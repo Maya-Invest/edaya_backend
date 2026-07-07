@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, SchedulingOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateRangeDurationDays, refineEndDateNotBeforeStartDate } from '../../domain/value-objects/date-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -90,20 +99,22 @@ export class CalendarEvent {
   }
 }
 
-export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.calendarEvents,
-    Permission.QUERY_CALENDAR_READ,
-    Permission.TIMETABLE_UPDATE,
-  )
-  return {
-    ...config,
-    gates: {
-      preSave: validateCalendarEventSave,
-    },
-  }
-}
+export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = ({ repositories, atomicExecution }) => ({
+  ...config({
+    repository: repositories.calendarEvents,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(SchedulingOperations.calendarRead), noopReadAccess),
+    write: write(
+      operationModule(SchedulingOperations.calendarManage),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  }),
+  gates: {
+    preSave: validateCalendarEventSave,
+  },
+})
 
 export async function validateCalendarEventSave(
   event: CalendarEvent,

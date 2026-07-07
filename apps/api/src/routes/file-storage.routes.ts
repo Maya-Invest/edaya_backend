@@ -9,14 +9,13 @@ import {
   allowsPublicInlineAttachmentContent,
   assertUploadPolicyAllowed,
   Attachment,
+  AttachmentOperations,
   AttachmentOwnerKind,
-  attachmentReadModule,
   AttachmentStatus,
   buildStorageKey,
   BusinessRuleViolationError,
   isInteractiveActor,
-  Permission,
-  permissionAction,
+  operationModule,
   validateAttachmentSave,
 } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
@@ -170,7 +169,7 @@ export const createFileUploadIntentHandler: AppRouteHandler<typeof createFileUpl
 
   try {
     const body = validatedJson(c) as z.infer<typeof uploadIntentRequestSchema>;
-    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(actor);
+    await operationModule(AttachmentOperations.configure)(actor);
     assertUploadPolicyAllowed({
       ownerKind: body.ownerKind,
       mimeType: body.mimeType,
@@ -232,7 +231,7 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
 
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    await attachmentReadModule()(actor);
+    await operationModule(AttachmentOperations.read)(actor);
 
     const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
     if (!attachment || attachment.schoolId !== actor.schoolId) {
@@ -347,7 +346,7 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
       if (!actor) {
         return unauthorizedResponse(c);
       }
-      await attachmentReadModule()(actor);
+      await operationModule(AttachmentOperations.read)(actor);
       if (attachment.schoolId !== actor.schoolId) {
         return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
       }

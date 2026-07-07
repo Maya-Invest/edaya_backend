@@ -1,12 +1,12 @@
 import type { BaseSchoolService } from '../../application/base-school-service'
 import type { Guardian, StaffMember, Student } from '../../domain'
-import { permissionAction } from '../../application/entities/entity-config'
+import { operationModule } from '../../application/entities/entity-config'
 import { AccountInvitationServiceWorkflow } from '../../application/workflows/account-invitation'
 import {
   AccountInvitationContactChannel,
   AccountInvitationKind,
 } from '../../domain/access/account-invitation'
-import { Permission } from '../authorization'
+import { AccessControlOperations } from '../authorization'
 import { resolveStudentInvitationEmail } from './resolve-invitation-contact'
 
 export interface ScheduleAccountInvitationInput {
@@ -36,7 +36,7 @@ export function scheduleAccountInvitationIfEligible(
 
   void (async () => {
     try {
-      await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(baseService.actor)
+      await operationModule(AccessControlOperations.assign)(baseService.actor)
       const workflow = new AccountInvitationServiceWorkflow(baseService)
       await workflow.sendAccountInvitation({
         kind: input.kind,

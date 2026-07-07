@@ -1,10 +1,22 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { OperationRef } from '../../capabilities/authorization/operations/types'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  anyOperationModule,
+  authorizeDeleteWithOperation,
+  authorizeSaveWithOperation,
+  config,
+  dateTime,
+  indirectTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { FinanceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { Money } from '../../domain/value-objects/money'
 import { StudentFeeSummary } from '../../domain/value-objects/student-fee-summary'
@@ -229,11 +241,22 @@ export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories
   config({
     repository: repositories.studentFees,
     tenant: studentFeeTenant(),
-    read: read(permissionAction(Permission.PAYMENT_READ), readByIds((actor, ids) => policy.checkStudentFeeAccess(actor, ids))),
+    read: read(
+      operationModule(FinanceOperations.paymentsRead),
+      readByIds((actor, ids) => policy.checkStudentFeeAccess(actor, ids)),
+    ),
     write: write(
-      anyPermissionAction([Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL]),
-      authorizeStudentFee(policy),
-      authorizeStudentFeeDelete(policy),
+      anyOperationModule([FinanceOperations.paymentRecord, FinanceOperations.paymentCancel]),
+      authorizeSaveWithOperation(
+        resolveStudentFeeWriteOperation,
+        async entity => ({ studentId: entity.studentId }),
+        authorizeStudentFeeResource(policy),
+      ),
+      authorizeDeleteWithOperation(
+        FinanceOperations.paymentCancel,
+        async entity => ({ studentId: entity.studentId }),
+        authorizeStudentFeeDeleteResource(policy),
+      ),
     ),
     gates: {
       preSave: validateStudentFeeSave,
@@ -241,6 +264,32 @@ export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories
     },
     atomicExecution,
   })
+
+function resolveStudentFeeWriteOperation(
+  entity: StudentFee,
+  existing: StudentFee | undefined,
+): OperationRef {
+  if (existing?.status !== FeeStatus.Cancelled && entity.status === FeeStatus.Cancelled) {
+    return FinanceOperations.paymentCancel
+  }
+  return FinanceOperations.paymentRecord
+}
+
+function authorizeStudentFeeResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<StudentFee>['authorizeSave'] {
+  return async (actor, entity) => {
+    await policy.checkStudentAccess(actor, [entity.studentId])
+  }
+}
+
+function authorizeStudentFeeDeleteResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<StudentFee>['authorizeDelete'] {
+  return async (actor, entity) => {
+    await policy.checkStudentFeeAccess(actor, [entity.id])
+  }
+}
 
 function studentFeeTenant(): EntityTenantResolver<StudentFee> {
   return indirectTenant(async (entity, repositories) => {
@@ -292,27 +341,6 @@ function cancellationChanged(entity: StudentFee, existing: StudentFee): boolean 
   return entity.cancellationReason !== existing.cancellationReason
     || entity.cancelledById !== existing.cancelledById
     || dateTime(entity.cancelledAt) !== dateTime(existing.cancelledAt)
-}
-
-export function authorizeStudentFee(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentFee>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await permissionAction(studentFeeWritePermission(entity, existing))(actor)
-    await policy.checkStudentAccess(actor, [entity.studentId])
-  }
-}
-
-export function authorizeStudentFeeDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentFee>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await permissionAction(Permission.PAYMENT_CANCEL)(actor)
-    await policy.checkStudentFeeAccess(actor, [entity.id])
-  }
-}
-
-function studentFeeWritePermission(entity: StudentFee, existing: StudentFee | undefined): Permission {
-  if (existing?.status !== FeeStatus.Cancelled && entity.status === FeeStatus.Cancelled) {
-    return Permission.PAYMENT_CANCEL
-  }
-  return Permission.PAYMENT_RECORD
 }
 
 async function validateStudentFeeDelete(

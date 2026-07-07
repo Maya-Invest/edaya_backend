@@ -3,8 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, DisciplineOperations } from '../../capabilities/authorization'
 import { StudentClassEnrollmentStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -55,8 +55,8 @@ export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncide
   config({
     repository: repositories.studentIncidentInvolvements,
     tenant: incidentLinkedTenant(),
-    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.DISCIPLINE_CREATE), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
+    write: write(operationModule(DisciplineOperations.create), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
     gates: {
       preSave: validateStudentIncidentInvolvementSave,
     },

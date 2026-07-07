@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { GuardianOperations } from '../../capabilities/authorization'
 import { AttachmentOwnerKind } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -138,24 +147,23 @@ export class Guardian {
   }
 }
 
-export const guardianConfig: EntityConfigFactory<Guardian> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.guardians,
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.PARENT_UPDATE,
-    readByIds((actor, ids) => input.policy.checkGuardianAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.QUERY_GUARDIAN_SELF_READ,
-  ])
-  return {
-    ...config,
+export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkGuardianAccess(actor, ids))
+
+  return config({
+    repository: repositories.guardians,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(GuardianOperations.read), readAccess),
+    write: write(
+      operationModule(GuardianOperations.update),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preDelete: validateGuardianDelete,
     },
-  }
+    atomicExecution,
+  })
 }
 
 async function validateGuardianDelete(

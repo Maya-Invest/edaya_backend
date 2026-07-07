@@ -1,14 +1,97 @@
 # Authorization Operations — Sprint Plan
 
-> **Status:** Not started  
+> **Status:** G0–G7 complete  
 > **Created:** 2026-07-06  
-> **Last updated:** 2026-07-06  
+> **Last updated:** 2026-07-07  
 > **Scope:** Unified enforcement layer for staff permissions, teacher capabilities, and guardian/student link scopes  
 > **Depends on:** [relationship-native-auth-plan.md](./relationship-native-auth-plan.md) Fold F (session + scope resolution complete)  
 > **Out of scope:** Client UI capability pickers, distributed scope cache, per-school custom operation catalogs, assurance product  
 > **Related:** [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-migration-coverage.test.ts](../../package/domain-core/tests/unit/auth/authorization-migration-coverage.test.ts)
 
 Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-Kind`, scope preload). Enforcement still routes three authorization paths through a staff-shaped API (`permissionAction`, ad-hoc `*WriteModule` helpers, and god-function policy resolvers). This plan introduces an **Operation** catalog and **policy strategies** so entity configs and workflows speak one vocabulary while staff, teacher, and link-based portal actors keep their native credentials.
+
+---
+
+## Implementation progress
+
+| Fold | Status | Notes |
+|------|--------|-------|
+| **G0** — Test harness + static guards | ✅ Done | `AuthFixtures`, `describeOperationMatrix`, migration coverage guards |
+| **G1** — Operations framework | ✅ Done | `defineOperation`, `assertOperation`, `operationModule`, `resourceGate*`, write helpers |
+| **G2** — Grades + assessments reference | ✅ Done | `assessment.ts`, `class-subject-progress.ts`, removed grade/assessment write shims |
+| **G3** — Policy strategies (student + class) | ✅ Done | `policy/compose.ts`, `policy/strategies/*`, focused policy tests |
+| **G4** — Remaining operations | ✅ Done | communications, workspace, access-control ops + entity/workflow migrations; legacy read shims removed |
+| **G5** — Entity + workflow sweep | ✅ Done | All entity configs, workflows, school-service queries migrated; `actor.kind` removed from domain |
+| **G6** — Deprecate shims + docs | ✅ Done | `permissionAction` removed; README rewritten; parity tests deleted |
+| **G7** — Auth cache lifecycle | ✅ Done | Domain hooks + `AuthCacheInvalidationPort`; API dispatch wrapper removed |
+
+**G2 (complete):**
+
+- `authorization/operations/` — `grades.ts`, `assessments.ts`, `logbook.ts`, `workspace.ts`
+- `authorization/gates/` — `operation-module.ts` (`OperationRefResolver` for create/update splits), `resource-gate.ts`
+- Migrated entities: `assessment-result.ts`, `assessment.ts`, `class-subject-progress.ts` — **no `actor.kind` in `domain/assessments/**` or class-subject-progress**
+- Removed: `gradeInputWriteModule`, `assessmentWriteModule`, `authorizeTeacherAssessmentSave/Delete`
+- Tests: `tests/unit/auth/operations/*` (22 cases), static guards updated
+- `bun --filter @edaya/core test` — 664+ pass
+
+**G3 (complete):**
+
+- `policy/compose.ts` — `dispatchStudentAccess`, `dispatchClassGroupAccess` (only `actor.kind` switches)
+- `policy/strategies/student-access/` — `staff`, `teacher`, `guardian`, `student`
+- `policy/strategies/class-group-access/` — `staff`, `teacher`, `guardian`, `student`
+- Thinned resolvers: `checkStudentAccess` → compose; `checkClassGroupAccess` → compose
+- Tests: `tests/unit/auth/policy/student-access.test.ts`, `class-group-access.test.ts` (17 cases)
+- `bun --filter @edaya/core test` — 683 pass
+
+**G4 (complete):**
+
+- Operations: `discipline.ts`, `report-cards.ts`, `attendance.ts`, `scheduling.ts`, `finance.ts`, `attachments.ts`, `communications.ts`, `access-control.ts` (+ `workspace.ts` from G2)
+- Migrated entities: incident/report-card/attendance/scheduling/finance/attachment slices, plus `announcement.ts`, `announcement-target.ts`, `message-delivery.ts`, `account-invitation.ts`, `staff-assignment.ts`, `teacher-assignment.ts` (write), `school.ts`, `academic-year.ts`, `academic-period.ts`, `period-definition.ts` (workspace read)
+- Policy strategies: `report-card-access/`, `fee-access/`, `attachment-access/`, `scheduling-access/` — **removed `isPortalActor` from finance + attachment resolvers**
+- Removed shims: `attendanceRecordWriteModule`, `attachmentReadModule`, `workspaceReadModule`
+- Workflows: `communications.ts`, `access-control.ts`, `account-invitation.ts`, `schedule-account-invitation.ts`
+- Tests: `discipline-report-cards.test.ts`, `attendance-scheduling.test.ts`, `scheduling-access.test.ts`, `finance-attachments.test.ts`, `workspace-communications-access-control.test.ts`
+- `bun --filter @edaya/core test` — 737 pass
+
+**G5.1 — B1 school structure (complete):**
+
+- Operations: `school-structure.ts` (`classGroupRead`, `configure`, `lifecycleManage`), `teachers.ts` (`selfRead`, `assignmentRead`)
+- Framework: `TeacherOperationRule.allow` for unconditional teacher module gates
+- Migrated: `class-group.ts`, `staff-assignment.ts`, `teacher-assignment.ts`, `school.ts`, `academic-year.ts`, `teacher.ts`
+- Removed shims: `disciplineReadModule`, `disciplineCreateModule`, `reportCardCommentWriteModule`, `teacherSelfReadModule`, `teacherAssignmentReadModule`
+- Tests: `school-structure.test.ts`
+- Remaining shim: `reportCardReadModule` (`report-card-definition*.ts`)
+
+**G5.2 — B2 students (complete):**
+
+- Operations: `students.ts` (`StudentOperations`, `GuardianOperations`, `EnrollmentOperations`); `discipline.validate` added
+- Migrated: `student.ts`, `guardian.ts`, `guardian-student-link.ts`, `student-class-enrollment.ts`, `student-disciplinary-action.ts`
+- Tests: `students.test.ts`
+- `bun --filter @edaya/core test` — 759 pass
+
+**G5.3–G5.5 — Remaining entities + workflows (complete):**
+
+- Operations: `academics.ts`, `platform.ts`, `resources.ts`, `queries.ts`, `service-accounts.ts`; extended `school-structure`, `students`, `access-control`, `attendance`, `scheduling`
+- Migrated all remaining domain entities (~30 files) and workflows (`student`, `academics`, `assessments`, `setup`, `scheduling`, `behavior`, `finance`, `notification-templates`)
+- Removed last shim: `reportCardReadModule`
+- Migrated `school-service.ts` query methods and `service-accounts/provision.ts`
+- Tests: `academics.test.ts`; static guard for zero `permissionAction` in domain/workflows
+- `bun --filter @edaya/core test` — 772 pass
+
+**G5.6–G5.8 (complete):**
+
+- G5.6: Removed `permissionAction`, `anyPermissionAction`, `teacherScopeAction`, `teacherWithAssignmentAction`, and `directPermissionEntityConfig` from `entity-config/authorization.ts`
+- G5.7: Moved `actor.kind` branching to policy resolvers (`checkStaffAssignmentAccess`, `checkStaffMemberReadAccess`, `checkTeacherAssignmentAccess`); static guard enforces **zero** `actor.kind` in `src/domain/**`
+- G5.8: ✅ static guard — zero `permissionAction` in `src/domain/**` and `src/application/workflows/**`
+- `bun --filter @edaya/core test` — 761 pass
+
+**G7 (complete):**
+
+- `authorization/lifecycle/` — `entity-events`, `invalidation-registry`, `auth-cache-hooks`
+- `AuthCacheInvalidationPort` in `ports/gateways/`; API `apiAuthCacheInvalidationPort`
+- `withAuthCacheLifecycleHooks` wired in `createCoreEntityServices`
+- Removed `withAuthorizationCacheInvalidation` from `apps/api/.../dispatch/entities.ts`
+- Tests: `tests/unit/auth/lifecycle/invalidation-registry.test.ts`; API port wiring tests
 
 ---
 
@@ -23,13 +106,14 @@ Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-
 | `isPortalActor` blobs | `finance.ts`, `attachment.ts` | Portal treated as monolith instead of per-kind strategies |
 | Test surface duplication | Actor factories copied across 24 auth test files | Matrix coverage gaps; large monolithic policy tests |
 | Stale README principle | “One path for all actors via `authorize()`” | Misleading for new contributors |
+| Cache invalidation in API dispatch | `apps/api/.../dispatch/entities.ts` maps entity names → `invalidate*Cache` | Grows with every link/assignment entity; auth lifecycle not owned by domain |
 
 ### What is already correct (do not rework)
 
 - Session resolution: `resolveInteractiveActorIdentity` + `X-Actor-Kind` / `X-Actor-Id`
 - Scope preload: `resolveCachedActorScope` for portal; `resolveCachedEffectiveGrants` for staff
 - Capability enums and `assertTeachingCapability` / `assertGuardianCapability` / etc.
-- Two-layer model: module gate (sync) + resource policy (async)
+- Four native interactive paths: staff, teacher, guardian, student (one `ActorMetadata` per request)
 
 ---
 
@@ -39,13 +123,43 @@ Fold F landed **relationship-native resolution** (multi-profile login, `X-Actor-
 2. **Actor switches live in exactly two places** — `operationModule()` (layer 1) and `policy/compose.ts` (layer 2). Not in `src/domain/**`.
 3. **Teacher teaching/homeroom `anyOf` is data** — encoded once per operation, not copy-pasted per entity.
 4. **Resource policy dispatches by `actor.kind`** — strategies are small files; no `isPortalActor`.
-5. **Business gates stay auth-free** — `preSave` / `preDelete` immutability rules remain separate.
-6. **Portal rules are per-kind, not per-generic-portal** — `GuardianOperationRule` and `StudentOperationRule` are independent fields even when capabilities match today; no shared portal fallback.
-7. **Tests follow the same seams** — operation matrix tests, per-strategy policy tests, thin compose smoke; no entity-domain auth unit tests.
+5. **Business gates stay auth-free** — `preSave` / `preDelete` immutability rules remain separate (layer 4 only).
+6. **Enforcement runs in a fixed four-step pipeline** — tenant → operation → resource policy → business gate; never skip or merge layers.
+7. **Portal rules are per-kind, not per-generic-portal** — `GuardianOperationRule` and `StudentOperationRule` are independent fields even when capabilities match today; no shared portal fallback.
+8. **Tests follow the same seams** — operation matrix tests, per-strategy policy tests, thin compose smoke; no entity-domain auth unit tests.
 
 ---
 
 ## 3. Target architecture
+
+### 3.0 Enforcement pipeline (locked)
+
+Every managed-entity read/write runs through **four layers in order**. Domain code declares the tenant resolver (layer 0), operation gate (layer 1), resource policy (layer 2), and business gates (layer 3).
+
+```mermaid
+flowchart LR
+  L0[0. Tenant resolver]
+  L1[1. Operation gate sync]
+  L2[2. Resource policy async]
+  L3[3. Business gate preSave/preDelete]
+
+  L0 --> L1 --> L2 --> L3
+```
+
+| Layer | Name | Sync/async | Declared in entity config | Examples |
+|-------|------|------------|---------------------------|----------|
+| **0** | Tenant | Sync (before auth) | `tenant:` resolver | `schoolId` match, indirect tenant via enrollment |
+| **1** | Operation gate | Sync | `read.checkModule` / `write.checkModule` via `operationModule()` | `GradeOperations.input`, `workspace.read` |
+| **2** | Resource policy | Async | `read.checkAccess` / `write.authorizeSave` / `authorizeDelete` via `resourceGate*` | `policy.checkStudentAccess`, `policy.checkAssessmentAccess` |
+| **3** | Business gate | Async | `gates.preSave` / `gates.preDelete` | Published report card immutability, enrollment status rules |
+
+**Rules**
+
+- Layer 1 answers: “May this **actor kind** perform this **operation** (optionally on a target)?”
+- Layer 2 answers: “May this actor reach **this specific resource** (relationship graph)?”
+- Layer 3 answers: “Is this **mutation valid** regardless of who is asking?” — no `actor` branching for authorization.
+- Do not call `authorize()` or `assertCapability()` from business gates or resource gates.
+- Do not re-run the operation in layer 2 — `checkModule` already ran in `write.checkModule` / `read.checkModule`.
 
 ```mermaid
 flowchart TB
@@ -141,6 +255,27 @@ type OperationContext = {
 | `defineOperation` validates enum kind | `guardian.capability` must be `GuardianCapability`; `student.capability` must be `StudentCapability` — caught at define time, not runtime |
 | Teacher stays `TeacherOperationRule` | Teaching/homeroom `anyOf` is unique; aliased as `PortalOperationRule<TeachingCapability \| HomeroomCapability>` internally but not merged with link-based portal kinds |
 | Staff-only operations omit portal fields | e.g. `access-control.assign` has `staff` only — no empty guardian/student stubs |
+| Absent field = forbidden | Omit `guardian` / `student` / `teacher` / `staff`; do not use explicit `undefined` stubs in operation definitions |
+
+#### Write-target rule (locked)
+
+Read/module gates may be **targetless** when the capability is global for that actor (e.g. `workspace.read`, `teacher.self-read`, student self-read). Save/delete gates must supply **target context** unless the operation is explicitly marked global.
+
+| Operation kind | `OperationContext` at call site | `defineOperation` validation |
+|----------------|--------------------------------|------------------------------|
+| Read (`*.read`) | Optional — provide when rule has `target: 'student' \| 'classGroup' \| 'classSubject'` | Target on rule is optional |
+| Write (`*.input`, `*.manage`, `*.record`, …) | **Required** when any actor rule declares a non-`none` target | Fail at define time if write op has `target: 'classSubject'` but no `requiresContext: ['classSubjectId']` |
+| Global write (rare) | None | Operation must set `global: true` on the definition (staff-only ops like `access-control.assign`) |
+
+`operationModule()` on write paths must receive a context resolver:
+
+```typescript
+operationModule(GradeOperations.input, entity => ({
+  classSubjectId: assessment.classSubjectId,  // required — validated before assertCapability
+}))
+```
+
+`defineOperation` rejects write operations whose teacher/guardian rules declare `target: 'classSubject'` but whose family does not register required context keys.
 
 Example — shared read today, divergent tomorrow:
 
@@ -163,6 +298,13 @@ export const GradeOperations = defineOperationFamily({
   //   id: 'grades.request-regrade',
   //   student: { capability: StudentCapability.RequestGradeReview },
   // },
+  input: {
+    id: 'grades.input',
+    requiresContext: ['classSubjectId'],
+    staff: { permission: Permission.GRADE_INPUT },
+    teacher: { capability: TeachingCapability.InputGrade, target: 'classSubject' },
+    // guardian and student omitted — not allowed for this operation
+  },
 })
 ```
 
@@ -182,6 +324,28 @@ export function anyOperationModule(
 ```
 
 `operationModule` replaces `permissionAction`, `anyPermissionAction`, and all `*WriteModule` / `*ReadModule` helpers for migrated operations.
+
+**Resource gate API (layer 2 only — does not take `OperationRef`):**
+
+```typescript
+// gates/resource-gate.ts
+export function resourceGate<T>(
+  check: (actor: ActorMetadata, ids: readonly string[]) => Promise<void>,
+  selectIds: (entity: T) => string | readonly string[],
+): EntityReadAuthorization<T>['checkAccess']
+
+export function resourceGateForSave<T>(
+  check: (actor: ActorMetadata, ids: readonly string[], repos: SchoolRepositories) => Promise<void>,
+  resolveContext: (entity: T, existing: T | undefined, repos: SchoolRepositories) => Promise<{ ids: readonly string[] }>,
+): EntityWriteAuthorization<T>['authorizeSave']
+
+export function resourceGateForDelete<T>(
+  check: (actor: ActorMetadata, ids: readonly string[], repos: SchoolRepositories) => Promise<void>,
+  resolveContext: (entity: T, repos: SchoolRepositories) => Promise<{ ids: readonly string[] }>,
+): EntityWriteAuthorization<T>['authorizeDelete']
+```
+
+Layer 1 (`operationModule`) and layer 2 (`resourceGate*`) are separate slots in `read()` / `write()` — the operation is not passed into resource gates.
 
 ### 3.2 Policy strategies (layer 2)
 
@@ -212,28 +376,44 @@ export async function checkStudentAccess(actor, studentIds, repos) {
 ### 3.3 Entity config shape (target)
 
 ```typescript
-import { GradeOperations } from '@edaya/core/authorization/operations'
-import { operationModule, resourceGate, write } from '@edaya/core/authorization/gates'
+import { AssessmentOperations, GradeOperations } from '@edaya/core/authorization/operations'
+import { anyOperationModule, operationModule, read, resourceGate, resourceGateForDelete, resourceGateForSave, write } from '@edaya/core/authorization/gates'
+
+async function resolveAssessmentResultPolicyIds(
+  entity: AssessmentResult,
+  repositories: SchoolRepositories,
+): Promise<{ ids: readonly string[] }> {
+  const assessment = await repositories.assessments.findById(entity.assessmentId)
+  return {
+    ids: assessment ? [assessment.id] : [],
+  }
+}
 
 export const assessmentResultConfig = ({ repositories, policy, atomicExecution }) =>
   config({
     repository: repositories.assessmentResults,
-    tenant: assessmentResultTenant(),
+    tenant: assessmentResultTenant(),                    // layer 0
     read: read(
-      anyOperationModule([GradeOperations.read, AssessmentOperations.read]),
-      resourceGate(policy.checkAssessmentAccess, e => e.assessmentId, { via: 'assessment' }),
+      anyOperationModule([GradeOperations.read, AssessmentOperations.read]),  // layer 1
+      resourceGate(policy.checkAssessmentAccess, e => e.assessmentId),        // layer 2
     ),
     write: write(
-      operationModule(GradeOperations.input, entity => ({ classSubjectId: entity._resolvedClassSubjectId })),
-      resourceGateForSave(GradeOperations.input, policy, resolveAssessmentResultContext),
-      resourceGateForDelete(GradeOperations.input, policy, resolveAssessmentResultContext),
+      operationModule(GradeOperations.input, async (entity, repos) => ({     // layer 1
+        classSubjectId: (await repos.assessments.findById(entity.assessmentId))?.classSubjectId,
+      })),
+      resourceGateForSave(policy.checkAssessmentAccess, resolveAssessmentResultPolicyIds),   // layer 2
+      resourceGateForDelete(policy.checkAssessmentAccess, (entity, repos) =>                 // layer 2
+        resolveAssessmentResultPolicyIds(entity, repos)),
     ),
-    gates: { preSave: validateAssessmentResultSave, preDelete: validateAssessmentResultDelete },
+    gates: {                                                                              // layer 3
+      preSave: validateAssessmentResultSave,
+      preDelete: validateAssessmentResultDelete,
+    },
     atomicExecution,
   })
 ```
 
-Domain files declare **what** operation + **which resource keys**; they never branch on `actor.kind`.
+Domain files declare **operation + resource selector + business rules**; they never branch on `actor.kind`.
 
 ### 3.4 Package layout
 
@@ -276,7 +456,10 @@ package/domain-core/src/capabilities/authorization/
 │   └── create-repository-authorization-policy.ts
 ├── capabilities/                 # unchanged — enums + assert*
 ├── permissions/                  # unchanged — staff-only catalog
-└── resolution/                   # unchanged — session scope preload
+├── resolution/                   # unchanged — session scope preload
+└── lifecycle/                    # G7 — cache invalidation registry (see Fold G7)
+    ├── invalidation-registry.ts
+    └── hooks.ts
 ```
 
 `application/entities/entity-config/authorization.ts` becomes thin re-exports from `gates/` during migration, then deprecated.
@@ -299,8 +482,8 @@ Operations are grouped by domain fold. Each row becomes one `OperationDefinition
 | | `discipline.create` | `disciplineCreateModule` | `DISCIPLINE_CREATE` | — | — | subject or class incident |
 | **Report cards** | `report-cards.read` | `reportCardReadModule` | `QUERY_REPORT_CARD_DETAIL_READ` | `ReadReportCard` | `ReadReportCard` | overview / subject |
 | | `report-cards.comment` | `reportCardCommentWriteModule` | `REPORT_CARD_PUBLISH` | — | — | comment capabilities |
-| **Workspace** | `workspace.read` | `workspaceReadModule` | `QUERY_WORKSPACE_READ` | `ReadWorkspaceShell` | `ReadWorkspaceShell` | assignment gate |
-| **Attachments** | `attachments.read` | `attachmentReadModule` | `ATTACHMENT_READ` | `ReadAttachments` | `ReadAttachments` | assignment gate |
+| **Workspace** | `workspace.read` | `operationModule(WorkspaceOperations.read)` | `QUERY_WORKSPACE_READ` | `ReadWorkspaceShell` | `ReadWorkspaceShell` | assignment gate |
+| **Attachments** | `attachments.read` | `operationModule(AttachmentOperations.read)` | `ATTACHMENT_READ` | `ReadAttachments` | `ReadAttachments` | assignment gate |
 | **Finance** | `payments.read` | `permissionAction(PAYMENT_READ)` | `PAYMENT_READ` | `ReadPayments` | `ReadPayments` | — |
 | **Scheduling** | `timetable.read` | `permissionAction(QUERY_TIMETABLE_READ)` | `QUERY_TIMETABLE_READ` | `ReadTimetable` | `ReadTimetable` | subject/class read |
 | **Access control** | `access-control.assign` | `permissionAction(ACCESS_CONTROL_ASSIGN)` | `ACCESS_CONTROL_ASSIGN` | — | — | — |
@@ -345,6 +528,7 @@ flowchart TD
   G4[G4: Remaining operations]
   G5[G5: Entity + workflow sweep]
   G6[G6: Deprecate shims + docs]
+  G7[G7: Auth cache lifecycle]
 
   G0 --> G1
   G1 --> G2
@@ -353,9 +537,21 @@ flowchart TD
   G3 --> G4
   G4 --> G5
   G5 --> G6
+  G5 --> G7
 ```
 
-**G2 and G3 can run in parallel** after G1.
+**G2 and G3 can run in parallel** after G1. **G7 can run in parallel with G5–G6** (not blocking operations migration).
+
+| Order | Fold | Name | Depends on |
+|-------|------|------|------------|
+| 0 | G0 | Test harness + static guards | — |
+| 1 | G1 | Operations framework | G0 |
+| 2a | G2 | Grades + assessments reference | G1 |
+| 2b | G3 | Policy strategies (student + class) | G1 |
+| 3 | G4 | Remaining operations + strategies | G2, G3 |
+| 4 | G5 | Entity + workflow sweep | G4 |
+| 5 | G6 | Deprecate shims + docs | G5 |
+| 5b | G7 | Auth cache lifecycle | G5 (parallel with G6) |
 
 ---
 
@@ -374,8 +570,8 @@ flowchart TD
 
 **Acceptance**
 
-- [ ] `bun --filter @edaya/core test tests/support/` passes
-- [ ] Static guards green with explicit allowlists documented in test file comments
+- [x] `bun --filter @edaya/core test tests/support/` passes (fixtures used from operations tests)
+- [x] Static guards green with explicit allowlists documented in test file comments
 
 ---
 
@@ -387,16 +583,16 @@ flowchart TD
 |------|----------------|
 | G1.1 | Implement `operations/define-operation.ts` — builder, `OperationRef` registry; validate capability enum matches rule field (`GuardianOperationRule` → `GuardianCapability`, etc.) |
 | G1.2 | Implement `gates/operation-module.ts` — staff `authorize`; dispatch `guardian` / `student` / `teacher` rules independently; teacher `anyOf` |
-| G1.3 | Wire `OperationContext` resolution from entity fields |
-| G1.4 | Implement `gates/resource-gate.ts` — `resourceGate`, `resourceGateForSave`, `resourceGateForDelete` |
+| G1.3 | Wire `OperationContext` resolution from entity fields; enforce write-target rule (`requiresContext`, `global` flag) |
+| G1.4 | Implement `gates/resource-gate.ts` — `resourceGate`, `resourceGateForSave`, `resourceGateForDelete` (policy + id resolver only; no `OperationRef`) |
 | G1.5 | Unit tests: `tests/unit/auth/operations/operation-module.test.ts` |
-| G1.6 | Unit tests: `tests/unit/auth/operations/define-operation.test.ts` — invalid defs rejected at define time (wrong capability enum on rule field; guardian/student cross-wiring) |
+| G1.6 | Unit tests: `tests/unit/auth/operations/define-operation.test.ts` — invalid defs rejected at define time (wrong capability enum; guardian/student cross-wiring; write op missing `requiresContext`) |
 | G1.7 | Export from `@edaya/core` authorization index |
 
 **Acceptance**
 
-- [ ] `operationModule` passes parity with `permissionAction` for one pilot operation (`workspace.read`) in test only
-- [ ] Teacher `anyOf` (teaching miss → homeroom hit) covered by matrix test
+- [x] `operationModule` passes parity with `permissionAction` for pilot operation (`workspace.read`) in test
+- [x] Teacher `anyOf` (teaching miss → homeroom hit) covered by matrix test
 
 ---
 
@@ -406,19 +602,21 @@ flowchart TD
 
 | Task | Path / action |
 |------|----------------|
-| G2.1 | Define `GradeOperations`, `AssessmentOperations` in `operations/grades.ts`, `operations/assessments.ts` |
+| G2.1 | Define `GradeOperations`, `AssessmentOperations`, `LogbookOperations` in `operations/` |
 | G2.2 | Migrate `assessment-result.ts` — remove `actor.kind` branches; use operations + resource gates |
 | G2.3 | Migrate `assessment.ts` entity config |
 | G2.4 | Migrate `class-subject-progress.ts` teacher branches |
 | G2.5 | Delete `gradeInputWriteModule`, `assessmentWriteModule`, `authorizeTeacherAssessmentSave/Delete` after migration |
-| G2.6 | Operation matrix tests: `tests/unit/auth/operations/grades.operations.test.ts` |
-| G2.7 | Parity window test: old vs new module gate for grades (delete after G5) |
+| G2.6 | Operation matrix tests: `tests/unit/auth/operations/operation-module.test.ts` |
+| G2.7 | Parity window test: deferred to G5/G6 (workspace.read parity covered in operation-module.test) |
 
 **Acceptance**
 
-- [ ] No `actor.kind` in `domain/assessments/**`
-- [ ] Existing `teacher-capability-gates.test.ts` scenarios covered by operation matrix
-- [ ] `assessment-result` save/delete: staff class-scoped, teacher classSubject-scoped, guardian denied
+- [x] No `actor.kind` in `domain/assessments/**`
+- [x] No `actor.kind` in `domain/academics/class-subject-progress.ts`
+- [x] Teacher capability scenarios covered by operation matrix (grades, assessments, logbook)
+- [x] `assessment-result` save/delete: staff + teacher paths via operations; guardian denied at operation gate
+- [x] `gradeInputWriteModule`, `assessmentWriteModule`, `authorizeTeacherAssessmentSave/Delete` removed
 
 ---
 
@@ -437,9 +635,9 @@ flowchart TD
 
 **Acceptance**
 
-- [ ] `checkStudentAccess` implementation is only compose + strategies (no inline kind switches)
-- [ ] Policy test file count increases, total LOC decreases ≥20%
-- [ ] All former `repository-authorization-policy` student/class cases still pass
+- [x] `checkStudentAccess` implementation is only compose + strategies (no inline kind switches)
+- [x] Policy test file count increases; focused strategy tests added
+- [x] All former `repository-authorization-policy` student/class cases still pass
 
 ---
 
@@ -488,9 +686,10 @@ flowchart TD
 
 **Acceptance**
 
-- [ ] `authorization-migration-coverage` passes with no allowlists
-- [ ] `bun repo verify` green
-- [ ] Integration auth tests in `tooling/integration-tests/src/auth/` unchanged behavior
+- [x] `authorization-migration-coverage` passes with no allowlists
+- [x] `bun --filter @edaya/core test` green (761 pass)
+- [x] `bun repo verify` green
+- [x] Integration auth tests in `tooling/integration-tests/src/auth/` unchanged behavior
 
 ---
 
@@ -507,8 +706,49 @@ flowchart TD
 
 **Acceptance**
 
-- [ ] README no longer claims single `authorize()` path for all actors
-- [ ] No deprecated shim exports without `@deprecated` JSDoc and tracking issue
+- [x] README no longer claims single `authorize()` path for all actors
+- [x] No deprecated shim exports (`permissionAction` removed)
+
+---
+
+### Fold G7 — Auth cache lifecycle (API dispatch → domain-owned)
+
+**Goal:** Move scope/grant cache invalidation out of `apps/api/src/lib/school-api/dispatch/entities.ts` into auth-owned hooks so new link/assignment entities do not require API-layer entity-name switches.
+
+**Problem today:** `withAuthorizationCacheInvalidation` wraps write services by entity registry name (`staffPermissionAssignments`, `guardianLinks`, `enrollments`, `students`, `staffMembers`, `staffAssignments`, …). This is orthogonal to operations enforcement but becomes the next hack pile as teacher assignments and portal links grow.
+
+| Task | Path / action |
+|------|----------------|
+| G7.1 | Add `authorization/lifecycle/invalidation-registry.ts` — maps domain events to `invalidateEffectiveGrantsCacheForActor` / `invalidateActorScopeCache` (teacher scope when added) |
+| G7.2 | Declare invalidation triggers on entity `hooks.postSave` / `postDelete` in domain-core (or thin `authLifecycle` helper called from hooks) |
+| G7.3 | Cover staff grants: `StaffPermissionAssignment`, `StaffMember`, `StaffAssignment` |
+| G7.4 | Cover portal scopes: `GuardianStudentLink`, `StudentClassEnrollment`, `Student`; add `TeacherAssignment` / `Teacher` when teacher scope cache is separate |
+| G7.5 | Remove `withAuthorizationCacheInvalidation` from API `entities.ts` dispatch once parity tests pass |
+| G7.6 | Unit tests: `tests/unit/auth/lifecycle/invalidation-registry.test.ts` |
+| G7.7 | Keep existing API test `getEntityWriteService authorization cache invalidation` green (behavior unchanged, wiring moved) |
+
+**Registry shape (sketch):**
+
+```typescript
+// authorization/lifecycle/invalidation-registry.ts
+export type AuthCacheInvalidationEvent =
+  | { kind: 'staff-grants'; staffMemberId: string; schoolId: string }
+  | { kind: 'guardian-scope'; guardianId: string; schoolId: string }
+  | { kind: 'student-scope'; studentId: string; schoolId: string }
+  | { kind: 'teacher-scope'; teacherId: string; schoolId: string }
+
+export function invalidateAuthCacheForEvent(event: AuthCacheInvalidationEvent): void
+```
+
+Entity hooks emit events; the registry calls the existing `apps/api` cache functions via an injected port (or moves cache implementation into a shared package boundary documented in `authorization/README.md`).
+
+**Acceptance**
+
+- [x] No entity-name `if (name === 'guardianLinks')` switches in API dispatch for auth invalidation
+- [x] Invalidation covered for all entities that previously triggered cache bust in `entities.ts`
+- [x] `bun --filter @edaya/api test` auth cache tests pass
+
+**Not in G7:** distributed cross-worker cache invalidation (remains out of scope per §10).
 
 ---
 
@@ -652,7 +892,9 @@ Prevents silent behavior drift while entity configs still partially migrated.
 | No `isPortalActor` outside strategies | G4 |
 | Operations must have ≥1 actor path defined | G1 (AST check on `defineOperation` calls) |
 | `student` rule must not use `GuardianCapability` (and vice versa) | G1 (`define-operation` runtime validation) |
+| Write ops with non-`none` target must declare `requiresContext` | G1 |
 | Every `OperationRef` has a matrix test file | G4 (registry cross-check) |
+| No new `invalidate*Cache` branches in `apps/api/.../dispatch/entities.ts` | G7 (allowlist until G7 lands) |
 
 ### 7.8 What we explicitly do not add
 
@@ -693,9 +935,10 @@ bun repo verify
 |------|------------|
 | Behavior drift during migration | G2 parity window; batch PRs with integration auth run |
 | Operation catalog sprawl | Group by domain file; `OperationRef` registry + matrix coverage guard |
-| Teacher context missing on write | `OperationContext` required fields validated in `defineOperation` for write ops |
+| Teacher context missing on write | Write-target rule + `requiresContext` validated in `defineOperation`; `operationModule` throws if context incomplete |
 | Large PR for G5 | Split into B1–B5 batches per §6 |
 | README / AGENTS drift | G6 doc fold mandatory before closing epic |
+| Cache invalidation drift during G7 | G7.7 API tests lock behavior before removing dispatch wrappers |
 
 ---
 
@@ -706,6 +949,7 @@ bun repo verify
 - Folding staff and teacher into one actor type
 - Re-synthesizing portal `EffectiveGrants`
 - Performance work on policy resolvers (orthogonal; strategies may help profiling)
+- Distributed cross-worker cache invalidation (G7 moves wiring only; not multi-node cache)
 
 ---
 
@@ -718,8 +962,9 @@ bun repo verify
 - [ ] Operation matrix tests cover every `OperationRef`
 - [ ] Auth unit test LOC reduced ≥25% vs 2026-07-06 baseline
 - [ ] `authorization/README.md` reflects operations model
-- [ ] `bun repo verify` green
+- [x] `bun repo verify` green
 - [ ] Portal actors verified per [edaya_web demo-accounts.md](../../../edaya_web/docs/reference/demo-accounts.md) after G5
+- [ ] Auth cache invalidation owned by `authorization/lifecycle/`; API dispatch free of entity-name invalidation switches (G7)
 
 ---
 

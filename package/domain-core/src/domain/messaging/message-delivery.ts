@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { CommunicationsOperations } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum MessageDeliveryChannel {
@@ -147,7 +147,7 @@ export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ re
   config({
     repository: repositories.messageDeliveries,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
+    write: write(operationModule(CommunicationsOperations.create), noopSaveAccess, noopDeleteAccess),
     atomicExecution,
   })

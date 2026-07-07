@@ -2,9 +2,8 @@ import type { EntityConfigFactory } from '../../application/entities/entity-conf
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { anyPermissionAction, config, indirectTenant, noopDeleteAccess, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../../capabilities/authorization'
-import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { AcademicsOperations, AuthorizationError, AuthorizationErrorCode } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const subjectMatterSchema = z.object({
@@ -43,8 +42,8 @@ export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ reposi
   config({
     repository: repositories.subjectMatters,
     tenant: subjectMatterTenant(),
-    read: read(anyPermissionAction([...CURRICULUM_READ_PERMISSIONS]), noopReadAccess),
-    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
+    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.programUpdate), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
     atomicExecution,
   })
 

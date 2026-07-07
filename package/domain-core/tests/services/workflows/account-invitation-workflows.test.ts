@@ -5,6 +5,7 @@ import {
   AccountInvitationKind,
   AccountInvitationStatus,
   ActorAssuranceLevel,
+  createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   Permission,
   RecordingInvitationDeliveryPort,
@@ -113,10 +114,7 @@ function createInvitationContext() {
 
   const service = new SchoolService({
     repositories: mockRepos,
-    authorizationPolicy: {
-      checkClassGroupAccess: async () => {},
-      checkLessonSessionAccess: async () => {},
-    } as unknown as import('../../../src/capabilities/authorization').AuthorizationPolicy,
+    authorizationPolicy: createRepositoryAuthorizationPolicy({ repositories: mockRepos }),
     actor: actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
     atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
     notificationGateway: new RecordingNotificationGateway(),

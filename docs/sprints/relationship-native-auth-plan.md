@@ -1,11 +1,11 @@
 # Relationship-Native Authorization — Sprint Plan
 
-> **Status:** Fold F complete (pending `bun repo verify`)  
+> **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./authorization-operations-plan.md) (G0–G6 ✅)  
 > **Created:** 2026-07-05  
-> **Last updated:** 2026-07-05  
+> **Last updated:** 2026-07-07  
 > **Scope:** Multi-profile auth, relationship scopes for portal actors (teacher, guardian, student), staff-only permission catalog  
 > **Out of scope:** Step-up assurance product, distributed grants cache, per-school custom capability catalogs, webapp teacher UI  
-> **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md)
+> **Related:** [authorization-model-simplification-plan.md](./authorization-model-simplification-plan.md), [authorization/README.md](../../package/domain-core/src/capabilities/authorization/README.md), [authorization-operations-plan.md](./authorization-operations-plan.md) (enforcement follow-up — ✅ G0–G6 complete)
 
 This plan replaces the current **portal-permission synthesis** model (`GUARDIAN_PORTAL_PERMISSIONS` → `EffectiveGrants` → `authorize()`) and **teacher-as-staff** model (`StaffAssignment` sync → `StaffPermissionAssignment`) with **relationship-native scopes** and a **staff-only** `Permission` catalog.
 
@@ -33,7 +33,7 @@ Portal actors get fixed capabilities from relationships. Staff keep configurable
 | Homeroom teacher | Card `teacherComment` | `WriteHomeroomReportComment` |
 | Homeroom teacher | Group/aggregation section `comment` | `WriteGroupReportComment` |
 
-Implementation: `report-card-comment-access.ts`, `reportCardReadModule` / `reportCardCommentWriteModule`, `checkReportCardResultAccess` teacher read scope. Unit tests in `report-card-comment-access.test.ts`.
+Implementation: `report-card-comment-access.ts`, `ReportCardOperations` / `DisciplineOperations` in `operations/`, `checkReportCardResultAccess` teacher read scope. Unit tests in `report-card-comment-access.test.ts` and `tests/unit/auth/operations/`.
 
 **Timetable (locked for v1):** Subject teachers with any assignment in a class may **view** the full class timetable (`getClassGroupTimetable`); timetable **writes** remain staff-only (`TIMETABLE_*` permissions).
 
@@ -542,7 +542,7 @@ if (actor.kind === 'teacher') {
 - Teachers may only update **comment fields** on **existing draft** report cards (`assertCommentOnlyReportCardUpdate`).
 - Published report cards are immutable for everyone at the entity gate.
 - Staff publish / generate / full edit stays on `Permission.REPORT_CARD_PUBLISH`.
-- Module: `report-card-comment-access.ts`; entity config uses `reportCardReadModule` / `reportCardCommentWriteModule`.
+- Module: `report-card-comment-access.ts`; entity config uses `ReportCardOperations` / `DisciplineOperations` from `operations/`.
 
 Ship D1 before D2 so teacher app can authenticate and load scope before write paths are migrated.
 

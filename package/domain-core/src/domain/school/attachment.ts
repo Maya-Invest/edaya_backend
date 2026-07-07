@@ -3,16 +3,15 @@ import type { EntityReadAuthorization } from '../../application/entities/managed
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
 import {
-  attachmentReadModule,
   authorizeDeleteByReadAccess,
   authorizeExistingById,
   config,
   directSchoolTenant,
-  permissionAction,
+  operationModule,
   read,
   write,
 } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { AttachmentOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { resolveAttendanceRecordSchoolId } from '../scheduling/attendance-record-school'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -105,9 +104,9 @@ export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories
   return config({
     repository: repositories.attachments,
     tenant: directSchoolTenant(),
-    read: read(attachmentReadModule(), readAccess),
+    read: read(operationModule(AttachmentOperations.read), readAccess),
     write: write(
-      permissionAction(Permission.ATTACHMENT_CONFIGURE),
+      operationModule(AttachmentOperations.configure),
       authorizeExistingById(readAccess),
       authorizeDeleteByReadAccess(readAccess),
     ),

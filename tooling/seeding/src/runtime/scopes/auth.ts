@@ -1,5 +1,6 @@
 import type { HttpSeedRuntimeContext, RunHttpDevSeedsResults } from '../types'
 import { createHttpAuthLinkSeedPort } from '../../domains/auth-link/adapters/http'
+import { createHttpCommunicationsSeedPort } from '../../domains/communications/adapters/http'
 import { runDevAuthLinkWithPort } from '../../orchestration/run-dev-auth-link'
 import { runDevAuthProvision } from '../../orchestration/run-dev-auth-provision'
 import { logDevSeedResults } from '../../orchestration/run-dev-seeds'
@@ -18,6 +19,12 @@ export async function runAuthScope(ctx: HttpSeedRuntimeContext): Promise<RunHttp
     results.authLink = await runDevAuthLinkWithPort(
       createHttpAuthLinkSeedPort({ client, serviceAccountApiKey: seedingApiKey }),
       auth,
+      {
+        communicationsPort: createHttpCommunicationsSeedPort({
+          client,
+          serviceAccountApiKey: seedingApiKey,
+        }),
+      },
     )
   }
 

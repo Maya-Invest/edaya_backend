@@ -6,8 +6,8 @@ import type {
   IncidentInvolvementRole,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { denyResourceAccess, DisciplineOperations, Permission, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   INCIDENT_RECORDED_EVENT_KEY,
   runWorkflowNotifications,
@@ -437,7 +437,11 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
 
-    await permissionAction(permission)(this.baseService.actor)
+    await operationModule(
+      permission === Permission.DISCIPLINE_VALIDATE
+        ? DisciplineOperations.validate
+        : DisciplineOperations.create,
+    )(this.baseService.actor)
 
     if (resource.classGroupId) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])

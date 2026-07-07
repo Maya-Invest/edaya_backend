@@ -1,8 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, SchedulingOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -42,9 +42,9 @@ export const classActivityEnrollmentConfig: EntityConfigFactory<ClassActivityEnr
   config({
     repository: repositories.classActivityEnrollments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.QUERY_TIMETABLE_READ), noopReadAccess),
+    read: read(operationModule(SchedulingOperations.timetableRead), noopReadAccess),
     write: write(
-      permissionAction(Permission.TIMETABLE_UPDATE),
+      operationModule(SchedulingOperations.timetableManage),
       authorizeClassGroupLinked(policy, 'classGroupId'),
       authorizeClassGroupLinkedDelete(policy),
     ),

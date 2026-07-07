@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, FinanceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { Money } from '../../domain/value-objects/money'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
@@ -93,25 +102,27 @@ export class Fee {
   get createdAt() { return this.data.createdAt }
 }
 
-export const feeConfig: EntityConfigFactory<Fee> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.fees,
-    Permission.FINANCIAL_CONFIG_READ,
-    Permission.FINANCIAL_CONFIG_CONFIGURE,
-    readByIds((actor, ids) => input.policy.checkFeeAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.FINANCIAL_CONFIG_READ,
-    Permission.PAYMENT_READ,
-  ])
-  return {
-    ...config,
+export const feeConfig: EntityConfigFactory<Fee> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkFeeAccess(actor, ids))
+
+  return config({
+    repository: repositories.fees,
+    tenant: directSchoolTenant(),
+    read: read(
+      operationModule(FinanceOperations.feeCatalogRead),
+      readAccess,
+    ),
+    write: write(
+      operationModule(FinanceOperations.feeConfigure),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preSave: validateFeeSave,
       preDelete: validateFeeDelete,
     },
-  }
+    atomicExecution,
+  })
 }
 
 export async function validateFeeSave(

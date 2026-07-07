@@ -18,7 +18,7 @@ import type { TeachersSeedPort } from '../domains/teachers/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
-import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
+import { syncDevAuthAndGuardianInboxProbes } from '../bootstrap/sync-dev-auth-inbox'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
 import { createInProcessAssessmentsSeedPort } from '../domains/assessments/in-process'
@@ -179,10 +179,11 @@ export async function runDevSchoolSeed(
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
-      await syncDevStaffAuthAndOwner(
+      await syncDevAuthAndGuardianInboxProbes(
         options.authLinkPort ?? createInProcessAuthLinkSeedPort(
           requireSeedApplication(application, 'authLinkPort'),
         ),
+        communicationsPort,
         options.auth,
         options.ownerSubjectId,
       )
@@ -233,10 +234,11 @@ export async function runDevSchoolSeed(
         apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
       }, seedDataset)
   if (options?.auth) {
-    await syncDevStaffAuthAndOwner(
+    await syncDevAuthAndGuardianInboxProbes(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
         requireSeedApplication(application, 'authLinkPort'),
       ),
+      communicationsPort,
       options.auth,
       ownerSubjectId,
     )

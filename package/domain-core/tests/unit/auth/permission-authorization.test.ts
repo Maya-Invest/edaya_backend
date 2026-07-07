@@ -1,11 +1,12 @@
 import type { TestRole } from '../../support/effective-grants'
 import { describe, expect, test } from 'bun:test'
-import { anyPermissionAction, permissionAction } from '../../../src/application/entities/entity-config'
+import { operationModule } from '../../../src/application/entities/entity-config'
 import {
+  AttendanceOperations,
   AuthorizationError,
-
   authorize,
   createStaffActorMetadata,
+  FinanceOperations,
   Permission,
   permissionDefinitions,
 } from '../../../src/capabilities/authorization'
@@ -106,7 +107,7 @@ describe('authorize', () => {
     })).toThrow(AuthorizationError)
   })
 
-  test('permissionAction uses preloaded grants', () => {
+  test('AttendanceOperations.record uses preloaded grants', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'subject-staff',
       staffMemberId: 'staff-1',
@@ -124,13 +125,12 @@ describe('authorize', () => {
       },
     })
 
-    expect(permissionAction(Permission.ATTENDANCE_RECORD, {
-      scopeType: 'school',
-      scopeEntityId: 'school-1',
-    })(actor)).toBeUndefined()
+    expect(() => operationModule(AttendanceOperations.record, {
+      classGroupId: 'class-1',
+    })(actor)).not.toThrow()
   })
 
-  test('anyPermissionAction allows one matching permission gate', () => {
+  test('FinanceOperations.paymentsRead allows matching staff grant', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'subject-staff',
       staffMemberId: 'staff-1',
@@ -148,9 +148,7 @@ describe('authorize', () => {
       },
     })
 
-    expect(anyPermissionAction([
-      Permission.PAYMENT_RECORD,
-      Permission.PAYMENT_READ,
-    ])(actor)).toBeUndefined()
+    expect(() => operationModule(FinanceOperations.paymentsRead)(actor)).not.toThrow()
+    expect(() => operationModule(FinanceOperations.paymentRecord)(actor)).toThrow(AuthorizationError)
   })
 })

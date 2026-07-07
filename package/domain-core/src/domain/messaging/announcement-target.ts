@@ -1,8 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { CommunicationsOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementTargetKind {
@@ -75,8 +75,8 @@ export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> =
   config({
     repository: repositories.announcementTargets,
     tenant: announcementLinkedTenant('announcementId'),
-    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
+    write: write(operationModule(CommunicationsOperations.create), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateAnnouncementTargetSave,
     },

@@ -1,6 +1,7 @@
 import type { SchoolRepositories } from '../../../ports/repositories/school-repositories'
 import type { AuthorizationPolicy, RepositoryAuthorizationPolicyArgs } from './types'
 import {
+  authorizeReportCardResultSave,
   checkActivitySessionAccess,
   checkAssessmentAccess,
   checkAttachmentAccess,
@@ -10,11 +11,14 @@ import {
   checkGuardianAccess,
   checkLessonSessionAccess,
   checkReportCardResultAccess,
+  checkStaffAssignmentAccess,
+  checkStaffMemberReadAccess,
   checkStudentAccess,
   checkStudentFeeAccess,
   checkStudentHealthAccess,
   checkStudentNoteAccess,
   checkTeacherAccess,
+  checkTeacherAssignmentAccess,
 } from './resolvers'
 
 function resolveRepositories(args: RepositoryAuthorizationPolicyArgs): SchoolRepositories {
@@ -38,9 +42,13 @@ export function createRepositoryAuthorizationPolicy(
     checkTeacherAccess: (actor, teacherIds) => checkTeacherAccess(actor, teacherIds, repositories),
     checkStudentNoteAccess: (actor, noteIds) => checkStudentNoteAccess(actor, noteIds, repositories),
     checkStudentHealthAccess: (actor, profileIds) => checkStudentHealthAccess(actor, profileIds, repositories),
+    checkStaffAssignmentAccess: (actor, assignments) => checkStaffAssignmentAccess(actor, assignments),
+    checkStaffMemberReadAccess: (actor, staffMembers) => checkStaffMemberReadAccess(actor, staffMembers),
+    checkTeacherAssignmentAccess: (actor, assignments) => checkTeacherAssignmentAccess(actor, assignments),
     checkClassGroupAccess: (actor, classGroupIds) => checkClassGroupAccess(actor, classGroupIds, repositories),
     checkAssessmentAccess: (actor, assessmentIds) => checkAssessmentAccess(actor, assessmentIds, repositories),
     checkReportCardResultAccess: (actor, reportCardResultIds) => checkReportCardResultAccess(actor, reportCardResultIds, repositories),
+    authorizeReportCardResultSave: (actor, entity, existing) => authorizeReportCardResultSave(actor, entity, existing, repositories),
     checkFeeAccess: (actor, feeIds) => checkFeeAccess(actor, feeIds, repositories),
     checkStudentFeeAccess: (actor, studentFeeIds) => checkStudentFeeAccess(actor, studentFeeIds, repositories),
     checkLessonSessionAccess: (actor, lessonSessionIds) => checkLessonSessionAccess(actor, lessonSessionIds, repositories),

@@ -1,9 +1,9 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
 import { requireSchool } from '../../application/require-school'
-import { Permission } from '../../capabilities/authorization'
+import { AcademicsOperations, GradeOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
@@ -128,8 +128,8 @@ export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.GRADE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(GradeOperations.read), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.examConfigure), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateGradeScaleSave,
     },

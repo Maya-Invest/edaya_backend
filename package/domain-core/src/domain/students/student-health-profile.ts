@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, StudentHealthOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -63,16 +72,21 @@ export class StudentHealthProfile {
   get updatedAt() { return this.data.updatedAt }
 }
 
-export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.studentHealthProfiles,
-    Permission.STUDENT_HEALTH_READ,
-    Permission.STUDENT_HEALTH_UPDATE,
-    readByIds((actor, ids) => input.policy.checkStudentHealthAccess(actor, ids)),
-  )
+export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkStudentHealthAccess(actor, ids))
+
   return {
-    ...config,
+    ...config({
+      repository: repositories.studentHealthProfiles,
+      tenant: directSchoolTenant(),
+      read: read(operationModule(StudentHealthOperations.read), readAccess),
+      write: write(
+        operationModule(StudentHealthOperations.update),
+        authorizeExistingById(readAccess),
+        authorizeDeleteByReadAccess(readAccess),
+      ),
+      atomicExecution,
+    }),
     gates: {
       preSave: validateStudentHealthProfileSave,
     },

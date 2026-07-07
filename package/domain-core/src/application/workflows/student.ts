@@ -9,8 +9,14 @@ import type {
   StudentNoteInput,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import {
+  CommunicationsOperations,
+  denyResourceAccess,
+  EnrollmentOperations,
+  GuardianOperations,
+  resolveAuditActorId,
+} from '../../capabilities/authorization'
 import {
   resolveStudentInvitationEmail,
   scheduleAccountInvitationIfEligible,
@@ -199,7 +205,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(Permission.ENROLLMENT_CREATE)(this.baseService.actor)
+    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
 
@@ -252,7 +258,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(guardian.schoolId)
-    await permissionAction(Permission.PARENT_UPDATE)(this.baseService.actor)
+    await operationModule(GuardianOperations.update)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
 
@@ -478,7 +484,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
 
     if (isSelfGuardian) {
-      permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+      operationModule(CommunicationsOperations.read)(actor)
       const guardian = new Guardian({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -499,7 +505,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       return guardian
     }
 
-    await permissionAction(Permission.PARENT_UPDATE)(actor)
+    await operationModule(GuardianOperations.update)(actor)
     await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
     const guardian = new Guardian({
       id: existing.id,
@@ -531,7 +537,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
 
     if (isSelfGuardian) {
-      permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+      operationModule(CommunicationsOperations.read)(actor)
       await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
       const link = new GuardianStudentLink({
         id: existing.id,
@@ -560,7 +566,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       return link
     }
 
-    await permissionAction(Permission.PARENT_UPDATE)(actor)
+    await operationModule(GuardianOperations.update)(actor)
     await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
     await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
     const link = new GuardianStudentLink({
@@ -603,7 +609,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(Permission.ENROLLMENT_CREATE)(this.baseService.actor)
+    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     return enrollment

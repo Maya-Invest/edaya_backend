@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { ResourceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -53,20 +62,22 @@ export class Resource {
   get createdAt() { return this.data.createdAt }
 }
 
-export const resourceConfig: EntityConfigFactory<Resource> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.resources,
-    Permission.RESOURCE_READ,
-    Permission.RESOURCE_CONFIGURE,
-  )
-  return {
-    ...config,
-    gates: {
-      preDelete: validateResourceDelete,
-    },
-  }
-}
+export const resourceConfig: EntityConfigFactory<Resource> = ({ repositories, atomicExecution }) => ({
+  ...config({
+    repository: repositories.resources,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(ResourceOperations.read), noopReadAccess),
+    write: write(
+      operationModule(ResourceOperations.configure),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  }),
+  gates: {
+    preDelete: validateResourceDelete,
+  },
+})
 
 async function validateResourceDelete(
   resource: Resource,

@@ -1,10 +1,10 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, teacherAssignmentReadModule, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, operationModule, read, write } from '../../application/entities/entity-config'
+import { AccessControlOperations, TeacherOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -102,11 +102,11 @@ export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = (
     repository: repositories.teacherAssignments,
     tenant: teacherAssignmentTenant(),
     read: read(
-      teacherAssignmentReadModule(),
-      checkTeacherAssignmentReadAccess,
+      operationModule(TeacherOperations.assignmentRead),
+      (actor, entities) => policy.checkTeacherAssignmentAccess(actor, entities),
     ),
     write: write(
-      permissionAction(Permission.ACCESS_CONTROL_ASSIGN),
+      operationModule(AccessControlOperations.assign),
       authorizeTeacherAssignment(policy),
       authorizeTeacherAssignmentDelete(policy),
     ),
@@ -115,27 +115,6 @@ export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = (
     },
     atomicExecution,
   })
-
-function isSelfTeacherAssignment(actor: ActorMetadata, assignment: TeacherAssignment): boolean {
-  return actor.kind === 'teacher' && actor.teacherId === assignment.teacherId
-}
-
-async function checkTeacherAssignmentReadAccess(
-  actor: ActorMetadata,
-  entities: readonly TeacherAssignment[],
-): Promise<void> {
-  if (actor.kind === 'system') {
-    return
-  }
-
-  for (const assignment of entities) {
-    if (isSelfTeacherAssignment(actor, assignment)) {
-      continue
-    }
-
-    permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(actor)
-  }
-}
 
 function teacherAssignmentTenant(): EntityTenantResolver<TeacherAssignment> {
   return indirectTenant(async (entity, repositories) => {

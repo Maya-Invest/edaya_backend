@@ -1,14 +1,14 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/core";
 import {
+  AccessControlOperations,
   AccountInvitationContactChannel,
   AccountInvitationKind,
   AuthorizationError,
   AuthorizationErrorCode,
   BusinessRuleViolationError,
   createBootstrapStaffActorMetadata,
-  Permission,
-  permissionAction,
+  operationModule,
   permissionRowsFromTemplatePermissions,
   StaffMember,
   StaffPermissionAssignment,
@@ -129,7 +129,7 @@ async function assertCanManageOnboardingInvites(
     return;
   }
 
-  permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(actor);
+  await operationModule(AccessControlOperations.assign)(actor);
 }
 
 async function rejectOwnerEmailInvites(

@@ -1,7 +1,8 @@
+import type { OperationRef } from '../../capabilities/authorization/operations/types'
 import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { denyResourceAccess, FinanceOperations, resolveAuditActorId } from '../../capabilities/authorization'
 import { Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '../../domain'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -71,7 +72,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }: AssignFeeToStudentInput): Promise<StudentFee> {
     const student = await this.requireStudent(studentId)
     this.checkActorSchool(student.schoolId)
-    await this.authorizeFinance(Permission.PAYMENT_RECORD, student.schoolId)
+    await this.authorizeFinance(FinanceOperations.paymentRecord)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     const fee = await this.requireFee(feeId)
     if (fee.schoolId !== student.schoolId) {
@@ -117,7 +118,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(Permission.PAYMENT_RECORD, student.schoolId)
+      await this.authorizeFinance(FinanceOperations.paymentRecord)
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
       await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFeeId])
       const payment = new Payment({
@@ -192,8 +193,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
       await this.authorizeFinance(
-        status === PaymentStatus.Cancelled ? Permission.PAYMENT_CANCEL : Permission.PAYMENT_REVERSE,
-        student.schoolId,
+        status === PaymentStatus.Cancelled ? FinanceOperations.paymentCancel : FinanceOperations.paymentReverse,
       )
       await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
       await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFee.id])
@@ -272,11 +272,8 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async authorizeFinance(permission: Permission, schoolId: string): Promise<void> {
-    await permissionAction(permission, {
-      scopeType: 'school',
-      scopeEntityId: schoolId,
-    })(this.baseService.actor)
+  private async authorizeFinance(operation: OperationRef): Promise<void> {
+    await operationModule(operation)(this.baseService.actor)
   }
 
   private async savePaidAmount(

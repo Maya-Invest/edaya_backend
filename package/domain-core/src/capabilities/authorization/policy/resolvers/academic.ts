@@ -1,16 +1,7 @@
+import type { ReportCardResult } from '../../../../domain/assessments/report-card-result'
 import type { SchoolRepositories } from '../../../../ports/repositories/school-repositories'
 import type { ActorMetadata } from '../../model/actor'
 import {
-  assertTeacherCanReadReportCard,
-} from '../../../../domain/assessments/report-card-comment-access'
-import {
-  guardianScopeCoversClassGroup,
-} from '../../capabilities/assert-guardian-capability'
-import {
-  studentScopeCoversClassGroup,
-} from '../../capabilities/assert-student-capability'
-import {
-  teacherCoversClassGroup,
   teacherScopeCoversClassSubject,
 } from '../../capabilities/assert-teaching-capability'
 import {
@@ -23,6 +14,10 @@ import {
   resourcePathForClassGroup,
   resourcePathForClassSubject,
 } from '../../scope/resolve-resource-path'
+import { dispatchClassGroupAccess, dispatchReportCardResultAccess } from '../compose'
+import {
+  authorizeReportCardCommentSave,
+} from '../strategies/report-card-access'
 import {
   CLASS_GROUP_ACCESS_PERMISSIONS,
   SCHOOL_WIDE_ASSESSMENT_ACCESS_PERMISSIONS,
@@ -32,55 +27,13 @@ import { checkStudentAccess } from './student'
 export async function checkClassGroupAccess(
   actor: ActorMetadata,
   classGroupIds: readonly string[],
-  _repos: SchoolRepositories,
+  repos: SchoolRepositories,
 ): Promise<void> {
   if (classGroupIds.length === 0) {
     return
   }
 
-  if (actor.kind === 'guardian') {
-    for (const classGroupId of classGroupIds) {
-      if (!guardianScopeCoversClassGroup(actor, classGroupId)) {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    }
-    return
-  }
-
-  if (actor.kind === 'student') {
-    for (const classGroupId of classGroupIds) {
-      if (!studentScopeCoversClassGroup(actor, classGroupId)) {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    }
-    return
-  }
-
-  if (actor.kind === 'teacher') {
-    for (const classGroupId of classGroupIds) {
-      if (!await teacherCoversClassGroup(actor, classGroupId, _repos)) {
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-      }
-    }
-    return
-  }
-
-  for (const classGroupId of classGroupIds) {
-    const canAccess = actorGrantCoversAnyResourcePath(
-      actor,
-      CLASS_GROUP_ACCESS_PERMISSIONS,
-      resourcePathForClassGroup(classGroupId),
-    ) || actorGrantCoversAny(
-      actor,
-      CLASS_GROUP_ACCESS_PERMISSIONS,
-      'class_group',
-      classGroupId,
-    )
-
-    if (!canAccess) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-  }
+  await dispatchClassGroupAccess(actor, classGroupIds, repos)
 }
 
 export async function checkAssessmentAccess(
@@ -160,13 +113,27 @@ export async function checkReportCardResultAccess(
     return
   }
 
-  if (actor.kind === 'teacher') {
-    for (const result of results) {
-      assertTeacherCanReadReportCard(actor, result)
+  await dispatchReportCardResultAccess(actor, results, repos)
+}
+
+export async function authorizeReportCardResultSave(
+  actor: ActorMetadata,
+  entity: ReportCardResult,
+  existing: ReportCardResult | undefined,
+  repos: SchoolRepositories,
+): Promise<void> {
+  await checkStudentAccess(actor, [entity.studentId], repos)
+
+  if (!existing) {
+    if (actor.kind === 'teacher') {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     }
     return
   }
 
-  const studentIds = [...new Set(results.map(result => result.studentId))]
-  await checkStudentAccess(actor, studentIds, repos)
+  if (actor.kind !== 'staff' && actor.kind !== 'teacher') {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  await authorizeReportCardCommentSave(actor, existing, entity, repos)
 }

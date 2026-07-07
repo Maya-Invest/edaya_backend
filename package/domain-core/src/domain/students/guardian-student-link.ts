@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, unique } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  unique,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, GuardianOperations } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const guardianStudentLinkSchema = z.object({
@@ -57,26 +66,25 @@ export class GuardianStudentLink {
   get createdAt() { return this.data.createdAt }
 }
 
-export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.guardianLinks,
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.PARENT_UPDATE,
-    async (actor, entities) => {
-      await input.policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-    },
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.QUERY_GUARDIAN_SELF_READ,
-  ])
-  return {
-    ...config,
+export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = async (actor: Parameters<typeof policy.checkStudentAccess>[0], entities: readonly GuardianStudentLink[]) => {
+    await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
+  }
+
+  return config({
+    repository: repositories.guardianLinks,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(GuardianOperations.read), readAccess),
+    write: write(
+      operationModule(GuardianOperations.update),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preSave: validateGuardianStudentLinkSave,
     },
-  }
+    atomicExecution,
+  })
 }
 
 export async function validateGuardianStudentLinkSave(

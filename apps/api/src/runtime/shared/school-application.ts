@@ -1,5 +1,6 @@
 import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
+import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
@@ -50,6 +51,7 @@ export async function buildSchoolApplication(
     notificationGateway,
     fileStorage,
     invitationDelivery,
+    authCacheInvalidation: apiAuthCacheInvalidationPort,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
     authContactResolver: options.authDb

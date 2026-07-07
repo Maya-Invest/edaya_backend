@@ -3,8 +3,9 @@ import {
   AuthorizationError,
   AuthorizationErrorCode,
   BusinessRuleViolationError,
-  type CoreEntityKey,
   DomainValidationError,
+  invalidateAuthCacheForEvents,
+  resolveAuthCacheInvalidationEvents,
 } from "@edaya/core";
 import {
   badRequestResponse,
@@ -12,6 +13,7 @@ import {
   forbiddenResponse,
   routeErrorResponse,
 } from "@/http/responses";
+import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
 import {
   clearEffectiveGrantsCache,
   resolveCachedEffectiveGrants,
@@ -85,29 +87,13 @@ describe("response helpers", () => {
   });
 });
 
-describe("getEntityWriteService authorization cache invalidation", () => {
+describe("auth cache invalidation via entity lifecycle port", () => {
   beforeEach(() => {
     clearEffectiveGrantsCache();
   });
 
-  function createMockEntityService(overrides: Record<string, unknown> = {}) {
-    return {
-      list: mock(),
-      findOne: mock(),
-      count: mock(),
-      findById: mock().mockResolvedValue(undefined),
-      findByIds: mock().mockResolvedValue([]),
-      save: mock().mockResolvedValue(undefined),
-      batchSave: mock().mockResolvedValue([]),
-      delete: mock().mockResolvedValue(undefined),
-      batchDelete: mock().mockResolvedValue(undefined),
-      ...overrides,
-    };
-  }
-
-  async function expectCacheInvalidatedAfterSave(
-    serviceName: CoreEntityKey,
-    entity: Record<string, unknown>,
+  async function expectCacheInvalidatedAfterEvents(
+    events: ReturnType<typeof resolveAuthCacheInvalidationEvents>,
     actorType: "student" | "guardian" | "staff",
     actorId: string,
   ) {
@@ -133,30 +119,24 @@ describe("getEntityWriteService authorization cache invalidation", () => {
     await resolveCachedEffectiveGrants(cacheArgs);
     expect(resolveActorGrants).toHaveBeenCalledTimes(1);
 
-    const writeService = getEntityWriteService({
-      baseService: {
-        entities: {
-          [serviceName]: createMockEntityService(),
-        },
-      },
-    } as any, serviceName);
-
-    await writeService!.save(entity);
+    invalidateAuthCacheForEvents(events, apiAuthCacheInvalidationPort);
 
     await resolveCachedEffectiveGrants(cacheArgs);
     expect(resolveActorGrants).toHaveBeenCalledTimes(2);
   }
 
-  it("invalidates student grants when enrollments are saved", async () => {
-    await expectCacheInvalidatedAfterSave(
-      "enrollments",
-      { studentId: "student-1", schoolId: "school-1" },
+  it("invalidates student grants when enrollment lifecycle events fire", async () => {
+    await expectCacheInvalidatedAfterEvents(
+      resolveAuthCacheInvalidationEvents("enrollments", {
+        studentId: "student-1",
+        schoolId: "school-1",
+      }),
       "student",
       "student-1",
     );
   });
 
-  it("invalidates guardian and student grants when guardian links are saved", async () => {
+  it("invalidates guardian and student grants when guardian link lifecycle events fire", async () => {
     const resolveActorGrants = mock().mockResolvedValue({
       permissions: new Set(),
       scopeGrants: [],
@@ -189,22 +169,41 @@ describe("getEntityWriteService authorization cache invalidation", () => {
     await resolveCachedEffectiveGrants(studentCacheArgs);
     expect(resolveActorGrants).toHaveBeenCalledTimes(2);
 
-    const writeService = getEntityWriteService({
-      baseService: {
-        entities: {
-          guardianLinks: createMockEntityService(),
-        },
-      },
-    } as any, "guardianLinks");
-
-    await writeService!.save({
-      guardianId: "guardian-1",
-      studentId: "student-1",
-      schoolId: "school-1",
-    });
+    invalidateAuthCacheForEvents(
+      resolveAuthCacheInvalidationEvents("guardianLinks", {
+        guardianId: "guardian-1",
+        studentId: "student-1",
+        schoolId: "school-1",
+      }),
+      apiAuthCacheInvalidationPort,
+    );
 
     await resolveCachedEffectiveGrants(guardianCacheArgs);
     await resolveCachedEffectiveGrants(studentCacheArgs);
     expect(resolveActorGrants).toHaveBeenCalledTimes(4);
+  });
+
+  it("getEntityWriteService returns the domain entity service without API dispatch wrapping", () => {
+    const inner = {
+      list: mock(),
+      findOne: mock(),
+      count: mock(),
+      findById: mock(),
+      findByIds: mock(),
+      save: mock(),
+      batchSave: mock(),
+      delete: mock(),
+      batchDelete: mock(),
+    };
+
+    const service = {
+      baseService: {
+        entities: {
+          enrollments: inner,
+        },
+      },
+    } as any;
+
+    expect(getEntityWriteService(service, "enrollments")).toBe(inner);
   });
 });

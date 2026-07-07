@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { SchedulingOperations } from '../../capabilities/authorization'
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -56,7 +56,11 @@ export const attendanceConfig: EntityConfigFactory<Attendance> = ({ repositories
   config({
     repository: repositories.attendances,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.QUERY_TIMETABLE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(operationModule(SchedulingOperations.timetableRead), noopReadAccess),
+    write: write(
+      operationModule(SchedulingOperations.timetableManage),
+      authorizeClassGroupLinked(policy, 'classGroupId'),
+      authorizeClassGroupLinkedDelete(policy),
+    ),
     atomicExecution,
   })

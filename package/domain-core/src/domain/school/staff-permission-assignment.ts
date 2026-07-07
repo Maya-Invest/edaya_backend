@@ -1,7 +1,16 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { AccessControlOperations, Permission } from '../../capabilities/authorization'
 import { permissionDefinitions } from '../../capabilities/authorization/permissions/permission-definitions'
 import { validateScopeIds } from '../../capabilities/authorization/scope/scope-ids-validate'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
@@ -88,10 +97,15 @@ export class StaffPermissionAssignment {
   get updatedAt() { return this.data.updatedAt }
 }
 
-export const staffPermissionAssignmentConfig: EntityConfigFactory<StaffPermissionAssignment> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.staffPermissionAssignments,
-    Permission.ACCESS_CONTROL_READ,
-    Permission.ACCESS_CONTROL_ASSIGN,
-  )
+export const staffPermissionAssignmentConfig: EntityConfigFactory<StaffPermissionAssignment> = ({ repositories, atomicExecution }) =>
+  config({
+    repository: repositories.staffPermissionAssignments,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(AccessControlOperations.read), noopReadAccess),
+    write: write(
+      operationModule(AccessControlOperations.assign),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  })

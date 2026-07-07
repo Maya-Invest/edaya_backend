@@ -1,12 +1,13 @@
 import type {
   BusinessRuleViolationError,
 } from '../../../src'
-import type { AuthorizationPolicy, EffectiveGrants } from '../../../src/capabilities/authorization'
+import type { EffectiveGrants } from '../../../src/capabilities/authorization'
 import type { SchoolRepositories } from '../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
+  createRepositoryAuthorizationPolicy,
   createStaffActorMetadata,
   Guardian,
   noOpNotificationGateway,
@@ -98,7 +99,7 @@ function createAccessControlContext(
     },
   } as unknown as SchoolRepositories
 
-  const mockPolicy = {} as AuthorizationPolicy
+  const mockPolicy = createRepositoryAuthorizationPolicy({ repositories: mockRepos })
   const service = new SchoolService({
     repositories: mockRepos,
     authorizationPolicy: mockPolicy,

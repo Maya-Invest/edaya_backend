@@ -1,10 +1,20 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, assessmentWriteModule, authorizeTeacherAssessmentDelete, authorizeTeacherAssessmentSave, classGroupLinkedTenant, config, read, readByIds, write } from '../../application/entities/entity-config'
+import {
+  anyOperationModule,
+  authorizeDeleteWithOperation,
+  authorizeSaveWithOperation,
+  classGroupLinkedTenant,
+  config,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
 import { assertNoClassGroupScheduleConflict } from '../../application/workflows/schedule-conflicts'
-import { denyResourceAccess } from '../../capabilities/authorization'
-import { ASSESSMENT_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { AssessmentOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
@@ -156,13 +166,44 @@ export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories
   config({
     repository: repositories.assessments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(anyPermissionAction([...ASSESSMENT_ACCESS_PERMISSIONS]), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
-    write: write(assessmentWriteModule(), authorizeTeacherAssessmentSave(policy), authorizeTeacherAssessmentDelete(policy)),
+    read: read(
+      anyOperationModule([AssessmentOperations.read]),
+      readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids)),
+    ),
+    write: write(
+      anyOperationModule([AssessmentOperations.create, AssessmentOperations.update]),
+      authorizeSaveWithOperation(
+        (_entity, existing) => existing ? AssessmentOperations.update : AssessmentOperations.create,
+        entity => ({ classSubjectId: entity.classSubjectId }),
+        authorizeAssessmentResource(policy),
+      ),
+      authorizeDeleteWithOperation(
+        AssessmentOperations.update,
+        entity => ({ classSubjectId: entity.classSubjectId }),
+        authorizeAssessmentDeleteResource(policy),
+      ),
+    ),
     gates: {
       preSave: validateAssessmentSave,
     },
     atomicExecution,
   })
+
+function authorizeAssessmentResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Assessment>['authorizeSave'] {
+  return async (actor, entity) => {
+    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
+  }
+}
+
+function authorizeAssessmentDeleteResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Assessment>['authorizeDelete'] {
+  return async (actor, entity) => {
+    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
+  }
+}
 
 async function validateAssessmentSave(
   assessment: Assessment,

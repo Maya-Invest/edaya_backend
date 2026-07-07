@@ -1,7 +1,7 @@
 import type { AttendanceAnchor, AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { AttendanceOperations, denyResourceAccess, resolveAuditActorId, SchedulingOperations } from '../../capabilities/authorization'
 import {
   ATTENDANCE_RECORDED_EVENT_KEY,
   runWorkflowNotifications,
@@ -892,10 +892,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(Permission.ATTENDANCE_RECORD, {
-      scopeType: 'class_group',
-      scopeEntityId: classGroup.id,
-    })(this.baseService.actor)
+    await operationModule(AttendanceOperations.record, { classGroupId: classGroup.id })(this.baseService.actor)
     if (classGroup.id) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     }
@@ -909,19 +906,13 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   private async authorizeTimetableUpdate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(Permission.TIMETABLE_UPDATE, {
-      scopeType: 'class_group',
-      scopeEntityId: classGroup.id,
-    })(this.baseService.actor)
+    await operationModule(SchedulingOperations.timetableManage, { classGroupId: classGroup.id })(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
   }
 
   private async authorizeTimetableCreate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await permissionAction(Permission.TIMETABLE_CREATE, {
-      scopeType: 'class_group',
-      scopeEntityId: classGroup.id,
-    })(this.baseService.actor)
+    await operationModule(SchedulingOperations.timetableCreate, { classGroupId: classGroup.id })(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
   }
 }

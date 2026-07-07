@@ -3,15 +3,18 @@ import type { EntityWriteAuthorization } from '../../application/entities/manage
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, dateTime, directSchoolTenant, disciplineCreateModule, disciplineReadModule, noopReadAccess, read, write } from '../../application/entities/entity-config'
 import {
-  assertHomeroomCapability,
-  assertTeachingCapability,
-  AuthorizationError,
-  AuthorizationErrorCode,
-  HomeroomCapability,
-  TeachingCapability,
-} from '../../capabilities/authorization'
+  authorizeDeleteWithOperation,
+  authorizeSaveWithOperation,
+  config,
+  dateTime,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, DisciplineOperations } from '../../capabilities/authorization'
 import { AttachmentOwnerKind } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -114,8 +117,20 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, po
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    read: read(disciplineReadModule(), noopReadAccess),
-    write: write(disciplineCreateModule(), authorizeIncident(policy), authorizeIncidentDelete(policy)),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
+    write: write(
+      operationModule(DisciplineOperations.create),
+      authorizeSaveWithOperation(
+        DisciplineOperations.create,
+        resolveIncidentContext,
+        authorizeIncidentResource(policy),
+      ),
+      authorizeDeleteWithOperation(
+        DisciplineOperations.create,
+        (entity, repositories) => resolveIncidentContext(entity, undefined, repositories),
+        authorizeIncidentDeleteResource(policy),
+      ),
+    ),
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,
@@ -123,61 +138,50 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, po
     atomicExecution,
   })
 
-function authorizeIncident(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeSave'] {
-  return async (actor, entity, _existing, repositories) => {
-    if (actor.kind === 'teacher') {
-      if (entity.lessonSessionId) {
-        const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
-        if (!lessonSession) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
-        assertTeachingCapability(actor, TeachingCapability.CreateSubjectDisciplineIncident, {
-          classSubjectId: lessonSession.classSubjectId,
-        })
-        return
-      }
-      if (entity.classGroupId) {
-        assertHomeroomCapability(actor, HomeroomCapability.CreateClassDisciplineIncident, {
-          classGroupId: entity.classGroupId,
-        })
-        return
-      }
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+async function resolveIncidentContext(
+  entity: Incident,
+  _existing: Incident | undefined,
+  repositories: SchoolRepositories,
+) {
+  if (entity.lessonSessionId) {
+    const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
+    if (!lessonSession) {
+      denyResourceAccess()
     }
+    return {
+      classSubjectId: lessonSession.classSubjectId,
+      classGroupId: lessonSession.classGroupId,
+    }
+  }
+  if (entity.classGroupId) {
+    return { classGroupId: entity.classGroupId }
+  }
+  return {}
+}
 
-    if (entity.classGroupId)
+function authorizeIncidentResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Incident>['authorizeSave'] {
+  return async (actor, entity) => {
+    if (entity.classGroupId) {
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
+    }
+    if (entity.lessonSessionId) {
       await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
+    }
   }
 }
 
-function authorizeIncidentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Incident>['authorizeDelete'] {
-  return async (actor, entity, repositories) => {
-    if (actor.kind === 'teacher') {
-      if (entity.lessonSessionId) {
-        const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
-        if (!lessonSession) {
-          throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-        }
-        assertTeachingCapability(actor, TeachingCapability.CreateSubjectDisciplineIncident, {
-          classSubjectId: lessonSession.classSubjectId,
-        })
-        return
-      }
-      if (entity.classGroupId) {
-        assertHomeroomCapability(actor, HomeroomCapability.CreateClassDisciplineIncident, {
-          classGroupId: entity.classGroupId,
-        })
-        return
-      }
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-
-    if (entity.classGroupId)
+function authorizeIncidentDeleteResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Incident>['authorizeDelete'] {
+  return async (actor, entity) => {
+    if (entity.classGroupId) {
       await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
+    }
+    if (entity.lessonSessionId) {
       await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
+    }
   }
 }
 
@@ -214,14 +218,14 @@ async function validateIncidentScope(entity: Incident, repositories: SchoolRepos
       || classGroup.schoolId !== entity.schoolId
       || (entity.classGroupId && classGroup.id !== entity.classGroupId)
     ) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      denyResourceAccess()
     }
     return
   }
   if (entity.classGroupId) {
     const classGroup = await repositories.classGroups.findById(entity.classGroupId)
     if (!classGroup || classGroup.schoolId !== entity.schoolId) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+      denyResourceAccess()
     }
   }
 }

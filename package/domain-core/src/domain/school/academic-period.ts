@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { directPermissionEntityConfig, workspaceReadModule } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -60,22 +69,23 @@ export class AcademicPeriod {
   }
 }
 
-export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.academicPeriods,
-    Permission.QUERY_WORKSPACE_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )
-  config.read.checkModule = workspaceReadModule()
-  return {
-    ...config,
-    gates: {
-      preSave: validateAcademicPeriodSave,
-      preDelete: validateAcademicPeriodDelete,
-    },
-  }
-}
+export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = ({ repositories, atomicExecution }) => ({
+  ...config({
+    repository: repositories.academicPeriods,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
+    write: write(
+      operationModule(SchoolStructureOperations.configure),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  }),
+  gates: {
+    preSave: validateAcademicPeriodSave,
+    preDelete: validateAcademicPeriodDelete,
+  },
+})
 
 export async function validateAcademicPeriodSave(
   period: AcademicPeriod,

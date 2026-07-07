@@ -4,21 +4,15 @@ import type { SchoolRepositories } from '../../ports'
 import type { StaffAccountKind } from './staff-account-kind'
 import { z } from 'zod'
 import {
-  anyPermissionAction,
   authorizeDeleteByReadAccess,
   authorizeExistingById,
   config,
   directSchoolTenant,
-  permissionAction,
+  operationModule,
   read,
   write,
 } from '../../application/entities/entity-config'
-import {
-  actorHasAnyPermission,
-  AuthorizationError,
-  AuthorizationErrorCode,
-  Permission,
-} from '../../capabilities/authorization'
+import { SchoolStructureOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
@@ -127,52 +121,19 @@ export class StaffMember {
   }
 }
 
-function isSelfStaffMember(actor: ActorMetadata, staffMember: StaffMember): boolean {
-  return actor.kind === 'staff' && actor.staffMemberId === staffMember.id
-}
-
-async function checkStaffMemberReadAccess(
-  actor: ActorMetadata,
-  entities: readonly StaffMember[],
-): Promise<void> {
-  if (actor.kind === 'system') {
-    return
-  }
-
-  for (const entity of entities) {
-    if (isSelfStaffMember(actor, entity)) {
-      continue
-    }
-    if (!actorHasAnyPermission(actor, [
-      Permission.SCHOOL_STRUCTURE_CONFIGURE,
-      Permission.STAFF_READ,
-      Permission.ACCESS_CONTROL_ASSIGN,
-    ])) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Staff member read denied')
-    }
-  }
-}
-
-const STAFF_MEMBER_ADMIN_READ_PERMISSIONS = [
-  Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  Permission.STAFF_READ,
-] as const
-
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
-  const checkStaffReadModule = anyPermissionAction([
-    Permission.QUERY_WORKSPACE_READ,
-    ...STAFF_MEMBER_ADMIN_READ_PERMISSIONS,
-  ])
+  const readAccess = (actor: ActorMetadata, entities: readonly StaffMember[]) =>
+    input.policy.checkStaffMemberReadAccess(actor, entities)
 
   return {
     ...config({
       repository: input.repositories.staffMembers,
       tenant: directSchoolTenant<StaffMember>(),
-      read: read(checkStaffReadModule, checkStaffMemberReadAccess),
+      read: read(operationModule(SchoolStructureOperations.staffRead), readAccess),
       write: write(
-        permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE),
-        authorizeExistingById(checkStaffMemberReadAccess),
-        authorizeDeleteByReadAccess(checkStaffMemberReadAccess),
+        operationModule(SchoolStructureOperations.configure),
+        authorizeExistingById(readAccess),
+        authorizeDeleteByReadAccess(readAccess),
       ),
       atomicExecution: input.atomicExecution,
     }),
@@ -199,8 +160,8 @@ export async function validateStaffMemberSave(
   if (
     existing?.isActive
     && !staffMember.isActive
-    && actor.kind === 'staff'
-    && staffMember.id === actor.staffMemberId
+    && 'staffMemberId' in actor
+    && actor.staffMemberId === staffMember.id
   ) {
     throw new BusinessRuleViolationError('SELF_DEACTIVATION_BLOCKED', 'Staff members cannot deactivate their own account')
   }

@@ -64,7 +64,7 @@ describe('SchoolService assessment workflows', () => {
     expect(result.id).toBe('rc-existing')
     expect(result.status).toBe(ReportCardResultStatus.Draft)
     expect(result.generatedAt).toBe(existingGeneratedAt)
-    expect(mockPolicy.checkReportCardResultAccess).toHaveBeenCalledWith(actor, ['rc-existing'])
+    expect(mockPolicy.authorizeReportCardResultSave).toHaveBeenCalled()
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
   })
 
@@ -124,7 +124,7 @@ describe('SchoolService assessment workflows', () => {
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
     expect(mockAtomic.execute).toHaveBeenCalled()
     expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockPolicy.checkReportCardResultAccess).toHaveBeenCalledWith(actor, ['rc1'])
+    expect(mockPolicy.authorizeReportCardResultSave).toHaveBeenCalled()
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
   })
 

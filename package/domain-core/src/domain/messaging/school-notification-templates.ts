@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, SchoolStructureOperations } from '../../capabilities/authorization'
 import { schoolNotificationTemplateDocumentSchema } from '../../capabilities/notifications/templates/document-schema'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -43,9 +43,9 @@ export const schoolNotificationTemplatesConfig: EntityConfigFactory<SchoolNotifi
   config({
     repository: repositories.schoolNotificationTemplates,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE), noopReadAccess),
+    read: read(operationModule(SchoolStructureOperations.lifecycleManage), noopReadAccess),
     write: write(
-      permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE),
+      operationModule(SchoolStructureOperations.lifecycleManage),
       denyTemplateEntityWrite,
       denyTemplateEntityWrite,
     ),

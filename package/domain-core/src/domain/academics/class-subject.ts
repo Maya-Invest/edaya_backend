@@ -1,9 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { CLASS_SUBJECT_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { AcademicsOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -52,8 +51,8 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
   config({
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(anyPermissionAction([...CLASS_SUBJECT_READ_PERMISSIONS]), noopReadAccess),
-    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    read: read(operationModule(AcademicsOperations.programRead), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateClassSubjectSave,
     },

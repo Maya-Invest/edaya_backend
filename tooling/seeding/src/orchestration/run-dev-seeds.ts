@@ -270,7 +270,9 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   }
 
   if (scope === 'auth:link') {
-    results.authLink = await runDevAuthLinkWithPort(authLinkPort, auth)
+    results.authLink = await runDevAuthLinkWithPort(authLinkPort, auth, {
+      communicationsPort,
+    })
   }
 
   if (scope === 'access') {

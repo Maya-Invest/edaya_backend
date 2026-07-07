@@ -3,9 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { CURRICULUM_READ_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
+import { AcademicsOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ClassSubjectMatterStatus {
@@ -59,8 +58,8 @@ export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> =
   config({
     repository: repositories.classSubjectMatters,
     tenant: classSubjectMatterTenant(),
-    read: read(anyPermissionAction([...CURRICULUM_READ_PERMISSIONS]), noopReadAccess),
-    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
+    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
     gates: {
       preSave: validateClassSubjectMatterSave,
     },

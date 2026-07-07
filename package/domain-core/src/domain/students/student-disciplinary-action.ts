@@ -3,8 +3,8 @@ import type { EntityWriteAuthorization } from '../../application/entities/manage
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, DisciplineOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -76,8 +76,8 @@ export const studentDisciplinaryActionConfig: EntityConfigFactory<StudentDiscipl
   config({
     repository: repositories.studentDisciplinaryActions,
     tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.DISCIPLINE_VALIDATE), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
+    write: write(operationModule(DisciplineOperations.validate), authorizeStudentDisciplinaryAction(policy), authorizeStudentDisciplinaryActionDelete(policy)),
     gates: {
       preSave: validateStudentDisciplinaryActionSave,
       preDelete: validateStudentDisciplinaryActionDelete,

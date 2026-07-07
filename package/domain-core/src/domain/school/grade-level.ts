@@ -1,7 +1,16 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { SchoolStructureOperations } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const gradeLevelSchema = z.object({
@@ -39,10 +48,15 @@ export class GradeLevel {
   get createdAt() { return this.data.createdAt }
 }
 
-export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.gradeLevels,
-    Permission.QUERY_CLASS_DIRECTORY_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )
+export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories, atomicExecution }) =>
+  config({
+    repository: repositories.gradeLevels,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(SchoolStructureOperations.classGroupRead), noopReadAccess),
+    write: write(
+      operationModule(SchoolStructureOperations.configure),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  })

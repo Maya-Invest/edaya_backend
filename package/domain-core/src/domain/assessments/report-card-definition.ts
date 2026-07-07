@@ -1,9 +1,9 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, reportCardReadModule, write } from '../../application/entities/entity-config'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
 import { requireSchool } from '../../application/require-school'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { AcademicsOperations, denyResourceAccess, ReportCardOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -66,8 +66,8 @@ export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinitio
   config({
     repository: repositories.definitions,
     tenant: directSchoolTenant(),
-    read: read(reportCardReadModule(), noopReadAccess),
-    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(ReportCardOperations.read), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.examConfigure), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateReportCardDefinitionSave,
       preDelete: validateReportCardDefinitionDelete,

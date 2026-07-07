@@ -1,6 +1,5 @@
 export * from './adapters'
 export * from './application'
-export { attachmentReadModule, permissionAction, workspaceReadModule } from './application/entities/entity-config/authorization'
 export * from './capabilities'
 export * from './domain'
 export * from './ports'

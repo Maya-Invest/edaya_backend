@@ -1,3 +1,4 @@
+export * from './auth-cache-invalidation'
 export * from './auth-contact-resolver'
 export * from './file-storage'
 export * from './invitation-delivery'

@@ -1,11 +1,22 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
+import type { OperationRef } from '../../capabilities/authorization/operations/types'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, config, dateTime, indirectTenant, permissionAction, read, write } from '../../application/entities/entity-config'
-import { unique } from '../../application/entities/entity-config/helper-utils'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  anyOperationModule,
+  authorizeDeleteWithOperation,
+  authorizeSaveWithOperation,
+  config,
+  dateTime,
+  indirectTenant,
+  operationModule,
+  read,
+  unique,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, FinanceOperations } from '../../capabilities/authorization'
 import { AttachmentOwnerKind, FeeStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { Money } from '../../domain/value-objects/money'
@@ -121,16 +132,28 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
     repository: repositories.payments,
     tenant: paymentTenant(),
     read: read(
-      permissionAction(Permission.PAYMENT_READ),
+      operationModule(FinanceOperations.paymentsRead),
       async (actor, entities) => {
         const studentFeeIds = unique(entities.map(entity => entity.studentFeeId))
         await policy.checkStudentFeeAccess(actor, studentFeeIds)
       },
     ),
     write: write(
-      anyPermissionAction([Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE]),
-      authorizePayment(policy),
-      authorizePaymentDelete(policy),
+      anyOperationModule([
+        FinanceOperations.paymentRecord,
+        FinanceOperations.paymentCancel,
+        FinanceOperations.paymentReverse,
+      ]),
+      authorizeSaveWithOperation(
+        resolvePaymentWriteOperation,
+        resolvePaymentContext,
+        authorizePaymentResource(policy),
+      ),
+      authorizeDeleteWithOperation(
+        FinanceOperations.paymentCancel,
+        (entity, repositories) => resolvePaymentContext(entity, undefined, repositories),
+        authorizePaymentDeleteResource(policy),
+      ),
     ),
     gates: {
       preSave: validatePaymentSave,
@@ -138,6 +161,47 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
     },
     atomicExecution,
   })
+
+async function resolvePaymentContext(
+  entity: Payment,
+  _existing: Payment | undefined,
+  repositories: SchoolRepositories,
+) {
+  const studentFee = await repositories.studentFees.findById(entity.studentFeeId)
+  if (!studentFee) {
+    denyResourceAccess()
+  }
+  return { studentId: studentFee.studentId }
+}
+
+function resolvePaymentWriteOperation(
+  entity: Payment,
+  existing: Payment | undefined,
+): OperationRef {
+  if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
+    return FinanceOperations.paymentCancel
+  }
+  if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
+    return FinanceOperations.paymentReverse
+  }
+  return FinanceOperations.paymentRecord
+}
+
+function authorizePaymentResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Payment>['authorizeSave'] {
+  return async (actor, entity) => {
+    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
+  }
+}
+
+function authorizePaymentDeleteResource(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<Payment>['authorizeDelete'] {
+  return async (actor, entity) => {
+    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
+  }
+}
 
 function paymentTenant(): EntityTenantResolver<Payment> {
   return indirectTenant(async (entity, repositories) => {
@@ -190,30 +254,6 @@ function paymentStatusChanged(entity: Payment, existing: Payment): boolean {
     || entity.reversedById !== existing.reversedById
     || dateTime(entity.cancelledAt) !== dateTime(existing.cancelledAt)
     || entity.cancelledById !== existing.cancelledById
-}
-
-export function authorizePayment(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await permissionAction(paymentWritePermission(entity, existing))(actor)
-    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
-  }
-}
-
-export function authorizePaymentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<Payment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await permissionAction(Permission.PAYMENT_CANCEL)(actor)
-    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
-  }
-}
-
-function paymentWritePermission(entity: Payment, existing: Payment | undefined): Permission {
-  if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
-    return Permission.PAYMENT_CANCEL
-  }
-  if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
-    return Permission.PAYMENT_REVERSE
-  }
-  return Permission.PAYMENT_RECORD
 }
 
 async function validatePaymentDelete(

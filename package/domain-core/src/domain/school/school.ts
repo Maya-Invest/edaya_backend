@@ -2,8 +2,8 @@ import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from
 import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
 import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
 import { z } from 'zod'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, workspaceReadModule, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, resolveIdFromFilter, write } from '../../application/entities/entity-config'
+import { SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SchoolType {
@@ -68,13 +68,9 @@ export class School {
 }
 
 export const schoolConfig: EntityConfigFactory<School> = (input) => {
-  const managedConfig = schoolEntityConfig(
-    input,
-    input.repositories.schools,
-    Permission.QUERY_WORKSPACE_READ,
-    Permission.SCHOOL_LIFECYCLE_MANAGE,
-  )
-  managedConfig.read.checkModule = workspaceReadModule()
+  const managedConfig = schoolEntityConfig(input, input.repositories.schools)
+  managedConfig.read.checkModule = operationModule(WorkspaceOperations.read)
+  managedConfig.write.checkModule = operationModule(SchoolStructureOperations.lifecycleManage)
   return managedConfig
 }
 
@@ -88,16 +84,14 @@ export function schoolEntityTenant<T extends EntityWithId>(): EntityTenantResolv
 export function schoolEntityConfig<T extends EntityWithId>(
   input: EntityConfigFactoryInput,
   repository: BaseRepositoryInterface<T>,
-  readPermission: Permission,
-  writePermission: Permission,
 ): ManagedEntityServiceConfig<T> {
   const { atomicExecution } = input
 
   return config({
     repository,
     tenant: schoolEntityTenant<T>(),
-    read: read(permissionAction(readPermission), noopReadAccess),
-    write: write(permissionAction(writePermission), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
+    write: write(operationModule(SchoolStructureOperations.lifecycleManage), noopSaveAccess, noopDeleteAccess),
     atomicExecution,
   })
 }

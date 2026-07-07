@@ -1,16 +1,17 @@
 import { describe, expect, test } from 'bun:test'
-import { permissionAction } from '../../../src/application/entities/entity-config'
+import { operationModule } from '../../../src/application/entities/entity-config'
 import {
   ALL_GUARDIAN_CAPABILITIES,
   ALL_STUDENT_CAPABILITIES,
   assertGuardianCapability,
+  AttachmentOperations,
   AuthorizationError,
   createGuardianActorMetadata,
   createStudentActorMetadata,
   effectiveGrantsForActor,
   GuardianCapability,
-  Permission,
   StudentCapability,
+  StudentOperations,
 } from '../../../src/capabilities/authorization'
 import { portalScopeForGuardian, portalScopeForStudent } from '../../support/effective-grants'
 
@@ -43,14 +44,14 @@ describe('portal capability policy', () => {
     expect(effectiveGrantsForActor(studentActor).permissions.size).toBe(0)
   })
 
-  test('permissionAction routes portal reads through capabilities instead of authorize()', () => {
-    expect(() => permissionAction(Permission.QUERY_STUDENT_DETAIL_READ)(guardianActor)).not.toThrow()
-    expect(() => permissionAction(Permission.QUERY_STUDENT_DETAIL_READ)(studentActor)).not.toThrow()
-    expect(() => permissionAction(Permission.ATTACHMENT_READ)(guardianActor)).not.toThrow()
-    expect(() => permissionAction(Permission.ATTACHMENT_READ)(studentActor)).not.toThrow()
+  test('operations route portal reads through capabilities instead of authorize()', () => {
+    expect(() => operationModule(StudentOperations.directoryRead)(guardianActor)).not.toThrow()
+    expect(() => operationModule(StudentOperations.directoryRead)(studentActor)).not.toThrow()
+    expect(() => operationModule(AttachmentOperations.read)(guardianActor)).not.toThrow()
+    expect(() => operationModule(AttachmentOperations.read)(studentActor)).not.toThrow()
 
-    expect(() => permissionAction(Permission.STUDENT_UPDATE)(guardianActor)).toThrow(AuthorizationError)
-    expect(() => permissionAction(Permission.PAYMENT_RECORD)(studentActor)).toThrow(AuthorizationError)
+    expect(() => operationModule(StudentOperations.update)(guardianActor)).toThrow(AuthorizationError)
+    expect(() => operationModule(StudentOperations.update)(studentActor)).toThrow(AuthorizationError)
   })
 
   test('assertGuardianCapability enforces linked student scope when targeted', () => {

@@ -1,12 +1,11 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, config, indirectTenant, permissionAction, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
+import { anyOperationModule, config, indirectTenant, operationModule, read, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId, write } from '../../application/entities/entity-config'
 
-import { actorHasAnyPermission, denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { AuthorizationError, AuthorizationErrorCode } from '../../capabilities/authorization/model/errors'
+import { AccessControlOperations, denyResourceAccess, Permission, SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
 import {
   resolveStaffAssignmentTarget,
   validateStaffAssignmentPermissionSelection,
@@ -88,13 +87,13 @@ export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ re
     repository: repositories.staffAssignments,
     tenant: staffAssignmentTenant(),
     read: read(
-      anyPermissionAction([
-        Permission.QUERY_WORKSPACE_READ,
-        Permission.SCHOOL_STRUCTURE_CONFIGURE,
+      anyOperationModule([
+        WorkspaceOperations.read,
+        SchoolStructureOperations.configure,
       ]),
-      checkStaffAssignmentReadAccess,
+      (actor, entities) => policy.checkStaffAssignmentAccess(actor, entities),
     ),
-    write: write(permissionAction(Permission.ACCESS_CONTROL_ASSIGN), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
+    write: write(operationModule(AccessControlOperations.assign), authorizeStaffAssignment(policy), authorizeStaffAssignmentDelete(policy)),
     gates: {
       preSave: validateStaffAssignmentSave,
     },
@@ -108,28 +107,6 @@ export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ re
     },
     atomicExecution,
   })
-
-function isSelfStaffAssignment(actor: ActorMetadata, assignment: StaffAssignment): boolean {
-  return actor.kind === 'staff' && actor.staffMemberId === assignment.staffId
-}
-
-async function checkStaffAssignmentReadAccess(
-  actor: ActorMetadata,
-  entities: readonly StaffAssignment[],
-): Promise<void> {
-  if (actor.kind === 'system') {
-    return
-  }
-
-  for (const entity of entities) {
-    if (isSelfStaffAssignment(actor, entity)) {
-      continue
-    }
-    if (!actorHasAnyPermission(actor, [Permission.SCHOOL_STRUCTURE_CONFIGURE])) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Staff assignment read denied')
-    }
-  }
-}
 
 function staffAssignmentTenant(): EntityTenantResolver<StaffAssignment> {
   return indirectTenant(async (entity, repositories) => {

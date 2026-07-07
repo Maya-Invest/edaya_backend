@@ -1,9 +1,12 @@
 export * from './bootstrap-actor'
 export * from './capabilities'
 export * from './engine'
+export * from './gates'
 export * from './grants'
+export * from './lifecycle'
 export * from './migration'
 export * from './model'
+export * from './operations'
 /**
  * Public authorization API.
  *

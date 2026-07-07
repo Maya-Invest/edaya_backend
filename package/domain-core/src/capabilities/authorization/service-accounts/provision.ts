@@ -1,3 +1,6 @@
+import type {
+  Permission,
+} from '../'
 import type { StaffMember } from '../../../domain'
 import type { SchoolRepositories } from '../../../ports'
 import type { StaffActorMetadata } from '../model/actor'
@@ -7,15 +10,15 @@ import {
   assertOwnerServiceAccountAllowed,
   encodeApiKey,
   generateApiKey,
-  Permission,
+  ServiceAccountOperations,
 } from '../'
-import { permissionAction } from '../../../application/entities/entity-config'
 import {
   ServiceApiKey,
   StaffMember as StaffMemberEntity,
   StaffPermissionAssignment,
 } from '../../../domain'
 import { BusinessRuleViolationError } from '../../../domain/shared/business-rule-error'
+import { operationModule } from '../gates/operation-module'
 
 export interface ServiceAccountPermissionAssignmentInput {
   permission: Permission
@@ -47,7 +50,7 @@ export async function createServiceAccount(
   actor: StaffActorMetadata,
   input: CreateServiceAccountInput,
 ): Promise<CreateServiceAccountResult> {
-  await permissionAction(Permission.SERVICE_ACCOUNT_CREATE)(actor)
+  await operationModule(ServiceAccountOperations.create)(actor)
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
@@ -192,7 +195,7 @@ export async function updateServiceAccount(
   staffMemberId: string,
   input: UpdateServiceAccountInput,
 ): Promise<StaffMember> {
-  await permissionAction(Permission.SERVICE_ACCOUNT_UPDATE)(actor)
+  await operationModule(ServiceAccountOperations.update)(actor)
 
   if (
     input.displayName === undefined
@@ -260,7 +263,7 @@ export async function listServiceAccounts(
   repositories: SchoolRepositories,
   actor: StaffActorMetadata,
 ): Promise<StaffMember[]> {
-  await permissionAction(Permission.SERVICE_ACCOUNT_READ)(actor)
+  await operationModule(ServiceAccountOperations.read)(actor)
   return repositories.staffMembers.list({
     schoolId: actor.schoolId,
     accountKind: 'service',
@@ -272,7 +275,7 @@ export async function revokeServiceAccount(
   actor: StaffActorMetadata,
   staffMemberId: string,
 ): Promise<StaffMember> {
-  await permissionAction(Permission.SERVICE_ACCOUNT_REVOKE)(actor)
+  await operationModule(ServiceAccountOperations.revoke)(actor)
 
   const existing = await repositories.staffMembers.findById(staffMemberId)
   if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service') {
@@ -324,7 +327,7 @@ export async function rotateServiceAccountKey(
   actor: StaffActorMetadata,
   staffMemberId: string,
 ): Promise<{ apiKey: string }> {
-  await permissionAction(Permission.SERVICE_ACCOUNT_ROTATE_KEY)(actor)
+  await operationModule(ServiceAccountOperations.rotateKey)(actor)
 
   const existing = await repositories.staffMembers.findById(staffMemberId)
   if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service' || !existing.isActive) {

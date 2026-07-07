@@ -1,9 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { CLASS_GROUP_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { denyResourceAccess, SchoolStructureOperations } from '../../capabilities/authorization'
 import { CalendarEventScopeKind, StudentClassEnrollmentStatus } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -69,22 +77,24 @@ export class ClassGroup {
   }
 }
 
-export const classGroupConfig: EntityConfigFactory<ClassGroup> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.classGroups,
-    Permission.QUERY_CLASS_DIRECTORY_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-    readByIds((actor, ids) => input.policy.checkClassGroupAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([...CLASS_GROUP_ACCESS_PERMISSIONS])
-  return {
-    ...config,
+export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkClassGroupAccess(actor, ids))
+
+  return config({
+    repository: repositories.classGroups,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(SchoolStructureOperations.classGroupRead), readAccess),
+    write: write(
+      operationModule(SchoolStructureOperations.configure),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preSave: validateClassGroupSave,
       preDelete: validateClassGroupDelete,
     },
-  }
+    atomicExecution,
+  })
 }
 
 export async function validateClassGroupSave(

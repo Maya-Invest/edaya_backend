@@ -313,6 +313,7 @@ export function createReportCardContext({
   const mockPolicy = {
     checkAssessmentAccess: mock(async () => {}),
     checkReportCardResultAccess: mock(async () => {}),
+    authorizeReportCardResultSave: mock(async () => {}),
     checkStudentAccess: mock(async () => {}),
   } as unknown as AuthorizationPolicy
 

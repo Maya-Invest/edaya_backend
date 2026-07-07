@@ -1,9 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { anyPermissionAction, authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { TIMETABLE_ACCESS_PERMISSIONS } from '../../capabilities/authorization/policy/resolvers/permission-sets'
+import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, operationModule, read, readByIds, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, SchedulingOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -94,10 +93,14 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
     repository: repositories.lessonSessions,
     tenant: classGroupLinkedTenant('classGroupId'),
     read: read(
-      anyPermissionAction([...TIMETABLE_ACCESS_PERMISSIONS]),
+      operationModule(SchedulingOperations.timetableRead),
       readByIds((actor, ids) => policy.checkLessonSessionAccess(actor, ids)),
     ),
-    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
+    write: write(
+      operationModule(SchedulingOperations.timetableManage),
+      authorizeClassGroupLinked(policy, 'classGroupId'),
+      authorizeClassGroupLinkedDelete(policy),
+    ),
     gates: {
       preSave: validateLessonSessionSave,
     },

@@ -1,7 +1,7 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, workspaceReadModule, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -53,8 +53,8 @@ export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ reposito
   config({
     repository: repositories.academicYears,
     tenant: directSchoolTenant(),
-    read: read(workspaceReadModule(), noopReadAccess),
-    write: write(permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
+    write: write(operationModule(SchoolStructureOperations.configure), noopSaveAccess, noopDeleteAccess),
     gates: {
       preDelete: async (year, repos) => {
         const classGroups = await repos.classGroups.list({ academicYearId: year.id })

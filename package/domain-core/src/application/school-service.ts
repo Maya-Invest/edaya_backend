@@ -2,11 +2,10 @@ import type { SchoolCommandHandlerMap } from './commands/school-command-handlers
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
 import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
-import { AuthorizationError, AuthorizationErrorCode, Permission } from '../capabilities/authorization'
-import { TIMETABLE_ACCESS_PERMISSIONS } from '../capabilities/authorization/policy/resolvers/permission-sets'
+import { AuthorizationError, AuthorizationErrorCode, QueryOperations, ReportCardOperations, SchedulingOperations } from '../capabilities/authorization'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
-import { anyPermissionAction, permissionAction } from './entities/entity-config'
+import { operationModule } from './entities/entity-config'
 import { buildClassGroupTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
@@ -65,19 +64,19 @@ export class SchoolService {
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    permissionAction(Permission.QUERY_OVERDUE_FEES_READ)(this.baseService.actor)
+    await operationModule(QueryOperations.overdueFeesRead)(this.baseService.actor)
     return this.baseService.repositories.schools.getOverdueFeeCount(schoolId)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ)(this.baseService.actor)
+    await operationModule(ReportCardOperations.read)(this.baseService.actor)
     return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
   }
 
   async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
     this.checkActorSchool(input.schoolId)
-    permissionAction(Permission.QUERY_OVERVIEW_READ)(this.baseService.actor)
+    await operationModule(QueryOperations.overviewRead)(this.baseService.actor)
     return this.baseService.repositories.schools.getSchoolOverview(input)
   }
 
@@ -87,7 +86,7 @@ export class SchoolService {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     }
     this.checkActorSchool(classGroup.schoolId)
-    anyPermissionAction([...TIMETABLE_ACCESS_PERMISSIONS])(this.baseService.actor)
+    await operationModule(SchedulingOperations.timetableRead)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkClassGroupAccess(
       this.baseService.actor,
       [input.classGroupId],

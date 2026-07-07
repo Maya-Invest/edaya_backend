@@ -7,8 +7,8 @@ import type {
   StaffMember,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, isInteractiveActor, Permission } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { CommunicationsOperations, denyResourceAccess, isInteractiveActor } from '../../capabilities/authorization'
 import {
   ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
   buildGuardianRecipientProfile,
@@ -235,7 +235,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     else {
-      await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
+      await operationModule(CommunicationsOperations.create)(this.baseService.actor)
     }
     const delivery = new MessageDelivery({
       id,
@@ -318,7 +318,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     }
     this.checkActorSchool(existing.schoolId)
     if (this.baseService.actor.kind !== 'system') {
-      await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
+      await operationModule(CommunicationsOperations.create)(this.baseService.actor)
     }
     if (!canTransitionDeliveryStatus(existing.status, status)) {
       return existing
@@ -365,7 +365,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     if (actor.kind === 'system' || existing.subjectId !== actor.subjectId) {
       denyResourceAccess()
     }
-    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(this.baseService.actor)
+    await operationModule(CommunicationsOperations.read)(this.baseService.actor)
     if (existing.status === DeliveryStatus.Read) {
       return existing
     }
@@ -396,7 +396,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     input: UpdateNotificationContactInput,
   ): Promise<StaffMember | Guardian> {
     const actor = this.baseService.actor
-    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+    await operationModule(CommunicationsOperations.read)(actor)
 
     const notificationEmail = normalizeNotificationContact(input.notificationEmail)
     const notificationPhone = normalizeNotificationContact(input.notificationPhone)
@@ -475,7 +475,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async registerPushDevice(input: RegisterPushDeviceInput): Promise<void> {
     const actor = this.baseService.actor
-    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+    await operationModule(CommunicationsOperations.read)(actor)
 
     if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
@@ -511,7 +511,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async unregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
     const actor = this.baseService.actor
-    await permissionAction(Permission.QUERY_COMMUNICATIONS_READ)(actor)
+    await operationModule(CommunicationsOperations.read)(actor)
 
     if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
@@ -793,6 +793,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId?: string
   }): Promise<void> {
     this.checkActorSchool(resource.schoolId)
-    await permissionAction(Permission.COMMUNICATION_CREATE)(this.baseService.actor)
+    await operationModule(CommunicationsOperations.create)(this.baseService.actor)
   }
 }

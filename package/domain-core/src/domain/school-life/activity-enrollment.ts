@@ -3,8 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, DisciplineOperations } from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ActivityEnrollmentStatus {
@@ -50,9 +50,9 @@ export const activityEnrollmentConfig: EntityConfigFactory<ActivityEnrollment> =
   config({
     repository: repositories.activityEnrollments,
     tenant: activityEnrollmentTenant(),
-    read: read(permissionAction(Permission.DISCIPLINE_READ), noopReadAccess),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
     write: write(
-      permissionAction(Permission.DISCIPLINE_CREATE),
+      operationModule(DisciplineOperations.create),
       authorizeActivityEnrollmentSave(policy),
       authorizeActivityEnrollmentDelete(policy),
     ),

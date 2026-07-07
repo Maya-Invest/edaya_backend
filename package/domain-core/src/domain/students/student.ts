@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { StudentOperations } from '../../capabilities/authorization'
 import { AttachmentOwnerKind } from '../../domain'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -89,25 +98,24 @@ export class Student {
   }
 }
 
-export const studentConfig: EntityConfigFactory<Student> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.students,
-    Permission.QUERY_STUDENT_DIRECTORY_READ,
-    Permission.STUDENT_UPDATE,
-    readByIds((actor, ids) => input.policy.checkStudentAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.QUERY_STUDENT_DIRECTORY_READ,
-    Permission.QUERY_STUDENT_DETAIL_READ,
-  ])
-  return {
-    ...config,
+export const studentConfig: EntityConfigFactory<Student> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkStudentAccess(actor, ids))
+
+  return config({
+    repository: repositories.students,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(StudentOperations.directoryRead), readAccess),
+    write: write(
+      operationModule(StudentOperations.update),
+      authorizeExistingById(readAccess),
+      authorizeDeleteByReadAccess(readAccess),
+    ),
     gates: {
       preSave: validateStudentSave,
       preDelete: validateStudentDelete,
     },
-  }
+    atomicExecution,
+  })
 }
 
 export async function validateStudentSave(

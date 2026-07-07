@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig, readByIds, teacherSelfReadModule } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { AccessControlOperations, TeacherOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -58,21 +67,20 @@ export class Teacher {
 }
 
 export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.teachers,
-    Permission.ACCESS_CONTROL_ASSIGN,
-    Permission.ACCESS_CONTROL_ASSIGN,
-    readByIds(async (actor, ids) => {
-      if (actor.kind === 'teacher' && ids.every(id => id === actor.teacherId)) {
-        return
-      }
-      await input.policy.checkTeacherAccess(actor, ids)
-    }),
-  )
-  config.read.checkModule = teacherSelfReadModule()
+  const readAccess = readByIds((actor, ids) => input.policy.checkTeacherAccess(actor, ids))
+
   return {
-    ...config,
+    ...config({
+      repository: input.repositories.teachers,
+      tenant: directSchoolTenant(),
+      read: read(operationModule(TeacherOperations.selfRead), readAccess),
+      write: write(
+        operationModule(AccessControlOperations.assign),
+        authorizeExistingById(readAccess),
+        authorizeDeleteByReadAccess(readAccess),
+      ),
+      atomicExecution: input.atomicExecution,
+    }),
     gates: {
       preDelete: validateTeacherDelete,
     },

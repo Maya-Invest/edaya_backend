@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { CommunicationsOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -99,20 +108,21 @@ export class Announcement {
   }
 }
 
-export const announcementConfig: EntityConfigFactory<Announcement> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.announcements,
-    Permission.QUERY_COMMUNICATIONS_READ,
-    Permission.COMMUNICATION_CREATE,
-  )
-  return {
-    ...config,
+export const announcementConfig: EntityConfigFactory<Announcement> = ({ repositories, atomicExecution }) =>
+  config({
+    repository: repositories.announcements,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
+    write: write(
+      operationModule(CommunicationsOperations.create),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
     gates: {
       preDelete: validateAnnouncementDelete,
     },
-  }
-}
+    atomicExecution,
+  })
 
 async function validateAnnouncementDelete(
   announcement: Announcement,

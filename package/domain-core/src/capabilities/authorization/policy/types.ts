@@ -19,9 +19,17 @@ export interface AuthorizationPolicy {
   checkTeacherAccess: (actor: ActorMetadata, teacherIds: readonly string[]) => Promise<void>
   checkStudentNoteAccess: (actor: ActorMetadata, noteIds: readonly string[]) => Promise<void>
   checkStudentHealthAccess: (actor: ActorMetadata, profileIds: readonly string[]) => Promise<void>
+  checkStaffAssignmentAccess: (actor: ActorMetadata, assignments: readonly { staffId: string }[]) => Promise<void>
+  checkStaffMemberReadAccess: (actor: ActorMetadata, staffMembers: readonly { id: string }[]) => Promise<void>
+  checkTeacherAssignmentAccess: (actor: ActorMetadata, assignments: readonly { teacherId: string }[]) => Promise<void>
   checkClassGroupAccess: (actor: ActorMetadata, classGroupIds: readonly string[]) => Promise<void>
   checkAssessmentAccess: (actor: ActorMetadata, assessmentIds: readonly string[]) => Promise<void>
   checkReportCardResultAccess: (actor: ActorMetadata, reportCardResultIds: readonly string[]) => Promise<void>
+  authorizeReportCardResultSave: (
+    actor: ActorMetadata,
+    entity: import('../../../domain/assessments/report-card-result').ReportCardResult,
+    existing: import('../../../domain/assessments/report-card-result').ReportCardResult | undefined,
+  ) => Promise<void>
   checkFeeAccess: (actor: ActorMetadata, feeIds: readonly string[]) => Promise<void>
   checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
   checkLessonSessionAccess: (actor: ActorMetadata, lessonSessionIds: readonly string[]) => Promise<void>

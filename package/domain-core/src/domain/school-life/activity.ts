@@ -1,8 +1,17 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { DisciplineOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -84,20 +93,22 @@ export class Activity {
   get createdAt() { return this.data.createdAt }
 }
 
-export const activityConfig: EntityConfigFactory<Activity> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.activities,
-    Permission.DISCIPLINE_READ,
-    Permission.DISCIPLINE_CREATE,
-  )
-  return {
-    ...config,
-    gates: {
-      preDelete: validateActivityDelete,
-    },
-  }
-}
+export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, atomicExecution }) => ({
+  ...config({
+    repository: repositories.activities,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
+    write: write(
+      operationModule(DisciplineOperations.create),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  }),
+  gates: {
+    preDelete: validateActivityDelete,
+  },
+})
 
 async function validateActivityDelete(
   activity: Activity,

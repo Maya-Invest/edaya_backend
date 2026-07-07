@@ -2,8 +2,8 @@ import type { NotificationTemplateKey } from '../../capabilities/notifications/t
 import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates'
 import type { SchoolNotificationTemplates } from '../../domain/messaging/school-notification-templates'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { SchoolStructureOperations } from '../../capabilities/authorization'
 import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest'
 import {
   mergeSchoolNotificationTemplateDocument,
@@ -31,7 +31,7 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
   async updateSchoolNotificationTemplates(
     input: UpdateSchoolNotificationTemplatesInput,
   ): Promise<SchoolNotificationTemplates> {
-    await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
     this.checkActorSchool(input.schoolId)
 
     const existing = await this.requireTemplateDocument(input.schoolId)
@@ -52,7 +52,7 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
   async resetSchoolNotificationTemplates(
     input: ResetSchoolNotificationTemplatesInput,
   ): Promise<SchoolNotificationTemplates> {
-    await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
     this.checkActorSchool(input.schoolId)
 
     const existing = await this.requireTemplateDocument(input.schoolId)

@@ -3,8 +3,8 @@ import type { EntityTenantResolver, EntityWriteAuthorization } from '../../appli
 import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { denyResourceAccess, ResourceOperations } from '../../capabilities/authorization'
 
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -67,8 +67,8 @@ export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> =
   config({
     repository: repositories.resourceAssignments,
     tenant: resourceAssignmentTenant(),
-    read: read(permissionAction(Permission.RESOURCE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.RESOURCE_CONFIGURE), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
+    read: read(operationModule(ResourceOperations.read), noopReadAccess),
+    write: write(operationModule(ResourceOperations.configure), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
     gates: {
       preSave: validateResourceAssignmentSave,
     },

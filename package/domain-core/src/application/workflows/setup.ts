@@ -23,8 +23,13 @@ import type {
   StaffMemberInput,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import {
+  AttachmentOperations,
+  denyResourceAccess,
+  PlatformOperations,
+  SchoolStructureOperations,
+} from '../../capabilities/authorization'
 import {
   scheduleAccountInvitationIfEligible,
 } from '../../capabilities/invitations'
@@ -132,7 +137,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
-    await permissionAction(Permission.PLATFORM_REGISTER_SCHOOL)(this.baseService.actor)
+    await operationModule(PlatformOperations.registerSchool)(this.baseService.actor)
     const school = new SchoolEntity(input)
     if (school.ownerSubjectId) {
       await this.validateOwnerSubject(school.id, school.ownerSubjectId)
@@ -144,7 +149,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
     const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
-    await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
     const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
     if (ownerSubjectId !== existing.ownerSubjectId) {
       await this.validateOwnerTransfer(existing, ownerSubjectId)
@@ -172,7 +177,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: CreateAcademicYearInput): Promise<AcademicYear> {
     this.checkActorSchool(schoolId)
-    await permissionAction(Permission.SCHOOL_STRUCTURE_CONFIGURE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.configure)(this.baseService.actor)
     await requireSchool(this.baseService.repositories.schools, schoolId)
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -197,7 +202,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(academicYear.schoolId)
-    await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
 
     return this.baseService.atomicExecution.execute(async () => {
       await this.deactivateOtherAcademicYears(academicYear.schoolId, academicYear.id)
@@ -223,7 +228,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async publishAcademicPeriod({ academicPeriodId }: PublishAcademicPeriodInput): Promise<AcademicPeriod> {
     const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
-    await permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE)(this.baseService.actor)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
     const period = new AcademicPeriodEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -412,7 +417,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(this.baseService.actor)
+    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
     const attachment = new Attachment({
       ...input,
       status: input.storageKey ? AttachmentStatus.Ready : input.status,
@@ -443,7 +448,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
     const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
-    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(this.baseService.actor)
+    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
     if (existing.storageKey) {
       await this.baseService.fileStorage.deleteObject(existing.storageKey)
     }

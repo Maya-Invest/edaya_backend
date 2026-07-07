@@ -1,7 +1,16 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig, workspaceReadModule } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  authorizeExistingById,
+  config,
+  directSchoolTenant,
+  noopReadAccess,
+  operationModule,
+  read,
+  write,
+} from '../../application/entities/entity-config'
+import { SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -59,13 +68,15 @@ export class PeriodDefinition {
   }
 }
 
-export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.periodDefinitions,
-    Permission.QUERY_WORKSPACE_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )
-  config.read.checkModule = workspaceReadModule()
-  return config
-}
+export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = ({ repositories, atomicExecution }) =>
+  config({
+    repository: repositories.periodDefinitions,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
+    write: write(
+      operationModule(SchoolStructureOperations.configure),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  })

@@ -3,8 +3,8 @@ import type { LinkSubjectToActorResult } from '../account-linking/link-subject-t
 import type { BaseSchoolService } from '../base-school-service'
 import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { AccessControlOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import {
   buildInvitationUrl,
@@ -70,12 +70,12 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async sendAccountInvitation(input: SendAccountInvitationInput): Promise<SendAccountInvitationResult> {
-    await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
+    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
     return this.createAndDeliverInvitation(input)
   }
 
   async resendAccountInvitation(input: ResendAccountInvitationInput): Promise<SendAccountInvitationResult> {
-    await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
+    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
     const existing = await this.requireInvitationInSchool(input.invitationId)
     if (existing.status === AccountInvitationStatus.Accepted) {
       throw new BusinessRuleViolationError(
@@ -99,7 +99,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async revokeAccountInvitation(input: RevokeAccountInvitationInput): Promise<AccountInvitation> {
-    await permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(this.baseService.actor)
+    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
     const existing = await this.requireInvitationInSchool(input.invitationId)
     if (existing.status === AccountInvitationStatus.Accepted) {
       throw new BusinessRuleViolationError(

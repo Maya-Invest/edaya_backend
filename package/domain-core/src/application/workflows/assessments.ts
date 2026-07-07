@@ -12,8 +12,8 @@ import type {
   StudentClassEnrollment,
 } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { denyResourceAccess, ReportCardOperations } from '../../capabilities/authorization'
 import {
   ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
   REPORT_CARD_PUBLISHED_EVENT_KEY,
@@ -147,7 +147,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
+    await operationModule(ReportCardOperations.comment)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
@@ -190,7 +190,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await permissionAction(Permission.REPORT_CARD_PUBLISH)(this.baseService.actor)
+    await operationModule(ReportCardOperations.comment)(this.baseService.actor)
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [input.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)

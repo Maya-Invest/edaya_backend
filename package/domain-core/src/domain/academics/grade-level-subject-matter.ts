@@ -1,8 +1,8 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
+import { AcademicsOperations, denyResourceAccess } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -40,8 +40,8 @@ export const gradeLevelSubjectMatterConfig: EntityConfigFactory<GradeLevelSubjec
   config({
     repository: repositories.gradeLevelSubjectMatters,
     tenant: gradeLevelSubjectMatterTenant(),
-    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
-    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), noopSaveAccess, noopDeleteAccess),
+    read: read(operationModule(AcademicsOperations.curriculumReadScoped), noopReadAccess),
+    write: write(operationModule(AcademicsOperations.programUpdate), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateGradeLevelSubjectMatterSave,
     },

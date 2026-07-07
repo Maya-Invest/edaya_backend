@@ -1,6 +1,7 @@
 import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config'
 import type { ServiceArgs } from '../service-args'
 import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
+import { noOpAuthCacheInvalidationPort, withAuthCacheLifecycleHooks } from '../../capabilities/authorization/lifecycle/auth-cache-hooks'
 import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
 import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
 import {
@@ -148,11 +149,17 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   input: EntityConfigFactoryInput,
 ): ManagedEntityService<CoreEntityMap[Key]> {
   const templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
-  const config = withNotificationPostSaveHook(
+  const authCacheInvalidation = args.authCacheInvalidation ?? noOpAuthCacheInvalidationPort
+  const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
+  const config = withAuthCacheLifecycleHooks(
     key,
-    CORE_ENTITY_CONFIG_FACTORIES[key](input),
-    args.notificationGateway,
-    templateService,
+    withNotificationPostSaveHook(
+      key,
+      baseConfig,
+      args.notificationGateway,
+      templateService,
+    ),
+    authCacheInvalidation,
   )
 
   return new ManagedEntityService<CoreEntityMap[Key]>({

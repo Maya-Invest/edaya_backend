@@ -1,8 +1,8 @@
 import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '../../domain'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
-import { permissionAction } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission, resolveAuditActorId } from '../../capabilities/authorization'
+import { operationModule } from '../../application/entities/entity-config'
+import { AcademicsOperations, denyResourceAccess, LogbookOperations, resolveAuditActorId } from '../../capabilities/authorization'
 import {
   ClassSubject,
   ClassSubjectMatter,
@@ -91,7 +91,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async offerSubjectToGradeLevel(input: OfferSubjectToGradeLevelInput): Promise<GradeLevelSubject> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     const { classSubjectIdsByClassGroupId, classSubjectMatterIdsByClassGroupId, ...gradeLevelSubjectInput } = input
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -111,7 +111,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async removeSubjectFromGradeLevel({ gradeLevelSubjectId }: RemoveSubjectFromGradeLevelInput): Promise<void> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     await this.baseService.atomicExecution.execute(async () => {
       const gradeLevelSubject = await this.requireGradeLevelSubject(gradeLevelSubjectId)
       await removeMirroredClassSubjects(this.baseService, gradeLevelSubject.id)
@@ -124,7 +124,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
       const updated = await saveGradeLevelSubjectEntity(this.baseService, {
@@ -163,7 +163,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     coefficient,
     isOffered = true,
   }: AddCustomClassSubjectInput): Promise<ClassSubject> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
@@ -181,7 +181,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async setClassSubjectOffered({ classSubjectId, isOffered }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     const existing = await this.requireClassSubject(classSubjectId)
     const updated = new ClassSubject({
       id: existing.id,
@@ -198,7 +198,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async assignMatterToGradeLevelSubject(input: AssignMatterToGradeLevelSubjectInput): Promise<GradeLevelSubjectMatter> {
-    await permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE)(this.baseService.actor)
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
     const { classSubjectMatterIdsByClassGroupId, ...matterInput } = input
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -266,7 +266,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         denyResourceAccess()
       }
 
-      await permissionAction(Permission.CLASS_LOGBOOK_CREATE)(this.baseService.actor)
+      await operationModule(LogbookOperations.create)(this.baseService.actor)
       await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [lessonSessionId])
 
       const existing = await this.baseService.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })

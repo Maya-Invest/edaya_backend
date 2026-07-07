@@ -4,8 +4,23 @@ import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/auth
 import type { StudentClassEnrollment } from '../../domain'
 import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { dateTime, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { actorHasSchoolWideGrant, denyResourceAccess, Permission } from '../../capabilities/authorization'
+import {
+  authorizeDeleteByReadAccess,
+  config,
+  dateTime,
+  directSchoolTenant,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import {
+  actorHasSchoolWideGrant,
+  denyResourceAccess,
+  LogbookOperations,
+  Permission,
+  StudentOperations,
+} from '../../capabilities/authorization'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentNoteVisibility {
@@ -73,20 +88,21 @@ export class StudentNote {
   get updatedAt() { return this.data.updatedAt }
 }
 
-export const studentNoteConfig: EntityConfigFactory<StudentNote> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.studentNotes,
-    Permission.QUERY_STUDENT_DETAIL_READ,
-    Permission.CLASS_LOGBOOK_UPDATE,
-    readByIds((actor, ids) => input.policy.checkStudentNoteAccess(actor, ids)),
-  )
+export const studentNoteConfig: EntityConfigFactory<StudentNote> = ({ repositories, policy, atomicExecution }) => {
+  const readAccess = readByIds((actor, ids) => policy.checkStudentNoteAccess(actor, ids))
+
   return {
-    ...config,
-    write: {
-      ...config.write,
-      authorizeSave: authorizeStudentNote(input.policy),
-    },
+    ...config({
+      repository: repositories.studentNotes,
+      tenant: directSchoolTenant(),
+      read: read(operationModule(StudentOperations.directoryRead), readAccess),
+      write: write(
+        operationModule(LogbookOperations.update),
+        authorizeStudentNote(policy),
+        authorizeDeleteByReadAccess(readAccess),
+      ),
+      atomicExecution,
+    }),
     gates: {
       preSave: validateStudentNoteSave,
     },
@@ -126,7 +142,7 @@ export async function validateStudentNoteSave(
 }
 
 function requireStaffActorId(actor: ActorMetadata): string {
-  if (actor.kind !== 'staff') {
+  if (!('staffMemberId' in actor)) {
     denyResourceAccess()
   }
   return actor.staffMemberId
