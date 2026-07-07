@@ -9,7 +9,7 @@ Scope: over-engineering, boundary definition/enforcement, and developer experien
 
 ## Simplification initiative closure (2026-06-22)
 
-Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun run verify` is green and idempotent.
+Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun repo verify` is green and idempotent.
 
 | Finding | Status | Resolution |
 |---------|--------|------------|
@@ -30,7 +30,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 
 | Metric | Baseline (audit) | Current |
 |--------|------------------|---------|
-| `bun run verify` | Failing / mutating | Passes twice idempotently; used in CI |
+| `bun repo verify` | Failing / mutating | Passes twice idempotently; used in CI |
 | Package tests | 688 passed | **826 passed**, 7 integration skips |
 | Webapp tests | Not typechecked | **141** runtime tests, typechecked via `tsconfig.test.json` |
 | Raw `.list({})` in webapp | 65 / 65 loaders | **0** (37 documented `schoolWideEntityList` call sites) |
@@ -48,7 +48,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 - **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
 - **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points. (`prototype.queries.ts` rename completed 2026-06-23.)
 - **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
-- **Operator:** Staging smoke (`bun run smoke:staging`), manual screen QA checklist (Phase 8.2).
+- **Operator:** Staging smoke (`bun repo smoke-test staging`), manual screen QA checklist (Phase 8.2).
 
 ---
 
@@ -66,7 +66,7 @@ The highest-return implementation path is:
 
 ## Verification notes
 
-- `bun run check:boundaries` passed during inspection.
+- `bun repo check boundaries` passed during inspection.
 - Full generated checks were not run because the worktree already had local and generated changes.
 - Existing dirty files were not modified by this inspection.
 

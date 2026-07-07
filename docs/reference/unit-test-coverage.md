@@ -5,28 +5,31 @@ How to run coverage, interpret reports, and add tests in the backend monorepo.
 ## Commands
 
 ```sh
-# All packages (via Turbo)
+# All packages (via Turbo) — informational lcov reports
 bun test:coverage
 
+# Raw Turbo (use lcov reporter; text table breaks Turbo on large packages)
+turbo run test -- --coverage --coverage-reporter=lcov
+
 # Single package
-bun --filter @edaya/core test --coverage
-bun --filter @edaya/api test --coverage
+bun --filter @edaya/core test --coverage --coverage-reporter=lcov
+bun --filter @edaya/api test --coverage --coverage-reporter=lcov
 ```
 
 Pre-PR verification (lint, types, tests — no coverage gate yet):
 
 ```sh
-bun repo verify
+bun run verify
 ```
 
 ## Thresholds
 
 | Package | Phase 1 floor | Long-term target |
 |---------|---------------|------------------|
-| `@edaya/core` | **86%** lines (`package/domain-core/bunfig.toml`, with `src/ports/**` excluded) | 95% T1 |
+| `@edaya/core` | Informational only (no enforced floor yet) | 95% T1 |
 | Other packages | Informational only (root `coverageThreshold = 0`) | See [unit-test-coverage-plan](../sprints/unit-test-coverage-plan.md) |
 
-CI runs `bun test:coverage` as an **informational** job on pull requests. `@edaya/core` enforces its package floor locally when `--coverage` is passed.
+CI runs `bun test:coverage` as an **informational** job on pull requests. No package fails the build on coverage today.
 
 ## Exclusions
 
@@ -54,4 +57,4 @@ Add new exclusions only with justification in the sprint plan or PR description.
 
 - [unit-test-coverage-plan.md](../sprints/unit-test-coverage-plan.md) — full epic plan
 - [authorization-operations-plan.md](../sprints/authorization-operations-plan.md) — auth test patterns
-- [AGENTS.md](../../AGENTS.md) — `bun repo verify` before PRs
+- [AGENTS.md](../../AGENTS.md) — `bun run verify` before PRs

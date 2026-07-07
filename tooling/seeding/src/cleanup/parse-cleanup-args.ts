@@ -32,7 +32,7 @@ export function parseCleanupArgs(argv: string[]): CleanupOptions {
 
 export function cleanupUsage(): string {
   return [
-    'Usage: bun seed clean [--local|--staging] [--yes] [--school|--auth]',
+    'Usage: bun repo seed clean [--local|--staging] [--yes] [--school|--auth]',
     '',
     'Targets:',
     '  --local     Wipe repo-root .data/ (PGlite school DB + auth). Default.',

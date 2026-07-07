@@ -2,7 +2,7 @@
 
 The API worker wires adapters from **`RUNTIME` only**. Scheduled cron jobs run on the same worker (`scheduled()` handler). Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present.
 
-**Env files:** `bun dev` loads `apps/api/.env` only. `.dev.vars` is Wrangler-only (`wrangler dev`, deploy, R2 ops scripts) and is never read by the local process runtime.
+**Env files:** `bun repo dev` loads `apps/api/.env` only. `.dev.vars` is Wrangler-only (`wrangler dev`, deploy, R2 ops scripts) and is never read by the local process runtime.
 
 See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runtimes.md) for commands and env loading.
 
@@ -10,9 +10,9 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 
 | Profile | Purpose | Command |
 |---------|---------|---------|
-| **`local`** | Day-to-day development | `bun dev` |
+| **`local`** | Day-to-day development | `bun repo dev` |
 | **`in-memory`** | Fast automated tests | `bun test` (harness sets env) |
-| **`worker`** | Staging / production deploy; optional local smoke | `bun run deploy:api:production`, `bun run deploy:api:staging`, `bun dev:worker` |
+| **`worker`** | Staging / production deploy; optional local smoke | `bun repo deploy api production`, `bun repo deploy api staging`, `bun --filter @edaya/api dev:worker` |
 
 **worker** is not a separate `RUNTIME` value. It means `RUNTIME=worker` executed through `wrangler dev` (Miniflare) with `.dev.vars` and Cloudflare bindings — same adapter wiring as a deployed Worker.
 
@@ -46,12 +46,12 @@ Positive requirements only (fail when the profile cannot boot):
 
 ## Local development stack
 
-`bun dev` starts:
+`bun repo dev` starts:
 
 1. `@edaya/api` — `RUNTIME=local`, PGlite + SQLite + local-fs client
 2. `@edaya/local-files-server` — HTTP file service on port 9200
 
-Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun dev:worker`** with `apps/api/.dev.vars` — not `bun dev`.
+Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun --filter @edaya/api dev:worker`** with `apps/api/.dev.vars` — not `bun repo dev`.
 
 ## Cron
 
@@ -66,7 +66,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun run doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun dev`, in-memory Novu gates, single heartbeat cron + `CRON_JOBS` queue in `wrangler.jsonc`, no legacy `apps/cron` package).
+`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu gates, single heartbeat cron + `CRON_JOBS` queue in `wrangler.jsonc`, no legacy `apps/cron` package).
 
 ## Related packages
 

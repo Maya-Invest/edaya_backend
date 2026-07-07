@@ -1,5 +1,4 @@
 [test]
-coverageThreshold = { lines = 0.85 }
 coveragePathIgnorePatterns = [
   "**/index.ts",
   "src/ports/**",

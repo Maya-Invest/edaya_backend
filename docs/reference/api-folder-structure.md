@@ -95,4 +95,4 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 
 TypeScript client bindings are generated at the repo root from the exported OpenAPI document: `bun tooling/repo/openapi/generate-bindings.ts`. OpenAPI export: `bun tooling/repo/openapi/export.ts`.
 
-Root shortcuts: `bun run deploy:api:production` → `@edaya/api deploy:production`; `bun run deploy:api:staging` → `deploy:staging`.
+Root shortcuts: `bun repo deploy api production` → `@edaya/api deploy:production`; `bun repo deploy api staging` → `deploy:staging`.

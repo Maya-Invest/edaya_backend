@@ -29,7 +29,7 @@ export function assertStagingSchoolDatabaseUrl(databaseUrl: string): void {
   }
 
   if (isLocalDatabaseUrl(trimmed)) {
-    throw new Error('Refusing to wipe a local/ephemeral DATABASE_URL. Use `bun seed:clean` for local `.data`.')
+    throw new Error('Refusing to wipe a local/ephemeral DATABASE_URL. Use `bun repo seed clean` for local `.data`.')
   }
 
   const allowDestructive = process.env['SEED_ALLOW_DESTRUCTIVE']?.trim().toLowerCase()

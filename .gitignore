@@ -60,3 +60,5 @@ mobile/**/*.iml
 !.vscode/launch.json
 apps/api/secrets.prod.json
 apps/api/secrets.staging.json
+
+**/coverage/*

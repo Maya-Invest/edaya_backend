@@ -95,8 +95,8 @@ Environment (from process.env or apps/api/.env):
   NOVU_API_URL              optional (e.g. https://eu.api.novu.co)
 
 Examples:
-  bun novu:cleanup -- --transient-invites
-  bun novu:cleanup:apply -- --prefix smoke- --yes
+  bun repo novu cleanup -- --transient-invites
+  bun repo novu cleanup apply -- --prefix smoke- --yes
   bun tooling/novu-ops/cleanup/cli.ts plan --ids auth-g1,invite:inv-123
 `);
 }

@@ -59,7 +59,7 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
 
     if (await probeLocalApiReachable(apiUrl)) {
       throw new Error(
-        `Local API is running at ${apiUrl}. Stop \`bun dev\` before wiping .data — `
+        `Local API is running at ${apiUrl}. Stop \`bun repo dev\` before wiping .data — `
         + 'deleting databases while the API is up corrupts PGlite.',
       )
     }
@@ -81,7 +81,7 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
       console.log(`No ${result.dataDir} directory found (already clean).`)
     }
 
-    console.log('Local cleanup complete. Restart `bun dev`, then run `bun seed`.')
+    console.log('Local cleanup complete. Restart `bun repo dev`, then run `bun repo seed`.')
     return
   }
 
@@ -113,5 +113,5 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
     console.log('Staging Better Auth tables wiped (auth.user/session/account/verification).')
   }
 
-  console.log('Staging cleanup complete. Run `bun run db:migrate:staging` if needed, then `bun seed --staging`.')
+  console.log('Staging cleanup complete. Run `bun repo db migrate staging` if needed, then `bun repo seed --staging`.')
 }

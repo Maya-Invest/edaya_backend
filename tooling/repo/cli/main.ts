@@ -2,6 +2,7 @@
 
 import process from 'node:process'
 import { dispatchCompoundCommand } from './dispatch'
+import { runDevContainer } from './commands/dev-container'
 import { repoCliUsage } from './lib/help'
 import { runBunScript } from './lib/spawn'
 import { isCompoundRepoCommand, parseRepoCliArgs } from './parse-repo-cli'
@@ -25,6 +26,10 @@ if (parsed.kind === 'help') {
 
 if (isCompoundRepoCommand(parsed.command)) {
   process.exit(await dispatchCompoundCommand(parsed.command, parsed.forwardArgs))
+}
+
+if (parsed.command === 'dev-container') {
+  process.exit(await runDevContainer(parsed.forwardArgs))
 }
 
 const scriptPath = resolveRepoCommandScript(parsed.command)

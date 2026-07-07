@@ -4,7 +4,7 @@ This inventory captures the seeding port architecture and the domain commands us
 
 ## Local dev (HTTP-only)
 
-CLI seeding (`bun seed`) always targets a **running API**:
+CLI seeding (`bun repo seed`) always targets a **running API**:
 
 1. Provision Better Auth users via `/auth/*`
 2. Bootstrap an owner session (`register-school` on a fresh database)
@@ -15,7 +15,7 @@ There is **no** direct PGlite/SQLite write path from the seed CLI. If HTTP boots
 
 `runHttpDevSeeds` is HTTP-only: it does not accept an in-process `SeedApplication`. In-process adapters under `domains/*/in-process.ts` remain for port-level unit tests and `@edaya/seeding` orchestration when a harness provides direct database access.
 
-After bootstrap, bulk seeding (including access assignments) uses the elevated **seeding service account API key** from `@edaya/fixtures` — no owner session re-sign-in. Use `bun seed:doctor` to diagnose partial local seed state; `bun seed:doctor --repair` runs the minimal HTTP repair chain (`auth:link`, `service-account`, `access`, `profile-pictures`) for common drift without wiping `.data`.
+After bootstrap, bulk seeding (including access assignments) uses the elevated **seeding service account API key** from `@edaya/fixtures` — no owner session re-sign-in. Use `bun repo seed --scope doctor` to diagnose partial local seed state; `bun repo seed --scope doctor --repair` runs the minimal HTTP repair chain (`auth:link`, `service-account`, `access`, `profile-pictures`) for common drift without wiping `.data`.
 
 ## Repository operations
 

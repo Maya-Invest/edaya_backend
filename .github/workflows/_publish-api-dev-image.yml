@@ -1,21 +1,14 @@
 name: Publish API dev image
 
 on:
-  push:
-    branches: [main, master, staging]
-    paths:
-      - .dockerignore
-      - apps/**
-      - package/**
-      - tooling/**
-      - package.json
-      - bun.lock
-      - bunfig.toml
-      - turbo.json
-
-concurrency:
-  group: publish-api-dev-${{ github.ref_name }}
-  cancel-in-progress: false
+  workflow_call:
+    outputs:
+      channel:
+        description: Published image channel (staging or production)
+        value: ${{ jobs.publish.outputs.channel }}
+      image:
+        description: Published image name without tag
+        value: ${{ jobs.publish.outputs.image }}
 
 permissions:
   contents: read
@@ -73,25 +66,3 @@ jobs:
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.channel }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  notify-consumers:
-    needs: publish
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - Maya-Invest/edaya_web
-          - Maya-Invest/edaya_mobile
-    steps:
-      - name: Notify consumer repository
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.REPO_DISPATCH_PAT }}
-          repository: ${{ matrix.repository }}
-          event-type: api-dev-image-published
-          client-payload: >-
-            {
-              "channel": "${{ needs.publish.outputs.channel }}",
-              "sha": "${{ github.sha }}",
-              "image": "${{ needs.publish.outputs.image }}"
-            }

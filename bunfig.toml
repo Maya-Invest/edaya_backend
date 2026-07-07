@@ -12,6 +12,5 @@ coveragePathIgnorePatterns = [
   "tooling/integration-tests/**",
 ]
 coverageReporters = [
-  "text",
-  "lcov"
+  "lcov",
 ]

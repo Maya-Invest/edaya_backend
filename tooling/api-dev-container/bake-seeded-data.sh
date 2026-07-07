@@ -16,7 +16,7 @@ bun apps/api/src/entries/local.ts &
 bash tooling/api-dev-container/wait-for-url.sh http://127.0.0.1:9999/reference 120
 
 echo "> Running full demo seed..."
-bun seed
+bun repo seed
 
 touch .data/.seed-complete
 echo "> Seeded database baked into image."

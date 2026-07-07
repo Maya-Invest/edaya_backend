@@ -32,7 +32,12 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 Before opening a PR:
 
 ```sh
-bun repo verify
+bun run verify        # quality + build + unit tests + repo hygiene
+bun run test:integration
 ```
+
+For seed HTTP paths, also run `bun run test:integration:seed`.
+
+Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun repo verify`.
 
 Package-scoped iteration: `bun --filter @edaya/core test`, `bun --filter @edaya/api test`, etc.

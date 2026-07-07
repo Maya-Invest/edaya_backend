@@ -59,10 +59,10 @@ Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value). St
 
 ```sh
 # 1. School + auth schema on Neon staging branch
-STAGING_DATABASE_URL=postgres://… bun run db:migrate:staging
+STAGING_DATABASE_URL=postgres://… bun repo db migrate staging
 
 # 2. Deploy API + webapp
-bun run deploy:api:staging
+bun repo deploy api staging
 bun run deploy:webapp:staging
 
 # 4. Configure seeding env (copy example, set remote URLs)
@@ -70,11 +70,11 @@ cp .env.example .env
 
 # 5. Bootstrap school + seeding service account (director session on first run)
 #    Optional fresh start after a failed/partial seed:
-#    bun seed:clean:staging --yes
-bun run seed:staging
+#    bun repo seed clean --staging --yes
+bun repo seed --staging
 
 # 6. Verify
-bun run smoke:staging
+bun repo smoke-test staging
 ```
 
 ---
@@ -84,31 +84,31 @@ bun run smoke:staging
 ### Local gate (every change)
 
 ```sh
-bun repo verify   # includes check openapi
+bun run verify   # includes check openapi
 ```
 
 ### Staging deploy
 
 ```sh
-STAGING_DATABASE_URL=postgres://… bun run db:migrate:staging   # when schema changed
-bun run db:migrate:staging                                      # school + auth schema when either changed
-bun run deploy:api:staging
+STAGING_DATABASE_URL=postgres://… bun repo db migrate staging   # when schema changed
+bun repo db migrate staging                                      # school + auth schema when either changed
+bun repo deploy api staging
 bun run deploy:webapp:staging
-bun run seed:staging   # if seed data needed
-bun run smoke:staging
+bun repo seed --staging   # if seed data needed
+bun repo smoke-test staging
 ```
 
 ### Production promotion (after staging green)
 
 ```sh
-bun repo verify
-bun run deploy:api:production
+bun run verify
+bun repo deploy api production
 bun run deploy:webapp:production
 ```
 
 ---
 
-## Smoke checks (`bun run smoke:staging`)
+## Smoke checks (`bun repo smoke-test staging`)
 
 Reads repo root `.env` when present, or env vars:
 
@@ -138,11 +138,11 @@ Reads repo root `.env` when present, or env vars:
 
 | Command | Description |
 |---------|-------------|
-| `bun run deploy:api:staging` | Deploy API Worker (`--env staging`) |
+| `bun repo deploy api staging` | Deploy API Worker (`--env staging`) |
 | `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy |
-| `bun run db:migrate:staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
-| `bun run seed:staging` | Full HTTP seed against `SEED_STAGING_API_URL` |
-| `bun run smoke:staging` | Tier 1 HTTP smoke against staging |
+| `bun repo db migrate staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
+| `bun repo seed --staging` | Full HTTP seed against `SEED_STAGING_API_URL` |
+| `bun repo smoke-test staging` | Tier 1 HTTP smoke against staging |
 
 ---
 
@@ -154,7 +154,7 @@ Reads repo root `.env` when present, or env vars:
 | S5 sign-in fails on seed | Auth users missing — re-run `seed:init` (provisions auth before session bootstrap) |
 | `MISSING_OR_NULL_ORIGIN` on seed | Ensure `SEED_STAGING_APP_ORIGIN` is set in repo root `.env` (seed CLI sends it as `Origin`) |
 | `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale auth row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
-| `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun run deploy:api:staging` |
+| `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun repo deploy api staging` |
 | `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `db:migrate:staging` |
 | `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations` with a future `created_at` blocks pending files — re-run `db:migrate:staging` (auto-repairs orphans) or delete unknown-hash rows manually |
 | `waitForApi` timeout | API not deployed yet, or DNS still propagating — verify `curl https://api-staging…/` returns 200 |

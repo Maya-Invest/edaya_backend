@@ -129,7 +129,7 @@ export function parseDevSeedScope(argv: string[]): DevSeedScope {
     return arg
   }
 
-  throw new Error(`Unknown seed scope: ${arg}. Usage: bun seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
+  throw new Error(`Unknown seed scope: ${arg}. Usage: bun repo seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
 }
 
 export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSeedsResults> {

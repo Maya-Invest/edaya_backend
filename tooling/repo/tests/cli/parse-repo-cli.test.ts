@@ -23,6 +23,11 @@ describe('parseRepoCliArgs', () => {
       command: 'doctor',
       forwardArgs: [],
     })
+    expect(parseRepoCliArgs(['bun', 'repo', 'dev-container', 'up'])).toEqual({
+      kind: 'run',
+      command: 'dev-container',
+      forwardArgs: ['up'],
+    })
     expect(parseRepoCliArgs(['bun', 'repo', 'db', 'migrate', 'local'])).toEqual({
       kind: 'run',
       command: 'db',

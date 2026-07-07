@@ -94,15 +94,15 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
 
 export function seedCliUsage(): string {
   return [
-    'Usage: bun seed [clean] [--staging] [--scope <name>] [--clean] [--repair] [--skip-profile-photos]',
+    'Usage: bun repo seed [clean] [--staging] [--scope <name>] [--clean] [--repair] [--skip-profile-photos]',
     '',
     'Commands:',
-    '  bun seed                 Full local demo seed',
-    '  bun seed --staging       Full staging seed',
-    '  bun seed clean           Wipe local .data (stop bun dev first)',
-    '  bun seed clean --staging Wipe staging DB (requires STAGING_DATABASE_URL)',
-    '  bun seed --scope doctor [--repair]',
-    '  bun seed --scope <name>  Granular scope',
+    '  bun repo seed                 Full local demo seed',
+    '  bun repo seed --staging       Full staging seed',
+    '  bun repo seed clean           Wipe local .data (stop bun repo dev first)',
+    '  bun repo seed clean --staging Wipe staging DB (requires STAGING_DATABASE_URL)',
+    '  bun repo seed --scope doctor [--repair]',
+    '  bun repo seed --scope <name>  Granular scope',
     '',
     'Options:',
     '  --staging                Target SEED_STAGING_API_URL (default: local SEED_API_URL)',
@@ -117,9 +117,9 @@ export function seedCliUsage(): string {
     '  -h, --help               Show this help',
     '',
     'Examples:',
-    '  bun seed --scope auth:link',
-    '  bun seed --staging --clean',
-    '  bun seed clean --yes',
+    '  bun repo seed --scope auth:link',
+    '  bun repo seed --staging --clean',
+    '  bun repo seed clean --yes',
   ].join('\n')
 }
 

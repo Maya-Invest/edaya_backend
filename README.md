@@ -79,9 +79,9 @@ flowchart TB
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `apps/api/src/entries/local.ts` | `apps/api/.env` | `bun dev` (root — API + local-files) |
+| **local** | `apps/api/src/entries/local.ts` | `apps/api/.env` | `bun repo dev` (API + local-files) |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
-| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun dev:worker` (optional smoke) |
+| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun --filter @edaya/api dev:worker` (optional smoke) |
 
 `local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
@@ -142,7 +142,7 @@ Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env
 ## Local development
 
 ```sh
-bun dev   # API only
+bun repo dev
 ```
 
 | Service | URL |
@@ -152,50 +152,45 @@ bun dev   # API only
 
 Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
 
-`bun dev` from the repo root starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun dev` alone starts the API without the file server.
+`bun repo dev` starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun repo dev` alone starts the API without the file server.
 
 **worker smoke** (Miniflare — optional, hits remote Neon/R2):
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun dev:worker
+bun --filter @edaya/api dev:worker
 ```
 
 See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database options, dev seed, and troubleshooting.
 
 ## Commands
 
-**Development and ops** use [`bun repo`](./docs/reference/repo-cli.md) (canonical). Short root aliases (`bun dev`, `bun seed`, …) forward to the same handlers.
+**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun repo dev`, `bun repo seed`, `bun repo db …`, etc. **No Turbo in `bun repo`** — use root scripts below.
 
-**Package quality** uses Turborepo from the repo root:
+**Turbo quality** (root `package.json`):
 
 | Command | Description |
 |---------|-------------|
+| `bun run verify` | Pre-PR gate: quality + build + test + `bun repo verify` |
 | `bun run lint` | ESLint across workspaces |
-| `bun run lint:fix` / `bun run fix` | ESLint with auto-fix |
+| `bun run lint:fix` | ESLint with auto-fix |
 | `bun run check` | TypeScript checks |
-| `bun run test` | `@edaya/repo` CLI tests + Turbo `test` |
+| `bun run test` | Unit tests (Turbo; excludes integration-tests) |
 | `bun run build` | Build deployable bundles |
 | `bun run quality` | `lint` + `check` per package |
+| `bun run test:coverage` | Unit coverage (informational) |
+| `bun run test:integration` | Integration api + http slices |
+| `bun run test:integration:seed` | Integration seed slice (slow, opt-in) |
 
 ### Pre-PR verification
 
 ```sh
-bun repo verify    # alias: bun run verify — same pipeline as CI
+bun run verify               # pre-PR gate (CI verify job)
+bun repo verify              # repo hygiene only (doctor + repo check *)
+bun run test:integration     # recommended when touching HTTP / PGlite
 ```
 
-### Common aliases
-
-| Alias | Equivalent |
-|-------|------------|
-| `bun dev` | `bun repo dev` |
-| `bun seed` / `bun seed:staging` | `bun repo seed` / `--staging` |
-| `bun db:migrate:local` | `bun repo db migrate local` |
-| `bun smoke:staging` | `bun repo smoke-test staging` |
-| `bun openapi:check` | `bun repo check openapi` |
-| `bun deploy:api:staging` | `bun repo deploy api staging` |
-
-Full command tree, seed flags, Novu ops, and DB browser: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**.
+Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**.
 
 ### Per-package iteration
 
@@ -204,11 +199,11 @@ bun --filter @edaya/core test
 bun --filter @edaya/api lint
 ```
 
-Then `bun repo verify` before opening a PR. Webapp tests run from **edaya_web**.
+Then `bun run verify` before opening a PR. Webapp tests run from **edaya_web**.
 
 ## Testing
 
-Tests are split by layer. Run everything with `bun run test` (repository tooling plus Turbo across packages that define a `test` script).
+Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun run test:integration`** runs in-memory integration slices (see [test-pyramid-plan.md](./docs/sprints/test-pyramid-plan.md)).
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|

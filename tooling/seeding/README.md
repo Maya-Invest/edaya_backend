@@ -6,14 +6,14 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed` | Full local demo seed |
-| `bun seed:staging` | Full staging seed |
-| `bun seed:doctor` | Diagnose seed health (sign-in, grants, data checks) |
-| `bun seed:doctor --repair` | Diagnose and run minimal HTTP repair chain |
-| `bun seed:clean` | Wipe local `.data/` (stop `bun dev` first) |
-| `bun seed:clean:staging` | Wipe Neon staging + Better Auth D1 (destructive) |
+| `bun repo seed` | Full local demo seed |
+| `bun repo seed --staging` | Full staging seed |
+| `bun repo seed --scope doctor` | Diagnose seed health (sign-in, grants, data checks) |
+| `bun repo seed --scope doctor --repair` | Diagnose and run minimal HTTP repair chain |
+| `bun repo seed clean` | Wipe local `.data/` (stop `bun repo dev` first) |
+| `bun repo seed clean --staging` | Wipe Neon staging + Better Auth D1 (destructive) |
 
-Granular scopes (power users): `bun seed --scope <name>` — see `bun seed --help`.
+Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo seed --help`.
 
 | Scope | Purpose |
 |-------|---------|
@@ -25,7 +25,7 @@ Granular scopes (power users): `bun seed --scope <name>` — see `bun seed --hel
 | `service-account` | Provision seeding service account |
 | `validate` | Manifest entity counts + dashboard queries |
 
-Staging smoke: `bun smoke:staging` (full tier-1 checks in `@edaya/integration-tests`).
+Staging smoke: `bun repo smoke-test staging` (full tier-1 checks in `@edaya/integration-tests`).
 
 ## Environment (repo root `.env`)
 
@@ -34,43 +34,43 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 | Variable | Used by | Default |
 |----------|---------|---------|
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-06-16` in `@edaya/fixtures` |
-| `SEED_API_URL` | `bun seed`, `bun seed:doctor`, … | `BETTER_AUTH_URL` → `http://localhost:9999` |
+| `SEED_API_URL` | `bun repo seed`, `bun repo seed --scope doctor`, … | `BETTER_AUTH_URL` → `http://localhost:9999` |
 | `SEED_APP_ORIGIN` | Local Better Auth `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun seed --staging` | `https://api-staging.edaya.softilab.dev` |
+| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://api-staging.edaya.softilab.dev` |
 | `SEED_STAGING_APP_ORIGIN` | Staging Better Auth `Origin` header | `https://app-staging.edaya.softilab.dev` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 
 ```sh
-bun seed:clean --yes && bun seed              # local fresh start
-bun seed:clean:staging --yes && bun seed --staging   # staging fresh start
+bun repo seed clean --yes && bun repo seed              # local fresh start
+bun repo seed clean --staging --yes && bun repo seed --staging   # staging fresh start
 # or
-bun seed --clean
-bun seed --staging --clean
+bun repo seed --clean
+bun repo seed --staging --clean
 ```
 
 ## Local dev flow
 
-1. Start the API: `bun dev`
-2. Seed: `bun seed`
+1. Start the API: `bun repo dev`
+2. Seed: `bun repo seed`
 3. Log in at http://localhost:5173/login
 
-After `rm -rf .data`, **stop `bun dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
+After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
 
 ### Profile photos
 
-Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`@edaya/local-files-server`** on port **9200**, started automatically by `bun dev`.
+Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`@edaya/local-files-server`** on port **9200**, started automatically by `bun repo dev`.
 
 | Situation | Behavior |
 |-----------|----------|
-| `bun dev` running (API + local-files) | Photos seed normally |
-| API only (no local-files) | `bun seed` **auto-skips** photos with a clear message |
-| Explicit opt-out | `bun seed --skip-profile-photos` |
+| `bun repo dev` running (API + local-files) | Photos seed normally |
+| API only (no local-files) | `bun repo seed` **auto-skips** photos with a clear message |
+| Explicit opt-out | `bun repo seed --skip-profile-photos` |
 | Staging / remote API | API uses R2-backed storage |
 
 ### Repair without wipe
 
-`bun seed:doctor --repair` runs the minimal chain (`auth:link` → `service-account` → `access` → `profile-pictures`) based on repairable findings. Broken state (missing auth or school) still requires `bun seed` or a wipe.
+`bun repo seed --scope doctor --repair` runs the minimal chain (`auth:link` → `service-account` → `access` → `profile-pictures`) based on repairable findings. Broken state (missing auth or school) still requires `bun repo seed` or a wipe.
 
 ## Architecture
 

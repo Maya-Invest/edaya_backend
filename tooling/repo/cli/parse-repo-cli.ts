@@ -1,4 +1,6 @@
-export type RepoSpawnCommand = 'dev' | 'seed' | 'doctor'
+export type RepoBunSpawnCommand = 'dev' | 'seed' | 'doctor'
+
+export type RepoSpawnCommand = RepoBunSpawnCommand | 'dev-container'
 
 export type CompoundRepoCommand
   = | 'db'
@@ -17,6 +19,7 @@ export type ParsedRepoCli
 
 const COMMANDS = new Set<RepoCliCommand>([
   'dev',
+  'dev-container',
   'seed',
   'doctor',
   'db',

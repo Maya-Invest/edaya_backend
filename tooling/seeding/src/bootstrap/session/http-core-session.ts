@@ -93,7 +93,7 @@ async function signInForOnboarding(client: HttpSeedClient): Promise<void> {
 
   throw new Error(
     'Could not sign in with the dev school owner account. '
-    + 'Run `bun seed --scope auth` with the API running, then retry `bun seed`.',
+    + 'Run `bun repo seed --scope auth` with the API running, then retry `bun repo seed`.',
   )
 }
 

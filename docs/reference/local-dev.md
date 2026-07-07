@@ -28,7 +28,7 @@ cp apps/webapp/.env.example apps/webapp/.env
 
 ```sh
 # Terminal 1 — API on http://localhost:9999 + local file storage on http://localhost:9200 (from edaya_backend/)
-cd edaya_backend && bun dev
+cd edaya_backend && bun repo dev
 
 # Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
 cd edaya_web && bun --filter @edaya/webapp dev
@@ -58,10 +58,10 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 
 | Profile | Command | School DB | Auth DB |
 |---------|---------|-----------|---------|
-| **local** | `bun dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
-| **worker** | `bun dev:worker` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
+| **local** | `bun repo dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
+| **worker** | `bun --filter @edaya/api dev:worker` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
 
-Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun dev`). See [api-runtimes.md](./api-runtimes.md).
+Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
@@ -69,7 +69,7 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `
 
 ## File storage (local dev)
 
-`bun dev` starts the API and **`@edaya/local-files-server`** together. Uploads persist under repo-root `.data/files/` (gitignored).
+`bun repo dev` starts the API and **`@edaya/local-files-server`** together. Uploads persist under repo-root `.data/files/` (gitignored).
 
 | Variable | Default |
 |----------|---------|
@@ -82,11 +82,11 @@ Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentI
 
 ### worker smoke (R2, Hyperdrive)
 
-Optional — exercises the same adaptors as deployed workers. Requires `apps/api/.dev.vars` (Wrangler secrets; **not** read by `bun dev`).
+Optional — exercises the same adaptors as deployed workers. Requires `apps/api/.dev.vars` (Wrangler secrets; **not** read by `bun repo dev`).
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun dev:worker
+bun --filter @edaya/api dev:worker
 ```
 
 Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` at the **staging** Neon branch. Production is deploy-only; use `wrangler dev --env production` manually only when required.
@@ -95,7 +95,7 @@ See [api-runtimes.md](./api-runtimes.md).
 
 ## Environment credentials matrix
 
-| Concern | Local dev (`bun dev`) | Staging | Production |
+| Concern | Local dev (`bun repo dev`) | Staging | Production |
 |---------|----------------------|---------|------------|
 | **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
@@ -121,42 +121,42 @@ bunx wrangler secret bulk secrets.prod.json --env production
 Plain HTTP browser — no extra setup.
 
 ```sh
-# School data (students, announcements, etc.) — stop `bun dev` first
-bun db:browser:school
+# School data (students, announcements, etc.) — stop `bun repo dev` first
+bun repo db browser school
 
 # Better Auth users/sessions — can run while the API is up
-bun db:browser:auth
+bun repo db browser auth
 ```
 
 Opens automatically at `http://127.0.0.1:8191` (auth) or `http://127.0.0.1:8192` (school).
 
 | Symptom | Fix |
 |---------|-----|
-| School browser fails to open PGlite | Stop `bun dev` first — the API holds the lock on `.data/school` |
+| School browser fails to open PGlite | Stop `bun repo dev` first — the API holds the lock on `.data/school` |
 | Only auth tables visible | You ran `db:browser:auth` — use `db:browser:school` for school entities |
 
 ## Dev database seed
 
-Seeding targets the **same local deployment** as `bun dev`: school data and auth both live in PGlite (`.data/school`, `auth` schema). After starting the API, run `bun seed` in a second terminal to load demo data.
+Seeding targets the **same local deployment** as `bun repo dev`: school data and auth both live in PGlite (`.data/school`, `auth` schema). After starting the API, run `bun repo seed` in a second terminal to load demo data.
 
 ### Fresh clone or after wiping `.data/`
 
-**Order matters.** Never delete `.data` while `bun dev` is running — open PGlite/SQLite handles will corrupt the files.
+**Order matters.** Never delete `.data` while `bun repo dev` is running — open PGlite/SQLite handles will corrupt the files.
 
 ```sh
-# 1. Stop bun dev (Ctrl+C)
+# 1. Stop bun repo dev (Ctrl+C)
 
 # 2. Wipe local databases
 rm -rf .data
 
 # 3. Start API + webapp
-bun dev          # terminal 1 — http://localhost:9999/
+bun repo dev          # terminal 1 — http://localhost:9999/
 
 # 4. Seed demo data (once API is ready)
-bun seed    # terminal 2
+bun repo seed    # terminal 2
 ```
 
-`bun seed` runs the full HTTP seed. On a fresh database the flow is:
+`bun repo seed` runs the full HTTP seed. On a fresh database the flow is:
 
 1. Provision Better Auth users (`/auth/sign-up`)
 2. Sign in and call `POST /core/onboarding/register-school` when no school exists yet
@@ -167,13 +167,13 @@ bun seed    # terminal 2
 
 | Command | Purpose |
 |---------|---------|
-| `bun seed` | Full local demo data via HTTP |
-| `bun seed --staging` | Full seed against `SEED_STAGING_API_URL` |
-| `bun seed:doctor` | Diagnose seed health (sign-in, grants, entity checks) |
-| `bun seed:doctor --repair` | Auto-repair common drift without wiping `.data` |
-| `bun seed --scope <name>` | Granular scope — `bun seed --help` for list |
+| `bun repo seed` | Full local demo data via HTTP |
+| `bun repo seed --staging` | Full seed against `SEED_STAGING_API_URL` |
+| `bun repo seed --scope doctor` | Diagnose seed health (sign-in, grants, entity checks) |
+| `bun repo seed --scope doctor --repair` | Auto-repair common drift without wiping `.data` |
+| `bun repo seed --scope <name>` | Granular scope — `bun repo seed --help` for list |
 
-**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun smoke:staging` for post-deploy checks.
+**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun repo smoke-test staging` for post-deploy checks.
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
@@ -194,7 +194,7 @@ Better Auth can send **real emails** when Novu is configured:
 3. Apply Novu workflows (includes `auth.otp` and `auth.email_verification`):
 
 ```sh
-bun novu:bootstrap:apply
+bun repo novu bootstrap apply
 ```
 
 | Mode | `NOVU_SECRET_KEY` | OTP sign-in | Signup verification |
@@ -206,7 +206,7 @@ When Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true** (override wi
 
 **Quick test:** use login **OTP email** on `/login` with your real address, or sign up (Phase 1 UI) once available — you should receive the message in your inbox.
 
-To flush pending notification deliveries locally: `CRON_JOB_KEYS=processDueNotifications bun run cron:local` (requires seeded `.data/`). See [cron-runtimes.md](./cron-runtimes.md).
+To flush pending notification deliveries locally: `CRON_JOB_KEYS=processDueNotifications bun --filter @edaya/api cron:local` (requires seeded `.data/`). See [cron-runtimes.md](./cron-runtimes.md).
 
 ## Testing
 
@@ -224,25 +224,26 @@ bun --filter @edaya/api test
 
 Webapp tests run from **edaya_web** (`bun --filter @edaya/webapp test`).
 
-Before opening a pull request, run `bun repo verify` (alias: `bun run verify`). See [repo-cli.md](./repo-cli.md).
+Before opening a pull request, run `bun run verify`. For integration coverage (HTTP routes, PGlite services), also run `bun run test:integration`. See [repo-cli.md](./repo-cli.md) and [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
 
 | Location | Scope |
 |----------|-------|
 | `apps/api/tests/` | API unit tests (mocked runtime) |
-| `tooling/integration-tests/src/seed/` | Seed verification (requires seeded DB) |
-| `tooling/integration-tests/src/routes/` | Route integration tests |
+| `tooling/integration-tests/src/services/` etc. | Integration `api` slice (PGlite) |
+| `tooling/integration-tests/src/routes/` etc. | Integration `http` slice |
+| `tooling/integration-tests/src/seed/` | Integration `seed` slice (slow; opt-in) |
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
-| `bun seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun dev`, `rm -rf .data`, restart, `bun seed` |
-| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Auth DB empty (seed not run after wipe) | Run `bun seed` while API is up |
-| Sign-in succeeds but app shows “Session API indisponible” | Auth user exists but staff actor is not linked | `rm -rf .data` + full reseed, or `bun seed --scope auth:link` |
-| `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun dev` |
+| `bun repo seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun repo dev`, `rm -rf .data`, restart, `bun repo seed` |
+| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Auth DB empty (seed not run after wipe) | Run `bun repo seed` while API is up |
+| Sign-in succeeds but app shows “Session API indisponible” | Auth user exists but staff actor is not linked | `rm -rf .data` + full reseed, or `bun repo seed --scope auth:link` |
+| `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun repo dev` |
 | Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; leave `PUBLIC_API_URL` empty in dev |
 | `SQLiteError: disk I/O error` on auth | API still running during a wipe | Stop API before `rm -rf .data`, then restart |
-| DB browser fails on school tables | API still running (`bun dev`) holds the `.data/school` lock | Stop `bun dev`, then run `bun db:browser:school` |
+| DB browser fails on school tables | API still running (`bun repo dev`) holds the `.data/school` lock | Stop `bun repo dev`, then run `bun repo db browser school` |
 
 Quick health checks:
 
@@ -250,8 +251,8 @@ Quick health checks:
 curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
 # Auth users (PGlite auth schema — use db-browser or psql against .data/school)
-# bun run db:browser:auth
-bun seed:doctor                                                    # health check (sign-in + grants + data)
+# bun repo db browser auth
+bun repo seed --scope doctor                                                    # health check (sign-in + grants + data)
 ```
 
 - **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.

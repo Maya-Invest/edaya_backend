@@ -123,7 +123,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (!startLocalDev.includes('@edaya/local-files-server')) {
       violations.push({
         label: 'local dev orchestrator',
-        message: 'start-local-dev.ts must start @edaya/local-files-server with bun dev',
+        message: 'start-local-dev.ts must start @edaya/local-files-server with bun repo dev',
       })
     }
     if (startLocalDev.includes('.dev.vars')) {

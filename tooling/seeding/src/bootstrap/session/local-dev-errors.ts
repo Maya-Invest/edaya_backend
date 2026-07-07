@@ -1,5 +1,5 @@
 export const LOCAL_DEV_WIPE_AND_RESEED_HINT
-  = 'Stop bun dev, run `rm -rf .data`, start `bun dev`, then `bun seed` in a second terminal.'
+  = 'Stop bun repo dev, run `rm -rf .data`, start `bun repo dev`, then `bun repo seed` in a second terminal.'
 
 export function formatHttpBootstrapFailure(detail: string): string {
   return (

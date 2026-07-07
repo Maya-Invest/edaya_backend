@@ -33,7 +33,7 @@ export interface SeedDoctorResult {
   findings: readonly SeedDoctorFinding[]
 }
 
-const WIPE_AND_RESEED_REPAIR = 'Stop `bun dev`, run `bun seed:clean --yes`, restart the API, then `bun seed`.'
+const WIPE_AND_RESEED_REPAIR = 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.'
 
 function finding(
   severity: SeedDoctorFinding['severity'],
@@ -57,7 +57,7 @@ export async function runHttpSeedDoctor(
       'error',
       'api-unreachable',
       `API at ${client.origin} returned HTTP ${health.response.status}.`,
-      'Start the API (`bun dev`) and retry.',
+      'Start the API (`bun repo dev`) and retry.',
     ))
     return { status: 'broken', findings }
   }
@@ -78,7 +78,7 @@ export async function runHttpSeedDoctor(
       'error',
       'auth-missing',
       `Dev staff sign-in failed for ${context.minimalStaffEmail} (HTTP ${signInResponse.status}).`,
-      `Run \`bun seed\` while the API is up. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo seed\` while the API is up. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -91,7 +91,7 @@ export async function runHttpSeedDoctor(
       'warn',
       'staff-unlinked',
       'Sign-in succeeded but effective-grants failed — staff actor is likely not linked.',
-      `Run \`bun seed --scope auth:link\` or \`bun seed:doctor --repair\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo seed --scope auth:link\` or \`bun repo seed --scope doctor --repair\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
   }
   else {
@@ -110,7 +110,7 @@ export async function runHttpSeedDoctor(
       'error',
       'school-missing',
       'No school records found in the database.',
-      `Run \`bun seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo seed\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -133,7 +133,7 @@ export async function runHttpSeedDoctor(
       'error',
       'students-missing',
       `Demo school ${context.schoolId} has no students.`,
-      `Run \`bun seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+      `Run \`bun repo seed\`. ${WIPE_AND_RESEED_REPAIR}`,
     ))
     return { status: 'broken', findings }
   }
@@ -147,7 +147,7 @@ export async function runHttpSeedDoctor(
         'warn',
         'service-account-key-rejected',
         'The profile seeding API key was rejected (401).',
-        'Run `bun seed:doctor --repair` or `bun seed` on a fresh database.',
+        'Run `bun repo seed --scope doctor --repair` or `bun repo seed` on a fresh database.',
       ))
     }
     else {
@@ -159,7 +159,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'service-account-grants',
           'Seeding service account API key is accepted but effective-grants failed.',
-          'Run `bun seed:doctor --repair` or `bun seed` to reprovision the seeding service account.',
+          'Run `bun repo seed --scope doctor --repair` or `bun repo seed` to reprovision the seeding service account.',
         ))
       }
       else {
@@ -177,7 +177,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'access-assignments-missing',
           `Demo school has ${permissionCount} staff permission assignment(s); expected at least ${expectedPermissions}.`,
-          'Run `bun seed --scope access` or `bun seed:doctor --repair`.',
+          'Run `bun repo seed --scope access` or `bun repo seed --scope doctor --repair`.',
         ))
       }
       else {
@@ -199,7 +199,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'profile-photos-unavailable',
           `Local file storage is not reachable at ${resolveLocalFilesUrl()}; profile photos were not checked.`,
-          'Start `bun dev` (API + @edaya/local-files-server), then run `bun seed --scope profile-pictures`.',
+          'Start `bun repo dev` (API + @edaya/local-files-server), then run `bun repo seed --scope profile-pictures`.',
         ))
       }
       else {
@@ -209,7 +209,7 @@ export async function runHttpSeedDoctor(
             'warn',
             'profile-photos-missing',
             `Demo school has ${attachmentCount} attachment(s); expected at least ${expectedPhotos} profile photos.`,
-            'Run `bun seed --scope profile-pictures` or `bun seed:doctor --repair`.',
+            'Run `bun repo seed --scope profile-pictures` or `bun repo seed --scope doctor --repair`.',
           ))
         }
         else {

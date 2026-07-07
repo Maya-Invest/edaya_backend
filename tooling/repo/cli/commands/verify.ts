@@ -1,5 +1,5 @@
 import { paths } from '../lib/paths'
-import { runBunScript, runRepoCommand } from '../lib/spawn'
+import { runBunScript } from '../lib/spawn'
 
 interface VerifyStep {
   label: string
@@ -8,17 +8,9 @@ interface VerifyStep {
 
 const VERIFY_STEPS: VerifyStep[] = [
   { label: 'repo doctor', run: () => runBunScript(paths.doctor) },
-  { label: 'turbo lint', run: () => runRepoCommand(['bunx', 'turbo', 'run', 'lint']) },
-  { label: 'turbo check', run: () => runRepoCommand(['bunx', 'turbo', 'run', 'check']) },
-  { label: 'turbo build', run: () => runRepoCommand(['bunx', 'turbo', 'run', 'build']) },
   { label: 'repo check openapi', run: () => runBunScript(paths.openapiCheck) },
   { label: 'repo check boundaries', run: () => runBunScript(paths.checkBoundaries) },
   { label: 'repo check test-naming', run: () => runBunScript(paths.checkTestNaming) },
-  { label: '@edaya/repo test', run: () => runRepoCommand(['bun', '--filter', '@edaya/repo', 'test']) },
-  {
-    label: 'turbo test',
-    run: () => runRepoCommand(['bunx', 'turbo', 'run', 'test', '--', '--dots']),
-  },
 ]
 
 export async function runVerify(): Promise<number> {
@@ -36,7 +28,7 @@ export function verifyCliUsage(): string {
   return [
     'Usage: bun repo verify',
     '',
-    'Pre-PR pipeline:',
+    'Repo hygiene checks (no Turbo — use root `bun run lint|check|test|build|quality` or `bun run verify`):',
     ...VERIFY_STEPS.map((step, index) => `  ${index + 1}. ${step.label}`),
   ].join('\n')
 }

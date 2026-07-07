@@ -1,11 +1,11 @@
 # Cron runtimes
 
-Scheduled jobs are defined in `@edaya/core` (`package/domain-core/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun dev`.
+Scheduled jobs are defined in `@edaya/core` (`package/domain-core/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun repo dev`.
 
 | Profile | Entry | Env source | Command |
 |---------|-------|------------|---------|
 | **local** | `apps/api/src/entries/cron-local.ts` | `apps/api/.env` | `bun cron:local` (root) |
-| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun run deploy:api:production`, `bun run deploy:api:staging` |
+| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun repo deploy api production`, `bun repo deploy api staging` |
 
 ## Environment variables
 
@@ -24,14 +24,14 @@ Worker bindings (not env vars):
 |---------|------|
 | `CRON_JOBS` | Queue producer (heartbeat) and consumer (`queue` handler) |
 
-Local cron uses the same PGlite school DB and `auth` schema as `bun dev`. Novu is optional (from `.env`). File storage uses `@edaya/adaptor-local-fs` when `LOCAL_FILES_*` is set in `.env`.
+Local cron uses the same PGlite school DB and `auth` schema as `bun repo dev`. Novu is optional (from `.env`). File storage uses `@edaya/adaptor-local-fs` when `LOCAL_FILES_*` is set in `.env`.
 
 ## Local (one-shot against PGlite)
 
-Requires a seeded local database (`bun dev` at least once, or `bun seed:init` with API running).
+Requires a seeded local database (`bun repo dev` at least once, or `bun repo seed` with API running).
 
 ```sh
-bun run cron:local
+bun --filter @edaya/api cron:local
 ```
 
 Runs one heartbeat tick: loads due rows from `cron_job_schedules`, dispatches each `(jobKey, schoolId)` **inline**, and advances `next_run_at`.
@@ -39,7 +39,7 @@ Runs one heartbeat tick: loads due rows from `cron_job_schedules`, dispatches ea
 Optional filter (bypasses the schedule table and runs handlers directly):
 
 ```sh
-CRON_JOB_KEYS=reconcilePendingDeliveries bun run cron:local
+CRON_JOB_KEYS=reconcilePendingDeliveries bun --filter @edaya/api cron:local
 ```
 
 ## Worker (Cloudflare)
@@ -68,8 +68,8 @@ Queue names per deploy profile:
 Deploy with the API worker:
 
 ```sh
-bun run deploy:api:staging    # staging
-bun run deploy:api:production # production
+bun repo deploy api staging    # staging
+bun repo deploy api production # production
 ```
 
 ## Architecture
@@ -100,7 +100,7 @@ After deploying the merged API worker with heartbeat + queue:
 2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `*/5 * * * *` cron trigger.
 3. Verify queue consumers are attached to the API worker (Queues → `edaya-cron-jobs-*`).
 
-`bun run doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.
+`bun repo doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.
 
 ### Schedule changes without redeploy
 

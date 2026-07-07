@@ -35,7 +35,7 @@ edaya_backend/
 | `package/adaptor-novu` | Novu `NotificationGatewayPort` adapter, delivery ports | Workflow bootstrap, subscriber cleanup CLI |
 | `tooling/db-migrate` | Postgres `drizzle-kit migrate`, Hyperdrive / staging bootstrap | School SQL source files (those live in adaptor-postgres) |
 | `tooling/novu-ops` | Novu workflow bootstrap, subscriber cleanup | Runtime notification gateway |
-| `tooling/seeding` | HTTP seed scripts against running API (`bun seed`, …) | API route handlers |
+| `tooling/seeding` | HTTP seed scripts against running API (`bun repo seed`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts, Novu ops CLI, seed data |
 
 **Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth`. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
@@ -78,24 +78,24 @@ edaya_backend/
 
 | Script | Package / target |
 |--------|------------------|
-| `bun dev` | `@edaya/api` watch mode |
-| `bun dev:worker` | `@edaya/api` `dev:worker` |
-| `bun seed` / `bun seed:staging` / `bun seed:doctor` / `bun smoke:staging` | `@edaya/seeding` / `@edaya/integration-tests` |
-| `bun db:generate` | `@edaya/adaptor-postgres` |
-| `bun db:migrate:local` | `@edaya/db-migrate` — school + auth (local) |
-| `bun db:migrate:staging` | `@edaya/db-migrate` — school + auth (staging) |
-| `bun db:migrate:production` | `@edaya/db-migrate` — school + auth (production) |
-| `bun db:migrate:*:school` | `@edaya/db-migrate` — school only (`local` / `staging` / `production`) |
-| `bun db:migrate:*:auth` | `@edaya/db-migrate` — auth only (`local` / `staging` / `production`) |
-| `bun db:generate:auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
-| `bun auth:generate-schema` | `@edaya/adaptor-auth` |
-| `bun novu:bootstrap` / `bun novu:bootstrap:apply` / `bun novu:bootstrap:validate` | `@edaya/novu-ops` |
-| `bun novu:cleanup` / `bun novu:cleanup:apply` | `@edaya/novu-ops` |
-| `bun run openapi:generate` | Export OpenAPI + regenerate client bindings |
+| `bun repo dev` | `@edaya/api` watch mode |
+| `bun --filter @edaya/api dev:worker` | `@edaya/api` `dev:worker` |
+| `bun repo seed` / `bun repo seed --staging` / `bun repo seed --scope doctor` / `bun repo smoke-test staging` | `@edaya/seeding` / `@edaya/integration-tests` |
+| `bun repo db generate` | `@edaya/adaptor-postgres` |
+| `bun repo db migrate local` | `@edaya/db-migrate` — school + auth (local) |
+| `bun repo db migrate staging` | `@edaya/db-migrate` — school + auth (staging) |
+| `bun repo db migrate production` | `@edaya/db-migrate` — school + auth (production) |
+| `bun repo db migrate <env> --school` | `@edaya/db-migrate` — school only (`local` / `staging` / `production`) |
+| `bun repo db migrate <env> --auth` | `@edaya/db-migrate` — auth only (`local` / `staging` / `production`) |
+| `bun repo db generate --auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
+| `bun repo db generate --auth` | `@edaya/adaptor-auth` |
+| `bun repo novu bootstrap` / `bun repo novu bootstrap apply` / `bun repo novu bootstrap validate` | `@edaya/novu-ops` |
+| `bun repo novu cleanup` / `bun repo novu cleanup apply` | `@edaya/novu-ops` |
+| `bun repo openapi generate` | Export OpenAPI + regenerate client bindings |
 | `bun repo check openapi` | Drift check for generated artifacts |
-| `bun deploy:api:production` | `@edaya/api` `deploy:production` |
-| `bun deploy:api:staging` | `@edaya/api` `deploy:staging` |
-| `bun smoke:staging` | `@edaya/integration-tests` |
+| `bun repo deploy api production` | `@edaya/api` `deploy:production` |
+| `bun repo deploy api staging` | `@edaya/api` `deploy:staging` |
+| `bun repo smoke-test staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 

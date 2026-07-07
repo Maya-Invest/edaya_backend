@@ -1,6 +1,6 @@
 /**
  * Maps seeded entity types to fixture modules and loader steps.
- * Used for documentation, completeness checks, and the HTTP validation harness (`bun seed:validate`).
+ * Used for documentation, completeness checks, and the HTTP validation harness (`bun run test:integration:seed`).
  */
 
 import type { FixtureDatasetPurpose } from '../datasets/types'

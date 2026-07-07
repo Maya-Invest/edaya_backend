@@ -12,14 +12,14 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '')
 }
 
-/** Local API base URL (`bun seed`, `bun seed:doctor`, …). */
+/** Local API base URL (`bun repo seed`, `bun repo seed --scope doctor`, …). */
 export function resolveLocalSeedApiUrl(): string {
   const configured = process.env['SEED_API_URL']?.trim()
     || process.env['BETTER_AUTH_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_LOCAL_API_URL)
 }
 
-/** Staging API base URL (`bun seed --staging`, `bun smoke:staging`). */
+/** Staging API base URL (`bun repo seed --staging`, `bun repo smoke-test staging`). */
 export function resolveStagingSeedApiUrl(): string {
   const configured = process.env['SEED_STAGING_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_STAGING_API_URL)

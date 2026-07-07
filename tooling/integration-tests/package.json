@@ -6,8 +6,10 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "test": "bun test src/auth src/routes src/services src/runtime src/adaptor src/seed/contract.test.ts src/seed/http --parallel=1",
-    "test:slow": "bun test src/seed/slow --parallel=1",
+    "test:integration": "bun run test:integration:api && bun run test:integration:http",
+    "test:integration:api": "bun test src/services src/runtime src/adaptor --parallel=1",
+    "test:integration:http": "bun test src/auth src/routes src/generated/api-client --parallel=1",
+    "test:integration:seed": "bun test src/seed --parallel=1",
     "lint": "eslint src smoke",
     "lint:fix": "eslint src smoke --fix"
   },

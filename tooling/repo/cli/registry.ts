@@ -1,7 +1,7 @@
-import type { RepoSpawnCommand } from './parse-repo-cli'
+import type { RepoBunSpawnCommand } from './parse-repo-cli'
 import { paths } from './lib/paths'
 
-export function resolveRepoCommandScript(command: RepoSpawnCommand): string {
+export function resolveRepoCommandScript(command: RepoBunSpawnCommand): string {
   switch (command) {
     case 'dev':
       return paths.dev
