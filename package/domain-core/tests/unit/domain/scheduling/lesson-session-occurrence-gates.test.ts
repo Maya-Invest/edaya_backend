@@ -2,9 +2,9 @@ import type { BusinessRuleViolationError } from '../../../../src/domain/shared/b
 import { describe, expect, mock, test } from 'bun:test'
 import { AuthorizationError } from '../../../../src/capabilities/authorization'
 import {
+  isLessonSessionLogbookOnlyUpdate,
   LessonSession,
   OccurrenceStatus,
-  isLessonSessionLogbookOnlyUpdate,
   validateLessonSessionSave,
 } from '../../../../src/domain'
 import { DomainValidationError } from '../../../../src/domain/shared/utils'

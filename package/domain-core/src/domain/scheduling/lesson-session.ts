@@ -5,7 +5,6 @@ import type { SchoolRepositories } from '../../ports/repositories/school-reposit
 import { z } from 'zod'
 import {
   anyOperationModule,
-  authorizeClassGroupLinked,
   authorizeClassGroupLinkedDelete,
   authorizeSaveWithOperation,
   classGroupLinkedTenant,
