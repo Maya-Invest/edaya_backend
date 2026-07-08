@@ -892,7 +892,12 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(AttendanceOperations.record, { classGroupId: classGroup.id })(this.baseService.actor)
+    await operationModule(
+      AttendanceOperations.record,
+      lessonSession
+        ? { classSubjectId: lessonSession.classSubjectId, classGroupId: classGroup.id }
+        : { classGroupId: classGroup.id },
+    )(this.baseService.actor)
     if (classGroup.id) {
       await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
     }

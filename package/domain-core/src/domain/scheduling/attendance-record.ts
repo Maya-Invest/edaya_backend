@@ -5,8 +5,6 @@ import type { SchoolRepositories } from '../../ports/repositories/school-reposit
 import type { AttendanceAnchor } from './attendance-anchor'
 import { z } from 'zod'
 import {
-  authorizeDeleteWithOperation,
-  authorizeSaveWithOperation,
   config,
   dateTime,
   indirectTenant,
@@ -15,7 +13,7 @@ import {
   unique,
   write,
 } from '../../application/entities/entity-config'
-import { AttendanceOperations, denyResourceAccess } from '../../capabilities/authorization'
+import { AttendanceOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 import { attendanceAnchorFields, attendanceAnchorKey, refineAttendanceAnchor } from './attendance-anchor'
@@ -211,16 +209,8 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
     ),
     write: write(
       operationModule(AttendanceOperations.record),
-      authorizeSaveWithOperation(
-        AttendanceOperations.record,
-        resolveAttendanceRecordContext,
-        authorizeAttendanceResource(policy),
-      ),
-      authorizeDeleteWithOperation(
-        AttendanceOperations.record,
-        (entity, repositories) => resolveAttendanceRecordContext(entity, undefined, repositories),
-        authorizeAttendanceDeleteResource(policy),
-      ),
+      authorizeAttendanceSave(policy),
+      authorizeAttendanceDelete(policy),
     ),
     gates: {
       preSave: validateAttendanceSave,
@@ -228,32 +218,7 @@ export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ 
     atomicExecution,
   })
 
-async function resolveAttendanceRecordContext(
-  entity: AttendanceRecord,
-  _existing: AttendanceRecord | undefined,
-  repositories: SchoolRepositories,
-) {
-  if (entity.lessonSessionId) {
-    const lessonSession = await repositories.lessonSessions.findById(entity.lessonSessionId)
-    if (!lessonSession) {
-      denyResourceAccess()
-    }
-    return {
-      classSubjectId: lessonSession.classSubjectId,
-      classGroupId: lessonSession.classGroupId,
-    }
-  }
-  if (entity.attendanceId) {
-    const attendance = await repositories.attendances.findById(entity.attendanceId)
-    if (!attendance) {
-      denyResourceAccess()
-    }
-    return { classGroupId: attendance.classGroupId }
-  }
-  return {}
-}
-
-function authorizeAttendanceResource(
+function authorizeAttendanceSave(
   policy: AuthorizationPolicy,
 ): EntityWriteAuthorization<AttendanceRecord>['authorizeSave'] {
   return async (actor, entity) => {
@@ -261,7 +226,7 @@ function authorizeAttendanceResource(
   }
 }
 
-function authorizeAttendanceDeleteResource(
+function authorizeAttendanceDelete(
   policy: AuthorizationPolicy,
 ): EntityWriteAuthorization<AttendanceRecord>['authorizeDelete'] {
   return async (actor, entity) => {

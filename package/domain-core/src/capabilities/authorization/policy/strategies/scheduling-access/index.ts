@@ -6,6 +6,7 @@ import {
 } from '../../../capabilities/assert-homeroom-capability'
 import {
   assertTeachingCapability,
+  teacherCoversClassGroup,
   teacherScopeCoversClassSubject,
 } from '../../../capabilities/assert-teaching-capability'
 import { HomeroomCapability } from '../../../capabilities/homeroom-capability'
@@ -50,6 +51,25 @@ export async function staffLessonSessionAccess(
   }
 
   await dispatchClassGroupAccess(actor, [...classGroupIds], repos)
+}
+
+export async function teacherLessonSessionReadAccess(
+  actor: TeacherActorMetadata,
+  lessonSessionIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  const uniqueIds = [...new Set(lessonSessionIds)]
+  const lessonSessions = await repos.lessonSessions.findByIds(uniqueIds)
+  if (lessonSessions.length !== uniqueIds.length) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  const classGroupIds = [...new Set(lessonSessions.map(session => session.classGroupId))]
+  for (const classGroupId of classGroupIds) {
+    if (!await teacherCoversClassGroup(actor, classGroupId, repos)) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+  }
 }
 
 export async function teacherLessonSessionAccess(
@@ -202,6 +222,33 @@ export async function rosterAttendanceRecordAccess(
     }
     const classGroupIds = [...new Set(attendances.map(attendance => attendance.classGroupId))]
     await dispatchClassGroupAccess(actor, classGroupIds, repos)
+  }
+}
+
+export async function dispatchLessonSessionReadAccess(
+  actor: ActorMetadata,
+  lessonSessionIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  if (lessonSessionIds.length === 0) {
+    return
+  }
+
+  switch (actor.kind) {
+    case 'system':
+      return
+    case 'teacher':
+      return teacherLessonSessionReadAccess(actor, lessonSessionIds, repos)
+    case 'staff':
+      return staffLessonSessionAccess(actor, lessonSessionIds, repos)
+    case 'guardian':
+    case 'student':
+      return portalLessonSessionAccess(actor, lessonSessionIds, repos)
+    default: {
+      const _exhaustive: never = actor
+      void _exhaustive
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
   }
 }
 

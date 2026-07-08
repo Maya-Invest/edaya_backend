@@ -5,6 +5,7 @@ import {
   dispatchActivitySessionAccess,
   dispatchAttendanceRecordAccess,
   dispatchLessonSessionAccess,
+  dispatchLessonSessionReadAccess,
 } from '../strategies/scheduling-access'
 
 export async function checkActivitySessionAccess(
@@ -13,6 +14,14 @@ export async function checkActivitySessionAccess(
   repos: SchoolRepositories,
 ): Promise<void> {
   await dispatchActivitySessionAccess(actor, activitySessionIds, repos)
+}
+
+export async function checkLessonSessionReadAccess(
+  actor: ActorMetadata,
+  lessonSessionIds: readonly string[],
+  repos: SchoolRepositories,
+): Promise<void> {
+  await dispatchLessonSessionReadAccess(actor, lessonSessionIds, repos)
 }
 
 export async function checkLessonSessionAccess(

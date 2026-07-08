@@ -6,7 +6,7 @@ import type {
 } from '../../../../src/capabilities/authorization'
 import type { ReportCardResult } from '../../../../src/domain/assessments/report-card-result'
 import type { SchoolRepositories } from '../../../../src/ports'
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, mock, test } from 'bun:test'
 import { AuthorizationError, Permission } from '../../../../src/capabilities/authorization'
 import {
   authorizeReportCardCommentSave,
@@ -68,6 +68,20 @@ describe('report card result access strategies', () => {
       studentId: 'student-1',
       classGroupId: 'class-1',
     })], enrollmentRepos('class-1'))
+  })
+
+  test('allows subject teacher to read class report cards when section results are empty', async () => {
+    const actor = AuthFixtures.teacher.subject('cs-math', [])
+    const repos = {
+      classSubjects: {
+        list: mock(async () => [{ id: 'cs-math', classGroupId: 'class-1' }]),
+      },
+    } as unknown as SchoolRepositories
+
+    await teacherReportCardResultAccess(actor as TeacherActorMetadata, [reportCardResult({
+      studentId: 'student-1',
+      classGroupId: 'class-1',
+    })], repos)
   })
 
   test('allows staff with student read to access report cards', async () => {

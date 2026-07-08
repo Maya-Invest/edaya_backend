@@ -1,8 +1,21 @@
 import type { EntityConfigFactory } from '../../application/entities/entity-config'
+import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
+import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, operationModule, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, SchedulingOperations } from '../../capabilities/authorization'
+import {
+  anyOperationModule,
+  authorizeClassGroupLinked,
+  authorizeClassGroupLinkedDelete,
+  authorizeSaveWithOperation,
+  classGroupLinkedTenant,
+  config,
+  operationModule,
+  read,
+  readByIds,
+  write,
+} from '../../application/entities/entity-config'
+import { AttendanceOperations, denyResourceAccess, LogbookOperations, SchedulingOperations } from '../../capabilities/authorization'
 import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 import { parseDomain, zodDate } from '../shared/utils'
@@ -97,8 +110,16 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
       readByIds((actor, ids) => policy.checkLessonSessionAccess(actor, ids)),
     ),
     write: write(
-      operationModule(SchedulingOperations.timetableManage),
-      authorizeClassGroupLinked(policy, 'classGroupId'),
+      anyOperationModule([
+        SchedulingOperations.timetableManage,
+        LogbookOperations.update,
+        AttendanceOperations.record,
+      ]),
+      authorizeSaveWithOperation(
+        (entity, existing) => resolveLessonSessionWriteOperation(entity, existing),
+        (entity, existing) => resolveLessonSessionWriteContext(entity, existing),
+        authorizeLessonSessionSave(policy),
+      ),
       authorizeClassGroupLinkedDelete(policy),
     ),
     gates: {
@@ -106,6 +127,83 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
     },
     atomicExecution,
   })
+
+export function isLessonSessionLogbookOnlyUpdate(
+  entity: LessonSession,
+  existing: LessonSession,
+): boolean {
+  return entity.schoolId === existing.schoolId
+    && entity.classGroupId === existing.classGroupId
+    && entity.scheduleId === existing.scheduleId
+    && entity.classSubjectId === existing.classSubjectId
+    && entity.status === existing.status
+    && entity.isException === existing.isException
+    && entity.startsAt.getTime() === existing.startsAt.getTime()
+    && entity.endsAt.getTime() === existing.endsAt.getTime()
+    && entity.createdAt.getTime() === existing.createdAt.getTime()
+}
+
+export function isLessonSessionAttendanceCompletionUpdate(
+  entity: LessonSession,
+  existing: LessonSession,
+): boolean {
+  return entity.schoolId === existing.schoolId
+    && entity.classGroupId === existing.classGroupId
+    && entity.scheduleId === existing.scheduleId
+    && entity.classSubjectId === existing.classSubjectId
+    && entity.isException === existing.isException
+    && entity.startsAt.getTime() === existing.startsAt.getTime()
+    && entity.endsAt.getTime() === existing.endsAt.getTime()
+    && entity.displayLabel === existing.displayLabel
+    && entity.sessionNote === existing.sessionNote
+    && entity.createdAt.getTime() === existing.createdAt.getTime()
+    && existing.status === OccurrenceStatus.Pending
+    && entity.status === OccurrenceStatus.Completed
+}
+
+function resolveLessonSessionWriteOperation(
+  entity: LessonSession,
+  existing: LessonSession | undefined,
+) {
+  if (!existing) {
+    return SchedulingOperations.timetableManage
+  }
+  if (isLessonSessionLogbookOnlyUpdate(entity, existing)) {
+    return LogbookOperations.update
+  }
+  if (isLessonSessionAttendanceCompletionUpdate(entity, existing)) {
+    return AttendanceOperations.record
+  }
+  return SchedulingOperations.timetableManage
+}
+
+function resolveLessonSessionWriteContext(
+  entity: LessonSession,
+  existing: LessonSession | undefined,
+) {
+  if (existing && (
+    isLessonSessionLogbookOnlyUpdate(entity, existing)
+    || isLessonSessionAttendanceCompletionUpdate(entity, existing)
+  )) {
+    return { classSubjectId: entity.classSubjectId }
+  }
+  return { classGroupId: entity.classGroupId }
+}
+
+function authorizeLessonSessionSave(
+  policy: AuthorizationPolicy,
+): EntityWriteAuthorization<LessonSession>['authorizeSave'] {
+  return async (actor, entity, existing) => {
+    if (existing && (
+      isLessonSessionLogbookOnlyUpdate(entity, existing)
+      || isLessonSessionAttendanceCompletionUpdate(entity, existing)
+    )) {
+      await policy.checkLessonSessionAccess(actor, [entity.id])
+      return
+    }
+    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
+  }
+}
 
 export async function validateLessonSessionSave(
   lessonSession: LessonSession,

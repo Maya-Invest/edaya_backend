@@ -4,6 +4,7 @@ import { AuthorizationError } from '../../../../src/capabilities/authorization'
 import {
   LessonSession,
   OccurrenceStatus,
+  isLessonSessionLogbookOnlyUpdate,
   validateLessonSessionSave,
 } from '../../../../src/domain'
 import { DomainValidationError } from '../../../../src/domain/shared/utils'
@@ -61,6 +62,19 @@ describe('LessonSession domain invariants', () => {
     expect(updated.id).toBe('session-1')
     expect(updated.sessionNote).toBe('Exam prep')
     expect(updated.displayLabel).toBe('Math review')
+  })
+
+  test('detects logbook-only updates when structural fields are unchanged', () => {
+    const existing = lessonSession({ sessionNote: 'Day 1' })
+    const updated = existing.copyWith({
+      sessionNote: 'Day 2',
+      displayLabel: 'Math recap',
+    })
+
+    expect(isLessonSessionLogbookOnlyUpdate(updated, existing)).toBe(true)
+    expect(isLessonSessionLogbookOnlyUpdate(updated.copyWith({
+      status: OccurrenceStatus.Completed,
+    }), existing)).toBe(false)
   })
 })
 

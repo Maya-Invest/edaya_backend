@@ -1,4 +1,5 @@
 import type { TeacherActorMetadata } from '../../capabilities/authorization/model/actor'
+import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { ReportCardResult } from './report-card-result'
 import type { ReportCardResultSection } from './report-card-result-section'
 import {
@@ -239,11 +240,33 @@ export function teacherCanReadReportCard(
   return result.sectionResults.some(visit)
 }
 
-export function assertTeacherCanReadReportCard(
+export async function teacherTeachesReportCardClassGroup(
+  actor: TeacherActorMetadata,
+  classGroupId: string,
+  repositories: SchoolRepositories,
+): Promise<boolean> {
+  const taughtClassSubjectIds = actor.teacherScope.teaching.classSubjectIds
+  if (taughtClassSubjectIds.length === 0) {
+    return false
+  }
+
+  const taughtIds = new Set(taughtClassSubjectIds)
+  const classSubjects = await repositories.classSubjects.list({ classGroupId })
+  return classSubjects.some(classSubject => taughtIds.has(classSubject.id))
+}
+
+export async function assertTeacherCanReadReportCard(
   actor: TeacherActorMetadata,
   result: ReportCardResult,
-): void {
-  if (!teacherCanReadReportCard(actor, result)) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  repositories?: SchoolRepositories,
+): Promise<void> {
+  if (teacherCanReadReportCard(actor, result)) {
+    return
   }
+
+  if (repositories && await teacherTeachesReportCardClassGroup(actor, result.classGroupId, repositories)) {
+    return
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
 }

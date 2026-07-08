@@ -20,9 +20,9 @@ export const staffReportCardResultAccess: StaffReportCardResultAccess = async (a
   await staffStudentAccess(actor, studentIds, repos)
 }
 
-export const teacherReportCardResultAccess: TeacherReportCardResultAccess = async (actor, results) => {
+export const teacherReportCardResultAccess: TeacherReportCardResultAccess = async (actor, results, repos) => {
   for (const result of results) {
-    assertTeacherCanReadReportCard(actor, result)
+    await assertTeacherCanReadReportCard(actor, result, repos)
   }
 }
 

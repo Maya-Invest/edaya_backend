@@ -33,6 +33,7 @@ export interface AuthorizationPolicy {
   checkFeeAccess: (actor: ActorMetadata, feeIds: readonly string[]) => Promise<void>
   checkStudentFeeAccess: (actor: ActorMetadata, studentFeeIds: readonly string[]) => Promise<void>
   checkLessonSessionAccess: (actor: ActorMetadata, lessonSessionIds: readonly string[]) => Promise<void>
+  checkLessonSessionReadAccess: (actor: ActorMetadata, lessonSessionIds: readonly string[]) => Promise<void>
   checkActivitySessionAccess: (actor: ActorMetadata, activitySessionIds: readonly string[]) => Promise<void>
   checkAttendanceRecordAccess: (actor: ActorMetadata, records: readonly AttendanceRecord[]) => Promise<void>
   checkAttachmentAccess: (actor: ActorMetadata, attachments: readonly AttachmentAccessInput[]) => Promise<void>
