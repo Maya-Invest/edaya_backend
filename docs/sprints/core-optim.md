@@ -1,4 +1,4 @@
-# Plan: `@edaya/core` + `@edaya/authorization` + `@edaya/school-service`
+# Plan: `@edaya/core` + `@edaya/authorization` + `@edaya/service`
 
 ## 1. Goals
 
@@ -16,7 +16,7 @@ flowchart BT
   tooling["tooling/*"]
   pg["@edaya/adaptor-postgres"]
   novu["@edaya/adaptor-novu"]
-  svc["@edaya/school-service"]
+  svc["@edaya/service"]
   auth["@edaya/authorization"]
   core["@edaya/core"]
 
@@ -163,7 +163,7 @@ export type AuthorizationRepositories = Pick<
 
 ---
 
-### `@edaya/school-service` — `package/school-service/`
+### `@edaya/service` — `package/domain-service/`
 
 **Owns:** orchestration — CRUD wiring, workflows, notifications, cron, invitations.
 
@@ -211,7 +211,7 @@ src/
 
 ```json
 {
-  "name": "@edaya/school-service",
+  "name": "@edaya/service",
   "dependencies": {
     "@edaya/core": "workspace:*",
     "@edaya/authorization": "workspace:*",
@@ -281,7 +281,7 @@ import { studentConfig } from './config/students/student'
 
 ```typescript
 import type { Student, AcademicYear, ... } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/school-service'
+import type { SchoolRepositories } from '@edaya/service'
 import { DefaultAuthorizationRepository } from '@edaya/authorization'
 ```
 
@@ -319,17 +319,17 @@ Each package runs its own `bun test` via turbo.
 | `Permission`, `ActorMetadata`, `AuthorizationPolicy` | `@edaya/authorization` |
 | `EffectiveGrants`, `ScopeGrant`, `authorize()` | `@edaya/authorization` |
 | `DefaultAuthorizationRepository` | `@edaya/authorization` |
-| `SchoolService`, `ManagedEntityService` | `@edaya/school-service` |
-| `SchoolRepositories`, `buildSchoolOverview` | `@edaya/school-service` |
+| `SchoolService`, `ManagedEntityService` | `@edaya/service` |
+| `SchoolRepositories`, `buildSchoolOverview` | `@edaya/service` |
 | `CORE_ENTITY_KEYS` | `@edaya/core` |
-| `createCoreEntityServices` | `@edaya/school-service` |
+| `createCoreEntityServices` | `@edaya/service` |
 | `createInMemoryFileStorage` | `@edaya/core` |
-| `runCronJob`, `CronJobKey` | `@edaya/school-service` |
+| `runCronJob`, `CronJobKey` | `@edaya/service` |
 | `NotificationGatewayPort` | `@edaya/core` |
 
-**`apps/api` (~70 files):** add both `@edaya/authorization` and `@edaya/school-service`; keep `@edaya/core` for entity types and ports.
+**`apps/api` (~70 files):** add both `@edaya/authorization` and `@edaya/service`; keep `@edaya/core` for entity types and ports.
 
-**`tooling/fixtures`:** mostly `@edaya/core`; seed workflows add `@edaya/school-service`.
+**`tooling/fixtures`:** mostly `@edaya/core`; seed workflows add `@edaya/service`.
 
 ---
 
@@ -339,10 +339,10 @@ Each package runs its own `bun test` via turbo.
 
 **Scope:** Create packages, move code, fix imports. Entity configs may still live in domain files temporarily.
 
-1. Create `package/authorization/` and `package/school-service/` with `package.json`, `tsconfig.json`, eslint config mirroring domain-core.
+1. Create `package/authorization/` and `package/domain-service/` with `package.json`, `tsconfig.json`, eslint config mirroring domain-core.
 2. `git mv capabilities/authorization → package/authorization/src/`
-3. `git mv application → package/school-service/src/services/`
-4. `git mv capabilities/{notifications,files,invitations,scheduling-jobs,email} → package/school-service/src/capabilities/`
+3. `git mv application → package/domain-service/src/services/`
+4. `git mv capabilities/{notifications,files,invitations,scheduling-jobs,email} → package/domain-service/src/capabilities/`
 5. Slim `domain-core/src/index.ts` to domain + ports + adapters.
 6. Add workspace deps to `apps/api`, adaptors, tooling.
 7. Fix all import paths (mechanical).
@@ -368,7 +368,7 @@ Each package runs its own `bun test` via turbo.
 **Exit criteria:**
 
 ```sh
-rg "@edaya/school-service" package/authorization   # must be empty
+rg "@edaya/service" package/authorization   # must be empty
 rg "application/|school-service" package/authorization/src  # must be empty
 rg "capabilities/authorization|@edaya/authorization" package/domain-core/src/domain  # may still have *Config refs until PR 3
 ```
@@ -404,7 +404,7 @@ Per batch:
 
 ```sh
 # authorization must not depend on school-service
-! rg -q "@edaya/school-service" package/authorization
+! rg -q "@edaya/service" package/authorization
 
 # core domain must be pure
 ! rg -q "authorization|entity-config|EntityConfigFactory" package/domain-core/src/domain

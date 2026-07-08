@@ -1,1 +1,1 @@
-export * from '../../../school-service/tests/support/create-test-app'
+export * from '../../../domain-service/tests/support/create-test-app'

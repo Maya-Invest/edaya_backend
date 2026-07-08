@@ -123,7 +123,7 @@ Keep special cases explicit through per-entity overrides rather than parallel ha
 
 ### Evidence
 
-- `package/domain-core/src/services/school-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
+- `package/domain-core/src/services/domain-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
 - The facade does add value for reports/queries and for a stable public command surface, but much of it is mechanical.
 
 ### Impact
@@ -404,7 +404,7 @@ Update root README and API client README to match current browser SPA behavior:
 - `tooling/repo/ci/check-boundaries.ts`
 - `apps/api/src/runtime/README.md`
 - `package/domain-core/src/services/base-school-service.ts`
-- `package/domain-core/src/services/school-service.ts`
+- `package/domain-core/src/services/domain-service.ts`
 - `package/domain-core/src/services/managed-entity-service.ts`
 - `package/domain-core/src/ports/school-repositories.ts`
 - `apps/api/src/lib/school-api/registry.ts`

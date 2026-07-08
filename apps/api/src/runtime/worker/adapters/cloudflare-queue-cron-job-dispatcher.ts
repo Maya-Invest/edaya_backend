@@ -1,5 +1,5 @@
 import type { LoggerPort } from "@edaya/core";
-import type { CronJobDispatcherPort, CronJobDispatchMessage } from "@edaya/school-service";
+import type { CronJobDispatcherPort, CronJobDispatchMessage } from "@edaya/service";
 import { toCronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 
 export interface CronJobsQueueBinding {

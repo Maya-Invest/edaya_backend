@@ -1,4 +1,4 @@
-import { scheduleNotificationRecipientBackfillForActor } from "@edaya/school-service";
+import { scheduleNotificationRecipientBackfillForActor } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";

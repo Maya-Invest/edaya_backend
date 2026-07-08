@@ -12,7 +12,7 @@ import { coreRouteErrorResponses, validatedJson } from "./shared";
 import type { SchoolApiRoutePair } from "./shared";
 import { schoolApiPath } from "./paths";
 import { resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
-import type { SchoolCommandKey } from "@edaya/school-service";
+import type { SchoolCommandKey } from "@edaya/service";
 
 const INVITATION_COMMANDS = new Set<SchoolCommandKey>([
   "sendAccountInvitation",

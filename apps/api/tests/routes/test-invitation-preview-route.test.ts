@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { parseEnv } from "@/runtime";
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
-import { hashInvitationToken } from "@edaya/school-service";
+import { hashInvitationToken } from "@edaya/service";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";

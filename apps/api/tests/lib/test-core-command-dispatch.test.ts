@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { SCHOOL_COMMAND_KEYS } from "@edaya/school-service";
+import { SCHOOL_COMMAND_KEYS } from "@edaya/service";
 import { coreCommands } from "@/lib/school-api/registry";
 import type { CoreCommandMethodName } from "@/lib/school-api/dispatch/commands";
 

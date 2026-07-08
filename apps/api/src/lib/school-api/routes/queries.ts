@@ -1,4 +1,4 @@
-import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/school-service";
+import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";

@@ -21,7 +21,7 @@
     "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
-    "@edaya/school-service": "workspace:*",
+    "@edaya/service": "workspace:*",
     "@edaya/fixtures": "workspace:*",
     "@edaya/seeding": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",

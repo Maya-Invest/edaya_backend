@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'bun:test'
 
 const authorizationRoot = join(dirname(fileURLToPath(import.meta.url)), '../..')
-const schoolServiceRoot = join(authorizationRoot, '../school-service')
+const schoolServiceRoot = join(authorizationRoot, '../domain-service')
 const coreRoot = join(authorizationRoot, '../domain-core')
 
 async function sourceFiles(dir: string): Promise<string[]> {

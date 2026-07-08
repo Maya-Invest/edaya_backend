@@ -2,7 +2,7 @@ import type { Attachment } from '@edaya/core'
 import type { SeedApplication } from '../../../support/types'
 import type { ProfilePicturesSeedPort, UploadProfilePhotoInput } from '../port'
 import { AttachmentStatus } from '@edaya/core'
-import { buildAttachmentContentUrl } from '@edaya/school-service'
+import { buildAttachmentContentUrl } from '@edaya/service'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 

@@ -34,7 +34,7 @@ edaya_backend/
 |-------|------|--------------|
 | `@edaya/core` (`package/domain-core`) | Entity types, Zod schemas, ports, registry, shared utils | Workflows, entity `*Config` factories, notifications, cron dispatch |
 | `@edaya/authorization` (`package/authorization`) | Permissions, grants, policy, `AuthorizationRepositories` | School workflows, entity configs, notification templates |
-| `@edaya/school-service` (`package/school-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, Better Auth runtime |
+| `@edaya/service` (`package/domain-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, Better Auth runtime |
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `package/adaptor-auth` | Auth Drizzle schema, auth SQL, auth `runMigrations()` | Better Auth runtime config (lives in `apps/api`) |
 | `package/adaptor-novu` | Novu `NotificationGatewayPort` adapter, delivery ports | Workflow bootstrap, subscriber cleanup CLI |
@@ -45,9 +45,9 @@ edaya_backend/
 
 **Domain dependency direction:** `school-service` → `authorization` → `core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
 
-**Dependency direction:** `package/domain-core`, `package/authorization`, `package/school-service`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth` from domain/adaptor persistence layers. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
+**Dependency direction:** `package/domain-core`, `package/authorization`, `package/domain-service`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth` from domain/adaptor persistence layers. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
 
-**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`). ESLint `no-restricted-imports` blocks `@edaya/school-service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/school-service` in `package/authorization/src`.
+**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/authorization/src`.
 
 ## Package map
 
@@ -56,7 +56,7 @@ edaya_backend/
 | `@edaya/api` | `apps/api` | Hono API + scheduled cron (Node + Worker) |
 | `@edaya/core` | `package/domain-core` | Domain entities + ports |
 | `@edaya/authorization` | `package/authorization` | Authorization engine |
-| `@edaya/school-service` | `package/school-service` | School orchestration (workflows, capabilities) |
+| `@edaya/service` | `package/domain-service` | School orchestration (workflows, capabilities) |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |
 | `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |

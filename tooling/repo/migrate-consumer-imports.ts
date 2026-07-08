@@ -10,7 +10,7 @@ const targets = [
   join(root, 'apps/api'),
   join(root, 'package/adaptor-postgres'),
   join(root, 'package/adaptor-novu'),
-  join(root, 'package/school-service/tests'),
+  join(root, 'package/domain-service/tests'),
   join(root, 'package/authorization/tests'),
   join(root, 'tooling/fixtures'),
   join(root, 'tooling/seeding'),
@@ -205,7 +205,7 @@ function migrateFile(content: string): string {
       lines.push(`import ${isTypeOnly ? 'type ' : ''}{ ${auth.join(', ')} } from "@edaya/authorization"`)
     }
     if (service.length > 0) {
-      lines.push(`import ${isTypeOnly ? 'type ' : ''}{ ${service.join(', ')} } from "@edaya/school-service"`)
+      lines.push(`import ${isTypeOnly ? 'type ' : ''}{ ${service.join(', ')} } from "@edaya/service"`)
     }
     return lines.join('\n')
   })
@@ -223,7 +223,7 @@ function migrateFile(content: string): string {
       if (line.includes('AuthCacheInvalidation'))
         return 'from "@edaya/authorization"'
       if (line.includes('createInlineCronJobDispatcher') || line.includes('CronJob'))
-        return 'from "@edaya/school-service"'
+        return 'from "@edaya/service"'
       return match
     },
   )

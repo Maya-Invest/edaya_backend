@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const testsDir = join(import.meta.dir, '../../package/school-service/tests')
+const testsDir = join(import.meta.dir, '../../package/domain-service/tests')
 
 function walk(dir: string): string[] {
   const files: string[] = []

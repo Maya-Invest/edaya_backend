@@ -1,5 +1,5 @@
 import type { AttendanceJustificationStatus, StudentFee } from '@edaya/core'
-import type { SchoolRepositories, SchoolService } from '@edaya/school-service'
+import type { SchoolRepositories, SchoolService } from '@edaya/service'
 import { AuthorizationError, AuthorizationErrorCode, authorize, createBootstrapStaffActorMetadata, Permission, permissionRowsFromTemplatePermissions, resolveAuditActorId } from '@edaya/authorization'
 import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, buildStudentFeeSummary, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Fee, FeeStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
 

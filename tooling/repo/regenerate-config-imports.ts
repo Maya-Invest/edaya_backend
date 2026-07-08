@@ -6,7 +6,7 @@ import { join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dir, '../..')
 const DOMAIN_ROOT = join(ROOT, 'package/domain-core/src/domain')
-const CONFIG_ROOT = join(ROOT, 'package/school-service/src/services/entities/config')
+const CONFIG_ROOT = join(ROOT, 'package/domain-service/src/services/entities/config')
 
 const ENTITY_CONFIG_SYMBOLS = [
   'config',

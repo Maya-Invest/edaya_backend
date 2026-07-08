@@ -1,5 +1,5 @@
 import { MessageDeliveryRecipientKind } from "@edaya/core";
-import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY, AUTH_PLATFORM_CONTEXT_ID } from "@edaya/school-service";
+import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY, AUTH_PLATFORM_CONTEXT_ID } from "@edaya/service";
 import type { NovuSubscriberClient } from "./novu-subscriber-client";
 import { createNovuSdkClient } from "./novu-sdk-client";
 import { createNovuSubscriberClient } from "./novu-subscriber-client";

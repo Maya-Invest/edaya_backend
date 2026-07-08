@@ -8,7 +8,7 @@ import { dirname, join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dir, '../..')
 const DOMAIN_ROOT = join(ROOT, 'package/domain-core/src/domain')
-const CONFIG_ROOT = join(ROOT, 'package/school-service/src/services/entities/config')
+const CONFIG_ROOT = join(ROOT, 'package/domain-service/src/services/entities/config')
 const DRY_RUN = process.argv.includes('--dry-run')
 
 function walkTsFiles(dir: string): string[] {
@@ -53,7 +53,7 @@ function rewriteRelativeImports(configBody: string, domainFile: string, configFi
       }
       return match
     })
-    .replace(/from ['"]@edaya\/school-service['"]/g, `from '${entityConfigPath}'`)
+    .replace(/from ['"]@edaya\/domain-service['"]/g, `from '${entityConfigPath}'`)
 }
 
 function collectDomainImports(domainHeader: string): string[] {
@@ -62,7 +62,7 @@ function collectDomainImports(domainHeader: string): string[] {
     const trimmed = line.trim()
     if (trimmed.startsWith('import ')) {
       if (
-        trimmed.includes('@edaya/school-service')
+        trimmed.includes('@edaya/service')
         || trimmed.includes('@edaya/authorization')
         || trimmed.includes('EntityConfigFactory')
       ) {
@@ -121,7 +121,7 @@ function stripConfigImports(header: string): string {
   for (const line of lines) {
     const trimmed = line.trim()
     if (trimmed.startsWith('import ') && (
-      trimmed.includes('@edaya/school-service')
+      trimmed.includes('@edaya/service')
       || trimmed.includes('EntityConfigFactory')
       || (trimmed.includes('@edaya/authorization') && !usesAuthorizationInDomain(header, line))
     )) {
@@ -162,7 +162,7 @@ function buildConfigFile(
 ): string {
   const entityConfigPath = entityConfigImportPath(configFile)
   const carriedImports = collectDomainImports(domainHeader)
-    .map(line => line.replace(/@edaya\/school-service/g, entityConfigPath))
+    .map(line => line.replace(/@edaya\/domain-service/g, entityConfigPath))
   const { types, values } = collectEntitySymbols(domainHeader, configBody)
 
   const coreTypeImports = types.filter(t => !values.includes(t))

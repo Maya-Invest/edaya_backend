@@ -7,7 +7,7 @@ import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError } from "@edaya/core";
 import { AttachmentOperations, isInteractiveActor, operationModule } from "@edaya/authorization";
-import { allowsPublicInlineAttachmentContent, assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/school-service";
+import { allowsPublicInlineAttachmentContent, assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";

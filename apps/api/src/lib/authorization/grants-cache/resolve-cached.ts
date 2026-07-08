@@ -1,5 +1,5 @@
 import type { EffectiveGrants } from "@edaya/authorization";
-import type { SchoolRepositories } from "@edaya/school-service";
+import type { SchoolRepositories } from "@edaya/service";
 import {
   getEffectiveGrantsCacheStore,
   resetEffectiveGrantsCacheStore,

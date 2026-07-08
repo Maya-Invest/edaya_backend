@@ -1,4 +1,4 @@
-import { CORE_ENTITY_KEYS } from '@edaya/school-service'
+import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createEntityStores } from './entity-stores'
 

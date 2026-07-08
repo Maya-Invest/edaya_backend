@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-const CONFIG_ROOT = join(import.meta.dir, '../../package/school-service/src/services/entities/config')
+const CONFIG_ROOT = join(import.meta.dir, '../../package/domain-service/src/services/entities/config')
 const DOMAIN_ROOT = join(import.meta.dir, '../../package/domain-core/src/domain')
 
 function walk(dir: string): string[] {

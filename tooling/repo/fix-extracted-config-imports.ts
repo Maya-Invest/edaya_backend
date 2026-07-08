@@ -8,7 +8,7 @@ import { join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dir, '../..')
 const DOMAIN_ROOT = join(ROOT, 'package/domain-core/src/domain')
-const CONFIG_ROOT = join(ROOT, 'package/school-service/src/services/entities/config')
+const CONFIG_ROOT = join(ROOT, 'package/domain-service/src/services/entities/config')
 
 const ENTITY_CONFIG_SYMBOLS = [
   'config',
@@ -264,8 +264,8 @@ function cleanDomainFile(domainFile: string): void {
   content = content.replace(/\nasync function deny\w+EntityWrite\(\): Promise<void> \{\n {2}denyResourceAccess\(\)\n\}\n?$/m, '\n')
 
   // Drop unused school-service import blocks
-  content = content.replace(/^import type \{[^}]+\} from '@edaya\/school-service'\n/gm, '')
-  content = content.replace(/^import \{[^}]+\} from '@edaya\/school-service'\n/gm, '')
+  content = content.replace(/^import type \{[^}]+\} from '@edaya\/domain-service'\n/gm, '')
+  content = content.replace(/^import \{[^}]+\} from '@edaya\/domain-service'\n/gm, '')
   content = content.replace(/^import type \{ CoreEntityRepositories \} from '@edaya\/core'\n/gm, '')
 
   // Drop unused authorization imports when no longer referenced

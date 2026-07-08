@@ -1,6 +1,6 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseInteractiveActorKind, resolveInteractiveActorIdentity } from "@edaya/authorization";
 import type { EffectiveGrants, GuardianScope, StudentScope, TeacherActorScope } from "@edaya/authorization";
-import type { SchoolRepositories } from "@edaya/school-service";
+import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
 import { resolveCachedActorScope } from "@/lib/authorization/scope-cache/resolve-cached";

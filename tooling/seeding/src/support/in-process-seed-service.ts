@@ -1,4 +1,4 @@
-import type { SchoolService } from '@edaya/school-service'
+import type { SchoolService } from '@edaya/service'
 import type { SeedApplication } from '../support/types'
 import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'

@@ -21,7 +21,7 @@
   "dependencies": {
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
-    "@edaya/school-service": "workspace:*",
+    "@edaya/service": "workspace:*",
     "drizzle-orm": "^0.39.0"
   },
   "devDependencies": {

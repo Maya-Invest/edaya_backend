@@ -1,4 +1,4 @@
-import type { CoreEntityKey, SchoolService } from "@edaya/school-service";
+import type { CoreEntityKey, SchoolService } from "@edaya/service";
 
 export interface EntityReadService {
   list: (...args: any[]) => Promise<unknown[]>;

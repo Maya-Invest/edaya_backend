@@ -1,6 +1,6 @@
 import type { LoggerPort } from "@edaya/core";
-import type { CronHeartbeatSummary, CronJobDispatcherPort, CronJobKey } from "@edaya/school-service";
-import { computeNextRunAt, createInlineCronJobDispatcher, runCronJobs, tickCronSchedules } from "@edaya/school-service";
+import type { CronHeartbeatSummary, CronJobDispatcherPort, CronJobKey } from "@edaya/service";
+import { computeNextRunAt, createInlineCronJobDispatcher, runCronJobs, tickCronSchedules } from "@edaya/service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-dispatcher";
 import type { ApiRuntime } from "@/runtime/types";

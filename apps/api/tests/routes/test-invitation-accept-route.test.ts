@@ -3,7 +3,7 @@ import { parseEnv } from "@/runtime";
 import type { Permission } from "@edaya/authorization";
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
-import { hashInvitationToken } from "@edaya/school-service";
+import { hashInvitationToken } from "@edaya/service";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";

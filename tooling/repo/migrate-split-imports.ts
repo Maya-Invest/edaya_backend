@@ -25,7 +25,7 @@ function walk(dir: string): string[] {
 }
 
 function rewriteSchoolService(content: string, filePath: string): string {
-  const rel = relative(join(root, 'package/school-service/src'), filePath)
+  const rel = relative(join(root, 'package/domain-service/src'), filePath)
   const inServices = rel.startsWith('services' + '/') || rel === 'services'
   const inCapabilities = rel.startsWith('capabilities' + '/')
 
@@ -98,7 +98,7 @@ function rewriteAuthorization(content: string): string {
   next = next.replace(
     /from '(?:\.\.\/)+application(?:\/([^']+))?'/g,
     (_match, subpath: string | undefined) =>
-      subpath ? `from '@edaya/school-service/services/${subpath}'` : `from '@edaya/school-service'`,
+      subpath ? `from '@edaya/service/services/${subpath}'` : `from '@edaya/service'`,
   )
 
   return next
@@ -110,7 +110,7 @@ function rewriteCore(content: string): string {
   next = next.replace(
     /from '(?:\.\.\/)+application(?:\/([^']+))?'/g,
     (_match, subpath: string | undefined) =>
-      subpath ? `from '@edaya/school-service/services/${subpath}'` : `from '@edaya/school-service'`,
+      subpath ? `from '@edaya/service/services/${subpath}'` : `from '@edaya/service'`,
   )
 
   next = next.replace(
@@ -121,15 +121,15 @@ function rewriteCore(content: string): string {
 
   next = next.replace(
     /from '(?:\.\.\/)+capabilities\/(?!authorization)([^']+)'/g,
-    (_match, subpath: string) => `from '@edaya/school-service/capabilities/${subpath}'`,
+    (_match, subpath: string) => `from '@edaya/service/capabilities/${subpath}'`,
   )
 
   return next
 }
 
 const packages = [
-  { name: 'school-service', dir: join(root, 'package/school-service/src'), rewrite: rewriteSchoolService },
-  { name: 'school-service-tests', dir: join(root, 'package/school-service/tests'), rewrite: rewriteSchoolService },
+  { name: 'school-service', dir: join(root, 'package/domain-service/src'), rewrite: rewriteSchoolService },
+  { name: 'school-service-tests', dir: join(root, 'package/domain-service/tests'), rewrite: rewriteSchoolService },
   { name: 'authorization', dir: join(root, 'package/authorization/src'), rewrite: (c: string) => rewriteAuthorization(c) },
   { name: 'authorization-tests', dir: join(root, 'package/authorization/tests'), rewrite: (c: string) => rewriteAuthorization(c) },
   { name: 'domain-core', dir: join(root, 'package/domain-core/src'), rewrite: (c: string) => rewriteCore(c) },
@@ -141,7 +141,7 @@ for (const pkg of packages) {
   for (const file of walk(pkg.dir)) {
     const original = readFileSync(file, 'utf8')
     const updated = pkg.name.startsWith('school-service')
-      ? rewriteSchoolService(original, file.startsWith(join(root, 'package/school-service/src')) ? file : join(root, 'package/school-service/src/_'))
+      ? rewriteSchoolService(original, file.startsWith(join(root, 'package/domain-service/src')) ? file : join(root, 'package/domain-service/src/_'))
       : pkg.rewrite(original)
     if (updated !== original) {
       writeFileSync(file, updated)

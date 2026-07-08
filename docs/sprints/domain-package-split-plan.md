@@ -3,7 +3,7 @@
 > **Status:** PR1–PR5 complete  
 > **Created:** 2026-07-08  
 > **Last updated:** 2026-07-08  
-> **Scope:** Split `package/domain-core` into `@edaya/core`, `@edaya/authorization`, and `@edaya/school-service`  
+> **Scope:** Split `package/domain-core` into `@edaya/core`, `@edaya/authorization`, and `@edaya/service`  
 > **Related:** [integrations-restructure.md](../reference/integrations-restructure.md), [relationship-native-auth-plan.md](./relationship-native-auth-plan.md)
 
 ## Target architecture
@@ -11,7 +11,7 @@
 ```text
 @edaya/core              domain/, ports/, adapters/, registry/, entity-access/, shared/
 @edaya/authorization     auth engine (promoted from capabilities/authorization)
-@edaya/school-service    services/, capabilities/ (notifications, cron, files, invitations, email)
+@edaya/service    services/, capabilities/ (notifications, cron, files, invitations, email)
 
 Dependency: school-service → authorization → core
 ```
@@ -33,7 +33,7 @@ Dependency: school-service → authorization → core
 ### Packages created
 
 - `package/authorization/` — `package.json`, `tsconfig.json`, `src/index.ts`
-- `package/school-service/` — same scaffolding
+- `package/domain-service/` — same scaffolding
 
 ### Source moved
 
@@ -66,7 +66,7 @@ Dependency: school-service → authorization → core
 
 ### Consumer deps partially updated
 
-`apps/api`, `adaptor-postgres`, `tooling/integration-tests`, `tooling/seeding`, `tooling/fixtures` — added `@edaya/authorization` and `@edaya/school-service`.
+`apps/api`, `adaptor-postgres`, `tooling/integration-tests`, `tooling/seeding`, `tooling/fixtures` — added `@edaya/authorization` and `@edaya/service`.
 
 ### Tests partially moved
 
@@ -81,7 +81,7 @@ Dependency: school-service → authorization → core
 ```sh
 bun --filter @edaya/core check
 bun --filter @edaya/authorization check
-bun --filter @edaya/school-service check
+bun --filter @edaya/service check
 bun --filter @edaya/adaptor-postgres check
 ```
 
@@ -97,17 +97,17 @@ bun --filter @edaya/adaptor-postgres check
 
 ### Goals
 
-1. Move `SchoolRepositories` aggregate to `@edaya/school-service` ✅
+1. Move `SchoolRepositories` aggregate to `@edaya/service` ✅
 2. Keep `CoreEntityRepositories` in `@edaya/core` only ✅
 3. Define `AuthorizationRepositories` in `@edaya/authorization` ✅
 4. Move cron platform ports to school-service ✅
 5. Split report-card comment access — `report-card-comment-rules.ts` (core) + `comment-access.ts` (authorization) ✅
-6. Update consumer imports (`SchoolRepositories` → `@edaya/school-service`) — partial; apps/api tests remain for PR4
+6. Update consumer imports (`SchoolRepositories` → `@edaya/service`) — partial; apps/api tests remain for PR4
 
 ### Not in PR2 (completed in PR3)
 
 - ~~54 entity `*Config` factories still in `domain/*.ts`~~ → extracted to school-service
-- ~~`@edaya/school-service` in core deps~~ → removed in PR3
+- ~~`@edaya/service` in core deps~~ → removed in PR3
 
 ### PR2 checklist
 
@@ -119,7 +119,7 @@ bun --filter @edaya/adaptor-postgres check
 - [x] Consumer import updates (adaptor-postgres, school-service, authorization)
 - [x] `bun --filter @edaya/core check` green (with transitional entity-config deps)
 - [x] `bun --filter @edaya/authorization check` green
-- [x] `bun --filter @edaya/school-service check` green
+- [x] `bun --filter @edaya/service check` green
 - [ ] Remaining `apps/api` / test import fixes (PR4)
 - [ ] Re-enable tests in package `tsconfig.json` `include` arrays (PR4)
 
@@ -141,7 +141,7 @@ Extracted all 54 `*Config` factories from `package/domain-core/src/domain/**/*.t
 - `school-service/src/services/runtime/core-entity-catalog.ts` — imports configs from `../entities/config`
 - Domain entity files retain types/schemas only; `isActivityAvailableForClassGroup` stays in domain (used by tests)
 - `notification-template-document-schema.ts` in core; school-service re-exports where needed
-- `@edaya/school-service` removed from `@edaya/core` `package.json`
+- `@edaya/service` removed from `@edaya/core` `package.json`
 - `@edaya/authorization` retained in core for `staff-assignment.ts` and `staff-permission-assignment.ts` schema coupling (`Permission`, `validateScopeIds`)
 
 ### Verification
@@ -149,23 +149,23 @@ Extracted all 54 `*Config` factories from `package/domain-core/src/domain/**/*.t
 ```sh
 bun --filter @edaya/core check          # ✅
 bun --filter @edaya/authorization check  # ✅
-bun --filter @edaya/school-service check   # ✅
+bun --filter @edaya/service check   # ✅
 bun --filter @edaya/adaptor-postgres check # ✅
 ```
 
 Domain purity:
 
 ```sh
-rg "@edaya/school-service|EntityConfigFactory" package/domain-core/src/domain  # no matches
+rg "@edaya/service|EntityConfigFactory" package/domain-core/src/domain  # no matches
 ```
 
 ### PR3 checklist
 
 - [x] Extract 54 entity configs to `school-service/src/services/entities/config/`
 - [x] Update `core-entity-catalog` imports
-- [x] Remove `@edaya/school-service` from `@edaya/core` deps
-- [x] Export configs/validators from `@edaya/school-service` barrel
-- [x] Fix authorization test import (`staffPermissionAssignmentConfig` → `@edaya/school-service`)
+- [x] Remove `@edaya/service` from `@edaya/core` deps
+- [x] Export configs/validators from `@edaya/service` barrel
+- [x] Fix authorization test import (`staffPermissionAssignmentConfig` → `@edaya/service`)
 - [x] Fix `entity-config-edge-gates.test.ts` validator imports
 - [ ] Move remaining domain-core tests that import school-service (PR4)
 - [x] Remove `@edaya/authorization` from core production deps (`Permission` + scope validation in `domain/permissions/`)
@@ -185,7 +185,7 @@ Extract `*Config` from `package/domain-core/src/domain/*.ts` → `school-service
 | 3e | messaging, school-life |
 | 3f | access, attachments |
 
-After PR3: remove `@edaya/school-service` from `@edaya/core` `package.json`. (`@edaya/authorization` remains for staff permission schema coupling.)
+After PR3: remove `@edaya/service` from `@edaya/core` `package.json`. (`@edaya/authorization` remains for staff permission schema coupling.)
 
 ---
 
@@ -199,7 +199,7 @@ After PR3: remove `@edaya/school-service` from `@edaya/core` `package.json`. (`@
 - Removed duplicate `domain-core/tests/{services,cron,notifications,queries,application,unit/auth,unit/invitations}` (copies live in school-service / authorization)
 - Restored shared test support files (`effective-grants`, `create-test-app`, `authorization-fixtures`, `operation-matrix`, etc.)
 - Exported gate validators from `school-service/src/services/entities/config/index.ts`
-- Added `@edaya/school-service` dependency to `@edaya/adaptor-novu`
+- Added `@edaya/service` dependency to `@edaya/adaptor-novu`
 
 ### Verification (PR4)
 
@@ -217,7 +217,7 @@ bun run verify                             # ✅ quality + build + unit tests + 
 - [x] Finish `apps/api` imports
 - [x] Finish `tooling/*`, `adaptor-postgres`, `adaptor-novu` imports
 - [x] Re-enable tests in package `tsconfig.json` `include` arrays
-- [x] Fix domain-core test imports (gate validators → `@edaya/school-service`)
+- [x] Fix domain-core test imports (gate validators → `@edaya/service`)
 - [x] Remove duplicate domain-core test trees
 - [x] Restore shared test harness (`create-test-app`, `effective-grants`, …)
 - [x] Finish school-service workflow test imports (`workflow-test-context.ts`, `account-invitation-workflows.test.ts`, …)
@@ -238,7 +238,7 @@ bun run verify                             # ✅ quality + build + unit tests + 
 
 ## PR5 — Enforcement (complete)
 
-- Extended `tooling/repo/lib/boundaries.ts` — core/authorization must not import `@edaya/school-service`; domain packages must not import `apps/` or `@edaya/adaptor-auth`
+- Extended `tooling/repo/lib/boundaries.ts` — core/authorization must not import `@edaya/service`; domain packages must not import `apps/` or `@edaya/adaptor-auth`
 - ESLint `no-restricted-imports` on `package/domain-core/src` and `package/authorization/src`
 - Updated `AGENTS.md` and `docs/reference/integrations-restructure.md`
 
@@ -263,10 +263,10 @@ Production dependency chain is acyclic: `school-service` → `authorization` →
 
 To remove test-only workspace cycles that blocked Turbo upstream `check`:
 
-- Moved gate/storage/auth tests that needed `@edaya/school-service` or `@edaya/authorization` out of `@edaya/core` into `package/school-service/tests/unit/` and `package/authorization/tests/unit-auth/`
-- Moved authorization tests that needed school-service fixtures into `package/school-service/tests/unit/auth/`
-- Removed `@edaya/authorization` and `@edaya/school-service` from `@edaya/core` `devDependencies`
-- Removed `@edaya/school-service` from `@edaya/authorization` `devDependencies` (authorization `create-test-app` re-exports school-service support via relative path)
+- Moved gate/storage/auth tests that needed `@edaya/service` or `@edaya/authorization` out of `@edaya/core` into `package/domain-service/tests/unit/` and `package/authorization/tests/unit-auth/`
+- Moved authorization tests that needed school-service fixtures into `package/domain-service/tests/unit/auth/`
+- Removed `@edaya/authorization` and `@edaya/service` from `@edaya/core` `devDependencies`
+- Removed `@edaya/service` from `@edaya/authorization` `devDependencies` (authorization `create-test-app` re-exports school-service support via relative path)
 
 ### Previously deferred (complete)
 
@@ -280,11 +280,11 @@ To remove test-only workspace cycles that blocked Turbo upstream `check`:
 | Symbol | Import from |
 |--------|-------------|
 | Entity types, `CoreEntityRepositories`, ports (gateways) | `@edaya/core` |
-| `*Config` factories, gate validators (`validate*Save`) | `@edaya/school-service` |
+| `*Config` factories, gate validators (`validate*Save`) | `@edaya/service` |
 | `Permission`, `ScopeType`, `validateScopeIds`, `scopeGrantSchema` | `@edaya/core` |
 | `permissionDefinitions`, `AuthorizationPolicy`, `ActorMetadata`, `ScopeGrant` (type) | `@edaya/authorization` |
-| `SchoolRepositories`, `SchoolService`, `ManagedEntityService`, workflows, cron ports | `@edaya/school-service` |
-| `createInlineCronJobDispatcher` | `@edaya/school-service` |
+| `SchoolRepositories`, `SchoolService`, `ManagedEntityService`, workflows, cron ports | `@edaya/service` |
+| `createInlineCronJobDispatcher` | `@edaya/service` |
 | `NotificationGatewayPort`, `FileStoragePort` | `@edaya/core` |
 
 ---
@@ -295,9 +295,9 @@ To remove test-only workspace cycles that blocked Turbo upstream `check`:
 |------|------|
 | `package/domain-core/src/index.ts` | Slim core barrel |
 | `package/authorization/src/index.ts` | Auth barrel |
-| `package/school-service/src/index.ts` | Service + capabilities barrel |
-| `package/school-service/src/services/entities/config/` | 54 extracted entity configs (PR3) |
-| `package/school-service/src/services/runtime/core-entity-catalog.ts` | Entity service registry |
-| `package/school-service/src/integration/auth-cache-hooks.ts` | Auth cache lifecycle hooks |
-| `package/school-service/src/ports/school-repositories.ts` | Full repo aggregate (PR2) |
+| `package/domain-service/src/index.ts` | Service + capabilities barrel |
+| `package/domain-service/src/services/entities/config/` | 54 extracted entity configs (PR3) |
+| `package/domain-service/src/services/runtime/core-entity-catalog.ts` | Entity service registry |
+| `package/domain-service/src/integration/auth-cache-hooks.ts` | Auth cache lifecycle hooks |
+| `package/domain-service/src/ports/school-repositories.ts` | Full repo aggregate (PR2) |
 | `package/domain-core/src/ports/repositories/school-repositories.ts` | `CoreEntityRepositories` only (PR2) |

@@ -1,5 +1,5 @@
 import { createNovuAuthEmailDeliveryPort } from "@edaya/adaptor-novu";
-import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY } from "@edaya/school-service";
+import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY } from "@edaya/service";
 import { describe, expect, mock, test } from "bun:test";
 
 describe("createNovuAuthEmailDeliveryPort", () => {

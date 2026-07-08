@@ -1,11 +1,11 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 /**
- * Rewrites @edaya/school-service/* internal imports in school-service tests to relative src paths.
+ * Rewrites @edaya/service/* internal imports in school-service tests to relative src paths.
  */
 import { dirname, join, relative } from 'node:path'
 
-const testsDir = join(import.meta.dir, '../../package/school-service/tests')
-const srcDir = join(import.meta.dir, '../../package/school-service/src')
+const testsDir = join(import.meta.dir, '../../package/domain-service/tests')
+const srcDir = join(import.meta.dir, '../../package/domain-service/src')
 
 function walk(dir: string): string[] {
   const files: string[] = []
@@ -19,7 +19,7 @@ function walk(dir: string): string[] {
   return files
 }
 
-const pattern = /from ["']@edaya\/school-service\/(capabilities|services|integration)\/([^"']+)["']/g
+const pattern = /from ["']@edaya\/domain-service\/(capabilities|services|integration)\/([^"']+)["']/g
 
 let changed = 0
 for (const file of walk(testsDir)) {

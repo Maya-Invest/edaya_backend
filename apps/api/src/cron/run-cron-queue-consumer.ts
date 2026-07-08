@@ -1,5 +1,5 @@
 import type { MessageBatch } from "@cloudflare/workers-types";
-import { runCronJobForSchool } from "@edaya/school-service";
+import { runCronJobForSchool } from "@edaya/service";
 import type { LoggerPort } from "@edaya/core";
 import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 import { parseCronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";

@@ -23,7 +23,7 @@
     "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
-    "@edaya/school-service": "workspace:*",
+    "@edaya/service": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",
     "@hono/graphql-server": "^0.7.0",
     "@hono/node-server": "^1.14.1",

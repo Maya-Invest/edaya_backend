@@ -8,7 +8,7 @@ import {
 } from '@edaya/adaptor-postgres'
 import { createRepositoryAuthorizationPolicy } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
-import { SchoolApplication } from '@edaya/school-service'
+import { SchoolApplication } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { sql } from 'drizzle-orm'

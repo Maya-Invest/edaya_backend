@@ -17,8 +17,8 @@ import {
   buildSeedValidationTargets,
 } from '@edaya/fixtures/meta/validation-harness'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
-import { buildSchoolOverview } from '@edaya/school-service'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
+import { buildSchoolOverview } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
 import { describeWithSeededSchool, describeWithSeededSchoolData, unwrapEntityList } from '../support/seeded-route-test-context'
