@@ -20,8 +20,9 @@ import {
 import {
   ACCESS_ROLE_ID_BY_INVITE_ROLE,
   isOnboardingStaffInviteRoleKey,
-  type OnboardingStaffInviteRoleKey,
+
 } from "./staff-invite-roles";
+import type { OnboardingStaffInviteRoleKey } from "./staff-invite-roles";
 
 export interface InviteStaffMemberInput {
   email: string;

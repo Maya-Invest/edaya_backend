@@ -1,4 +1,5 @@
-import { GraphQLScalarType, Kind, type ValueNode } from "graphql";
+import { GraphQLScalarType, Kind } from "graphql";
+import type { ValueNode } from "graphql";
 
 function parseLiteral(ast: ValueNode): unknown {
   switch (ast.kind) {

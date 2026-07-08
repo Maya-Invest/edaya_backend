@@ -1,7 +1,8 @@
 import type { Context } from "hono";
 import { isInteractiveActor, resolveAuditActorId } from "@edaya/core";
 import type { AppBindings } from "@/http/types";
-import { type AuthSession, normalizeAuthSession } from "@/http/dependencies/session-actor";
+import { normalizeAuthSession } from "@/http/dependencies/session-actor";
+import type { AuthSession } from "@/http/dependencies/session-actor";
 import { isGraphiQLEnabled } from "@/lib/graphql/graphiql";
 
 export async function handleGraphiQLSession(c: Context<AppBindings>) {

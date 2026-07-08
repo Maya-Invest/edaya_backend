@@ -1,7 +1,8 @@
 import {
   createDependenciesInjection as createHonoDependenciesInjection,
-  type DependencyModule,
+
 } from "@/http/dependency-injection";
+import type { DependencyModule } from "@/http/dependency-injection";
 import type { MiddlewareHandler } from "hono";
 import { closeRequestApiRuntime } from "@/runtime/resolve-api-runtime";
 import type { AppBindings } from "@/http/types";

@@ -122,16 +122,17 @@ describe("createDependenciesInjection", () => {
 describe("createRuntimeRegistry", () => {
   it("reuses cached runtimes on process profiles and rejects worker env", async () => {
     let buildCount = 0;
+    const registryConfig = {
+      buildRuntime: async () => {
+        buildCount += 1;
+        return { close: async () => {} };
+      },
+      closeRuntime: async () => {},
+    };
     const registry = createRuntimeRegistry<
       { RUNTIME: "local" | "worker"; DATABASE_URL: string },
       { close: () => Promise<void> }
-    >({
-          buildRuntime: async () => {
-            buildCount += 1;
-            return { close: async () => {} };
-          },
-          closeRuntime: async () => {},
-        });
+    >(registryConfig);
 
     const env = { RUNTIME: "local" as const, DATABASE_URL: "postgres://local" };
     await registry.get(env);

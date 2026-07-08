@@ -25,7 +25,7 @@ import {
   ClassSubjectMatter,
   ClassSubjectProgress,
   CORE_ENTITY_KEYS,
-  type CoreEntityKey,
+
   DisciplinaryAction,
   Fee,
   GradeLevel,
@@ -46,7 +46,7 @@ import {
   ResourceAssignment,
   Schedule,
   School,
-  type SchoolCommandKey,
+
   SchoolNotificationTemplates,
   StaffAssignment,
   StaffMember,
@@ -63,6 +63,7 @@ import {
   Teacher,
   TeacherAssignment,
 } from "@edaya/core";
+import type { CoreEntityKey, SchoolCommandKey } from "@edaya/core";
 
 export interface CoreCommandConfig {
   publicName: string;

@@ -1,19 +1,16 @@
 import {
+  ActorAssuranceLevel,
   createGuardianActorMetadata,
   createServiceStaffActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
   createTeacherActorMetadata,
-  type EffectiveGrants,
-  type GuardianScope,
   hashApiKey,
   parseBearerApiKey,
   parseInteractiveActorKind,
   resolveInteractiveActorIdentity,
-  type SchoolRepositories,
-  type StudentScope,
-  type TeacherActorScope,
 } from "@edaya/core";
+import type { EffectiveGrants, GuardianScope, SchoolRepositories, StudentScope, TeacherActorScope } from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
 import { resolveCachedActorScope } from "@/lib/authorization/scope-cache/resolve-cached";
@@ -21,7 +18,6 @@ import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
 import { isBetterAuthPath } from "./utils";
-import { ActorAssuranceLevel } from "@edaya/core";
 
 export interface AuthSession {
   user: {

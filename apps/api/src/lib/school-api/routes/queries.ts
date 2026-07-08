@@ -6,7 +6,8 @@ import { queryRouteOperation } from "@/lib/school-api/openapi/client-extensions"
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
+import { coreRouteErrorResponses, validatedJson } from "./shared";
+import type { SchoolApiRoutePair } from "./shared";
 import { schoolApiPath } from "./paths";
 
 export function buildQueryRoutes(): SchoolApiRoutePair[] {

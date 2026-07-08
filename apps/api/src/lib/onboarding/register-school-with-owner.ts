@@ -2,10 +2,9 @@ import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import {
   BusinessRuleViolationError,
   createBootstrapStaffActorMetadata,
-  type School,
-  type SchoolRepositories,
-  type SchoolType,
+
 } from "@edaya/core";
+import type { School, SchoolRepositories, SchoolType } from "@edaya/core";
 import { randomUUID } from "node:crypto";
 
 export interface RegisterSchoolOwnerSession {

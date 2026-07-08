@@ -20,10 +20,11 @@ import type {
   StructureTemplateId,
 } from "@edaya/fixtures/onboarding";
 import {
-  type AppliedStructureLevelSubjects,
+
   applyReportCardsFromTemplate,
   collectLevelSubjects,
 } from "./apply-report-cards-from-template";
+import type { AppliedStructureLevelSubjects } from "./apply-report-cards-from-template";
 import { ensureAcademicPeriodsFromTemplates } from "./ensure-academic-periods-from-template";
 
 export interface ApplyStructureLevelInput {

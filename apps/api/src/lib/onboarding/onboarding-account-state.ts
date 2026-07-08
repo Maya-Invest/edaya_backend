@@ -1,9 +1,10 @@
 import {
-  type ActorMetadata,
+
   BusinessRuleViolationError,
-  type SchoolRepositories,
+
   StaffMember,
 } from "@edaya/core";
+import type { ActorMetadata, SchoolRepositories } from "@edaya/core";
 
 export type OnboardingStepNumber = 1 | 2 | 3 | 4;
 

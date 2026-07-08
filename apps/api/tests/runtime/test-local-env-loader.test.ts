@@ -7,7 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
-import { isR2FileStorageConfigured, type R2Environment } from "@edaya/adaptor-r2";
+import { isR2FileStorageConfigured } from "@edaya/adaptor-r2";
+import type { R2Environment } from "@edaya/adaptor-r2";
 import { loadLocalProcessEnv } from "@/runtime";
 
 const originalEnv = { ...process.env };
