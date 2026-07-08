@@ -19,7 +19,7 @@ function walk(dir: string): string[] {
   return files
 }
 
-const pattern = /from ["']@edaya\/domain-service\/(capabilities|services|integration)\/([^"']+)["']/g
+const pattern = /from ["']@edaya\/service\/(capabilities|services|integration)\/([^"']+)["']/g
 
 let changed = 0
 for (const file of walk(testsDir)) {

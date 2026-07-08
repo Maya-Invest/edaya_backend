@@ -148,8 +148,8 @@ function migrateFile(content: string, filePath: string): string {
   let next = content
 
   next = next.replace(/from ["']@edaya\/core\/[^"']+["']/g, 'from "@edaya/core"')
-  next = next.replace(/from ["']@edaya\/domain-service\/account-linking\/[^"']+["']/g, 'from "@edaya/service"')
-  next = next.replace(/from ["']@edaya\/domain-service\/entities\/[^"']+["']/g, 'from "@edaya/service"')
+  next = next.replace(/from ["']@edaya\/service\/account-linking\/[^"']+["']/g, 'from "@edaya/service"')
+  next = next.replace(/from ["']@edaya\/service\/entities\/[^"']+["']/g, 'from "@edaya/service"')
   next = next.replace(/from ["']@edaya\/core\/platform["']/g, 'from "@edaya/service"')
 
   next = next.replace(
@@ -195,18 +195,18 @@ function migrateFile(content: string, filePath: string): string {
 
   if (filePath.includes('entity-tenant-resolvers.test.ts')) {
     next = next.replace(
-      /from ["']@edaya\/domain-service\/entities\/entity-config\/tenant["']/g,
+      /from ["']@edaya\/service\/entities\/entity-config\/tenant["']/g,
       'from "@edaya/service/services/entities/entity-config/tenant"',
     )
   }
 
   if (filePath.includes('business-rule-exception-codes.test.ts')) {
-    next = next.replace(/from ["']@edaya\/domain-service\/require-school["']/g, 'from "@edaya/service"')
+    next = next.replace(/from ["']@edaya\/service\/require-school["']/g, 'from "@edaya/service"')
   }
 
   if (filePath.includes('attachment-upload-policy.test.ts') || filePath.includes('read-storage-body.test.ts')) {
     next = next.replace(
-      /from ["']@edaya\/domain-service\/capabilities\/files\/([^"']+)["']/g,
+      /from ["']@edaya\/service\/capabilities\/files\/([^"']+)["']/g,
       'from "@edaya/service/capabilities/files/$1"',
     )
   }

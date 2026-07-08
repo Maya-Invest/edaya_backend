@@ -53,7 +53,7 @@ function rewriteRelativeImports(configBody: string, domainFile: string, configFi
       }
       return match
     })
-    .replace(/from ['"]@edaya\/domain-service['"]/g, `from '${entityConfigPath}'`)
+    .replace(/from ['"]@edaya\/service['"]/g, `from '${entityConfigPath}'`)
 }
 
 function collectDomainImports(domainHeader: string): string[] {
@@ -162,7 +162,7 @@ function buildConfigFile(
 ): string {
   const entityConfigPath = entityConfigImportPath(configFile)
   const carriedImports = collectDomainImports(domainHeader)
-    .map(line => line.replace(/@edaya\/domain-service/g, entityConfigPath))
+    .map(line => line.replace(/@edaya\/service/g, entityConfigPath))
   const { types, values } = collectEntitySymbols(domainHeader, configBody)
 
   const coreTypeImports = types.filter(t => !values.includes(t))

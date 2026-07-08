@@ -119,7 +119,7 @@
         "@types/bun": "^1.3.14",
       },
     },
-    "package/authorization": {
+    "package/domain-authorization": {
       "name": "@edaya/authorization",
       "version": "0.0.1",
       "dependencies": {
@@ -406,7 +406,7 @@
 
     "@edaya/api": ["@edaya/api@workspace:apps/api"],
 
-    "@edaya/authorization": ["@edaya/authorization@workspace:package/authorization"],
+    "@edaya/authorization": ["@edaya/authorization@workspace:package/domain-authorization"],
 
     "@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#b8c0d72", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-b8c0d72", "sha512-wI6aD2otzngJx2dGz+iKgQXzP8tsZQQb4HJGyf/Nmcl2pPbkTjBkgFaPJrEHYp/VC3IGGQOyWW64rf2KFPDdFA=="],
 

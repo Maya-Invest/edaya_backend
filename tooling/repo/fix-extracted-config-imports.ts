@@ -264,8 +264,8 @@ function cleanDomainFile(domainFile: string): void {
   content = content.replace(/\nasync function deny\w+EntityWrite\(\): Promise<void> \{\n {2}denyResourceAccess\(\)\n\}\n?$/m, '\n')
 
   // Drop unused school-service import blocks
-  content = content.replace(/^import type \{[^}]+\} from '@edaya\/domain-service'\n/gm, '')
-  content = content.replace(/^import \{[^}]+\} from '@edaya\/domain-service'\n/gm, '')
+  content = content.replace(/^import type \{[^}]+\} from '@edaya\/service'\n/gm, '')
+  content = content.replace(/^import \{[^}]+\} from '@edaya\/service'\n/gm, '')
   content = content.replace(/^import type \{ CoreEntityRepositories \} from '@edaya\/core'\n/gm, '')
 
   // Drop unused authorization imports when no longer referenced
