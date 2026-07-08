@@ -1,7 +1,7 @@
-export type OnboardingStaffInviteRoleKey =
-  | "deputy_director"
-  | "cpe"
-  | "secretary";
+export type OnboardingStaffInviteRoleKey
+  = | "deputy_director"
+    | "cpe"
+    | "secretary";
 
 export const ONBOARDING_STAFF_INVITE_ROLE_KEYS: readonly OnboardingStaffInviteRoleKey[] = [
   "deputy_director",

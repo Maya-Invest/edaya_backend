@@ -17,23 +17,23 @@ export const X_EDAYA_PATH_PARAMS = "x-edaya-path-params";
 export const X_EDAYA_BASE_PATH = "x-edaya-base-path";
 export const X_EDAYA_RESPONSE_IS_ARRAY = "x-edaya-response-is-array";
 
-export type ClientRouteNamespace =
-  | "authorization"
-  | "onboarding"
-  | "files"
-  | "serviceAccounts"
-  | "public"
-  | "webhooks";
+export type ClientRouteNamespace
+  = | "authorization"
+    | "onboarding"
+    | "files"
+    | "serviceAccounts"
+    | "public"
+    | "webhooks";
 
-export type EntityRouteAction =
-  | "list"
-  | "one"
-  | "count"
-  | "get"
-  | "save"
-  | "delete"
-  | "batchSave"
-  | "batchDelete";
+export type EntityRouteAction
+  = | "list"
+    | "one"
+    | "count"
+    | "get"
+    | "save"
+    | "delete"
+    | "batchSave"
+    | "batchDelete";
 
 const ENTITY_ACTION_OPERATION_SUFFIX: Record<EntityRouteAction, string> = {
   list: "list",

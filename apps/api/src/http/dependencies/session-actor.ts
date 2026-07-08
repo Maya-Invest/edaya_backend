@@ -61,8 +61,8 @@ interface ActorIdentityContext {
   assuranceLevel: ActorAssuranceLevel;
 }
 
-type ActorIdentity =
-  | {
+type ActorIdentity
+  = | {
     kind: "staff";
     schoolId: string;
     staffMemberId: string;
