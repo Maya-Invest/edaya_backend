@@ -32,7 +32,7 @@ jobs:
       migrate_target: ${{ steps.plan.outputs.migrate_target }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Detect API dev image changes
         uses: dorny/paths-filter@v3
