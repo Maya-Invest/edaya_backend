@@ -1,6 +1,6 @@
 import type { ActivitySession, Assessment, LessonSession, OccurrenceStatus } from '../../domain'
 import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
-import { AssessmentKind } from '../../domain'
+import { AssessmentKind, TeacherAssignmentKind, TeacherAssignmentStatus } from '../../domain'
 import { normalizeDate } from '../../domain/shared/utils'
 
 export type TimetableEventKind = 'lesson' | 'activity' | 'assessment'
@@ -12,6 +12,10 @@ export interface TimetableEvent {
   classSubjectId?: string
   activityId?: string
   title: string
+  /** Canonical subject or activity label for portal clients. Defaults to title. */
+  subjectLabel?: string
+  /** Subject teacher for lessons/assessments, or activity coach for activities. */
+  teacherName?: string
   startsAt: Date
   endsAt: Date
   lessonSessionId?: string
@@ -64,6 +68,8 @@ export async function buildClassGroupTimetable(
   ]
 
   events.sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
+
+  await enrichTimetableEventPresentation(repositories, input.classGroupId, events)
 
   return {
     classGroupId: input.classGroupId,
@@ -167,4 +173,82 @@ function endOfUtcDay(date: Date): Date {
 
 function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10)
+}
+
+function uniqueStrings(values: Iterable<string | undefined>): string[] {
+  return [...new Set(values)].filter((value): value is string => Boolean(value))
+}
+
+async function enrichTimetableEventPresentation(
+  repositories: SchoolRepositories,
+  classGroupId: string,
+  events: TimetableEvent[],
+): Promise<void> {
+  if (events.length === 0) {
+    return
+  }
+
+  const classGroup = await repositories.classGroups?.findById(classGroupId)
+  if (!classGroup) {
+    for (const event of events) {
+      event.subjectLabel = event.title
+    }
+    return
+  }
+
+  const classSubjectIds = uniqueStrings(events.map(event => event.classSubjectId))
+  const activityIds = uniqueStrings(events.map(event => event.activityId))
+
+  const [assignments, activities] = await Promise.all([
+    classSubjectIds.length > 0 && repositories.teacherAssignments
+      ? repositories.teacherAssignments.list({
+          academicYearId: classGroup.academicYearId,
+          classSubjectId: { $in: classSubjectIds },
+        })
+      : Promise.resolve([]),
+    activityIds.length > 0 && repositories.activities
+      ? repositories.activities.findByIds(activityIds)
+      : Promise.resolve([]),
+  ])
+
+  const activeSubjectAssignments = assignments.filter(
+    assignment =>
+      assignment.status === TeacherAssignmentStatus.Active
+      && assignment.kind === TeacherAssignmentKind.Subject
+      && assignment.classSubjectId,
+  )
+  const teacherIds = uniqueStrings(activeSubjectAssignments.map(assignment => assignment.teacherId))
+  const teachers = teacherIds.length > 0 && repositories.teachers
+    ? await repositories.teachers.findByIds(teacherIds)
+    : []
+  const teacherNameById = new Map(
+    teachers.map(teacher => [teacher.id, teacher.fullName.trim()] as const),
+  )
+  const teacherNameByClassSubjectId = new Map<string, string>()
+  for (const assignment of activeSubjectAssignments) {
+    const classSubjectId = assignment.classSubjectId!
+    if (teacherNameByClassSubjectId.has(classSubjectId)) {
+      continue
+    }
+    const teacherName = teacherNameById.get(assignment.teacherId)
+    if (teacherName) {
+      teacherNameByClassSubjectId.set(classSubjectId, teacherName)
+    }
+  }
+
+  const activityById = new Map(activities.map(activity => [activity.id, activity]))
+
+  for (const event of events) {
+    if (event.kind === 'activity') {
+      const activity = event.activityId ? activityById.get(event.activityId) : undefined
+      event.subjectLabel = activity?.name ?? event.title
+      event.teacherName = activity?.coach
+      continue
+    }
+
+    event.subjectLabel = event.title
+    if (event.classSubjectId) {
+      event.teacherName = teacherNameByClassSubjectId.get(event.classSubjectId)
+    }
+  }
 }

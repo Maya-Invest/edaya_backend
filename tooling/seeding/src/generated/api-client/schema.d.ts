@@ -12252,6 +12252,8 @@ export interface components {
             classSubjectId?: string;
             activityId?: string;
             title: string;
+            subjectLabel?: string;
+            teacherName?: string;
             /** Format: date-time */
             startsAt: string;
             /** Format: date-time */

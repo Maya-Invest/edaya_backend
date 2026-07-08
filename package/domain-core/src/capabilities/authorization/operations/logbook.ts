@@ -1,3 +1,5 @@
+import { GuardianCapability } from '../capabilities/guardian-capability'
+import { StudentCapability } from '../capabilities/student-capability'
 import { TeachingCapability } from '../capabilities/teaching-capability'
 import { Permission } from '../permissions/permission'
 import { LOGBOOK_ACCESS_PERMISSIONS } from '../policy/resolvers/permission-sets'
@@ -9,6 +11,8 @@ export const LogbookOperations = defineOperationFamily({
     staff: {
       anyOf: LOGBOOK_ACCESS_PERMISSIONS.map(permission => ({ permission })),
     },
+    guardian: { capability: GuardianCapability.ReadLogbook, target: 'student' },
+    student: { capability: StudentCapability.ReadLogbook },
     teacher: { capability: TeachingCapability.ReadSubjectLogbook, target: 'classSubject' },
   },
   create: {

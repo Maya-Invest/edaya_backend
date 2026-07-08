@@ -94,6 +94,8 @@ export const timetableEventSchema = z.object({
   classSubjectId: z.string().min(1).optional(),
   activityId: z.string().min(1).optional(),
   title: z.string().min(1),
+  subjectLabel: z.string().min(1).optional(),
+  teacherName: z.string().min(1).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   lessonSessionId: z.string().min(1).optional(),

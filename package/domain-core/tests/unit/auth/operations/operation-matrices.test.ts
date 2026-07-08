@@ -187,6 +187,8 @@ describeMatrix(LogbookOperations.read, [
   { label: 'staff', actor: { kind: 'staff', permission: Permission.CLASS_LOGBOOK_READ }, expect: 'allow' },
   { label: 'assigned teacher', actor: { kind: 'teacherSubject' }, expect: 'allow', context: CLASS_SUBJECT },
   { label: 'unassigned teacher denied', actor: { kind: 'teacherUnassigned' }, expect: 'deny', context: CLASS_SUBJECT },
+  { label: 'guardian linked student', actor: { kind: 'guardian' }, expect: 'allow', context: STUDENT },
+  { label: 'student self', actor: { kind: 'student' }, expect: 'allow' },
 ])
 
 describeMatrix(DisciplineOperations.read, [

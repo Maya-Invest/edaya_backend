@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '../../src/ports'
 import { describe, expect, test } from 'bun:test'
 import { buildClassGroupTimetable } from '../../src/application/queries/timetable'
-import { ActivitySession, Assessment, AssessmentKind, LessonSession, OccurrenceStatus } from '../../src/domain'
+import { Activity, ActivityCategory, ActivitySession, Assessment, AssessmentKind, LessonSession, OccurrenceStatus, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherAssignmentStatus } from '../../src/domain'
 
 function lessonSession(overrides: Partial<ConstructorParameters<typeof LessonSession>[0]> & { id: string }): LessonSession {
   return new LessonSession({
@@ -185,5 +185,70 @@ describe('buildClassGroupTimetable', () => {
     })
 
     expect(timetable.events).toHaveLength(0)
+  })
+
+  test('enriches subject teacher names and activity coach from repository joins', async () => {
+    const repos = {
+      classGroups: {
+        findById: async () => ({
+          id: 'cg-1',
+          academicYearId: 'ay-2025',
+        }),
+      },
+      lessonSessions: {
+        list: async () => [lessonSession({ id: 'ls-1', classSubjectId: 'cs-math' })],
+      },
+      activitySessions: {
+        list: async () => [activitySession({ id: 'as-1', activityId: 'act-chess' })],
+      },
+      assessments: { list: async () => [] },
+      teacherAssignments: {
+        list: async () => [new TeacherAssignment({
+          id: 'ta-1',
+          teacherId: 'teacher-1',
+          academicYearId: 'ay-2025',
+          kind: TeacherAssignmentKind.Subject,
+          classSubjectId: 'cs-math',
+          status: TeacherAssignmentStatus.Active,
+        })],
+      },
+      teachers: {
+        findByIds: async () => [new Teacher({
+          id: 'teacher-1',
+          schoolId: 'school-1',
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+        })],
+      },
+      activities: {
+        findByIds: async () => [new Activity({
+          id: 'act-chess',
+          schoolId: 'school-1',
+          name: 'Chess Club',
+          category: ActivityCategory.Wellbeing,
+          coach: 'Coach Martin',
+          schedule: 'Wednesdays',
+          participants: 12,
+          capacity: 20,
+          description: 'Chess',
+          startDate: new Date('2026-01-01T00:00:00.000Z'),
+          endDate: new Date('2026-12-31T00:00:00.000Z'),
+        })],
+      },
+    } as unknown as SchoolRepositories
+
+    const timetable = await buildClassGroupTimetable(repos, {
+      classGroupId: 'cg-1',
+      startDate: new Date('2026-05-01T00:00:00.000Z'),
+      endDate: new Date('2026-05-31T23:59:59.999Z'),
+    })
+
+    const lesson = timetable.events.find(event => event.kind === 'lesson')
+    const activity = timetable.events.find(event => event.kind === 'activity')
+
+    expect(lesson?.subjectLabel).toBe('Math')
+    expect(lesson?.teacherName).toBe('Ada Lovelace')
+    expect(activity?.subjectLabel).toBe('Chess Club')
+    expect(activity?.teacherName).toBe('Coach Martin')
   })
 })
