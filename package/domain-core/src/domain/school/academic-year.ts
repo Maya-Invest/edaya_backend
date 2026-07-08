@@ -1,9 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../application/entities/entity-config'
-import { SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const academicYearBaseSchema = z.object({
@@ -48,23 +46,3 @@ export class AcademicYear {
     return dateRangeContains(this.startDate, this.endDate, value)
   }
 }
-
-export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.academicYears,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
-    write: write(operationModule(SchoolStructureOperations.configure), noopSaveAccess, noopDeleteAccess),
-    gates: {
-      preDelete: async (year, repos) => {
-        const classGroups = await repos.classGroups.list({ academicYearId: year.id })
-        if (classGroups.length > 0) {
-          throw new BusinessRuleViolationError(
-            'ACADEMIC_YEAR_HAS_CLASS_GROUPS',
-            `Cannot delete academic year ${year.id}: class groups still exist`,
-          )
-        }
-      },
-    },
-    atomicExecution,
-  })

@@ -1,14 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { demoDataset } from "@edaya/fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  Guardian,
-  StaffMember,
-} from "@edaya/core";
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, StaffMember } from "@edaya/core";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 
 describe("serializeCommandResult", () => {

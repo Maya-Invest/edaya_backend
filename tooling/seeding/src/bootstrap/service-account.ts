@@ -1,10 +1,6 @@
 import type { SeedApplication } from '../support/types'
 import type { HttpSeedClient } from '../transport/http/client'
-import {
-  ActorAssuranceLevel,
-  createServiceAccount,
-  createStaffActorMetadata,
-} from '@edaya/core'
+import { ActorAssuranceLevel, createServiceAccount, createStaffActorMetadata } from '@edaya/authorization'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { signInViaHttp } from './auth/http-provisioner'

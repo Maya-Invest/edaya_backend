@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  AuthorizationError,
-  AuthorizationErrorCode,
-  BusinessRuleViolationError,
-  DomainValidationError,
-  invalidateAuthCacheForEvents,
-  resolveAuthCacheInvalidationEvents,
-} from "@edaya/core";
+import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
+import { AuthorizationError, AuthorizationErrorCode, invalidateAuthCacheForEvents, resolveAuthCacheInvalidationEvents } from "@edaya/authorization";
 import {
   badRequestResponse,
   conflictResponse,

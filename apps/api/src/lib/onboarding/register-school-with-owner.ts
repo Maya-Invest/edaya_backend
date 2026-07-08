@@ -1,10 +1,8 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import {
-  BusinessRuleViolationError,
-  createBootstrapStaffActorMetadata,
-
-} from "@edaya/core";
-import type { School, SchoolRepositories, SchoolType } from "@edaya/core";
+import { BusinessRuleViolationError } from "@edaya/core";
+import { createBootstrapStaffActorMetadata } from "@edaya/authorization";
+import type { School, SchoolType } from "@edaya/core";
+import type { SchoolRepositories } from "@edaya/school-service";
 import { randomUUID } from "node:crypto";
 
 export interface RegisterSchoolOwnerSession {

@@ -1,16 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { DisciplineOperations } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum DisciplinaryActionKind {
@@ -58,16 +47,3 @@ export class DisciplinaryAction {
   get description() { return this.data.description }
   get createdAt() { return this.data.createdAt }
 }
-
-export const disciplinaryActionConfig: EntityConfigFactory<DisciplinaryAction> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.disciplinaryActions,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(
-      operationModule(DisciplineOperations.validate),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  })

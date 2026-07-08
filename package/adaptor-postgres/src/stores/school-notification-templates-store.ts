@@ -1,9 +1,7 @@
-import type { QueryOptions, SchoolNotificationTemplateDocument } from '@edaya/core'
-import {
-  buildDefaultNotificationTemplateDocument,
-  mergeSchoolNotificationTemplateDocument,
-  SchoolNotificationTemplates,
-} from '@edaya/core'
+import type { QueryOptions } from '@edaya/core'
+import type { SchoolNotificationTemplateDocument } from '@edaya/school-service'
+import { SchoolNotificationTemplates } from '@edaya/core'
+import { buildDefaultNotificationTemplateDocument, mergeSchoolNotificationTemplateDocument } from '@edaya/school-service'
 import { asc, desc, eq, inArray } from 'drizzle-orm'
 import { buildWhereClause } from '../lib/filter'
 import * as schema from '../postgres-schema'

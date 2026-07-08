@@ -1,18 +1,9 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
+
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const periodDefinitionBaseSchema = z.object({
@@ -67,16 +58,3 @@ export class PeriodDefinition {
     return timeRangeDurationMinutes(this.startTime, this.endTime)
   }
 }
-
-export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.periodDefinitions,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
-    write: write(
-      operationModule(SchoolStructureOperations.configure),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  })

@@ -6,20 +6,12 @@ import type { AppRouteHandler } from "@/http/types";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
-import {
-
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-
-  BusinessRuleViolationError,
-  createSystemActorMetadata,
-
-  hashInvitationToken,
-  resolveInviteeDisplayName,
-
-} from "@edaya/core";
-import type { AccountInvitation, ActorMetadata, Guardian, SchoolRepositories, StaffMember, Student } from "@edaya/core";
+import { AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError } from "@edaya/core";
+import { hashInvitationToken, resolveInviteeDisplayName } from "@edaya/school-service";
+import { createSystemActorMetadata } from "@edaya/authorization";
+import type { AccountInvitation, Guardian, StaffMember, Student } from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import type { SchoolRepositories } from "@edaya/school-service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";

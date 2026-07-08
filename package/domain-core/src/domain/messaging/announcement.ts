@@ -1,18 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { CommunicationsOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementStatus {
@@ -105,34 +92,5 @@ export class Announcement {
 
   get effectiveDate(): Date {
     return this.publishedAt ?? this.createdAt
-  }
-}
-
-export const announcementConfig: EntityConfigFactory<Announcement> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.announcements,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
-    write: write(
-      operationModule(CommunicationsOperations.create),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    gates: {
-      preDelete: validateAnnouncementDelete,
-    },
-    atomicExecution,
-  })
-
-async function validateAnnouncementDelete(
-  announcement: Announcement,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [targets, deliveries] = await Promise.all([
-    repositories.announcementTargets.list({ announcementId: announcement.id }),
-    repositories.messageDeliveries.list({ announcementId: announcement.id }),
-  ])
-  if (targets.length > 0 || deliveries.length > 0) {
-    throw new BusinessRuleViolationError('ANNOUNCEMENT_HAS_DEPENDENCIES', `Cannot delete announcement ${announcement.id}: dependent records still exist`)
   }
 }

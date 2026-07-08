@@ -1,9 +1,4 @@
-import type {
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSectionKind,
-  ReportCardDefinitionSectionRole,
-  ReportCardDefinitionStatus,
-} from '@edaya/core'
+import type { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 
 export interface GradeScaleRangeSeedRecord {
   letter: string

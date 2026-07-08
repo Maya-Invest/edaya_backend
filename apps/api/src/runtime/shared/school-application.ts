@@ -9,7 +9,7 @@ import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
 import type { Environment } from "@/runtime/shared/env/schema";
-import { createRepositoryAuthorizationPolicy } from "@edaya/core";
+import { createRepositoryAuthorizationPolicy } from "@edaya/authorization";
 import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
 
 export interface BuildSchoolApplicationOptions {

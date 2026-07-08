@@ -1,4 +1,4 @@
-import { Permission } from '@edaya/core'
+import { Permission } from '@edaya/authorization'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import { buildDevAccessSeedRecords } from './build-dev-access-seed-records'

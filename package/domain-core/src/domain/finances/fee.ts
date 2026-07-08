@@ -1,19 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  operationModule,
-  read,
-  readByIds,
-  write,
-} from '../../application/entities/entity-config'
-import { denyResourceAccess, FinanceOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { Money } from '../../domain/value-objects/money'
+
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 export enum FeeCategory {
@@ -100,51 +88,4 @@ export class Fee {
   get defaultAmount() { return this.data.defaultAmount }
   get installments() { return this.data.installments }
   get createdAt() { return this.data.createdAt }
-}
-
-export const feeConfig: EntityConfigFactory<Fee> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkFeeAccess(actor, ids))
-
-  return config({
-    repository: repositories.fees,
-    tenant: directSchoolTenant(),
-    read: read(
-      operationModule(FinanceOperations.feeCatalogRead),
-      readAccess,
-    ),
-    write: write(
-      operationModule(FinanceOperations.feeConfigure),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
-    gates: {
-      preSave: validateFeeSave,
-      preDelete: validateFeeDelete,
-    },
-    atomicExecution,
-  })
-}
-
-export async function validateFeeSave(
-  fee: Fee,
-  _existing: Fee | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [school, academicYear] = await Promise.all([
-    repositories.schools.findById(fee.schoolId),
-    repositories.academicYears.findById(fee.academicYearId),
-  ])
-  if (!school || !academicYear || academicYear.schoolId !== fee.schoolId) {
-    denyResourceAccess()
-  }
-}
-
-export async function validateFeeDelete(
-  fee: Fee,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const studentFees = await repositories.studentFees.list({ feeId: fee.id })
-  if (studentFees.length > 0) {
-    throw new BusinessRuleViolationError('FEE_HAS_DEPENDENCIES', `Cannot delete fee ${fee.id}: dependent records still exist`)
-  }
 }

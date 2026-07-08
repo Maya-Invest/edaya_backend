@@ -13,6 +13,7 @@
   "dependencies": {
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/core": "workspace:*",
+    "@edaya/school-service": "workspace:*",
     "@novu/api": "^3.17.0"
   },
   "devDependencies": {

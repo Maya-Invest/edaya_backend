@@ -1,10 +1,4 @@
-import type {
-  GuardianInput,
-  GuardianStudentLinkInput,
-  StaffMemberInput,
-  StudentClassEnrollmentInput,
-  StudentInput,
-} from '@edaya/core'
+import type { GuardianInput, GuardianStudentLinkInput, StaffMemberInput, StudentClassEnrollmentInput, StudentInput } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 
 export const demoCiStudents = [

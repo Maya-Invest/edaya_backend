@@ -18,7 +18,7 @@ import {
   DEV_AUTH_STAFF_ACCOUNTS,
 } from "@edaya/fixtures/meta/dev-auth-fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { Permission } from "@edaya/core";
+import { Permission } from "@edaya/authorization";
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
   Permission.CLASS_LOGBOOK_CREATE,

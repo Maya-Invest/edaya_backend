@@ -1,9 +1,5 @@
+import { DomainValidationError, ReportCardDefinitionSection, ReportCardDefinitionSectionKind } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import {
-  ReportCardDefinitionSection,
-  ReportCardDefinitionSectionKind,
-} from '../../../../src/domain/assessments/report-card-definition-section'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('Report card definition section type validations', () => {
   const baseArgs = {

@@ -1,5 +1,5 @@
+import { StaffMember } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { StaffMember } from '../../../../src/domain/school/staff-member'
 
 describe('StaffMember entity', () => {
   const baseArgs = {

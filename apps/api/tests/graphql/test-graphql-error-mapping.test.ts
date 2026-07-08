@@ -1,11 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { GraphQLError } from "graphql";
-import {
-  AuthorizationError,
-  AuthorizationErrorCode,
-  BusinessRuleViolationError,
-  DomainValidationError,
-} from "@edaya/core";
+import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
+import { AuthorizationError, AuthorizationErrorCode } from "@edaya/authorization";
 import {
   requireActor,
   toGraphQLError,

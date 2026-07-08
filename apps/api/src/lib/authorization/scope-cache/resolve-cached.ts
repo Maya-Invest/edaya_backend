@@ -1,8 +1,6 @@
-import type {
-  ResolvedActorScope,
-  SchoolRepositories,
-} from "@edaya/core";
-import { resolveActorScope } from "@edaya/core";
+import type { ResolvedActorScope } from "@edaya/authorization";
+import type { SchoolRepositories } from "@edaya/school-service";
+import { resolveActorScope } from "@edaya/authorization";
 import {
   getActorScopeCacheStore,
   resetActorScopeCacheStore,

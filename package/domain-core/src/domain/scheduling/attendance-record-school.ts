@@ -1,8 +1,8 @@
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
+import type { CoreEntityRepositories } from '@edaya/core'
 import type { AttendanceRecord } from './attendance-record'
 
 export async function resolveAttendanceRecordSchoolId(
-  repositories: SchoolRepositories,
+  repositories: CoreEntityRepositories,
   record: AttendanceRecord,
 ): Promise<string | undefined> {
   if (record.attendanceId) {

@@ -1,5 +1,5 @@
+import { AssessmentResult, DeadlineComplianceStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { AssessmentResult, DeadlineComplianceStatus } from '../../../../src/domain/assessments/assessment-result'
 
 describe('AssessmentResult entity', () => {
   test('instantiates successfully with valid inputs', () => {

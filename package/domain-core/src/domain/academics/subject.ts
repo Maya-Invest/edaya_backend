@@ -1,16 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { AcademicsOperations } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SubjectCategory {
@@ -82,16 +71,3 @@ export class Subject {
     })
   }
 }
-
-export const subjectConfig: EntityConfigFactory<Subject> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.subjects,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(AcademicsOperations.programRead), noopReadAccess),
-    write: write(
-      operationModule(AcademicsOperations.programUpdate),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  })

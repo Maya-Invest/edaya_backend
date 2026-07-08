@@ -1,18 +1,5 @@
-import {
-  AcademicPeriodType,
-  ACCOUNTANT_PERMISSIONS,
-  ActorAssuranceLevel,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  AttendanceStatus,
-  AuthorizationErrorCode,
-  authorize,
-  COORDINATOR_PERMISSIONS,
-  createStaffActorMetadata,
-  GradeLevel,
-  Permission,
-  StaffMember,
-  Subject,
-} from '@edaya/core'
+import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationErrorCode, authorize, COORDINATOR_PERMISSIONS, createStaffActorMetadata, Permission } from '@edaya/authorization'
+import { AcademicPeriodType, AttendanceStatus, GradeLevel, StaffMember, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {

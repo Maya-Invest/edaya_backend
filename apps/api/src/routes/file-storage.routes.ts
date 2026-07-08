@@ -5,19 +5,9 @@ import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import {
-  allowsPublicInlineAttachmentContent,
-  assertUploadPolicyAllowed,
-  Attachment,
-  AttachmentOperations,
-  AttachmentOwnerKind,
-  AttachmentStatus,
-  buildStorageKey,
-  BusinessRuleViolationError,
-  isInteractiveActor,
-  operationModule,
-  validateAttachmentSave,
-} from "@edaya/core";
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError } from "@edaya/core";
+import { AttachmentOperations, isInteractiveActor, operationModule } from "@edaya/authorization";
+import { allowsPublicInlineAttachmentContent, assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/school-service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";

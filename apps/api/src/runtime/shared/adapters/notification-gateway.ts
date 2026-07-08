@@ -1,13 +1,5 @@
 import { createNovuNotificationGatewayFromSecretKey } from "@edaya/adaptor-novu";
-import type {
-  LoggerPort,
-  NotificationEnqueueInput,
-  NotificationGatewayPort,
-  NotificationRecipient,
-  NotificationRecipientProfile,
-  RegisterPushDeviceInput,
-  UnregisterPushDeviceInput,
-} from "@edaya/core";
+import type { LoggerPort, NotificationEnqueueInput, NotificationGatewayPort, NotificationRecipient, NotificationRecipientProfile, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
 import { noOpNotificationGateway } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
 

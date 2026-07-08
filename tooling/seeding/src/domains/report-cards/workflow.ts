@@ -1,10 +1,6 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { ReportCardsSeedPort } from './port'
-import {
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSectionKind,
-  ReportCardDefinitionStatus,
-} from '@edaya/core'
+import { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionStatus } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
 
 export interface DevReportCardSeedCounts {

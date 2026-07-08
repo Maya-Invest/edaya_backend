@@ -1,5 +1,7 @@
 import { z } from 'zod'
+
 import { parseDomain } from '../../domain/shared/utils'
+
 import { timeOfDayToMinutes, zodTimeOfDay } from './time-of-day'
 
 export const timeRangeBaseSchema = z.object({

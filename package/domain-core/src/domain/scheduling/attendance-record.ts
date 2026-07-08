@@ -1,23 +1,10 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { AttendanceAnchor } from './attendance-anchor'
+
 import { z } from 'zod'
-import {
-  config,
-  dateTime,
-  indirectTenant,
-  operationModule,
-  read,
-  unique,
-  write,
-} from '../../application/entities/entity-config'
-import { AttendanceOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
+
 import { attendanceAnchorFields, attendanceAnchorKey, refineAttendanceAnchor } from './attendance-anchor'
-import { resolveAttendanceRecordSchoolId } from './attendance-record-school'
 
 export enum AttendanceStatus {
   Present = 'present',
@@ -195,105 +182,4 @@ export function buildOccurrenceAttendanceSummary(records: AttendanceRecord[], ex
   }
 
   return summary
-}
-
-export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.attendance,
-    tenant: attendanceRecordTenant(),
-    read: read(
-      operationModule(AttendanceOperations.read),
-      async (actor, entities) => {
-        await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-      },
-    ),
-    write: write(
-      operationModule(AttendanceOperations.record),
-      authorizeAttendanceSave(policy),
-      authorizeAttendanceDelete(policy),
-    ),
-    gates: {
-      preSave: validateAttendanceSave,
-    },
-    atomicExecution,
-  })
-
-function authorizeAttendanceSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
-
-function authorizeAttendanceDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
-
-function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
-  return indirectTenant(async (entity, repositories) => resolveAttendanceRecordSchoolId(repositories, entity))
-}
-
-async function validateAttendanceSave(
-  entity: AttendanceRecord,
-  existing: AttendanceRecord | undefined,
-): Promise<void> {
-  if (!existing)
-    return
-
-  const existingReviewed = isReviewedJustification(existing.justificationStatus)
-  const proposedReviewed = isReviewedJustification(entity.justificationStatus)
-  const isCorrection = entity.status !== existing.status
-  if (isCorrection && existingReviewed) {
-    throw new BusinessRuleViolationError('CORRECT_REVIEWED_ATTENDANCE_BLOCKED', 'Reviewed attendance must not be corrected without a reopen workflow')
-  }
-  if (!proposedReviewed)
-    return
-
-  if (existingReviewed && attendanceJustificationChanged(entity, existing)) {
-    throw new BusinessRuleViolationError('JUSTIFICATION_ALREADY_REVIEWED', 'Attendance justification has already been reviewed')
-  }
-  if (existing.status !== AttendanceStatus.Absent || entity.status !== AttendanceStatus.Absent) {
-    throw new BusinessRuleViolationError('JUSTIFICATION_ABSENCE_REQUIRED', 'Only an absent attendance record may receive a justification decision')
-  }
-  if (!entity.reason || entity.reason.trim().length === 0) {
-    throw new BusinessRuleViolationError('JUSTIFICATION_REASON_REQUIRED', 'reason is required for an attendance justification decision')
-  }
-}
-
-function isReviewedJustification(status: AttendanceJustificationStatus): boolean {
-  return status === AttendanceJustificationStatus.Excused
-    || status === AttendanceJustificationStatus.Rejected
-}
-
-function attendanceJustificationChanged(entity: AttendanceRecord, existing: AttendanceRecord): boolean {
-  return entity.justificationStatus !== existing.justificationStatus
-    || entity.reason !== existing.reason
-    || entity.notes !== existing.notes
-    || dateTime(entity.justifiedAt) !== dateTime(existing.justifiedAt)
-    || entity.justifiedByStaffId !== existing.justifiedByStaffId
-}
-
-export async function findAttendanceRecordByAnchor(
-  repositories: SchoolRepositories,
-  studentId: string,
-  anchor: AttendanceAnchor,
-): Promise<AttendanceRecord | undefined> {
-  if (anchor.attendanceId) {
-    return repositories.attendance.findOne({ studentId, attendanceId: anchor.attendanceId })
-  }
-  if (anchor.lessonSessionId) {
-    return repositories.attendance.findOne({ studentId, lessonSessionId: anchor.lessonSessionId })
-  }
-  if (anchor.activitySessionId) {
-    return repositories.attendance.findOne({ studentId, activitySessionId: anchor.activitySessionId })
-  }
-  if (anchor.assessmentId) {
-    return repositories.attendance.findOne({ studentId, assessmentId: anchor.assessmentId })
-  }
-  return undefined
 }

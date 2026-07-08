@@ -1,4 +1,4 @@
-import type { GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/core";
+import type { GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/school-service";
 import type { CoreQueryConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 

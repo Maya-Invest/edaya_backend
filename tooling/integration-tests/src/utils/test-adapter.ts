@@ -1,15 +1,8 @@
-import type {
-  ActorMetadata,
-  SchoolRepositories,
-} from '@edaya/core'
-import {
-  ActorAssuranceLevel,
-  createRepositoryAuthorizationPolicy,
-  noOpFileStorage,
-  noOpNotificationGateway,
-  SchoolApplication,
-  StaffMember,
-} from '@edaya/core'
+import type { ActorMetadata } from '@edaya/authorization'
+import type { SchoolRepositories } from '@edaya/school-service'
+import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy } from '@edaya/authorization'
+import { noOpFileStorage, noOpNotificationGateway, StaffMember } from '@edaya/core'
+import { SchoolApplication } from '@edaya/school-service'
 import { effectiveGrantsForRoles } from './effective-grants'
 
 export type FailableRepository

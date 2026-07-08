@@ -1,15 +1,4 @@
-import type {
-  ClassGroupInput,
-  ClassSubjectInput,
-  GuardianInput,
-  GuardianStudentLinkInput,
-  StaffAssignmentInput,
-  StaffMemberInput,
-  StudentClassEnrollmentInput,
-  StudentInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
+import type { ClassGroupInput, ClassSubjectInput, GuardianInput, GuardianStudentLinkInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
 import { SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../shared/ids'
 import { buildSubjectMattersForSubject, centralSubjectMatterCatalog } from '../../shared/subject-matter-chapters'

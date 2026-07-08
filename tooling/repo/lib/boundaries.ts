@@ -40,6 +40,38 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     pattern: /from ["']@\//,
     searchPath: 'package/domain-core/src',
   },
+  {
+    label: 'core imports school-service',
+    pattern: /from ["']@edaya\/school-service/,
+    searchPath: 'package/domain-core/src',
+  },
+  {
+    label: 'core imports authorization',
+    pattern: /from ["']@edaya\/authorization/,
+    searchPath: 'package/domain-core/src',
+  },
+  {
+    label: 'authorization imports school-service',
+    pattern: /from ["']@edaya\/school-service/,
+    searchPath: 'package/authorization/src',
+  },
+  {
+    label: 'authorization imports apps',
+    pattern: /from ["']@\//,
+    searchPath: 'package/authorization/src',
+  },
+  {
+    label: 'school-service imports apps',
+    pattern: /from ["']@\//,
+    searchPath: 'package/school-service/src',
+  },
+  ...['package/domain-core', 'package/authorization', 'package/school-service'].map(
+    (searchPath): BoundaryCheck => ({
+      label: 'domain package imports adaptor-auth',
+      pattern: /from ["']@edaya\/adaptor-auth/,
+      searchPath,
+    }),
+  ),
   ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports adaptor-auth',

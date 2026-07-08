@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { EMPTY_GUARDIAN_SCOPE } from "@edaya/core";
+import { EMPTY_GUARDIAN_SCOPE } from "@edaya/authorization";
 import {
   InMemoryActorScopeCacheStore,
   resetActorScopeCacheStore,

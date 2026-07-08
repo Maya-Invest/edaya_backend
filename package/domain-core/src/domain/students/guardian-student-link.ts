@@ -1,17 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  operationModule,
-  read,
-  unique,
-  write,
-} from '../../application/entities/entity-config'
-import { denyResourceAccess, GuardianOperations } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const guardianStudentLinkSchema = z.object({
@@ -64,42 +52,4 @@ export class GuardianStudentLink {
   get contactRestrictions() { return this.data.contactRestrictions }
   get notes() { return this.data.notes }
   get createdAt() { return this.data.createdAt }
-}
-
-export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = async (actor: Parameters<typeof policy.checkStudentAccess>[0], entities: readonly GuardianStudentLink[]) => {
-    await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-  }
-
-  return config({
-    repository: repositories.guardianLinks,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(GuardianOperations.read), readAccess),
-    write: write(
-      operationModule(GuardianOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
-    gates: {
-      preSave: validateGuardianStudentLinkSave,
-    },
-    atomicExecution,
-  })
-}
-
-export async function validateGuardianStudentLinkSave(
-  link: GuardianStudentLink,
-  existing: GuardianStudentLink | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [guardian, student] = await Promise.all([
-    repositories.guardians.findById(link.guardianId),
-    repositories.students.findById(link.studentId),
-  ])
-  if (!guardian || !student || guardian.schoolId !== link.schoolId || student.schoolId !== link.schoolId) {
-    denyResourceAccess()
-  }
-  if (existing && (existing.guardianId !== link.guardianId || existing.studentId !== link.studentId)) {
-    denyResourceAccess()
-  }
 }

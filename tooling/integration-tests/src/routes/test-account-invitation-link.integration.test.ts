@@ -1,7 +1,7 @@
 import type { Hono } from 'hono'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
-import { createBootstrapStaffActorMetadata } from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
 import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,

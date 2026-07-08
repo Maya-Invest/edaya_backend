@@ -1,14 +1,4 @@
-import type {
-  AcademicPeriodInput,
-  AcademicYearInput,
-  ClassGroupInput,
-  ClassSubjectInput,
-  GradeLevelInput,
-  PeriodDefinitionInput,
-  SchoolInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
 import { AttendanceMode, SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'

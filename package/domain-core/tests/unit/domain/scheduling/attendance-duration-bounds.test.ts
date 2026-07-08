@@ -1,6 +1,5 @@
+import { Attendance, DomainValidationError } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { Attendance } from '../../../../src/domain'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('Attendance domain invariants', () => {
   test('computes durationMinutes from the occurrence window', () => {

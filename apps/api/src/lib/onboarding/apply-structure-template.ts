@@ -1,13 +1,6 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
-import {
-  BusinessRuleViolationError,
-  GradeLevel,
-  Subject,
-  SubjectCategory,
-  SubjectColor,
-  SubjectMatter,
-} from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import { BusinessRuleViolationError, GradeLevel, Subject, SubjectCategory, SubjectColor, SubjectMatter } from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import {
   classDisplayName,

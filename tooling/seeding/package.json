@@ -37,7 +37,9 @@
     "lint:fix": "eslint src scripts --fix"
   },
   "dependencies": {
+    "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
+    "@edaya/school-service": "workspace:*",
     "@edaya/fixtures": "workspace:*",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",

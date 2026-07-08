@@ -1,10 +1,4 @@
-import type {
-  ClassGroupInput,
-  GuardianInput,
-  GuardianStudentLinkInput,
-  StudentClassEnrollmentInput,
-  StudentInput,
-} from '@edaya/core'
+import type { ClassGroupInput, GuardianInput, GuardianStudentLinkInput, StudentClassEnrollmentInput, StudentInput } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../shared/ids'
 import { BULK_CLASS_CAPACITY, BULK_NARRATIVE_STUDENT_ID_MAX, BULK_TARGET_STUDENT_COUNT } from './constants'
 import { buildBulkGuardianEmail, buildBulkGuardianEmailCi } from './email'

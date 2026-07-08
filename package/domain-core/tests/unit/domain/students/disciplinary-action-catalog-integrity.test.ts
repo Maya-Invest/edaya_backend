@@ -1,5 +1,5 @@
+import { DisciplinaryAction, DisciplinaryActionKind } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { DisciplinaryAction, DisciplinaryActionKind } from '../../../../src/domain/students/disciplinary-action'
 
 describe('DisciplinaryAction entity catalog integrity', () => {
   const baseArgs = {

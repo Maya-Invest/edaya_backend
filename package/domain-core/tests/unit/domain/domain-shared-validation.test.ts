@@ -1,10 +1,6 @@
+import { DomainValidationError, isSameDate, parseDomain } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { z } from 'zod'
-import {
-  DomainValidationError,
-  isSameDate,
-  parseDomain,
-} from '../../../src/domain/shared/utils'
 
 describe('domain shared validation', () => {
   test('isSameDate compares UTC year, month, and day', () => {

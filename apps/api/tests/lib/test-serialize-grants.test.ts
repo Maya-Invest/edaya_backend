@@ -1,13 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  ActorAssuranceLevel,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-  createTeacherActorMetadata,
-  EMPTY_TEACHER_SCOPE,
-  Permission,
-} from "@edaya/core";
+import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, EMPTY_TEACHER_SCOPE, Permission } from "@edaya/authorization";
 import {
   requireInteractiveActor,
   serializeActorAuthorization,

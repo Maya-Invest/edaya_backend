@@ -1,9 +1,5 @@
-import type { EffectiveGrants } from '@edaya/core'
-import {
-  ACCOUNTANT_PERMISSIONS,
-  COORDINATOR_PERMISSIONS,
-  Permission,
-} from '@edaya/core'
+import type { EffectiveGrants } from '@edaya/authorization'
+import { ACCOUNTANT_PERMISSIONS, COORDINATOR_PERMISSIONS, Permission } from '@edaya/authorization'
 
 /** Staff teaching-write permissions used in auth test fixtures. */
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [

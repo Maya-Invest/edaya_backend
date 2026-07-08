@@ -1,18 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { DisciplineOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ActivityCategory {
@@ -91,37 +78,4 @@ export class Activity {
   get startDate() { return this.data.startDate }
   get endDate() { return this.data.endDate }
   get createdAt() { return this.data.createdAt }
-}
-
-export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, atomicExecution }) => ({
-  ...config({
-    repository: repositories.activities,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(
-      operationModule(DisciplineOperations.create),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  }),
-  gates: {
-    preDelete: validateActivityDelete,
-  },
-})
-
-export async function validateActivityDelete(
-  activity: Activity,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [studentEnrollments, classEnrollments] = await Promise.all([
-    repositories.activityEnrollments.list({ activityId: activity.id }),
-    repositories.classActivityEnrollments.list({ activityId: activity.id }),
-  ])
-  if (studentEnrollments.length > 0 || classEnrollments.length > 0) {
-    throw new BusinessRuleViolationError(
-      'ACTIVITY_HAS_DEPENDENCIES',
-      `Cannot delete activity ${activity.id}: enrollments still exist`,
-    )
-  }
 }

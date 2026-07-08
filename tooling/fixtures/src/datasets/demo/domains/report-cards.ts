@@ -4,11 +4,7 @@ import type {
   FixtureReportCardGradeScale,
   FixtureReportCardResult,
 } from '../../types'
-import {
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSectionRole,
-  ReportCardDefinitionStatus,
-} from '@edaya/core'
+import { ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../../shared/ids'
 
 export const demoGradeScales = [

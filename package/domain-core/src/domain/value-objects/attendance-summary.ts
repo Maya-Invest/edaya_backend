@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { parseDomain } from '../../domain/shared/utils'
 
 export const attendanceSummaryBaseSchema = z.object({

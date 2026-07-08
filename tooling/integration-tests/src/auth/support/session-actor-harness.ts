@@ -1,23 +1,8 @@
-import type {
-  EffectiveGrants,
-  GuardianScope,
-  InteractiveActorMetadata,
-  SchoolRepositories,
-  StudentScope,
-  TeacherActorScope,
-} from '@edaya/core'
+import type { EffectiveGrants, GuardianScope, InteractiveActorMetadata, StudentScope, TeacherActorScope } from '@edaya/authorization'
+import type { SchoolRepositories } from '@edaya/school-service'
 import type { MiddlewareHandler } from 'hono'
 import { randomUUID } from 'node:crypto'
-import {
-  ActorAssuranceLevel,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-  createTeacherActorMetadata,
-  parseInteractiveActorKind,
-  resolveActorScope,
-  resolveInteractiveActorIdentity,
-} from '@edaya/core'
+import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, parseInteractiveActorKind, resolveActorScope, resolveInteractiveActorIdentity } from '@edaya/authorization'
 
 export interface AuthSession {
   user: {

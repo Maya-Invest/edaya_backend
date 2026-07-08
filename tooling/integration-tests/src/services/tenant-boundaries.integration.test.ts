@@ -1,30 +1,5 @@
-import {
-  AcademicPeriodType,
-  ActorAssuranceLevel,
-  AnnouncementTargetKind,
-  AssessmentKind,
-  AttachmentOwnerKind,
-  AttendanceJustificationStatus,
-  AttendanceStatus,
-  AuthorizationErrorCode,
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  createStaffActorMetadata,
-  DisciplinaryAction,
-  DisciplinaryActionKind,
-  GradeLevel,
-  GradeScale,
-  IncidentInvolvementRole,
-  IncidentKind,
-  PaymentMethod,
-  Resource,
-  ResourceKind,
-  StaffMember,
-  StudentNoteVisibility,
-  StudentStatus,
-  Subject,
-  SubjectMatter,
-} from '@edaya/core'
+import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '@edaya/authorization'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {

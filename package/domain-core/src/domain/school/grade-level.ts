@@ -1,16 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { SchoolStructureOperations } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const gradeLevelSchema = z.object({
@@ -47,16 +36,3 @@ export class GradeLevel {
   get cycle() { return this.data.cycle }
   get createdAt() { return this.data.createdAt }
 }
-
-export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.gradeLevels,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(SchoolStructureOperations.classGroupRead), noopReadAccess),
-    write: write(
-      operationModule(SchoolStructureOperations.configure),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  })

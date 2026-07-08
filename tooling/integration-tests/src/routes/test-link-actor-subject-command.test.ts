@@ -1,4 +1,4 @@
-import { createBootstrapStaffActorMetadata } from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,

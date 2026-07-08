@@ -1,5 +1,7 @@
-import type { AccountInvitationData, SchoolCommandKey, SchoolService } from "@edaya/core";
-import { dispatchSchoolCommand, toPublicAccountInvitationData } from "@edaya/core";
+import type { AccountInvitationData } from "@edaya/core";
+import type { SchoolCommandKey, SchoolService } from "@edaya/school-service";
+import { toPublicAccountInvitationData } from "@edaya/core";
+import { dispatchSchoolCommand } from "@edaya/school-service";
 
 export type CoreCommandMethodName = SchoolCommandKey;
 

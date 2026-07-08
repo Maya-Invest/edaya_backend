@@ -1,5 +1,5 @@
+import { StudentNote, StudentNoteCategory } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { StudentNote, StudentNoteCategory } from '../../../../src/domain/students/student-note'
 
 describe('StudentNote entity', () => {
   const baseArgs = {

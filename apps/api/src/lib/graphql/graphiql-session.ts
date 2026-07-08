@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { isInteractiveActor, resolveAuditActorId } from "@edaya/core";
+import { isInteractiveActor, resolveAuditActorId } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
 import { normalizeAuthSession } from "@/http/dependencies/session-actor";
 import type { AuthSession } from "@/http/dependencies/session-actor";

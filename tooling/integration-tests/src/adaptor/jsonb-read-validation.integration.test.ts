@@ -1,12 +1,6 @@
 import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
-import {
-  DomainValidationError,
-  Fee,
-  FeeCategory,
-  Permission,
-  StaffMember,
-  StaffPermissionAssignment,
-} from '@edaya/core'
+import { Permission } from '@edaya/authorization'
+import { DomainValidationError, Fee, FeeCategory, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'

@@ -1,8 +1,4 @@
-import type {
-  DayOfWeek,
-  ResourceKind,
-  ScheduleKind,
-} from '@edaya/core'
+import type { DayOfWeek, ResourceKind, ScheduleKind } from '@edaya/core'
 
 export interface ResourceSeedRecord {
   id: string

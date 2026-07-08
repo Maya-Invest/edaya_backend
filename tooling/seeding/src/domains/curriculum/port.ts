@@ -1,7 +1,4 @@
-import type {
-  SubjectCategory,
-  SubjectColor,
-} from '@edaya/core'
+import type { SubjectCategory, SubjectColor } from '@edaya/core'
 
 export interface SubjectSeedRecord {
   id: string

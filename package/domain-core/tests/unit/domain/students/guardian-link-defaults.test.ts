@@ -1,6 +1,5 @@
+import { DomainValidationError, GuardianStudentLink } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
-import { GuardianStudentLink } from '../../../../src/domain/students/guardian-student-link'
 
 describe('Guardian student link default values and validation', () => {
   const baseArgs = {

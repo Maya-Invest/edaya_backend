@@ -1,5 +1,7 @@
 import { z } from 'zod'
+
 import { parseDomain, roundTo2 } from '../shared/utils'
+
 import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
 
 export const reportCardResultSectionBaseSchema = z.object({

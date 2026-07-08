@@ -9,7 +9,7 @@ import { clearActorScopeCache } from "@/lib/authorization/scope-cache/resolve-ca
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { DefaultAuthorizationRepository, Permission } from "@edaya/core";
+import { DefaultAuthorizationRepository, Permission } from "@edaya/authorization";
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
   Permission.CLASS_LOGBOOK_CREATE,

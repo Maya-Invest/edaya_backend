@@ -1,4 +1,4 @@
-import type { AuthCacheInvalidationEvent, AuthCacheInvalidationPort } from "@edaya/core";
+import type { AuthCacheInvalidationEvent, AuthCacheInvalidationPort } from "@edaya/authorization";
 import {
   invalidateEffectiveGrantsCacheForActor,
   invalidateEffectiveGrantsCacheForStaff,

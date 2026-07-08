@@ -1,5 +1,5 @@
+import { Payment, PaymentMethod, PaymentStatus } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { Payment, PaymentMethod, PaymentStatus } from '../../../../src/domain/finances/payment'
 
 describe('Payment entity method and receipt validation', () => {
   const defaultArgs = {

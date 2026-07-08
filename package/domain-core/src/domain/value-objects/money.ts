@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { parseDomain } from '../../domain/shared/utils'
 
 export const moneySchema = z.object({

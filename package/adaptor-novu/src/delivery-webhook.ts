@@ -1,7 +1,4 @@
-import type {
-  NormalizedDeliveryEvent,
-  NotificationDeliveryWebhookAdapter,
-} from "@edaya/core";
+import type { NormalizedDeliveryEvent, NotificationDeliveryWebhookAdapter } from "@edaya/core";
 import { Webhook } from "svix";
 import crypto from "node:crypto";
 

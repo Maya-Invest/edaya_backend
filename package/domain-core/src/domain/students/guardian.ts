@@ -1,19 +1,4 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  operationModule,
-  read,
-  readByIds,
-  write,
-} from '../../application/entities/entity-config'
-import { GuardianOperations } from '../../capabilities/authorization'
-import { AttachmentOwnerKind } from '../../domain'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 import {
   GuardianContactMethod,
@@ -144,37 +129,5 @@ export class Guardian {
     const normalizedValue
       = type === GuardianContactMethodType.Email ? value.toLocaleLowerCase() : value
     return `${type}:${normalizedValue}`
-  }
-}
-
-export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkGuardianAccess(actor, ids))
-
-  return config({
-    repository: repositories.guardians,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(GuardianOperations.read), readAccess),
-    write: write(
-      operationModule(GuardianOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
-    gates: {
-      preDelete: validateGuardianDelete,
-    },
-    atomicExecution,
-  })
-}
-
-async function validateGuardianDelete(
-  guardian: Guardian,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [links, attachments] = await Promise.all([
-    repositories.guardianLinks.list({ guardianId: guardian.id }),
-    repositories.attachments.list({ ownerKind: AttachmentOwnerKind.Guardian, ownerId: guardian.id }),
-  ])
-  if (links.length > 0 || attachments.length > 0) {
-    throw new BusinessRuleViolationError('GUARDIAN_HAS_DEPENDENCIES', `Cannot delete guardian ${guardian.id}: dependent records still exist`)
   }
 }

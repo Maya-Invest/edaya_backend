@@ -1,5 +1,5 @@
+import { Attachment, AttachmentOwnerKind } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { Attachment, AttachmentOwnerKind } from '../../../../src/domain/school/attachment'
 
 describe('Attachment entity owner relationship and URL integrity', () => {
   const baseArgs = {

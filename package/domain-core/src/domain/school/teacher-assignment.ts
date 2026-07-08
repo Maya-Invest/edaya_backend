@@ -1,11 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, operationModule, read, write } from '../../application/entities/entity-config'
-import { AccessControlOperations, TeacherOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum TeacherAssignmentKind {
@@ -95,83 +89,4 @@ export class TeacherAssignment {
   get endsAt() { return this.data.endsAt }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
-}
-
-export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.teacherAssignments,
-    tenant: teacherAssignmentTenant(),
-    read: read(
-      operationModule(TeacherOperations.assignmentRead),
-      (actor, entities) => policy.checkTeacherAssignmentAccess(actor, entities),
-    ),
-    write: write(
-      operationModule(AccessControlOperations.assign),
-      authorizeTeacherAssignment(policy),
-      authorizeTeacherAssignmentDelete(policy),
-    ),
-    gates: {
-      preSave: validateTeacherAssignmentSave,
-    },
-    atomicExecution,
-  })
-
-function teacherAssignmentTenant(): EntityTenantResolver<TeacherAssignment> {
-  return indirectTenant(async (entity, repositories) => {
-    const teacher = await repositories.teachers.findById(entity.teacherId)
-    return teacher?.schoolId
-  })
-}
-
-function authorizeTeacherAssignment(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<TeacherAssignment>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkTeacherAccess(actor, [entity.teacherId])
-  }
-}
-
-function authorizeTeacherAssignmentDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<TeacherAssignment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkTeacherAccess(actor, [entity.teacherId])
-  }
-}
-
-export async function validateTeacherAssignmentSave(
-  assignment: TeacherAssignment,
-  existing: TeacherAssignment | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const teacher = await repositories.teachers.findById(assignment.teacherId)
-  if (!teacher) {
-    throw new BusinessRuleViolationError('TEACHER_NOT_FOUND', `Teacher ${assignment.teacherId} not found`)
-  }
-
-  const academicYear = await repositories.academicYears.findById(assignment.academicYearId)
-  if (!academicYear || academicYear.schoolId !== teacher.schoolId) {
-    throw new BusinessRuleViolationError('ACADEMIC_YEAR_NOT_FOUND', `Academic year ${assignment.academicYearId} not found in school`)
-  }
-
-  if (assignment.kind === TeacherAssignmentKind.Subject) {
-    const classSubject = await repositories.classSubjects.findById(assignment.classSubjectId!)
-    if (!classSubject) {
-      throw new BusinessRuleViolationError('CLASS_SUBJECT_NOT_FOUND', `Class subject ${assignment.classSubjectId} not found`)
-    }
-    const classGroup = await repositories.classGroups.findById(classSubject.classGroupId)
-    if (!classGroup || classGroup.schoolId !== teacher.schoolId || classGroup.academicYearId !== assignment.academicYearId) {
-      throw new BusinessRuleViolationError('CLASS_GROUP_NOT_FOUND', 'Class subject must belong to the assignment academic year')
-    }
-    return
-  }
-
-  const classGroup = await repositories.classGroups.findById(assignment.classGroupId!)
-  if (!classGroup || classGroup.schoolId !== teacher.schoolId || classGroup.academicYearId !== assignment.academicYearId) {
-    throw new BusinessRuleViolationError('CLASS_GROUP_NOT_FOUND', `Class group ${assignment.classGroupId} not found in school/year`)
-  }
-
-  if (existing && existing.id !== assignment.id) {
-    throw new BusinessRuleViolationError('TEACHER_ASSIGNMENT_CONFLICT', 'Assignment id mismatch')
-  }
 }

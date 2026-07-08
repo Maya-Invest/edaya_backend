@@ -1,6 +1,7 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AuthLinkSeedPort } from '../port'
-import { createBootstrapStaffActorMetadata, Guardian, School, StaffMember } from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { Guardian, School, StaffMember } from '@edaya/core'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { SeedPortError, withSeedPortError } from '../../../support/seed-port-error'
 

@@ -1,4 +1,4 @@
-import type { CronJobDispatchMessage, CronJobKey } from "@edaya/core";
+import type { CronJobDispatchMessage, CronJobKey } from "@edaya/school-service";
 
 /** JSON-safe queue body for Cloudflare Queues. */
 export interface CronJobDispatchQueueBody {

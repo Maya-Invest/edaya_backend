@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
 import { z } from 'zod'
-import { config, indirectTenant, noopDeleteAccess, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
-import { AcademicsOperations, AuthorizationError, AuthorizationErrorCode } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const subjectMatterSchema = z.object({
@@ -36,32 +32,4 @@ export class SubjectMatter {
   get sequenceOrder() { return this.data.sequenceOrder }
   get estimatedHours() { return this.data.estimatedHours }
   get createdAt() { return this.data.createdAt }
-}
-
-export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.subjectMatters,
-    tenant: subjectMatterTenant(),
-    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), authorizeSubjectMatter(policy), authorizeSubjectMatterDelete(policy)),
-    atomicExecution,
-  })
-
-function subjectMatterTenant(): EntityTenantResolver<SubjectMatter> {
-  return indirectTenant(async (entity, repositories) => {
-    const subject = await repositories.subjects.findById(entity.subjectId)
-    return subject?.schoolId
-  })
-}
-
-function authorizeSubjectMatter(_policy: AuthorizationPolicy): EntityWriteAuthorization<SubjectMatter>['authorizeSave'] {
-  return async (actor, entity, _existing, repositories) => {
-    const subject = await repositories.subjects.findById(entity.subjectId)
-    if (!subject || subject.schoolId !== actor.schoolId)
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-}
-
-function authorizeSubjectMatterDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<SubjectMatter>['authorizeDelete'] {
-  return noopDeleteAccess
 }

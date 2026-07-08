@@ -1,12 +1,6 @@
 import type { AnnouncementInput, AnnouncementTargetInput, MessageDeliveryInput } from '@edaya/core'
 import type { FixtureAnnouncementMaterializePlan } from '../../types'
-import {
-  AnnouncementPriority,
-  AnnouncementStatus,
-  AnnouncementTargetKind,
-  MessageDeliveryRecipientKind,
-  MessageDeliveryStatus,
-} from '@edaya/core'
+import { AnnouncementPriority, AnnouncementStatus, AnnouncementTargetKind, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 
 export const demoCiAnnouncements = [

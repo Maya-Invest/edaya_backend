@@ -1,5 +1,5 @@
+import { School, SchoolType } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { School, SchoolType } from '../../../../src/domain/school/school'
 
 describe('School entity', () => {
   const baseArgs = {

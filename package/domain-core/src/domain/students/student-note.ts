@@ -1,26 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
-import type { StudentClassEnrollment } from '../../domain'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  config,
-  dateTime,
-  directSchoolTenant,
-  operationModule,
-  read,
-  readByIds,
-  write,
-} from '../../application/entities/entity-config'
-import {
-  actorHasSchoolWideGrant,
-  denyResourceAccess,
-  LogbookOperations,
-  Permission,
-  StudentOperations,
-} from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentNoteVisibility {
@@ -86,81 +65,4 @@ export class StudentNote {
   get visibility() { return this.data.visibility }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
-}
-
-export const studentNoteConfig: EntityConfigFactory<StudentNote> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkStudentNoteAccess(actor, ids))
-
-  return {
-    ...config({
-      repository: repositories.studentNotes,
-      tenant: directSchoolTenant(),
-      read: read(operationModule(StudentOperations.directoryRead), readAccess),
-      write: write(
-        operationModule(LogbookOperations.update),
-        authorizeStudentNote(policy),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
-      atomicExecution,
-    }),
-    gates: {
-      preSave: validateStudentNoteSave,
-    },
-  }
-}
-
-function authorizeStudentNote(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentNote>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    if (existing)
-      await policy.checkStudentNoteAccess(actor, [existing.id])
-  }
-}
-
-export async function validateStudentNoteSave(
-  note: StudentNote,
-  existing: StudentNote | undefined,
-  repositories: SchoolRepositories,
-  actor: ActorMetadata,
-): Promise<void> {
-  const student = await repositories.students.findById(note.studentId)
-  if (!student || student.schoolId !== note.schoolId) {
-    denyResourceAccess()
-  }
-  const staffActorId = requireStaffActorId(actor)
-  if (note.visibility === StudentNoteVisibility.AdminOnly && !hasFullStudentRecordAccess(actor)) {
-    denyResourceAccess()
-  }
-  if (existing) {
-    if (existing.schoolId !== note.schoolId || existing.studentId !== note.studentId || existing.authorStaffId !== note.authorStaffId) {
-      denyResourceAccess()
-    }
-    if (existing.authorStaffId !== staffActorId && !hasFullStudentRecordAccess(actor)) {
-      denyResourceAccess()
-    }
-  }
-}
-
-function requireStaffActorId(actor: ActorMetadata): string {
-  if (!('staffMemberId' in actor)) {
-    denyResourceAccess()
-  }
-  return actor.staffMemberId
-}
-
-function hasFullStudentRecordAccess(actor: ActorMetadata): boolean {
-  return actorHasSchoolWideGrant(
-    actor,
-    [Permission.QUERY_STUDENT_DETAIL_READ],
-  )
-}
-
-export function progressionDecisionChanged(
-  entity: StudentClassEnrollment,
-  existing: StudentClassEnrollment,
-): boolean {
-  return entity.progressionDecision !== existing.progressionDecision
-    || dateTime(entity.progressionDecidedAt) !== dateTime(existing.progressionDecidedAt)
-    || entity.progressionDecidedBy !== existing.progressionDecidedBy
-    || entity.progressionNotes !== existing.progressionNotes
 }

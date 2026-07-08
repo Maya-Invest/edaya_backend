@@ -1,5 +1,6 @@
-import type { CronJobDispatcherPort, LoggerPort } from "@edaya/core";
-import { createInlineCronJobDispatcher } from "@edaya/core";
+import type { LoggerPort } from "@edaya/core";
+import type { CronJobDispatcherPort } from "@edaya/school-service";
+import { createInlineCronJobDispatcher } from "@edaya/school-service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { createCloudflareQueueCronJobDispatcher } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";

@@ -1,6 +1,6 @@
-import type { LegacyScopeType } from '../../capabilities/authorization/permissions/scope-type'
+import type { LegacyScopeType } from '../permissions/scope-type'
 import { z } from 'zod'
-import { Permission } from '../../capabilities/authorization/permissions/permission'
+import { Permission } from '../permissions/permission'
 
 const legacyScopeTypeSchema = z.enum([
   'platform',

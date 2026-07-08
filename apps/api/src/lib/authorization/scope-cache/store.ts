@@ -1,4 +1,4 @@
-import type { ResolvedActorScope } from "@edaya/core";
+import type { ResolvedActorScope } from "@edaya/authorization";
 
 export interface ActorScopeCacheEntry {
   scope: ResolvedActorScope;

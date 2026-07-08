@@ -1,19 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { denyResourceAccess, SchoolStructureOperations, WorkspaceOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { dateRangeContains, refineEndDateNotBeforeStartDate, refineEndDateNotBeforeStartDatePartial } from '../../domain/value-objects/date-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AcademicPeriodType {
@@ -66,50 +54,5 @@ export class AcademicPeriod {
 
   contains(value: Date): boolean {
     return dateRangeContains(this.startDate, this.endDate, value)
-  }
-}
-
-export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = ({ repositories, atomicExecution }) => ({
-  ...config({
-    repository: repositories.academicPeriods,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
-    write: write(
-      operationModule(SchoolStructureOperations.configure),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  }),
-  gates: {
-    preSave: validateAcademicPeriodSave,
-    preDelete: validateAcademicPeriodDelete,
-  },
-})
-
-export async function validateAcademicPeriodSave(
-  period: AcademicPeriod,
-  _existing: AcademicPeriod | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const academicYear = await repositories.academicYears.findById(period.academicYearId)
-  if (!academicYear || academicYear.schoolId !== period.schoolId) {
-    denyResourceAccess()
-  }
-  if (period.startDate.getTime() < academicYear.startDate.getTime() || period.endDate.getTime() > academicYear.endDate.getTime()) {
-    throw new BusinessRuleViolationError('ACADEMIC_PERIOD_OUTSIDE_YEAR', `Academic period ${period.id} must fit within academic year ${period.academicYearId}`)
-  }
-}
-
-export async function validateAcademicPeriodDelete(
-  period: AcademicPeriod,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [assessments, reportCards] = await Promise.all([
-    repositories.assessments.list({ periodId: period.id }),
-    repositories.results.list({ periodId: period.id }),
-  ])
-  if (assessments.length > 0 || reportCards.length > 0) {
-    throw new BusinessRuleViolationError('ACADEMIC_PERIOD_HAS_DEPENDENCIES', `Cannot delete academic period ${period.id}: dependent records still exist`)
   }
 }

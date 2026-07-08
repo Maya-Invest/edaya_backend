@@ -1,6 +1,5 @@
+import { DomainValidationError, ResourceAssignment } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { ResourceAssignment } from '../../../../src/domain/school/resource-assignment'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 const targetError = 'A ResourceAssignment must target exactly one of: lessonSessionId, activitySessionId, assessmentId, or classGroupId'
 

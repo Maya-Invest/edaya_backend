@@ -4,66 +4,9 @@ import * as commandResponseSchemas from "@/lib/school-api/schemas/command-respon
 import * as commandSchemas from "@/lib/school-api/schemas/commands";
 import * as entitySchemas from "@/lib/school-api/schemas/entities";
 import * as querySchemas from "@/lib/school-api/schemas/queries";
-import {
-  AcademicPeriod,
-  AcademicYear,
-  AccountInvitation,
-  Activity,
-  ActivityEnrollment,
-  ActivitySession,
-  Announcement,
-  AnnouncementTarget,
-  Assessment,
-  AssessmentResult,
-  Attachment,
-  Attendance,
-  AttendanceRecord,
-  CalendarEvent,
-  ClassActivityEnrollment,
-  ClassGroup,
-  ClassSubject,
-  ClassSubjectMatter,
-  ClassSubjectProgress,
-  CORE_ENTITY_KEYS,
-
-  DisciplinaryAction,
-  Fee,
-  GradeLevel,
-  GradeLevelSubject,
-  GradeLevelSubjectMatter,
-  GradeScale,
-  Guardian,
-  GuardianStudentLink,
-  Incident,
-  LessonSession,
-  MessageDelivery,
-  Payment,
-  PeriodDefinition,
-  ReportCardDefinition,
-  ReportCardDefinitionSection,
-  ReportCardResult,
-  Resource,
-  ResourceAssignment,
-  Schedule,
-  School,
-
-  SchoolNotificationTemplates,
-  StaffAssignment,
-  StaffMember,
-  StaffPermissionAssignment,
-  Student,
-  StudentClassEnrollment,
-  StudentDisciplinaryAction,
-  StudentFee,
-  StudentHealthProfile,
-  StudentIncidentInvolvement,
-  StudentNote,
-  Subject,
-  SubjectMatter,
-  Teacher,
-  TeacherAssignment,
-} from "@edaya/core";
-import type { CoreEntityKey, SchoolCommandKey } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment } from "@edaya/core";
+import { CORE_ENTITY_KEYS } from "@edaya/school-service";
+import type { CoreEntityKey, SchoolCommandKey } from "@edaya/school-service";
 
 export interface CoreCommandConfig {
   publicName: string;

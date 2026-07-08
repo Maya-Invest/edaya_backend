@@ -1,4 +1,4 @@
-import { Permission } from "@edaya/core";
+import { Permission } from "@edaya/authorization";
 import { z } from "zod";
 
 export const serviceAccountPermissionAssignmentRequestSchema = z.object({

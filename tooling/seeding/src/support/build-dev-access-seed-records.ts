@@ -5,11 +5,7 @@ import type {
   StaffAssignmentSeedRecord,
   StaffRoleAssignmentPresetRecord,
 } from '../domains/access/port'
-import {
-  COORDINATOR_PERMISSIONS,
-  ELEVATED_STAFF_PERMISSIONS,
-  Permission,
-} from '@edaya/core'
+import { COORDINATOR_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS, Permission } from '@edaya/authorization'
 
 /** Permissions that require explicit scope entity ids when materialized from role templates. */
 const CLASS_GROUP_SCOPED_PERMISSIONS = [

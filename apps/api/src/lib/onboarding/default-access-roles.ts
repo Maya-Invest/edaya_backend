@@ -1,7 +1,4 @@
-import {
-  COORDINATOR_PERMISSIONS,
-  Permission,
-} from "@edaya/core";
+import { COORDINATOR_PERMISSIONS, Permission } from "@edaya/authorization";
 
 export interface StaffInvitePermissionPreset {
   id: string;

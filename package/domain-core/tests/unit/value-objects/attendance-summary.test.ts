@@ -1,6 +1,5 @@
+import { AttendanceSummary, DomainValidationError } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domain/shared/utils'
-import { AttendanceSummary } from '../../../src/domain/value-objects/attendance-summary'
 
 describe('attendanceSummary value object', () => {
   test('should create valid summary', () => {

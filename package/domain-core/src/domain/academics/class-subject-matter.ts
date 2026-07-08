@@ -1,10 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, resolveClassSubjectSchoolId, write } from '../../application/entities/entity-config'
-import { AcademicsOperations, denyResourceAccess } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ClassSubjectMatterStatus {
@@ -52,45 +47,4 @@ export class ClassSubjectMatter {
   get completedAt() { return this.data.completedAt }
   get notes() { return this.data.notes }
   get updatedAt() { return this.data.updatedAt }
-}
-
-export const classSubjectMatterConfig: EntityConfigFactory<ClassSubjectMatter> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.classSubjectMatters,
-    tenant: classSubjectMatterTenant(),
-    read: read(operationModule(AcademicsOperations.curriculumRead), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassSubjectMatter(policy), authorizeClassSubjectMatterDelete(policy)),
-    gates: {
-      preSave: validateClassSubjectMatterSave,
-    },
-    atomicExecution,
-  })
-
-function classSubjectMatterTenant(): EntityTenantResolver<ClassSubjectMatter> {
-  return indirectTenant(async (entity, repositories) => resolveClassSubjectSchoolId(repositories, entity.classSubjectId))
-}
-
-async function validateClassSubjectMatterSave(
-  classSubjectMatter: ClassSubjectMatter,
-  _existing: ClassSubjectMatter | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (!repositories.classSubjects || !repositories.subjectMatters) {
-    return
-  }
-  const [classSubject, subjectMatter] = await Promise.all([
-    repositories.classSubjects.findById(classSubjectMatter.classSubjectId),
-    repositories.subjectMatters.findById(classSubjectMatter.subjectMatterId),
-  ])
-  if (!classSubject || !subjectMatter || subjectMatter.subjectId !== classSubject.subjectId) {
-    denyResourceAccess()
-  }
-}
-
-function authorizeClassSubjectMatter(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectMatter>['authorizeSave'] {
-  return noopSaveAccess
-}
-
-function authorizeClassSubjectMatterDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectMatter>['authorizeDelete'] {
-  return noopDeleteAccess
 }

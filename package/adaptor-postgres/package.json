@@ -19,7 +19,9 @@
     "test": "bun test src"
   },
   "dependencies": {
+    "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
+    "@edaya/school-service": "workspace:*",
     "drizzle-orm": "^0.39.0"
   },
   "devDependencies": {

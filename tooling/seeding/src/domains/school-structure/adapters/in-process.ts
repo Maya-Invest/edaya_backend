@@ -1,9 +1,6 @@
 import type { SeedApplication } from '../../../support/types'
 import type { SchoolStructureSeedPort } from '../port'
-import {
-  GradeLevel,
-  PeriodDefinition,
-} from '@edaya/core'
+import { GradeLevel, PeriodDefinition } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 

@@ -1,18 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  operationModule,
-  read,
-  readByIds,
-  write,
-} from '../../application/entities/entity-config'
-import { AccessControlOperations, TeacherOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const teacherSchema = z.object({
@@ -63,36 +50,5 @@ export class Teacher {
 
   copyWith(changes: Partial<TeacherInput>): Teacher {
     return new Teacher({ ...this.data, ...changes })
-  }
-}
-
-export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
-  const readAccess = readByIds((actor, ids) => input.policy.checkTeacherAccess(actor, ids))
-
-  return {
-    ...config({
-      repository: input.repositories.teachers,
-      tenant: directSchoolTenant(),
-      read: read(operationModule(TeacherOperations.selfRead), readAccess),
-      write: write(
-        operationModule(AccessControlOperations.assign),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
-      atomicExecution: input.atomicExecution,
-    }),
-    gates: {
-      preDelete: validateTeacherDelete,
-    },
-  }
-}
-
-async function validateTeacherDelete(
-  teacher: Teacher,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const assignments = await repositories.teacherAssignments.list({ teacherId: teacher.id })
-  if (assignments.length > 0) {
-    throw new BusinessRuleViolationError('TEACHER_HAS_DEPENDENCIES', `Cannot delete teacher ${teacher.id}: dependent records still exist`)
   }
 }

@@ -1,18 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  operationModule,
-  read,
-  readByIds,
-  write,
-} from '../../application/entities/entity-config'
-import { denyResourceAccess, StudentHealthOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const studentHealthProfileBaseSchema = z.object({
@@ -70,47 +57,4 @@ export class StudentHealthProfile {
   get bloodType() { return this.data.bloodType }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
-}
-
-export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkStudentHealthAccess(actor, ids))
-
-  return {
-    ...config({
-      repository: repositories.studentHealthProfiles,
-      tenant: directSchoolTenant(),
-      read: read(operationModule(StudentHealthOperations.read), readAccess),
-      write: write(
-        operationModule(StudentHealthOperations.update),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
-      atomicExecution,
-    }),
-    gates: {
-      preSave: validateStudentHealthProfileSave,
-    },
-  }
-}
-
-async function validateStudentHealthProfileSave(
-  profile: StudentHealthProfile,
-  existing: StudentHealthProfile | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const student = await repositories.students.findById(profile.studentId)
-  if (!student || student.schoolId !== profile.schoolId) {
-    denyResourceAccess()
-  }
-  if (existing && (existing.schoolId !== profile.schoolId || existing.studentId !== profile.studentId)) {
-    denyResourceAccess()
-  }
-  const profiles = await repositories.studentHealthProfiles.list({
-    schoolId: profile.schoolId,
-    studentId: profile.studentId,
-  })
-  const duplicate = profiles.find(item => item.id !== profile.id)
-  if (duplicate) {
-    throw new BusinessRuleViolationError('STUDENT_HEALTH_PROFILE_ALREADY_EXISTS', `Student ${profile.studentId} already has a health profile`)
-  }
 }

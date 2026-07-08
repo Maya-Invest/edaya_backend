@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
-import { AcademicsOperations, denyResourceAccess } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const classSubjectSchema = z.object({
@@ -45,90 +41,4 @@ export class ClassSubject {
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
   get isOffered() { return this.data.isOffered }
-}
-
-export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.classSubjects,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(operationModule(AcademicsOperations.programRead), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateClassSubjectSave,
-    },
-    atomicExecution,
-  })
-
-function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
-  return existing.classGroupId === classSubject.classGroupId
-    && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
-    && existing.coefficient === classSubject.coefficient
-    && existing.isOffered === classSubject.isOffered
-    && classSubject.completedPercentage !== existing.completedPercentage
-}
-
-function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
-  return existing.classGroupId === classSubject.classGroupId
-    && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
-    && existing.coefficient === classSubject.coefficient
-    && existing.completedPercentage === classSubject.completedPercentage
-    && classSubject.isOffered !== existing.isOffered
-}
-
-function isCustomClassSubject(classSubject: ClassSubject): boolean {
-  return !classSubject.gradeLevelSubjectId
-}
-
-async function validateClassSubjectSave(
-  classSubject: ClassSubject,
-  existing: ClassSubject | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (!repositories.classGroups || !repositories.subjects) {
-    return
-  }
-  const [classGroup, subject] = await Promise.all([
-    repositories.classGroups.findById(classSubject.classGroupId),
-    repositories.subjects.findById(classSubject.subjectId),
-  ])
-  if (!classGroup || !subject || subject.schoolId !== classGroup.schoolId) {
-    denyResourceAccess()
-  }
-  if (existing && isProgressOnlyClassSubjectUpdate(existing, classSubject)) {
-    return
-  }
-  if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
-    return
-  }
-  if (!classSubject.gradeLevelSubjectId) {
-    if (existing && !isCustomClassSubject(existing)) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_INHERITED_FROM_GRADE_LEVEL',
-        'Inherited class subjects cannot be converted to custom subjects',
-      )
-    }
-    const duplicate = await repositories.classSubjects.findOne({
-      classGroupId: classSubject.classGroupId,
-      subjectId: classSubject.subjectId,
-    })
-    if (duplicate && duplicate.id !== classSubject.id) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_ALREADY_EXISTS',
-        `Subject ${classSubject.subjectId} is already offered in class group ${classSubject.classGroupId}`,
-      )
-    }
-    return
-  }
-  if (!existing) {
-    throw new BusinessRuleViolationError(
-      'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-      'Class subjects are inherited from grade level allocation and cannot be created directly',
-    )
-  }
-  throw new BusinessRuleViolationError(
-    'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-    'Inherited class subjects can only be updated through grade level sync or setClassSubjectOffered',
-  )
 }

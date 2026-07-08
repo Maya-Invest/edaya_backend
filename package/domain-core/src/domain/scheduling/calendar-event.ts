@@ -1,19 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import {
-  authorizeDeleteByReadAccess,
-  authorizeExistingById,
-  config,
-  directSchoolTenant,
-  noopReadAccess,
-  operationModule,
-  read,
-  write,
-} from '../../application/entities/entity-config'
-import { denyResourceAccess, SchedulingOperations } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { dateRangeDurationDays, refineEndDateNotBeforeStartDate } from '../../domain/value-objects/date-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum CalendarEventKind {
@@ -96,48 +84,5 @@ export class CalendarEvent {
   /** Returns the number of calendar days this event spans (inclusive). */
   get durationDays(): number {
     return dateRangeDurationDays(this.startDate, this.endDate)
-  }
-}
-
-export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = ({ repositories, atomicExecution }) => ({
-  ...config({
-    repository: repositories.calendarEvents,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(SchedulingOperations.calendarRead), noopReadAccess),
-    write: write(
-      operationModule(SchedulingOperations.calendarManage),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
-    atomicExecution,
-  }),
-  gates: {
-    preSave: validateCalendarEventSave,
-  },
-})
-
-export async function validateCalendarEventSave(
-  event: CalendarEvent,
-  _existing: CalendarEvent | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const academicYear = await repositories.academicYears.findById(event.academicYearId)
-  if (!academicYear || academicYear.schoolId !== event.schoolId) {
-    denyResourceAccess()
-  }
-  if (event.startDate.getTime() < academicYear.startDate.getTime() || event.endDate.getTime() > academicYear.endDate.getTime()) {
-    throw new BusinessRuleViolationError('CALENDAR_EVENT_OUT_OF_YEAR', `Calendar event ${event.id} must fit within academic year ${event.academicYearId}`)
-  }
-  if (event.scopeKind === CalendarEventScopeKind.ClassGroup) {
-    const classGroup = event.scopeId ? await repositories.classGroups.findById(event.scopeId) : undefined
-    if (!classGroup || classGroup.schoolId !== event.schoolId || classGroup.academicYearId !== event.academicYearId) {
-      denyResourceAccess()
-    }
-  }
-  if (event.scopeKind === CalendarEventScopeKind.GradeLevel) {
-    const gradeLevel = event.scopeId ? await repositories.gradeLevels.findById(event.scopeId) : undefined
-    if (!gradeLevel || gradeLevel.schoolId !== event.schoolId) {
-      denyResourceAccess()
-    }
   }
 }

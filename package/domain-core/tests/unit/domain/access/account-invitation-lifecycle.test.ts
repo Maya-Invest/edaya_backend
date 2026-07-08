@@ -1,11 +1,5 @@
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, toPublicAccountInvitation } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  toPublicAccountInvitation,
-} from '../../../../src/domain'
 
 const baseArgs = {
   id: 'inv-1',

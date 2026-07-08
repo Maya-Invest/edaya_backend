@@ -1,20 +1,6 @@
-import type { GuardianScope, StudentScope } from '@edaya/core'
-import {
-  ActorAssuranceLevel,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  AttendanceStatus,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-  GradeLevel,
-
-  PaymentMethod,
-  Permission,
-  resolveActorScope,
-  resolveEffectiveGrants,
-
-  Subject,
-} from '@edaya/core'
+import type { GuardianScope, StudentScope } from '@edaya/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, Permission, resolveActorScope, resolveEffectiveGrants } from '@edaya/authorization'
+import { AttendanceStatus, GradeLevel, PaymentMethod, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {

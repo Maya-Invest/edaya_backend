@@ -1,18 +1,7 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
-import {
-  AccessControlOperations,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AuthorizationError,
-  AuthorizationErrorCode,
-  BusinessRuleViolationError,
-  createBootstrapStaffActorMetadata,
-  operationModule,
-  permissionRowsFromTemplatePermissions,
-  StaffMember,
-  StaffPermissionAssignment,
-} from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from "@edaya/core";
+import { AccessControlOperations, AuthorizationError, AuthorizationErrorCode, createBootstrapStaffActorMetadata, operationModule, permissionRowsFromTemplatePermissions } from "@edaya/authorization";
 import { randomUUID } from "node:crypto";
 import {
   getStaffInvitePermissionPreset,

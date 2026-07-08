@@ -1,9 +1,5 @@
-import {
-  Permission,
-  StaffAssignment,
-  StaffMember,
-  StaffPermissionAssignment,
-} from '@edaya/core'
+import { Permission } from '@edaya/authorization'
+import { StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createTestApp } from '../utils/test-adapter'

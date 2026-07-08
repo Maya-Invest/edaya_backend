@@ -1,10 +1,5 @@
-import {
-  listPermissionCatalog,
-  Permission,
-  renderScopeIds,
-
-} from "@edaya/core";
-import type { ScopeType } from "@edaya/core";
+import { listPermissionCatalog, Permission, renderScopeIds } from "@edaya/authorization";
+import type { ScopeType } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";

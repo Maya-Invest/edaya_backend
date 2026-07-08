@@ -1,18 +1,9 @@
 import { describe, expect, it, mock } from "bun:test";
 import { parseEnv } from "@/runtime";
-import type {
-  Permission,
-} from "@edaya/core";
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  ActorAssuranceLevel,
-  createStaffActorMetadata,
-  hashInvitationToken,
-  StaffMember,
-} from "@edaya/core";
+import type { Permission } from "@edaya/authorization";
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
+import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
+import { hashInvitationToken } from "@edaya/school-service";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";

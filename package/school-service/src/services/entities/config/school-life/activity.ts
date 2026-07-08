@@ -1,0 +1,41 @@
+import type { Activity } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { DisciplineOperations } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { authorizeDeleteByReadAccess, authorizeExistingById, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
+
+// Extracted from domain/school-life/activity.ts (PR3)
+export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, atomicExecution }) => ({
+  ...config({
+    repository: repositories.activities,
+    tenant: directSchoolTenant(),
+    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
+    write: write(
+      operationModule(DisciplineOperations.create),
+      authorizeExistingById(noopReadAccess),
+      authorizeDeleteByReadAccess(noopReadAccess),
+    ),
+    atomicExecution,
+  }),
+  gates: {
+    preDelete: validateActivityDelete,
+  },
+})
+
+export async function validateActivityDelete(
+  activity: Activity,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const [studentEnrollments, classEnrollments] = await Promise.all([
+    repositories.activityEnrollments.list({ activityId: activity.id }),
+    repositories.classActivityEnrollments.list({ activityId: activity.id }),
+  ])
+  if (studentEnrollments.length > 0 || classEnrollments.length > 0) {
+    throw new BusinessRuleViolationError(
+      'ACTIVITY_HAS_DEPENDENCIES',
+      `Cannot delete activity ${activity.id}: enrollments still exist`,
+    )
+  }
+}

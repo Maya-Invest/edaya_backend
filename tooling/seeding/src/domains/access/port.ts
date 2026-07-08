@@ -1,4 +1,4 @@
-import type { Permission, ScopeGrantInput } from '@edaya/core'
+import type { Permission, ScopeGrantInput } from '@edaya/authorization'
 
 export interface StaffPermissionAssignmentSeedRecord {
   id: string

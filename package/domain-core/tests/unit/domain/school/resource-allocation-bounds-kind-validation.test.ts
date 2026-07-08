@@ -1,5 +1,5 @@
+import { Resource, ResourceKind } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { Resource, ResourceKind } from '../../../../src/domain/school/resource'
 
 describe('Resource allocation bounds and kind validation', () => {
   const baseArgs = {

@@ -1,7 +1,8 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { ProfilePicturesSeedPort } from '../port'
-import { AttachmentStatus, buildAttachmentContentUrl } from '@edaya/core'
+import { AttachmentStatus } from '@edaya/core'
+import { buildAttachmentContentUrl } from '@edaya/school-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand } from '../../../transport/http/core-entity'
 

@@ -1,9 +1,4 @@
-import {
-  AcademicPeriodType,
-  AttendanceMode,
-  GradeLevel,
-  SchoolType,
-} from '@edaya/core'
+import { AcademicPeriodType, AttendanceMode, GradeLevel, SchoolType } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {

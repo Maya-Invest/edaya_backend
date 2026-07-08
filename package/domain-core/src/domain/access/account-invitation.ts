@@ -1,7 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
-import { AccessControlOperations, denyResourceAccess } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AccountInvitationKind {
@@ -85,21 +83,3 @@ export function toPublicAccountInvitationData(data: AccountInvitationData): Publ
 export function toPublicAccountInvitation(invitation: AccountInvitation): PublicAccountInvitationData {
   return toPublicAccountInvitationData(invitation.data)
 }
-
-async function denyInvitationEntityWrite(): Promise<void> {
-  denyResourceAccess()
-}
-
-/** Read-only entity — mutations go through invitation commands. */
-export const accountInvitationConfig: EntityConfigFactory<AccountInvitation> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.accountInvitations,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(AccessControlOperations.assign), noopReadAccess),
-    write: write(
-      operationModule(AccessControlOperations.assign),
-      denyInvitationEntityWrite,
-      denyInvitationEntityWrite,
-    ),
-    atomicExecution,
-  })

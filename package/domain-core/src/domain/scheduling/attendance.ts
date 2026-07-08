@@ -1,8 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, operationModule, read, write } from '../../application/entities/entity-config'
-import { SchedulingOperations } from '../../capabilities/authorization'
+
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const attendanceBaseSchema = z.object({
@@ -51,16 +50,3 @@ export class Attendance {
     return dateTimeRangeDurationMinutes(this.startsAt, this.endsAt)
   }
 }
-
-export const attendanceConfig: EntityConfigFactory<Attendance> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.attendances,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(operationModule(SchedulingOperations.timetableRead), noopReadAccess),
-    write: write(
-      operationModule(SchedulingOperations.timetableManage),
-      authorizeClassGroupLinked(policy, 'classGroupId'),
-      authorizeClassGroupLinkedDelete(policy),
-    ),
-    atomicExecution,
-  })

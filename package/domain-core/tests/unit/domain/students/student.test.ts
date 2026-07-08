@@ -1,5 +1,5 @@
+import { Student, StudentStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { Student, StudentStatus } from '../../../../src/domain/students/student'
 
 describe('Student copyWith', () => {
   const baseArgs = {
