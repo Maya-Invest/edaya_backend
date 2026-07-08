@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '../../../../src/ports'
 import { describe, expect, mock, test } from 'bun:test'
 import { AuthorizationError } from '../../../../src/capabilities/authorization'
-import { dispatchAttendanceRecordAccess, dispatchLessonSessionAccess } from '../../../../src/capabilities/authorization/policy/strategies/scheduling-access'
+import { dispatchAttendanceRecordAccess, dispatchLessonSessionAccess, dispatchLessonSessionReadAccess } from '../../../../src/capabilities/authorization/policy/strategies/scheduling-access'
 import { StudentClassEnrollmentStatus } from '../../../../src/domain'
 import { AttendanceRecord, AttendanceStatus } from '../../../../src/domain/scheduling/attendance-record'
 import { AuthFixtures } from '../../../support/authorization-fixtures'
@@ -56,6 +56,30 @@ function attendanceRepos(classGroupId = 'class-1'): SchoolRepositories {
 async function expectForbidden(operation: Promise<void>): Promise<void> {
   await expect(operation).rejects.toBeInstanceOf(AuthorizationError)
 }
+
+describe('dispatchLessonSessionReadAccess', () => {
+  test('allows subject teacher to read lesson sessions in an assigned class group', async () => {
+    const actor = AuthFixtures.teacher.subject('cs-math')
+    await dispatchLessonSessionReadAccess(actor, ['session-1', 'session-2'], lessonRepos('cs-french', 'class-1'))
+  })
+
+  test('denies subject teacher for lesson sessions outside assigned class groups', async () => {
+    const actor = AuthFixtures.teacher.subject('cs-math')
+    const repos = {
+      lessonSessions: {
+        findByIds: mock(async (ids: readonly string[]) =>
+          ids.map(id => ({ id, classGroupId: 'class-2', classSubjectId: 'cs-french' })),
+        ),
+      },
+      classSubjects: {
+        findByIds: mock(async (ids: readonly string[]) =>
+          ids.map(id => ({ id, classGroupId: 'class-1' })),
+        ),
+      },
+    } as unknown as SchoolRepositories
+    await expectForbidden(dispatchLessonSessionReadAccess(actor, ['session-1'], repos))
+  })
+})
 
 describe('dispatchLessonSessionAccess', () => {
   test('allows teacher assigned to class subject', async () => {

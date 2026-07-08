@@ -107,7 +107,7 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
     tenant: classGroupLinkedTenant('classGroupId'),
     read: read(
       operationModule(SchedulingOperations.timetableRead),
-      readByIds((actor, ids) => policy.checkLessonSessionAccess(actor, ids)),
+      readByIds((actor, ids) => policy.checkLessonSessionReadAccess(actor, ids)),
     ),
     write: write(
       anyOperationModule([
