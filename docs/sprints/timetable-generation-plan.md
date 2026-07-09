@@ -2,7 +2,7 @@
 
 > **Status:** Locked — ready for Phase 0  
 > **Created:** 2026-07-08  
-> **Last updated:** 2026-07-08 (session-native resolver model; timetable flag on `LessonSession`)  
+> **Last updated:** 2026-07-08 (`timetableGenerated`: `draft` | `published`)  
 > **Scope:** Date-range timetable generation via resolver + session-level solver; publish writes flagged `LessonSession`s; ad-hoc `Schedule` + materialize remains independent  
 > **Out of scope (v1):** Activity/assessment generation, room requirements, teacher availability, CP-SAT solver, stored generation process / draft entities  
 > **Related domain:** `package/domain-core/src/domain/scheduling/`, `domain/academics/`, `domain/school/`  
@@ -17,9 +17,9 @@
 | Period model | **Weekly `PeriodDefinition`** (`dayOfWeek`, `isTeachingSlot`, `isBreak`) |
 | Planning space | **Resolver** maps `startDate`–`endDate` + weekly slots + calendar → resolved **cells** `(date, period slot)` |
 | Periodicity | **No periodicity field** — repetition is implicit in resolver expansion from placement **parameters** |
-| Generate output | **`LessonSession` rows** with dedicated **`timetableGenerated: true`** flag (draft until publish) |
-| Publish | Promote / finalize generated sessions in range (delete incomplete prior generated, write new) |
-| Republish | **= regenerate** — delete previous `timetableGenerated` sessions that are **not completed**, then generate again |
+| Generate output | **`LessonSession`** with `timetableGenerated: 'draft'` |
+| Publish | Flip `timetableGenerated` to **`'published'`** in range (after conflict pass) |
+| Republish | Delete incomplete generated (`draft` or `published` pending) in range → regenerate |
 | Conflicts | **Session level** — lessons, activities, in-class assessments share one overlap check |
 | Occupancy | **Layered** — e.g. `OccupiedCell` keyed by **teacher** (and class group for own-class placement) |
 | `scheduleId` | **Optional** on generated sessions — ad-hoc path still uses `Schedule` → `materializeSchedule` |
@@ -30,8 +30,8 @@
 
 | Path | Creates | Use case |
 |------|---------|----------|
-| **Timetable generator** | `LessonSession` (`timetableGenerated: true`, `scheduleId` optional) | Auto timetable for a date range |
-| **Schedule + materialize** | `LessonSession` (`timetableGenerated: false`, `scheduleId` required) | Manual / ad-hoc recurring or one-off |
+| **Timetable generator** | `LessonSession` (`timetableGenerated: 'draft'` → `'published'`) | Auto timetable for a date range |
+| **Schedule + materialize** | `LessonSession` (`timetableGenerated` null, `scheduleId` required) | Manual / ad-hoc |
 
 ---
 
@@ -39,8 +39,8 @@
 
 1. **Session-level conflicts** — one overlap engine for `LessonSession`, `ActivitySession`, and in-class `Assessment` in the resolved datetime range.
 2. **Resolver owns repetition** — placement **parameters** (e.g. weekly pattern) are expanded into concrete cells at resolution time; the solver places on cells, not on abstract recurrence.
-3. **Generated sessions are flagged** — `timetableGenerated: true` distinguishes solver output from schedule-materialized sessions.
-4. **Republish replaces incomplete generated work** — completed generated sessions are kept; all other `timetableGenerated` sessions in scope are deleted and regenerated.
+3. **Timetable flag on session** — `timetableGenerated: 'draft' | 'published' | null`; `null` = ad-hoc / materialized from `Schedule`.
+4. **Republish replaces incomplete generated work** — completed sessions kept; delete other generated (`draft` or non-completed `published`) in range, then regenerate.
 5. **Teacher occupancy is a layer** — cross-class sequential generation pins occupied cells per teacher.
 
 ---
@@ -66,19 +66,19 @@ flowchart TB
   subgraph gen [Generate]
     OCC[Occupancy layers\nteacher, class]
     SOL[Session-level solver]
-    DRAFT[LessonSession\ntimetableGenerated=true draft]
+    DRAFT[LessonSession\ntimetableGenerated=draft]
   end
 
   subgraph pub [Publish / Republish]
-    DEL[Delete incomplete\ntimetableGenerated in range]
+    DEL[Delete incomplete generated in range]
     REGEN[Regenerate if republish]
-    LIVE[LessonSession published]
+    LIVE[LessonSession\ntimetableGenerated=published]
   end
 
   subgraph adhoc [Independent ad-hoc]
     SCH[Schedule]
     MAT[materializeSchedule]
-    LS2[LessonSession\ntimetableGenerated=false]
+    LS2[LessonSession\ntimetableGenerated=null]
   end
 
   PD --> resolve
@@ -167,22 +167,30 @@ Used by **generator** (on each candidate cell) and available for **ad-hoc** save
 ### 1.5 `LessonSession` extensions
 
 ```typescript
-timetableGenerated: z.boolean().default(false)
-scheduleId: z.string().trim().min(1).nullable().optional()  // required when timetableGenerated=false
+export enum TimetableGenerated {
+  Draft = 'draft',
+  Published = 'published',
+}
+
+// nullable — null/undefined = ad-hoc (Schedule → materialize)
+timetableGenerated: z.nativeEnum(TimetableGenerated).nullable().optional()
+scheduleId: z.string().trim().min(1).nullable().optional()
 ```
 
-| Field | Generated path | Ad-hoc (materialized) path |
-|-------|----------------|----------------------------|
-| `timetableGenerated` | `true` | `false` |
+| Field | Timetable path | Ad-hoc path |
+|-------|----------------|-------------|
+| `timetableGenerated` | `'draft'` → `'published'` | `null` / omitted |
 | `scheduleId` | optional | **required** |
-| `status` | `pending` on publish | `pending` / `completed` / `cancelled` |
+| `status` | `pending` (until completed/cancelled) | same |
 
 Validation:
 
-- `timetableGenerated === false` → `scheduleId` required.
-- `timetableGenerated === true` → `scheduleId` optional.
+- `timetableGenerated` is `draft` or `published` → `scheduleId` optional.
+- `timetableGenerated` is null / omitted → `scheduleId` **required**.
 
-Direct `lessonSessions.save` for **new** rows: allowed only via timetable publish workflow or materialize workflow (`moduleChecked`).
+**Occupancy / pins:** teacher layer includes `published` sessions and `draft` sessions from other classes in range (drafts reserve teacher cells).
+
+Direct `lessonSessions.save` for **new** rows: only via generate, publish, or materialize workflows (`moduleChecked`).
 
 ---
 
@@ -204,8 +212,8 @@ Synced to `ClassSubject`. Required when workload enforcement is on.
 
 ### 2.3 `LessonSession`
 
-- `timetableGenerated: boolean`
-- Relax `scheduleId` to optional when `timetableGenerated === true`
+- `timetableGenerated: 'draft' | 'published' | null`
+- `scheduleId` optional when `timetableGenerated` is set; required when null
 
 ### 2.4 School generation defaults (`School`)
 
@@ -246,7 +254,7 @@ interface GenerateClassGroupTimetableInput {
 1. Resolve space → cells.
 2. Build occupancy layers (teacher pins from other classes; class layer from existing sessions in range).
 3. Greedy solver: place `classSubject` instances on cells; enforce workload, `minPeriodGapSameSubject` (per week slice in range), teacher layer.
-4. Write `LessonSession` rows with `timetableGenerated: true`, `status: pending` (unpublished draft state — see §3.2).
+4. Write `LessonSession` rows with `timetableGenerated: 'draft'`, `status: pending`.
 
 **No stored process** — output is only the flagged sessions (and transient solver state in memory).
 
@@ -263,15 +271,13 @@ interface PublishClassGroupTimetableInput {
 }
 ```
 
-**Publish = finalize generated sessions in range** (no separate artifact).
+**Publish** finalizes draft generated sessions in range:
 
-For sessions with `timetableGenerated: true` in range:
+1. Select `LessonSession` where `classGroupId`, `timetableGenerated === 'draft'`, date in `[startDate, endDate]`.
+2. Run `assertNoSessionConflict` per row (`sessionConflictPolicy`: fail aborts atomically; skip omits row).
+3. Set `timetableGenerated: 'published'` on surviving rows.
 
-- Already written by generate; publish validates conflicts once more if needed and marks them live (or generate writes publish-ready rows and publish is a no-op validation — implementer choice; prefer **generate writes draft, publish commits** via status or `publishedAt` flag if needed).
-
-**Simpler v1:** generate writes sessions; **publish** only runs final conflict pass + sets `publishedAt` or flips `isDraft: false` if we add a draft bit. If no draft bit: generate creates replaceable rows; publish confirms.
-
-**Recommended v1:** add `timetableDraft: boolean` on generated sessions (`true` after generate, `false` after publish) OR use `publishedAt: Date | null`.
+No separate artifact — the flag transition **is** publish.
 
 ### 3.3 Republish (= regenerate)
 
@@ -286,15 +292,15 @@ interface RepublishClassGroupTimetableInput {
 
 **No separate republish state machine:**
 
-1. Delete all `timetableGenerated` `LessonSession`s in `[startDate, endDate]` where `status !== completed` (and not `cancelled` if preserving audit — **completed only is kept**).
-2. Run **generate** again (same inputs).
-3. Run **publish** (or generate produces publish-ready rows in one step).
+1. Delete `LessonSession` in range where `timetableGenerated` is `'draft'` or `'published'`, and `status !== completed`.
+2. Run **generate** (writes new `'draft'` rows).
+3. Run **publish** (`'draft'` → `'published'`).
 
 `isException` manual reschedules on generated sessions: treat as **completed or pinned** occupancy (do not delete if completed; if pending exception, pin cell in occupancy layer).
 
 ### 3.4 Ad-hoc path (unchanged)
 
-- `Schedule` + `materializeSchedule` → `LessonSession` with `timetableGenerated: false`, `scheduleId` required.
+- `Schedule` + `materializeSchedule` → `LessonSession` with `timetableGenerated: null`, `scheduleId` required.
 - `school.enforceScheduleConflicts` + `materializeConflictPolicy` for this path only.
 
 ---
@@ -321,7 +327,7 @@ Teacher conflicts: **mandatory** via teacher occupancy layer (not optional).
 | Task | Deliverable |
 |------|-------------|
 | `PeriodDefinition`: `dayOfWeek`, `isTeachingSlot` | Migration + demo Wed PM |
-| `LessonSession`: `timetableGenerated`, optional `scheduleId` | Domain + validation |
+| `LessonSession`: `timetableGenerated` enum + optional `scheduleId` | Domain + validation |
 | `periodsPerWeek` on `GradeLevelSubject` + sync | Domain + API |
 | `resolveTimetableSpace` | Query |
 | `assertNoSessionConflict` | Shared conflict module |
@@ -358,10 +364,11 @@ Demo `periodsPerWeek`, seed optional generate+publish, portal smoke.
 |------|----------|
 | Christmas in range | Resolver skips dates — no cells |
 | Completed generated session in range | **Kept** on republish |
-| Pending generated session in range | **Deleted** on republish |
-| `isException` pending session | Pin occupancy; do not delete if policy says pin |
+| Pending `draft` / `published` generated session | **Deleted** on republish |
+| `published` + `completed` | **Kept** on republish |
+| Ad-hoc materialized session | `timetableGenerated: null` |
+| `isException` pending session | Pin occupancy; do not delete on republish if pinned |
 | Activity overlaps generated lesson | `assertNoSessionConflict` at generate / publish |
-| Ad-hoc materialized session | `timetableGenerated: false`; blocks via session conflict |
 | Teacher not assigned | Generate fails preflight |
 | Generate then republish without option changes | Deletes incomplete generated → new placements |
 
@@ -374,8 +381,8 @@ bun run verify
 bun run test:integration
 ```
 
-- Generate for date range → flagged sessions created.
-- Publish → sessions finalized in range.
+- Generate → `timetableGenerated: 'draft'` sessions in range.
+- Publish → `'draft'` becomes `'published'`.
 - Republish → completed kept; pending regenerated.
 - No overlap between generated lessons and activity sessions in range.
 - Ad-hoc `Schedule` materialize still works with `scheduleId` required.
@@ -387,7 +394,7 @@ bun run test:integration
 
 | Topic | Decision |
 |-------|----------|
-| Draft artifact | **Flag on `LessonSession`** (`timetableGenerated` + draft/publish state) — not a separate placement entity |
+| Timetable flag | **`timetableGenerated: 'draft' \| 'published' \| null`** on `LessonSession` |
 | Placement pattern | **Resolver parameters** expand to cells; no periodicity enum |
 | `scheduleId` | Optional for generated sessions |
 | Occupancy | **Layered by teacher** (and class for own-group) |
