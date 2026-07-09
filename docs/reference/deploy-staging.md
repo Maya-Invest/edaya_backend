@@ -41,7 +41,7 @@ Copy the returned config ids into `apps/api/wrangler.jsonc`:
 
 Auth must use a cache-disabled Hyperdrive path. Hyperdrive does not invalidate cached reads after writes; Better Auth sign-up followed by sign-in fails with stale “user already exists” / “invalid password” when auth goes through a cached config.
 
-**Interim (staging):** caching is currently disabled on the shared `edaya-staging` Hyperdrive (`c6b9a94e…`) so seed/auth works after the `pg` driver switch. Prefer restoring cache later by creating `edaya-staging-auth-fresh` (`--caching-disabled`), binding it as `HYPERDRIVE_AUTH`, then re-enabling cache on `HYPERDRIVE`.
+School `HYPERDRIVE` may keep query cache enabled. Staging seed retries a few read-after-write 403s (domain maps missing rows to forbidden) when Hyperdrive serves stale school reads during population.
 
 ### 3. Custom domains
 
