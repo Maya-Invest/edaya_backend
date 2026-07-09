@@ -24,6 +24,7 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 | Runtime boundaries | [docs/reference/runtime-boundaries.md](docs/reference/runtime-boundaries.md) |
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
 | Repo CLI (`bun repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
+| CI setup | [docs/reference/ci-setup.md](docs/reference/ci-setup.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
 | Unit test coverage | [docs/reference/unit-test-coverage.md](docs/reference/unit-test-coverage.md) |
 | Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |
@@ -33,7 +34,7 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 Before opening a PR:
 
 ```sh
-bun run verify        # quality + build + unit tests + repo hygiene
+bun run verify        # repo hygiene, then quality + build + unit tests
 bun run test:integration
 ```
 

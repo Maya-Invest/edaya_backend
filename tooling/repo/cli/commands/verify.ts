@@ -28,7 +28,7 @@ export function verifyCliUsage(): string {
   return [
     'Usage: bun repo verify',
     '',
-    'Repo hygiene checks (no Turbo — use root `bun run lint|check|test|build|quality` or `bun run verify`):',
+    'Repo hygiene checks (no Turbo). Root `bun run verify` runs this first, then turbo quality/build/test:',
     ...VERIFY_STEPS.map((step, index) => `  ${index + 1}. ${step.label}`),
   ].join('\n')
 }

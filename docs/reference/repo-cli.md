@@ -120,11 +120,11 @@ Repo hygiene only — **no Turbo**. Runs `doctor` and all `repo check *` targets
 
 ### Pre-PR (`bun run verify`)
 
-Full gate from repo root — Turbo quality + build + unit tests, then repo hygiene:
+Full gate from repo root — repo hygiene first, then Turbo quality + build + unit tests:
 
 ```sh
 bun run verify
-# = bun run quality && bun run build && turbo run test -- --dots && bun repo verify
+# = bun repo verify && bun run quality && bun run build && turbo run test -- --dots
 ```
 
 CI uses `bun run verify`. For integration coverage, also run `bun run test:integration` (see [test-pyramid-plan.md](../sprints/test-pyramid-plan.md)).
@@ -199,7 +199,7 @@ bun --filter @edaya/api lint
 Turbo quality and integration slices only — no Turbo tasks in `bun repo`:
 
 ```sh
-bun run verify                # quality + build + test + bun repo verify
+bun run verify                # bun repo verify + quality + build + test
 bun run lint | check | test | build | quality | lint:fix
 bun run test:coverage
 bun run test:integration          # api + http
