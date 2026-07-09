@@ -18,17 +18,30 @@ Create a dedicated branch (e.g. `staging`) in Neon. Store the connection string 
 
 Neon **staging** branch: `br-flat-union-ahedlz5i` on project `calm-brook-83532792` (edaya).
 
-Create a Hyperdrive config from the Neon console connection string (staging branch, **not** production):
+Create **two** Hyperdrive configs from the Neon staging connection string (not production):
 
 ```sh
 cd apps/api
+# School / domain reads (query cache enabled)
 bunx wrangler hyperdrive create edaya-staging \
   --connection-string="$STAGING_DATABASE_URL"
+
+# Better Auth (cache disabled — required for sign-up → sign-in consistency)
+bunx wrangler hyperdrive create edaya-staging-auth-fresh \
+  --connection-string="$STAGING_DATABASE_URL" \
+  --caching-disabled
 ```
 
-Copy the returned config `id` into `apps/api/wrangler.jsonc` → `env.staging.hyperdrive[0].id` (replace placeholder `…000001`).
+Copy the returned config ids into `apps/api/wrangler.jsonc`:
+
+- `env.staging.hyperdrive` → binding `HYPERDRIVE` (cached)
+- `env.staging.hyperdrive` → binding `HYPERDRIVE_AUTH` (cache-disabled)
 
 **Do not commit** `STAGING_DATABASE_URL` — store it in repo root `.env` (gitignored) or your secret manager.
+
+Auth must use a cache-disabled Hyperdrive path. Hyperdrive does not invalidate cached reads after writes; Better Auth sign-up followed by sign-in fails with stale “user already exists” / “invalid password” when auth goes through a cached config.
+
+**Interim (staging):** caching is currently disabled on the shared `edaya-staging` Hyperdrive (`c6b9a94e…`) so seed/auth works after the `pg` driver switch. Prefer restoring cache later by creating `edaya-staging-auth-fresh` (`--caching-disabled`), binding it as `HYPERDRIVE_AUTH`, then re-enabling cache on `HYPERDRIVE`.
 
 ### 3. Custom domains
 

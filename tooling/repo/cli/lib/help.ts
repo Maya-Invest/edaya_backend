@@ -10,7 +10,7 @@ export function repoCliUsage(): string {
     '',
     'Validation:',
     '  check openapi|boundaries     Read-only checks',
-    '  verify                       Repo hygiene (no Turbo — use bun run verify)',
+    '  verify [--full]              Hygiene; --full = PR CI (verify + integration)',
     '  doctor                       Repo hygiene',
     '',
     'Operations:',
@@ -26,5 +26,6 @@ export function repoCliUsage(): string {
     '  bun repo check openapi',
     '  bun repo smoke-test staging',
     '  bun repo verify',
+    '  bun repo verify --full',
   ].join('\n')
 }

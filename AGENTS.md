@@ -34,7 +34,9 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 Before opening a PR:
 
 ```sh
-bun run verify        # repo hygiene, then quality + build + unit tests
+bun repo verify --full   # PR blocking CI locally (verify + integration)
+# or separately:
+bun run verify           # repo hygiene, then quality + build + unit tests
 bun run test:integration
 ```
 

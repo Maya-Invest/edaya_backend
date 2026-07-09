@@ -67,7 +67,7 @@ export class HttpAuthProvisioner implements AuthProvisioner {
       attempts.push(formatSignInFailure(signInResult))
 
       let signUpResult = await this.signUp(account, attempts)
-      if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, attempts)) {
+      if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, signUpResult, attempts)) {
         await repairStagingAuthUser(account.email)
         attempts.push('repaired stale staging auth user')
         signUpResult = await this.signUp(account, attempts)
@@ -104,13 +104,15 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
   private shouldRepairStaleUser(
     signInResult: AuthAttemptResult,
+    signUpResult: AuthAttemptResult,
     attempts: string[],
   ): boolean {
     if (!shouldRepairStaleStagingAuthUsers(this.client.origin)) {
       return false
     }
 
-    const userAlreadyExists = attempts.some(entry => entry.includes('user already exists'))
+    const userAlreadyExists = signUpResult.code === 'USER_ALREADY_EXISTS'
+      || attempts.some(entry => entry.includes('user already exists'))
     const invalidCredentials = signInResult.status === 401
       && signInResult.code === 'INVALID_EMAIL_OR_PASSWORD'
 
@@ -167,12 +169,12 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
     if (!response.ok) {
       const message = await response.text()
-      if (response.status === 422 && message.includes('USER_ALREADY_EXISTS')) {
+      if (response.status === 422 && isUserAlreadyExistsMessage(message)) {
         attempts.push('sign-up skipped (user already exists)')
         return { status: response.status, code: 'USER_ALREADY_EXISTS' }
       }
 
-      attempts.push(`sign-up ${response.status}`)
+      attempts.push(`sign-up ${response.status}${readAuthErrorCode(message) ? ` ${readAuthErrorCode(message)}` : ''}`)
       return {
         status: response.status,
         code: readAuthErrorCode(message),
@@ -185,6 +187,11 @@ export class HttpAuthProvisioner implements AuthProvisioner {
       ...(subjectId ? { subjectId } : {}),
     }
   }
+}
+
+function isUserAlreadyExistsMessage(message: string): boolean {
+  return message.includes('USER_ALREADY_EXISTS')
+    || message.includes('User already exists')
 }
 
 function formatSignInFailure(result: AuthAttemptResult): string {

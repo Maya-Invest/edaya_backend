@@ -43,6 +43,11 @@ describe('parseRepoCliArgs', () => {
       command: 'verify',
       forwardArgs: [],
     })
+    expect(parseRepoCliArgs(['bun', 'repo', 'verify', '--full'])).toEqual({
+      kind: 'run',
+      command: 'verify',
+      forwardArgs: ['--full'],
+    })
   })
 
   it('forwards --help to subcommands', () => {

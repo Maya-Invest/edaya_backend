@@ -64,7 +64,11 @@ bun repo verify && turbo run quality && turbo run build && turbo run test -- --d
 
 Repo hygiene (doctor, OpenAPI drift, boundaries, test naming) runs **first** and fails fast before the Turbo graph. See [repo-cli.md](./repo-cli.md).
 
-Integration tests (`bun run test:integration`) are a **separate** PR job after verify — not part of `bun run verify`.
+Integration tests (`bun run test:integration`) are a **separate** PR job after verify — not part of `bun run verify`. Locally, run both blocking PR jobs with:
+
+```sh
+bun repo verify --full
+```
 
 After the first successful publish of `edaya-api-dev`, grant consumer repos read access to the GHCR package (one-time, org admin):
 

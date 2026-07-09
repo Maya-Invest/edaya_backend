@@ -18,12 +18,14 @@ export {
   parseRuntimeEnv,
   prepareRuntimeBindings,
   resolveAccountInvitationsEnabled,
+  resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
   resolveInviteBaseUrl,
   resolveRepoLocalDatabaseUrl,
   resolveRepoLocalDataPath,
   resolveRepoRoot,
   shouldAllowPublicSchoolRegistration,
+  usesAuthHyperdriveBinding,
   usesHyperdriveBinding,
 } from "@/runtime/shared/env";
 

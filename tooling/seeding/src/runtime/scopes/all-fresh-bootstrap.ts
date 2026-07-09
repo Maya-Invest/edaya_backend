@@ -44,7 +44,9 @@ export async function tryRunAllFreshBootstrap(
       await bootstrapHttpCoreSession(client)
     }
     catch (error) {
-      throwHttpBootstrapFailure(error)
+      throwHttpBootstrapFailure(error, {
+        staging: client.origin.includes('api-staging.'),
+      })
     }
   })
 
