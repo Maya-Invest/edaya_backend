@@ -7,6 +7,7 @@ import type { AuthService } from "@/runtime/types";
 import { createAppLogger, createBetterAuthLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthEmailSenders } from "@/runtime/shared/adapters/auth-otp-mailer";
 import { shouldRequireEmailVerification } from "@/runtime/shared/adapters/auth-email-delivery";
+import { isSeedAuthProvisionRequest } from "@/runtime/shared/adapters/seed-auth-provision";
 
 export type BetterAuthEnv = Pick<
   Environment,
@@ -64,7 +65,10 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
     emailVerification: {
       sendOnSignUp: requireEmailVerification,
       sendOnSignIn: requireEmailVerification,
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url }, request) => {
+        if (isSeedAuthProvisionRequest(request?.headers)) {
+          return;
+        }
         void authEmail.sendAuthVerificationEmail({
           email: user.email,
           url,
@@ -75,6 +79,23 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
             "Failed to send auth verification email",
           );
         });
+      },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user, ctx) => {
+            if (!isSeedAuthProvisionRequest(ctx?.headers)) {
+              return;
+            }
+            return {
+              data: {
+                ...user,
+                emailVerified: true,
+              },
+            };
+          },
+        },
       },
     },
     session: {

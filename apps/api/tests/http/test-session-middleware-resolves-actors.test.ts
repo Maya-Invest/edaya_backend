@@ -212,14 +212,13 @@ describe("session Middleware ActorMetadata Construction", () => {
     });
   });
 
-  it("should preserve explicit session assurance level on staff actors", async () => {
+  it("should set verified assurance when the auth user email is verified", async () => {
     const createdAt = new Date().toISOString();
     getSession.mockResolvedValueOnce({
-      user: { id: "auth-user-verified" },
+      user: { id: "auth-user-verified", emailVerified: true },
       session: {
         id: "session-verified",
         createdAt,
-        assuranceLevel: "verified",
       },
     } as any);
 
@@ -248,6 +247,43 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     expect(res.status).toBe(200);
     expect(body.actor.assuranceLevel).toBe("verified");
+  });
+
+  it("should keep standard assurance when the auth user email is not verified", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-unverified", emailVerified: false },
+      session: {
+        id: "session-unverified",
+        createdAt,
+      },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-unverified",
+      schoolId: "school-1",
+      roles: ["teacher"],
+      isActive: true,
+    };
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValueOnce(mockStaff),
+        findById: mock().mockResolvedValue(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValueOnce([]) },
+      ...mockAccessControlForStaff("staff-unverified", "school-1"),
+      guardians: { findOne: mock().mockResolvedValueOnce(null) },
+      students: { findOne: mock().mockResolvedValueOnce(null) },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected", {
+      headers: { "x-academic-year-id": "year-2026" },
+    });
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor.assuranceLevel).toBe("standard");
   });
 
   it("should reuse cached staff effective grants for the same auth session", async () => {

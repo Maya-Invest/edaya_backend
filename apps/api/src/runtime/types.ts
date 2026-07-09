@@ -16,6 +16,13 @@ export interface AuthService {
   api: {
     getSession: (args: { headers: Headers }) => Promise<unknown>;
   };
+  $context?: Promise<{
+    internalAdapter: {
+      updateUser: (userId: string, data: { emailVerified?: boolean }) => Promise<unknown>;
+      updateUserByEmail: (email: string, data: { emailVerified?: boolean }) => Promise<unknown>;
+      findUserByEmail: (email: string) => Promise<{ id: string; emailVerified?: boolean } | null>;
+    };
+  }>;
 }
 
 export interface ApiRuntime {

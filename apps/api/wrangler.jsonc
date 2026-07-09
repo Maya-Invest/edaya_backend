@@ -45,6 +45,10 @@
         {
           "binding": "HYPERDRIVE",
           "id": "c6b9a94e449647d78f7c49591ba301e6"
+        },
+        {
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "e08656297f69446c8eea3d1ded0268d5"
         }
       ],
       "vars": {
@@ -59,7 +63,7 @@
         "NOVU_API_URL": "https://eu.api.novu.co",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "false",
+        "REQUIRE_EMAIL_VERIFICATION": "true",
         "AUTH_EMAIL_LOG_OTP": "false",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
@@ -113,6 +117,10 @@
         {
           "binding": "HYPERDRIVE",
           "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
+        },
+        {
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
         }
       ],
       "routes": [

@@ -14,11 +14,11 @@ export interface AuthSession {
     id: string;
     email?: string | null;
     name?: string | null;
+    emailVerified?: boolean | null;
   };
   session: {
     id?: string;
     createdAt: string | Date;
-    assuranceLevel?: ActorAssuranceLevel | string;
   };
 }
 
@@ -27,6 +27,7 @@ export interface AuthenticatedSession {
     id: string;
     email?: string;
     name?: string;
+    emailVerified: boolean;
   };
   session: {
     id?: string;
@@ -81,11 +82,13 @@ type ActorIdentity
 
 type NormalizedAuthSession = AuthenticatedSession;
 
-function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
-  if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
-    return input;
-  }
-  return ActorAssuranceLevel.Standard;
+/** Interactive assurance tracks email verification; strong (2FA) is unused for now. */
+export function resolveAssuranceFromEmailVerified(
+  emailVerified: boolean | undefined | null,
+): ActorAssuranceLevel {
+  return emailVerified === true
+    ? ActorAssuranceLevel.Verified
+    : ActorAssuranceLevel.Standard;
 }
 
 export function normalizeAuthSession(input: AuthSession | null | undefined): AuthenticatedSession | null {
@@ -106,9 +109,12 @@ export function normalizeAuthSession(input: AuthSession | null | undefined): Aut
     return null;
   }
 
+  const emailVerified = input.user.emailVerified === true;
+
   return {
     user: {
       id: input.user.id,
+      emailVerified,
       ...(typeof input.user.email === "string" && input.user.email.trim() !== ""
         ? { email: input.user.email.trim() }
         : {}),
@@ -119,7 +125,7 @@ export function normalizeAuthSession(input: AuthSession | null | undefined): Aut
     session: {
       ...(input.session.id ? { id: input.session.id } : {}),
       createdAt: authenticatedAt,
-      assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
+      assuranceLevel: resolveAssuranceFromEmailVerified(emailVerified),
     },
   };
 }
@@ -347,26 +353,6 @@ function resolveAcademicYearId(headerValue: string | undefined): string | undefi
   return trimmed || undefined;
 }
 
-/**
- * Finance and other sensitive writes require `verified` assurance.
- * Dev sign-in uses `standard` until step-up auth exists; elevate school owners locally.
- */
-function resolveInteractiveAssuranceLevel(
-  assuranceLevel: ActorAssuranceLevel,
-  identity: ActorIdentity,
-  isDevelopment: boolean,
-): ActorAssuranceLevel {
-  if (
-    isDevelopment
-    && identity.kind === "staff"
-    && identity.effectiveGrants?.isElevated
-    && assuranceLevel === ActorAssuranceLevel.Standard
-  ) {
-    return ActorAssuranceLevel.Verified;
-  }
-  return assuranceLevel;
-}
-
 export function createSessionActorDependency(
   resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
 ): DependencyModule<AppBindings> {
@@ -415,11 +401,7 @@ export function createSessionActorDependency(
             requestId,
             ...(session.session.id ? { sessionId: session.session.id } : {}),
             authenticatedAt: session.session.createdAt,
-            assuranceLevel: resolveInteractiveAssuranceLevel(
-              session.session.assuranceLevel,
-              identity,
-              c.env?.NODE_ENV !== "production",
-            ),
+            assuranceLevel: session.session.assuranceLevel,
           };
           c.set("actor", createActorFromIdentity(identity, interactiveContext));
           return;

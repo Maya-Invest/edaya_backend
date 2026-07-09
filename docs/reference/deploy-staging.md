@@ -90,6 +90,8 @@ bun repo seed --staging
 bun repo smoke-test staging
 ```
 
+**Auth assurance (prod-identical):** interactive `assuranceLevel` is derived from Better Auth `user.emailVerified` (`standard` = unverified, `verified` = verified; `strong` reserved for future 2FA). Staging sets `REQUIRE_EMAIL_VERIFICATION=true` like production. Demo seed marks provisioned accounts `email_verified = true` so password login still works for fixture staff.
+
 ---
 
 ## Repeatable deploy checklist

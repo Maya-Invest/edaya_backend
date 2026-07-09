@@ -128,15 +128,15 @@ export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSe
     api: {
       getSession: async (args) => {
         const session = await original(args);
-        if (!session?.session) {
+        if (!session?.user) {
           return session;
         }
 
         return {
           ...session,
-          session: {
-            ...session.session,
-            assuranceLevel: ActorAssuranceLevel.Verified,
+          user: {
+            ...session.user,
+            emailVerified: true,
           },
         };
       },
