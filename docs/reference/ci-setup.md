@@ -66,6 +66,13 @@ Repo hygiene (doctor, OpenAPI drift, boundaries, test naming) runs **first** and
 
 Integration tests (`bun run test:integration`) are a **separate** PR job after verify — not part of `bun run verify`.
 
+After the first successful publish of `edaya-api-dev`, grant consumer repos read access to the GHCR package (one-time, org admin):
+
+1. [edaya-api-dev package settings](https://github.com/orgs/Maya-Invest/packages/container/edaya-api-dev/settings)
+2. **Manage Actions access** → add `edaya_web` and `edaya_mobile` with **Read**
+
+Or set the package to **Public** so CI can pull without cross-repo token setup.
+
 ## Adopting in another repo
 
 1. Copy `.github/actions/ci-bun-turbo/` into the target repo.

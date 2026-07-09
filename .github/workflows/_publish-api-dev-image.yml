@@ -64,5 +64,7 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.channel }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
