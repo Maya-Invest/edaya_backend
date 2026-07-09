@@ -3,7 +3,7 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/http/types";
-import { SEED_AUTH_PROVISION_HEADER, isSeedAuthProvisionRequest } from "@/runtime/shared/adapters/seed-auth-provision";
+import { isSeedAuthProvisionRequest, SEED_AUTH_PROVISION_HEADER } from "@/runtime/shared/adapters/seed-auth-provision";
 
 const commandMessageSchema = createMessageObjectSchema();
 

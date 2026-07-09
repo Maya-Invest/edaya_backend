@@ -3,8 +3,8 @@ export const LOCAL_DEV_WIPE_AND_RESEED_HINT
 
 export const STAGING_AUTH_CACHE_HINT
   = 'If sign-up reports USER_ALREADY_EXISTS while sign-in fails after a wipe, Hyperdrive query cache is likely stale. '
-  + 'Disable caching on the staging Hyperdrive (`wrangler hyperdrive update <id> --caching-disabled`) '
-  + 'or bind HYPERDRIVE_AUTH to a cache-disabled config, then `bun repo seed clean --staging --yes` and retry.'
+    + 'Disable caching on the staging Hyperdrive (`wrangler hyperdrive update <id> --caching-disabled`) '
+    + 'or bind HYPERDRIVE_AUTH to a cache-disabled config, then `bun repo seed clean --staging --yes` and retry.'
 
 export function formatHttpBootstrapFailure(detail: string, options?: { staging?: boolean }): string {
   const hint = options?.staging
