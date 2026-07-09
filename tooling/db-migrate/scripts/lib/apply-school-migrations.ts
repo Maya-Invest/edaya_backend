@@ -1,7 +1,3 @@
-import { spawnSync } from 'node:child_process'
-import path from 'node:path'
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 import {
   resolveMigrationDriver,
   resolvePgliteDataDir,
@@ -9,9 +5,9 @@ import {
 } from '@edaya/adaptor-postgres'
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
 import { repairDrizzleMigrationJournal } from '../repair-drizzle-journal'
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 export async function applySchoolMigrations(databaseUrl: string): Promise<void> {
   const driver = resolveMigrationDriver(databaseUrl)
@@ -29,13 +25,8 @@ export async function applySchoolMigrations(databaseUrl: string): Promise<void> 
 
   await repairDrizzleMigrationJournal(databaseUrl)
 
-  const result = spawnSync('bun', ['run', 'migrate'], {
-    cwd: packageRoot,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-    stdio: 'inherit',
-  })
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1)
-  }
+  const sql = postgres(databaseUrl, { max: 1 })
+  const db = drizzlePostgres(sql)
+  await runMigrations(db, { driver: 'postgres-js' })
+  await sql.end({ timeout: 5 })
 }
