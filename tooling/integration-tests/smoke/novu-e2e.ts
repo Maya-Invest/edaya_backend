@@ -4,11 +4,11 @@ import { randomUUID } from 'node:crypto'
  * Novu outbound + webhook smoke test against local API.
  *
  * Prerequisites:
- *   - API running: cd apps/api && bun dev  (or bun dev from repo root)
- *   - Seed data: bun seed:smoke  (or bun seed:init)
- *   - apps/api/.env (+ .dev.vars): NOVU_SECRET_KEY (+ NOVU_API_URL for EU)
+ *   - API running: cd apps/api && bun repo dev  (or bun repo dev from repo root)
+ *   - Seed data: bun repo seed  (or bun repo seed --scope doctor to verify)
+ *   - apps/api/.env: NOVU_SECRET_KEY (+ NOVU_API_URL for EU)
  *   - Novu dashboard: workflow trigger ids `announcement.published` and `account_invitation`
- *     (or run `bun novu:bootstrap:apply`)
+ *     (or run `bun repo novu bootstrap apply`)
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
 import { buildSignedNovuWebhookRequest, createNovuInvitationDeliveryPortFromSecretKey } from '@edaya/adaptor-novu'
@@ -208,7 +208,7 @@ async function main() {
   const deliveries = await listDeliveries(client, announcementId)
   if (deliveries.length === 0) {
     fail(
-      'No MessageDelivery rows — guardians may lack linked subjectId. Run: bun seed:auth:link',
+      'No MessageDelivery rows — guardians may lack linked subjectId. Run: bun repo seed --scope auth:link',
     )
   }
 
@@ -236,7 +236,7 @@ async function main() {
   console.log('\n── Novu dashboard (invite) ──')
   console.log(`1. Filter Activity by transactionId: ${inviteTransactionId}`)
   console.log('2. Confirm workflow `account_invitation` fired to a transient invite:… subscriber')
-  console.log('3. Orphan cleanup: bun novu:cleanup:apply -- --transient-invites --yes')
+  console.log('3. Orphan cleanup: bun repo novu cleanup apply -- --transient-invites --yes')
 
   console.log('\n── Novu dashboard (announcement) ──')
   console.log('1. Open Novu → Activity / Messages')
@@ -244,7 +244,7 @@ async function main() {
   console.log('3. Confirm workflow `announcement.published` exists (trigger id must match event key)')
   console.log('4. For real webhook delivery: point Novu webhook URL to your public API')
   console.log('   e.g. https://<tunnel>/webhooks/notification-delivery  +  NOVU_WEBHOOK_SECRET in .env')
-  console.log('   Or skip webhooks and run: CRON_JOB_KEYS=reconcilePendingDeliveries bun run dev:cron')
+  console.log('   Or skip webhooks and run: CRON_JOB_KEYS=reconcilePendingDeliveries bun --filter @edaya/api cron:local')
   console.log('\n✓ Smoke test finished — check API logs for "novu notification failed" if triggers did not appear.')
 }
 

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { parseDomain, zodDate } from '../../domain/shared/utils'
 
 export const dateRangeBaseSchema = z.object({

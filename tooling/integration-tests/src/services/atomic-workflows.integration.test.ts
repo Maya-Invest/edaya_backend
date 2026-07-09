@@ -1,18 +1,5 @@
-import {
-  AcademicPeriodType,
-  AnnouncementStatus,
-  AnnouncementTargetKind,
-  AttendanceStatus,
-  AuthorizationErrorCode,
-  DayOfWeek,
-  FeeStatus,
-  GradeLevel,
-  GradeScale,
-  PaymentMethod,
-  PaymentStatus,
-  Subject,
-  SubjectMatter,
-} from '@edaya/core'
+import { AuthorizationErrorCode } from '@edaya/authorization'
+import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, DayOfWeek, FeeStatus, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {

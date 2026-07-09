@@ -1,5 +1,5 @@
+import { Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { Subject } from '../../../../src/domain'
 
 describe('Subject entity', () => {
   test('copyWith should copy with new values', () => {

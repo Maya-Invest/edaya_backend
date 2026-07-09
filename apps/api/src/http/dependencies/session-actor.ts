@@ -1,20 +1,13 @@
-import {
-  createGuardianActorMetadata,
-  createServiceStaffActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-  type EffectiveGrants,
-  hashApiKey,
-  parseBearerApiKey,
-  type SchoolRepositories,
-} from "@edaya/core";
+import { ActorAssuranceLevel, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseInteractiveActorKind, resolveInteractiveActorIdentity } from "@edaya/authorization";
+import type { EffectiveGrants, GuardianScope, StudentScope, TeacherActorScope } from "@edaya/authorization";
+import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
 import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
+import { resolveCachedActorScope } from "@/lib/authorization/scope-cache/resolve-cached";
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
 import { isBetterAuthPath } from "./utils";
-import { ActorAssuranceLevel } from "@edaya/core";
 
 export interface AuthSession {
   user: {
@@ -58,8 +51,8 @@ interface ActorIdentityContext {
   assuranceLevel: ActorAssuranceLevel;
 }
 
-type ActorIdentity =
-  | {
+type ActorIdentity
+  = | {
     kind: "staff";
     schoolId: string;
     staffMemberId: string;
@@ -71,13 +64,19 @@ type ActorIdentity =
     kind: "guardian";
     schoolId: string;
     guardianId: string;
-    effectiveGrants?: EffectiveGrants;
+    guardianScope?: GuardianScope;
   }
   | {
     kind: "student";
     schoolId: string;
     studentId: string;
-    effectiveGrants?: EffectiveGrants;
+    studentScope?: StudentScope;
+  }
+  | {
+    kind: "teacher";
+    schoolId: string;
+    teacherId: string;
+    teacherScope?: TeacherActorScope;
   };
 
 type NormalizedAuthSession = AuthenticatedSession;
@@ -144,60 +143,71 @@ async function resolveActorIdentity(
   session: NormalizedAuthSession["session"],
   academicYearId: string | undefined,
   ttlMs: number,
+  resolution: {
+    actorKind?: ReturnType<typeof parseInteractiveActorKind>;
+    schoolId?: string;
+    actorId?: string;
+  },
 ): Promise<ActorIdentity | null> {
-  const [staff, guardian, student] = await Promise.all([
-    repos.staffMembers.findOne({ subjectId }),
-    repos.guardians.findOne({ subjectId }),
-    repos.students.findOne({ subjectId }),
-  ]);
+  const resolved = await resolveInteractiveActorIdentity(repos, {
+    subjectId,
+    ...(resolution.actorKind ? { actorKind: resolution.actorKind } : {}),
+    ...(resolution.schoolId ? { schoolId: resolution.schoolId } : {}),
+    ...(resolution.actorId ? { actorId: resolution.actorId } : {}),
+  });
 
-  const identities: ActorIdentity[] = [];
-
-  if (staff) {
-    identities.push({
-      kind: "staff",
-      schoolId: staff.schoolId,
-      staffMemberId: staff.id,
-    });
-  }
-
-  if (guardian) {
-    identities.push({
-      kind: "guardian",
-      schoolId: guardian.schoolId,
-      guardianId: guardian.id,
-    });
-  }
-
-  if (student) {
-    identities.push({
-      kind: "student",
-      schoolId: student.schoolId,
-      studentId: student.id,
-    });
-  }
-
-  if (identities.length !== 1) {
+  if (!resolved) {
     return null;
   }
 
-  const [identity] = identities;
-  if (!identity) {
-    return null;
-  }
-
-  const actorId
-    = identity.kind === "staff"
-      ? identity.staffMemberId
-      : identity.kind === "guardian"
-        ? identity.guardianId
-        : identity.studentId;
+  const identity: ActorIdentity = resolved.kind === "staff"
+    ? {
+        kind: "staff",
+        schoolId: resolved.schoolId,
+        staffMemberId: resolved.actorId,
+      }
+    : resolved.kind === "guardian"
+      ? {
+          kind: "guardian",
+          schoolId: resolved.schoolId,
+          guardianId: resolved.actorId,
+        }
+      : resolved.kind === "student"
+        ? {
+            kind: "student",
+            schoolId: resolved.schoolId,
+            studentId: resolved.actorId,
+          }
+        : {
+            kind: "teacher",
+            schoolId: resolved.schoolId,
+            teacherId: resolved.actorId,
+          };
 
   try {
-    const effectiveGrants = await resolveCachedEffectiveGrants({
-      actorId,
-      actorType: identity.kind,
-      schoolId: identity.schoolId,
+    if (resolved.kind === "staff") {
+      const effectiveGrants = await resolveCachedEffectiveGrants({
+        actorId: resolved.actorId,
+        actorType: resolved.kind,
+        schoolId: resolved.schoolId,
+        ...(academicYearId ? { academicYearId } : {}),
+        subjectId,
+        ...(session.id ? { sessionId: session.id } : {}),
+        authenticatedAt: session.createdAt,
+        repositories: repos,
+        ttlMs,
+      });
+
+      return {
+        ...identity,
+        effectiveGrants,
+      } as ActorIdentity;
+    }
+
+    const scope = await resolveCachedActorScope({
+      actorId: resolved.actorId,
+      actorKind: resolved.kind,
+      schoolId: resolved.schoolId,
       ...(academicYearId ? { academicYearId } : {}),
       subjectId,
       ...(session.id ? { sessionId: session.id } : {}),
@@ -206,9 +216,29 @@ async function resolveActorIdentity(
       ttlMs,
     });
 
+    if (resolved.kind === "guardian") {
+      return {
+        kind: "guardian",
+        schoolId: resolved.schoolId,
+        guardianId: resolved.actorId,
+        guardianScope: scope as GuardianScope,
+      };
+    }
+
+    if (resolved.kind === "student") {
+      return {
+        kind: "student",
+        schoolId: resolved.schoolId,
+        studentId: resolved.actorId,
+        studentScope: scope as StudentScope,
+      };
+    }
+
     return {
-      ...identity,
-      effectiveGrants,
+      kind: "teacher",
+      schoolId: resolved.schoolId,
+      teacherId: resolved.actorId,
+      teacherScope: scope as TeacherActorScope,
     };
   }
   catch {
@@ -283,16 +313,33 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
         ...context,
         schoolId: identity.schoolId,
         guardianId: identity.guardianId,
-        effectiveGrants: identity.effectiveGrants!,
+        guardianScope: identity.guardianScope!,
       });
     case "student":
       return createStudentActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         studentId: identity.studentId,
-        effectiveGrants: identity.effectiveGrants!,
+        studentScope: identity.studentScope!,
+      });
+    case "teacher":
+      return createTeacherActorMetadata({
+        ...context,
+        schoolId: identity.schoolId,
+        teacherId: identity.teacherId,
+        teacherScope: identity.teacherScope!,
       });
   }
+}
+
+function resolveActorIdHeader(headerValue: string | undefined): string | undefined {
+  const trimmed = headerValue?.trim();
+  return trimmed || undefined;
+}
+
+function resolveSchoolIdHeader(headerValue: string | undefined): string | undefined {
+  const trimmed = headerValue?.trim();
+  return trimmed || undefined;
 }
 
 function resolveAcademicYearId(headerValue: string | undefined): string | undefined {
@@ -356,6 +403,11 @@ export function createSessionActorDependency(
           session.session,
           academicYearId,
           ttlMs,
+          {
+            actorKind: parseInteractiveActorKind(c.req.header("x-actor-kind")),
+            schoolId: resolveSchoolIdHeader(c.req.header("x-school-id")),
+            actorId: resolveActorIdHeader(c.req.header("x-actor-id")),
+          },
         );
         if (identity) {
           const interactiveContext = {

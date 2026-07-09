@@ -1,16 +1,7 @@
-import type {
-  AcademicPeriodInput,
-  AcademicYearInput,
-  ClassGroupInput,
-  ClassSubjectInput,
-  GradeLevelInput,
-  PeriodDefinitionInput,
-  SchoolInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
 import { SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../shared/ids'
+import { buildCatalogSubjectMatters, centralSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 import { minimalSchool } from '../minimal/school'
 
 export const demoSchool = minimalSchool satisfies SchoolInput
@@ -91,14 +82,24 @@ export const demoFoundationSubjects = [
   { id: 'subj-eps', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Physical Education', code: 'EPS', defaultCoefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
 ] as const satisfies readonly SubjectInput[]
 
-export const demoFoundationSubjectMatters = [
-  { id: 'sm-math', subjectId: 'subj-math', name: 'Core programme', description: 'Algebra fundamentals, geometry and problem solving.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'sm-fr', subjectId: 'subj-fr', name: 'Core programme', description: 'Reading, writing and analysis of classical texts.', sequenceOrder: 1, estimatedHours: 4 },
-  { id: 'sm-hist', subjectId: 'subj-hist', name: 'Core programme', description: 'Antiquity to medieval Europe; world geography.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-sci', subjectId: 'subj-sci', name: 'Core programme', description: 'Biology, ecology and earth sciences.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-en', subjectId: 'subj-en', name: 'Core programme', description: 'Communication, comprehension and culture.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-eps', subjectId: 'subj-eps', name: 'Core programme', description: 'Athletics, team sports and wellbeing.', sequenceOrder: 1, estimatedHours: 2 },
-] as const satisfies readonly SubjectMatterInput[]
+export const demoFoundationSubjectMatters = buildCatalogSubjectMatters(
+  {
+    'subj-math': centralSubjectMatterCatalog['subj-math'],
+    'subj-fr': centralSubjectMatterCatalog['subj-fr'],
+    'subj-hist': centralSubjectMatterCatalog['subj-hist'],
+    'subj-sci': centralSubjectMatterCatalog['subj-sci'],
+    'subj-en': centralSubjectMatterCatalog['subj-en'],
+    'subj-eps': centralSubjectMatterCatalog['subj-eps'],
+  },
+  {
+    'subj-math': 'sm-math-',
+    'subj-fr': 'sm-fr-',
+    'subj-hist': 'sm-hist-',
+    'subj-sci': 'sm-sci-',
+    'subj-en': 'sm-en-',
+    'subj-eps': 'sm-eps-',
+  },
+) satisfies readonly SubjectMatterInput[]
 
 export const demoFoundationClassSubjects = [
   { id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', coefficient: 3 },

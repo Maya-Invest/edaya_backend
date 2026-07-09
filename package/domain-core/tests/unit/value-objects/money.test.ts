@@ -1,6 +1,5 @@
+import { DomainValidationError, Money } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domain/shared/utils'
-import { Money } from '../../../src/domain/value-objects/money'
 
 describe('money value object', () => {
   test('should construct valid Money', () => {

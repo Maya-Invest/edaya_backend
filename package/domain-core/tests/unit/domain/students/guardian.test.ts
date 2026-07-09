@@ -1,6 +1,5 @@
+import { Guardian, GuardianContactMethod, GuardianContactMethodType } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { Guardian } from '../../../../src/domain/students/guardian'
-import { GuardianContactMethod, GuardianContactMethodType } from '../../../../src/domain/students/guardian-contact-method'
 
 describe('Guardian entity', () => {
   const baseArgs = {

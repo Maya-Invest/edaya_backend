@@ -1,5 +1,7 @@
-import type { ActorMetadata, FileStoragePort, SchoolRepositories, SchoolService } from "@edaya/core";
-import { SchoolApplication as CoreSchoolApplication } from "@edaya/core";
+import type { FileStoragePort } from "@edaya/core";
+import type { SchoolRepositories, SchoolService } from "@edaya/service";
+import type { ActorMetadata } from "@edaya/authorization";
+import { SchoolApplication as CoreSchoolApplication } from "@edaya/service";
 
 type CoreSchoolApplicationArgs = ConstructorParameters<typeof CoreSchoolApplication>[0];
 

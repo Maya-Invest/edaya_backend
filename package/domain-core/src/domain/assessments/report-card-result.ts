@@ -1,15 +1,13 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import type { ReportCardResultSection } from './report-card-result-section'
+
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { AttendanceSummary, attendanceSummarySchema } from '../../domain/value-objects/attendance-summary'
+
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
+
 import { reportCardAggregationSchema } from './report-card-aggregation-config'
+
 import { reportCardResultSectionSchema } from './report-card-result-section'
 
 export enum ReportCardResultStatus {
@@ -141,82 +139,4 @@ export function getLatestReportCard(results: ReportCardResult[]): ReportCardResu
     const rightDate = right.publishedAt ?? right.generatedAt
     return rightDate.getTime() - leftDate.getTime() || left.id.localeCompare(right.id)
   })[0]
-}
-
-export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.results,
-    tenant: reportCardResultTenant(),
-    read: read(permissionAction(Permission.QUERY_REPORT_CARD_DETAIL_READ), readByIds((actor: any, ids: readonly string[]) => policy.checkReportCardResultAccess(actor, ids))),
-    write: write(permissionAction(Permission.REPORT_CARD_PUBLISH), authorizeReportCardResult(policy), authorizeReportCardResultDelete(policy)),
-    gates: {
-      preSave: validateReportCardResultSave,
-      preDelete: validateReportCardResultDelete,
-    },
-    atomicExecution,
-  })
-
-function reportCardResultTenant(): EntityTenantResolver<ReportCardResult> {
-  return indirectTenant(async (entity: ReportCardResult, repositories: SchoolRepositories) => {
-    const student = await repositories.students.findById(entity.studentId)
-    return student?.schoolId
-  })
-}
-
-async function validateReportCardResultSave(
-  result: ReportCardResult,
-  _existing: ReportCardResult | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [student, classGroup, period, definition] = await Promise.all([
-    repositories.students.findById(result.studentId),
-    repositories.classGroups.findById(result.classGroupId),
-    repositories.academicPeriods.findById(result.periodId),
-    repositories.definitions.findById(result.reportCardDefinitionId),
-  ])
-  if (
-    !student
-    || !classGroup
-    || student.schoolId !== classGroup.schoolId
-    || !period
-    || period.schoolId !== student.schoolId
-    || period.academicYearId !== classGroup.academicYearId
-    || !definition
-    || definition.schoolId !== student.schoolId
-    || definition.academicYearId !== period.academicYearId
-  ) {
-    denyResourceAccess()
-  }
-
-  const published = await repositories.results.findOne({
-    studentId: result.studentId,
-    periodId: result.periodId,
-    status: ReportCardResultStatus.Published,
-  })
-  if (!published || published.status !== ReportCardResultStatus.Published) {
-    return
-  }
-  throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${result.periodId} is immutable`)
-}
-
-function authorizeReportCardResult(policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardResult>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    if (existing)
-      await policy.checkReportCardResultAccess(actor, [existing.id])
-  }
-}
-
-function authorizeReportCardResultDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardResult>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkReportCardResultAccess(actor, [entity.id])
-  }
-}
-
-async function validateReportCardResultDelete(
-  result: ReportCardResult,
-): Promise<void> {
-  if (result.status === ReportCardResultStatus.Published) {
-    throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${result.periodId} is immutable`)
-  }
 }

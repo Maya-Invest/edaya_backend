@@ -21,7 +21,14 @@ export interface ActivityEnrollmentSeedRecord {
   status: ActivityEnrollmentStatus
 }
 
+export interface ClassActivityEnrollmentSeedRecord {
+  id: string
+  activityId: string
+  classGroupId: string
+}
+
 export interface ActivitiesSeedPort {
   saveActivity: (record: ActivitySeedRecord) => Promise<void>
   saveEnrollment: (record: ActivityEnrollmentSeedRecord) => Promise<void>
+  saveClassActivityEnrollment: (record: ClassActivityEnrollmentSeedRecord) => Promise<void>
 }

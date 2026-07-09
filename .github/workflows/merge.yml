@@ -1,0 +1,102 @@
+name: Merge
+
+on:
+  push:
+    branches: [main, master, staging]
+  workflow_dispatch:
+    inputs:
+      run_migrate:
+        description: Run database migrations
+        type: boolean
+        default: true
+      run_publish_api_dev:
+        description: Build and publish edaya-api-dev image
+        type: boolean
+        default: true
+      run_notify_consumers:
+        description: Notify web/mobile to re-run open PR CI
+        type: boolean
+        default: true
+
+concurrency:
+  group: merge-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run_migrate: ${{ steps.plan.outputs.run_migrate }}
+      run_publish_api_dev: ${{ steps.plan.outputs.run_publish_api_dev }}
+      run_notify_consumers: ${{ steps.plan.outputs.run_notify_consumers }}
+      migrate_target: ${{ steps.plan.outputs.migrate_target }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Detect API dev image changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            api_dev_image:
+              - .dockerignore
+              - apps/**
+              - package/**
+              - tooling/**
+              - package.json
+              - bun.lock
+              - bunfig.toml
+              - turbo.json
+
+      - name: Plan jobs
+        id: plan
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            main|master)
+              MIGRATE_TARGET=production
+              ;;
+            *)
+              MIGRATE_TARGET=staging
+              ;;
+          esac
+          echo "migrate_target=${MIGRATE_TARGET}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_migrate=${{ inputs.run_migrate }}" >> "$GITHUB_OUTPUT"
+            echo "run_publish_api_dev=${{ inputs.run_publish_api_dev }}" >> "$GITHUB_OUTPUT"
+            echo "run_notify_consumers=${{ inputs.run_notify_consumers }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_migrate=true" >> "$GITHUB_OUTPUT"
+            echo "run_publish_api_dev=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
+            echo "run_notify_consumers=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  migrate:
+    needs: gate
+    if: needs.gate.outputs.run_migrate == 'true'
+    uses: ./.github/workflows/_migrate.yml
+    with:
+      migrate_target: ${{ needs.gate.outputs.migrate_target }}
+    secrets: inherit
+
+  publish-api-dev-image:
+    needs: gate
+    if: needs.gate.outputs.run_publish_api_dev == 'true'
+    uses: ./.github/workflows/_publish-api-dev-image.yml
+    secrets: inherit
+
+  notify-api-dev-consumers:
+    needs: [gate, publish-api-dev-image]
+    if: >-
+      needs.gate.outputs.run_notify_consumers == 'true' &&
+      needs.publish-api-dev-image.result == 'success'
+    uses: ./.github/workflows/_notify-api-dev-consumers.yml
+    with:
+      channel: ${{ needs.publish-api-dev-image.outputs.channel }}
+      image: ${{ needs.publish-api-dev-image.outputs.image }}
+      sha: ${{ github.sha }}
+    secrets: inherit

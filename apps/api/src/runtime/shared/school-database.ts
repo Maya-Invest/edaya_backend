@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import type { DatabaseHandle } from "@/runtime/types";
 
 /** Required for Hyperdrive query caching (see Cloudflare postgres.js docs). */
@@ -9,6 +10,10 @@ export const postgresDriverOptions = {
 export async function createPgliteSchoolDatabase(dataDir: string | null): Promise<DatabaseHandle> {
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
+
+  if (dataDir) {
+    mkdirSync(dataDir, { recursive: true });
+  }
 
   const pglite = dataDir ? new PGlite(dataDir) : new PGlite();
   return {

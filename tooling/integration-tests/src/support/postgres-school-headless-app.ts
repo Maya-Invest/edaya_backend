@@ -1,6 +1,4 @@
-import type {
-  ActorMetadata,
-} from '@edaya/core'
+import type { ActorMetadata } from '@edaya/authorization'
 import {
   applyAllSaveFailureWraps,
   buildSchoolApplication,

@@ -9,22 +9,29 @@ const repoRoot = resolve(import.meta.dirname, '../../..')
 const expectedEnvExamples = [
   'apps/api/.env.example',
   'apps/api/.dev.vars.example',
-  'tooling/seeding/.env.example',
-  'tooling/seeding/.env.staging.example',
-  'tooling/seeding/.env.production.example',
+  '.env.example',
 ]
+const expectedSecretExamples = [
+  'apps/api/secrets.json.example',
+]
+
+function isAllowedTrackedEnvFile(name: string): boolean {
+  return name === '.env.example'
+    || /^\.env\..+\.example$/.test(name)
+    || /^container\..+\.env$/.test(name)
+}
 
 const trackedEnvOutput = await $`git -C ${repoRoot} ls-files -- ${'*.env*'}`.text()
 const trackedEnvFiles = trackedEnvOutput
   .split('\n')
   .filter(path => path && existsSync(resolve(repoRoot, path)))
 const unexpectedTrackedEnvFiles = trackedEnvFiles.filter((path) => {
-  const name = basename(path)
-  return name !== '.env.example' && !/^\.env\..+\.example$/.test(name)
+  return !isAllowedTrackedEnvFile(basename(path))
 })
 const missingEnvExamples = expectedEnvExamples.filter(path => !existsSync(resolve(repoRoot, path)))
+const missingSecretExamples = expectedSecretExamples.filter(path => !existsSync(resolve(repoRoot, path)))
 
-if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0) {
+if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0 || missingSecretExamples.length > 0) {
   if (unexpectedTrackedEnvFiles.length > 0) {
     console.error('Tracked runtime environment files:')
     unexpectedTrackedEnvFiles.forEach(path => console.error(`  - ${path}`))
@@ -32,6 +39,10 @@ if (unexpectedTrackedEnvFiles.length > 0 || missingEnvExamples.length > 0) {
   if (missingEnvExamples.length > 0) {
     console.error('Missing environment examples:')
     missingEnvExamples.forEach(path => console.error(`  - ${path}`))
+  }
+  if (missingSecretExamples.length > 0) {
+    console.error('Missing Wrangler secret examples:')
+    missingSecretExamples.forEach(path => console.error(`  - ${path}`))
   }
   process.exitCode = 1
 }

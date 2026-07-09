@@ -1,10 +1,4 @@
-import type {
-  AnnouncementPriority,
-  AnnouncementStatus,
-  AnnouncementTargetKind,
-  MessageDeliveryRecipientKind,
-  MessageDeliveryStatus,
-} from '@edaya/core'
+import type { AnnouncementPriority, AnnouncementStatus, AnnouncementTargetKind, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 
 export interface AnnouncementSeedRecord {
   id: string

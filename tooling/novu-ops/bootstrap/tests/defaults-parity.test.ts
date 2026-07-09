@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/core";
+import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { buildBootstrapWorkflows } from "../catalog/workflows";
 import { loadBootstrapEmailTemplates } from "../lib/load-templates";
 import {

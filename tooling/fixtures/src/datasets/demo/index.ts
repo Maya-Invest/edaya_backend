@@ -27,6 +27,7 @@ import {
   demoReportCardResults,
 } from './domains/report-cards'
 import {
+  demoClassResourceAssignments,
   demoResources,
   demoSchedules,
   demoSchedulingSessionProgressAnchor,
@@ -57,6 +58,7 @@ import {
   demoPeriodDefinitions,
   demoSchool,
 } from './school'
+import { demoTeacherAssignments, demoTeachers } from './teachers'
 
 export const demoDataset = {
   purpose: 'demo',
@@ -69,6 +71,8 @@ export const demoDataset = {
     periodDefinitions: demoPeriodDefinitions,
     classGroups: [...demoFoundationClassGroups, ...demoExtendedClassGroups],
     staffMembers: demoStaffMembers,
+    teachers: demoTeachers,
+    teacherAssignments: demoTeacherAssignments,
     students: demoStudents,
     enrollments: demoEnrollments,
     guardians: demoGuardians,
@@ -118,5 +122,6 @@ export const demoDataset = {
     reportCardResults: demoReportCardResults,
     announcementMaterializePlans: demoAnnouncementMaterializePlans,
     classSubjectStaffAssignments: demoClassSubjectStaffAssignments,
+    classResourceAssignments: demoClassResourceAssignments,
   },
 } satisfies FixtureDataset<'demo'>

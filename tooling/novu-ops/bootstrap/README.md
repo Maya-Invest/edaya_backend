@@ -28,13 +28,13 @@ From repo root:
 
 ```sh
 # Dry-run (default)
-bun novu:bootstrap
+bun repo novu bootstrap
 
 # Push to Novu Cloud
-bun novu:bootstrap:apply
+bun repo novu bootstrap apply
 
 # Validate local catalog only
-bun novu:bootstrap:validate
+bun repo novu bootstrap validate
 ```
 
 ## Environment
@@ -63,7 +63,7 @@ Email bodies live in `templates/emails/*.html`; subjects in `templates/subjects/
 1. Export the `eventKey` constant from `@edaya/core` (if new).
 2. Add an entry to `catalog/workflows.ts`.
 3. Add the id to `NOVU_NOTIFICATION_WORKFLOW_IDS` in `package/adaptor-novu/src/map-subscriber-preferences.ts` when subscribers should sync prefs.
-4. Run `bun novu:bootstrap:validate` then `bun novu:bootstrap:apply`.
+4. Run `bun repo novu bootstrap validate` then `bun repo novu bootstrap apply`.
 
 ## Manual follow-up
 
@@ -76,4 +76,4 @@ Not yet managed by this bootstrap:
 ## Related
 
 - Runtime adapter: `package/adaptor-novu/README.md`
-- Smoke test: `bun novu:smoke`
+- Smoke test: `bun repo smoke-test novu`

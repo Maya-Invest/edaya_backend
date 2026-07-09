@@ -1,12 +1,6 @@
 import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
-import {
-  DomainValidationError,
-  Fee,
-  FeeCategory,
-  Permission,
-  StaffMember,
-  StaffPermissionAssignment,
-} from '@edaya/core'
+import { Permission } from '@edaya/authorization'
+import { DomainValidationError, Fee, FeeCategory, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
@@ -82,13 +76,13 @@ describe('[Postgres PGlite] JSONB read validation', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1:*',
+      scopeIds: 'class-1',
       status: 'active',
     }))
 
     await db.execute(sql`
       UPDATE staff_permission_assignments
-      SET scope_ids = 'class-1/invalid'
+      SET scope_ids = 'class-1:math'
       WHERE id = 'spa-corrupt-2'
     `)
 

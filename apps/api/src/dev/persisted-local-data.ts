@@ -1,4 +1,3 @@
-/* eslint-disable node/no-process-env */
 import path from "node:path";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { resolveRepoLocalDataPath } from "@/runtime/shared/env/repo-root";
@@ -29,18 +28,4 @@ export function isPersistedLocalDataDeployment(
 
   const schoolDataDir = env.DATABASE_URL.slice("pglite:".length).trim();
   return Boolean(schoolDataDir && schoolDataDir !== "pglite" && usesRepoLocalDataPath(schoolDataDir));
-}
-
-export function resolveSeedOnStart(
-  env: Pick<Environment, "NODE_ENV" | "RUNTIME" | "DATABASE_URL">,
-): boolean {
-  const raw = process.env.SEED_ON_START?.trim().toLowerCase();
-  if (raw === "false" || raw === "0" || raw === "no") {
-    return false;
-  }
-  if (raw === "true" || raw === "1" || raw === "yes") {
-    return isPersistedLocalDataDeployment(env);
-  }
-
-  return env.NODE_ENV === "development" && isPersistedLocalDataDeployment(env);
 }

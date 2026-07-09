@@ -146,7 +146,7 @@ async function createBackend(): Promise<DbBrowserBackend> {
     const resolvedDir = resolveRepoLocalPath(dataDir)
     if (!existsSync(resolvedDir)) {
       console.error(`School/auth database not found: ${resolvedDir}`)
-      console.error('Start the API and run `bun seed:init` first.')
+      console.error('Start the API and run `bun repo seed` first.')
       process.exit(1)
     }
 
@@ -168,11 +168,11 @@ async function createBackend(): Promise<DbBrowserBackend> {
   const resolvedDir = resolveRepoLocalPath(dataDir)
   if (!existsSync(resolvedDir)) {
     console.error(`School database not found: ${resolvedDir}`)
-    console.error('Start the API and run `bun seed:init` first.')
+    console.error('Start the API and run `bun repo seed` first.')
     process.exit(1)
   }
 
-  console.log('Note: stop `bun dev` first — PGlite allows only one handle on .data/school.\n')
+  console.log('Note: stop `bun repo dev` first — PGlite allows only one handle on .data/school.\n')
   return createSchoolBackend(resolvedDir)
 }
 

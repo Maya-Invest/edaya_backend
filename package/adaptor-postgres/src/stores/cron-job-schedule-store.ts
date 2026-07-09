@@ -1,4 +1,4 @@
-import type { CronJobKey, CronJobSchedule, CronJobSchedulePort } from '@edaya/core'
+import type { CronJobKey, CronJobSchedule, CronJobSchedulePort } from '@edaya/service'
 import { and, eq, lte } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
 

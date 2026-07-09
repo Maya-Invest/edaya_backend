@@ -1,9 +1,4 @@
-import {
-  AcademicPeriodType,
-  AttendanceMode,
-  GradeLevel,
-  SchoolType,
-} from '@edaya/core'
+import { AcademicPeriodType, AttendanceMode, GradeLevel, SchoolType } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -92,11 +87,12 @@ describeIntegration('setup lifecycle journey', () => {
       classGroupId: 'class',
       name: 'Grade 6 Alpha',
       capacity: 3,
-      attendanceMode: AttendanceMode.Session,
+      attendanceMode: AttendanceMode.Daily,
       homeroomStaffId: 'teacher',
     })
     expect(classGroup.name).toBe('Grade 6 Alpha')
     expect(classGroup.capacity).toBe(3)
+    expect(classGroup.attendanceMode).toBe(AttendanceMode.Daily)
     expect(classGroup.homeroomStaffId).toBe('teacher')
 
     expect((await updateStaffStatus(app, 'teacher', false)).isActive).toBe(false)

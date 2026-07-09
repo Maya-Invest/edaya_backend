@@ -1,13 +1,6 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
-import {
-  BusinessRuleViolationError,
-  GradeLevel,
-  Subject,
-  SubjectCategory,
-  SubjectColor,
-  SubjectMatter,
-} from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import { BusinessRuleViolationError, GradeLevel, Subject, SubjectCategory, SubjectColor, SubjectMatter } from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import {
   classDisplayName,
@@ -20,10 +13,11 @@ import type {
   StructureTemplateId,
 } from "@edaya/fixtures/onboarding";
 import {
-  type AppliedStructureLevelSubjects,
+
   applyReportCardsFromTemplate,
   collectLevelSubjects,
 } from "./apply-report-cards-from-template";
+import type { AppliedStructureLevelSubjects } from "./apply-report-cards-from-template";
 import { ensureAcademicPeriodsFromTemplates } from "./ensure-academic-periods-from-template";
 
 export interface ApplyStructureLevelInput {

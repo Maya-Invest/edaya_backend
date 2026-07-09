@@ -1,3 +1,4 @@
+/* eslint-disable node/no-process-env -- test harness syncs LOCAL_FILES_URL for embedded server */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,6 +11,20 @@ export interface EmbeddedLocalFilesServer {
   rootDir: string;
   dataRoot: string;
   stop: () => void;
+}
+
+/** Align seed doctor / profile-photo preflight with the embedded server URL. */
+export function syncProcessEnvLocalFilesUrl(baseUrl: string): () => void {
+  const previous = process.env.LOCAL_FILES_URL;
+  process.env.LOCAL_FILES_URL = baseUrl;
+  return () => {
+    if (previous === undefined) {
+      delete process.env.LOCAL_FILES_URL;
+    }
+    else {
+      process.env.LOCAL_FILES_URL = previous;
+    }
+  };
 }
 
 export function startEmbeddedLocalFilesServer(

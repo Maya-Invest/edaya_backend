@@ -1,5 +1,5 @@
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind } from '../../../../src/domain/scheduling/calendar-event'
 
 describe('CalendarEvent entity', () => {
   const baseArgs = {

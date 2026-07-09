@@ -1,5 +1,5 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
 import { AcademicPeriodType } from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import type {

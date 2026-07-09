@@ -17,11 +17,8 @@ export function isLocalDatabaseUrl(databaseUrl: string | undefined): boolean {
 }
 
 function isStagingSeedEnvironment(): boolean {
-  const apiUrl = process.env['SEED_API_URL']
-    ?? process.env['STAGING_API_URL']
-    ?? ''
-
-  return apiUrl.includes('api-staging.')
+  const apiUrl = process.env['SEED_STAGING_API_URL'] ?? ''
+  return apiUrl.includes('api-staging.') || apiUrl.includes('staging')
 }
 
 /** Block obvious production Neon URLs unless the operator explicitly opts in. */
@@ -32,7 +29,7 @@ export function assertStagingSchoolDatabaseUrl(databaseUrl: string): void {
   }
 
   if (isLocalDatabaseUrl(trimmed)) {
-    throw new Error('Refusing to wipe a local/ephemeral DATABASE_URL. Use `bun seed:clean` for local `.data`.')
+    throw new Error('Refusing to wipe a local/ephemeral DATABASE_URL. Use `bun repo seed clean` for local `.data`.')
   }
 
   const allowDestructive = process.env['SEED_ALLOW_DESTRUCTIVE']?.trim().toLowerCase()

@@ -5,12 +5,51 @@ import type {
   StaffAssignmentSeedRecord,
   StaffRoleAssignmentPresetRecord,
 } from '../domains/access/port'
-import {
-  COORDINATOR_PERMISSIONS,
-  ELEVATED_STAFF_PERMISSIONS,
-  Permission,
-  TEACHER_PERMISSIONS,
-} from '@edaya/core'
+import { COORDINATOR_PERMISSIONS, ELEVATED_STAFF_PERMISSIONS, Permission } from '@edaya/authorization'
+
+/** Permissions that require explicit scope entity ids when materialized from role templates. */
+const CLASS_GROUP_SCOPED_PERMISSIONS = [
+  Permission.ACADEMIC_PROGRAM_READ,
+  Permission.ACADEMIC_PROGRAM_UPDATE,
+  Permission.ACADEMIC_PROGRAM_ASSIGN,
+  Permission.QUERY_CLASS_DIRECTORY_READ,
+  Permission.QUERY_CLASS_CURRICULUM_READ,
+  Permission.ATTENDANCE_READ,
+  Permission.GRADE_READ,
+  Permission.TIMETABLE_READ,
+  Permission.TIMETABLE_CREATE,
+  Permission.TIMETABLE_UPDATE,
+  Permission.CLASS_LOGBOOK_READ,
+  Permission.COMMUNICATION_SEND,
+  Permission.QUERY_ATTENDANCE_READ,
+  Permission.QUERY_TIMETABLE_READ,
+  Permission.QUERY_CURRICULUM_PROGRESS_READ,
+  Permission.GRADE_INPUT,
+  Permission.GRADE_UPDATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.DISCIPLINE_CREATE,
+] as const
+
+const SCHOOL_LEADERSHIP_ROLE_IDS = new Set(['role-director', 'role-coordinator'])
+
+function buildSchoolLeadershipScopeGrants(context: DevSeedContext): StaffRoleAssignmentPresetRecord['scopeGrants'] {
+  const classGroupIds = context.dataset.entities.classGroups?.map(classGroup => classGroup.id) ?? []
+
+  return CLASS_GROUP_SCOPED_PERMISSIONS.map(permission => ({
+    permission,
+    scopeType: 'class_group' as const,
+    scopeEntityIds: classGroupIds,
+  }))
+}
+
+function scopeGrantsForRole(context: DevSeedContext, roleId: string): StaffRoleAssignmentPresetRecord['scopeGrants'] {
+  if (SCHOOL_LEADERSHIP_ROLE_IDS.has(roleId)) {
+    return buildSchoolLeadershipScopeGrants(context)
+  }
+  return []
+}
 
 const DEV_WEBAPP_SHELL_READ_PERMISSIONS = [
   Permission.QUERY_WORKSPACE_READ,
@@ -90,24 +129,6 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
 
 function buildAccessRoleRecords(schoolId: string): readonly AccessRolePresetRecord[] {
   return [
-    {
-      id: 'role-teacher',
-      schoolId,
-      name: 'Teacher',
-      permissions: mergePermissions(
-        TEACHER_PERMISSIONS,
-        [Permission.GRADE_READ],
-        DEV_WEBAPP_SHELL_READ_PERMISSIONS,
-        DEV_WEBAPP_PEOPLE_READ_PERMISSIONS,
-        DEV_WEBAPP_SCHEDULING_READ_PERMISSIONS,
-        DEV_WEBAPP_ASSESSMENT_READ_PERMISSIONS,
-        DEV_WEBAPP_CALENDAR_READ_PERMISSIONS,
-        DEV_WEBAPP_ATTENDANCE_READ_PERMISSIONS,
-        DEV_WEBAPP_DISCIPLINE_READ_PERMISSIONS,
-        DEV_WEBAPP_STUDENT_360_READ_PERMISSIONS,
-        DEV_WEBAPP_REPORT_CARD_READ_PERMISSIONS,
-      ),
-    },
     {
       id: 'role-coordinator',
       schoolId,
@@ -192,26 +213,21 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
     },
   ]
 
-  if (context.datasetId === 'ci') {
+  if (context.datasetId === 'demo-ci') {
     const roles = context.staffAccessRoleIds
     return [
-      createStaffRoleAssignment(context, 'ci-st1', roles['ci-st1']!),
-      createStaffRoleAssignment(context, 'ci-st2', roles['ci-st2']!),
-      createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!),
-      createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!),
-      createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!),
+      createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!, scopeGrantsForRole(context, roles['ci-st3']!)),
+      createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!, scopeGrantsForRole(context, roles['ci-st8']!)),
+      createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!, scopeGrantsForRole(context, roles['ci-st5']!)),
       createStaffRoleAssignment(context, 'ci-st7', roles['ci-st7']!, schoolDisciplineAndAttendanceGrants),
     ]
   }
 
   const roles = context.staffAccessRoleIds
   return [
-    createStaffRoleAssignment(context, 'st1', roles['st1']!),
-    createStaffRoleAssignment(context, 'st2', roles['st2']!),
-    createStaffRoleAssignment(context, 'st3', roles['st3']!),
-    createStaffRoleAssignment(context, 'st4', 'role-teacher'),
-    createStaffRoleAssignment(context, 'st8', roles['st8']!),
-    createStaffRoleAssignment(context, 'st5', roles['st5']!),
+    createStaffRoleAssignment(context, 'st3', roles['st3']!, scopeGrantsForRole(context, roles['st3']!)),
+    createStaffRoleAssignment(context, 'st8', roles['st8']!, scopeGrantsForRole(context, roles['st8']!)),
+    createStaffRoleAssignment(context, 'st5', roles['st5']!, scopeGrantsForRole(context, roles['st5']!)),
     createStaffRoleAssignment(context, 'st6', 'role-educator', schoolDisciplineAndAttendanceGrants),
     createStaffRoleAssignment(context, 'st7', roles['st7']!, schoolDisciplineAndAttendanceGrants),
   ]
@@ -221,21 +237,15 @@ function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly Staf
   const academicYearId = context.dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Seed dataset must include academicYear for access seeding') })()
 
-  if (context.datasetId === 'ci') {
+  if (context.datasetId === 'demo-ci') {
     return [
-      { id: 'sa-ci-st1-6a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st1-5a', staffId: 'ci-st1', academicYearId, responsibility: 'Mathématiques', classGroupId: 'ci-5a' },
       { id: 'sa-ci-st3-6a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st2-6b', staffId: 'ci-st2', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6b' },
       { id: 'sa-ci-st3-5a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-5a' },
     ]
   }
 
   return [
-    { id: 'sa-st1-6a', staffId: 'st1', academicYearId, responsibility: 'Mathematics', classGroupId: '6a' },
-    { id: 'sa-st1-5a', staffId: 'st1', academicYearId, responsibility: 'Mathematics', classGroupId: '5a' },
     { id: 'sa-st3-6a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '6a' },
-    { id: 'sa-st2-6b', staffId: 'st2', academicYearId, responsibility: 'Homeroom', classGroupId: '6b' },
     { id: 'sa-st3-5a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '5a' },
   ]
 }

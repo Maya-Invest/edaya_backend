@@ -22,6 +22,8 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'subject-matters': 'subjectMatters',
   'class-subjects': 'classSubjects',
   'class-subject-matters': 'classSubjectMatters',
+  'teachers': 'teachers',
+  'teacher-assignments': 'teacherAssignments',
   'resources': 'resources',
   'schedules': 'schedules',
   'lesson-sessions': 'lessonSessions',
@@ -87,7 +89,7 @@ export function buildSeedValidationTargets(): SeedValidationTarget[] {
       return {
         entity: entry.entity,
         serviceName,
-        minCount: entry.status === 'partial' && minCount === 0 ? 0 : minCount,
+        minCount: (entry.status as SeedEntityManifestStatus) === 'partial' && minCount === 0 ? 0 : minCount,
         status: entry.status,
       }
     })
@@ -98,8 +100,8 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
   const context = resolveDevSeedContext()
   const schoolId = context.schoolId
   const academicYearId = context.dataset.entities.academicYear?.id
-    ?? (context.datasetId === 'ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
-  const academicPeriodId = context.datasetId === 'ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
+    ?? (context.datasetId === 'demo-ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
+  const academicPeriodId = context.datasetId === 'demo-ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
   const expectsFinanceAndReportCards = context.datasetId === 'central'
 
   return [

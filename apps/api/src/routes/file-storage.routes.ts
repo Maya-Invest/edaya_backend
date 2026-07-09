@@ -5,19 +5,9 @@ import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import {
-  allowsPublicInlineAttachmentContent,
-  assertUploadPolicyAllowed,
-  Attachment,
-  AttachmentOwnerKind,
-  AttachmentStatus,
-  buildStorageKey,
-  BusinessRuleViolationError,
-  isInteractiveActor,
-  Permission,
-  permissionAction,
-  validateAttachmentSave,
-} from "@edaya/core";
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError } from "@edaya/core";
+import { AttachmentOperations, isInteractiveActor, operationModule } from "@edaya/authorization";
+import { allowsPublicInlineAttachmentContent, assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -169,7 +159,7 @@ export const createFileUploadIntentHandler: AppRouteHandler<typeof createFileUpl
 
   try {
     const body = validatedJson(c) as z.infer<typeof uploadIntentRequestSchema>;
-    await permissionAction(Permission.ATTACHMENT_CONFIGURE)(actor);
+    await operationModule(AttachmentOperations.configure)(actor);
     assertUploadPolicyAllowed({
       ownerKind: body.ownerKind,
       mimeType: body.mimeType,
@@ -231,12 +221,14 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
 
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    await permissionAction(Permission.ATTACHMENT_READ)(actor);
+    await operationModule(AttachmentOperations.read)(actor);
 
     const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
     if (!attachment || attachment.schoolId !== actor.schoolId) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
+
+    await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess(actor, [attachment]);
 
     if (!attachment.storageKey) {
       if (attachment.fileUrl) {
@@ -344,10 +336,11 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
       if (!actor) {
         return unauthorizedResponse(c);
       }
-      await permissionAction(Permission.ATTACHMENT_READ)(actor);
+      await operationModule(AttachmentOperations.read)(actor);
       if (attachment.schoolId !== actor.schoolId) {
         return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
       }
+      await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess(actor, [attachment]);
     }
 
     if (!attachment.storageKey) {

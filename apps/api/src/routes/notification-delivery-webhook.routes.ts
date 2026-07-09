@@ -1,7 +1,8 @@
 import type { AppRouteHandler } from "@/http/types";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { resolveNotificationDeliveryWebhookAdapter } from "@/runtime/shared/adapters/notification-delivery-webhook";
-import { createSystemActorMetadata, MessageDeliveryStatus } from "@edaya/core";
+import { MessageDeliveryStatus } from "@edaya/core";
+import { createSystemActorMetadata } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";

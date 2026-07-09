@@ -1,45 +1,4 @@
-import type {
-  AcademicPeriodInput,
-  AcademicYearInput,
-  ActivityEnrollmentInput,
-  ActivityInput,
-  AnnouncementInput,
-  AnnouncementTargetInput,
-  AssessmentInput,
-  AssessmentResultInput,
-  AttachmentInput,
-  AttendanceRecordInput,
-  CalendarEventKind,
-  ClassGroupInput,
-  ClassSubjectInput,
-  DayOfWeek,
-  DisciplinaryActionInput,
-  FeeInput,
-  GradeLevelInput,
-  GradeScaleInput,
-  GuardianInput,
-  GuardianStudentLinkInput,
-  IncidentInput,
-  MessageDeliveryInput,
-  PaymentInput,
-  PeriodDefinitionInput,
-  ReportCardDefinitionInput,
-  ReportCardDefinitionSectionRole,
-  ResourceInput,
-  ScheduleInput,
-  SchoolInput,
-  StaffAssignmentInput,
-  StaffMemberInput,
-  StudentClassEnrollmentInput,
-  StudentDisciplinaryActionInput,
-  StudentFeeInput,
-  StudentHealthProfileInput,
-  StudentIncidentInvolvementInput,
-  StudentInput,
-  StudentNoteInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, FeeInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentFeeInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'demo-ci' | 'bulk'
 
@@ -59,7 +18,10 @@ export interface FixtureAttendanceSession {
 export interface FixtureSchedulingSlot {
   slotId: string
   schedule: ScheduleInput
+  /** Portal teacher (Teacher entity id) responsible for this slot. */
   teacherId: string
+  /** Staff member assigned to the materialized lesson session; omit for portal-only teachers. */
+  lessonSessionStaffId?: string
   resourceId?: string
 }
 
@@ -145,12 +107,14 @@ export interface FixtureDatasetExtensions {
   }
   schedulingSlots?: readonly FixtureSchedulingSlot[]
   schedulingSessionProgressAnchor?: FixtureSchedulingSessionProgressAnchor
+  schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]
   calendarEvents?: readonly FixtureCalendarEvent[]
   reportCardGradeScaleFixtures?: readonly FixtureReportCardGradeScale[]
   reportCardDefinitionFixtures?: readonly FixtureReportCardDefinition[]
   reportCardResults?: readonly FixtureReportCardResult[]
   announcementMaterializePlans?: readonly FixtureAnnouncementMaterializePlan[]
   classSubjectStaffAssignments?: readonly StaffAssignmentInput[]
+  classResourceAssignments?: readonly ResourceAssignmentInput[]
 }
 
 export interface FixtureDatasetEntities {
@@ -161,6 +125,8 @@ export interface FixtureDatasetEntities {
   periodDefinitions?: readonly PeriodDefinitionInput[]
   classGroups?: readonly ClassGroupInput[]
   staffMembers?: readonly StaffMemberInput[]
+  teachers?: readonly TeacherInput[]
+  teacherAssignments?: readonly TeacherAssignmentInput[]
   guardians?: readonly GuardianInput[]
   students?: readonly StudentInput[]
   enrollments?: readonly StudentClassEnrollmentInput[]
@@ -176,6 +142,7 @@ export interface FixtureDatasetEntities {
   attendanceRecords?: readonly AttendanceRecordInput[]
   activities?: readonly ActivityInput[]
   activityEnrollments?: readonly ActivityEnrollmentInput[]
+  classActivityEnrollments?: readonly ClassActivityEnrollmentInput[]
   fees?: readonly FeeInput[]
   studentFees?: readonly StudentFeeInput[]
   payments?: readonly PaymentInput[]

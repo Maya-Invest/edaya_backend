@@ -1,4 +1,5 @@
 import type { ZodError, ZodType } from 'zod'
+
 import { z } from 'zod'
 
 export class DomainValidationError extends Error {

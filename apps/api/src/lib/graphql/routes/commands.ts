@@ -1,7 +1,8 @@
 import {
-  type GraphQLFieldConfigMap,
+
   GraphQLNonNull,
 } from "graphql";
+import type { GraphQLFieldConfigMap } from "graphql";
 import type { Context } from "hono";
 import { coreCommands } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";

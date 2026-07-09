@@ -1,7 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SubjectCategory {
@@ -73,11 +71,3 @@ export class Subject {
     })
   }
 }
-
-export const subjectConfig: EntityConfigFactory<Subject> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.subjects,
-    Permission.QUERY_CLASS_CURRICULUM_READ,
-    Permission.ACADEMIC_PROGRAM_UPDATE,
-  )

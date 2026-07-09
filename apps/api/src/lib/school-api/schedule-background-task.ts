@@ -1,7 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 
 import type { Context } from "hono";
-import type { ActorMetadata, SchoolService } from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import type { SchoolService } from "@edaya/service";
 import type { AppBindings } from "@/http/bindings";
 import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
 

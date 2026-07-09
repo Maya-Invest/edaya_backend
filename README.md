@@ -79,9 +79,9 @@ flowchart TB
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `apps/api/src/entries/local.ts` | `.env` (dotenv) | `cd apps/api && bun dev` |
+| **local** | `apps/api/src/entries/local.ts` | `apps/api/.env` | `bun repo dev` (API + local-files) |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
-| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun dev:worker-local` |
+| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun --filter @edaya/api dev:worker` (optional smoke) |
 
 `local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
@@ -117,9 +117,9 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
+| `@edaya/repo` | `tooling/repo` | Repo CLI (`bun repo`), CI checks, OpenAPI tooling |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
-| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (`seed:init`, …) |
+| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (via `bun repo seed`) |
 | `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
 | `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
@@ -134,6 +134,7 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 bun install
 
 cp apps/api/.env.example apps/api/.env
+cp .env.example .env   # optional — seeding, migrations, smoke-test staging
 ```
 
 Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` there).
@@ -141,7 +142,7 @@ Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env
 ## Local development
 
 ```sh
-bun dev   # API only
+bun repo dev
 ```
 
 | Service | URL |
@@ -151,118 +152,58 @@ bun dev   # API only
 
 Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
 
-Or run the API alone:
+`bun repo dev` starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun repo dev` alone starts the API without the file server.
 
-```sh
-cd apps/api && bun dev          # Node API
-```
-
-**Worker runtime** (API on Cloudflare):
+**worker smoke** (Miniflare — optional, hits remote Neon/R2):
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun dev:worker-local
+bun --filter @edaya/api dev:worker
 ```
 
 See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database options, dev seed, and troubleshooting.
 
 ## Commands
 
-All root scripts run across the monorepo via Turborepo unless noted.
+**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun repo dev`, `bun repo seed`, `bun repo db …`, etc. **No Turbo in `bun repo`** — use root scripts below.
 
-### Development
-
-| Command | Description |
-|---------|-------------|
-| `bun dev` | Start API in watch mode |
-| `bun seed` | Short alias for `seed:init` — full HTTP demo seed |
-| `bun run seed:init` | Full HTTP demo seed (fresh clone / after `rm -rf .data`) |
-| `bun run seed:auth` | Provision Better Auth user accounts only |
-| `bun run seed:smoke` | Minimal smoke seed for quick verification |
-| `bun run seed:remote` | Seed a remote API instance |
-| `bun run deploy:api:staging` | Deploy API to Cloudflare Workers (staging) |
-| `bun run seed:smoke:staging` | Sign-in + effective-grants smoke against staging URL |
-| `cd apps/api && bun dev` | API only (Node, port 9999) |
-| `bun dev:worker-local` | API worker-local smoke (Miniflare; alias: `bun dev:worker`) |
-| `cd apps/api && bun start` | Run Node API bundle (`dist/node.js`) |
-| `bun run deploy:api` | Deploy API to Cloudflare Workers (production) |
-
-### Database
-
-Root scripts use the `db:*` prefix (`@edaya/db-migrate` implements `migrate:*`).
+**Turbo quality** (root `package.json`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run db:generate` | Generate school schema SQL migrations |
-| `bun run db:migrate` | Apply school schema only (`DATABASE_URL=postgres://…`) |
-| `bun run db:migrate:full` | Apply school + auth on `DATABASE_URL` |
-| `bun run db:migrate:production` | Migrate Neon production branch (`tooling/seeding/.env.production`) |
-| `bun run db:migrate:staging` | Migrate Neon staging branch (`tooling/seeding/.env.staging`) |
-| `bun run db:generate:auth` | Generate auth SQL migrations |
-| `bun run auth:generate-schema` | Regenerate Better Auth Drizzle schema from CLI |
-
-Local PGlite (`bun dev`) migrates on startup — no command needed.
-
-Deprecated aliases: `db:migrate:all` → `db:migrate:full`, `db:migrate:dev` → `db:migrate:production`, `db:migrate:hyperdrive` → `db:migrate:production` (`.dev.vars` fallback).
-
-Package-level extras (run from adaptor package or with `bun --filter`):
-
-| Command | Description |
-|---------|-------------|
-| `bun --filter @edaya/adaptor-postgres db:push` | Push schema to database (drizzle-kit) |
-| `bun --filter @edaya/adaptor-auth auth:db:push` | Push auth schema |
-| `bun db:browser:school` | Browse local school tables (stop `bun dev` first) |
-| `bun db:browser:auth` | Browse local auth tables |
-
-### OpenAPI & API client
-
-| Command | Description |
-|---------|-------------|
-| `bun run openapi:generate` | Export OpenAPI and update tracked API client bindings |
-| `bun run openapi:check` | Fail if tracked generated artifacts drift |
-| `bun run generated:update` | Alias for `openapi:generate` |
-| `bun run generated:check` | Alias for `openapi:check` |
-| `bun run check:boundaries` | Verify layer import boundaries (runtime/http, core/adaptor-auth) |
-| `bun run export-openapi` | Export OpenAPI JSON only |
-| `bun tooling/repo/openapi/generate-bindings.ts` | Regenerate `@edaya/api-client` bindings from OpenAPI only |
-
-TypeScript schema types for web apps are generated in **edaya_web** (`bun run openapi:generate`).
-
-### Quality & CI
-
-| Command | Description |
-|---------|-------------|
-| `bun run doctor` | Check environment-file tracking and required examples |
-| `bun run lint` | ESLint repository scripts and all packages |
-| `bun run lint:fix` | ESLint repository scripts and all packages with auto-fix |
-| `bun run fix` | Alias for `lint:fix`; this command mutates files |
-| `bun run check` | TypeScript / Svelte type checks |
+| `bun run verify` | Pre-PR gate: `bun repo verify` + quality + build + test |
+| `bun run lint` | ESLint across workspaces |
+| `bun run lint:fix` | ESLint with auto-fix |
+| `bun run check` | TypeScript checks |
+| `bun run test` | Unit tests (Turbo; excludes integration-tests) |
+| `bun run build` | Build deployable bundles |
 | `bun run quality` | `lint` + `check` per package |
-| `bun run test` | Repository-tooling, unit, and integration tests |
-| `bun run test:remote` | Integration tests against a real Postgres database |
-| `bun run test:coverage` | Tests with coverage (where supported) |
-| `bun run build` | Build deployable API bundle |
-| `bun run verify` | Complete non-mutating CI verification path |
+| `bun run test:coverage` | Unit coverage (informational) |
+| `bun run test:integration` | Integration api + http slices |
+| `bun run test:integration:seed` | Integration seed slice (slow, opt-in) |
 
-### Per-package shortcuts
-
-Use package-scoped commands during local iteration, then run `bun run verify` before opening a pull request:
+### Pre-PR verification
 
 ```sh
-bun --filter @edaya/core lint
-bun --filter @edaya/core check
-bun --filter @edaya/core test
-
-bun --filter @edaya/api lint
-bun --filter @edaya/api check
-bun --filter @edaya/api test
+bun run verify               # pre-PR gate (CI verify job)
+bun repo verify              # repo hygiene only (doctor + repo check *)
+bun run test:integration     # recommended when touching HTTP / PGlite
 ```
 
-Webapp tests run from **edaya_web** (`bun --filter @edaya/webapp test`).
+Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**. CI workflow details: **[docs/reference/ci-setup.md](./docs/reference/ci-setup.md)**.
+
+### Per-package iteration
+
+```sh
+bun --filter @edaya/core test
+bun --filter @edaya/api lint
+```
+
+Then `bun run verify` before opening a PR. Webapp tests run from **edaya_web**.
 
 ## Testing
 
-Tests are split by layer. Run everything with `bun run test` (repository tooling plus Turbo across packages that define a `test` script).
+Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun run test:integration`** runs in-memory integration slices (see [test-pyramid-plan.md](./docs/sprints/test-pyramid-plan.md)).
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|

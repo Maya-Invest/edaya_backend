@@ -16,7 +16,7 @@ bun run auth:generate-schema   # Regenerate Drizzle schema after Better Auth plu
 bun run auth:db:generate       # Generate SQL migration from schema changes (requires DATABASE_URL)
 ```
 
-From the monorepo root: `bun auth:generate-schema`, `bun db:generate:auth`.
+From the monorepo root: `bun repo db generate --auth`, `bun repo db generate --auth`.
 
 ## Usage
 

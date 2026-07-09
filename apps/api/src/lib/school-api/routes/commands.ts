@@ -4,14 +4,15 @@ import { executeSchoolCommand } from "@/lib/school-api/execute-command";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { coreCommands } from "@/lib/school-api/registry";
 import { commandRouteOperation } from "@/lib/school-api/openapi/client-extensions";
-import { assertCommandActorKind } from "@edaya/core";
+import { assertCommandActorKind } from "@edaya/authorization";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
+import { coreRouteErrorResponses, validatedJson } from "./shared";
+import type { SchoolApiRoutePair } from "./shared";
 import { schoolApiPath } from "./paths";
 import { resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
-import type { SchoolCommandKey } from "@edaya/core";
+import type { SchoolCommandKey } from "@edaya/service";
 
 const INVITATION_COMMANDS = new Set<SchoolCommandKey>([
   "sendAccountInvitation",

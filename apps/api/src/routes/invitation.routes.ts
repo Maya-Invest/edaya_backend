@@ -6,21 +6,12 @@ import type { AppRouteHandler } from "@/http/types";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
-import {
-  type AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  type ActorMetadata,
-  BusinessRuleViolationError,
-  createSystemActorMetadata,
-  type Guardian,
-  hashInvitationToken,
-  resolveInviteeDisplayName,
-  type SchoolRepositories,
-  type StaffMember,
-  type Student,
-} from "@edaya/core";
+import { AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError } from "@edaya/core";
+import { hashInvitationToken, resolveInviteeDisplayName } from "@edaya/service";
+import { createSystemActorMetadata } from "@edaya/authorization";
+import type { AccountInvitation, Guardian, StaffMember, Student } from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import type { SchoolRepositories } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
 import * as HttpStatusCodes from "stoker/http-status-codes";
@@ -123,6 +114,10 @@ async function resolveInviteeName(
     const guardian = await repositories.guardians.findById(invitation.targetId) as Guardian | undefined;
     return guardian ? resolveInviteeDisplayName(guardian) : "Guardian";
   }
+  if (invitation.kind === AccountInvitationKind.Teacher) {
+    const teacher = await repositories.teachers.findById(invitation.targetId);
+    return teacher ? resolveInviteeDisplayName(teacher) : "Teacher";
+  }
   const student = await repositories.students.findById(invitation.targetId) as Student | undefined;
   return student ? resolveInviteeDisplayName(student) : "Student";
 }
@@ -135,7 +130,10 @@ function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountI
       return actor.kind === "guardian" && actor.guardianId === invitation.targetId;
     case AccountInvitationKind.Student:
       return actor.kind === "student" && actor.studentId === invitation.targetId;
+    case AccountInvitationKind.Teacher:
+      return actor.kind === "teacher" && actor.teacherId === invitation.targetId;
   }
+  return false;
 }
 
 function createInvitationSystemService(

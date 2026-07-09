@@ -1,6 +1,5 @@
+import { DomainValidationError, TimeRange } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domain/shared/utils'
-import { TimeRange } from '../../../src/domain/value-objects/time-range'
 
 describe('timeRange value object', () => {
   test('computes durationMinutes', () => {

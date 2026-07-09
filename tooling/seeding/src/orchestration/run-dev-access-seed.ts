@@ -5,10 +5,7 @@ import type {
 } from '../domains/access/port'
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import {
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  permissionRowsFromTemplatePermissions,
-} from '@edaya/core'
+import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromTemplatePermissions } from '@edaya/authorization'
 import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'

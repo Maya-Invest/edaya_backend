@@ -1,12 +1,4 @@
-import type {
-  NotificationDeliveryStatusLookup,
-  NotificationEnqueueInput,
-  NotificationGatewayPort,
-  NotificationRecipient,
-  NotificationRecipientProfile,
-  RegisterPushDeviceInput,
-  UnregisterPushDeviceInput,
-} from "@edaya/core";
+import type { NotificationDeliveryStatusLookup, NotificationEnqueueInput, NotificationGatewayPort, NotificationRecipient, NotificationRecipientProfile, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
 import { chunkNovuTriggerRequests, defaultNovuWorkflowIdResolver, mapNotificationToNovuTriggerRequest } from "./trigger-request";
 import type { NovuMessagesClient } from "./novu-messages-client";
 import type { NovuNotificationGatewayOptions } from "./types";

@@ -27,10 +27,9 @@ function loadEnvFile(fileName: string, options?: { override?: boolean }): void {
   }));
 }
 
+/** Load `apps/api/.env` for process runtimes (`bun repo dev`, tests, cron-local). */
 export function loadDotenvFiles(): void {
   loadEnvFile(".env");
-  // Shared with `wrangler dev --env-file .dev.vars` — R2 credentials and other secrets.
-  loadEnvFile(".dev.vars");
 }
 
 function shouldLoadDotenvFiles(): boolean {

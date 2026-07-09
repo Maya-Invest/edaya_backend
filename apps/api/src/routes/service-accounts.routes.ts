@@ -11,13 +11,7 @@ import {
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import {
-  createServiceAccount,
-  listServiceAccounts,
-  revokeServiceAccount,
-  rotateServiceAccountKey,
-  updateServiceAccount,
-} from "@edaya/core";
+import { createServiceAccount, listServiceAccounts, revokeServiceAccount, rotateServiceAccountKey, updateServiceAccount } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";

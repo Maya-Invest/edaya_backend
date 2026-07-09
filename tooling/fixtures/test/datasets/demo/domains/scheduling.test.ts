@@ -1,7 +1,8 @@
-import type { ResourceInput, ScheduleInput } from '@edaya/core'
+import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
 import { DayOfWeek } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import {
+  demoClassResourceAssignments,
   demoResources,
   demoSchedules,
   demoSchedulingSessionProgressAnchor,
@@ -12,8 +13,14 @@ import { planningSessionDateForDayOfWeek } from '../../../../src/meta/dates'
 describe('demo scheduling', () => {
   it('exposes typed resources, schedules, and slots', () => {
     expect(demoResources).toHaveLength(7)
+    expect(demoClassResourceAssignments).toHaveLength(3)
     expect(demoSchedules).toHaveLength(16)
     expect(demoSchedulingSlots).toHaveLength(16)
+  })
+
+  it('typed class resource assignments satisfy ResourceAssignmentInput', () => {
+    const assignment = demoClassResourceAssignments[0] satisfies ResourceAssignmentInput
+    expect(assignment.classGroupId).toBe('6a')
   })
 
   it('typed resources satisfy ResourceInput', () => {

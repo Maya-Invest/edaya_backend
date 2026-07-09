@@ -1,5 +1,7 @@
-import { PostgresAtomicExecution, PostgresSchoolRepositories, type PostgresTransactionalDb, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
+import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
@@ -7,7 +9,8 @@ import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
 import type { Environment } from "@/runtime/shared/env/schema";
-import { createRepositoryAuthorizationPolicy, type FileStoragePort, type InvitationDeliveryPort, type NotificationGatewayPort } from "@edaya/core";
+import { createRepositoryAuthorizationPolicy } from "@edaya/authorization";
+import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -50,6 +53,7 @@ export async function buildSchoolApplication(
     notificationGateway,
     fileStorage,
     invitationDelivery,
+    authCacheInvalidation: apiAuthCacheInvalidationPort,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
     authContactResolver: options.authDb

@@ -56,7 +56,7 @@ describe("onboarding invite-staff-members route", () => {
       },
       body: JSON.stringify({
         invites: [
-          { email: "prof@school.edu", role: "teacher" },
+          { email: "prof@school.edu", role: "secretary" },
           { email: "cpe@school.edu", role: "cpe" },
         ],
       }),
@@ -106,7 +106,7 @@ describe("onboarding invite-staff-members route", () => {
         "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
-        invites: [{ email, role: "teacher" }],
+        invites: [{ email, role: "secretary" }],
       }),
     }));
 

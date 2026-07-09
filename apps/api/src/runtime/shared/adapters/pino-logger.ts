@@ -1,6 +1,7 @@
 import type { LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
-import pino, { type Logger } from "pino";
+import pino from "pino";
+import type { Logger } from "pino";
 import pretty from "pino-pretty";
 
 type BetterAuthLogLevel = "debug" | "info" | "warn" | "error";

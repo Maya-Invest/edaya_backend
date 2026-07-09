@@ -20,6 +20,28 @@ function gradeLevelSubjectSeedId(gradeLevelId: string, subjectId: string): strin
   return `gls-${gradeLevelId}-${subjectId.replace('subj-', '')}`
 }
 
+export function classSubjectMatterSeedId(classSubjectId: string, subjectMatterId: string): string {
+  return `csm-${classSubjectId}-${subjectMatterId}`
+}
+
+function mattersBySubjectId(
+  subjectMatters: NonNullable<FixtureDatasetEntities['subjectMatters']>,
+): Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>[number][]> {
+  const grouped = new Map<string, NonNullable<FixtureDatasetEntities['subjectMatters']>[number][]>()
+  for (const matter of [...subjectMatters].sort((left, right) => {
+    const order = left.sequenceOrder - right.sequenceOrder
+    if (order !== 0) {
+      return order
+    }
+    return left.name.localeCompare(right.name)
+  })) {
+    const existing = grouped.get(matter.subjectId) ?? []
+    existing.push(matter)
+    grouped.set(matter.subjectId, existing)
+  }
+  return grouped
+}
+
 export function buildFixtureCurriculumPlan(
   entities: FixtureDatasetEntities,
 ): {
@@ -37,9 +59,7 @@ export function buildFixtureCurriculumPlan(
   const classGradeLevelById = Object.fromEntries(
     classGroups.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
   )
-  const subjectMatterBySubjectId = Object.fromEntries(
-    subjectMatters.map(matter => [matter.subjectId, matter.id]),
-  )
+  const subjectMattersBySubjectId = mattersBySubjectId(subjectMatters)
 
   const gradeLevelSubjects: FixtureCurriculumGradeLevelSubject[] = []
   const classSubjectIdsByGradeLevelSubjectId: Record<string, Record<string, string>> = {}
@@ -73,22 +93,21 @@ export function buildFixtureCurriculumPlan(
   }
 
   const gradeLevelSubjectMatters = gradeLevelSubjects.flatMap((gradeLevelSubject) => {
-    const subjectMatterId = subjectMatterBySubjectId[gradeLevelSubject.subjectId]
-    if (!subjectMatterId) {
-      return []
-    }
-    const classSubjectMatterIdsByClassGroupId = Object.fromEntries(
-      Object.entries(gradeLevelSubject.classSubjectIdsByClassGroupId).map(([classGroupId, classSubjectId]) => [
-        classGroupId,
-        `csm-${classSubjectId}`,
-      ]),
-    )
-    return [{
-      id: `glsm-${gradeLevelSubject.id}`,
-      gradeLevelSubjectId: gradeLevelSubject.id,
-      subjectMatterId,
-      classSubjectMatterIdsByClassGroupId,
-    }]
+    const matters = subjectMattersBySubjectId.get(gradeLevelSubject.subjectId) ?? []
+    return matters.map((matter) => {
+      const classSubjectMatterIdsByClassGroupId = Object.fromEntries(
+        Object.entries(gradeLevelSubject.classSubjectIdsByClassGroupId).map(([classGroupId, classSubjectId]) => [
+          classGroupId,
+          classSubjectMatterSeedId(classSubjectId, matter.id),
+        ]),
+      )
+      return {
+        id: `glsm-${gradeLevelSubject.id}-${matter.id}`,
+        gradeLevelSubjectId: gradeLevelSubject.id,
+        subjectMatterId: matter.id,
+        classSubjectMatterIdsByClassGroupId,
+      }
+    })
   })
 
   return {

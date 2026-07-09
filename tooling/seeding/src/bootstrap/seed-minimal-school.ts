@@ -1,8 +1,6 @@
 import type { SeedApplication } from '../support/types'
-import {
-  createBootstrapStaffActorMetadata,
-  Guardian,
-} from '@edaya/core'
+import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { Guardian } from '@edaya/core'
 import { minimalDataset } from '@edaya/fixtures'
 import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from '@edaya/fixtures/meta/dev-auth-fixtures'
 

@@ -1,0 +1,27 @@
+import type { HttpDevSeedScope } from './types'
+
+export function parseHttpDevSeedScope(argv: string[]): HttpDevSeedScope {
+  const arg = argv.slice(2).find(entry => !entry.startsWith('-'))
+
+  if (!arg || arg === 'all') {
+    return 'all'
+  }
+
+  if (
+    arg === 'school'
+    || arg === 'auth'
+    || arg === 'auth:link'
+    || arg === 'access'
+    || arg === 'profile-pictures'
+    || arg === 'smoke'
+    || arg === 'service-account'
+    || arg === 'validate'
+    || arg === 'doctor'
+  ) {
+    return arg
+  }
+
+  throw new Error(
+    `Unknown HTTP seed scope: ${arg}. Valid scopes: all, school, auth, auth:link, access, profile-pictures, service-account, smoke, validate, doctor`,
+  )
+}

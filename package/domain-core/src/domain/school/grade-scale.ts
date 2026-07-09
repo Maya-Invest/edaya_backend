@@ -1,10 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { requireSchool } from '../../application/require-school'
-import { Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 export const gradeScaleRangeSchema = z.object({
@@ -121,38 +116,5 @@ export class GradeScale {
 
   findRange(score: number): GradeScaleRange | undefined {
     return this.ranges.find(r => score >= r.minScore && score <= r.maxScore)
-  }
-}
-
-export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.gradeScales,
-    tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.GRADE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.EXAM_CONFIG_CONFIGURE), noopSaveAccess, noopDeleteAccess),
-    gates: {
-      preSave: validateGradeScaleSave,
-    },
-    atomicExecution,
-  })
-
-async function validateGradeScaleSave(
-  gradeScale: GradeScale,
-  _existing: GradeScale | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  await requireSchool(repositories.schools, gradeScale.schoolId)
-  if (!gradeScale.isDefault)
-    return
-
-  const existingDefault = await repositories.gradeScales.findOne({
-    schoolId: gradeScale.schoolId,
-    isDefault: true,
-  })
-  if (existingDefault && existingDefault.id !== gradeScale.id) {
-    throw new BusinessRuleViolationError(
-      'DEFAULT_GRADE_SCALE_ALREADY_EXISTS',
-      `School ${gradeScale.schoolId} already has a default grade scale`,
-    )
   }
 }

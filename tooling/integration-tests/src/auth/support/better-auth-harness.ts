@@ -6,14 +6,9 @@ import {
   PostgresAtomicExecution,
   PostgresSchoolRepositories,
 } from '@edaya/adaptor-postgres'
-import {
-  createRepositoryAuthorizationPolicy,
-  noOpFileStorage,
-  noOpNotificationGateway,
-  School,
-  SchoolApplication,
-  StaffMember,
-} from '@edaya/core'
+import { createRepositoryAuthorizationPolicy } from '@edaya/authorization'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { SchoolApplication } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { betterAuth } from 'better-auth'
 import { sql } from 'drizzle-orm'

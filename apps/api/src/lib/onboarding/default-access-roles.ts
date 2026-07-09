@@ -1,8 +1,4 @@
-import {
-  COORDINATOR_PERMISSIONS,
-  Permission,
-  TEACHER_PERMISSIONS,
-} from "@edaya/core";
+import { COORDINATOR_PERMISSIONS, Permission } from "@edaya/authorization";
 
 export interface StaffInvitePermissionPreset {
   id: string;
@@ -44,12 +40,6 @@ function mergePermissions(...groups: readonly (readonly Permission[])[]): Permis
 
 export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPreset[] = [
   {
-    id: "role-teacher",
-    name: "Professeur",
-    description: "Enseignement et suivi pédagogique",
-    permissions: mergePermissions(TEACHER_PERMISSIONS, WEBAPP_READ_PERMISSIONS),
-  },
-  {
     id: "role-coordinator",
     name: "Coordination",
     description: "Profil principal, secrétariat et direction adjointe",
@@ -77,9 +67,6 @@ export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPres
     ]),
   },
 ];
-
-/** @deprecated Use STAFF_INVITE_PERMISSION_PRESETS */
-export const DEFAULT_ACCESS_ROLE_TEMPLATES = STAFF_INVITE_PERMISSION_PRESETS;
 
 export function getStaffInvitePermissionPreset(roleId: string): StaffInvitePermissionPreset | undefined {
   return STAFF_INVITE_PERMISSION_PRESETS.find(preset => preset.id === roleId);

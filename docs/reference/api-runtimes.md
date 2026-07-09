@@ -8,9 +8,9 @@ Scheduled cron jobs run on the API worker (`scheduled()` handler). See [cron-run
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `bun dev` (root) |
+| **local** | `src/entries/local.ts` | `process.env` + optional `.env` (dotenv) | `bun repo dev` (root) |
 | **in-memory** | *(tests only)* | harness env | `bun test` in `apps/api` |
-| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun dev:worker-local` (alias: `bun dev:worker`) |
+| **worker** | `src/entries/worker.ts` | Cloudflare bindings (`wrangler.jsonc` `vars` + secrets) | `bun --filter @edaya/api dev:worker` (optional) |
 
 ## Environment variables
 
@@ -21,7 +21,7 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
-| `BETTER_AUTH_SECRET` | `.env` | `.dev.vars` / Worker secret |
+| `BETTER_AUTH_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |
 | `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
 | `COOKIE_DOMAIN` | optional `.env` | `[vars]` (production split-domain) |
@@ -29,7 +29,7 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 | `LOCAL_FILES_*` | local profile only | ignored |
 
-`dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`).
+`dotenv` is **only** used by process profiles (`local` / `in-memory`) in non-production environments (`runtime/shared/env/local-loader.ts`), loading **`apps/api/.env` only**.
 
 On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdrive binding when present (`runtime/shared/env/hyperdrive.ts`). Any `pglite` / `file://` URL is rejected on Worker.
 
@@ -40,7 +40,7 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 | School DB | PGlite (ephemeral) | PGlite persisted (`.data/school`) | Postgres via Hyperdrive |
 | Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB) | Postgres `auth` schema via Hyperdrive |
 | Migrations on startup | yes | yes (PGlite default) | no |
-| File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun dev` | R2 (required) |
+| File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun repo dev` | R2 (required) |
 | Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
 
 \*Novu is the documented vendor exception on `local` and `worker`. See [runtime-boundaries.md](./runtime-boundaries.md).
@@ -51,10 +51,10 @@ Bootstrap resolvers do not upgrade adaptors when unrelated vendor env vars are p
 
 ```sh
 cp apps/api/.env.example apps/api/.env
-bun dev
+bun repo dev
 ```
 
-Set `RUNTIME=local` (default). `bun dev` starts the API and `@edaya/local-files` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
+Set `RUNTIME=local` (default). `bun repo dev` starts the API and `@edaya/local-files-server` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
 
 Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 
@@ -62,18 +62,18 @@ Production containers using the local entry should inject env vars directly — 
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-cd apps/api && bun run dev:worker-local
+cd apps/api && bun run dev:worker
 ```
 
-Worker-local smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
+worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
 
 - **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive binding
-- **`.dev.vars`** — local secrets (gitignored), mirrors Worker dashboard secrets in production
-- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` for local wrangler dev); auth tables in the `auth` schema
+- **`.dev.vars`** — Wrangler-only secrets (gitignored); loaded by `wrangler dev --env-file` and deploy — **not** by `bun repo dev`
+- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local wrangler dev); auth tables in the `auth` schema
 
-Deploy with `bun run deploy:api` (root) or `bun run deploy:worker` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
+Deploy with `bun repo deploy api production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
 
-**Staging:** `bun run deploy:api:staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
+**Staging:** `bun repo deploy api staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
 
 ## Architecture
 

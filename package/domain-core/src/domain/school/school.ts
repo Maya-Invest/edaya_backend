@@ -1,9 +1,5 @@
-import type { EntityConfigFactory, EntityConfigFactoryInput, EntityWithId } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, ManagedEntityServiceConfig } from '../../application/entities/managed-entity-service'
-import type { BaseRepositoryInterface } from '../../ports/repositories/base-repository'
 import { z } from 'zod'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, resolveIdFromFilter, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SchoolType {
@@ -65,31 +61,4 @@ export class School {
     const parts = [this.city, this.country].filter((value): value is string => Boolean(value))
     return parts.length > 0 ? parts.join(', ') : undefined
   }
-}
-
-export const schoolConfig: EntityConfigFactory<School> = input =>
-  schoolEntityConfig(input, input.repositories.schools, Permission.QUERY_WORKSPACE_READ, Permission.SCHOOL_LIFECYCLE_MANAGE)
-
-export function schoolEntityTenant<T extends EntityWithId>(): EntityTenantResolver<T> {
-  return {
-    resolve: entity => entity.id,
-    resolveFromFilter: resolveIdFromFilter,
-  }
-}
-
-export function schoolEntityConfig<T extends EntityWithId>(
-  input: EntityConfigFactoryInput,
-  repository: BaseRepositoryInterface<T>,
-  readPermission: Permission,
-  writePermission: Permission,
-): ManagedEntityServiceConfig<T> {
-  const { atomicExecution } = input
-
-  return config({
-    repository,
-    tenant: schoolEntityTenant<T>(),
-    read: read(permissionAction(readPermission), noopReadAccess),
-    write: write(permissionAction(writePermission), noopSaveAccess, noopDeleteAccess),
-    atomicExecution,
-  })
 }

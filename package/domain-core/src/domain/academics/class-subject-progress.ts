@@ -1,12 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { config, indirectTenant, permissionAction, read, resolveClassSubjectSchoolId, unique, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
+
 import { ClassSubjectMatterStatus } from './class-subject-matter'
 
 export const classSubjectProgressSchema = z.object({
@@ -54,67 +49,5 @@ export class ClassSubjectProgress {
       return ClassSubjectMatterStatus.Completed
     }
     return ClassSubjectMatterStatus.InProgress
-  }
-}
-
-export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgress> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.classSubjectProgress,
-    tenant: classSubjectProgressTenant(),
-    read: read(permissionAction(Permission.CLASS_LOGBOOK_READ), async (actor, entities) => {
-      await policy.checkLessonSessionAccess(actor, unique(entities.map(entity => entity.lessonSessionId)))
-    }),
-    write: write(permissionAction(Permission.CLASS_LOGBOOK_CREATE), authorizeClassSubjectProgress(policy), authorizeClassSubjectProgressDelete(policy)),
-    gates: {
-      preSave: validateClassSubjectProgressSave,
-    },
-    atomicExecution,
-  })
-
-function classSubjectProgressTenant(): EntityTenantResolver<ClassSubjectProgress> {
-  return indirectTenant(async (entity, repositories) => {
-    const matter = await repositories.classSubjectMatters.findById(entity.classSubjectMatterId)
-    return matter ? resolveClassSubjectSchoolId(repositories, matter.classSubjectId) : undefined
-  })
-}
-
-function authorizeClassSubjectProgress(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeSave'] {
-  return async (actor, entity) => {
-    await _policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-  }
-}
-
-function authorizeClassSubjectProgressDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ClassSubjectProgress>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await _policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-  }
-}
-
-async function validateClassSubjectProgressSave(
-  progress: ClassSubjectProgress,
-  existing: ClassSubjectProgress | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [matter, lessonSession] = await Promise.all([
-    repositories.classSubjectMatters.findById(progress.classSubjectMatterId),
-    repositories.lessonSessions.findById(progress.lessonSessionId),
-  ])
-  if (!matter || !lessonSession) {
-    denyResourceAccess()
-  }
-  const classSubject = await repositories.classSubjects.findById(matter.classSubjectId)
-  if (!classSubject || classSubject.classGroupId !== lessonSession.classGroupId || lessonSession.classSubjectId !== classSubject.id) {
-    denyResourceAccess()
-  }
-  const duplicate = await repositories.classSubjectProgress.findOne({
-    classSubjectMatterId: progress.classSubjectMatterId,
-    lessonSessionId: progress.lessonSessionId,
-  })
-  if (duplicate && duplicate.id !== progress.id) {
-    throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${progress.classSubjectMatterId} and lesson session ${progress.lessonSessionId}`)
-  }
-  const previousPercentage = existing?.completedPercentage ?? matter.completedPercentage
-  if (progress.completedPercentage < previousPercentage) {
-    throw new BusinessRuleViolationError('PROGRESS_PERCENTAGE_DECREASED', 'completedPercentage must not decrease cumulative class subject matter progress')
   }
 }

@@ -1,10 +1,6 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { ReportCardsSeedPort } from './port'
-import {
-  ReportCardDefinitionKind,
-  ReportCardDefinitionSectionKind,
-  ReportCardDefinitionStatus,
-} from '@edaya/core'
+import { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionStatus } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
 
 export interface DevReportCardSeedCounts {
@@ -98,6 +94,13 @@ export async function seedDevReportCards(
       generatedAt: seedDateTime(result.generatedAt),
     }
     await port.generateReportCardResult(record)
+
+    if (result.homeroomComment?.trim()) {
+      await port.saveReportCardTeacherComment({
+        id: result.id,
+        teacherComment: result.homeroomComment.trim(),
+      })
+    }
 
     if (result.narrativeStatus === 'published' && result.publishedAt) {
       await port.publishReportCardResult({

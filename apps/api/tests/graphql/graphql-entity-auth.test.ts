@@ -2,7 +2,8 @@ import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import { mountGraphQLRoute } from "@/lib/graphql/mount";
 import type { AppBindings } from "@/http/types";
-import { ActorAssuranceLevel, type Permission } from "@edaya/core";
+import { ActorAssuranceLevel } from "@edaya/authorization";
+import type { Permission } from "@edaya/authorization";
 
 const mockActor = {
   kind: "staff" as const,

@@ -1,9 +1,9 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const periodDefinitionBaseSchema = z.object({
@@ -58,11 +58,3 @@ export class PeriodDefinition {
     return timeRangeDurationMinutes(this.startTime, this.endTime)
   }
 }
-
-export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.periodDefinitions,
-    Permission.QUERY_WORKSPACE_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )

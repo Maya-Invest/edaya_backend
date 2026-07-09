@@ -1,5 +1,5 @@
+import { StudentHealthProfile } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { StudentHealthProfile } from '../../../../src/domain/students/student-health-profile'
 
 describe('StudentHealthProfile entity', () => {
   const baseArgs = {

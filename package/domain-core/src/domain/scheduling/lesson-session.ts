@@ -1,11 +1,9 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
+
 import { OccurrenceStatus } from './occurrence-status'
 
 export const lessonSessionBaseSchema = z.object({
@@ -85,48 +83,5 @@ export class LessonSession {
       createdAt: this.createdAt,
       ...changes,
     })
-  }
-}
-
-export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.lessonSessions,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(
-      permissionAction(Permission.QUERY_TIMETABLE_READ),
-      readByIds((actor, ids) => policy.checkLessonSessionAccess(actor, ids)),
-    ),
-    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateLessonSessionSave,
-    },
-    atomicExecution,
-  })
-
-export async function validateLessonSessionSave(
-  lessonSession: LessonSession,
-  existing: LessonSession | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (existing && (existing.status === OccurrenceStatus.Completed || existing.status === OccurrenceStatus.Cancelled)) {
-    if (
-      lessonSession.status !== existing.status
-      || lessonSession.startsAt.getTime() !== existing.startsAt.getTime()
-      || lessonSession.endsAt.getTime() !== existing.endsAt.getTime()
-    ) {
-      throw new BusinessRuleViolationError('OCCURRENCE_IMMUTABLE', `Lesson session ${existing.id} is ${existing.status} and cannot be modified`)
-    }
-  }
-  await requireValidClassSubject(lessonSession.classSubjectId, lessonSession.classGroupId, repositories)
-}
-
-async function requireValidClassSubject(
-  classSubjectId: string,
-  classGroupId: string,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const classSubject = await repositories.classSubjects.findById(classSubjectId)
-  if (!classSubject || classSubject.classGroupId !== classGroupId) {
-    denyResourceAccess()
   }
 }

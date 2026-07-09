@@ -13,10 +13,13 @@ describe('resolveDevSeedContext', () => {
     }
   })
 
-  it('defaults to the local central bulk dataset', () => {
+  it('defaults to the compact demo-ci dataset', () => {
     delete process.env.SEED_DATASET
-    expect(resolveDevSeedDatasetId()).toBe('central')
-    expect(resolveDevSeedContext().schoolId).toBe('sch-edaya-central')
+    expect(resolveDevSeedDatasetId()).toBe('demo-ci')
+    const context = resolveDevSeedContext()
+    expect(context.schoolId).toBe('sch-edaya-ci-cocody')
+    expect(context.minimalStaffEmail).toBe('a.kone@ecole-ci.edaya.dev')
+    expect(context.dataset.entities.school?.city).toBe('Abidjan')
   })
 
   it('selects the Ivory Coast bulk dataset with central auth when requested', () => {

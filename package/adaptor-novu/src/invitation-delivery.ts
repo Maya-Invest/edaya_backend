@@ -1,9 +1,6 @@
 import type { InvitationDeliveryInput, InvitationDeliveryPort } from "@edaya/core";
-import {
-  ACCOUNT_INVITATION_EVENT_KEY,
-  buildTransientInvitationSubscriberId,
-  MessageDeliveryRecipientKind,
-} from "@edaya/core";
+import { MessageDeliveryRecipientKind } from "@edaya/core";
+import { ACCOUNT_INVITATION_EVENT_KEY, buildTransientInvitationSubscriberId } from "@edaya/service";
 import type { NovuSubscriberClient } from "./novu-subscriber-client";
 import { createNovuSdkClient } from "./novu-sdk-client";
 import { createNovuSubscriberClient } from "./novu-subscriber-client";

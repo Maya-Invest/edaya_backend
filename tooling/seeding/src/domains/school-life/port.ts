@@ -1,9 +1,4 @@
-import type {
-  CalendarEventKind,
-  CalendarEventScopeKind,
-  IncidentInvolvementRole,
-  IncidentKind,
-} from '@edaya/core'
+import type { CalendarEventKind, CalendarEventScopeKind, IncidentInvolvementRole, IncidentKind } from '@edaya/core'
 
 export interface CalendarEventSeedRecord {
   id: string

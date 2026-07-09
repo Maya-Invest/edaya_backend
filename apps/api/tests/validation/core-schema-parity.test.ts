@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  attendanceRecordCreateSchema,
-  paymentCreateSchema,
-  schoolCreateSchema,
-  studentClassEnrollmentCreateSchema,
-  studentCreateSchema,
-} from "@edaya/core";
+import { attendanceRecordCreateSchema, paymentCreateSchema, schoolCreateSchema, studentClassEnrollmentCreateSchema, studentCreateSchema } from "@edaya/core";
 import {
   enrollStudentCommandSchema,
   recordAttendanceCommandSchema,

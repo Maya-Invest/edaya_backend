@@ -1,7 +1,7 @@
 import type { Context } from "hono";
-import type { PublishAnnouncementInput, SchoolCommandKey, SchoolService } from "@edaya/core";
+import type { PublishAnnouncementInput, SchoolCommandKey, SchoolService } from "@edaya/service";
 import type { AppBindings } from "@/http/bindings";
-import { dispatchSchoolCommand } from "@edaya/core";
+import { dispatchSchoolCommand } from "@edaya/service";
 import { scheduleBackgroundTask } from "@/lib/school-api/schedule-background-task";
 
 export async function executeSchoolCommand(

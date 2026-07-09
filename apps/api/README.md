@@ -4,19 +4,23 @@ Hono API for Edaya Core (`@edaya/api`).
 
 ## Local development
 
-**Local runtime** (default):
+**Local runtime** (default — from repo root):
 
 ```sh
 cp .env.example .env   # from apps/api
-bun dev                # http://localhost:9999 (+ local-files on :9200)
+bun repo dev                # http://localhost:9999 + local-files on :9200
 ```
 
-**Worker-local smoke** (Miniflare — same wiring as production):
+`bun repo dev` at the repo root is required for file uploads. `cd apps/api && bun repo dev` starts the API only (no local-files).
+
+**Worker smoke** (optional — Miniflare against staging Neon/R2):
 
 ```sh
 cp .dev.vars.example .dev.vars
-bun run dev:worker-local
+bun run dev:worker
 ```
+
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env production --env-file .dev.vars`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
@@ -30,24 +34,25 @@ GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authori
 2. **Session cookie** — sign in via the webapp (http://localhost:5173), then open GraphiQL.
 3. **Service account** — set `GRAPHQL_DEV_API_KEY` in `apps/api/.env` to the school profile `seedingApiKey` from `@edaya/fixtures` for auto-injected Bearer auth locally, or add it manually in GraphiQL's **Headers** panel.
 
-Default dev credentials (after `bun run seed:auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
+Default dev credentials (after `bun repo seed --scope auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 
-`RUNTIME=local` uses persisted PGlite (`.data/school`) with Better Auth in the `auth` schema. Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, R2) are for `RUNTIME=worker` via `bun dev:worker-local` or deploy.
+`RUNTIME=local` uses persisted PGlite (`.data/school`) with Better Auth in the `auth` schema. Tests use `RUNTIME=in-memory` with ephemeral storage. Vendor adaptors (Hyperdrive Postgres, R2) are for `RUNTIME=worker` via optional staging smoke or deploy.
 
 See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundaries.md).
 
 ## Build & deploy
 
-| Target | Command | Output |
-|--------|---------|--------|
-| **Node** | `bun run build` then `bun start` | `dist/node.js` (bundles workspace packages) |
-| **Worker** | `bun run deploy:worker` | Wrangler bundles `src/entries/worker.ts` → `api.edaya.softilab.dev` |
+| Target     | Command                 | Output                                                                   |
+| ---------- | ----------------------- | ------------------------------------------------------------------------ |
+| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api-prod.edaya.softilab.dev` |
+
+`bun run build` produces a Node bundle of the **local** entry (`dist/node.js`) for CI/typecheck only — not used in production deploy.
 
 Before first production deploy:
 
-1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun run db:migrate:production` (from repo root)
-2. Set `BETTER_AUTH_SECRET`: `wrangler secret put BETTER_AUTH_SECRET --env production`
-3. Dry-run: `bun run deploy:worker:dry-run`
-4. Deploy: `bun run deploy:worker`
+1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate production` (from repo root)
+2. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env production`
+3. Dry-run: `bun run deploy:production:dry-run`
+4. Deploy: `bun run deploy:production` (or `bun repo deploy api production` from repo root)
 
 See [docs/reference/local-dev.md](../../docs/reference/local-dev.md) and [docs/reference/api-runtimes.md](../../docs/reference/api-runtimes.md).

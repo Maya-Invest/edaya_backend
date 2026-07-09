@@ -1,0 +1,6 @@
+[test]
+coveragePathIgnorePatterns = [
+  "**/index.ts",
+  "src/ports/**",
+  "src/capabilities/authorization/policy/strategies/types.ts",
+]

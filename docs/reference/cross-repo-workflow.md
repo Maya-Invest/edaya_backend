@@ -14,16 +14,16 @@ Edaya spans multiple repositories:
 When API routes or registry metadata change in **this repo**:
 
 ```sh
-bun run export-openapi          # tooling/repo/fixtures/openapi.json
-bun run openapi:generate          # package/generated-api-client/src/generated/*
+bun repo openapi export          # tooling/repo/fixtures/openapi.json
+bun repo openapi generate          # package/generated-api-client/src/generated/*
 bun run verify
 ```
 
 | Step | Script | Output |
 |------|--------|--------|
-| Export spec | `bun run export-openapi` | `tooling/repo/fixtures/openapi.json` |
-| Generate bindings | `bun run openapi:generate` | `package/generated-api-client/src/generated/client-bindings.ts` |
-| Drift check | `bun run openapi:check` | Compares temp output to tracked files (non-mutating) |
+| Export spec | `bun repo openapi export` | `tooling/repo/fixtures/openapi.json` |
+| Generate bindings | `bun repo openapi generate` | `package/generated-api-client/src/generated/client-bindings.ts` |
+| Drift check | `bun repo check openapi` | Compares temp output to tracked files (non-mutating) |
 
 Bindings are embedded in the OpenAPI document under `info.x-edaya-client-bindings`. The export step reads route metadata from `apps/api/src/lib/school-api/client-bindings.ts`.
 
@@ -32,7 +32,7 @@ Bindings are embedded in the OpenAPI document under `info.x-edaya-client-binding
 After merging API changes here:
 
 1. Copy or re-export the updated `openapi.json` into **edaya_web** (`apps/webapp/src/lib/api/openapi.json`).
-2. In edaya_web: `bun run openapi:generate` (schema types + web copy of client bindings).
+2. In edaya_web: `bun repo openapi generate` (schema types + web copy of client bindings).
 3. Run `bun run verify` in both repos.
 
 Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](../../edaya_web/docs/reference/cross-repo-workflow.md).

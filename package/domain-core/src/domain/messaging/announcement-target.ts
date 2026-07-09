@@ -1,8 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { announcementLinkedTenant, config, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementTargetKind {
@@ -69,62 +66,4 @@ export class AnnouncementTarget {
   get targetKind() { return this.data.targetKind }
   get targetId() { return this.data.targetId }
   get createdAt() { return this.data.createdAt }
-}
-
-export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.announcementTargets,
-    tenant: announcementLinkedTenant('announcementId'),
-    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
-    gates: {
-      preSave: validateAnnouncementTargetSave,
-    },
-    atomicExecution,
-  })
-
-export async function validateAnnouncementTargetSave(
-  target: AnnouncementTarget,
-  _existing: AnnouncementTarget | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const announcement = await repositories.announcements.findById(target.announcementId)
-  if (!announcement) {
-    denyResourceAccess()
-  }
-  if (!target.targetId) {
-    return
-  }
-  switch (target.targetKind) {
-    case AnnouncementTargetKind.ClassGroup:
-      await requireOwnedResource(repositories.classGroups.findById(target.targetId), announcement.schoolId)
-      break
-    case AnnouncementTargetKind.GradeLevel:
-      await requireOwnedResource(repositories.gradeLevels.findById(target.targetId), announcement.schoolId)
-      break
-    case AnnouncementTargetKind.StaffMember:
-      await requireOwnedResource(repositories.staffMembers.findById(target.targetId), announcement.schoolId)
-      break
-    case AnnouncementTargetKind.Guardian:
-      await requireOwnedResource(repositories.guardians.findById(target.targetId), announcement.schoolId)
-      break
-    case AnnouncementTargetKind.Student:
-      await requireOwnedResource(repositories.students.findById(target.targetId), announcement.schoolId)
-      break
-    case AnnouncementTargetKind.School:
-    case AnnouncementTargetKind.AllStaff:
-    case AnnouncementTargetKind.AllGuardians:
-    case AnnouncementTargetKind.AllStudents:
-      break
-  }
-}
-
-async function requireOwnedResource<T extends { schoolId: string }>(
-  resourcePromise: Promise<T | undefined>,
-  schoolId: string,
-): Promise<void> {
-  const resource = await resourcePromise
-  if (!resource || resource.schoolId !== schoolId) {
-    denyResourceAccess()
-  }
 }

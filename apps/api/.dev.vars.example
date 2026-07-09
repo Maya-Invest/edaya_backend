@@ -1,63 +1,49 @@
 # -----------------------------------------------------------------------------
-# Edaya API — secrets for `bun dev:worker-local` (worker-local smoke via Miniflare)
-# Copy to `.dev.vars` (gitignored). Loaded by wrangler (`--env-file`) and dotenv.
-# Non-secret defaults live in `wrangler.jsonc` [vars] or `.env`.
-# `bun dev` (RUNTIME=local) does not use R2 or Hyperdrive — see runtime-boundaries.md.
+# Edaya API — Cloudflare / Wrangler secrets (+ wrangler-only local overrides)
+# Copy to `.dev.vars` (gitignored). Loaded by `wrangler dev --env-file` and deploy secrets.
+# NOT loaded by `bun dev` — use `apps/api/.env` for local process runtime.
+# Non-secret worker defaults: `wrangler.jsonc` [env.*.vars]
+# Bulk deploy secrets: secrets.json.example → secrets.staging.json / secrets.prod.json
 # -----------------------------------------------------------------------------
 
-"NODE_ENV": "development",
-"LOG_LEVEL": "info",
-"RUNTIME": "worker",
-"BETTER_AUTH_URL": "http://localhost:9999",
-"TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:4173",
-"R2_BUCKET_NAME": "edaya-files-dev",
-"ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true"
+# --- Wrangler local smoke overrides (optional; staging [vars] apply when --env staging) ---
+# NODE_ENV=development
+# LOG_LEVEL=info
+# RUNTIME=worker
+# BETTER_AUTH_URL=http://localhost:9999
+# TRUSTED_ORIGINS=http://localhost:5173,http://localhost:4173
+# ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
 
-# --- Required ---
-
+# --- Required secret ---
 BETTER_AUTH_SECRET=dev-secret-change-in-production
 
-# --- Hyperdrive (worker-local dev) ---
-# Origin Postgres for the Hyperdrive binding in wrangler.jsonc.
-# WARNING: default `bun dev:worker-local` uses the production Hyperdrive ID from wrangler.jsonc.
-# Point this at the Neon branch that matches the Hyperdrive config you are testing.
-# Prefer staging smoke: `cd apps/api && wrangler dev --env staging --env-file .dev.vars`
+# --- Hyperdrive local origin (wrangler dev only; must match --env Neon branch) ---
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
 
-# --- R2 file storage (required on RUNTIME=worker) ---
-# Buckets: edaya-files-dev | edaya-files-staging | edaya-files-production
-# R2_BUCKET_NAME defaults in wrangler.jsonc [vars] per deploy profile.
+# --- R2 (required on RUNTIME=worker; bucket name in wrangler.jsonc [vars]) ---
 # R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 # R2_ACCOUNT_ID=
 # R2_ACCESS_KEY_ID=
 # R2_SECRET_ACCESS_KEY=
-# R2_BUCKET_NAME=edaya-files-dev
 
-# --- Novu Cloud (notifications, auth emails, cron jobs) ---
+# --- Novu (staging: dev key; production: separate key in secrets.prod.json) ---
 # NOVU_SECRET_KEY=
 # NOVU_API_URL=https://eu.api.novu.co
 # NOVU_WEBHOOK_SECRET=whsec_...
-# Apply workflows once: bun novu:bootstrap:apply
 
 # --- Optional ---
-
 # GRANTS_CACHE_TTL_MS=300000
+# COOKIE_DOMAIN=softilab.dev
+# WEBAPP_ORIGIN=https://app-staging.edaya.softilab.dev
+# ACCOUNT_INVITATIONS_ENABLED=true
+# REQUIRE_EMAIL_VERIFICATION=false
 
-# --- Cron / queues ---
-# CRON_JOBS is a Wrangler queue binding (wrangler.jsonc) — not an env var here.
-# Local `bun dev:cron` runs inline; worker deploy uses Cloudflare Queues.
+# --- Not used in Wrangler / worker ---
+# PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS= / AUTH_EMAIL_LOG_OTP=
+#   → local only: `apps/api/.env`
+# GRAPHQL_* / LOCAL_FILES_PORT=
+#   → local only
 
-# --- One-time setup before first worker-local smoke ---
-# bun run db:migrate:production       # Neon school + auth (from tooling/seeding/.env.production)
-# bun run db:migrate:staging           # Neon staging branch
-
-# --- Wrangler secrets (deployed workers only; run from apps/api) ---
-# Template: cp secrets.json.example secrets.json — fill values, then bulk upload:
-#   bunx wrangler secret bulk secrets.json --env staging
-#   bunx wrangler secret bulk secrets.json --env production
-# Use unique secrets per environment (never reuse staging values in production).
-# Or set individually:
-#   bunx wrangler secret put BETTER_AUTH_SECRET --env staging
-# Non-secrets (BETTER_AUTH_URL, TRUSTED_ORIGINS, R2_BUCKET_NAME, …) live in wrangler.jsonc [vars].
-# Do not include CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_* — local dev only.
-# R2_ENDPOINT or R2_ACCOUNT_ID is required; R2_BUCKET_NAME is already in wrangler [vars].
+# Upload deploy secrets (from apps/api):
+#   cp secrets.json.example secrets.staging.json
+#   bunx wrangler secret bulk secrets.staging.json --env staging

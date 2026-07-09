@@ -1,5 +1,5 @@
+import { StaffAssignment } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { StaffAssignment } from '../../../../src/domain/school/staff-assignment'
 
 const targetError = 'A StaffAssignment must target exactly one of: classGroupId, classSubjectId, lessonSessionId, activitySessionId, or assessmentId'
 

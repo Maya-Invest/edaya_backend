@@ -1,9 +1,5 @@
-import {
-  Permission,
-  StaffAssignment,
-  StaffMember,
-  StaffPermissionAssignment,
-} from '@edaya/core'
+import { Permission } from '@edaya/authorization'
+import { StaffAssignment, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import { createTestApp } from '../utils/test-adapter'
@@ -33,7 +29,7 @@ describeIntegration('access control persistence', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-6a:*',
+      scopeIds: 'class-6a',
       status: 'active',
     }))
 
@@ -44,6 +40,6 @@ describeIntegration('access control persistence', () => {
     })
 
     expect(grants.permissions.has(Permission.ATTENDANCE_RECORD)).toBe(true)
-    expect(grants.scopeIdsByPermission?.[Permission.ATTENDANCE_RECORD]).toBe('class-6a:*')
+    expect(grants.scopeIdsByPermission?.[Permission.ATTENDANCE_RECORD]).toBe('class-6a')
   })
 })

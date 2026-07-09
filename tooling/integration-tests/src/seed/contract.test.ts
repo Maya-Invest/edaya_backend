@@ -1,4 +1,3 @@
-import { buildSchoolOverview } from '@edaya/core'
 import { devSeedDataset } from '@edaya/fixtures'
 import {
   parseSeedDate,
@@ -19,6 +18,7 @@ import {
 } from '@edaya/fixtures/meta/validation-harness'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
+import { buildSchoolOverview } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { createAppRequest } from '../support/api-route-harness'
 import { describeWithSeededSchool, describeWithSeededSchoolData, unwrapEntityList } from '../support/seeded-route-test-context'
@@ -136,7 +136,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       }
     }
 
-    expect(staffAssignments.some(assignment => assignment.id === 'sa-st2-6b' && assignment.classGroupId === '6b')).toBe(true)
+    expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-6a' && assignment.classGroupId === '6a')).toBe(true)
     expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-5a' && assignment.classGroupId === '5a')).toBe(true)
   })
 })

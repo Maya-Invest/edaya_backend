@@ -1,6 +1,6 @@
 /**
  * Maps seeded entity types to fixture modules and loader steps.
- * Used for documentation, completeness checks, and the HTTP validation harness (`bun seed:validate`).
+ * Used for documentation, completeness checks, and the HTTP validation harness (`bun run test:integration:seed`).
  */
 
 import type { FixtureDatasetPurpose } from '../datasets/types'
@@ -33,11 +33,13 @@ export const SEED_ENTITY_MANIFEST = [
   { entity: 'subject-matters', fixtureFile: 'demoDataset.entities.subjectMatters', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'class-subjects', fixtureFile: 'demoDataset.entities.classSubjects', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'class-subject-matters', fixtureFile: 'datasets/demo/people.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'teachers', fixtureFile: 'datasets/demo/teachers.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Portal teachers (not staff)' },
+  { entity: 'teacher-assignments', fixtureFile: 'datasets/demo/teachers.ts', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'resources', fixtureFile: 'demoDataset.entities.resources', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'schedules', fixtureFile: 'demoDataset.entities.schedules', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },
   { entity: 'lesson-sessions', fixtureFile: 'demoDataset.extensions.schedulingSlots', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Classes 6a, 6b, 5a' },
   { entity: 'staff-assignments', fixtureFile: 'datasets/demo/people.ts', loader: 'run-dev-access-seed', status: 'seeded', dataset: 'demo', notes: 'Homeroom + class-subject teachers' },
-  { entity: 'resource-assignments', fixtureFile: 'demoDataset.entities.resources', loader: 'run-dev-school-seed', status: 'partial', dataset: 'demo' },
+  { entity: 'resource-assignments', fixtureFile: 'demoDataset.extensions.classResourceAssignments + schedulingSlots', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Class homeroom resources + lesson-session rooms' },
   { entity: 'class-subject-progress', fixtureFile: 'demoDataset.extensions.schedulingSessionProgressAnchor', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'assessments', fixtureFile: 'demoDataset.entities.inClassAssessments + homeworkAssessments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'In-class + homework; all trimesters' },
   { entity: 'assessment-results', fixtureFile: 'demoDataset.extensions.assessmentResultScores + homeworkSubmissions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Scores + homework submission compliance' },

@@ -1,10 +1,5 @@
+import { AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, buildOccurrenceAttendanceSummary } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import {
-  AttendanceJustificationStatus,
-  AttendanceRecord,
-  AttendanceStatus,
-  buildOccurrenceAttendanceSummary,
-} from '../../../../src/domain/scheduling/attendance-record'
 
 describe('Attendance record status transitions and validation', () => {
   const baseArgs = {

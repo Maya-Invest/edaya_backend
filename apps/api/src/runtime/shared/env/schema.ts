@@ -64,7 +64,7 @@ export const EnvSchema = z.object({
   LOCAL_FILES_ROOT: z.string().min(1).optional(),
   /** Shared secret for local file storage tokens and internal API (defaults to BETTER_AUTH_SECRET) */
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
-  /** Local one-shot cron (`bun dev:cron`): comma-separated job keys; default runs all registered jobs */
+  /** Local one-shot cron (`bun cron:local`): comma-separated job keys; default runs heartbeat tick */
   CRON_JOB_KEYS: z.string().optional(),
 });
 

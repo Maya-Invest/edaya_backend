@@ -5,10 +5,19 @@ import {
   invalidateEffectiveGrantsCacheForStaff,
   resolveCachedEffectiveGrants,
 } from "@/lib/authorization/grants-cache/resolve-cached";
+import { clearActorScopeCache } from "@/lib/authorization/scope-cache/resolve-cached";
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { buildPortalScopeIdsByPermission, DefaultAuthorizationRepository, GUARDIAN_PORTAL_PERMISSIONS, STUDENT_PORTAL_PERMISSIONS, TEACHER_PERMISSIONS } from "@edaya/core";
+import { DefaultAuthorizationRepository, Permission } from "@edaya/authorization";
+
+const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.DISCIPLINE_CREATE,
+  Permission.GRADE_INPUT,
+  Permission.CLASS_LOGBOOK_UPDATE,
+];
 
 describe("session Middleware ActorMetadata Construction", () => {
   const getSession = mock();
@@ -16,6 +25,7 @@ describe("session Middleware ActorMetadata Construction", () => {
   beforeEach(() => {
     getSession.mockReset();
     clearEffectiveGrantsCache();
+    clearActorScopeCache();
   });
 
   const mockInteractiveContext = (userId: string, createdAt: string, requestId = expect.any(String)) => ({
@@ -26,13 +36,18 @@ describe("session Middleware ActorMetadata Construction", () => {
   });
 
   const setupMockApp = (mockRepos: any) => {
-    if (mockRepos && !mockRepos.authorization) {
-      mockRepos.authorization = new DefaultAuthorizationRepository(mockRepos);
+    const teachersFindOne = mockRepos.teachers?.findOne ?? mock().mockResolvedValue(null);
+    const repos = {
+      teachers: { findOne: teachersFindOne },
+      ...mockRepos,
+    };
+    if (repos && !repos.authorization) {
+      repos.authorization = new DefaultAuthorizationRepository(repos);
     }
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {
       c.set("schoolApp", {
-        repositories: mockRepos,
+        repositories: repos,
       } as any);
       await next();
     });
@@ -139,6 +154,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     const mockStaff = {
       id: "staff-1",
       schoolId: "school-1",
+      subjectId: "auth-user-999",
       roles: ["teacher"],
       isActive: true,
     };
@@ -174,6 +190,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       academicYearId: "year-2026",
       status: "active",
     }));
+    expect(mockRepos.staffMembers.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-999" });
     expect(body.actor).toEqual({
@@ -189,7 +206,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         isElevated: false,
         scopeGrants: [],
         scopeIdsByPermission: Object.fromEntries(
-          TEACHER_PERMISSIONS.map(permission => [permission, "class-1:subject-1"]),
+          STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map(permission => [permission, "class-1"]),
         ),
       },
     });
@@ -400,6 +417,7 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     expect(res.status).toBe(200);
     expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
+    expect(findStaffMock).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
     expect(findGuardianMock).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-888" });
     expect(body.actor).toEqual({
@@ -408,11 +426,9 @@ describe("session Middleware ActorMetadata Construction", () => {
       actorId: "guardian-1",
       schoolId: "school-1",
       guardianId: "guardian-1",
-      effectiveGrants: {
-        isElevated: false,
-        permissions: {},
-        scopeGrants: [],
-        scopeIdsByPermission: buildPortalScopeIdsByPermission(GUARDIAN_PORTAL_PERMISSIONS, {}),
+      guardianScope: {
+        studentIds: [],
+        classGroupIds: [],
       },
     });
   });
@@ -466,13 +482,8 @@ describe("session Middleware ActorMetadata Construction", () => {
       actorId: "student-1",
       schoolId: "school-1",
       studentId: "student-1",
-      effectiveGrants: {
-        isElevated: false,
-        permissions: {},
-        scopeGrants: [],
-        scopeIdsByPermission: buildPortalScopeIdsByPermission(STUDENT_PORTAL_PERMISSIONS, {
-          studentIds: ["student-1"],
-        }),
+      studentScope: {
+        studentId: "student-1",
       },
     });
   });
@@ -516,6 +527,199 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(mockRepos.guardians.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
     expect(mockRepos.students.findOne).toHaveBeenCalledWith({ subjectId: "auth-user-ambiguous" });
     expect(body.actor).toBeNull();
+  });
+
+  it("should construct TeacherActorMetadata when user matches a teacher record", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: {
+        id: "auth-user-teacher",
+        email: "a.toure@ecole-ci.edaya.dev",
+        name: "Mme Touré",
+      },
+      session: { createdAt },
+    } as any);
+
+    const mockTeacher = {
+      id: "ci-t1",
+      schoolId: "school-1",
+      isActive: true,
+    };
+    const mockRepos = {
+      staffMembers: { findOne: mock().mockResolvedValue(null) },
+      guardians: { findOne: mock().mockResolvedValue(null) },
+      students: { findOne: mock().mockResolvedValue(null) },
+      teachers: {
+        findOne: mock().mockResolvedValue(mockTeacher),
+        findById: mock().mockResolvedValue(mockTeacher),
+      },
+      teacherAssignments: {
+        list: mock().mockResolvedValue([
+          {
+            id: "ta-1",
+            teacherId: "ci-t1",
+            academicYearId: "year-1",
+            kind: "subject",
+            classSubjectId: "ci-cs-6a-math",
+            status: "active",
+          },
+        ]),
+      },
+      academicYears: {
+        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", isActive: true }),
+      },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected", {
+      headers: { "x-academic-year-id": "year-1" },
+    });
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor).toEqual({
+      ...mockInteractiveContext("auth-user-teacher", createdAt),
+      kind: "teacher",
+      actorId: "ci-t1",
+      schoolId: "school-1",
+      teacherId: "ci-t1",
+      teacherScope: {
+        teaching: { classSubjectIds: ["ci-cs-6a-math"] },
+        homeroom: { classGroupIds: [] },
+      },
+    });
+  });
+
+  it("should resolve teacher when X-Actor-Kind is teacher and staff also exists", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValue({
+      user: { id: "auth-user-multi" },
+      session: { createdAt },
+    } as any);
+
+    const mockStaff = {
+      id: "ci-st3",
+      schoolId: "school-1",
+      subjectId: "auth-user-multi",
+      isActive: true,
+    };
+    const mockTeacher = {
+      id: "ci-t1",
+      schoolId: "school-1",
+      subjectId: "auth-user-multi",
+      isActive: true,
+    };
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValue(mockStaff),
+        findById: mock().mockResolvedValue(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...mockAccessControlForStaff("ci-st3", "school-1"),
+      guardians: { findOne: mock().mockResolvedValue(null) },
+      students: { findOne: mock().mockResolvedValue(null) },
+      teachers: {
+        findOne: mock().mockResolvedValue(mockTeacher),
+        findById: mock().mockResolvedValue(mockTeacher),
+      },
+      teacherAssignments: {
+        list: mock().mockResolvedValue([
+          {
+            id: "ta-1",
+            teacherId: "ci-t1",
+            academicYearId: "year-1",
+            kind: "subject",
+            classSubjectId: "ci-cs-6a-math",
+            status: "active",
+          },
+        ]),
+      },
+      academicYears: {
+        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", isActive: true }),
+      },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const staffRes = await app.request("/test-protected", {
+      headers: {
+        "x-actor-kind": "staff",
+        "x-school-id": "school-1",
+        "x-academic-year-id": "year-1",
+      },
+    });
+    const teacherRes = await app.request("/test-protected", {
+      headers: {
+        "x-actor-kind": "teacher",
+        "x-school-id": "school-1",
+        "x-academic-year-id": "year-1",
+      },
+    });
+
+    const staffBody = (await staffRes.json()) as any;
+    const teacherBody = (await teacherRes.json()) as any;
+
+    expect(staffBody.actor?.kind).toBe("staff");
+    expect(staffBody.actor?.staffMemberId).toBe("ci-st3");
+    expect(teacherBody.actor?.kind).toBe("teacher");
+    expect(teacherBody.actor?.teacherId).toBe("ci-t1");
+  });
+
+  it("should resolve staff when X-Actor-Kind is set and guardian also exists", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-multi" },
+      session: { createdAt },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-1",
+      schoolId: "school-1",
+      subjectId: "auth-user-multi",
+      isActive: true,
+    };
+    const mockGuardian = {
+      id: "guardian-1",
+      schoolId: "school-1",
+      subjectId: "auth-user-multi",
+    };
+    const resolveActorGrants = mock().mockResolvedValue({
+      permissions: new Set(),
+      scopeGrants: [],
+      isElevated: false,
+    });
+    const mockRepos = {
+      staffMembers: {
+        findOne: mock().mockResolvedValue(mockStaff),
+        findById: mock().mockResolvedValue(mockStaff),
+      },
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...mockAccessControlForStaff("staff-1", "school-1"),
+      guardians: {
+        findOne: mock().mockResolvedValue(mockGuardian),
+        findById: mock().mockResolvedValue(mockGuardian),
+      },
+      guardianLinks: { list: mock().mockResolvedValue([]) },
+      students: { findOne: mock().mockResolvedValue(null) },
+      authorization: { resolveActorGrants },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected", {
+      headers: {
+        "x-actor-kind": "staff",
+        "x-school-id": "school-1",
+      },
+    });
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor?.kind).toBe("staff");
+    expect(body.actor?.staffMemberId).toBe("staff-1");
+    expect(resolveActorGrants).toHaveBeenCalledWith(expect.objectContaining({
+      actorId: "staff-1",
+      actorType: "staff",
+      schoolId: "school-1",
+    }));
   });
 
   it("should pass X-Academic-Year-Id to grant resolution for staff actors", async () => {
@@ -570,6 +774,7 @@ function createMockRepos() {
     staffMembers: { findOne: mock() },
     guardians: { findOne: mock() },
     students: { findOne: mock() },
+    teachers: { findOne: mock() },
   };
 }
 
@@ -581,13 +786,13 @@ function mockAccessControlForStaff(
 ) {
   return {
     staffPermissionAssignments: {
-      list: mock().mockResolvedValue(TEACHER_PERMISSIONS.map((permission, index) => ({
+      list: mock().mockResolvedValue(STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map((permission, index) => ({
         id: `spa-${staffId}-${index}`,
         staffId,
         schoolId,
         academicYearId,
         permission,
-        scopeIds: "class-1:subject-1",
+        scopeIds: "class-1",
         status: "active",
         ...permissionOverrides,
       }))),

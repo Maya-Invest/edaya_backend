@@ -4,7 +4,7 @@ This inventory captures the seeding port architecture and the domain commands us
 
 ## Local dev (HTTP-only)
 
-CLI seeding (`bun seed`, `bun seed:init`) always targets a **running API**:
+CLI seeding (`bun repo seed`) always targets a **running API**:
 
 1. Provision Better Auth users via `/auth/*`
 2. Bootstrap an owner session (`register-school` on a fresh database)
@@ -13,7 +13,9 @@ CLI seeding (`bun seed`, `bun seed:init`) always targets a **running API**:
 
 There is **no** direct PGlite/SQLite write path from the seed CLI. If HTTP bootstrap fails, the CLI exits with instructions to wipe `.data` and reseed — do not write to the database while the API is running.
 
-Integration tests may still pass `application?: SeedApplication` to `runHttpDevSeeds` to use in-process adapters for speed; that path is test-only.
+`runHttpDevSeeds` is HTTP-only: it does not accept an in-process `SeedApplication`. In-process adapters under `domains/*/in-process.ts` remain for port-level unit tests and `@edaya/seeding` orchestration when a harness provides direct database access.
+
+After bootstrap, bulk seeding (including access assignments) uses the elevated **seeding service account API key** from `@edaya/fixtures` — no owner session re-sign-in. Use `bun repo seed --scope doctor` to diagnose partial local seed state; `bun repo seed --scope doctor --repair` runs the minimal HTTP repair chain (`auth:link`, `service-account`, `access`, `profile-pictures`) for common drift without wiping `.data`.
 
 ## Repository operations
 
@@ -31,17 +33,17 @@ Application-level repositories:
 | `attendance` | `findById` | attendance correction |
 | `authorization` | `resolveEffectiveGrants` | service-account bootstrap |
 
-Direct base-service writes:
+Direct base-service writes are **not** used by HTTP seed adapters. Bootstrap catalog/configuration rows go through domain commands:
 
-`activities.save`, `activityEnrollments.save`, `attachments.save`, `attendance.save`, `disciplinaryActions.save`, `gradeLevels.save`, `periodDefinitions.save`, `resources.save`, `subjectMatters.save`, and `subjects.save`.
+`assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `enrollStudentInActivity`, `registerAttachment`, `relinkActorSubject`, `requestAttendanceJustification`, and `updateSchoolConfiguration`.
 
-These writes are bootstrap operations, not normal public workflows. Keep them named and isolated in future ports rather than exposing a generic repository bag.
+Entity reads (`findById`, `list`) remain on `/core/entities/*` query routes where seeding needs idempotent presence checks.
 
 ## Domain commands
 
 The seed flows call these `SchoolService` workflows:
 
-`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignFeeToStudent`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `completeAssessment`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createClassGroup`, `createFee`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `rescheduleOccurrence`, `updateStudentDisciplinaryActionStatus`, and `upsertStudentHealthProfile`.
+`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignFeeToStudent`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `completeAssessment`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createClassGroup`, `createFee`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `enrollStudentInActivity`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `registerAttachment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `relinkActorSubject`, `requestAttendanceJustification`, `rescheduleOccurrence`, `updateSchoolConfiguration`, `updateStudentDisciplinaryActionStatus`, and `upsertStudentHealthProfile`.
 
 ## Migrated vertical ports
 
@@ -96,7 +98,7 @@ Curriculum uses a four-operation `CurriculumSeedPort` for subjects, subject matt
 
 ### Scheduling
 
-Scheduling uses a six-operation `SchedulingSeedPort` for resources, schedules, schedule materialization, lesson-session staff/resource assignments, and lesson-session progress. Timestamps cross the boundary as ISO strings. Lesson session IDs follow `{scheduleId}:{calendarDate}` after `materializeSchedule`. The in-process adapter reconstructs `Date` and `Resource`; the HTTP adapter sends command records directly.
+Scheduling uses a seven-operation `SchedulingSeedPort` for resources, class-level resource assignments, schedules, schedule materialization, lesson-session staff/resource assignments, and lesson-session progress. Timestamps cross the boundary as ISO strings. Lesson session IDs follow `{scheduleId}:{calendarDate}` after `materializeSchedule`. The in-process adapter reconstructs `Date` and `Resource`; the HTTP adapter sends command records directly.
 
 ### Attendance
 

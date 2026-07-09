@@ -1,5 +1,6 @@
 /* eslint-disable node/no-process-env -- test harness may load optional dotenv files */
-import { type Environment, parseEnv } from "@/runtime";
+import { parseEnv } from "@/runtime";
+import type { Environment } from "@/runtime";
 import { loadDotenvFiles } from "@/runtime/shared/env/local-loader";
 
 if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {

@@ -1,5 +1,5 @@
+import { GradeLevel } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { GradeLevel } from '../../../../src/domain/school/grade-level'
 
 describe('GradeLevel entity lexical order and naming', () => {
   const baseArgs = {

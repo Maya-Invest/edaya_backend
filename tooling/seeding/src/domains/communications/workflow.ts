@@ -3,7 +3,7 @@ import type { CommunicationsSeedPort } from './port'
 import { AnnouncementPriority, AnnouncementStatus, MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
 
-function seedDateAndMinute(timestamp: string): string {
+export function seedDateAndMinute(timestamp: string): string {
   return `${timestamp.slice(0, 16)}:00.000Z`
 }
 

@@ -1,10 +1,5 @@
+import { EnrollmentEndReason, ProgressionDecision, StudentClassEnrollment, StudentClassEnrollmentStatus } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import {
-  EnrollmentEndReason,
-  ProgressionDecision,
-  StudentClassEnrollment,
-  StudentClassEnrollmentStatus,
-} from '../../../../src/domain/students/student-class-enrollment'
 
 describe('Student class enrollment state transitions and validation', () => {
   const baseArgs = {

@@ -1,10 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { AttachmentOwnerKind } from '../../domain'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentStatus {
@@ -86,81 +81,5 @@ export class Student {
       createdAt: this.createdAt,
       ...changes,
     })
-  }
-}
-
-export const studentConfig: EntityConfigFactory<Student> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.students,
-    Permission.QUERY_STUDENT_DIRECTORY_READ,
-    Permission.STUDENT_UPDATE,
-    readByIds((actor, ids) => input.policy.checkStudentAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.QUERY_STUDENT_DIRECTORY_READ,
-    Permission.QUERY_STUDENT_DETAIL_READ,
-  ])
-  return {
-    ...config,
-    gates: {
-      preSave: validateStudentSave,
-      preDelete: validateStudentDelete,
-    },
-  }
-}
-
-export async function validateStudentSave(
-  student: Student,
-  existing: Student | undefined,
-): Promise<void> {
-  if (existing?.status === StudentStatus.Graduated && student.status !== StudentStatus.Graduated) {
-    throw new BusinessRuleViolationError('GRADUATED_STUDENT_STATUS_RESTRICTED', `Student ${student.id} cannot leave graduated status through profile update`)
-  }
-}
-
-async function validateStudentDelete(
-  student: Student,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [
-    enrollments,
-    guardianLinks,
-    notes,
-    healthProfiles,
-    studentFees,
-    attendance,
-    assessmentResults,
-    reportCards,
-    incidentInvolvements,
-    disciplinaryActions,
-    attachments,
-  ] = await Promise.all([
-    repositories.enrollments.list({ studentId: student.id }),
-    repositories.guardianLinks.list({ studentId: student.id }),
-    repositories.studentNotes.list({ studentId: student.id }),
-    repositories.studentHealthProfiles.list({ studentId: student.id }),
-    repositories.studentFees.list({ studentId: student.id }),
-    repositories.attendance.list({ studentId: student.id }),
-    repositories.assessmentResults.list({ studentId: student.id }),
-    repositories.results.list({ studentId: student.id }),
-    repositories.studentIncidentInvolvements.list({ studentId: student.id }),
-    repositories.studentDisciplinaryActions.list({ studentId: student.id }),
-    repositories.attachments.list({ ownerKind: AttachmentOwnerKind.Student, ownerId: student.id }),
-  ])
-  if (
-    enrollments.length > 0
-    || guardianLinks.length > 0
-    || notes.length > 0
-    || healthProfiles.length > 0
-    || studentFees.length > 0
-    || attendance.length > 0
-    || assessmentResults.length > 0
-    || reportCards.length > 0
-    || incidentInvolvements.length > 0
-    || disciplinaryActions.length > 0
-    || attachments.length > 0
-  ) {
-    throw new BusinessRuleViolationError('STUDENT_HAS_DEPENDENCIES', `Cannot delete student ${student.id}: dependent records still exist`)
   }
 }

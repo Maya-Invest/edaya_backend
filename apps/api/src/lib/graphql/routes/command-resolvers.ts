@@ -1,4 +1,4 @@
-import { assertCommandActorKind } from "@edaya/core";
+import { assertCommandActorKind } from "@edaya/authorization";
 import { executeSchoolCommand } from "@/lib/school-api/execute-command";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import type { CoreCommandConfig } from "@/lib/school-api/registry";

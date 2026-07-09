@@ -1,11 +1,4 @@
-import type {
-  CreatePresignedDownloadOptions,
-  CreatePresignedUploadInput,
-  FileStoragePort,
-  HeadObjectResult,
-  PutObjectInput,
-  PutObjectResult,
-} from "@edaya/core";
+import type { CreatePresignedDownloadOptions, CreatePresignedUploadInput, FileStoragePort, HeadObjectResult, PutObjectInput, PutObjectResult } from "@edaya/core";
 import { createInMemoryFileStorage } from "@edaya/core";
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -200,19 +193,6 @@ export async function readLocalDevStoredObject(
     return localStorage.readStoredObject(storageKey);
   }
 
-  const memoryStorage = fileStorage as ReturnType<typeof createInMemoryFileStorage>;
-  const stored = memoryStorage.objects?.get(storageKey);
-  if (!stored) {
-    return null;
-  }
-  return stored;
-}
-
-/** @deprecated Use {@link readLocalDevStoredObject} */
-export function readLocalDevMemoryObject(
-  fileStorage: FileStoragePort,
-  storageKey: string,
-): LocalDevStoredObject | null {
   const memoryStorage = fileStorage as ReturnType<typeof createInMemoryFileStorage>;
   const stored = memoryStorage.objects?.get(storageKey);
   if (!stored) {
