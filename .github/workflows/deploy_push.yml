@@ -13,10 +13,6 @@ on:
         description: Build and publish edaya-api-dev image
         type: boolean
         default: true
-      run_notify_consumers:
-        description: Notify web/mobile to re-run open PR CI
-        type: boolean
-        default: true
 
 concurrency:
   group: merge-${{ github.ref_name }}
@@ -33,7 +29,6 @@ jobs:
     outputs:
       run_migrate: ${{ steps.plan.outputs.run_migrate }}
       run_publish_api_dev: ${{ steps.plan.outputs.run_publish_api_dev }}
-      run_notify_consumers: ${{ steps.plan.outputs.run_notify_consumers }}
       migrate_target: ${{ steps.plan.outputs.migrate_target }}
     steps:
       - name: Checkout
@@ -73,11 +68,9 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "run_migrate=${{ inputs.run_migrate }}" >> "$GITHUB_OUTPUT"
             echo "run_publish_api_dev=${{ inputs.run_publish_api_dev }}" >> "$GITHUB_OUTPUT"
-            echo "run_notify_consumers=${{ inputs.run_notify_consumers }}" >> "$GITHUB_OUTPUT"
           else
             echo "run_migrate=true" >> "$GITHUB_OUTPUT"
             echo "run_publish_api_dev=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
-            echo "run_notify_consumers=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
           fi
 
   migrate:
@@ -94,16 +87,4 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-dev-image.yml
-    secrets: inherit
-
-  notify-api-dev-consumers:
-    needs: [gate, publish-api-dev-image]
-    if: >-
-      needs.gate.outputs.run_notify_consumers == 'true' &&
-      needs.publish-api-dev-image.result == 'success'
-    uses: ./.github/workflows/_notify-api-dev-consumers.yml
-    with:
-      channel: ${{ needs.publish-api-dev-image.outputs.channel }}
-      image: ${{ needs.publish-api-dev-image.outputs.image }}
-      sha: ${{ github.sha }}
     secrets: inherit
