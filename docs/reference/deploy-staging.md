@@ -162,3 +162,4 @@ Reads repo root `.env` when present, or env vars:
 | S8 missing school | School seed not applied; run `seed:staging` |
 | Webapp calls wrong API | Rebuild webapp with `deploy:webapp:staging` (sets `PUBLIC_API_URL`) |
 | CORS errors in browser | `TRUSTED_ORIGINS` must include exact app staging origin |
+| Seed fails on profile photo upload (R2 401) | Run `bun repo smoke-test r2` — uses `apps/api/secrets.staging.json` + bucket `edaya-files-staging`; re-run `wrangler secret bulk secrets.staging.json --env staging` if check fails |

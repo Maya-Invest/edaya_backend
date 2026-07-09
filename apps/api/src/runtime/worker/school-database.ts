@@ -1,6 +1,6 @@
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { DatabaseHandle } from "@/runtime/types";
-import { postgresDriverOptions } from "@/runtime/shared/school-database";
+import { createPostgresSchoolDatabase, postgresPoolOptions } from "@/runtime/shared/school-database";
 import { isPgliteDatabase } from "@edaya/adaptor-postgres";
 
 export async function createSchoolDatabase(env: Environment): Promise<DatabaseHandle> {
@@ -8,18 +8,5 @@ export async function createSchoolDatabase(env: Environment): Promise<DatabaseHa
     throw new Error("PGlite DATABASE_URL is not supported on the worker runtime. Use a Postgres connection string or Hyperdrive.");
   }
 
-  const { drizzle } = await import("drizzle-orm/postgres-js");
-  const { default: postgres } = await import("postgres");
-
-  const sqlClient = postgres(env.DATABASE_URL, {
-    ...postgresDriverOptions,
-    max: 1,
-  });
-  return {
-    db: drizzle(sqlClient),
-    sqlClient,
-    async dispose() {
-      await sqlClient.end({ timeout: 5 });
-    },
-  };
+  return createPostgresSchoolDatabase(env.DATABASE_URL, postgresPoolOptions);
 }

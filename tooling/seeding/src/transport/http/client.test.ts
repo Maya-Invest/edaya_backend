@@ -52,4 +52,23 @@ describe('HttpSeedClient.request', () => {
     expect(capturedHeaders?.get('cookie')).toContain('better-auth.session_token=session-token')
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
+
+  it('does not pace non-API presigned storage uploads on staging', async () => {
+    let requestCount = 0
+    const client = new HttpSeedClient({
+      baseUrl: 'https://api-staging.edaya.softilab.dev',
+      fetch: async () => {
+        requestCount += 1
+        return new Response(null, { status: 200 })
+      },
+    })
+
+    const startedAt = Date.now()
+    await client.request('https://bucket.account.r2.cloudflarestorage.com/a?sig=1', { method: 'PUT' })
+    await client.request('https://bucket.account.r2.cloudflarestorage.com/b?sig=2', { method: 'PUT' })
+    const elapsedMs = Date.now() - startedAt
+
+    expect(requestCount).toBe(2)
+    expect(elapsedMs).toBeLessThan(50)
+  })
 })

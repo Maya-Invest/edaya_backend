@@ -47,6 +47,7 @@ function assessmentResultSeedRecord(result: AssessmentResultInput) {
 export async function seedDevAssessments(
   port: AssessmentsSeedPort,
   dataset: FixtureDataset,
+  options?: { onProgress?: () => void },
 ): Promise<void> {
   const inClassAssessments = dataset.entities.inClassAssessments ?? []
   const resultScores = dataset.extensions?.assessmentResultScores ?? {}
@@ -55,6 +56,7 @@ export async function seedDevAssessments(
 
   for (const assessment of inClassAssessments) {
     await port.createAssessment(assessmentSeedRecord(assessment))
+    options?.onProgress?.()
 
     const scores = resultScores[assessment.id] ?? {}
     for (const [studentId, score] of Object.entries(scores)) {
@@ -67,14 +69,34 @@ export async function seedDevAssessments(
         studentId,
         score,
       })
+      options?.onProgress?.()
     }
   }
 
   for (const assessment of homeworkAssessments) {
     await port.createAssessment(assessmentSeedRecord(assessment))
+    options?.onProgress?.()
   }
 
   for (const submission of homeworkSubmissions) {
     await port.recordAssessmentResult(assessmentResultSeedRecord(submission))
+    options?.onProgress?.()
   }
+}
+
+export function countDevAssessmentSeedOperations(dataset: FixtureDataset): number {
+  const inClassAssessments = dataset.entities.inClassAssessments ?? []
+  const resultScores = dataset.extensions?.assessmentResultScores ?? {}
+  const homeworkAssessments = dataset.entities.homeworkAssessments ?? []
+  const homeworkSubmissions = dataset.entities.homeworkSubmissions ?? []
+
+  let total = 0
+  for (const assessment of inClassAssessments) {
+    total += 1
+    const scores = resultScores[assessment.id] ?? {}
+    total += Object.values(scores).filter(score => score !== undefined).length
+  }
+  total += homeworkAssessments.length
+  total += homeworkSubmissions.length
+  return total
 }

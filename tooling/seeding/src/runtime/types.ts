@@ -3,6 +3,7 @@ import type { runHttpSeedDoctor } from '../diagnostics/seed-doctor'
 import type { SeedDoctorRepairResult } from '../diagnostics/seed-doctor-repair'
 import type { HttpSeedValidationResult } from '../diagnostics/seed-validation'
 import type { DevSeedScope, LogDevSeedResultsOptions, RunDevSeedsResults } from '../orchestration/run-dev-seeds'
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner } from '../support/types'
 import type { HttpSeedClient } from '../transport/http/client'
 
@@ -23,6 +24,10 @@ export interface RunHttpDevSeedsOptions {
   /** When scope is `doctor`, run the minimal HTTP repair chain for repairable findings. */
   repair?: boolean
   log?: LogDevSeedResultsOptions
+  /** Disable interactive stderr progress bars. */
+  noProgress?: boolean
+  /** Interactive stderr progress bars (TTY only unless forced). */
+  progress?: SeedProgressReporter
 }
 
 export interface HttpSmokeSeedResult {
