@@ -2542,6 +2542,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/queries/get-app-shell-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-app-shell-counts */
+        post: operations["queries.getAppShellCounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/queries/get-class-group-timetable": {
         parameters: {
             query?: never;
@@ -12335,6 +12352,19 @@ export interface components {
             academicPeriodId: string;
             /** Format: date */
             referenceDate?: string;
+        };
+        AppShellCountsResponse: {
+            schoolId: string;
+            activeEnrollmentCountsByClass: {
+                [key: string]: number;
+            };
+            studentCount: number;
+            guardianCount: number;
+            staffCount: number;
+        };
+        GetAppShellCountsQuery: {
+            schoolId: string;
+            classGroupIds?: string[];
         };
         TimetableEvent: {
             /** @enum {string} */
@@ -22771,6 +22801,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchoolOverviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getAppShellCounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-app-shell-counts payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetAppShellCountsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-app-shell-counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppShellCountsResponse"];
                 };
             };
             /** @description Invalid request payload */

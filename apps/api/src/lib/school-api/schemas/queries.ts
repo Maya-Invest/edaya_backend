@@ -7,6 +7,19 @@ export const getSchoolOverviewQuerySchema = z.object({
   referenceDate: z.string().date().optional(),
 }).openapi("GetSchoolOverviewQuery");
 
+export const getAppShellCountsQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  classGroupIds: z.array(z.string().min(1)).optional(),
+}).openapi("GetAppShellCountsQuery");
+
+export const appShellCountsResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  activeEnrollmentCountsByClass: z.record(z.string(), z.number().int().nonnegative()),
+  studentCount: z.number().int().nonnegative(),
+  guardianCount: z.number().int().nonnegative(),
+  staffCount: z.number().int().nonnegative(),
+}).openapi("AppShellCountsResponse");
+
 export const dashboardActionItemSchema = z.object({
   key: z.enum([
     "overdue_fees",

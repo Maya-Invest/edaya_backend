@@ -18,7 +18,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getClassGroupTimetable";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -275,6 +275,13 @@ export const coreQueries = [
     methodName: "getSchoolOverview",
     requestSchema: querySchemas.getSchoolOverviewQuerySchema,
     responseSchema: querySchemas.schoolOverviewResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-app-shell-counts",
+    methodName: "getAppShellCounts",
+    requestSchema: querySchemas.getAppShellCountsQuerySchema,
+    responseSchema: querySchemas.appShellCountsResponseSchema,
     responseShape: "body",
   },
   {

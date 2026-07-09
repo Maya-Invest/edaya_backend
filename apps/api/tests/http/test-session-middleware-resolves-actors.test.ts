@@ -758,6 +758,53 @@ describe("session Middleware ActorMetadata Construction", () => {
     }));
   });
 
+  it("should resolve staff by X-Actor-Id without probing other actor tables", async () => {
+    const createdAt = new Date().toISOString();
+    getSession.mockResolvedValueOnce({
+      user: { id: "auth-user-header" },
+      session: { id: "session-header", createdAt },
+    } as any);
+
+    const mockStaff = {
+      id: "staff-header",
+      schoolId: "school-1",
+      subjectId: "auth-user-header",
+      isActive: true,
+    };
+    const findStaffOne = mock().mockResolvedValue(mockStaff);
+    const findStaffById = mock().mockResolvedValue(mockStaff);
+    const findGuardianOne = mock().mockResolvedValue(null);
+    const findStudentOne = mock().mockResolvedValue(null);
+    const findTeacherOne = mock().mockResolvedValue(null);
+    const mockRepos = {
+      staffMembers: { findOne: findStaffOne, findById: findStaffById },
+      staffAssignments: { list: mock().mockResolvedValue([]) },
+      ...mockAccessControlForStaff("staff-header", "school-1"),
+      guardians: { findOne: findGuardianOne },
+      students: { findOne: findStudentOne },
+      teachers: { findOne: findTeacherOne },
+    };
+
+    const app = setupMockApp(mockRepos);
+    const res = await app.request("/test-protected", {
+      headers: {
+        "x-actor-kind": "staff",
+        "x-actor-id": "staff-header",
+        "x-school-id": "school-1",
+        "x-academic-year-id": "year-2026",
+      },
+    });
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.actor?.staffMemberId).toBe("staff-header");
+    expect(findStaffById).toHaveBeenCalledWith("staff-header");
+    expect(findStaffOne).not.toHaveBeenCalled();
+    expect(findGuardianOne).not.toHaveBeenCalled();
+    expect(findStudentOne).not.toHaveBeenCalled();
+    expect(findTeacherOne).not.toHaveBeenCalled();
+  });
+
   it("should pass X-Academic-Year-Id to grant resolution for staff actors", async () => {
     const createdAt = new Date().toISOString();
     getSession.mockResolvedValueOnce({

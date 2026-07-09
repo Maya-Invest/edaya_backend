@@ -1,4 +1,4 @@
-import type { GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
+import type { GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
 import type { CoreQueryConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 
@@ -25,6 +25,16 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
           : undefined,
       };
       return service.getSchoolOverview(input);
+    }
+
+    if (queryConfig.methodName === "getAppShellCounts") {
+      const input: GetAppShellCountsInput = {
+        schoolId: payload.schoolId as string,
+        ...(Array.isArray(payload.classGroupIds)
+          ? { classGroupIds: payload.classGroupIds as string[] }
+          : {}),
+      };
+      return service.getAppShellCounts(input);
     }
 
     if (queryConfig.methodName === "getClassGroupTimetable") {

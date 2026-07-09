@@ -10638,6 +10638,60 @@
           "academicPeriodId"
         ]
       },
+      "AppShellCountsResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activeEnrollmentCountsByClass": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "studentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "guardianCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "staffCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "schoolId",
+          "activeEnrollmentCountsByClass",
+          "studentCount",
+          "guardianCount",
+          "staffCount"
+        ]
+      },
+      "GetAppShellCountsQuery": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "schoolId"
+        ]
+      },
       "TimetableEvent": {
         "type": "object",
         "properties": {
@@ -29233,6 +29287,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SchoolOverviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-app-shell-counts": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-app-shell-counts",
+        "operationId": "queries.getAppShellCounts",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getAppShellCounts",
+        "x-edaya-query-public-name": "get-app-shell-counts",
+        "x-edaya-request-schema": "GetAppShellCountsQuery",
+        "x-edaya-response-schema": "AppShellCountsResponse",
+        "requestBody": {
+          "description": "get-app-shell-counts payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetAppShellCountsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-app-shell-counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppShellCountsResponse"
                 }
               }
             }
