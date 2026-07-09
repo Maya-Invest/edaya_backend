@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Detect API dev image changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         if: github.event_name == 'push'
         with:
@@ -86,7 +86,9 @@ jobs:
     uses: ./.github/workflows/_migrate.yml
     with:
       migrate_target: ${{ needs.gate.outputs.migrate_target }}
-    secrets: inherit
+    secrets:
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
   publish-api-dev-image:
     needs: gate
