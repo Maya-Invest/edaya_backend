@@ -87,7 +87,7 @@
         ]
       }
     },
-    // Production (`wrangler deploy --env production`):
+    // Production (`wrangler deploy --env prod`):
     "prod": {
       "name": "edaya-api-prod",
       "vars": {

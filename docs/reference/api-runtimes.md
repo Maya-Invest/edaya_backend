@@ -71,7 +71,7 @@ worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Mi
 - **`.dev.vars`** — Wrangler-only secrets (gitignored); loaded by `wrangler dev --env-file` and deploy — **not** by `bun repo dev`
 - **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local wrangler dev); auth tables in the `auth` schema
 
-Deploy with `bun repo deploy api production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env production`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
+Deploy with `bun repo deploy api production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env prod`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
 
 **Staging:** `bun repo deploy api staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
 
