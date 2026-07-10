@@ -3,6 +3,7 @@ import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
 import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
+import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, QueryOperations, ReportCardOperations, SchedulingOperations } from '@edaya/authorization'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
@@ -20,6 +21,7 @@ import { NotificationTemplatesServiceWorkflow } from './workflows/notification-t
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
 import { SetupServiceWorkflow } from './workflows/setup'
 import { StudentServiceWorkflow } from './workflows/student'
+import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation'
 
 export class SchoolService {
   readonly baseService: BaseSchoolService
@@ -28,6 +30,7 @@ export class SchoolService {
   readonly assessmentsWorkflow: AssessmentsServiceWorkflow
   readonly studentWorkflow: StudentServiceWorkflow
   readonly schedulingWorkflow: SchedulingServiceWorkflow
+  readonly timetableGenerationWorkflow: TimetableGenerationServiceWorkflow
   readonly setupWorkflow: SetupServiceWorkflow
   readonly communicationsWorkflow: CommunicationsServiceWorkflow
   readonly behaviorWorkflow: BehaviorServiceWorkflow
@@ -43,6 +46,7 @@ export class SchoolService {
     this.assessmentsWorkflow = new AssessmentsServiceWorkflow(this.baseService)
     this.studentWorkflow = new StudentServiceWorkflow(this.baseService)
     this.schedulingWorkflow = new SchedulingServiceWorkflow(this.baseService)
+    this.timetableGenerationWorkflow = new TimetableGenerationServiceWorkflow(this.baseService)
     this.setupWorkflow = new SetupServiceWorkflow(this.baseService)
     this.communicationsWorkflow = new CommunicationsServiceWorkflow(this.baseService)
     this.behaviorWorkflow = new BehaviorServiceWorkflow(this.baseService)
@@ -58,6 +62,7 @@ export class SchoolService {
       assessments: this.assessmentsWorkflow,
       student: this.studentWorkflow,
       scheduling: this.schedulingWorkflow,
+      timetableGeneration: this.timetableGenerationWorkflow,
       communications: this.communicationsWorkflow,
       behavior: this.behaviorWorkflow,
       finance: this.financeWorkflow,
@@ -100,6 +105,16 @@ export class SchoolService {
       [input.classGroupId],
     )
     return buildClassGroupTimetable(this.baseService.repositories, input)
+  }
+
+  async resolveTimetableSpace(input: ResolveTimetableSpaceInput): Promise<ResolvedTimetableCell[]> {
+    const classGroup = await this.baseService.repositories.classGroups.findById(input.classGroupId)
+    if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    }
+    await operationModule(SchedulingOperations.timetableRead)(this.baseService.actor)
+    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [input.classGroupId])
+    return resolveTimetableSpace(this.baseService.repositories, input)
   }
 
   private checkActorSchool(schoolId: string): void {

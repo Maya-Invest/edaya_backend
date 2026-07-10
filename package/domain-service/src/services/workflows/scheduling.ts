@@ -26,7 +26,7 @@ import {
 import { findAttendanceRecordByAnchor } from '../entities/config/scheduling/attendance-record'
 import { operationModule } from '../entities/entity-config'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { assertNoClassGroupScheduleConflict } from './schedule-conflicts'
+import { assertNoSessionConflict } from './schedule-conflicts'
 
 function nextUtcCalendarDate(date: Date): Date {
   const nextDate = new Date(date)
@@ -828,11 +828,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     excludeLessonSessionId?: string
     excludeActivitySessionId?: string
   }): Promise<void> {
-    await assertNoClassGroupScheduleConflict(this.baseService.repositories, {
+    await assertNoSessionConflict(this.baseService.repositories, {
       classGroupId,
       startsAt,
       endsAt,
-      excludeLessonSessionId,
+      excludeSessionId: excludeLessonSessionId,
       excludeActivitySessionId,
     })
   }

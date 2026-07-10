@@ -18,7 +18,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -241,6 +241,10 @@ export const coreCommands = [
   command("record-class-daily-attendance", "recordClassDailyAttendance", commandSchemas.recordClassDailyAttendanceCommandSchema),
   command("review-attendance-justification", "reviewAttendanceJustification", commandSchemas.reviewAttendanceJustificationCommandSchema),
   command("request-attendance-justification", "requestAttendanceJustification", commandSchemas.requestAttendanceJustificationCommandSchema),
+  command("generate-class-group-timetable", "generateClassGroupTimetable", commandSchemas.generateClassGroupTimetableCommandSchema),
+  command("generate-school-timetable", "generateSchoolTimetable", commandSchemas.generateSchoolTimetableCommandSchema),
+  command("publish-class-group-timetable", "publishClassGroupTimetable", commandSchemas.publishClassGroupTimetableCommandSchema),
+  command("republish-class-group-timetable", "republishClassGroupTimetable", commandSchemas.republishClassGroupTimetableCommandSchema),
   command("create-announcement", "createAnnouncement", commandSchemas.createAnnouncementCommandSchema),
   command("add-target", "addTarget", commandSchemas.addTargetCommandSchema),
   command("publish-announcement", "publishAnnouncement", commandSchemas.publishAnnouncementCommandSchema),
@@ -289,6 +293,13 @@ export const coreQueries = [
     methodName: "getClassGroupTimetable",
     requestSchema: querySchemas.getClassGroupTimetableQuerySchema,
     responseSchema: querySchemas.classGroupTimetableResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "resolve-timetable-space",
+    methodName: "resolveTimetableSpace",
+    requestSchema: querySchemas.resolveTimetableSpaceQuerySchema,
+    responseSchema: querySchemas.resolvedTimetableSpaceResponseSchema,
     responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];

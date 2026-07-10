@@ -27,6 +27,10 @@ export const schoolSchema = z.object({
   country: z.string().trim().min(1, 'country must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   city: z.string().trim().min(1, 'city must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   enforceScheduleConflicts: z.boolean().default(false),
+  timetableEnforceWorkloadFulfillment: z.boolean().default(true),
+  timetableExcludeBreakSlots: z.boolean().default(true),
+  timetableMinPeriodGapSameSubject: z.number().int().nonnegative('timetableMinPeriodGapSameSubject must be a non-negative integer').default(2),
+  timetablePreferredPeriodDefinitionIds: z.array(z.string().trim().min(1, 'preferred period definition id must not be blank')).default([]),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -55,6 +59,10 @@ export class School {
   get country() { return this.data.country }
   get city() { return this.data.city }
   get enforceScheduleConflicts() { return this.data.enforceScheduleConflicts }
+  get timetableEnforceWorkloadFulfillment() { return this.data.timetableEnforceWorkloadFulfillment }
+  get timetableExcludeBreakSlots() { return this.data.timetableExcludeBreakSlots }
+  get timetableMinPeriodGapSameSubject() { return this.data.timetableMinPeriodGapSameSubject }
+  get timetablePreferredPeriodDefinitionIds() { return this.data.timetablePreferredPeriodDefinitionIds }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

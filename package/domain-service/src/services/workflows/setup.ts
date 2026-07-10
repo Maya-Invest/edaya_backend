@@ -162,6 +162,11 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       type: changes.type === undefined ? existing.type : changes.type,
       country: changes.country === undefined ? existing.country : changes.country,
       city: changes.city === undefined ? existing.city : changes.city,
+      enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,
+      timetableEnforceWorkloadFulfillment: changes.timetableEnforceWorkloadFulfillment ?? existing.timetableEnforceWorkloadFulfillment,
+      timetableExcludeBreakSlots: changes.timetableExcludeBreakSlots ?? existing.timetableExcludeBreakSlots,
+      timetableMinPeriodGapSameSubject: changes.timetableMinPeriodGapSameSubject ?? existing.timetableMinPeriodGapSameSubject,
+      timetablePreferredPeriodDefinitionIds: changes.timetablePreferredPeriodDefinitionIds ?? existing.timetablePreferredPeriodDefinitionIds,
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.schools.save(school, { moduleChecked: true })

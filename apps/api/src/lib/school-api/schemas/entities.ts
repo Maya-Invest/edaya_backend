@@ -125,6 +125,9 @@ export const academicPeriodQuerySchema = createQueryOptionsSchema({
 export const periodDefinitionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
+  academicYearId: field.id(),
+  dayOfWeek: field.string(),
+  isTeachingSlot: field.boolean(),
   name: field.string(),
 });
 
@@ -248,6 +251,7 @@ export const lessonSessionQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   classGroupId: field.id(),
   scheduleId: field.id(),
+  timetableGenerated: field.string(),
   classSubjectId: field.id(),
   status: field.string(),
   displayLabel: field.string(),
@@ -341,6 +345,7 @@ export const classSubjectQuerySchema = createQueryOptionsSchema({
   classGroupId: field.id(),
   subjectId: field.id(),
   gradeLevelSubjectId: field.id(),
+  periodsPerWeek: field.number(),
 });
 
 export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
@@ -348,6 +353,7 @@ export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
   gradeLevelId: field.id(),
   academicYearId: field.id(),
   subjectId: field.id(),
+  periodsPerWeek: field.number(),
 });
 
 export const gradeLevelSubjectMatterQuerySchema = createQueryOptionsSchema({

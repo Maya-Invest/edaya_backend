@@ -434,6 +434,41 @@ export const rescheduleOccurrenceCommandSchema = z.object({
   endsAt: field.date(),
 }).openapi("RescheduleOccurrenceCommand");
 
+const timetableGenerationOptionsSchema = z.object({
+  enforceWorkloadFulfillment: z.boolean().optional(),
+  excludeBreakSlots: z.boolean().optional(),
+  minPeriodGapSameSubject: z.number().int().nonnegative().optional(),
+  preferredPeriodDefinitionIds: z.array(field.id()).optional(),
+}).openapi("TimetableGenerationOptions");
+
+const timetablePlacementParametersSchema = z.object({
+  periodsPerWeekByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+}).openapi("TimetablePlacementParameters");
+
+export const generateClassGroupTimetableCommandSchema = z.object({
+  classGroupId: field.id(),
+  academicYearId: field.id(),
+  startDate: field.date(),
+  endDate: field.date(),
+  placementParameters: timetablePlacementParametersSchema.optional(),
+  options: timetableGenerationOptionsSchema.optional(),
+}).openapi("GenerateClassGroupTimetableCommand");
+
+export const generateSchoolTimetableCommandSchema = generateClassGroupTimetableCommandSchema
+  .omit({ classGroupId: true })
+  .openapi("GenerateSchoolTimetableCommand");
+
+export const publishClassGroupTimetableCommandSchema = z.object({
+  classGroupId: field.id(),
+  startDate: field.date(),
+  endDate: field.date(),
+  sessionConflictPolicy: z.enum(["fail", "skip"]).optional(),
+}).openapi("PublishClassGroupTimetableCommand");
+
+export const republishClassGroupTimetableCommandSchema = generateClassGroupTimetableCommandSchema
+  .extend({ sessionConflictPolicy: z.enum(["fail", "skip"]).optional() })
+  .openapi("RepublishClassGroupTimetableCommand");
+
 export const recordAttendanceCommandSchema = objectFromSchema(attendanceRecordSchema)
   .omit({
     date: true,

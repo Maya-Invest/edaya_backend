@@ -24,6 +24,7 @@ function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: 
     && existing.subjectId === classSubject.subjectId
     && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
+    && existing.periodsPerWeek === classSubject.periodsPerWeek
     && existing.isOffered === classSubject.isOffered
     && classSubject.completedPercentage !== existing.completedPercentage
 }
@@ -33,6 +34,7 @@ function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: C
     && existing.subjectId === classSubject.subjectId
     && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
+    && existing.periodsPerWeek === classSubject.periodsPerWeek
     && existing.completedPercentage === classSubject.completedPercentage
     && classSubject.isOffered !== existing.isOffered
 }

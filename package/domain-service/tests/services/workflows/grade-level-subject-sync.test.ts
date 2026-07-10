@@ -155,6 +155,7 @@ describe('grade level subject inheritance', () => {
       academicYearId: 'ay1',
       subjectId: 'subj-math',
       coefficient: 3,
+      periodsPerWeek: 5,
       classSubjectIdsByClassGroupId: {
         '6a': 'cs-6a-math',
         '6b': 'cs-6b-math',
@@ -186,6 +187,7 @@ describe('grade level subject inheritance', () => {
 
     expect([...classSubjects.values()]).toHaveLength(3)
     expect(classSubjects.get('cs-6a-math')?.coefficient).toBe(3)
+    expect(classSubjects.get('cs-6a-math')?.periodsPerWeek).toBe(5)
     expect(classSubjects.get('cs-6a-math')?.isOffered).toBe(true)
   })
 

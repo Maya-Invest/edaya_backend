@@ -2287,6 +2287,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/generate-class-group-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** generate-class-group-timetable */
+        post: operations["commands.generateClassGroupTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/generate-school-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** generate-school-timetable */
+        post: operations["commands.generateSchoolTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/publish-class-group-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** publish-class-group-timetable */
+        post: operations["commands.publishClassGroupTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/republish-class-group-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** republish-class-group-timetable */
+        post: operations["commands.republishClassGroupTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-announcement": {
         parameters: {
             query?: never;
@@ -2570,6 +2638,23 @@ export interface paths {
         put?: never;
         /** get-class-group-timetable */
         post: operations["queries.getClassGroupTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/resolve-timetable-space": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resolve-timetable-space */
+        post: operations["queries.resolveTimetableSpace"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9996,6 +10081,14 @@ export interface components {
             city?: string | null;
             /** @default false */
             enforceScheduleConflicts: boolean;
+            /** @default true */
+            timetableEnforceWorkloadFulfillment: boolean;
+            /** @default true */
+            timetableExcludeBreakSlots: boolean;
+            /** @default 2 */
+            timetableMinPeriodGapSameSubject: number;
+            /** @default [] */
+            timetablePreferredPeriodDefinitionIds: string[];
             createdAt?: unknown;
         };
         BusinessRuleViolationResponse: {
@@ -10216,6 +10309,14 @@ export interface components {
             city?: string | null;
             /** @default false */
             enforceScheduleConflicts: boolean;
+            /** @default true */
+            timetableEnforceWorkloadFulfillment: boolean;
+            /** @default true */
+            timetableExcludeBreakSlots: boolean;
+            /** @default 2 */
+            timetableMinPeriodGapSameSubject: number;
+            /** @default [] */
+            timetablePreferredPeriodDefinitionIds: string[];
             createdAt?: unknown;
         };
         UpdateSchoolConfigurationCommand: {
@@ -10228,6 +10329,14 @@ export interface components {
             city?: string | null;
             /** @default false */
             enforceScheduleConflicts: boolean;
+            /** @default true */
+            timetableEnforceWorkloadFulfillment: boolean;
+            /** @default true */
+            timetableExcludeBreakSlots: boolean;
+            /** @default 2 */
+            timetableMinPeriodGapSameSubject: number;
+            /** @default [] */
+            timetablePreferredPeriodDefinitionIds: string[];
             schoolId: string;
         };
         AcademicYear: {
@@ -10302,22 +10411,30 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             label: string;
+            /** @enum {string} */
+            dayOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
             order: number;
             startTime: string;
             endTime: string;
             /** @default false */
             isBreak: boolean;
+            /** @default true */
+            isTeachingSlot: boolean;
             createdAt?: unknown;
         };
         PeriodDefinitionConfigCommand: {
             id: string;
             academicYearId: string;
             label: string;
+            /** @enum {string} */
+            dayOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
             order: number;
             startTime: string;
             endTime: string;
             /** @default false */
             isBreak: boolean;
+            /** @default true */
+            isTeachingSlot: boolean;
             createdAt?: unknown;
         };
         Resource: {
@@ -11189,6 +11306,7 @@ export interface components {
             subjectId: string;
             gradeLevelSubjectId?: string | null;
             coefficient?: number | null;
+            periodsPerWeek?: number | null;
             /** @default 0 */
             completedPercentage: number | null;
             /** @default true */
@@ -11201,6 +11319,7 @@ export interface components {
             subjectId: string;
             gradeLevelSubjectId?: string | null;
             coefficient?: number | null;
+            periodsPerWeek?: number | null;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -11231,6 +11350,7 @@ export interface components {
             academicYearId: string;
             subjectId: string;
             coefficient?: number | null;
+            periodsPerWeek?: number | null;
             /** @default false */
             isOptional: boolean;
             createdAt?: unknown;
@@ -11241,6 +11361,7 @@ export interface components {
             academicYearId: string;
             subjectId: string;
             coefficient?: number | null;
+            periodsPerWeek?: number | null;
             /** @default false */
             isOptional: boolean;
             createdAt?: unknown;
@@ -11279,6 +11400,7 @@ export interface components {
             classGroupId: string;
             subjectId: string;
             coefficient?: number | null;
+            periodsPerWeek?: number | null;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -11933,7 +12055,9 @@ export interface components {
             id: string;
             schoolId: string;
             classGroupId: string;
-            scheduleId: string;
+            scheduleId?: string | null;
+            /** @enum {string|null} */
+            timetableGenerated?: "draft" | "published" | null;
             classSubjectId: string;
             /**
              * @default pending
@@ -12098,6 +12222,86 @@ export interface components {
             studentId: string;
             attendanceId: string;
             reason: string;
+        };
+        TimetablePlacement: {
+            classSubjectId: string;
+            displayLabel: string;
+            teacherIds: string[];
+            cell: {
+                /** Format: date */
+                date: string;
+                /** Format: date */
+                weekKey: string;
+                weeklyIndex: number;
+                periodDefinitionId: string;
+                /** Format: date-time */
+                startsAt: string;
+                /** Format: date-time */
+                endsAt: string;
+            };
+        };
+        UnmetTimetableWorkload: {
+            classSubjectId: string;
+            /** Format: date */
+            weekKey: string;
+            required: number;
+            placed: number;
+        };
+        GenerateClassGroupTimetableResponse: {
+            classGroupId: string;
+            sessions: components["schemas"]["LessonSession"][];
+            placements: components["schemas"]["TimetablePlacement"][];
+            unmetWorkloads: components["schemas"]["UnmetTimetableWorkload"][];
+        };
+        TimetablePlacementParameters: {
+            periodsPerWeekByClassSubjectId?: {
+                [key: string]: number;
+            };
+        };
+        TimetableGenerationOptions: {
+            enforceWorkloadFulfillment?: boolean;
+            excludeBreakSlots?: boolean;
+            minPeriodGapSameSubject?: number;
+            preferredPeriodDefinitionIds?: string[];
+        };
+        GenerateClassGroupTimetableCommand: {
+            classGroupId: string;
+            academicYearId: string;
+            startDate: string | null;
+            endDate: string | null;
+            placementParameters?: components["schemas"]["TimetablePlacementParameters"];
+            options?: components["schemas"]["TimetableGenerationOptions"];
+        };
+        GenerateSchoolTimetableResponse: {
+            academicYearId: string;
+            classGroups: components["schemas"]["GenerateClassGroupTimetableResponse"][];
+        };
+        GenerateSchoolTimetableCommand: {
+            academicYearId: string;
+            startDate: string | null;
+            endDate: string | null;
+            placementParameters?: components["schemas"]["TimetablePlacementParameters"];
+            options?: components["schemas"]["TimetableGenerationOptions"];
+        };
+        PublishClassGroupTimetableResponse: {
+            classGroupId: string;
+            publishedSessionIds: string[];
+            skippedSessionIds: string[];
+        };
+        PublishClassGroupTimetableCommand: {
+            classGroupId: string;
+            startDate: string | null;
+            endDate: string | null;
+            /** @enum {string} */
+            sessionConflictPolicy?: "fail" | "skip";
+        };
+        RepublishClassGroupTimetableResponse: {
+            generation: components["schemas"]["GenerateClassGroupTimetableResponse"];
+            publication: components["schemas"]["PublishClassGroupTimetableResponse"];
+        };
+        RepublishClassGroupTimetableCommand: components["schemas"]["GenerateClassGroupTimetableCommand"] & {
+            /** @enum {string} */
+            sessionConflictPolicy?: "fail" | "skip";
         };
         Announcement: {
             id: string;
@@ -12396,6 +12600,27 @@ export interface components {
         };
         GetClassGroupTimetableQuery: {
             classGroupId: string;
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+        };
+        ResolvedTimetableCell: {
+            /** Format: date */
+            date: string;
+            /** Format: date */
+            weekKey: string;
+            weeklyIndex: number;
+            periodDefinitionId: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+        };
+        ResolvedTimetableSpaceResponse: components["schemas"]["ResolvedTimetableCell"][];
+        ResolveTimetableSpaceQuery: {
+            classGroupId: string;
+            academicYearId: string;
             /** Format: date */
             startDate: string;
             /** Format: date */
@@ -21688,6 +21913,318 @@ export interface operations {
             };
         };
     };
+    "commands.generateClassGroupTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description generate-class-group-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateClassGroupTimetableCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed generate-class-group-timetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateClassGroupTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.generateSchoolTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description generate-school-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateSchoolTimetableCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed generate-school-timetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateSchoolTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.publishClassGroupTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description publish-class-group-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PublishClassGroupTimetableCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed publish-class-group-timetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishClassGroupTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.republishClassGroupTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description republish-class-group-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RepublishClassGroupTimetableCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed republish-class-group-timetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepublishClassGroupTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.createAnnouncement": {
         parameters: {
             query?: never;
@@ -22957,6 +23494,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassGroupTimetableResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.resolveTimetableSpace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description resolve-timetable-space payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResolveTimetableSpaceQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved resolve-timetable-space */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedTimetableSpaceResponse"];
                 };
             };
             /** @description Invalid request payload */

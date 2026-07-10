@@ -3,7 +3,8 @@ import type { LessonSession } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityWriteAuthorization } from '../../entity-config'
 import { AttendanceOperations, denyResourceAccess, LogbookOperations, SchedulingOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, OccurrenceStatus } from '@edaya/core'
+import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts'
 import { anyOperationModule, authorizeClassGroupLinkedDelete, authorizeSaveWithOperation, config, operationModule, read, readByIds, write } from '../../entity-config'
 import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
@@ -42,6 +43,7 @@ export function isLessonSessionLogbookOnlyUpdate(
   return entity.schoolId === existing.schoolId
     && entity.classGroupId === existing.classGroupId
     && entity.scheduleId === existing.scheduleId
+    && entity.timetableGenerated === existing.timetableGenerated
     && entity.classSubjectId === existing.classSubjectId
     && entity.status === existing.status
     && entity.isException === existing.isException
@@ -57,6 +59,7 @@ export function isLessonSessionAttendanceCompletionUpdate(
   return entity.schoolId === existing.schoolId
     && entity.classGroupId === existing.classGroupId
     && entity.scheduleId === existing.scheduleId
+    && entity.timetableGenerated === existing.timetableGenerated
     && entity.classSubjectId === existing.classSubjectId
     && entity.isException === existing.isException
     && entity.startsAt.getTime() === existing.startsAt.getTime()
@@ -127,6 +130,38 @@ export async function validateLessonSessionSave(
     }
   }
   await requireValidClassSubject(lessonSession.classSubjectId, lessonSession.classGroupId, repositories)
+
+  if ((!existing && lessonSession.timetableGenerated) || (existing && lessonSession.timetableGenerated !== existing.timetableGenerated)) {
+    throw new BusinessRuleViolationError(
+      'TIMETABLE_GENERATED_STATE_WORKFLOW_ONLY',
+      'Generated timetable state can only be created or transitioned by timetable workflows',
+    )
+  }
+
+  const scheduleChanged = !existing
+    || lessonSession.classGroupId !== existing.classGroupId
+    || lessonSession.startsAt.getTime() !== existing.startsAt.getTime()
+    || lessonSession.endsAt.getTime() !== existing.endsAt.getTime()
+
+  if (scheduleChanged && !lessonSession.scheduleId && !lessonSession.timetableGenerated) {
+    const assignments = await repositories.teacherAssignments.list({
+      classSubjectId: lessonSession.classSubjectId,
+      kind: TeacherAssignmentKind.Subject,
+      status: TeacherAssignmentStatus.Active,
+    })
+    const teacherIds = assignments
+      .filter(assignment => (!assignment.startsAt || assignment.startsAt < lessonSession.endsAt)
+        && (!assignment.endsAt || lessonSession.startsAt < assignment.endsAt))
+      .map(assignment => assignment.teacherId)
+
+    await assertNoSessionConflict(repositories, {
+      classGroupId: lessonSession.classGroupId,
+      teacherIds,
+      startsAt: lessonSession.startsAt,
+      endsAt: lessonSession.endsAt,
+      excludeSessionId: lessonSession.id,
+    })
+  }
 }
 
 async function requireValidClassSubject(

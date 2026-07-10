@@ -130,6 +130,25 @@ export const classGroupTimetableResponseSchema = z.object({
   events: z.array(timetableEventSchema),
 }).openapi("ClassGroupTimetableResponse");
 
+export const resolveTimetableSpaceQuerySchema = z.object({
+  classGroupId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+}).openapi("ResolveTimetableSpaceQuery");
+
+export const resolvedTimetableCellSchema = z.object({
+  date: z.string().date(),
+  weekKey: z.string().date(),
+  weeklyIndex: z.number().int().nonnegative(),
+  periodDefinitionId: z.string().min(1),
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+}).openapi("ResolvedTimetableCell");
+
+export const resolvedTimetableSpaceResponseSchema = z.array(resolvedTimetableCellSchema)
+  .openapi("ResolvedTimetableSpaceResponse");
+
 export const schoolOverviewResponseSchema = z.object({
   schoolId: z.string().min(1),
   academicYearId: z.string().min(1),

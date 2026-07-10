@@ -8,6 +8,7 @@ export const classSubjectSchema = z.object({
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
   gradeLevelSubjectId: z.string().trim().min(1, 'gradeLevelSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
+  periodsPerWeek: z.number().int().positive('periodsPerWeek must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
   completedPercentage: z.preprocess(
     val => val === null ? undefined : val,
     z.number().min(0, 'completedPercentage must be a finite, non-negative number').max(100, 'completedPercentage must be between 0 and 100').default(0),
@@ -38,6 +39,7 @@ export class ClassSubject {
   get subjectId() { return this.data.subjectId }
   get gradeLevelSubjectId() { return this.data.gradeLevelSubjectId ?? undefined }
   get coefficient() { return this.data.coefficient ?? undefined }
+  get periodsPerWeek() { return this.data.periodsPerWeek ?? undefined }
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
   get isOffered() { return this.data.isOffered }

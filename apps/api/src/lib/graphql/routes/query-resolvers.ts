@@ -1,4 +1,4 @@
-import type { GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
+import type { GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, ResolveTimetableSpaceInput } from "@edaya/service";
 import type { CoreQueryConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 
@@ -52,6 +52,21 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
           endsAt: event.endsAt.toISOString(),
         })),
       };
+    }
+
+    if (queryConfig.methodName === "resolveTimetableSpace") {
+      const input: ResolveTimetableSpaceInput = {
+        classGroupId: payload.classGroupId as string,
+        academicYearId: payload.academicYearId as string,
+        startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+        endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
+      };
+      const cells = await service.resolveTimetableSpace(input);
+      return cells.map(cell => ({
+        ...cell,
+        startsAt: cell.startsAt.toISOString(),
+        endsAt: cell.endsAt.toISOString(),
+      }));
     }
 
     const count = await service[queryConfig.methodName](payload.schoolId as string);

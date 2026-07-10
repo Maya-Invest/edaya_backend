@@ -82,6 +82,10 @@ export type SchoolCommandKey
     | 'recordClassDailyAttendance'
     | 'reviewAttendanceJustification'
     | 'requestAttendanceJustification'
+    | 'generateClassGroupTimetable'
+    | 'generateSchoolTimetable'
+    | 'publishClassGroupTimetable'
+    | 'republishClassGroupTimetable'
     | 'createAnnouncement'
     | 'addTarget'
     | 'publishAnnouncement'
@@ -203,6 +207,10 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'recordClassDailyAttendance',
   'reviewAttendanceJustification',
   'requestAttendanceJustification',
+  'generateClassGroupTimetable',
+  'generateSchoolTimetable',
+  'publishClassGroupTimetable',
+  'republishClassGroupTimetable',
   'createAnnouncement',
   'addTarget',
   'publishAnnouncement',

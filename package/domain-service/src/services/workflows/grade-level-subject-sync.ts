@@ -34,6 +34,7 @@ export async function syncGradeLevelSubjectToClassGroup(
     subjectId: gradeLevelSubject.subjectId,
     gradeLevelSubjectId: gradeLevelSubject.id,
     coefficient: gradeLevelSubject.coefficient,
+    periodsPerWeek: gradeLevelSubject.periodsPerWeek,
     completedPercentage: existing?.completedPercentage ?? 0,
     isOffered: existing?.isOffered ?? !gradeLevelSubject.isOptional,
     createdAt: existing?.createdAt ?? new Date(),

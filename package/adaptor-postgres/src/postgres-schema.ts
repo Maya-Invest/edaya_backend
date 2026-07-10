@@ -11,6 +11,10 @@ export const schools = pgTable('schools', {
   country: text('country'),
   city: text('city'),
   enforceScheduleConflicts: boolean('enforce_schedule_conflicts').notNull().default(false),
+  timetableEnforceWorkloadFulfillment: boolean('timetable_enforce_workload_fulfillment').notNull().default(true),
+  timetableExcludeBreakSlots: boolean('timetable_exclude_break_slots').notNull().default(true),
+  timetableMinPeriodGapSameSubject: integer('timetable_min_period_gap_same_subject').notNull().default(2),
+  timetablePreferredPeriodDefinitionIds: jsonb('timetable_preferred_period_definition_ids').notNull().default([]),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -44,10 +48,12 @@ export const periodDefinitions = pgTable('period_definitions', {
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   label: text('label').notNull(),
+  dayOfWeek: text('day_of_week').notNull(),
   order: integer('order_val').notNull(),
   startTime: text('start_time').notNull(),
   endTime: text('end_time').notNull(),
   isBreak: boolean('is_break').notNull().default(false),
+  isTeachingSlot: boolean('is_teaching_slot').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('period_definitions', table))
 
@@ -274,7 +280,8 @@ export const lessonSessions = pgTable('lesson_sessions', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
-  scheduleId: text('schedule_id').notNull(),
+  scheduleId: text('schedule_id'),
+  timetableGenerated: text('timetable_generated'),
   classSubjectId: text('class_subject_id').notNull(),
   status: text('status').notNull(),
   isException: boolean('is_exception').notNull(),
@@ -464,6 +471,7 @@ export const gradeLevelSubjects = pgTable('grade_level_subjects', {
   academicYearId: text('academic_year_id').notNull(),
   subjectId: text('subject_id').notNull(),
   coefficient: integer('coefficient'),
+  periodsPerWeek: integer('periods_per_week'),
   isOptional: boolean('is_optional').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('grade_level_subjects', table))
@@ -482,6 +490,7 @@ export const classSubjects = pgTable('class_subjects', {
   subjectId: text('subject_id').notNull(),
   gradeLevelSubjectId: text('grade_level_subject_id'),
   coefficient: integer('coefficient'),
+  periodsPerWeek: integer('periods_per_week'),
   isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),

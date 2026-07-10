@@ -23,6 +23,10 @@ describe('School entity', () => {
     expect(school.ownerSubjectId).toBe('staff-owner')
     expect(school.type).toBe(SchoolType.Secondary)
     expect(school.location).toBe('Douala, Cameroon')
+    expect(school.timetableEnforceWorkloadFulfillment).toBe(true)
+    expect(school.timetableExcludeBreakSlots).toBe(true)
+    expect(school.timetableMinPeriodGapSameSubject).toBe(2)
+    expect(school.timetablePreferredPeriodDefinitionIds).toEqual([])
     expect(school.createdAt).toBeInstanceOf(Date)
   })
 
@@ -41,5 +45,20 @@ describe('School entity', () => {
     expect(() => {
       new School({ ...baseArgs, timeZone: 'Invalid/Zone' })
     }).toThrow('Invalid IANA time zone: Invalid/Zone')
+  })
+
+  test('accepts timetable generation overrides', () => {
+    const school = new School({
+      ...baseArgs,
+      timetableEnforceWorkloadFulfillment: false,
+      timetableExcludeBreakSlots: false,
+      timetableMinPeriodGapSameSubject: 0,
+      timetablePreferredPeriodDefinitionIds: ['period-1'],
+    })
+
+    expect(school.timetableEnforceWorkloadFulfillment).toBe(false)
+    expect(school.timetableExcludeBreakSlots).toBe(false)
+    expect(school.timetableMinPeriodGapSameSubject).toBe(0)
+    expect(school.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
   })
 })

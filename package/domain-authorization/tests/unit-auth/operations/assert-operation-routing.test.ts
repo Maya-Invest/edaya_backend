@@ -45,6 +45,12 @@ describe('assertOperation', () => {
       { classGroupId: 'cg-7a' },
       'full',
     )).not.toThrow()
+    expect(() => assertOperation(
+      actor,
+      SchedulingOperations.timetablePublish,
+      { classGroupId: 'cg-7a' },
+      'full',
+    )).not.toThrow()
   })
 
   test('passes student scope into staff authorization when operation declares scopeFrom', () => {

@@ -4,7 +4,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, Resource, ResourceKind, StaffMember } from '@edaya/core'
+import { AcademicPeriodType, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember } from '@edaya/core'
 import {
   describe,
   expect,
@@ -88,6 +88,18 @@ describe('SchoolService setup workflows', () => {
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {
     const { schools, service } = createFullSetupContext()
+    schools.store.set('sch1', new School({
+      id: 'sch1',
+      name: 'School',
+      timeZone: 'UTC',
+      ownerSubjectId: 'owner-subject',
+      enforceScheduleConflicts: true,
+      timetableEnforceWorkloadFulfillment: false,
+      timetableExcludeBreakSlots: false,
+      timetableMinPeriodGapSameSubject: 4,
+      timetablePreferredPeriodDefinitionIds: ['period-1'],
+      createdAt: new Date('2025-01-01T00:00:00Z'),
+    }))
 
     const updated = await service.setupWorkflow.updateSchoolConfiguration({
       schoolId: 'sch1',
@@ -97,6 +109,11 @@ describe('SchoolService setup workflows', () => {
 
     expect(updated.name).toBe('Renamed School')
     expect(updated.city).toBe('Abidjan')
+    expect(updated.enforceScheduleConflicts).toBe(true)
+    expect(updated.timetableEnforceWorkloadFulfillment).toBe(false)
+    expect(updated.timetableExcludeBreakSlots).toBe(false)
+    expect(updated.timetableMinPeriodGapSameSubject).toBe(4)
+    expect(updated.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
     expect(schools.store.get('sch1')?.name).toBe('Renamed School')
   })
 
@@ -254,6 +271,7 @@ describe('SchoolService setup workflows', () => {
       schoolId: 'sch1',
       academicYearId: 'ay-current',
       label: 'Morning',
+      dayOfWeek: DayOfWeek.Monday,
       order: 1,
       startTime: '08:00',
       endTime: '12:00',

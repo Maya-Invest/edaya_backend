@@ -760,6 +760,26 @@ export const clientBindings = {
         "requestSchemaName": "RequestAttendanceJustificationCommand",
         "responseSchemaName": "Attendance"
       },
+      "generateClassGroupTimetable": {
+        "publicName": "generate-class-group-timetable",
+        "requestSchemaName": "GenerateClassGroupTimetableCommand",
+        "responseSchemaName": "GenerateClassGroupTimetableResponse"
+      },
+      "generateSchoolTimetable": {
+        "publicName": "generate-school-timetable",
+        "requestSchemaName": "GenerateSchoolTimetableCommand",
+        "responseSchemaName": "GenerateSchoolTimetableResponse"
+      },
+      "publishClassGroupTimetable": {
+        "publicName": "publish-class-group-timetable",
+        "requestSchemaName": "PublishClassGroupTimetableCommand",
+        "responseSchemaName": "PublishClassGroupTimetableResponse"
+      },
+      "republishClassGroupTimetable": {
+        "publicName": "republish-class-group-timetable",
+        "requestSchemaName": "RepublishClassGroupTimetableCommand",
+        "responseSchemaName": "RepublishClassGroupTimetableResponse"
+      },
       "createAnnouncement": {
         "publicName": "create-announcement",
         "requestSchemaName": "CreateAnnouncementCommand",
@@ -846,6 +866,11 @@ export const clientBindings = {
         "publicName": "get-class-group-timetable",
         "requestSchemaName": "GetClassGroupTimetableQuery",
         "responseSchemaName": "ClassGroupTimetableResponse"
+      },
+      "resolveTimetableSpace": {
+        "publicName": "resolve-timetable-space",
+        "requestSchemaName": "ResolveTimetableSpaceQuery",
+        "responseSchemaName": "ResolvedTimetableSpaceResponse"
       }
     },
     "authorization": {

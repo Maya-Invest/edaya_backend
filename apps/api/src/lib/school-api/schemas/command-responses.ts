@@ -75,6 +75,50 @@ export const attendanceCommandListResponseSchema = z.array(attendanceResponseSch
 export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
 export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
 
+const timetablePlacementSchema = z.object({
+  classSubjectId: z.string().min(1),
+  displayLabel: z.string().min(1),
+  teacherIds: z.array(z.string().min(1)),
+  cell: z.object({
+    date: z.string().date(),
+    weekKey: z.string().date(),
+    weeklyIndex: z.number().int().nonnegative(),
+    periodDefinitionId: z.string().min(1),
+    startsAt: z.string().datetime(),
+    endsAt: z.string().datetime(),
+  }),
+}).openapi("TimetablePlacement");
+
+const unmetTimetableWorkloadSchema = z.object({
+  classSubjectId: z.string().min(1),
+  weekKey: z.string().date(),
+  required: z.number().int().positive(),
+  placed: z.number().int().nonnegative(),
+}).openapi("UnmetTimetableWorkload");
+
+export const generateClassGroupTimetableResponseSchema = z.object({
+  classGroupId: z.string().min(1),
+  sessions: z.array(lessonSessionResponseSchema),
+  placements: z.array(timetablePlacementSchema),
+  unmetWorkloads: z.array(unmetTimetableWorkloadSchema),
+}).openapi("GenerateClassGroupTimetableResponse");
+
+export const generateSchoolTimetableResponseSchema = z.object({
+  academicYearId: z.string().min(1),
+  classGroups: z.array(generateClassGroupTimetableResponseSchema),
+}).openapi("GenerateSchoolTimetableResponse");
+
+export const publishClassGroupTimetableResponseSchema = z.object({
+  classGroupId: z.string().min(1),
+  publishedSessionIds: z.array(z.string().min(1)),
+  skippedSessionIds: z.array(z.string().min(1)),
+}).openapi("PublishClassGroupTimetableResponse");
+
+export const republishClassGroupTimetableResponseSchema = z.object({
+  generation: generateClassGroupTimetableResponseSchema,
+  publication: publishClassGroupTimetableResponseSchema,
+}).openapi("RepublishClassGroupTimetableResponse");
+
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   registerSchool: schoolResponseSchema,
@@ -152,6 +196,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   configureSubjectMatter: subjectMatterResponseSchema,
   configureDisciplinaryAction: disciplinaryActionResponseSchema,
   requestAttendanceJustification: attendanceResponseSchema,
+  generateClassGroupTimetable: generateClassGroupTimetableResponseSchema,
+  generateSchoolTimetable: generateSchoolTimetableResponseSchema,
+  publishClassGroupTimetable: publishClassGroupTimetableResponseSchema,
+  republishClassGroupTimetable: republishClassGroupTimetableResponseSchema,
   sendAccountInvitation: z.object({
     invitation: accountInvitationResponseSchema,
     token: z.string(),
