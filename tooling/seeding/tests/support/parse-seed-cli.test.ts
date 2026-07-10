@@ -10,6 +10,7 @@ describe('parseSeedCliArgs', () => {
       clean: false,
       repair: false,
       skipProfilePhotos: false,
+      noProgress: false,
     })
   })
 
@@ -30,6 +31,7 @@ describe('parseSeedCliArgs', () => {
       clean: true,
       repair: true,
       skipProfilePhotos: true,
+      noProgress: false,
     })
   })
 

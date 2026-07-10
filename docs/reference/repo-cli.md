@@ -14,7 +14,8 @@ Implementation: `tooling/repo/cli/` — thin subprocess dispatch, no domain impo
 |------|---------|
 | Start API + local files | `bun repo dev` |
 | Full local seed | `bun repo seed` |
-| Pre-PR check | `bun run verify` |
+| Pre-PR check (verify job) | `bun run verify` |
+| PR CI locally (verify + integration) | `bun repo verify --full` |
 | Repo hygiene only | `bun repo verify` |
 | Staging smoke | `bun repo smoke-test staging` |
 
@@ -39,7 +40,7 @@ bun repo
 ├── novu <bootstrap|cleanup> [plan|apply|validate]
 ├── deploy api <staging|production>
 ├── doctor
-└── verify
+└── verify [--full]
 ```
 
 ## Development
@@ -116,18 +117,24 @@ Repo hygiene only — **no Turbo**. Runs `doctor` and all `repo check *` targets
 3. `repo check boundaries`
 4. `repo check test-naming`
 
-**Not included:** `lint`, `check`, `build`, `test`, `quality` (root Turbo scripts), `test:integration*`, `smoke-test *`.
+**Not included (default):** `lint`, `check`, `build`, `test`, `quality`, `test:integration*`, `smoke-test *`.
+
+```sh
+bun repo verify --full
+```
+
+Local **PR blocking** gate: hygiene + `quality` + `build` + unit `test` + `test:integration` (same as `_verify.yml` then `_integration.yml`). Omits informational coverage (`_coverage.yml`).
 
 ### Pre-PR (`bun run verify`)
 
-Full gate from repo root — Turbo quality + build + unit tests, then repo hygiene:
+Default gate from repo root — repo hygiene first, then Turbo quality + build + unit tests (no integration):
 
 ```sh
 bun run verify
-# = bun run quality && bun run build && turbo run test -- --dots && bun repo verify
+# = bun repo verify && bun run quality && bun run build && turbo run test -- --dots
 ```
 
-CI uses `bun run verify`. For integration coverage, also run `bun run test:integration` (see [test-pyramid-plan.md](../sprints/test-pyramid-plan.md)).
+CI verify job uses `bun run verify`. PR workflows also run `bun run test:integration` afterward — use `bun repo verify --full` to run both locally. See [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
 
 ## Operations
 
@@ -199,7 +206,8 @@ bun --filter @edaya/api lint
 Turbo quality and integration slices only — no Turbo tasks in `bun repo`:
 
 ```sh
-bun run verify                # quality + build + test + bun repo verify
+bun run verify                # bun repo verify + quality + build + test
+bun repo verify --full        # above + test:integration (PR blocking CI)
 bun run lint | check | test | build | quality | lint:fix
 bun run test:coverage
 bun run test:integration          # api + http

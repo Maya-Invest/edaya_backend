@@ -29,8 +29,9 @@ const DEFAULT_REQUEST_RETRIES = 5
 const DEFAULT_RETRY_BASE_DELAY_MS = 500
 const STAGING_REQUEST_RETRIES = 12
 const STAGING_RETRY_BASE_DELAY_MS = 1500
-const STAGING_MIN_REQUEST_INTERVAL_MS = 200
-const STAGING_JSON_OUTER_RETRIES = 3
+/** Min gap between staging API calls — kept low; retries handle transient Worker limits. */
+const STAGING_MIN_REQUEST_INTERVAL_MS = 5
+const STAGING_JSON_OUTER_RETRIES = 50
 
 export function isTransientHttpStatus(status: number): boolean {
   return RETRYABLE_STATUS_CODES.has(status)
@@ -202,7 +203,9 @@ export class HttpSeedClient {
     let lastResponse: Response | undefined
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      await this.paceStagingRequest()
+      if (this.isApiRequest(url)) {
+        await this.paceStagingRequest()
+      }
 
       const response = await this.fetchImpl(url, {
         ...init,

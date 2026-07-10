@@ -1,7 +1,16 @@
 import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../../support/types'
 import type { HttpSeedClient } from '../../transport/http/client'
 import { isTransientHttpStatus } from '../../transport/http/client'
+import { markAuthUserEmailVerifiedBySql } from './mark-email-verified'
 import { repairStagingAuthUser, shouldRepairStaleStagingAuthUsers } from './staging-user-repair'
+
+/** Must match apps/api seed-auth-provision header. */
+const SEED_AUTH_PROVISION_HEADER = 'x-edaya-seed-provision'
+
+const seedProvisionHeaders = {
+  'content-type': 'application/json',
+  [SEED_AUTH_PROVISION_HEADER]: '1',
+} as const
 
 interface AuthUserResponse {
   user?: {
@@ -52,9 +61,14 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
     const attempts: string[] = []
 
+    // Demo seed accounts are treated as email-verified (prod-identical assurance).
+    // Mark before sign-in so REQUIRE_EMAIL_VERIFICATION does not block password login.
+    await this.markVerifiedByEmail(account.email)
+
     for (let round = 0; round < MAX_ENSURE_USER_ATTEMPTS; round++) {
       const signInResult = await this.signIn(account)
       if (signInResult.subjectId) {
+        await this.markVerified(signInResult.subjectId, account.email)
         return { subjectId: signInResult.subjectId }
       }
 
@@ -67,13 +81,20 @@ export class HttpAuthProvisioner implements AuthProvisioner {
       attempts.push(formatSignInFailure(signInResult))
 
       let signUpResult = await this.signUp(account, attempts)
-      if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, attempts)) {
+      if (!signUpResult.subjectId && this.shouldRepairStaleUser(signInResult, signUpResult, attempts)) {
         await repairStagingAuthUser(account.email)
         attempts.push('repaired stale staging auth user')
         signUpResult = await this.signUp(account, attempts)
       }
 
+      // Sign-up with requireEmailVerification may not auto-sign-in; mark verified then sign in.
+      await this.markVerifiedByEmail(account.email, signUpResult.subjectId)
+
       if (signUpResult.subjectId) {
+        const afterSignUp = await this.signIn(account)
+        if (afterSignUp.subjectId) {
+          return { subjectId: afterSignUp.subjectId }
+        }
         return { subjectId: signUpResult.subjectId }
       }
 
@@ -84,6 +105,7 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
       const retryResult = await this.signIn(account)
       if (retryResult.subjectId) {
+        await this.markVerified(retryResult.subjectId, account.email)
         return { subjectId: retryResult.subjectId }
       }
 
@@ -102,15 +124,57 @@ export class HttpAuthProvisioner implements AuthProvisioner {
     )
   }
 
+  private async markVerifiedByEmail(email: string, subjectId?: string): Promise<void> {
+    if (subjectId) {
+      await this.markVerified(subjectId, email)
+      return
+    }
+
+    const response = await this.client.request('/dev/seed/mark-email-verified', {
+      method: 'POST',
+      headers: { ...seedProvisionHeaders },
+      body: JSON.stringify({ email }),
+    })
+    if (response.ok || response.status === 404) {
+      return
+    }
+
+    await markAuthUserEmailVerifiedBySql({
+      email,
+      apiOrigin: this.client.origin,
+    })
+  }
+
+  private async markVerified(subjectId: string, email: string): Promise<void> {
+    // Prefer API path (works with local PGlite while the API holds the DB lock).
+    const response = await this.client.request('/dev/seed/mark-email-verified', {
+      method: 'POST',
+      headers: { ...seedProvisionHeaders },
+      body: JSON.stringify({ subjectId, email }),
+    })
+    if (response.ok) {
+      return
+    }
+
+    // Staging/prod Workers forbid the local route; fall back to direct Neon SQL.
+    await markAuthUserEmailVerifiedBySql({
+      subjectId,
+      email,
+      apiOrigin: this.client.origin,
+    })
+  }
+
   private shouldRepairStaleUser(
     signInResult: AuthAttemptResult,
+    signUpResult: AuthAttemptResult,
     attempts: string[],
   ): boolean {
     if (!shouldRepairStaleStagingAuthUsers(this.client.origin)) {
       return false
     }
 
-    const userAlreadyExists = attempts.some(entry => entry.includes('user already exists'))
+    const userAlreadyExists = signUpResult.code === 'USER_ALREADY_EXISTS'
+      || attempts.some(entry => entry.includes('user already exists'))
     const invalidCredentials = signInResult.status === 401
       && signInResult.code === 'INVALID_EMAIL_OR_PASSWORD'
 
@@ -155,9 +219,7 @@ export class HttpAuthProvisioner implements AuthProvisioner {
   ): Promise<AuthAttemptResult> {
     const response = await this.client.request('/auth/sign-up/email', {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
+      headers: { ...seedProvisionHeaders },
       body: JSON.stringify({
         email: account.email,
         password: account.password,
@@ -167,12 +229,12 @@ export class HttpAuthProvisioner implements AuthProvisioner {
 
     if (!response.ok) {
       const message = await response.text()
-      if (response.status === 422 && message.includes('USER_ALREADY_EXISTS')) {
+      if (response.status === 422 && isUserAlreadyExistsMessage(message)) {
         attempts.push('sign-up skipped (user already exists)')
         return { status: response.status, code: 'USER_ALREADY_EXISTS' }
       }
 
-      attempts.push(`sign-up ${response.status}`)
+      attempts.push(`sign-up ${response.status}${readAuthErrorCode(message) ? ` ${readAuthErrorCode(message)}` : ''}`)
       return {
         status: response.status,
         code: readAuthErrorCode(message),
@@ -185,6 +247,11 @@ export class HttpAuthProvisioner implements AuthProvisioner {
       ...(subjectId ? { subjectId } : {}),
     }
   }
+}
+
+function isUserAlreadyExistsMessage(message: string): boolean {
+  return message.includes('USER_ALREADY_EXISTS')
+    || message.includes('User already exists')
 }
 
 function formatSignInFailure(result: AuthAttemptResult): string {

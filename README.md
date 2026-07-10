@@ -171,7 +171,8 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 
 | Command | Description |
 |---------|-------------|
-| `bun run verify` | Pre-PR gate: quality + build + test + `bun repo verify` |
+| `bun run verify` | Pre-PR gate: `bun repo verify` + quality + build + test |
+| `bun repo verify --full` | Local PR CI: `bun run verify` + `test:integration` |
 | `bun run lint` | ESLint across workspaces |
 | `bun run lint:fix` | ESLint with auto-fix |
 | `bun run check` | TypeScript checks |
@@ -185,12 +186,13 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 ### Pre-PR verification
 
 ```sh
-bun run verify               # pre-PR gate (CI verify job)
+bun repo verify --full       # PR blocking CI locally (verify + integration)
+bun run verify               # CI verify job only (no integration)
 bun repo verify              # repo hygiene only (doctor + repo check *)
-bun run test:integration     # recommended when touching HTTP / PGlite
+bun run test:integration     # integration slices alone
 ```
 
-Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**.
+Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**. CI workflow details: **[docs/reference/ci-setup.md](./docs/reference/ci-setup.md)**.
 
 ### Per-package iteration
 

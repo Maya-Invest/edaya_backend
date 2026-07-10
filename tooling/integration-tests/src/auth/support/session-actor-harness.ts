@@ -7,11 +7,11 @@ import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetad
 export interface AuthSession {
   user: {
     id: string
+    emailVerified?: boolean | null
   }
   session: {
     id?: string
     createdAt: string | Date
-    assuranceLevel?: ActorAssuranceLevel | string
   }
 }
 
@@ -127,11 +127,12 @@ async function resolveActorIdentity(
   }
 }
 
-function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
-  if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
-    return input
-  }
-  return ActorAssuranceLevel.Standard
+function resolveAssuranceFromEmailVerified(
+  emailVerified: boolean | undefined | null,
+): ActorAssuranceLevel {
+  return emailVerified === true
+    ? ActorAssuranceLevel.Verified
+    : ActorAssuranceLevel.Standard
 }
 
 function normalizeAuthSession(input: AuthSession | null | undefined) {
@@ -152,14 +153,17 @@ function normalizeAuthSession(input: AuthSession | null | undefined) {
     return null
   }
 
+  const emailVerified = input.user.emailVerified === true
+
   return {
     user: {
       id: input.user.id,
+      emailVerified,
     },
     session: {
       ...(input.session.id ? { id: input.session.id } : {}),
       createdAt: authenticatedAt,
-      assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
+      assuranceLevel: resolveAssuranceFromEmailVerified(emailVerified),
     },
   }
 }

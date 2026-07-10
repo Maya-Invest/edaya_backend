@@ -20,7 +20,7 @@ cp .dev.vars.example .dev.vars
 bun run dev:worker
 ```
 
-Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env production --env-file .dev.vars`.
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env prod --env-file .dev.vars`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
@@ -51,7 +51,7 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 Before first production deploy:
 
 1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate production` (from repo root)
-2. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env production`
+2. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
 3. Dry-run: `bun run deploy:production:dry-run`
 4. Deploy: `bun run deploy:production` (or `bun repo deploy api production` from repo root)
 

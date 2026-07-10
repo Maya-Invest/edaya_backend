@@ -69,6 +69,7 @@ export async function runSeedHttpCli(
     provisionServiceAccount: scope === 'all',
     skipProfilePhotos: skipProfilePhotos || undefined,
     profilePhotosSkipReason,
+    noProgress: invocation.noProgress,
     repair: scope === 'doctor' ? invocation.repair : undefined,
   })
 

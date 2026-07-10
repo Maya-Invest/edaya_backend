@@ -34,7 +34,7 @@ Apply migrations with `@edaya/db-migrate` (`bun repo db migrate staging`, `bun r
 |-------|-------------|
 | `pglite`, `memory`, `memory://` | In-memory (tests) |
 | `pglite:.data/school`, `file://…` | Persisted filesystem directory |
-| `postgres://…` | Real Postgres via `postgres-js` |
+| `postgres://…` | Real Postgres (app/Worker: `node-postgres` / `pg`; CLI migrate: `postgres-js`) |
 
 ```ts
 import {

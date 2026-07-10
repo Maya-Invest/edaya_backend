@@ -1,4 +1,5 @@
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
+import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
 import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
@@ -6,6 +7,7 @@ import { AuthorizationError, AuthorizationErrorCode, QueryOperations, ReportCard
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { operationModule } from './entities/entity-config'
+import { buildAppShellCounts } from './queries/app-shell-counts'
 import { buildClassGroupTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
@@ -78,6 +80,12 @@ export class SchoolService {
     this.checkActorSchool(input.schoolId)
     await operationModule(QueryOperations.overviewRead)(this.baseService.actor)
     return this.baseService.repositories.schools.getSchoolOverview(input)
+  }
+
+  async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {
+    this.checkActorSchool(input.schoolId)
+    await operationModule(QueryOperations.overviewRead)(this.baseService.actor)
+    return buildAppShellCounts(this.baseService.repositories, input)
   }
 
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {

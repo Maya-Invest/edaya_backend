@@ -1,4 +1,4 @@
-import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
+import type { AppShellCounts, ClassGroupTimetable, GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/service";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
@@ -50,6 +50,17 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           };
           const overview = await service.getSchoolOverview(input);
           return c.json(overview, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getAppShellCounts") {
+          const input: GetAppShellCountsInput = {
+            schoolId: payload.schoolId as string,
+            ...(Array.isArray(payload.classGroupIds)
+              ? { classGroupIds: payload.classGroupIds as string[] }
+              : {}),
+          };
+          const counts: AppShellCounts = await service.getAppShellCounts(input);
+          return c.json(counts, HttpStatusCodes.OK);
         }
 
         if (queryConfig.methodName === "getClassGroupTimetable") {

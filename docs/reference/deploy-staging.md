@@ -18,17 +18,30 @@ Create a dedicated branch (e.g. `staging`) in Neon. Store the connection string 
 
 Neon **staging** branch: `br-flat-union-ahedlz5i` on project `calm-brook-83532792` (edaya).
 
-Create a Hyperdrive config from the Neon console connection string (staging branch, **not** production):
+Create **two** Hyperdrive configs from the Neon staging connection string (not production):
 
 ```sh
 cd apps/api
+# School / domain reads (query cache enabled)
 bunx wrangler hyperdrive create edaya-staging \
   --connection-string="$STAGING_DATABASE_URL"
+
+# Better Auth (cache disabled — required for sign-up → sign-in consistency)
+bunx wrangler hyperdrive create edaya-staging-auth-fresh \
+  --connection-string="$STAGING_DATABASE_URL" \
+  --caching-disabled
 ```
 
-Copy the returned config `id` into `apps/api/wrangler.jsonc` → `env.staging.hyperdrive[0].id` (replace placeholder `…000001`).
+Copy the returned config ids into `apps/api/wrangler.jsonc`:
+
+- `env.staging.hyperdrive` → binding `HYPERDRIVE` (cached)
+- `env.staging.hyperdrive` → binding `HYPERDRIVE_AUTH` (cache-disabled)
 
 **Do not commit** `STAGING_DATABASE_URL` — store it in repo root `.env` (gitignored) or your secret manager.
+
+Auth must use a cache-disabled Hyperdrive path. Hyperdrive does not invalidate cached reads after writes; Better Auth sign-up followed by sign-in fails with stale “user already exists” / “invalid password” when auth goes through a cached config.
+
+School `HYPERDRIVE` may keep query cache enabled. Staging seed retries a few read-after-write 403s (domain maps missing rows to forbidden) when Hyperdrive serves stale school reads during population.
 
 ### 3. Custom domains
 
@@ -76,6 +89,8 @@ bun repo seed --staging
 # 6. Verify
 bun repo smoke-test staging
 ```
+
+**Auth assurance (prod-identical):** interactive `assuranceLevel` is derived from Better Auth `user.emailVerified` (`standard` = unverified, `verified` = verified; `strong` reserved for future 2FA). Staging sets `REQUIRE_EMAIL_VERIFICATION=true` like production. Demo seed marks provisioned accounts `email_verified = true` so password login still works for fixture staff.
 
 ---
 
@@ -162,3 +177,4 @@ Reads repo root `.env` when present, or env vars:
 | S8 missing school | School seed not applied; run `seed:staging` |
 | Webapp calls wrong API | Rebuild webapp with `deploy:webapp:staging` (sets `PUBLIC_API_URL`) |
 | CORS errors in browser | `TRUSTED_ORIGINS` must include exact app staging origin |
+| Seed fails on profile photo upload (R2 401) | Run `bun repo smoke-test r2` — uses `apps/api/secrets.staging.json` + bucket `edaya-files-staging`; re-run `wrangler secret bulk secrets.staging.json --env staging` if check fails |

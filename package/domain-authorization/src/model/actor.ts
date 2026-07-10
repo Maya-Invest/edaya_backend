@@ -3,6 +3,13 @@ import type { GuardianScope, StudentScope, TeacherActorScope } from './actor-sco
 import type { EffectiveGrants } from './effective-grants'
 import { DomainValidationError } from '@edaya/core'
 
+/**
+ * Interactive assurance for human sessions:
+ * - `standard` — email not verified
+ * - `verified` — email verified (link or OTP)
+ * - `strong` — reserved for future 2FA (unused)
+ * - `service` — service-account API keys
+ */
 export enum ActorAssuranceLevel {
   Standard = 'standard',
   Verified = 'verified',

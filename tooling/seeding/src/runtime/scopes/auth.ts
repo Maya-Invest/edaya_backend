@@ -10,7 +10,10 @@ export async function runAuthScope(ctx: HttpSeedRuntimeContext): Promise<RunHttp
   const { auth, client, options } = ctx
   const results = createEmptyHttpSeedResults()
 
-  results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
+  results.authProvision = await runDevAuthProvision(auth, {
+    baseUrl: client.origin,
+    progress: options.progress,
+  })
 
   const seedingApiKey = ctx.profileSeedingApiKey
   const canListSchoolsViaHttp = Boolean(options.serviceAccountApiKey)

@@ -9,6 +9,7 @@ import type {
 } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
+import { withTenantLookupCache } from './tenant-lookup-cache'
 
 export interface EntityTenantResolver<T> {
   resolve: (entity: T, repositories: SchoolRepositories) => Promise<string | undefined> | string | undefined
@@ -117,6 +118,13 @@ export class ManagedEntityService<T> {
   async count(filter?: Filter<T>): Promise<number> {
     this.ensureFilterTenant(filter)
     await this.config.read.checkModule(this.actor)
+
+    // Elevated staff / system actors already have school-wide access via module
+    // checks. Use SQL COUNT(*) and skip loading every row + per-row tenant/ACL.
+    if (canCountWithoutRowAccess(this.actor)) {
+      return this.config.repository.count(filter)
+    }
+
     const entities = await this.config.repository.list(filter as QueryOptions<T> | undefined)
     await this.ensureEntitiesTenant(entities)
     await this.config.read.checkAccess(this.actor, entities, this.repositories)
@@ -223,13 +231,21 @@ export class ManagedEntityService<T> {
   }
 
   private async ensureEntitiesTenant(entities: readonly T[]): Promise<void> {
+    if (entities.length === 0) {
+      return
+    }
+
+    const repositories = withTenantLookupCache(this.repositories)
     for (const entity of entities) {
-      await this.ensureEntityTenant(entity)
+      await this.ensureEntityTenant(entity, repositories)
     }
   }
 
-  private async ensureEntityTenant(entity: T): Promise<void> {
-    const schoolId = await this.config.tenant.resolve(entity, this.repositories)
+  private async ensureEntityTenant(
+    entity: T,
+    repositories: SchoolRepositories = this.repositories,
+  ): Promise<void> {
+    const schoolId = await this.config.tenant.resolve(entity, repositories)
     if (!schoolId || schoolId !== this.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
@@ -238,4 +254,11 @@ export class ManagedEntityService<T> {
 export function getEntityId(entity: unknown): string | undefined {
   const id = (entity as { id?: unknown } | undefined)?.id
   return typeof id === 'string' ? id : undefined
+}
+
+function canCountWithoutRowAccess(actor: ActorMetadata): boolean {
+  if (actor.kind === 'system') {
+    return true
+  }
+  return actor.kind === 'staff' && actor.effectiveGrants.isElevated
 }

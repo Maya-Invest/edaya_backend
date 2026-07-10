@@ -89,7 +89,7 @@ cp apps/api/.dev.vars.example apps/api/.dev.vars
 bun --filter @edaya/api dev:worker
 ```
 
-Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` at the **staging** Neon branch. Production is deploy-only; use `wrangler dev --env production` manually only when required.
+Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` at the **staging** Neon branch. Production is deploy-only; use `wrangler dev --env prod` manually only when required.
 
 See [api-runtimes.md](./api-runtimes.md).
 
@@ -109,7 +109,7 @@ See [api-runtimes.md](./api-runtimes.md).
 cp secrets.json.example secrets.staging.json   # fill staging R2 + dev Novu
 cp secrets.json.example secrets.prod.json         # fill production R2 + prod Novu
 bunx wrangler secret bulk secrets.staging.json --env staging
-bunx wrangler secret bulk secrets.prod.json --env production
+bunx wrangler secret bulk secrets.prod.json --env prod
 ```
 
 **Neon connection strings** (migrations only — not in Wrangler): add `STAGING_DATABASE_URL` / `PRODUCTION_DATABASE_URL` to repo root `.env` (gitignored) or pass inline.

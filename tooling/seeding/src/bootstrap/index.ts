@@ -1,4 +1,5 @@
 export { HttpAuthProvisioner, signInViaHttp } from './auth/http-provisioner'
+export { markAuthUserEmailVerifiedBySql } from './auth/mark-email-verified'
 export {
   isStagingSeedApiUrl,
   repairStagingAuthUser,

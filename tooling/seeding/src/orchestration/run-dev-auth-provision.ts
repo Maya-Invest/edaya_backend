@@ -1,5 +1,7 @@
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner } from '../support/types'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { countAuthProvisionAccounts } from '../support/seed-progress'
 
 const AUTH_REQUEST_PAUSE_MS = 250
 const STAGING_AUTH_REQUEST_PAUSE_MS = 750
@@ -9,6 +11,7 @@ export interface RunDevAuthProvisionOptions {
   baseUrl?: string
   /** Override delay between ensureUser calls. Defaults to 0 in-process, 250ms remote, 750ms staging. */
   pauseBetweenRequestsMs?: number
+  progress?: SeedProgressReporter
 }
 
 function resolveAuthRequestPauseMs(options: RunDevAuthProvisionOptions): number {
@@ -40,47 +43,60 @@ export async function runDevAuthProvision(
 ): Promise<DevAuthProvisionResult> {
   const context = resolveDevSeedContext()
   const accounts: DevAuthProvisionResult['accounts'] = []
+  const totalAccounts = countAuthProvisionAccounts(context)
 
-  for (const account of context.staffAccounts) {
-    const { subjectId } = await auth.ensureUser({
-      email: account.email,
-      password: context.authPassword,
-      name: account.name,
-    })
-    accounts.push({
-      email: account.email,
-      subjectId,
-      kind: 'staff',
-    })
-    await pauseBetweenAuthRequests(options)
+  const run = async (tick: (by?: number) => void) => {
+    for (const account of context.staffAccounts) {
+      const { subjectId } = await auth.ensureUser({
+        email: account.email,
+        password: context.authPassword,
+        name: account.name,
+      })
+      accounts.push({
+        email: account.email,
+        subjectId,
+        kind: 'staff',
+      })
+      tick()
+      await pauseBetweenAuthRequests(options)
+    }
+
+    for (const account of context.teacherAccounts) {
+      const { subjectId } = await auth.ensureUser({
+        email: account.email,
+        password: context.authPassword,
+        name: account.name,
+      })
+      accounts.push({
+        email: account.email,
+        subjectId,
+        kind: 'teacher',
+      })
+      tick()
+      await pauseBetweenAuthRequests(options)
+    }
+
+    for (const account of context.guardianAccounts) {
+      const { subjectId } = await auth.ensureUser({
+        email: account.email,
+        password: context.authPassword,
+        name: account.name,
+      })
+      accounts.push({
+        email: account.email,
+        subjectId,
+        kind: 'guardian',
+      })
+      tick()
+      await pauseBetweenAuthRequests(options)
+    }
   }
 
-  for (const account of context.teacherAccounts) {
-    const { subjectId } = await auth.ensureUser({
-      email: account.email,
-      password: context.authPassword,
-      name: account.name,
-    })
-    accounts.push({
-      email: account.email,
-      subjectId,
-      kind: 'teacher',
-    })
-    await pauseBetweenAuthRequests(options)
+  if (options.progress) {
+    await options.progress.step(run, { total: totalAccounts })
   }
-
-  for (const account of context.guardianAccounts) {
-    const { subjectId } = await auth.ensureUser({
-      email: account.email,
-      password: context.authPassword,
-      name: account.name,
-    })
-    accounts.push({
-      email: account.email,
-      subjectId,
-      kind: 'guardian',
-    })
-    await pauseBetweenAuthRequests(options)
+  else {
+    await run(() => {})
   }
 
   return {

@@ -7,6 +7,11 @@ on:
         description: Migration target (staging or production)
         required: true
         type: string
+    secrets:
+      STAGING_DATABASE_URL:
+        required: false
+      PRODUCTION_DATABASE_URL:
+        required: false
 
 jobs:
   migrate:
@@ -23,6 +28,26 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Validate migration secrets
+        env:
+          MIGRATE_TARGET: ${{ inputs.migrate_target }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          missing=
+          case "$MIGRATE_TARGET" in
+            staging)
+              [ -z "$STAGING_DATABASE_URL" ] && missing=STAGING_DATABASE_URL
+              ;;
+            production)
+              [ -z "$PRODUCTION_DATABASE_URL" ] && missing=PRODUCTION_DATABASE_URL
+              ;;
+          esac
+          if [ -n "$missing" ]; then
+            echo "::error::Missing GitHub Actions secret: $missing (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
 
       - name: Migrate school + auth schema
         env:

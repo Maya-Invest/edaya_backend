@@ -25,7 +25,8 @@ import { authSchema, runMigrations } from '@edaya/adaptor-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 
 await runMigrations(db, { driver: 'pglite' }) // PGlite local/tests
-// or { driver: 'postgres-js' } with drizzle-orm/postgres-js
+// or { driver: 'node-postgres' } with drizzle-orm/node-postgres (Worker / Hyperdrive)
+// or { driver: 'postgres-js' } with drizzle-orm/postgres-js (CLI migrate tooling)
 
 betterAuth({
   database: drizzleAdapter(db, {

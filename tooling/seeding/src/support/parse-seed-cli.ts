@@ -31,6 +31,7 @@ export type SeedCliInvocation
       clean: boolean
       repair: boolean
       skipProfilePhotos: boolean
+      noProgress: boolean
     }
 
 function isSeedCliScope(value: string): value is SeedCliScope {
@@ -89,6 +90,7 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
     clean: flagArgs.includes('--clean'),
     repair: flagArgs.includes('--repair'),
     skipProfilePhotos: flagArgs.includes('--skip-profile-photos'),
+    noProgress: flagArgs.includes('--no-progress'),
   }
 }
 
@@ -111,6 +113,7 @@ export function seedCliUsage(): string {
     '  --clean                  Wipe before seeding (local or staging when --staging)',
     '  --repair                 With --scope doctor: run minimal repair chain',
     '  --skip-profile-photos    Skip profile photo uploads',
+    '  --no-progress            Disable interactive progress bars',
     '  --yes, -y                With clean: skip confirmation prompt',
     '  --school                 With clean --staging: truncate school DB only',
     '  --auth                   With clean --staging: wipe auth only',

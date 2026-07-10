@@ -6,5 +6,5 @@ export async function createAuthDatabase(
   env: Environment,
   options: { runMigrations?: boolean } = {},
 ): Promise<DatabaseHandle> {
-  return createPostgresAuthDatabase(env.DATABASE_URL, options);
+  return createPostgresAuthDatabase(env.AUTH_DATABASE_URL ?? env.DATABASE_URL, options);
 }

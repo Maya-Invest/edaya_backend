@@ -4,6 +4,7 @@ import type { TestEntity } from './managed-entity-test-context'
 import {
   AuthorizationError,
   AuthorizationErrorCode,
+  createStaffActorMetadata,
 } from '@edaya/authorization'
 import { ManagedEntityService } from '@edaya/service'
 import {
@@ -410,7 +411,47 @@ describe('ManagedEntityService', () => {
     expect(postDelete).toHaveBeenCalledTimes(1)
   })
 
-  test('count applies tenant and row access checks', async () => {
+  test('count uses repository.count for elevated staff without row access checks', async () => {
+    const repository = createRepository<TestEntity>()
+    const allowed = { id: 'entity-1', schoolId: 'school' }
+    const denied = { id: 'entity-2', schoolId: 'school' }
+    await repository.batchSave([allowed, denied])
+    const checkAccess = mock(async () => {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    })
+    const count = mock(async () => 2)
+    const list = mock(async () => {
+      throw new Error('list should not run for elevated count')
+    })
+    const service = new ManagedEntityService<TestEntity>({
+      actor,
+      repositories: {} as SchoolRepositories,
+      config: {
+        repository: {
+          ...repository,
+          count,
+          list,
+        },
+        tenant: { resolve: value => value.schoolId },
+        read: {
+          checkModule: mock(async () => {}),
+          checkAccess,
+        },
+        write: {
+          checkModule: mock(async () => {}),
+          authorizeSave: mock(async () => {}),
+          authorizeDelete: mock(async () => {}),
+        },
+      },
+    })
+
+    await expect(service.count()).resolves.toBe(2)
+    expect(count).toHaveBeenCalledWith(undefined)
+    expect(list).not.toHaveBeenCalled()
+    expect(checkAccess).not.toHaveBeenCalled()
+  })
+
+  test('count applies tenant and row access checks for non-elevated staff', async () => {
     const repository = createRepository<TestEntity>()
     const allowed = { id: 'entity-1', schoolId: 'school' }
     const denied = { id: 'entity-2', schoolId: 'school' }
@@ -419,8 +460,20 @@ describe('ManagedEntityService', () => {
       if (entities.some(entity => entity.id === denied.id))
         throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     })
+    const limitedActor = createStaffActorMetadata({
+      subjectId: 'user-1',
+      schoolId: 'school',
+      requestId: 'req-1',
+      authenticatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      staffMemberId: 'staff-1',
+      effectiveGrants: {
+        permissions: new Set(),
+        scopeGrants: [],
+        isElevated: false,
+      },
+    })
     const service = new ManagedEntityService<TestEntity>({
-      actor,
+      actor: limitedActor,
       repositories: {} as SchoolRepositories,
       config: {
         repository,

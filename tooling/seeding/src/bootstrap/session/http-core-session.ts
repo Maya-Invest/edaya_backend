@@ -25,6 +25,23 @@ async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | '
   return 'authorized'
 }
 
+const CORE_ACCESS_PROBE_ATTEMPTS = 8
+const CORE_ACCESS_PROBE_DELAY_MS = 750
+
+async function waitForCoreAccess(client: HttpSeedClient): Promise<'authorized' | 'unauthorized'> {
+  let last: 'authorized' | 'unauthorized' = 'unauthorized'
+  for (let attempt = 0; attempt < CORE_ACCESS_PROBE_ATTEMPTS; attempt++) {
+    last = await probeCoreAccess(client)
+    if (last === 'authorized') {
+      return last
+    }
+    if (attempt < CORE_ACCESS_PROBE_ATTEMPTS - 1) {
+      await new Promise(resolve => setTimeout(resolve, CORE_ACCESS_PROBE_DELAY_MS * (attempt + 1)))
+    }
+  }
+  return last
+}
+
 async function trySignIn(client: HttpSeedClient, email: string, password: string): Promise<boolean> {
   client.clearCookies()
   const response = await client.request('/auth/sign-in/email', {
@@ -103,7 +120,7 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
 
   await signInForOnboarding(client)
 
-  if (await probeCoreAccess(client) === 'authorized') {
+  if (await waitForCoreAccess(client) === 'authorized') {
     return
   }
 
@@ -142,10 +159,16 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
     const message = typeof body === 'object' && body && 'message' in body
       ? String((body as { message?: string }).message)
       : `HTTP ${response.status}`
-    throw new Error(`Failed to bootstrap HTTP core session via onboarding: ${message}`)
+    // School may already exist from a partial prior seed — wait for actor resolution.
+    const alreadyLinked = message.includes('SUBJECT_ALREADY_LINKED')
+      || message.includes('already linked')
+      || response.status === 409
+    if (!alreadyLinked) {
+      throw new Error(`Failed to bootstrap HTTP core session via onboarding: ${message}`)
+    }
   }
 
-  if (await probeCoreAccess(client) !== 'authorized') {
+  if (await waitForCoreAccess(client) !== 'authorized') {
     throw new Error('HTTP core session bootstrap completed but /core/* is still unauthorized')
   }
 }

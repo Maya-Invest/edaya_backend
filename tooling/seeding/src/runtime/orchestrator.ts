@@ -2,7 +2,13 @@ import type { HttpSeedRuntimeContext, RunHttpDevSeedsOptions } from './types'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { HttpAuthProvisioner } from '../bootstrap/auth/http-provisioner'
-import { resolveServiceAccountApiKey } from './helpers'
+import {
+  resolveAllSeedPhaseLabels,
+  resolveFreshBootstrapPhaseLabels,
+  resolveSeedPhaseLabels,
+} from '../support/resolve-seed-progress-plan'
+import { createSeedProgressReporter } from '../support/seed-progress'
+import { canUseSeedingServiceAccount, resolveServiceAccountApiKey } from './helpers'
 import { tryRunAllFreshBootstrap } from './scopes/all-fresh-bootstrap'
 import { runAuthScope } from './scopes/auth'
 import { runDoctorScope } from './scopes/doctor'
@@ -29,8 +35,25 @@ async function buildRuntimeContext(options: RunHttpDevSeedsOptions): Promise<Htt
   const profileSeedingApiKey = resolveSeedingApiKeyForSchool(seedContext.schoolId)
   const serviceAccountApiKey = await resolveServiceAccountApiKey(client, options, profileSeedingApiKey)
 
+  let progress = options.progress
+  if (!progress && !options.noProgress) {
+    const skipProfilePhotos = options.skipProfilePhotos ?? false
+    let phases = resolveSeedPhaseLabels(scope, skipProfilePhotos)
+    if (scope === 'all') {
+      const usesExistingServiceAccount = Boolean(serviceAccountApiKey)
+        || await canUseSeedingServiceAccount(client, profileSeedingApiKey)
+      phases = usesExistingServiceAccount
+        ? resolveAllSeedPhaseLabels(skipProfilePhotos, { skipAuth: true })
+        : resolveFreshBootstrapPhaseLabels(skipProfilePhotos)
+    }
+    progress = createSeedProgressReporter(phases)
+  }
+
   return {
-    options,
+    options: {
+      ...options,
+      progress,
+    },
     auth,
     client,
     scope,
@@ -43,25 +66,30 @@ async function buildRuntimeContext(options: RunHttpDevSeedsOptions): Promise<Htt
 export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions) {
   const ctx = await buildRuntimeContext(options)
 
-  switch (ctx.scope) {
-    case 'doctor':
-      return runDoctorScope(ctx)
-    case 'validate':
-      return runValidateScope(ctx)
-    case 'auth':
-      return runAuthScope(ctx)
-    case 'smoke':
-      return runSmokeScope(ctx)
-    case 'service-account':
-      return runServiceAccountScope(ctx)
-    case 'all': {
-      const freshBootstrap = await tryRunAllFreshBootstrap(ctx)
-      if (freshBootstrap) {
-        return freshBootstrap
+  try {
+    switch (ctx.scope) {
+      case 'doctor':
+        return await runDoctorScope(ctx)
+      case 'validate':
+        return await runValidateScope(ctx)
+      case 'auth':
+        return await runAuthScope(ctx)
+      case 'smoke':
+        return await runSmokeScope(ctx)
+      case 'service-account':
+        return await runServiceAccountScope(ctx)
+      case 'all': {
+        const freshBootstrap = await tryRunAllFreshBootstrap(ctx)
+        if (freshBootstrap) {
+          return freshBootstrap
+        }
+        return await runDomainSeedScope(ctx)
       }
-      return runDomainSeedScope(ctx)
+      default:
+        return await runDomainSeedScope(ctx)
     }
-    default:
-      return runDomainSeedScope(ctx)
+  }
+  finally {
+    ctx.options.progress?.finish()
   }
 }

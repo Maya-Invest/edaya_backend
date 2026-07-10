@@ -30,6 +30,7 @@ export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<R
     apiBaseUrl: client.origin,
     skipProfilePhotos: options.skipProfilePhotos,
     profilePhotosSkipReason: options.profilePhotosSkipReason,
+    progress: options.progress,
     ...(scope === 'all' && !serviceAccountApiKey
       ? { skipAuthProvision: true }
       : {}),
