@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { TimetableGenerationMode } from '../scheduling/timetable-generation-mode'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum SchoolType {
@@ -29,10 +30,11 @@ export const schoolSchema = z.object({
   enforceScheduleConflicts: z.boolean().default(false),
   timetableEnforceWorkloadFulfillment: z.boolean().default(true),
   timetableExcludeBreakSlots: z.boolean().default(true),
-  timetableMinPeriodGapSameSubject: z.number().int().nonnegative('timetableMinPeriodGapSameSubject must be a non-negative integer').default(2),
+  timetableMinDayGapSameSubject: z.number().int().nonnegative('timetableMinDayGapSameSubject must be a non-negative integer').default(1),
   timetablePreferredPeriodDefinitionIds: z.array(z.string().trim().min(1, 'preferred period definition id must not be blank')).default([]),
   timetableAllowUnassignedTeacherPlacements: z.boolean().default(false),
   timetableUseHomeroomTeacherFallback: z.boolean().default(false),
+  timetableGenerationMode: z.nativeEnum(TimetableGenerationMode).default(TimetableGenerationMode.Weekly),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -63,10 +65,11 @@ export class School {
   get enforceScheduleConflicts() { return this.data.enforceScheduleConflicts }
   get timetableEnforceWorkloadFulfillment() { return this.data.timetableEnforceWorkloadFulfillment }
   get timetableExcludeBreakSlots() { return this.data.timetableExcludeBreakSlots }
-  get timetableMinPeriodGapSameSubject() { return this.data.timetableMinPeriodGapSameSubject }
+  get timetableMinDayGapSameSubject() { return this.data.timetableMinDayGapSameSubject }
   get timetablePreferredPeriodDefinitionIds() { return this.data.timetablePreferredPeriodDefinitionIds }
   get timetableAllowUnassignedTeacherPlacements() { return this.data.timetableAllowUnassignedTeacherPlacements }
   get timetableUseHomeroomTeacherFallback() { return this.data.timetableUseHomeroomTeacherFallback }
+  get timetableGenerationMode() { return this.data.timetableGenerationMode }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

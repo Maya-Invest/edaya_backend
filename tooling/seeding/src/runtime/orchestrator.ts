@@ -38,13 +38,14 @@ async function buildRuntimeContext(options: RunHttpDevSeedsOptions): Promise<Htt
   let progress = options.progress
   if (!progress && !options.noProgress) {
     const skipProfilePhotos = options.skipProfilePhotos ?? false
-    let phases = resolveSeedPhaseLabels(scope, skipProfilePhotos)
+    const skipAttachments = options.skipAttachments ?? false
+    let phases = resolveSeedPhaseLabels(scope, skipProfilePhotos, { skipAttachments })
     if (scope === 'all') {
       const usesExistingServiceAccount = Boolean(serviceAccountApiKey)
         || await canUseSeedingServiceAccount(client, profileSeedingApiKey)
       phases = usesExistingServiceAccount
-        ? resolveAllSeedPhaseLabels(skipProfilePhotos, { skipAuth: true })
-        : resolveFreshBootstrapPhaseLabels(skipProfilePhotos)
+        ? resolveAllSeedPhaseLabels(skipProfilePhotos, { skipAuth: true, skipAttachments })
+        : resolveFreshBootstrapPhaseLabels(skipProfilePhotos, skipAttachments)
     }
     progress = createSeedProgressReporter(phases)
   }

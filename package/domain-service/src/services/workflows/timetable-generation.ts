@@ -3,6 +3,7 @@ import type {
   Assessment,
   ClassGroup,
   ClassSubject,
+  GradeLevelSubject,
   LessonSession as LessonSessionEntity,
   PeriodDefinition,
   School,
@@ -21,7 +22,10 @@ import {
   OccurrenceStatus,
   TeacherAssignmentKind,
   TeacherAssignmentStatus,
+  TeacherUnavailability,
+  TeacherUnavailabilityRecurrence,
   TimetableGenerated,
+  TimetableGenerationMode,
 } from '@edaya/core'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { assertNoSessionConflict } from './schedule-conflicts'
@@ -44,9 +48,10 @@ export interface ResolvedTimetableCell {
 }
 
 export interface TimetableGenerationDefaults {
+  generationMode: TimetableGenerationMode
   enforceWorkloadFulfillment: boolean
   excludeBreakSlots: boolean
-  minPeriodGapSameSubject: number
+  minDayGapSameSubject: number
   preferredPeriodDefinitionIds: string[]
   allowUnassignedTeacherPlacements: boolean
   useHomeroomTeacherFallback: boolean
@@ -131,6 +136,31 @@ export interface SolveTimetableResult {
   unmetWorkloads: UnmetTimetableWorkload[]
 }
 
+export interface SpreadWeeklyTemplateInput {
+  classGroupId: string
+  templatePlacements: readonly TimetablePlacement[]
+  periodById: ReadonlyMap<string, PeriodDefinition>
+  startDate: Date
+  endDate: Date
+  nonSchoolDates: ReadonlySet<string>
+  occupiedIntervals: readonly OccupiedInterval[]
+  subjects: readonly TimetableSubjectDemand[]
+  options: TimetableGenerationDefaults
+}
+
+export const WEEKLY_TEMPLATE_WEEK_KEY = '__template__'
+const TEMPLATE_REFERENCE_MONDAY = normalizeDate(new Date('2026-01-05T00:00:00.000Z'))
+
+const DAY_OFFSET_BY_DAY_OF_WEEK: Record<DayOfWeek, number> = {
+  [DayOfWeek.Monday]: 0,
+  [DayOfWeek.Tuesday]: 1,
+  [DayOfWeek.Wednesday]: 2,
+  [DayOfWeek.Thursday]: 3,
+  [DayOfWeek.Friday]: 4,
+  [DayOfWeek.Saturday]: 5,
+  [DayOfWeek.Sunday]: 6,
+}
+
 export interface GenerateClassGroupTimetableResult extends SolveTimetableResult {
   classGroupId: string
   sessions: LessonSessionEntity[]
@@ -139,6 +169,7 @@ export interface GenerateClassGroupTimetableResult extends SolveTimetableResult 
 export interface GenerateSchoolTimetableResult {
   academicYearId: string
   classGroups: GenerateClassGroupTimetableResult[]
+  skippedClassGroupIds: string[]
 }
 
 export interface PublishClassGroupTimetableResult {
@@ -174,6 +205,25 @@ function nextDate(date: Date): Date {
 
 function endExclusive(date: Date): Date {
   return nextDate(normalizeDate(date))
+}
+
+function calendarDaysBetween(leftDateKey: string, rightDateKey: string): number {
+  const parse = (dateKey: string) => {
+    const [year, month, day] = dateKey.split('-').map(Number)
+    return Date.UTC(year!, month! - 1, day!)
+  }
+  return Math.round(Math.abs(parse(rightDateKey) - parse(leftDateKey)) / (24 * 60 * 60 * 1000))
+}
+
+function violatesSameSubjectDayGap(
+  placements: readonly TimetablePlacement[],
+  classSubjectId: string,
+  date: string,
+  minDayGapSameSubject: number,
+): boolean {
+  return placements.some(placement =>
+    placement.classSubjectId === classSubjectId
+    && calendarDaysBetween(placement.cell.date, date) < minDayGapSameSubject)
 }
 
 function weekKey(date: Date): string {
@@ -284,6 +334,217 @@ export async function resolveTimetableSpace(
   return cells
 }
 
+function signedCalendarDaysBetween(leftDateKey: string, rightDateKey: string): number {
+  const parse = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number)
+    return Date.UTC(year!, month! - 1, day!)
+  }
+  return Math.round((parse(rightDateKey) - parse(leftDateKey)) / (24 * 60 * 60 * 1000))
+}
+
+function dateFromKey(dateKeyValue: string): Date {
+  const [year, month, day] = dateKeyValue.split('-').map(Number)
+  return normalizeDate(new Date(Date.UTC(year!, month! - 1, day!)))
+}
+
+function referenceDateForDayOfWeek(day: DayOfWeek): Date {
+  const offset = DAY_OFFSET_BY_DAY_OF_WEEK[day]
+  const date = new Date(TEMPLATE_REFERENCE_MONDAY)
+  date.setUTCDate(date.getUTCDate() + offset)
+  return normalizeDate(date)
+}
+
+function dateInWeek(weekMondayKey: string, templateDateKey: string): string {
+  const offset = signedCalendarDaysBetween(dateKey(TEMPLATE_REFERENCE_MONDAY), templateDateKey)
+  const date = dateFromKey(weekMondayKey)
+  date.setUTCDate(date.getUTCDate() + offset)
+  return dateKey(date)
+}
+
+function weekKeysInRange(startDate: Date, endDate: Date): string[] {
+  const keys = new Set<string>()
+  let current = normalizeDate(startDate)
+  const last = normalizeDate(endDate)
+  while (current <= last) {
+    keys.add(weekKey(current))
+    current = nextDate(current)
+  }
+  return [...keys].sort()
+}
+
+async function collectNonSchoolDates(
+  repositories: SchoolRepositories,
+  classGroup: ClassGroup,
+  academicYearId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<Set<string>> {
+  const events = await repositories.calendarEvents.list({ academicYearId })
+  const nonSchoolDates = new Set<string>()
+  for (const event of events) {
+    if (!event.isNonSchoolDay || !calendarEventAppliesToClass(event, classGroup)) {
+      continue
+    }
+    let current = normalizeDate(event.startDate)
+    const last = normalizeDate(event.endDate)
+    while (current <= last) {
+      nonSchoolDates.add(dateKey(current))
+      current = nextDate(current)
+    }
+  }
+  return nonSchoolDates
+}
+
+function formatTimetableWorkloadViolation(first: UnmetTimetableWorkload): string {
+  const weekLabel = first.weekKey === WEEKLY_TEMPLATE_WEEK_KEY ? 'the template week' : `week ${first.weekKey}`
+  return `Could not place ${first.placed}/${first.required} periods for class subject ${first.classSubjectId} in ${weekLabel}`
+}
+
+export async function resolveWeeklyTemplateSpace(
+  repositories: SchoolRepositories,
+  academicYearId: string,
+  options: { excludeBreakSlots?: boolean } = {},
+): Promise<ResolvedTimetableCell[]> {
+  const periods = await repositories.periodDefinitions.list({ academicYearId })
+  const teachingPeriods = periods
+    .filter(period => period.isTeachingSlot
+      && (!(options.excludeBreakSlots ?? true) || !period.isBreak))
+    .sort((left, right) =>
+      DAY_OFFSET_BY_DAY_OF_WEEK[left.dayOfWeek] - DAY_OFFSET_BY_DAY_OF_WEEK[right.dayOfWeek]
+      || left.order - right.order
+      || left.id.localeCompare(right.id))
+  const cells: ResolvedTimetableCell[] = []
+  let weeklyIndex = 0
+  for (const period of teachingPeriods) {
+    const date = referenceDateForDayOfWeek(period.dayOfWeek)
+    const times = buildCellTimes(date, period)
+    cells.push({
+      date: dateKey(date),
+      weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
+      weeklyIndex: weeklyIndex++,
+      periodDefinitionId: period.id,
+      ...times,
+    })
+  }
+  return cells
+}
+
+function placementOccupiedIntervals(
+  classGroupId: string,
+  placement: TimetablePlacement,
+): OccupiedInterval[] {
+  const intervals: OccupiedInterval[] = [{
+    layer: 'class_group',
+    layerKey: classGroupId,
+    startsAt: placement.cell.startsAt,
+    endsAt: placement.cell.endsAt,
+  }]
+  for (const teacherId of placement.teacherIds) {
+    intervals.push({
+      layer: 'teacher',
+      layerKey: teacherId,
+      startsAt: placement.cell.startsAt,
+      endsAt: placement.cell.endsAt,
+    })
+  }
+  return intervals
+}
+
+function teachingDateKeysInWeek(
+  weekMondayKey: string,
+  rangeStartKey: string,
+  rangeEndKey: string,
+  nonSchoolDates: ReadonlySet<string>,
+): string[] {
+  const monday = dateFromKey(weekMondayKey)
+  const dates: string[] = []
+  for (let offset = 0; offset < 5; offset++) {
+    const date = new Date(monday)
+    date.setUTCDate(date.getUTCDate() + offset)
+    const key = dateKey(date)
+    if (key >= rangeStartKey && key <= rangeEndKey && !nonSchoolDates.has(key)) {
+      dates.push(key)
+    }
+  }
+  return dates
+}
+
+export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTimetableResult {
+  const rangeStartKey = dateKey(normalizeDate(input.startDate))
+  const rangeEndKey = dateKey(normalizeDate(input.endDate))
+  const occupied = [...input.occupiedIntervals]
+  const placements: TimetablePlacement[] = []
+  const placedBySubjectWeek: Record<string, Record<string, number>> = {}
+  const weeks = weekKeysInRange(input.startDate, input.endDate)
+
+  for (const templatePlacement of input.templatePlacements) {
+    const period = input.periodById.get(templatePlacement.cell.periodDefinitionId)
+    if (!period) {
+      continue
+    }
+    for (const currentWeekKey of weeks) {
+      const concreteDate = dateInWeek(currentWeekKey, templatePlacement.cell.date)
+      if (concreteDate < rangeStartKey || concreteDate > rangeEndKey) {
+        continue
+      }
+      if (input.nonSchoolDates.has(concreteDate)) {
+        continue
+      }
+      const times = buildCellTimes(dateFromKey(concreteDate), period)
+      const cell: ResolvedTimetableCell = {
+        date: concreteDate,
+        weekKey: currentWeekKey,
+        weeklyIndex: templatePlacement.cell.weeklyIndex,
+        periodDefinitionId: templatePlacement.cell.periodDefinitionId,
+        ...times,
+      }
+      if (!cellIsAvailable(cell, input.classGroupId, templatePlacement.teacherIds, occupied)) {
+        continue
+      }
+      const placement = {
+        classSubjectId: templatePlacement.classSubjectId,
+        displayLabel: templatePlacement.displayLabel,
+        teacherIds: templatePlacement.teacherIds,
+        cell,
+      }
+      placements.push(placement)
+      occupied.push(...placementOccupiedIntervals(input.classGroupId, placement))
+      const byWeek = placedBySubjectWeek[placement.classSubjectId] ?? {}
+      byWeek[currentWeekKey] = (byWeek[currentWeekKey] ?? 0) + 1
+      placedBySubjectWeek[placement.classSubjectId] = byWeek
+    }
+  }
+
+  const unmetWorkloads: UnmetTimetableWorkload[] = []
+  for (const subject of input.subjects) {
+    for (const currentWeekKey of weeks) {
+      const teachingDays = teachingDateKeysInWeek(currentWeekKey, rangeStartKey, rangeEndKey, input.nonSchoolDates)
+      if (teachingDays.length === 0) {
+        continue
+      }
+      const placed = placedBySubjectWeek[subject.classSubjectId]?.[currentWeekKey] ?? 0
+      if (placed < subject.periodsPerWeek) {
+        unmetWorkloads.push({
+          classSubjectId: subject.classSubjectId,
+          weekKey: currentWeekKey,
+          required: subject.periodsPerWeek,
+          placed,
+        })
+      }
+    }
+  }
+
+  if (input.options.enforceWorkloadFulfillment && unmetWorkloads.length > 0) {
+    const first = unmetWorkloads[0]!
+    throw new BusinessRuleViolationError(
+      'TIMETABLE_WORKLOAD_UNSATISFIED',
+      formatTimetableWorkloadViolation(first),
+    )
+  }
+
+  return { placements, unmetWorkloads }
+}
+
 function cellIsAvailable(
   cell: ResolvedTimetableCell,
   classGroupId: string,
@@ -342,8 +603,7 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
         if (!cellIsAvailable(cell, input.classGroupId, subject.teacherIds, occupied)) {
           continue
         }
-        if (subjectPlacements.some(placement =>
-          Math.abs(placement.cell.weeklyIndex - cell.weeklyIndex) < input.options.minPeriodGapSameSubject)) {
+        if (violatesSameSubjectDayGap(placements, subject.classSubjectId, cell.date, input.options.minDayGapSameSubject)) {
           continue
         }
         const placement = { classSubjectId: subject.classSubjectId, displayLabel: subject.displayLabel, teacherIds: subject.teacherIds, cell }
@@ -374,7 +634,7 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
     const first = unmetWorkloads[0]!
     throw new BusinessRuleViolationError(
       'TIMETABLE_WORKLOAD_UNSATISFIED',
-      `Could not place ${first.required} periods for class subject ${first.classSubjectId} in week ${first.weekKey}`,
+      formatTimetableWorkloadViolation(first),
     )
   }
   return { placements, unmetWorkloads }
@@ -386,6 +646,26 @@ function assignmentApplies(assignment: TeacherAssignment, startsAt: Date, endsAt
     && Boolean(assignment.classSubjectId)
     && (!assignment.startsAt || assignment.startsAt < endsAt)
     && (!assignment.endsAt || startsAt < assignment.endsAt)
+}
+
+function resolveClassSubjectPeriodsPerWeek(
+  subject: ClassSubject,
+  override: number | undefined,
+  gradeLevelSubject?: GradeLevelSubject,
+): number | undefined {
+  if (override !== undefined && Number.isInteger(override) && override > 0) {
+    return override
+  }
+  if (subject.periodsPerWeek && subject.periodsPerWeek > 0) {
+    return subject.periodsPerWeek
+  }
+  if (gradeLevelSubject?.periodsPerWeek && gradeLevelSubject.periodsPerWeek > 0) {
+    return gradeLevelSubject.periodsPerWeek
+  }
+  if (subject.coefficient && subject.coefficient > 0) {
+    return Math.max(2, Math.round(subject.coefficient) + 1)
+  }
+  return undefined
 }
 
 function teacherIdsForClassSubjectAt(
@@ -419,24 +699,9 @@ async function buildOccupiedIntervals(
   startsAt: Date,
   endsAt: Date,
   demands: TimetableSubjectDemand[],
+  scope: 'spread' | 'unavailability-only' = 'spread',
 ): Promise<OccupiedInterval[]> {
-  const [lessons, activities, assignments, assessments] = await Promise.all([
-    repositories.lessonSessions.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
-    repositories.activitySessions.list({ classGroupId }),
-    repositories.teacherAssignments.list({ kind: TeacherAssignmentKind.Subject, status: TeacherAssignmentStatus.Active }),
-    repositories.assessments.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
-  ])
   const relevantTeacherIds = new Set(demands.flatMap(demand => demand.teacherIds))
-  for (const lesson of lessons) {
-    for (const teacherId of resolveLessonTeacherIds(lesson, assignments)) {
-      relevantTeacherIds.add(teacherId)
-    }
-  }
-  for (const assessment of assessments.filter(assessmentIsTimed)) {
-    for (const teacherId of teacherIdsForClassSubjectAt(assessment.classSubjectId, assignments, assessment.startsAt, assessment.endsAt)) {
-      relevantTeacherIds.add(teacherId)
-    }
-  }
   const unavailabilities = relevantTeacherIds.size > 0
     ? await repositories.teacherUnavailabilities.list({ teacherId: { $in: [...relevantTeacherIds] }, isActive: true })
     : []
@@ -450,6 +715,26 @@ async function buildOccupiedIntervals(
         endsAt: interval.endsAt,
         sourceSessionId: `teacher-unavailability:${interval.sourceId}`,
       })
+    }
+  }
+  if (scope === 'unavailability-only') {
+    return occupied
+  }
+
+  const [lessons, activities, assignments, assessments] = await Promise.all([
+    repositories.lessonSessions.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
+    repositories.activitySessions.list({ classGroupId }),
+    repositories.teacherAssignments.list({ kind: TeacherAssignmentKind.Subject, status: TeacherAssignmentStatus.Active }),
+    repositories.assessments.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
+  ])
+  for (const lesson of lessons) {
+    for (const teacherId of resolveLessonTeacherIds(lesson, assignments)) {
+      relevantTeacherIds.add(teacherId)
+    }
+  }
+  for (const assessment of assessments.filter(assessmentIsTimed)) {
+    for (const teacherId of teacherIdsForClassSubjectAt(assessment.classSubjectId, assignments, assessment.startsAt, assessment.endsAt)) {
+      relevantTeacherIds.add(teacherId)
     }
   }
   for (const lesson of lessons) {
@@ -483,6 +768,60 @@ async function buildOccupiedIntervals(
   return occupied
 }
 
+function clockTimeOnDate(date: Date, time: string): Date {
+  const [hour = 0, minute = 0] = time.split(':').map(Number)
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hour, minute))
+}
+
+function expandWeeklyUnavailabilityForTemplate(
+  rule: TeacherUnavailability,
+  generationStart: Date,
+  generationEnd: Date,
+): OccupiedInterval[] {
+  if (!rule.isActive
+    || rule.recurrence !== TeacherUnavailabilityRecurrence.Weekly
+    || !rule.dayOfWeek
+    || !rule.startTime
+    || !rule.endTime
+    || !rule.effectiveFrom
+    || !rule.effectiveUntil) {
+    return []
+  }
+  const generationRangeStart = normalizeDate(generationStart)
+  const generationRangeEnd = normalizeDate(generationEnd)
+  const ruleStart = normalizeDate(rule.effectiveFrom)
+  const ruleEnd = normalizeDate(rule.effectiveUntil)
+  if (ruleEnd < generationRangeStart || ruleStart > generationRangeEnd) {
+    return []
+  }
+  const templateDate = referenceDateForDayOfWeek(rule.dayOfWeek)
+  return [{
+    layer: 'teacher',
+    layerKey: rule.teacherId,
+    startsAt: clockTimeOnDate(templateDate, rule.startTime),
+    endsAt: clockTimeOnDate(templateDate, rule.endTime),
+    sourceSessionId: `teacher-unavailability:${rule.id}`,
+  }]
+}
+
+async function buildTemplateOccupiedIntervals(
+  repositories: SchoolRepositories,
+  demands: TimetableSubjectDemand[],
+  generationStart: Date,
+  generationEnd: Date,
+): Promise<OccupiedInterval[]> {
+  const relevantTeacherIds = new Set(demands.flatMap(demand => demand.teacherIds))
+  if (relevantTeacherIds.size === 0) {
+    return []
+  }
+  const unavailabilities = await repositories.teacherUnavailabilities.list({
+    teacherId: { $in: [...relevantTeacherIds] },
+    isActive: true,
+  })
+  return unavailabilities.flatMap(rule =>
+    expandWeeklyUnavailabilityForTemplate(rule, generationStart, generationEnd))
+}
+
 export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
   async generateClassGroupTimetable(input: GenerateClassGroupTimetableInput): Promise<GenerateClassGroupTimetableResult> {
     const context = await this.requireGenerationContext(input)
@@ -506,13 +845,18 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       await this.authorizeCreate(group)
     }
     return this.baseService.atomicExecution.execute(async () => {
+      const school = await this.baseService.repositories.schools.findById(academicYear.schoolId)
+      const generationMode = input.options?.generationMode ?? school?.timetableGenerationMode ?? TimetableGenerationMode.Weekly
+      if (generationMode === TimetableGenerationMode.Weekly) {
+        return this.generateSchoolWeeklyInternal(input, groups)
+      }
       const results: GenerateClassGroupTimetableResult[] = []
       for (const group of groups) {
         const classInput = { ...input, classGroupId: group.id }
         const context = await this.requireGenerationContext(classInput)
         results.push(await this.generateClassGroupInternal(classInput, context, true))
       }
-      return { academicYearId: input.academicYearId, classGroups: results }
+      return { academicYearId: input.academicYearId, classGroups: results, skippedClassGroupIds: [] }
     })
   }
 
@@ -527,56 +871,53 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     await this.authorizeCreate(context.classGroup)
     await this.authorizePublish(context.classGroup)
     return this.baseService.atomicExecution.execute(async () => {
-      const generated = await this.generatedSessionsInRange(input.classGroupId, input.startDate, input.endDate)
-      for (const session of generated) {
-        const preserve = session.status === OccurrenceStatus.Completed
-          || (session.status === OccurrenceStatus.Pending && session.isException)
-        if (!preserve) {
-          await this.baseService.repositories.lessonSessions.delete(session.id)
-        }
-      }
+      await this.discardRegeneratableSessionsInRange(input.classGroupId, input.startDate, input.endDate)
       const generation = await this.generateClassGroupInternal(input, context, false)
       const publication = await this.publishInternal(input, context.classGroup)
       return { generation, publication }
     })
   }
 
-  private async generateClassGroupInternal(
+  private resolveGenerationOptions(
     input: GenerateClassGroupTimetableInput,
-    context: { classGroup: ClassGroup, academicYear: AcademicYear, school: School },
-    rejectExistingDrafts: boolean,
-  ): Promise<GenerateClassGroupTimetableResult> {
-    if (rejectExistingDrafts) {
-      const existing = await this.generatedSessionsInRange(input.classGroupId, input.startDate, input.endDate)
-      if (existing.some(session => session.timetableGenerated === TimetableGenerated.Draft && !session.isException)) {
-        throw new BusinessRuleViolationError('TIMETABLE_DRAFT_ALREADY_EXISTS', 'Generated drafts already exist in this range; use republish to replace them')
-      }
-      if (existing.some(session => session.timetableGenerated === TimetableGenerated.Published && !session.isException)) {
-        throw new BusinessRuleViolationError('TIMETABLE_PUBLISHED_ALREADY_EXISTS', 'Published timetable sessions already exist in this range; use republish to replace them')
-      }
+    school: School,
+  ): TimetableGenerationDefaults {
+    return {
+      generationMode: input.options?.generationMode ?? school.timetableGenerationMode,
+      enforceWorkloadFulfillment: input.options?.enforceWorkloadFulfillment ?? school.timetableEnforceWorkloadFulfillment,
+      excludeBreakSlots: input.options?.excludeBreakSlots ?? school.timetableExcludeBreakSlots,
+      minDayGapSameSubject: input.options?.minDayGapSameSubject ?? school.timetableMinDayGapSameSubject,
+      preferredPeriodDefinitionIds: input.options?.preferredPeriodDefinitionIds ?? school.timetablePreferredPeriodDefinitionIds,
+      allowUnassignedTeacherPlacements: input.options?.allowUnassignedTeacherPlacements ?? school.timetableAllowUnassignedTeacherPlacements,
+      useHomeroomTeacherFallback: input.options?.useHomeroomTeacherFallback ?? school.timetableUseHomeroomTeacherFallback,
     }
-    const options: TimetableGenerationDefaults = {
-      enforceWorkloadFulfillment: input.options?.enforceWorkloadFulfillment ?? context.school.timetableEnforceWorkloadFulfillment,
-      excludeBreakSlots: input.options?.excludeBreakSlots ?? context.school.timetableExcludeBreakSlots,
-      minPeriodGapSameSubject: input.options?.minPeriodGapSameSubject ?? context.school.timetableMinPeriodGapSameSubject,
-      preferredPeriodDefinitionIds: input.options?.preferredPeriodDefinitionIds ?? context.school.timetablePreferredPeriodDefinitionIds,
-      allowUnassignedTeacherPlacements: input.options?.allowUnassignedTeacherPlacements ?? context.school.timetableAllowUnassignedTeacherPlacements,
-      useHomeroomTeacherFallback: input.options?.useHomeroomTeacherFallback ?? context.school.timetableUseHomeroomTeacherFallback,
-    }
-    const cells = await resolveTimetableSpace(this.baseService.repositories, input, { excludeBreakSlots: options.excludeBreakSlots })
-    const rangeStart = normalizeDate(input.startDate)
-    const rangeEnd = endExclusive(input.endDate)
+  }
+
+  private async buildClassDemands(
+    input: GenerateClassGroupTimetableInput,
+    context: { classGroup: ClassGroup },
+    options: TimetableGenerationDefaults,
+    rangeStart: Date,
+    rangeEnd: Date,
+  ): Promise<TimetableSubjectDemand[]> {
     const [classSubjects, assignments] = await Promise.all([
       this.baseService.repositories.classSubjects.list({ classGroupId: input.classGroupId }),
       this.baseService.repositories.teacherAssignments.list({ kind: TeacherAssignmentKind.Subject, status: TeacherAssignmentStatus.Active }),
     ])
     const offered = classSubjects.filter(subject => subject.isOffered)
+    const gradeLevelSubjectIds = [...new Set(offered
+      .map(subject => subject.gradeLevelSubjectId)
+      .filter((gradeLevelSubjectId): gradeLevelSubjectId is string => Boolean(gradeLevelSubjectId)))]
+    const gradeLevelSubjects = gradeLevelSubjectIds.length > 0
+      ? await this.baseService.repositories.gradeLevelSubjects.findByIds(gradeLevelSubjectIds)
+      : []
+    const gradeLevelSubjectById = new Map(gradeLevelSubjects.map(gradeLevelSubject => [gradeLevelSubject.id, gradeLevelSubject]))
     const subjectEntities = await this.baseService.repositories.subjects.findByIds([...new Set(offered.map(subject => subject.subjectId))])
     const labelBySubjectId = new Map(subjectEntities.map(subject => [subject.id, subject.name]))
     const homeroomTeacherId = options.useHomeroomTeacherFallback
       ? await this.resolveHomeroomTeacherId(context.classGroup)
       : undefined
-    const demands = offered.map(subject => this.buildDemand(
+    return offered.map(subject => this.buildDemand(
       subject,
       assignments,
       input,
@@ -585,19 +926,16 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       labelBySubjectId.get(subject.subjectId) ?? subject.subjectId,
       rangeStart,
       rangeEnd,
+      subject.gradeLevelSubjectId ? gradeLevelSubjectById.get(subject.gradeLevelSubjectId) : undefined,
     ))
-    const occupiedIntervals = await buildOccupiedIntervals(this.baseService.repositories, input.classGroupId, rangeStart, rangeEnd, demands)
-    const existingWorkloadByClassSubjectAndWeek = await this.buildExistingWorkload(input.classGroupId, rangeStart, rangeEnd)
-    const solved = solveTimetable({
-      classGroupId: input.classGroupId,
-      cells,
-      subjects: demands,
-      occupiedIntervals,
-      existingWorkloadByClassSubjectAndWeek,
-      options,
-    })
+  }
+
+  private async persistPlacementSessions(
+    placements: readonly TimetablePlacement[],
+    context: { classGroup: ClassGroup },
+  ): Promise<LessonSessionEntity[]> {
     const sessions: LessonSessionEntity[] = []
-    for (const placement of solved.placements) {
+    for (const placement of placements) {
       const session = new LessonSession({
         id: randomUUID(),
         schoolId: context.classGroup.schoolId,
@@ -614,7 +952,167 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.repositories.lessonSessions.save(session)
       sessions.push(session)
     }
+    return sessions
+  }
+
+  private async generateClassGroupInternal(
+    input: GenerateClassGroupTimetableInput,
+    context: { classGroup: ClassGroup, academicYear: AcademicYear, school: School },
+    rejectExistingDrafts: boolean,
+  ): Promise<GenerateClassGroupTimetableResult> {
+    if (rejectExistingDrafts) {
+      await this.discardRegeneratableSessionsInRange(input.classGroupId, input.startDate, input.endDate)
+    }
+    const options = this.resolveGenerationOptions(input, context.school)
+    if (options.generationMode === TimetableGenerationMode.Weekly) {
+      return this.generateClassGroupWeeklyInternal(input, context, options)
+    }
+    const rangeStart = normalizeDate(input.startDate)
+    const rangeEnd = endExclusive(input.endDate)
+    const cells = await resolveTimetableSpace(this.baseService.repositories, input, { excludeBreakSlots: options.excludeBreakSlots })
+    const demands = await this.buildClassDemands(input, context, options, rangeStart, rangeEnd)
+    const occupiedIntervals = await buildOccupiedIntervals(this.baseService.repositories, input.classGroupId, rangeStart, rangeEnd, demands)
+    const existingWorkloadByClassSubjectAndWeek = await this.buildExistingWorkload(input.classGroupId, rangeStart, rangeEnd)
+    const solved = solveTimetable({
+      classGroupId: input.classGroupId,
+      cells,
+      subjects: demands,
+      occupiedIntervals,
+      existingWorkloadByClassSubjectAndWeek,
+      options,
+    })
+    const sessions = await this.persistPlacementSessions(solved.placements, context)
     return { classGroupId: input.classGroupId, sessions, ...solved }
+  }
+
+  private async generateClassGroupWeeklyInternal(
+    input: GenerateClassGroupTimetableInput,
+    context: { classGroup: ClassGroup, academicYear: AcademicYear, school: School },
+    options: TimetableGenerationDefaults,
+  ): Promise<GenerateClassGroupTimetableResult> {
+    const rangeStart = normalizeDate(input.startDate)
+    const rangeEnd = endExclusive(input.endDate)
+    const demands = await this.buildClassDemands(input, context, options, rangeStart, rangeEnd)
+    const [templateCells, periods] = await Promise.all([
+      resolveWeeklyTemplateSpace(this.baseService.repositories, input.academicYearId, { excludeBreakSlots: options.excludeBreakSlots }),
+      this.baseService.repositories.periodDefinitions.list({ academicYearId: input.academicYearId }),
+    ])
+    const periodById = new Map(periods.map(period => [period.id, period]))
+    const templateUnavailability = await buildTemplateOccupiedIntervals(
+      this.baseService.repositories,
+      demands,
+      input.startDate,
+      input.endDate,
+    )
+    const templateSolved = solveTimetable({
+      classGroupId: input.classGroupId,
+      cells: templateCells,
+      subjects: demands,
+      occupiedIntervals: templateUnavailability,
+      options: { ...options, enforceWorkloadFulfillment: false },
+    })
+    const nonSchoolDates = await collectNonSchoolDates(
+      this.baseService.repositories,
+      context.classGroup,
+      input.academicYearId,
+      input.startDate,
+      input.endDate,
+    )
+    const spreadOccupied = await buildOccupiedIntervals(
+      this.baseService.repositories,
+      input.classGroupId,
+      rangeStart,
+      rangeEnd,
+      demands,
+    )
+    const spread = spreadWeeklyTemplate({
+      classGroupId: input.classGroupId,
+      templatePlacements: templateSolved.placements,
+      periodById,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      nonSchoolDates,
+      occupiedIntervals: spreadOccupied,
+      subjects: demands,
+      options,
+    })
+    const sessions = await this.persistPlacementSessions(spread.placements, context)
+    return { classGroupId: input.classGroupId, sessions, ...spread }
+  }
+
+  private async generateSchoolWeeklyInternal(
+    input: GenerateSchoolTimetableInput,
+    groups: ClassGroup[],
+  ): Promise<GenerateSchoolTimetableResult> {
+    for (const group of groups) {
+      await this.discardRegeneratableSessionsInRange(group.id, input.startDate, input.endDate)
+    }
+    const rangeStart = normalizeDate(input.startDate)
+    const rangeEnd = endExclusive(input.endDate)
+    const firstContext = await this.requireGenerationContext({ ...input, classGroupId: groups[0]!.id })
+    const sharedOptions = this.resolveGenerationOptions({ ...input, classGroupId: groups[0]!.id }, firstContext.school)
+    const [templateCells, periods] = await Promise.all([
+      resolveWeeklyTemplateSpace(this.baseService.repositories, input.academicYearId, { excludeBreakSlots: sharedOptions.excludeBreakSlots }),
+      this.baseService.repositories.periodDefinitions.list({ academicYearId: input.academicYearId }),
+    ])
+    const periodById = new Map(periods.map(period => [period.id, period]))
+    let sharedTemplateOccupied: OccupiedInterval[] = []
+    const prepared = []
+    for (const group of groups) {
+      const classInput = { ...input, classGroupId: group.id }
+      const context = await this.requireGenerationContext(classInput)
+      const options = this.resolveGenerationOptions(classInput, context.school)
+      const demands = await this.buildClassDemands(classInput, context, options, rangeStart, rangeEnd)
+      const templateUnavailability = await buildTemplateOccupiedIntervals(
+        this.baseService.repositories,
+        demands,
+        input.startDate,
+        input.endDate,
+      )
+      const templateSolved = solveTimetable({
+        classGroupId: group.id,
+        cells: templateCells,
+        subjects: demands,
+        occupiedIntervals: [...sharedTemplateOccupied, ...templateUnavailability],
+        options: { ...options, enforceWorkloadFulfillment: false },
+      })
+      for (const placement of templateSolved.placements) {
+        sharedTemplateOccupied.push(...placementOccupiedIntervals(group.id, placement))
+      }
+      prepared.push({ classInput, context, options, demands, templateSolved })
+    }
+
+    const results: GenerateClassGroupTimetableResult[] = []
+    for (const entry of prepared) {
+      const nonSchoolDates = await collectNonSchoolDates(
+        this.baseService.repositories,
+        entry.context.classGroup,
+        input.academicYearId,
+        input.startDate,
+        input.endDate,
+      )
+      const spreadOccupied = await buildOccupiedIntervals(
+        this.baseService.repositories,
+        entry.classInput.classGroupId,
+        rangeStart,
+        rangeEnd,
+        entry.demands,
+      )
+      const spread = spreadWeeklyTemplate({
+        classGroupId: entry.classInput.classGroupId,
+        templatePlacements: entry.templateSolved.placements,
+        periodById,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        nonSchoolDates,
+        occupiedIntervals: spreadOccupied,
+        subjects: entry.demands,
+        options: entry.options,
+      })
+      const sessions = await this.persistPlacementSessions(spread.placements, entry.context)
+      results.push({ classGroupId: entry.classInput.classGroupId, sessions, ...spread })
+    }
+    return { academicYearId: input.academicYearId, classGroups: results, skippedClassGroupIds: [] }
   }
 
   private buildDemand(
@@ -626,6 +1124,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     displayLabel: string,
     startsAt: Date,
     endsAt: Date,
+    gradeLevelSubject?: GradeLevelSubject,
   ): TimetableSubjectDemand {
     const teacherIds = [...new Set(assignments
       .filter(assignment => assignment.classSubjectId === subject.id && assignmentApplies(assignment, startsAt, endsAt))
@@ -636,9 +1135,13 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     if (teacherIds.length === 0 && !options.allowUnassignedTeacherPlacements) {
       throw new BusinessRuleViolationError('TIMETABLE_TEACHER_ASSIGNMENT_REQUIRED', `Class subject ${subject.id} has no active teacher assignment`)
     }
-    const periodsPerWeek = input.placementParameters?.periodsPerWeekByClassSubjectId?.[subject.id] ?? subject.periodsPerWeek
-    if (!periodsPerWeek || !Number.isInteger(periodsPerWeek) || periodsPerWeek <= 0) {
-      throw new BusinessRuleViolationError('TIMETABLE_WORKLOAD_REQUIRED', `Class subject ${subject.id} has no valid periodsPerWeek`)
+    const periodsPerWeek = resolveClassSubjectPeriodsPerWeek(
+      subject,
+      input.placementParameters?.periodsPerWeekByClassSubjectId?.[subject.id],
+      gradeLevelSubject,
+    )
+    if (!periodsPerWeek) {
+      throw new BusinessRuleViolationError('TIMETABLE_WORKLOAD_REQUIRED', `Class subject ${displayLabel} has no valid periodsPerWeek`)
     }
     return { classSubjectId: subject.id, displayLabel, periodsPerWeek, teacherIds }
   }
@@ -743,6 +1246,21 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       throw new BusinessRuleViolationError('SCHOOL_NOT_FOUND', 'School was not found')
     }
     return { classGroup, academicYear, school }
+  }
+
+  private shouldPreserveGeneratedSession(session: LessonSessionEntity): boolean {
+    return session.status === OccurrenceStatus.Completed
+      || (session.status === OccurrenceStatus.Pending && session.isException)
+  }
+
+  private async discardRegeneratableSessionsInRange(classGroupId: string, startDate: Date, endDate: Date): Promise<void> {
+    const sessions = await this.generatedSessionsInRange(classGroupId, startDate, endDate)
+    for (const session of sessions) {
+      if (this.shouldPreserveGeneratedSession(session)) {
+        continue
+      }
+      await this.baseService.repositories.lessonSessions.delete(session.id)
+    }
   }
 
   private async generatedSessionsInRange(classGroupId: string, startDate: Date, endDate: Date): Promise<LessonSessionEntity[]> {

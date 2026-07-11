@@ -10221,14 +10221,19 @@ export interface components {
             timetableEnforceWorkloadFulfillment: boolean;
             /** @default true */
             timetableExcludeBreakSlots: boolean;
-            /** @default 2 */
-            timetableMinPeriodGapSameSubject: number;
+            /** @default 1 */
+            timetableMinDayGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
             /** @default false */
             timetableAllowUnassignedTeacherPlacements: boolean;
             /** @default false */
             timetableUseHomeroomTeacherFallback: boolean;
+            /**
+             * @default weekly
+             * @enum {string}
+             */
+            timetableGenerationMode: "weekly" | "free";
             createdAt?: unknown;
         };
         BusinessRuleViolationResponse: {
@@ -10453,14 +10458,19 @@ export interface components {
             timetableEnforceWorkloadFulfillment: boolean;
             /** @default true */
             timetableExcludeBreakSlots: boolean;
-            /** @default 2 */
-            timetableMinPeriodGapSameSubject: number;
+            /** @default 1 */
+            timetableMinDayGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
             /** @default false */
             timetableAllowUnassignedTeacherPlacements: boolean;
             /** @default false */
             timetableUseHomeroomTeacherFallback: boolean;
+            /**
+             * @default weekly
+             * @enum {string}
+             */
+            timetableGenerationMode: "weekly" | "free";
             createdAt?: unknown;
         };
         UpdateSchoolConfigurationCommand: {
@@ -10477,14 +10487,19 @@ export interface components {
             timetableEnforceWorkloadFulfillment: boolean;
             /** @default true */
             timetableExcludeBreakSlots: boolean;
-            /** @default 2 */
-            timetableMinPeriodGapSameSubject: number;
+            /** @default 1 */
+            timetableMinDayGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
             /** @default false */
             timetableAllowUnassignedTeacherPlacements: boolean;
             /** @default false */
             timetableUseHomeroomTeacherFallback: boolean;
+            /**
+             * @default weekly
+             * @enum {string}
+             */
+            timetableGenerationMode: "weekly" | "free";
             schoolId: string;
         };
         AcademicYear: {
@@ -12409,9 +12424,11 @@ export interface components {
             };
         };
         TimetableGenerationOptions: {
+            /** @enum {string} */
+            generationMode?: "weekly" | "free";
             enforceWorkloadFulfillment?: boolean;
             excludeBreakSlots?: boolean;
-            minPeriodGapSameSubject?: number;
+            minDayGapSameSubject?: number;
             preferredPeriodDefinitionIds?: string[];
             allowUnassignedTeacherPlacements?: boolean;
             useHomeroomTeacherFallback?: boolean;
@@ -12427,6 +12444,7 @@ export interface components {
         GenerateSchoolTimetableResponse: {
             academicYearId: string;
             classGroups: components["schemas"]["GenerateClassGroupTimetableResponse"][];
+            skippedClassGroupIds: string[];
         };
         GenerateSchoolTimetableCommand: {
             academicYearId: string;

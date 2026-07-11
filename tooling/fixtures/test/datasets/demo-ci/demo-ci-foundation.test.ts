@@ -22,8 +22,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiGradeLevels).toHaveLength(4)
     expect(demoCiClassGroups).toHaveLength(5)
     expect(demoCiStaffMembers).toHaveLength(5)
-    expect(demoCiDataset.entities.teachers).toHaveLength(8)
-    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(11)
+    expect(demoCiDataset.entities.teachers).toHaveLength(5)
+    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(34)
     expect(demoCiSubjects).toHaveLength(8)
     expect(demoCiSubjectMatters.length).toBeGreaterThan(8)
     expect(demoCiSubjectMatters.some(matter => matter.name === 'Fractions et proportions')).toBe(true)
@@ -65,15 +65,22 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiSchool.name).toBe('École Edaya — Cocody')
   })
 
-  it('assigns a subject teacher to every 6ème A class subject', () => {
-    const classSubjectIds = demoCiClassSubjects
-      .filter(classSubject => classSubject.classGroupId === 'ci-6a')
-      .map(classSubject => classSubject.id)
+  it('uses a realistic default min day gap for timetable generation', () => {
+    expect(demoCiSchool.timetableMinDayGapSameSubject).toBe(1)
+  })
+
+  it('skips lesson session seeding while timetable periodicity is under review', () => {
+    expect(demoCiDataset.extensions?.skipLessonSessionSeeding).toBe(true)
+  })
+
+  it('assigns a subject teacher to every class subject', () => {
+    const classSubjectIds = demoCiClassSubjects.map(classSubject => classSubject.id)
     const assignedClassSubjectIds = (demoCiDataset.entities.teacherAssignments ?? [])
       .map(assignment => assignment.classSubjectId)
       .filter((classSubjectId): classSubjectId is string => Boolean(classSubjectId))
 
-    expect(classSubjectIds).toHaveLength(7)
+    expect(classSubjectIds).toHaveLength(33)
+    expect(assignedClassSubjectIds).toHaveLength(33)
     for (const classSubjectId of classSubjectIds) {
       expect(assignedClassSubjectIds).toContain(classSubjectId)
     }

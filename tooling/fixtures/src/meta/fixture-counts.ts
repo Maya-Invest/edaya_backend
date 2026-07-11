@@ -91,6 +91,15 @@ function countGradeLevelSubjectMatters(dataset: FixtureDataset): number {
   return seen.size
 }
 
+function countClassSubjectProgress(dataset: FixtureDataset): number {
+  if (dataset.extensions?.skipLessonSessionSeeding) {
+    return 0
+  }
+  const anchorCount = (dataset.extensions?.schedulingSessionProgressAnchors?.length ?? 0)
+    + (dataset.extensions?.schedulingSessionProgressAnchor ? 1 : 0)
+  return anchorCount > 0 ? anchorCount : 1
+}
+
 function countClassSubjectMatters(dataset: FixtureDataset): number {
   const subjectMattersBySubjectId = mattersBySubjectId(dataset.entities.subjectMatters ?? [])
   return (dataset.entities.classSubjects ?? []).reduce((total, offering) => {
@@ -108,11 +117,24 @@ function countSchedulingSlots(dataset: FixtureDataset): number {
 
 function countResourceAssignments(dataset: FixtureDataset): number {
   const classLevel = countArray(dataset.extensions?.classResourceAssignments)
+  if (dataset.extensions?.skipLessonSessionSeeding) {
+    return classLevel
+  }
   const lessonSession = dataset.extensions?.schedulingSlots?.filter(slot => slot.resourceId).length ?? 0
   return classLevel + lessonSession
 }
 
+function countLessonSessions(dataset: FixtureDataset): number {
+  if (dataset.extensions?.skipLessonSessionSeeding) {
+    return 0
+  }
+  return countSchedulingSlots(dataset)
+}
+
 function countAttendanceRecords(dataset: FixtureDataset): number {
+  if (dataset.extensions?.skipLessonSessionSeeding) {
+    return 0
+  }
   const attendanceRecords = dataset.entities.attendanceRecords
   if (attendanceRecords) {
     return attendanceRecords.length
@@ -210,10 +232,10 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'teacher-assignments': countArray(entities.teacherAssignments),
     'resources': countArray(entities.resources),
     'schedules': countSchedulingSlots(dataset),
-    'lesson-sessions': countSchedulingSlots(dataset),
+    'lesson-sessions': countLessonSessions(dataset),
     'staff-assignments': 5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
     'resource-assignments': countResourceAssignments(dataset),
-    'class-subject-progress': 1,
+    'class-subject-progress': countClassSubjectProgress(dataset),
     'assessments': countAssessments(dataset),
     'assessment-results': countAssessmentResults(dataset),
     'activities': countArray(entities.activities),

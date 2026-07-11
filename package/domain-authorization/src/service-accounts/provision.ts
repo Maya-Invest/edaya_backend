@@ -86,6 +86,7 @@ export async function createServiceAccount(
     schoolId,
     accountKind: 'service',
     serviceId: input.serviceId,
+    isActive: true,
   })
   if (existingService) {
     throw new BusinessRuleViolationError(
@@ -322,10 +323,16 @@ export async function revokeServiceAccount(
   return revoked
 }
 
+export interface RotateServiceAccountKeyInput {
+  /** When set, stores this key instead of generating a random one (dev/seeding only). */
+  apiKey?: string
+}
+
 export async function rotateServiceAccountKey(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
+  input: RotateServiceAccountKeyInput = {},
 ): Promise<{ apiKey: string }> {
   await operationModule(ServiceAccountOperations.rotateKey)(actor)
 
@@ -356,7 +363,9 @@ export async function rotateServiceAccountKey(
     }
   }
 
-  const generated = generateApiKey()
+  const generated = input.apiKey
+    ? encodeApiKey(input.apiKey)
+    : generateApiKey()
   await repositories.serviceApiKeys.save(new ServiceApiKey({
     id: randomUUID(),
     staffMemberId: existing.id,

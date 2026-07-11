@@ -6,6 +6,7 @@ export interface FixtureCurriculumGradeLevelSubject {
   academicYearId: string
   subjectId: string
   coefficient?: number
+  periodsPerWeek?: number
   classSubjectIdsByClassGroupId: Record<string, string>
 }
 
@@ -79,9 +80,16 @@ export function buildFixtureCurriculumPlan(
         academicYearId,
         subjectId: offering.subjectId,
         coefficient: offering.coefficient ?? undefined,
+        periodsPerWeek: offering.periodsPerWeek ?? undefined,
         classSubjectIdsByClassGroupId: {},
       })
       classSubjectIdsByGradeLevelSubjectId[gradeLevelSubjectId] = {}
+    }
+    else if (offering.periodsPerWeek) {
+      const gradeLevelSubject = gradeLevelSubjects.find(entry => entry.id === gradeLevelSubjectId)
+      if (gradeLevelSubject && !gradeLevelSubject.periodsPerWeek) {
+        gradeLevelSubject.periodsPerWeek = offering.periodsPerWeek
+      }
     }
     classSubjectIdsByGradeLevelSubjectId[gradeLevelSubjectId]![offering.classGroupId] = offering.id
   }

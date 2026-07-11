@@ -26,9 +26,6 @@ describe('teachers seed port workflow', () => {
       'ci-t3',
       'ci-t4',
       'ci-t5',
-      'ci-t6',
-      'ci-t7',
-      'ci-t8',
     ])
     expect(teacherAssignments.some(assignment => assignment.classSubjectId === 'ci-cs-6a-math')).toBe(true)
     expect(teacherAssignments.some(assignment => assignment.classSubjectId === 'ci-cs-6a-fr')).toBe(true)

@@ -323,6 +323,20 @@
       "when": 1781104996447,
       "tag": "0045_timetable_teacher_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1781104996448,
+      "tag": "0046_timetable_min_day_gap_same_subject",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781104996449,
+      "tag": "0047_timetable_generation_mode",
+      "breakpoints": true
     }
   ]
 }

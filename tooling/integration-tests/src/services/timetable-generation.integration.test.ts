@@ -32,7 +32,7 @@ describeIntegration('timetable generation lifecycle', () => {
       id: 'school',
       name: 'Edaya',
       timeZone: 'UTC',
-      timetableMinPeriodGapSameSubject: 1,
+      timetableMinDayGapSameSubject: 1,
     })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',

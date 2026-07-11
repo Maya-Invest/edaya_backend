@@ -17,6 +17,7 @@ export async function seedDevScheduling(
 ): Promise<void> {
   const resources = dataset.entities.resources ?? []
   const slots = dataset.extensions?.schedulingSlots ?? []
+  const skipLessonSessions = dataset.extensions?.skipLessonSessionSeeding === true
   const anchor = dataset.extensions?.schedulingSessionProgressAnchor
   const academicYearId = dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Fixture dataset must include academicYear for scheduling seed') })()
@@ -62,6 +63,10 @@ export async function seedDevScheduling(
       startTime: schedule.startTime,
       endTime: schedule.endTime,
     })
+  }
+
+  if (skipLessonSessions) {
+    return
   }
 
   for (const slot of slots) {

@@ -123,6 +123,7 @@ export interface RunDevSchoolSeedOptions {
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
   skipProfilePhotos?: boolean
+  skipAttachments?: boolean
   progress?: SeedProgressReporter
 }
 
@@ -259,8 +260,10 @@ export async function runDevSchoolSeed(
 
   const communicationsCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevCommunications(communicationsPort, seedDataset))
-  const attachmentCounts = await runSchoolSeedStep(options?.progress, async () =>
-    seedDevAttachments(attachmentsPort, seedDataset))
+  const attachmentCounts = options?.skipAttachments
+    ? { attachments: 0 }
+    : await runSchoolSeedStep(options?.progress, async () =>
+        seedDevAttachments(attachmentsPort, seedDataset))
   const profilePictureCounts = options?.skipProfilePhotos
     ? { profilePhotos: 0 }
     : await runSchoolSeedStep(options?.progress, async tick =>

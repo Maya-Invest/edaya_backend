@@ -1,4 +1,7 @@
-export function resolveSchoolSeedPhaseLabels(skipProfilePhotos: boolean): readonly string[] {
+export function resolveSchoolSeedPhaseLabels(
+  skipProfilePhotos: boolean,
+  skipAttachments = false,
+): readonly string[] {
   const phases = [
     'School structure',
     'Students & guardians',
@@ -14,8 +17,11 @@ export function resolveSchoolSeedPhaseLabels(skipProfilePhotos: boolean): readon
     'Report cards',
     'Finance',
     'Communications',
-    'Attachments',
   ]
+
+  if (!skipAttachments) {
+    phases.push('Attachments')
+  }
 
   if (!skipProfilePhotos) {
     phases.push('Profile photos')
@@ -24,31 +30,35 @@ export function resolveSchoolSeedPhaseLabels(skipProfilePhotos: boolean): readon
   return phases
 }
 
-export function resolveFreshBootstrapPhaseLabels(skipProfilePhotos: boolean): readonly string[] {
+export function resolveFreshBootstrapPhaseLabels(
+  skipProfilePhotos: boolean,
+  skipAttachments = false,
+): readonly string[] {
   return [
     'Auth accounts',
     'Session bootstrap',
     'Access roles',
     'Service account',
-    ...resolveSchoolSeedPhaseLabels(skipProfilePhotos),
+    ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
     'Access assignments',
   ]
 }
 
 export function resolveAllSeedPhaseLabels(
   skipProfilePhotos: boolean,
-  options?: { skipAuth?: boolean },
+  options?: { skipAuth?: boolean, skipAttachments?: boolean },
 ): readonly string[] {
+  const skipAttachments = options?.skipAttachments ?? false
   if (options?.skipAuth) {
     return [
-      ...resolveSchoolSeedPhaseLabels(skipProfilePhotos),
+      ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
       'Access assignments',
     ]
   }
 
   return [
     'Auth accounts',
-    ...resolveSchoolSeedPhaseLabels(skipProfilePhotos),
+    ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
     'Access assignments',
   ]
 }
@@ -56,15 +66,16 @@ export function resolveAllSeedPhaseLabels(
 export function resolveSeedPhaseLabels(
   scope: string,
   skipProfilePhotos: boolean,
-  options?: { freshBootstrap?: boolean, skipAuth?: boolean },
+  options?: { freshBootstrap?: boolean, skipAuth?: boolean, skipAttachments?: boolean },
 ): readonly string[] {
+  const skipAttachments = options?.skipAttachments ?? false
   if (options?.freshBootstrap) {
-    return resolveFreshBootstrapPhaseLabels(skipProfilePhotos)
+    return resolveFreshBootstrapPhaseLabels(skipProfilePhotos, skipAttachments)
   }
 
   switch (scope) {
     case 'school':
-      return resolveSchoolSeedPhaseLabels(skipProfilePhotos)
+      return resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments)
     case 'auth':
       return ['Auth accounts']
     case 'auth:link':

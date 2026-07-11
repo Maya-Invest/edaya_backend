@@ -106,6 +106,7 @@ export const generateClassGroupTimetableResponseSchema = z.object({
 export const generateSchoolTimetableResponseSchema = z.object({
   academicYearId: z.string().min(1),
   classGroups: z.array(generateClassGroupTimetableResponseSchema),
+  skippedClassGroupIds: z.array(z.string().min(1)),
 }).openapi("GenerateSchoolTimetableResponse");
 
 export const publishClassGroupTimetableResponseSchema = z.object({

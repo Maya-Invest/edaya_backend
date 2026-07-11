@@ -102,6 +102,8 @@ export interface RunDevSeedsOptions {
   apiBaseUrl?: string
   /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
   skipProfilePhotos?: boolean
+  /** Skip fixture attachment registration. */
+  skipAttachments?: boolean
   profilePhotosSkipReason?: string
   progress?: SeedProgressReporter
 }
@@ -221,6 +223,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
       progress: options.progress,
     })
     if (options.skipProfilePhotos) {
@@ -264,6 +267,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
       progress: options.progress,
     })
     if (options.skipProfilePhotos) {

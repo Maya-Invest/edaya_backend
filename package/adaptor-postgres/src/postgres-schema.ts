@@ -13,10 +13,11 @@ export const schools = pgTable('schools', {
   enforceScheduleConflicts: boolean('enforce_schedule_conflicts').notNull().default(false),
   timetableEnforceWorkloadFulfillment: boolean('timetable_enforce_workload_fulfillment').notNull().default(true),
   timetableExcludeBreakSlots: boolean('timetable_exclude_break_slots').notNull().default(true),
-  timetableMinPeriodGapSameSubject: integer('timetable_min_period_gap_same_subject').notNull().default(2),
+  timetableMinDayGapSameSubject: integer('timetable_min_day_gap_same_subject').notNull().default(1),
   timetablePreferredPeriodDefinitionIds: jsonb('timetable_preferred_period_definition_ids').notNull().default([]),
   timetableAllowUnassignedTeacherPlacements: boolean('timetable_allow_unassigned_teacher_placements').notNull().default(false),
   timetableUseHomeroomTeacherFallback: boolean('timetable_use_homeroom_teacher_fallback').notNull().default(false),
+  timetableGenerationMode: text('timetable_generation_mode').notNull().default('weekly'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

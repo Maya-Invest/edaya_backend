@@ -165,10 +165,11 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,
       timetableEnforceWorkloadFulfillment: changes.timetableEnforceWorkloadFulfillment ?? existing.timetableEnforceWorkloadFulfillment,
       timetableExcludeBreakSlots: changes.timetableExcludeBreakSlots ?? existing.timetableExcludeBreakSlots,
-      timetableMinPeriodGapSameSubject: changes.timetableMinPeriodGapSameSubject ?? existing.timetableMinPeriodGapSameSubject,
+      timetableMinDayGapSameSubject: changes.timetableMinDayGapSameSubject ?? existing.timetableMinDayGapSameSubject,
       timetablePreferredPeriodDefinitionIds: changes.timetablePreferredPeriodDefinitionIds ?? existing.timetablePreferredPeriodDefinitionIds,
       timetableAllowUnassignedTeacherPlacements: changes.timetableAllowUnassignedTeacherPlacements ?? existing.timetableAllowUnassignedTeacherPlacements,
       timetableUseHomeroomTeacherFallback: changes.timetableUseHomeroomTeacherFallback ?? existing.timetableUseHomeroomTeacherFallback,
+      timetableGenerationMode: changes.timetableGenerationMode ?? existing.timetableGenerationMode,
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.schools.save(school, { moduleChecked: true })

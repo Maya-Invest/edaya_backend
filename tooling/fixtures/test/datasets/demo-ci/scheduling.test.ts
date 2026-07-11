@@ -16,7 +16,7 @@ describe('demo-ci scheduling', () => {
     expect(demoCiSchedules).toHaveLength(6)
 
     const teacherIds = new Set(demoCiSchedulingSlots.map(slot => slot.teacherId))
-    expect(teacherIds).toEqual(new Set(['ci-t1']))
+    expect(teacherIds).toEqual(new Set(['ci-t1', 'ci-t3']))
 
     const classGroupIds = new Set(demoCiSchedulingSlots.map(slot => slot.schedule.classGroupId))
     expect(classGroupIds).toEqual(new Set(['ci-6a', 'ci-5a', 'ci-6b']))

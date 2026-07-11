@@ -1,6 +1,22 @@
 import type { TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 import { TeacherAssignmentKind } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
+import { demoCiClassSubjects, demoCiSubjects } from './school'
+
+type DemoCiTeacherId = 'ci-t1' | 'ci-t2' | 'ci-t3' | 'ci-t4' | 'ci-t5'
+
+const SUBJECT_TEACHER_BY_ID: Record<string, DemoCiTeacherId> = {
+  'ci-subj-math': 'ci-t1',
+  'ci-subj-pc': 'ci-t1',
+  'ci-subj-fr': 'ci-t3',
+  'ci-subj-hg': 'ci-t4',
+  'ci-subj-edhc': 'ci-t4',
+  'ci-subj-svt': 'ci-t5',
+  'ci-subj-ang': 'ci-t5',
+  'ci-subj-eps': 'ci-t2',
+}
+
+const subjectNameById = Object.fromEntries(demoCiSubjects.map(subject => [subject.id, subject.name]))
 
 export const demoCiTeachers = [
   {
@@ -38,46 +54,24 @@ export const demoCiTeachers = [
     lastName: 'Bamba',
     email: 'n.bamba@ecole-ci.edaya.dev',
   },
-  {
-    id: 'ci-t6',
-    schoolId: DEMO_CI_SCHOOL_ID,
-    firstName: 'M.',
-    lastName: 'Ouattara',
-    email: 'h.ouattara@ecole-ci.edaya.dev',
-  },
-  {
-    id: 'ci-t7',
-    schoolId: DEMO_CI_SCHOOL_ID,
-    firstName: 'Mme',
-    lastName: 'Cissé',
-    email: 'l.cisse@ecole-ci.edaya.dev',
-  },
-  {
-    id: 'ci-t8',
-    schoolId: DEMO_CI_SCHOOL_ID,
-    firstName: 'M.',
-    lastName: 'Silué',
-    email: 'p.silue@ecole-ci.edaya.dev',
-  },
 ] as const satisfies readonly TeacherInput[]
 
 export const demoCiTeacherAssignments = [
-  {
-    id: 'ta-ci-t1-6a-math',
-    teacherId: 'ci-t1',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-math',
-    responsibility: 'Mathématiques',
-  },
-  {
-    id: 'ta-ci-t1-5a-math',
-    teacherId: 'ci-t1',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-5a-math',
-    responsibility: 'Mathématiques',
-  },
+  ...demoCiClassSubjects.map((classSubject) => {
+    const teacherId = SUBJECT_TEACHER_BY_ID[classSubject.subjectId]
+    if (!teacherId) {
+      throw new Error(`Missing demo-ci teacher mapping for subject ${classSubject.subjectId}`)
+    }
+
+    return {
+      id: `ta-${classSubject.id}`,
+      teacherId,
+      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
+      kind: TeacherAssignmentKind.Subject,
+      classSubjectId: classSubject.id,
+      responsibility: subjectNameById[classSubject.subjectId] ?? classSubject.subjectId,
+    }
+  }),
   {
     id: 'ta-ci-t2-6b',
     teacherId: 'ci-t2',
@@ -85,69 +79,5 @@ export const demoCiTeacherAssignments = [
     kind: TeacherAssignmentKind.Homeroom,
     classGroupId: 'ci-6b',
     responsibility: 'Professeur principal',
-  },
-  {
-    id: 'ta-ci-t3-6a-fr',
-    teacherId: 'ci-t3',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-fr',
-    responsibility: 'Français',
-  },
-  {
-    id: 'ta-ci-t4-6a-hg',
-    teacherId: 'ci-t4',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-hg',
-    responsibility: 'Histoire-Géographie',
-  },
-  {
-    id: 'ta-ci-t5-6a-svt',
-    teacherId: 'ci-t5',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-svt',
-    responsibility: 'Sciences de la Vie et de la Terre',
-  },
-  {
-    id: 'ta-ci-t6-6a-ang',
-    teacherId: 'ci-t6',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-ang',
-    responsibility: 'Anglais',
-  },
-  {
-    id: 'ta-ci-t7-6a-edhc',
-    teacherId: 'ci-t7',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-edhc',
-    responsibility: 'Éducation aux Droits de l\'Homme et à la Citoyenneté',
-  },
-  {
-    id: 'ta-ci-t8-6a-eps',
-    teacherId: 'ci-t8',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6a-eps',
-    responsibility: 'Éducation Physique et Sportive',
-  },
-  {
-    id: 'ta-ci-t3-6b-fr',
-    teacherId: 'ci-t3',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-6b-fr',
-    responsibility: 'Français',
-  },
-  {
-    id: 'ta-ci-t6-5a-ang',
-    teacherId: 'ci-t6',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    kind: TeacherAssignmentKind.Subject,
-    classSubjectId: 'ci-cs-5a-ang',
-    responsibility: 'Anglais',
   },
 ] as const satisfies readonly TeacherAssignmentInput[]

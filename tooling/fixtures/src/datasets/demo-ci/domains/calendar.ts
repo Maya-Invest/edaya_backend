@@ -37,9 +37,9 @@ export const demoCiCalendarEvents = [
     title: 'Conseils de classe T1',
     startDate: '2025-12-15',
     endDate: '2025-12-17',
-    description: 'Conseils de classe du premier trimestre.',
+    description: 'Conseils de classe du premier trimestre (après-midi — cours maintenus le matin).',
     kind: CalendarEventKind.Other,
-    isNonSchoolDay: true,
+    isNonSchoolDay: false,
     scope: 'school',
   },
   {

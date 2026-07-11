@@ -15,6 +15,7 @@ import { runDevSchoolSeed } from '../../orchestration/run-dev-school-seed'
 import { logDevSeedResults } from '../../orchestration/run-dev-seeds'
 import { runSeedProgressStep } from '../../support/seed-progress'
 import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
+import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-service-account'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
 
 /** Fresh-database `all` path: auth → bootstrap session → roles → service account → school → access. */
@@ -73,7 +74,18 @@ export async function tryRunAllFreshBootstrap(
     )
   }
 
-  const ports = createHttpDomainSeedPorts(client, serviceAccountApiKeyFromProvision)
+  const seedingAuthKey = await isSeedingServiceAccountApiKeyReady(client, serviceAccountApiKeyFromProvision)
+    ? serviceAccountApiKeyFromProvision
+    : undefined
+
+  if (!seedingAuthKey) {
+    throw new Error(
+      'Seeding service account is not ready after provisioning. '
+      + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+    )
+  }
+
+  const ports = createHttpDomainSeedPorts(client, seedingAuthKey)
 
   results.school = await runDevSchoolSeed(undefined, {
     auth,
@@ -81,10 +93,11 @@ export async function tryRunAllFreshBootstrap(
     ...ports,
     apiBaseUrl: client.origin,
     skipProfilePhotos: options.skipProfilePhotos,
+    skipAttachments: options.skipAttachments,
     progress,
   })
   results.access = await runDevAccessAssignmentsSeedWithPort(
-    createHttpAccessSeedPort({ client, serviceAccountApiKey: serviceAccountApiKeyFromProvision }),
+    createHttpAccessSeedPort({ client, serviceAccountApiKey: seedingAuthKey }),
     { progress },
   )
   if (options.skipProfilePhotos) {

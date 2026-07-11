@@ -25,6 +25,7 @@ export interface GradeLevelSubjectSeedRecord {
   academicYearId: string
   subjectId: string
   coefficient?: number
+  periodsPerWeek?: number
   classSubjectIdsByClassGroupId?: Record<string, string>
 }
 

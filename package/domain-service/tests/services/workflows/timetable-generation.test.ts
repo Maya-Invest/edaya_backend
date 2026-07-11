@@ -25,10 +25,11 @@ import {
   TeacherUnavailability,
   TeacherUnavailabilityRecurrence,
   TimetableGenerated,
+  TimetableGenerationMode,
 } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
-import { resolveTimetableSpace, solveTimetable } from '../../../src/services/workflows/timetable-generation'
+import { resolveTimetableSpace, solveTimetable, spreadWeeklyTemplate, resolveWeeklyTemplateSpace, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
@@ -122,9 +123,10 @@ describe('timetable resolver and solver', () => {
         endsAt: cells[0]!.endsAt,
       }],
       options: {
+        generationMode: TimetableGenerationMode.Free,
         enforceWorkloadFulfillment: false,
         excludeBreakSlots: true,
-        minPeriodGapSameSubject: 1,
+        minDayGapSameSubject: 1,
         preferredPeriodDefinitionIds: [cells[2]!.periodDefinitionId],
         allowUnassignedTeacherPlacements: false,
         useHomeroomTeacherFallback: false,
@@ -137,17 +139,311 @@ describe('timetable resolver and solver', () => {
     ])
     expect(result.unmetWorkloads).toEqual([{ classSubjectId: 'subject-1', weekKey: '2026-09-07', required: 3, placed: 2 }])
   })
+
+  test('cannot place four same-subject periods in a short week when min gap is too large', () => {
+    const cells = Array.from({ length: 16 }, (_, index) => ({
+      date: `2025-12-${index < 8 ? 18 : 19}`,
+      weekKey: '2025-12-15',
+      weeklyIndex: index,
+      periodDefinitionId: `period-${index}`,
+      startsAt: new Date(Date.UTC(2025, 11, index < 8 ? 18 : 19, 8 + (index % 8))),
+      endsAt: new Date(Date.UTC(2025, 11, index < 8 ? 18 : 19, 9 + (index % 8))),
+    }))
+
+    expect(() => solveTimetable({
+      classGroupId: 'class-1',
+      cells,
+      subjects: [{ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] }],
+      occupiedIntervals: [],
+      options: {
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 8,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })).toThrow('Could not place 1/4 periods for class subject ci-cs-6a-fr in week 2025-12-15')
+  })
+
+  test('places four same-subject periods in a full teaching week with day gap 1', () => {
+    const cells = Array.from({ length: 40 }, (_, index) => ({
+      date: `2026-01-${String(5 + Math.floor(index / 8)).padStart(2, '0')}`,
+      weekKey: '2026-01-05',
+      weeklyIndex: index,
+      periodDefinitionId: `period-${index}`,
+      startsAt: new Date(Date.UTC(2026, 0, 5 + Math.floor(index / 8), 7 + (index % 8))),
+      endsAt: new Date(Date.UTC(2026, 0, 5 + Math.floor(index / 8), 8 + (index % 8))),
+    }))
+
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells,
+      subjects: [{ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] }],
+      occupiedIntervals: [],
+      options: {
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 1,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(result.unmetWorkloads).toEqual([])
+    expect(result.placements).toHaveLength(4)
+  })
+
+  test('enforces same-subject day gap across calendar weeks', () => {
+    const cells = [
+      {
+        date: '2026-01-05',
+        weekKey: '2026-01-05',
+        weeklyIndex: 0,
+        periodDefinitionId: 'period-w1',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+      },
+      {
+        date: '2026-01-12',
+        weekKey: '2026-01-12',
+        weeklyIndex: 0,
+        periodDefinitionId: 'period-w2',
+        startsAt: new Date(Date.UTC(2026, 0, 12, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 12, 9)),
+      },
+    ]
+
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells,
+      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 1, teacherIds: ['teacher-1'] }],
+      occupiedIntervals: [],
+      options: {
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: false,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 8,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(result.placements).toHaveLength(1)
+    expect(result.placements[0]?.cell.date).toBe('2026-01-05')
+    expect(result.unmetWorkloads).toEqual([{
+      classSubjectId: 'subject-fr',
+      weekKey: '2026-01-12',
+      required: 1,
+      placed: 0,
+    }])
+  })
+
+  test('allows two same-subject lessons on one day when day gap is zero', () => {
+    const cells = [
+      {
+        date: '2026-01-05',
+        weekKey: '2026-01-05',
+        weeklyIndex: 0,
+        periodDefinitionId: 'period-am',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+      },
+      {
+        date: '2026-01-05',
+        weekKey: '2026-01-05',
+        weeklyIndex: 1,
+        periodDefinitionId: 'period-pm',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 13)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 14)),
+      },
+    ]
+
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells,
+      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] }],
+      occupiedIntervals: [],
+      options: {
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 0,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(result.unmetWorkloads).toEqual([])
+    expect(result.placements).toHaveLength(2)
+    expect(new Set(result.placements.map(placement => placement.cell.date))).toEqual(new Set(['2026-01-05']))
+  })
+
+  test('blocks a second same-subject lesson on the same day when day gap is one', () => {
+    const cells = [
+      {
+        date: '2026-01-05',
+        weekKey: '2026-01-05',
+        weeklyIndex: 0,
+        periodDefinitionId: 'period-am',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+      },
+      {
+        date: '2026-01-05',
+        weekKey: '2026-01-05',
+        weeklyIndex: 1,
+        periodDefinitionId: 'period-pm',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 13)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 14)),
+      },
+      {
+        date: '2026-01-06',
+        weekKey: '2026-01-05',
+        weeklyIndex: 2,
+        periodDefinitionId: 'period-tue',
+        startsAt: new Date(Date.UTC(2026, 0, 6, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 6, 9)),
+      },
+    ]
+
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells,
+      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] }],
+      occupiedIntervals: [],
+      options: {
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 1,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(result.unmetWorkloads).toEqual([])
+    expect(result.placements.map(placement => placement.cell.date)).toEqual(['2026-01-05', '2026-01-06'])
+  })
+
+  test('resolves a logical weekly template grid without calendar closures', async () => {
+    const classGroup = new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Class 1',
+    })
+    const repositories = {
+      periodDefinitions: {
+        list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday), period(DayOfWeek.Wednesday, '-disabled')],
+      },
+    } as unknown as SchoolRepositories
+
+    const cells = await resolveWeeklyTemplateSpace(repositories, 'year-1')
+
+    expect(cells).toHaveLength(2)
+    expect(cells.every(cell => cell.weekKey === WEEKLY_TEMPLATE_WEEK_KEY)).toBe(true)
+    expect(cells.map(cell => cell.date)).toEqual(['2026-01-05', '2026-01-06'])
+    expect(classGroup.id).toBe('class-1')
+  })
+
+  test('spreads a weekly template across calendar weeks and drops closure days', () => {
+    const templatePlacements = [{
+      classSubjectId: 'subject-1',
+      displayLabel: 'Math',
+      teacherIds: ['teacher-1'],
+      cell: {
+        date: '2026-01-05',
+        weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
+        weeklyIndex: 0,
+        periodDefinitionId: 'period-Monday',
+        startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+        endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+      },
+    }]
+    const spread = spreadWeeklyTemplate({
+      classGroupId: 'class-1',
+      templatePlacements,
+      periodById: new Map([['period-Monday', period(DayOfWeek.Monday)]]),
+      startDate: new Date('2026-09-07T00:00:00.000Z'),
+      endDate: new Date('2026-09-18T00:00:00.000Z'),
+      nonSchoolDates: new Set(['2026-09-14']),
+      occupiedIntervals: [],
+      subjects: [{ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 1, teacherIds: ['teacher-1'] }],
+      options: {
+        generationMode: TimetableGenerationMode.Weekly,
+        enforceWorkloadFulfillment: false,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 1,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(spread.placements.map(placement => placement.cell.date)).toEqual(['2026-09-07'])
+    expect(spread.unmetWorkloads).toEqual([{
+      classSubjectId: 'subject-1',
+      weekKey: '2026-09-14',
+      required: 1,
+      placed: 0,
+    }])
+  })
+
+  test('does not report unmet workload for weeks with no teaching days', () => {
+    const spread = spreadWeeklyTemplate({
+      classGroupId: 'class-1',
+      templatePlacements: [{
+        classSubjectId: 'subject-1',
+        displayLabel: 'Math',
+        teacherIds: ['teacher-1'],
+        cell: {
+          date: '2026-01-05',
+          weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
+          weeklyIndex: 0,
+          periodDefinitionId: 'period-Monday',
+          startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+          endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+        },
+      }],
+      periodById: new Map([['period-Monday', period(DayOfWeek.Monday)]]),
+      startDate: new Date('2025-10-20T00:00:00.000Z'),
+      endDate: new Date('2025-10-24T00:00:00.000Z'),
+      nonSchoolDates: new Set(['2025-10-20', '2025-10-21', '2025-10-22', '2025-10-23', '2025-10-24']),
+      occupiedIntervals: [],
+      subjects: [{ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 4, teacherIds: ['teacher-1'] }],
+      options: {
+        generationMode: TimetableGenerationMode.Weekly,
+        enforceWorkloadFulfillment: true,
+        excludeBreakSlots: true,
+        minDayGapSameSubject: 1,
+        preferredPeriodDefinitionIds: [],
+        allowUnassignedTeacherPlacements: false,
+        useHomeroomTeacherFallback: false,
+      },
+    })
+
+    expect(spread.placements).toEqual([])
+    expect(spread.unmetWorkloads).toEqual([])
+  })
 })
 
 function createWorkflowContext(
   unavailabilities: TeacherUnavailability[] = [],
-  config: { unassignedFirstSubject?: boolean, homeroomTeacherLinked?: boolean } = {},
+  config: { unassignedFirstSubject?: boolean, homeroomTeacherLinked?: boolean, omitPeriodsPerWeek?: boolean } = {},
 ) {
   const school = new School({
     id: 'school-1',
     name: 'School',
     timeZone: 'UTC',
-    timetableMinPeriodGapSameSubject: 1,
+    timetableMinDayGapSameSubject: 1,
   } satisfies SchoolInput)
   const academicYear = new AcademicYear({
     id: 'year-1',
@@ -180,7 +476,9 @@ function createWorkflowContext(
     id: `class-subject-${index + 1}`,
     classGroupId: group.id,
     subjectId: subject.id,
-    periodsPerWeek: 2,
+    ...(config.omitPeriodsPerWeek
+      ? { coefficient: 2 }
+      : { periodsPerWeek: 2 }),
   }))
   const assignments = classSubjects
     .filter((_, index) => !(config.unassignedFirstSubject && index === 0))
@@ -206,6 +504,7 @@ function createWorkflowContext(
       list: async (filter: { classGroupId?: string } = {}) => classSubjects.filter(item => !filter.classGroupId || item.classGroupId === filter.classGroupId),
     },
     subjects: { findByIds: async () => [subject] },
+    gradeLevelSubjects: { findByIds: async () => [] },
     teacherAssignments: { list: async () => assignments },
     teacherUnavailabilities: { list: async () => unavailabilities },
     staffMembers: {
@@ -301,6 +600,7 @@ describe('timetable generation workflow', () => {
     })
 
     expect(result.classGroups).toHaveLength(2)
+    expect(result.skippedClassGroupIds).toEqual([])
     const startsAt = result.classGroups.flatMap(group => group.sessions.map(session => session.startsAt.toISOString()))
     expect(new Set(startsAt).size).toBe(4)
     expect(result.classGroups.flatMap(group => group.sessions).every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
@@ -323,6 +623,7 @@ describe('timetable generation workflow', () => {
       academicYearId: 'year-1',
       startDate: weekStart,
       endDate: weekEnd,
+      options: { enforceWorkloadFulfillment: false },
     })
 
     expect(result.sessions.every(session => session.startsAt.toISOString() !== '2026-09-07T08:00:00.000Z')).toBe(true)
@@ -335,6 +636,7 @@ describe('timetable generation workflow', () => {
       academicYearId: 'year-1',
       startDate: weekStart,
       endDate: weekEnd,
+      options: { enforceWorkloadFulfillment: false },
     })
     const publication = await service.timetableGenerationWorkflow.publishClassGroupTimetable({
       classGroupId: 'class-1',
@@ -362,6 +664,7 @@ describe('timetable generation workflow', () => {
       academicYearId: 'year-1',
       startDate: weekStart,
       endDate: weekEnd,
+      options: { enforceWorkloadFulfillment: false },
     })
     expect(sessions.has(completed.id)).toBe(true)
     expect(sessions.has(standalone.id)).toBe(true)
@@ -405,8 +708,8 @@ describe('timetable generation workflow', () => {
     expect(skipped.publishedSessionIds).toEqual([generated.sessions[1]!.id])
   })
 
-  test('blocks initial generation when published sessions already exist in range', async () => {
-    const { service } = createWorkflowContext()
+  test('regenerates class timetables by discarding existing drafts and published sessions in range', async () => {
+    const { service, sessions } = createWorkflowContext()
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -418,13 +721,52 @@ describe('timetable generation workflow', () => {
       startDate: weekStart,
       endDate: weekEnd,
     })
+    const publishedIds = generated.sessions.map(session => session.id)
 
-    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({
+    const regenerated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
       startDate: weekStart,
       endDate: weekEnd,
-    })).rejects.toMatchObject({ code: 'TIMETABLE_PUBLISHED_ALREADY_EXISTS' })
+    })
+
+    expect(regenerated.sessions).toHaveLength(2)
+    expect(publishedIds.every(sessionId => !sessions.has(sessionId))).toBe(true)
+    expect(regenerated.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+  })
+
+  test('regenerates class drafts by discarding existing drafts in range', async () => {
+    const { service, sessions } = createWorkflowContext()
+    const first = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+    expect(first.sessions).toHaveLength(2)
+
+    const second = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(second.sessions).toHaveLength(2)
+    expect(first.sessions.every(session => !sessions.has(session.id))).toBe(true)
+    expect(second.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+  })
+
+  test('derives periodsPerWeek from coefficient when class subject workload is unset', async () => {
+    const { service } = createWorkflowContext([], { omitPeriodsPerWeek: true })
+    const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(result.sessions).toHaveLength(3)
   })
 
   test('blocks single-class generation when a shared teacher is occupied in another class', async () => {
@@ -445,9 +787,11 @@ describe('timetable generation workflow', () => {
       academicYearId: 'year-1',
       startDate: weekStart,
       endDate: weekEnd,
+      options: { enforceWorkloadFulfillment: false },
     })
 
     expect(result.sessions.every(session => session.startsAt.toISOString() !== '2026-09-07T08:00:00.000Z')).toBe(true)
+    expect(result.unmetWorkloads.length).toBeGreaterThan(0)
   })
 
   test('persists resolved teacher snapshots when publishing drafts without stored teacher ids', async () => {
@@ -472,5 +816,75 @@ describe('timetable generation workflow', () => {
       expect(sessions.get(session.id)?.timetableTeacherIds).toEqual(['teacher-shared'])
       expect(sessions.get(session.id)?.timetableGenerated).toBe(TimetableGenerated.Published)
     }
+  })
+
+  test('regenerates published class timetables during school generation', async () => {
+    const { service } = createWorkflowContext()
+    await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+    await service.timetableGenerationWorkflow.publishClassGroupTimetable({
+      classGroupId: 'class-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    const result = await service.timetableGenerationWorkflow.generateSchoolTimetable({
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(result.skippedClassGroupIds).toEqual([])
+    expect(result.classGroups).toHaveLength(2)
+    expect(result.classGroups.every(classGroup => classGroup.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft))).toBe(true)
+  })
+
+  test('regenerates school drafts for classes without published timetables', async () => {
+    const { service } = createWorkflowContext()
+    await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    const result = await service.timetableGenerationWorkflow.generateSchoolTimetable({
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(result.skippedClassGroupIds).toEqual([])
+    expect(result.classGroups).toHaveLength(2)
+  })
+
+  test('regenerates all class groups during school generation even when timetables were published', async () => {
+    const { service } = createWorkflowContext()
+    await service.timetableGenerationWorkflow.generateSchoolTimetable({
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+    for (const classGroupId of ['class-1', 'class-2']) {
+      await service.timetableGenerationWorkflow.publishClassGroupTimetable({
+        classGroupId,
+        startDate: weekStart,
+        endDate: weekEnd,
+      })
+    }
+
+    const result = await service.timetableGenerationWorkflow.generateSchoolTimetable({
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(result.skippedClassGroupIds).toEqual([])
+    expect(result.classGroups).toHaveLength(2)
+    expect(result.classGroups.every(classGroup => classGroup.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft))).toBe(true)
   })
 })

@@ -96,7 +96,7 @@ describe('SchoolService setup workflows', () => {
       enforceScheduleConflicts: true,
       timetableEnforceWorkloadFulfillment: false,
       timetableExcludeBreakSlots: false,
-      timetableMinPeriodGapSameSubject: 4,
+      timetableMinDayGapSameSubject: 4,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
       timetableAllowUnassignedTeacherPlacements: true,
       timetableUseHomeroomTeacherFallback: true,
@@ -114,7 +114,7 @@ describe('SchoolService setup workflows', () => {
     expect(updated.enforceScheduleConflicts).toBe(true)
     expect(updated.timetableEnforceWorkloadFulfillment).toBe(false)
     expect(updated.timetableExcludeBreakSlots).toBe(false)
-    expect(updated.timetableMinPeriodGapSameSubject).toBe(4)
+    expect(updated.timetableMinDayGapSameSubject).toBe(4)
     expect(updated.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
     expect(updated.timetableAllowUnassignedTeacherPlacements).toBe(true)
     expect(updated.timetableUseHomeroomTeacherFallback).toBe(true)

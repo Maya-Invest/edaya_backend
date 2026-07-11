@@ -9,6 +9,7 @@ export const demoCiSchool = {
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
+  timetableMinDayGapSameSubject: 1,
 } satisfies SchoolInput
 
 export const demoCiAcademicYear = {

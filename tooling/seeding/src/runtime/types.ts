@@ -20,6 +20,8 @@ export interface RunHttpDevSeedsOptions {
   provisionServiceAccount?: boolean
   /** Skip profile photo uploads (unreachable local-files or `--skip-profile-photos`). */
   skipProfilePhotos?: boolean
+  /** Skip fixture attachment registration (`--skip-attachments`). */
+  skipAttachments?: boolean
   profilePhotosSkipReason?: string
   /** When scope is `doctor`, run the minimal HTTP repair chain for repairable findings. */
   repair?: boolean

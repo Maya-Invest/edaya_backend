@@ -1,4 +1,4 @@
-import { School, SchoolType } from '@edaya/core'
+import { School, SchoolType, TimetableGenerationMode } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('School entity', () => {
@@ -25,10 +25,11 @@ describe('School entity', () => {
     expect(school.location).toBe('Douala, Cameroon')
     expect(school.timetableEnforceWorkloadFulfillment).toBe(true)
     expect(school.timetableExcludeBreakSlots).toBe(true)
-    expect(school.timetableMinPeriodGapSameSubject).toBe(2)
+    expect(school.timetableMinDayGapSameSubject).toBe(1)
     expect(school.timetablePreferredPeriodDefinitionIds).toEqual([])
     expect(school.timetableAllowUnassignedTeacherPlacements).toBe(false)
     expect(school.timetableUseHomeroomTeacherFallback).toBe(false)
+    expect(school.timetableGenerationMode).toBe(TimetableGenerationMode.Weekly)
     expect(school.createdAt).toBeInstanceOf(Date)
   })
 
@@ -54,7 +55,7 @@ describe('School entity', () => {
       ...baseArgs,
       timetableEnforceWorkloadFulfillment: false,
       timetableExcludeBreakSlots: false,
-      timetableMinPeriodGapSameSubject: 0,
+      timetableMinDayGapSameSubject: 0,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
       timetableAllowUnassignedTeacherPlacements: true,
       timetableUseHomeroomTeacherFallback: true,
@@ -62,7 +63,7 @@ describe('School entity', () => {
 
     expect(school.timetableEnforceWorkloadFulfillment).toBe(false)
     expect(school.timetableExcludeBreakSlots).toBe(false)
-    expect(school.timetableMinPeriodGapSameSubject).toBe(0)
+    expect(school.timetableMinDayGapSameSubject).toBe(0)
     expect(school.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
     expect(school.timetableAllowUnassignedTeacherPlacements).toBe(true)
     expect(school.timetableUseHomeroomTeacherFallback).toBe(true)
