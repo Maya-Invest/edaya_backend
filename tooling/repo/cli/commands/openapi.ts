@@ -5,8 +5,8 @@ import { runBunScript } from '../lib/spawn'
 export async function runOpenapiCommand(parsed: Exclude<ParsedOpenapiCli, { kind: 'help' }>): Promise<number> {
   switch (parsed.action) {
     case 'export':
-      return runBunScript(paths.openapiExport)
+      return runBunScript(paths.openapiExport, parsed.forwardArgs)
     case 'generate':
-      return runBunScript(paths.openapiGenerate)
+      return runBunScript(paths.openapiGenerate, parsed.forwardArgs)
   }
 }
