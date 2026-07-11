@@ -55,11 +55,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- package/api-client/src; then
-            echo "No client source changes; skipping publish."
-            exit 0
-          fi
-
           SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
           VERSION="0.0.0-${CHANNEL}.${SHORT_SHA}"
           export VERSION
