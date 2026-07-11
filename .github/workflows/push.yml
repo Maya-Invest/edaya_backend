@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  actions: write
-  contents: read
+  contents: write
+  packages: write
 
 jobs:
   verify:
