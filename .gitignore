@@ -54,3 +54,4 @@ apps/api/secrets.prod.json
 apps/api/secrets.staging.json
 
 **/coverage/*
+edaya-client-codegen/

@@ -1,6 +1,6 @@
 import type { Env, Hono } from 'hono'
-import type { Transport } from '../generated/api-client'
-import { ApiError, createSchoolClient } from '../generated/api-client'
+import type { Transport } from '@edaya/api-client'
+import { ApiError, createSchoolClient } from '@edaya/api-client'
 
 export function createInProcessTransport<E extends Env>(
   app: Hono<E>,

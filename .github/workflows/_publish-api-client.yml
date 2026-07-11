@@ -1,0 +1,104 @@
+name: Publish API client
+
+on:
+  workflow_call:
+    outputs:
+      channel:
+        description: Published npm dist-tag (staging or production)
+        value: ${{ jobs.publish.outputs.channel }}
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      channel: ${{ steps.meta.outputs.channel }}
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v5
+
+      - name: Checkout codegen repo
+        uses: actions/checkout@v5
+        with:
+          repository: Maya-Invest/edaya-client-codegen
+          ref: ${{ github.ref_name }}
+          path: edaya-client-codegen
+          token: ${{ secrets.CODEGEN_REPO_TOKEN }}
+
+      - name: Resolve channel
+        id: meta
+        run: |
+          REF="${GITHUB_REF_NAME}"
+          case "$REF" in
+            main|master)
+              CHANNEL=production
+              ;;
+            *)
+              CHANNEL=staging
+              ;;
+          esac
+          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Bun and Turbo cache
+        uses: ./.github/actions/ci-bun-turbo
+
+      - name: Export OpenAPI
+        run: bun repo openapi export --output /tmp/openapi.json
+
+      - name: Install codegen dependencies
+        working-directory: edaya-client-codegen
+        run: bun install
+
+      - name: Generate client
+        working-directory: edaya-client-codegen
+        env:
+          OPENAPI_INPUT: /tmp/openapi.json
+        run: bun run generate:client
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+
+      - name: Commit and publish client
+        working-directory: edaya-client-codegen
+        env:
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- clients/school-api/src; then
+            echo "No client source changes; skipping commit and npm publish."
+            exit 0
+          fi
+
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          VERSION="0.0.0-${CHANNEL}.${SHORT_SHA}"
+          export VERSION
+
+          node -e "
+            const fs = require('node:fs')
+            const path = 'clients/school-api/package.json'
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+            pkg.version = process.env.VERSION
+            fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n')
+          "
+
+          git add clients/school-api/src clients/school-api/package.json
+          git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+
+          bun run build:client
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          cd clients/school-api
+          npm publish --access public --tag "${CHANNEL}"
+

@@ -83,3 +83,32 @@ Or set the package to **Public** so CI can pull without cross-repo token setup.
 2. Set `cache-prefix` to a repo-specific value.
 3. Replace inline `setup-bun` + `bun install` in `_verify.yml` with the composite action.
 4. Keep `bun run verify` as the only verify-step command (no workflow-specific check logic).
+
+
+## API client npm publish (`@edaya/api-client`)
+
+[`_publish-api-client.yml`](../../.github/workflows/_publish-api-client.yml) runs on merge to `staging` / `main` when API-related paths change (same gate as `edaya-api-dev`). It exports OpenAPI in-process from the merged backend — no Docker — then regenerates and publishes the client from [edaya-client-codegen](https://github.com/Maya-Invest/edaya-client-codegen).
+
+### One-time secrets (`edaya_backend` repo settings)
+
+| Secret | Purpose |
+|--------|---------|
+| `CODEGEN_REPO_TOKEN` | PAT or fine-grained token with `contents: write` on `Maya-Invest/edaya-client-codegen` (cross-repo commit + push) |
+| `NPM_TOKEN` | npm automation token with publish access to `@edaya/api-client` (public) |
+
+### Branch alignment
+
+`edaya-client-codegen` must have `staging` and `main` branches aligned with `edaya_backend` — the workflow checks out `ref: ${{ github.ref_name }}` in both repos.
+
+### Consumer install
+
+```sh
+npm install @edaya/api-client@staging    # from staging channel
+npm install @edaya/api-client@production # from main channel
+```
+
+Local development without npm:
+
+```json
+"@edaya/api-client": "file:../edaya-client-codegen/clients/school-api"
+```

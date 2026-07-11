@@ -15,15 +15,27 @@ When API routes or registry metadata change in **this repo**:
 
 ```sh
 bun repo openapi export          # tooling/repo/fixtures/openapi.json
-bun repo openapi generate          # package/generated-api-client/src/generated/*
+bun repo openapi generate        # tooling/seeding + integration-tests client dirs
 bun run verify
 ```
 
 | Step | Script | Output |
 |------|--------|--------|
 | Export spec | `bun repo openapi export` | `tooling/repo/fixtures/openapi.json` |
-| Generate bindings | `bun repo openapi generate` | `package/generated-api-client/src/generated/client-bindings.ts` |
+| Generate bindings | `bun repo openapi generate` | `edaya-client-codegen/clients/school-api/src/` (when checkout present) |
 | Drift check | `bun repo check openapi` | Compares temp output to tracked files (non-mutating) |
+
+### Published client (`@edaya/api-client`)
+
+On merge to `staging` / `main`, CI also regenerates and publishes the shared client from **edaya-client-codegen** (`clients/school-api/`). See [ci-setup.md](./ci-setup.md#api-client-npm-publish-edayaapi-client).
+
+Consumers can install:
+
+```sh
+npm install @edaya/api-client@staging
+```
+
+Or use a local path checkout: `file:../edaya-client-codegen/clients/school-api`.
 
 Bindings are embedded in the OpenAPI document under `info.x-edaya-client-bindings`. The export step reads route metadata from `apps/api/src/lib/school-api/client-bindings.ts`.
 
@@ -43,4 +55,4 @@ Each repo runs `bun run verify` from its own checkout. **edaya_web** CI uses com
 
 ## Hand-written client runtime
 
-Generated files are regen-only. The handwritten runtime (`Transport`, `EntityResource`, `createSchoolClient`, …) lives in `package/generated-api-client/src/`. **edaya_web** maintains a synced copy under `packages/api-client/src/` until a shared publish workflow ships.
+Generated files are regen-only. The handwritten runtime (`Transport`, `EntityResource`, `createSchoolClient`, …) lives in `edaya-client-codegen/templates/runtime/` and is copied into each generated client directory. **edaya_web** and backend tooling depend on `@edaya/api-client` (`file:../../edaya-client-codegen/clients/school-api`).

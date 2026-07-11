@@ -190,13 +190,15 @@
     "tooling/integration-tests": {
       "name": "@edaya/integration-tests",
       "version": "0.0.1",
+      "dependencies": {
+        "@edaya/api-client": "file:../../edaya-client-codegen/clients/school-api",
+      },
       "devDependencies": {
         "@edaya/adaptor-auth": "workspace:*",
         "@edaya/adaptor-novu": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/api": "workspace:*",
         "@edaya/authorization": "workspace:*",
-        "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
         "@edaya/core": "workspace:*",
         "@edaya/fixtures": "workspace:*",
         "@edaya/seeding": "workspace:*",
@@ -257,6 +259,7 @@
       "name": "@edaya/seeding",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/api-client": "file:../../edaya-client-codegen/clients/school-api",
         "@edaya/authorization": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/fixtures": "workspace:*",
@@ -266,7 +269,6 @@
         "postgres": "^3.4.4",
       },
       "devDependencies": {
-        "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
         "@types/bun": "^1.3.14",
         "typescript": "^6.0.2",
       },
@@ -1769,13 +1771,15 @@
 
     "@edaya/api/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
 
-    "@edaya/integration-tests/@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#b8c0d72", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-b8c0d72", "sha512-wI6aD2otzngJx2dGz+iKgQXzP8tsZQQb4HJGyf/Nmcl2pPbkTjBkgFaPJrEHYp/VC3IGGQOyWW64rf2KFPDdFA=="],
+    "@edaya/integration-tests/@edaya/api-client": ["@edaya/api-client@file:edaya-client-codegen/clients/school-api", {}],
 
     "@edaya/integration-tests/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
 
     "@edaya/repo/@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#b8c0d72", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-b8c0d72", "sha512-wI6aD2otzngJx2dGz+iKgQXzP8tsZQQb4HJGyf/Nmcl2pPbkTjBkgFaPJrEHYp/VC3IGGQOyWW64rf2KFPDdFA=="],
 
     "@edaya/repo/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
+
+    "@edaya/seeding/@edaya/api-client": ["@edaya/api-client@file:edaya-client-codegen/clients/school-api", {}],
 
     "@es-joy/jsdoccomment/comment-parser": ["comment-parser@1.4.5", "", {}, "sha512-aRDkn3uyIlCFfk5NUA+VdwMmMsh8JGhc4hapfV4yxymHGQ3BVskMQfoXGpCo5IoBuQ9tS5iiVKhCpTcB4pW4qw=="],
 

@@ -88,3 +88,10 @@ jobs:
     if: needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-dev-image.yml
     secrets: inherit
+
+  publish-api-client:
+    needs: gate
+    if: needs.gate.outputs.run_publish_api_dev == 'true'
+    uses: ./.github/workflows/_publish-api-client.yml
+    secrets: inherit
+
