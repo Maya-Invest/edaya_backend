@@ -38,11 +38,8 @@ jobs:
       - name: Setup Bun and Turbo cache
         uses: ./.github/actions/ci-bun-turbo
 
-      - name: Export OpenAPI
-        run: bun repo openapi export --output /tmp/openapi.json
-
-      - name: Generate client
-        run: bun tooling/repo/openapi/generate-bindings.ts --openapi /tmp/openapi.json
+      - name: Export and generate client
+        run: bun repo openapi generate
 
       - name: Setup Node.js for GitHub Packages
         uses: actions/setup-node@v4
@@ -81,17 +78,17 @@ jobs:
           npm publish --tag "${CHANNEL}"
           echo "Published @maya-invest/edaya-api-client@${VERSION} (tag: ${CHANNEL})"
 
-      - name: Commit regenerated client
-        run: |
-          set -euo pipefail
+      # - name: Commit regenerated client
+      #   run: |
+      #     set -euo pipefail
 
-          if git diff --quiet -- package/api-client; then
-            echo "No api-client changes to commit."
-            exit 0
-          fi
+      #     if git diff --quiet -- package/api-client tooling/repo/fixtures/openapi.json; then
+      #       echo "No api-client changes to commit."
+      #       exit 0
+      #     fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package/api-client
-          git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+      #     git add package/api-client tooling/repo/fixtures/openapi.json
+      #     git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+      #     git push origin "HEAD:${GITHUB_REF_NAME}"
