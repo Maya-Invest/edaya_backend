@@ -33,7 +33,8 @@ async function validateTeacherDelete(
   repositories: SchoolRepositories,
 ): Promise<void> {
   const assignments = await repositories.teacherAssignments.list({ teacherId: teacher.id })
-  if (assignments.length > 0) {
+  const unavailabilities = await repositories.teacherUnavailabilities.list({ teacherId: teacher.id })
+  if (assignments.length > 0 || unavailabilities.length > 0) {
     throw new BusinessRuleViolationError('TEACHER_HAS_DEPENDENCIES', `Cannot delete teacher ${teacher.id}: dependent records still exist`)
   }
 }

@@ -6,7 +6,7 @@
 > **Prerequisite:** [timetable-generation-preparation-plan.md](./timetable-generation-preparation-plan.md), section 7
 > **Archived source:** [timetable-generation-plan.md](./archive/timetable-generation-plan.md)
 > **Scope:** Resolve, generate, publish, and republish date-range class timetables using prepared session-level contracts
-> **Out of scope (v1):** Activity or assessment generation, room requirements, teacher availability calendars, CP-SAT, and stored solver-run or draft-process entities
+> **Out of scope (v1):** Activity or assessment generation, room requirements, positive teacher-availability or preference calendars, CP-SAT, and stored solver-run or draft-process entities. Hard recurring and one-off teacher unavailability is implemented as teacher occupancy.
 
 ---
 

@@ -25,6 +25,7 @@ import {
 } from '@edaya/core'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { assertNoSessionConflict } from './schedule-conflicts'
+import { expandTeacherUnavailability } from './teacher-unavailability'
 
 export interface ResolveTimetableSpaceInput {
   classGroupId: string
@@ -396,10 +397,14 @@ async function buildOccupiedIntervals(
   endsAt: Date,
   assignments: TeacherAssignment[],
 ): Promise<OccupiedInterval[]> {
-  const [lessons, activities, assessments] = await Promise.all([
+  const assignedTeacherIds = [...new Set(assignments.map(assignment => assignment.teacherId))]
+  const [lessons, activities, assessments, unavailabilities] = await Promise.all([
     repositories.lessonSessions.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
     repositories.activitySessions.list({ classGroupId }),
     repositories.assessments.list(),
+    assignedTeacherIds.length > 0
+      ? repositories.teacherUnavailabilities.list({ teacherId: { $in: assignedTeacherIds }, isActive: true })
+      : Promise.resolve([]),
   ])
   const teachersByClassSubject = new Map<string, string[]>()
   for (const assignment of assignments.filter(item => assignmentApplies(item, startsAt, endsAt))) {
@@ -409,6 +414,17 @@ async function buildOccupiedIntervals(
     ])
   }
   const occupied: OccupiedInterval[] = []
+  for (const rule of unavailabilities) {
+    for (const interval of expandTeacherUnavailability(rule, startsAt, endsAt)) {
+      occupied.push({
+        layer: 'teacher',
+        layerKey: interval.teacherId,
+        startsAt: interval.startsAt,
+        endsAt: interval.endsAt,
+        sourceSessionId: `teacher-unavailability:${interval.sourceId}`,
+      })
+    }
+  }
   for (const lesson of lessons) {
     if (lesson.status === OccurrenceStatus.Cancelled) {
       continue

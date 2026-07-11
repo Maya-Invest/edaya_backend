@@ -20,7 +20,7 @@
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/adaptor-r2": "workspace:*",
-    "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
+    "@edaya/client-codegen": "workspace:*",
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*",

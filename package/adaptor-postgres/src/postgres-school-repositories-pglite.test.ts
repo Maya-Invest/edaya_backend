@@ -1,4 +1,4 @@
-import { ClassSubject, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TimetableGenerated } from '@edaya/core'
+import { ClassSubject, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -120,6 +120,29 @@ describe('PostgresSchoolRepositories with PGlite', () => {
     expect(await repos.lessonSessions.findById('lesson-1')).toMatchObject({
       scheduleId: undefined,
       timetableGenerated: TimetableGenerated.Draft,
+    })
+  })
+
+  test('round trips weekly teacher unavailability', async () => {
+    await repos.teacherUnavailabilities.save(new TeacherUnavailability({
+      id: 'unavailability-1',
+      teacherId: 'teacher-1',
+      academicYearId: 'year-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Tuesday,
+      startTime: '08:30',
+      endTime: '11:00',
+      effectiveFrom: new Date('2026-09-01T00:00:00.000Z'),
+      effectiveUntil: new Date('2026-12-31T00:00:00.000Z'),
+      reason: 'Contract teaching hours',
+    }))
+
+    expect(await repos.teacherUnavailabilities.findById('unavailability-1')).toMatchObject({
+      teacherId: 'teacher-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Tuesday,
+      startTime: '08:30',
+      reason: 'Contract teaching hours',
     })
   })
 })

@@ -8,7 +8,7 @@ on:
         value: ${{ jobs.publish.outputs.channel }}
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -20,14 +20,6 @@ jobs:
     steps:
       - name: Checkout backend
         uses: actions/checkout@v5
-
-      - name: Checkout codegen repo
-        uses: actions/checkout@v5
-        with:
-          repository: Maya-Invest/edaya-client-codegen
-          ref: ${{ github.ref_name }}
-          path: edaya-client-codegen
-          token: ${{ secrets.CODEGEN_REPO_TOKEN }}
 
       - name: Resolve channel
         id: meta
@@ -49,15 +41,8 @@ jobs:
       - name: Export OpenAPI
         run: bun repo openapi export --output /tmp/openapi.json
 
-      - name: Install codegen dependencies
-        working-directory: edaya-client-codegen
-        run: bun install
-
       - name: Generate client
-        working-directory: edaya-client-codegen
-        env:
-          OPENAPI_INPUT: /tmp/openapi.json
-        run: bun run generate:client
+        run: bun tooling/repo/openapi/generate-bindings.ts --openapi /tmp/openapi.json
 
       - name: Setup Node.js for GitHub Packages
         uses: actions/setup-node@v4
@@ -67,14 +52,13 @@ jobs:
           scope: "@maya-invest"
 
       - name: Build and publish client
-        working-directory: edaya-client-codegen
         env:
           CHANNEL: ${{ steps.meta.outputs.channel }}
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          if git diff --quiet -- clients/school-api/src; then
+          if git diff --quiet -- package/api-client/src; then
             echo "No client source changes; skipping publish."
             exit 0
           fi
@@ -85,36 +69,29 @@ jobs:
 
           node -e "
             const fs = require('node:fs')
-            const path = 'clients/school-api/package.json'
+            const path = 'package/api-client/package.json'
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
             pkg.version = process.env.VERSION
             fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n')
           "
 
-          bun run build:client
+          bun --filter @maya-invest/edaya-api-client build
 
-          cd clients/school-api
+          cd package/api-client
           npm publish --tag "${CHANNEL}"
+          echo "Published @maya-invest/edaya-api-client@${VERSION} (tag: ${CHANNEL})"
 
-      - name: Commit regenerated client to codegen repo
-        working-directory: edaya-client-codegen
-        env:
-          CODEGEN_REPO_TOKEN: ${{ secrets.CODEGEN_REPO_TOKEN }}
+      - name: Commit regenerated client
         run: |
           set -euo pipefail
 
-          if [ -z "${CODEGEN_REPO_TOKEN:-}" ]; then
-            echo "CODEGEN_REPO_TOKEN not set; skipping codegen repo commit."
-            exit 0
-          fi
-
-          if git diff --quiet -- clients/school-api; then
-            echo "No codegen repo changes to commit."
+          if git diff --quiet -- package/api-client; then
+            echo "No api-client changes to commit."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add clients/school-api
+          git add package/api-client
           git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

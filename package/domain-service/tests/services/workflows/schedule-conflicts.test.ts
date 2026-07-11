@@ -1,4 +1,4 @@
-import { AssessmentKind, BusinessRuleViolationError, LessonSession, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus, TimetableGenerated } from '@edaya/core'
+import { AssessmentKind, BusinessRuleViolationError, DayOfWeek, LessonSession, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { validateLessonSessionSave } from '../../../src/services/entities/config/scheduling/lesson-session'
 import { assertNoClassGroupScheduleConflict, assertNoSessionConflict } from '../../../src/services/workflows/schedule-conflicts'
@@ -92,12 +92,39 @@ describe('assertNoClassGroupScheduleConflict', () => {
           createdAt: new Date(),
         }],
       },
+      teacherUnavailabilities: { list: async () => [] },
     } as never, {
       classGroupId: 'cg1',
       teacherIds: ['teacher-1', 'teacher-2'],
       startsAt: new Date('2026-05-28T08:30:00.000Z'),
       endsAt: new Date('2026-05-28T09:30:00.000Z'),
     })).rejects.toMatchObject({ code: 'SCHEDULE_CONFLICT' })
+  })
+
+  test('rejects a session that overlaps recurring teacher unavailability', async () => {
+    const unavailable = new TeacherUnavailability({
+      id: 'contract-hours',
+      teacherId: 'teacher-1',
+      academicYearId: 'year-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Thursday,
+      startTime: '08:30',
+      endTime: '10:15',
+      effectiveFrom: new Date('2026-05-01T00:00:00.000Z'),
+      effectiveUntil: new Date('2026-06-30T00:00:00.000Z'),
+    })
+    await expect(assertNoSessionConflict({
+      lessonSessions: { list: async () => [] },
+      activitySessions: { list: async () => [] },
+      assessments: { list: async () => [] },
+      teacherAssignments: { list: async () => [] },
+      teacherUnavailabilities: { list: async () => [unavailable] },
+    } as never, {
+      classGroupId: 'cg1',
+      teacherIds: ['teacher-1'],
+      startsAt: new Date('2026-05-28T08:00:00.000Z'),
+      endsAt: new Date('2026-05-28T09:00:00.000Z'),
+    })).rejects.toMatchObject({ code: 'TEACHER_UNAVAILABLE' })
   })
 
   test('validates standalone saves and reserves generated state transitions for workflows', async () => {

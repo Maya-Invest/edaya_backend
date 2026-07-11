@@ -88,15 +88,11 @@ Or set the package to **Public** so CI can pull without cross-repo token setup.
 
 ## API client GitHub Packages (`@maya-invest/edaya-api-client`)
 
-[`_publish-api-client.yml`](../../.github/workflows/_publish-api-client.yml) runs on merge to `staging` / `main` when API-related paths change (same gate as `edaya-api-dev`). It exports OpenAPI in-process, regenerates `edaya-client-codegen/clients/school-api`, and publishes to **GitHub Packages** (`npm.pkg.github.com`) with dist-tags `staging` / `production`.
+[`_publish-api-client.yml`](../../.github/workflows/_publish-api-client.yml) runs on merge to `staging` / `main` when API-related paths change (same gate as `edaya-api-dev`). It exports OpenAPI in-process, regenerates `package/api-client/src/`, and publishes to **GitHub Packages** (`npm.pkg.github.com`) with dist-tags `staging` / `production`.
 
 ### Secrets (`edaya_backend` repo settings)
 
-| Secret | Purpose |
-|--------|---------|
-| `CODEGEN_REPO_TOKEN` | Optional — PAT with `contents: write` on `edaya-client-codegen` to commit regenerated `clients/school-api` after publish |
-
-Publish uses `GITHUB_TOKEN` (`packages: write` on `deploy_push`) — no `NPM_TOKEN`.
+Publish uses `GITHUB_TOKEN` (`packages: write` and `contents: write` on `deploy_push`) — no extra tokens required.
 
 ### Consumer package access (one-time, org admin)
 
@@ -117,12 +113,12 @@ bun add @maya-invest/edaya-api-client@staging
 bun add @maya-invest/edaya-api-client@production
 ```
 
-**Local development** — root `package.json` override (committed in this monorepo):
+**Local development in this monorepo** — root `package.json` override:
 
 ```json
 "overrides": {
-  "@maya-invest/edaya-api-client": "file:edaya-client-codegen/clients/school-api"
+  "@maya-invest/edaya-api-client": "workspace:*"
 }
 ```
 
-Symlink or CI-checkout `edaya-client-codegen` at the repo root.
+**Sibling repos** — `file:../edaya_backend/package/api-client`.

@@ -309,6 +309,13 @@
       "when": 1781104996445,
       "tag": "0043_timetable_generation_preparation",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1781104996446,
+      "tag": "0044_teacher_unavailabilities",
+      "breakpoints": true
     }
   ]
 }

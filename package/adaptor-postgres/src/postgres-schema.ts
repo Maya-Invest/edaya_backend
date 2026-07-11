@@ -465,6 +465,24 @@ export const teacherAssignments = pgTable('teacher_assignments', {
   updatedAt: timestamp('updated_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('teacher_assignments', table))
 
+export const teacherUnavailabilities = pgTable('teacher_unavailabilities', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  recurrence: text('recurrence').notNull(),
+  dayOfWeek: text('day_of_week'),
+  startTime: text('start_time'),
+  endTime: text('end_time'),
+  effectiveFrom: timestamp('effective_from', { mode: 'date' }),
+  effectiveUntil: timestamp('effective_until', { mode: 'date' }),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  reason: text('reason'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('teacher_unavailabilities', table))
+
 export const gradeLevelSubjects = pgTable('grade_level_subjects', {
   id: text('id').primaryKey(),
   gradeLevelId: text('grade_level_id').notNull(),

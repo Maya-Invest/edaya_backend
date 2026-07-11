@@ -33,6 +33,6 @@
     "zod": "^3.24.4"
   },
   "dependencies": {
-    "@maya-invest/edaya-api-client": "file:../../edaya-client-codegen/clients/school-api"
+    "@maya-invest/edaya-api-client": "workspace:*"
   }
 }

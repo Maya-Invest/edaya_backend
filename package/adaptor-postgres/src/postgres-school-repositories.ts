@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -24,6 +24,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly staffAssignments: PostgresStore<StaffAssignment>
   public readonly teachers: PostgresStore<Teacher>
   public readonly teacherAssignments: PostgresStore<TeacherAssignment>
+  public readonly teacherUnavailabilities: PostgresStore<TeacherUnavailability>
   public readonly serviceApiKeys: PostgresServiceApiKeyStore
   public readonly accountInvitations: PostgresAccountInvitationStore
   public readonly cronJobSchedules: PostgresCronJobScheduleStore
@@ -84,6 +85,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.staffAssignments = stores.staffAssignments
     this.teachers = stores.teachers
     this.teacherAssignments = stores.teacherAssignments
+    this.teacherUnavailabilities = stores.teacherUnavailabilities
     this.serviceApiKeys = new PostgresServiceApiKeyStore(db)
     this.accountInvitations = new PostgresAccountInvitationStore(db)
     this.cronJobSchedules = new PostgresCronJobScheduleStore(db)

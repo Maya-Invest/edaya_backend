@@ -37,6 +37,6 @@
     "typescript": "^6.0.2"
   },
   "overrides": {
-    "@maya-invest/edaya-api-client": "file:edaya-client-codegen/clients/school-api"
+    "@maya-invest/edaya-api-client": "workspace:*"
   }
 }

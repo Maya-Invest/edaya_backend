@@ -42,6 +42,7 @@ export { staffMemberConfig, validateStaffMemberSave } from './school/staff-membe
 export { staffPermissionAssignmentConfig } from './school/staff-permission-assignment'
 export { teacherConfig } from './school/teacher'
 export { teacherAssignmentConfig, validateTeacherAssignmentSave } from './school/teacher-assignment'
+export { teacherUnavailabilityConfig, validateTeacherUnavailabilitySave } from './school/teacher-unavailability'
 export { disciplinaryActionConfig } from './students/disciplinary-action'
 export { guardianConfig } from './students/guardian'
 export { guardianStudentLinkConfig, validateGuardianStudentLinkSave } from './students/guardian-student-link'

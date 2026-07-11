@@ -1,6 +1,7 @@
 import type { Assessment, LessonSession, TeacherAssignment } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { AssessmentKind, BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { teacherUnavailabilityOverlaps } from './teacher-unavailability'
 
 export interface SessionConflictInput {
   classGroupId: string
@@ -95,6 +96,18 @@ export async function assertNoSessionConflict(
   const teacherAssessments: Assessment[] = []
 
   if (teacherIds.size > 0) {
+    const unavailabilities = await repositories.teacherUnavailabilities.list({
+      teacherId: { $in: [...teacherIds] },
+      isActive: true,
+    })
+    const unavailable = unavailabilities.find(rule => teacherUnavailabilityOverlaps(rule, input.startsAt, input.endsAt))
+    if (unavailable) {
+      throw new BusinessRuleViolationError(
+        'TEACHER_UNAVAILABLE',
+        `Teacher ${unavailable.teacherId} is unavailable during this occurrence (${unavailable.id})`,
+      )
+    }
+
     const assignments = await repositories.teacherAssignments.list({
       kind: TeacherAssignmentKind.Subject,
       status: TeacherAssignmentStatus.Active,

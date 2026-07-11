@@ -20,6 +20,8 @@ import {
   SubjectColor,
   TeacherAssignment,
   TeacherAssignmentKind,
+  TeacherUnavailability,
+  TeacherUnavailabilityRecurrence,
   TimetableGenerated,
 } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
@@ -133,7 +135,7 @@ describe('timetable resolver and solver', () => {
   })
 })
 
-function createWorkflowContext() {
+function createWorkflowContext(unavailabilities: TeacherUnavailability[] = []) {
   const school = new School({
     id: 'school-1',
     name: 'School',
@@ -189,6 +191,7 @@ function createWorkflowContext() {
     },
     subjects: { findByIds: async () => [subject] },
     teacherAssignments: { list: async () => assignments },
+    teacherUnavailabilities: { list: async () => unavailabilities },
     periodDefinitions: { list: async () => periods },
     calendarEvents: { list: async () => [] },
     lessonSessions: {
@@ -230,6 +233,28 @@ describe('timetable generation workflow', () => {
     const startsAt = result.classGroups.flatMap(group => group.sessions.map(session => session.startsAt.toISOString()))
     expect(new Set(startsAt).size).toBe(4)
     expect(result.classGroups.flatMap(group => group.sessions).every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+  })
+
+  test('does not place lessons in a recurring teacher-unavailable slot', async () => {
+    const { service } = createWorkflowContext([new TeacherUnavailability({
+      id: 'monday-contract-hours',
+      teacherId: 'teacher-shared',
+      academicYearId: 'year-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Monday,
+      startTime: '08:30',
+      endTime: '09:30',
+      effectiveFrom: weekStart,
+      effectiveUntil: weekEnd,
+    })])
+    const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(result.sessions.every(session => session.startsAt.toISOString() !== '2026-09-07T08:00:00.000Z')).toBe(true)
   })
 
   test('publishes and atomically republishes while preserving completed and standalone sessions', async () => {

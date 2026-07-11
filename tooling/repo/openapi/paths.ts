@@ -4,10 +4,7 @@ import process from 'node:process'
 export const repoRoot = resolve(import.meta.dirname, '../../..')
 
 export const trackedOpenApiPath = resolve(repoRoot, 'tooling/repo/fixtures/openapi.json')
-export const trackedApiClientDirPath = resolve(
-  repoRoot,
-  'edaya-client-codegen/clients/school-api/src',
-)
+export const trackedApiClientDirPath = resolve(repoRoot, 'package/api-client/src')
 
 export function resolveArgvPath(flag: string, defaultPath: string): string {
   const flagIndex = process.argv.indexOf(flag)
