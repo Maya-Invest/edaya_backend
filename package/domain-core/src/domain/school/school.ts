@@ -31,6 +31,8 @@ export const schoolSchema = z.object({
   timetableExcludeBreakSlots: z.boolean().default(true),
   timetableMinPeriodGapSameSubject: z.number().int().nonnegative('timetableMinPeriodGapSameSubject must be a non-negative integer').default(2),
   timetablePreferredPeriodDefinitionIds: z.array(z.string().trim().min(1, 'preferred period definition id must not be blank')).default([]),
+  timetableAllowUnassignedTeacherPlacements: z.boolean().default(false),
+  timetableUseHomeroomTeacherFallback: z.boolean().default(false),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -63,6 +65,8 @@ export class School {
   get timetableExcludeBreakSlots() { return this.data.timetableExcludeBreakSlots }
   get timetableMinPeriodGapSameSubject() { return this.data.timetableMinPeriodGapSameSubject }
   get timetablePreferredPeriodDefinitionIds() { return this.data.timetablePreferredPeriodDefinitionIds }
+  get timetableAllowUnassignedTeacherPlacements() { return this.data.timetableAllowUnassignedTeacherPlacements }
+  get timetableUseHomeroomTeacherFallback() { return this.data.timetableUseHomeroomTeacherFallback }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

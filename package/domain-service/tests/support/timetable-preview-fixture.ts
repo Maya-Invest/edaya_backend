@@ -129,6 +129,8 @@ const options: TimetableGenerationDefaults = {
     `${day.toLowerCase()}-p1`,
     `${day.toLowerCase()}-p2`,
   ]),
+  allowUnassignedTeacherPlacements: false,
+  useHomeroomTeacherFallback: false,
 }
 
 export const timetablePreviewFixture = {

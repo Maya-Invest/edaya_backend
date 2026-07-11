@@ -37,7 +37,7 @@ demo-ci/
 | Élèves | 30 |
 | Parents | 21 |
 | Personnel | 5 |
-| Enseignants portail | 2 (`ci-t1`, `ci-t2`) |
+| Enseignants portail | 8 (`ci-t1` → `ci-t8`) |
 | Bulletins (T1) | 30 résultats (tous les élèves) |
 
 ## Domaines couverts
@@ -46,7 +46,7 @@ demo-ci/
 |---------|---------|
 | Scolarité | Structure, curriculum, 5 classes, 33 matières de classe |
 | Population | 30 élèves, 21 parents, liens famille |
-| Enseignants | 2 portail + affectations |
+| Enseignants | 8 portail + affectations (toutes les matières de 6ème A couvertes) |
 | Emploi du temps | 5 créneaux, 3 ancres de progression |
 | Évaluations | Contrôles T1 (toutes classes) + devoirs maison |
 | Bulletins | 4 modèles (6ème→3ème), 30 résultats T1 |

@@ -48,6 +48,8 @@ export interface TimetableGenerationDefaults {
   excludeBreakSlots: boolean
   minPeriodGapSameSubject: number
   preferredPeriodDefinitionIds: string[]
+  allowUnassignedTeacherPlacements: boolean
+  useHomeroomTeacherFallback: boolean
 }
 
 export interface TimetablePlacementParameters {
@@ -386,6 +388,27 @@ function assignmentApplies(assignment: TeacherAssignment, startsAt: Date, endsAt
     && (!assignment.endsAt || startsAt < assignment.endsAt)
 }
 
+function teacherIdsForClassSubjectAt(
+  classSubjectId: string,
+  assignments: readonly TeacherAssignment[],
+  occurrenceStartsAt: Date,
+  occurrenceEndsAt: Date,
+): string[] {
+  return [...new Set(assignments
+    .filter(assignment => assignment.classSubjectId === classSubjectId && assignmentApplies(assignment, occurrenceStartsAt, occurrenceEndsAt))
+    .map(assignment => assignment.teacherId))]
+}
+
+function resolveLessonTeacherIds(
+  lesson: LessonSessionEntity,
+  assignments: readonly TeacherAssignment[],
+): string[] {
+  if (lesson.timetableTeacherIds.length > 0) {
+    return lesson.timetableTeacherIds
+  }
+  return teacherIdsForClassSubjectAt(lesson.classSubjectId, assignments, lesson.startsAt, lesson.endsAt)
+}
+
 function assessmentIsTimed(assessment: Assessment): assessment is Assessment & { startsAt: Date, endsAt: Date } {
   return assessment.kind !== AssessmentKind.Homework && Boolean(assessment.startsAt && assessment.endsAt)
 }
@@ -395,24 +418,28 @@ async function buildOccupiedIntervals(
   classGroupId: string,
   startsAt: Date,
   endsAt: Date,
-  assignments: TeacherAssignment[],
+  demands: TimetableSubjectDemand[],
 ): Promise<OccupiedInterval[]> {
-  const assignedTeacherIds = [...new Set(assignments.map(assignment => assignment.teacherId))]
-  const [lessons, activities, assessments, unavailabilities] = await Promise.all([
+  const [lessons, activities, assignments, assessments] = await Promise.all([
     repositories.lessonSessions.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
     repositories.activitySessions.list({ classGroupId }),
-    repositories.assessments.list(),
-    assignedTeacherIds.length > 0
-      ? repositories.teacherUnavailabilities.list({ teacherId: { $in: assignedTeacherIds }, isActive: true })
-      : Promise.resolve([]),
+    repositories.teacherAssignments.list({ kind: TeacherAssignmentKind.Subject, status: TeacherAssignmentStatus.Active }),
+    repositories.assessments.list({ startsAt: { $lt: endsAt }, endsAt: { $gt: startsAt } }),
   ])
-  const teachersByClassSubject = new Map<string, string[]>()
-  for (const assignment of assignments.filter(item => assignmentApplies(item, startsAt, endsAt))) {
-    teachersByClassSubject.set(assignment.classSubjectId!, [
-      ...(teachersByClassSubject.get(assignment.classSubjectId!) ?? []),
-      assignment.teacherId,
-    ])
+  const relevantTeacherIds = new Set(demands.flatMap(demand => demand.teacherIds))
+  for (const lesson of lessons) {
+    for (const teacherId of resolveLessonTeacherIds(lesson, assignments)) {
+      relevantTeacherIds.add(teacherId)
+    }
   }
+  for (const assessment of assessments.filter(assessmentIsTimed)) {
+    for (const teacherId of teacherIdsForClassSubjectAt(assessment.classSubjectId, assignments, assessment.startsAt, assessment.endsAt)) {
+      relevantTeacherIds.add(teacherId)
+    }
+  }
+  const unavailabilities = relevantTeacherIds.size > 0
+    ? await repositories.teacherUnavailabilities.list({ teacherId: { $in: [...relevantTeacherIds] }, isActive: true })
+    : []
   const occupied: OccupiedInterval[] = []
   for (const rule of unavailabilities) {
     for (const interval of expandTeacherUnavailability(rule, startsAt, endsAt)) {
@@ -432,7 +459,7 @@ async function buildOccupiedIntervals(
     if (lesson.classGroupId === classGroupId) {
       occupied.push({ layer: 'class_group', layerKey: classGroupId, startsAt: lesson.startsAt, endsAt: lesson.endsAt, sourceSessionId: lesson.id })
     }
-    for (const teacherId of teachersByClassSubject.get(lesson.classSubjectId) ?? []) {
+    for (const teacherId of resolveLessonTeacherIds(lesson, assignments)) {
       occupied.push({ layer: 'teacher', layerKey: teacherId, startsAt: lesson.startsAt, endsAt: lesson.endsAt, sourceSessionId: lesson.id })
     }
   }
@@ -449,7 +476,7 @@ async function buildOccupiedIntervals(
     if (assessment.classGroupId === classGroupId) {
       occupied.push({ layer: 'class_group', layerKey: classGroupId, startsAt: assessment.startsAt, endsAt: assessment.endsAt, sourceSessionId: assessment.id })
     }
-    for (const teacherId of teachersByClassSubject.get(assessment.classSubjectId) ?? []) {
+    for (const teacherId of teacherIdsForClassSubjectAt(assessment.classSubjectId, assignments, assessment.startsAt, assessment.endsAt)) {
       occupied.push({ layer: 'teacher', layerKey: teacherId, startsAt: assessment.startsAt, endsAt: assessment.endsAt, sourceSessionId: assessment.id })
     }
   }
@@ -520,9 +547,12 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     rejectExistingDrafts: boolean,
   ): Promise<GenerateClassGroupTimetableResult> {
     if (rejectExistingDrafts) {
-      const drafts = await this.generatedSessionsInRange(input.classGroupId, input.startDate, input.endDate)
-      if (drafts.some(session => session.timetableGenerated === TimetableGenerated.Draft && !session.isException)) {
+      const existing = await this.generatedSessionsInRange(input.classGroupId, input.startDate, input.endDate)
+      if (existing.some(session => session.timetableGenerated === TimetableGenerated.Draft && !session.isException)) {
         throw new BusinessRuleViolationError('TIMETABLE_DRAFT_ALREADY_EXISTS', 'Generated drafts already exist in this range; use republish to replace them')
+      }
+      if (existing.some(session => session.timetableGenerated === TimetableGenerated.Published && !session.isException)) {
+        throw new BusinessRuleViolationError('TIMETABLE_PUBLISHED_ALREADY_EXISTS', 'Published timetable sessions already exist in this range; use republish to replace them')
       }
     }
     const options: TimetableGenerationDefaults = {
@@ -530,6 +560,8 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       excludeBreakSlots: input.options?.excludeBreakSlots ?? context.school.timetableExcludeBreakSlots,
       minPeriodGapSameSubject: input.options?.minPeriodGapSameSubject ?? context.school.timetableMinPeriodGapSameSubject,
       preferredPeriodDefinitionIds: input.options?.preferredPeriodDefinitionIds ?? context.school.timetablePreferredPeriodDefinitionIds,
+      allowUnassignedTeacherPlacements: input.options?.allowUnassignedTeacherPlacements ?? context.school.timetableAllowUnassignedTeacherPlacements,
+      useHomeroomTeacherFallback: input.options?.useHomeroomTeacherFallback ?? context.school.timetableUseHomeroomTeacherFallback,
     }
     const cells = await resolveTimetableSpace(this.baseService.repositories, input, { excludeBreakSlots: options.excludeBreakSlots })
     const rangeStart = normalizeDate(input.startDate)
@@ -541,8 +573,20 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     const offered = classSubjects.filter(subject => subject.isOffered)
     const subjectEntities = await this.baseService.repositories.subjects.findByIds([...new Set(offered.map(subject => subject.subjectId))])
     const labelBySubjectId = new Map(subjectEntities.map(subject => [subject.id, subject.name]))
-    const demands = offered.map(subject => this.buildDemand(subject, assignments, input, labelBySubjectId.get(subject.subjectId) ?? subject.subjectId, rangeStart, rangeEnd))
-    const occupiedIntervals = await buildOccupiedIntervals(this.baseService.repositories, input.classGroupId, rangeStart, rangeEnd, assignments)
+    const homeroomTeacherId = options.useHomeroomTeacherFallback
+      ? await this.resolveHomeroomTeacherId(context.classGroup)
+      : undefined
+    const demands = offered.map(subject => this.buildDemand(
+      subject,
+      assignments,
+      input,
+      options,
+      homeroomTeacherId,
+      labelBySubjectId.get(subject.subjectId) ?? subject.subjectId,
+      rangeStart,
+      rangeEnd,
+    ))
+    const occupiedIntervals = await buildOccupiedIntervals(this.baseService.repositories, input.classGroupId, rangeStart, rangeEnd, demands)
     const existingWorkloadByClassSubjectAndWeek = await this.buildExistingWorkload(input.classGroupId, rangeStart, rangeEnd)
     const solved = solveTimetable({
       classGroupId: input.classGroupId,
@@ -560,6 +604,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
         classGroupId: context.classGroup.id,
         classSubjectId: placement.classSubjectId,
         timetableGenerated: TimetableGenerated.Draft,
+        timetableTeacherIds: placement.teacherIds,
         status: OccurrenceStatus.Pending,
         isException: false,
         startsAt: placement.cell.startsAt,
@@ -576,6 +621,8 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     subject: ClassSubject,
     assignments: TeacherAssignment[],
     input: GenerateClassGroupTimetableInput,
+    options: TimetableGenerationDefaults,
+    homeroomTeacherId: string | undefined,
     displayLabel: string,
     startsAt: Date,
     endsAt: Date,
@@ -583,7 +630,10 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     const teacherIds = [...new Set(assignments
       .filter(assignment => assignment.classSubjectId === subject.id && assignmentApplies(assignment, startsAt, endsAt))
       .map(assignment => assignment.teacherId))]
-    if (teacherIds.length === 0) {
+    if (teacherIds.length === 0 && options.useHomeroomTeacherFallback && homeroomTeacherId) {
+      teacherIds.push(homeroomTeacherId)
+    }
+    if (teacherIds.length === 0 && !options.allowUnassignedTeacherPlacements) {
       throw new BusinessRuleViolationError('TIMETABLE_TEACHER_ASSIGNMENT_REQUIRED', `Class subject ${subject.id} has no active teacher assignment`)
     }
     const periodsPerWeek = input.placementParameters?.periodsPerWeekByClassSubjectId?.[subject.id] ?? subject.periodsPerWeek
@@ -591,6 +641,22 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       throw new BusinessRuleViolationError('TIMETABLE_WORKLOAD_REQUIRED', `Class subject ${subject.id} has no valid periodsPerWeek`)
     }
     return { classSubjectId: subject.id, displayLabel, periodsPerWeek, teacherIds }
+  }
+
+  private async resolveHomeroomTeacherId(classGroup: ClassGroup): Promise<string | undefined> {
+    if (!classGroup.homeroomStaffId) {
+      return undefined
+    }
+    const staff = await this.baseService.repositories.staffMembers.findById(classGroup.homeroomStaffId)
+    if (!staff?.subjectId) {
+      return undefined
+    }
+    const teacher = await this.baseService.repositories.teachers.findOne({
+      schoolId: classGroup.schoolId,
+      subjectId: staff.subjectId,
+      isActive: true,
+    })
+    return teacher?.id
   }
 
   private async publishInternal(
@@ -603,12 +669,14 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       kind: TeacherAssignmentKind.Subject,
       status: TeacherAssignmentStatus.Active,
     })
-    const publishable: LessonSessionEntity[] = []
+    const publishable: Array<{ draft: LessonSessionEntity, teacherIds: string[] }> = []
     const skippedSessionIds: string[] = []
     for (const draft of drafts) {
-      const teacherIds = [...new Set(assignments
-        .filter(assignment => assignment.classSubjectId === draft.classSubjectId && assignmentApplies(assignment, draft.startsAt, draft.endsAt))
-        .map(assignment => assignment.teacherId))]
+      const teacherIds = draft.timetableTeacherIds.length > 0
+        ? draft.timetableTeacherIds
+        : [...new Set(assignments
+            .filter(assignment => assignment.classSubjectId === draft.classSubjectId && assignmentApplies(assignment, draft.startsAt, draft.endsAt))
+            .map(assignment => assignment.teacherId))]
       try {
         await assertNoSessionConflict(this.baseService.repositories, {
           classGroupId: classGroup.id,
@@ -617,7 +685,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
           endsAt: draft.endsAt,
           excludeSessionId: draft.id,
         })
-        publishable.push(draft)
+        publishable.push({ draft, teacherIds })
       }
       catch (error) {
         if (input.sessionConflictPolicy === 'skip'
@@ -630,8 +698,11 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     const publishedSessionIds: string[] = []
-    for (const draft of publishable) {
-      const published = draft.copyWith({ timetableGenerated: TimetableGenerated.Published })
+    for (const { draft, teacherIds } of publishable) {
+      const published = draft.copyWith({
+        timetableGenerated: TimetableGenerated.Published,
+        timetableTeacherIds: teacherIds,
+      })
       await this.baseService.repositories.lessonSessions.save(published)
       publishedSessionIds.push(published.id)
     }

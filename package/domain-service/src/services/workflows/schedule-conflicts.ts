@@ -108,10 +108,16 @@ export async function assertNoSessionConflict(
       )
     }
 
-    const assignments = await repositories.teacherAssignments.list({
-      kind: TeacherAssignmentKind.Subject,
-      status: TeacherAssignmentStatus.Active,
-    })
+    const [assignments, generatedLessons] = await Promise.all([
+      repositories.teacherAssignments.list({
+        kind: TeacherAssignmentKind.Subject,
+        status: TeacherAssignmentStatus.Active,
+      }),
+      repositories.lessonSessions.list({
+        startsAt: { $lt: input.endsAt },
+        endsAt: { $gt: input.startsAt },
+      }),
+    ])
     const classSubjectIds = [...new Set(assignments
       .filter(assignment => assignmentApplies(assignment, teacherIds, input.startsAt, input.endsAt))
       .map(assignment => assignment.classSubjectId!))]
@@ -124,6 +130,8 @@ export async function assertNoSessionConflict(
       teacherLessons.push(...lessons)
       teacherAssessments.push(...assessments)
     }
+    teacherLessons.push(...generatedLessons.filter(lesson =>
+      lesson.timetableTeacherIds.some(teacherId => teacherIds.has(teacherId))))
   }
 
   const teacherLessonIds = new Set(teacherLessons.map(lesson => lesson.id))

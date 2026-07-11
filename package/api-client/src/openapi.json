@@ -783,6 +783,14 @@
             },
             "default": []
           },
+          "timetableAllowUnassignedTeacherPlacements": {
+            "type": "boolean",
+            "default": false
+          },
+          "timetableUseHomeroomTeacherFallback": {
+            "type": "boolean",
+            "default": false
+          },
           "createdAt": {}
         },
         "required": [
@@ -1882,6 +1890,14 @@
             },
             "default": []
           },
+          "timetableAllowUnassignedTeacherPlacements": {
+            "type": "boolean",
+            "default": false
+          },
+          "timetableUseHomeroomTeacherFallback": {
+            "type": "boolean",
+            "default": false
+          },
           "createdAt": {}
         },
         "required": [
@@ -1949,6 +1965,14 @@
               "minLength": 1
             },
             "default": []
+          },
+          "timetableAllowUnassignedTeacherPlacements": {
+            "type": "boolean",
+            "default": false
+          },
+          "timetableUseHomeroomTeacherFallback": {
+            "type": "boolean",
+            "default": false
           },
           "schoolId": {
             "type": "string",
@@ -9167,6 +9191,14 @@
               "published"
             ]
           },
+          "timetableTeacherIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          },
           "classSubjectId": {
             "type": "string",
             "minLength": 1
@@ -9940,6 +9972,12 @@
               "type": "string",
               "minLength": 1
             }
+          },
+          "allowUnassignedTeacherPlacements": {
+            "type": "boolean"
+          },
+          "useHomeroomTeacherFallback": {
+            "type": "boolean"
           }
         }
       },

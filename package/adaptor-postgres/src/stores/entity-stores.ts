@@ -511,6 +511,7 @@ export function createEntityStores(db: any): EntityStores {
         classGroupId: entity.classGroupId,
         scheduleId: entity.scheduleId ?? null,
         timetableGenerated: entity.timetableGenerated ?? null,
+        timetableTeacherIds: entity.timetableTeacherIds,
         classSubjectId: entity.classSubjectId,
         status: entity.status,
         isException: entity.isException,
@@ -533,6 +534,7 @@ export function createEntityStores(db: any): EntityStores {
         timetableGenerated: row.timetableGenerated
           ? enumValue(TimetableGenerated, row.timetableGenerated, 'lessonSessions.timetableGenerated')
           : undefined,
+        timetableTeacherIds: row.timetableTeacherIds as string[],
         classSubjectId: row.classSubjectId,
         status: enumValue(OccurrenceStatus, row.status, 'lessonSessions.status'),
         isException: row.isException,

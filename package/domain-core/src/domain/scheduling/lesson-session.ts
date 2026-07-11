@@ -17,6 +17,7 @@ export const lessonSessionBaseSchema = z.object({
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   scheduleId: z.string().trim().min(1, 'scheduleId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   timetableGenerated: z.nativeEnum(TimetableGenerated).nullable().optional().transform(v => v === null ? undefined : v),
+  timetableTeacherIds: z.array(z.string().trim().min(1, 'timetable teacher id must not be blank')).default([]),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank'),
   status: z.nativeEnum(OccurrenceStatus).default(OccurrenceStatus.Pending),
   isException: z.boolean().default(false),
@@ -57,6 +58,7 @@ export class LessonSession {
   get classGroupId() { return this.data.classGroupId }
   get scheduleId() { return this.data.scheduleId }
   get timetableGenerated() { return this.data.timetableGenerated }
+  get timetableTeacherIds() { return this.data.timetableTeacherIds }
   get classSubjectId() { return this.data.classSubjectId }
   get status() { return this.data.status }
   get isException() { return this.data.isException }
@@ -81,6 +83,7 @@ export class LessonSession {
       classGroupId: this.classGroupId,
       scheduleId: this.scheduleId,
       timetableGenerated: this.timetableGenerated,
+      timetableTeacherIds: this.timetableTeacherIds,
       classSubjectId: this.classSubjectId,
       status: this.status,
       isException: this.isException,

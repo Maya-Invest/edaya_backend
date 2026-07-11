@@ -10225,6 +10225,10 @@ export interface components {
             timetableMinPeriodGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
+            /** @default false */
+            timetableAllowUnassignedTeacherPlacements: boolean;
+            /** @default false */
+            timetableUseHomeroomTeacherFallback: boolean;
             createdAt?: unknown;
         };
         BusinessRuleViolationResponse: {
@@ -10453,6 +10457,10 @@ export interface components {
             timetableMinPeriodGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
+            /** @default false */
+            timetableAllowUnassignedTeacherPlacements: boolean;
+            /** @default false */
+            timetableUseHomeroomTeacherFallback: boolean;
             createdAt?: unknown;
         };
         UpdateSchoolConfigurationCommand: {
@@ -10473,6 +10481,10 @@ export interface components {
             timetableMinPeriodGapSameSubject: number;
             /** @default [] */
             timetablePreferredPeriodDefinitionIds: string[];
+            /** @default false */
+            timetableAllowUnassignedTeacherPlacements: boolean;
+            /** @default false */
+            timetableUseHomeroomTeacherFallback: boolean;
             schoolId: string;
         };
         AcademicYear: {
@@ -12194,6 +12206,8 @@ export interface components {
             scheduleId?: string | null;
             /** @enum {string|null} */
             timetableGenerated?: "draft" | "published" | null;
+            /** @default [] */
+            timetableTeacherIds: string[];
             classSubjectId: string;
             /**
              * @default pending
@@ -12399,6 +12413,8 @@ export interface components {
             excludeBreakSlots?: boolean;
             minPeriodGapSameSubject?: number;
             preferredPeriodDefinitionIds?: string[];
+            allowUnassignedTeacherPlacements?: boolean;
+            useHomeroomTeacherFallback?: boolean;
         };
         GenerateClassGroupTimetableCommand: {
             classGroupId: string;

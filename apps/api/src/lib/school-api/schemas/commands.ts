@@ -439,6 +439,8 @@ const timetableGenerationOptionsSchema = z.object({
   excludeBreakSlots: z.boolean().optional(),
   minPeriodGapSameSubject: z.number().int().nonnegative().optional(),
   preferredPeriodDefinitionIds: z.array(field.id()).optional(),
+  allowUnassignedTeacherPlacements: z.boolean().optional(),
+  useHomeroomTeacherFallback: z.boolean().optional(),
 }).openapi("TimetableGenerationOptions");
 
 const timetablePlacementParametersSchema = z.object({

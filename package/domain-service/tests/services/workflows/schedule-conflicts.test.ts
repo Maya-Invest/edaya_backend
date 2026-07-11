@@ -101,6 +101,36 @@ describe('assertNoClassGroupScheduleConflict', () => {
     })).rejects.toMatchObject({ code: 'SCHEDULE_CONFLICT' })
   })
 
+  test('rejects cross-class overlap using the generated teacher snapshot', async () => {
+    const generatedLesson = new LessonSession({
+      id: 'generated-fallback-lesson',
+      schoolId: 'school-1',
+      classGroupId: 'cg2',
+      classSubjectId: 'cs-without-assignment',
+      status: OccurrenceStatus.Pending,
+      startsAt: new Date('2026-05-28T08:00:00.000Z'),
+      endsAt: new Date('2026-05-28T09:00:00.000Z'),
+      displayLabel: 'Generated lesson',
+      timetableGenerated: TimetableGenerated.Draft,
+      timetableTeacherIds: ['teacher-1'],
+    })
+
+    await expect(assertNoSessionConflict({
+      lessonSessions: {
+        list: async (filter: Record<string, unknown>) => 'startsAt' in filter ? [generatedLesson] : [],
+      },
+      activitySessions: { list: async () => [] },
+      assessments: { list: async () => [] },
+      teacherAssignments: { list: async () => [] },
+      teacherUnavailabilities: { list: async () => [] },
+    } as never, {
+      classGroupId: 'cg1',
+      teacherIds: ['teacher-1'],
+      startsAt: new Date('2026-05-28T08:30:00.000Z'),
+      endsAt: new Date('2026-05-28T09:30:00.000Z'),
+    })).rejects.toMatchObject({ code: 'SCHEDULE_CONFLICT' })
+  })
+
   test('rejects a session that overlaps recurring teacher unavailability', async () => {
     const unavailable = new TeacherUnavailability({
       id: 'contract-hours',

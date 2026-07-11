@@ -44,6 +44,7 @@ export function isLessonSessionLogbookOnlyUpdate(
     && entity.classGroupId === existing.classGroupId
     && entity.scheduleId === existing.scheduleId
     && entity.timetableGenerated === existing.timetableGenerated
+    && entity.timetableTeacherIds.join('|') === existing.timetableTeacherIds.join('|')
     && entity.classSubjectId === existing.classSubjectId
     && entity.status === existing.status
     && entity.isException === existing.isException
@@ -60,6 +61,7 @@ export function isLessonSessionAttendanceCompletionUpdate(
     && entity.classGroupId === existing.classGroupId
     && entity.scheduleId === existing.scheduleId
     && entity.timetableGenerated === existing.timetableGenerated
+    && entity.timetableTeacherIds.join('|') === existing.timetableTeacherIds.join('|')
     && entity.classSubjectId === existing.classSubjectId
     && entity.isException === existing.isException
     && entity.startsAt.getTime() === existing.startsAt.getTime()

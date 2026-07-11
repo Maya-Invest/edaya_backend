@@ -27,6 +27,8 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       timetableExcludeBreakSlots: false,
       timetableMinPeriodGapSameSubject: 4,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
     })
 
@@ -40,6 +42,8 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       timetableExcludeBreakSlots: false,
       timetableMinPeriodGapSameSubject: 4,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
     })
   })
 
@@ -106,6 +110,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
       timetableGenerated: TimetableGenerated.Draft,
+      timetableTeacherIds: ['teacher-1'],
       startsAt: new Date('2026-09-07T08:00:00.000Z'),
       endsAt: new Date('2026-09-07T09:00:00.000Z'),
       displayLabel: 'Mathematics',
@@ -120,6 +125,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
     expect(await repos.lessonSessions.findById('lesson-1')).toMatchObject({
       scheduleId: undefined,
       timetableGenerated: TimetableGenerated.Draft,
+      timetableTeacherIds: ['teacher-1'],
     })
   })
 

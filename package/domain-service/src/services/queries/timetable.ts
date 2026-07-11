@@ -15,6 +15,8 @@ export interface TimetableEvent {
   subjectLabel?: string
   /** Subject teacher for lessons/assessments, or activity coach for activities. */
   teacherName?: string
+  /** Snapshot teacher ids from generated lesson sessions. */
+  timetableTeacherIds?: string[]
   startsAt: Date
   endsAt: Date
   lessonSessionId?: string
@@ -85,6 +87,7 @@ function lessonEventFromSession(session: LessonSession): TimetableEvent {
     classGroupId: session.classGroupId,
     classSubjectId: session.classSubjectId,
     title: session.displayLabel,
+    timetableTeacherIds: session.timetableTeacherIds.length > 0 ? session.timetableTeacherIds : undefined,
     startsAt: session.startsAt,
     endsAt: session.endsAt,
     lessonSessionId: session.id,
@@ -216,7 +219,9 @@ async function enrichTimetableEventPresentation(
       && assignment.kind === TeacherAssignmentKind.Subject
       && assignment.classSubjectId,
   )
-  const teacherIds = uniqueStrings(activeSubjectAssignments.map(assignment => assignment.teacherId))
+  const snapshotTeacherIds = uniqueStrings(events.flatMap(event => event.timetableTeacherIds ?? []))
+  const assignmentTeacherIds = uniqueStrings(activeSubjectAssignments.map(assignment => assignment.teacherId))
+  const teacherIds = uniqueStrings([...assignmentTeacherIds, ...snapshotTeacherIds])
   const teachers = teacherIds.length > 0 && repositories.teachers
     ? await repositories.teachers.findByIds(teacherIds)
     : []
@@ -246,6 +251,15 @@ async function enrichTimetableEventPresentation(
     }
 
     event.subjectLabel = event.title
+    if (event.timetableTeacherIds?.length) {
+      const snapshotNames = event.timetableTeacherIds
+        .map(teacherId => teacherNameById.get(teacherId))
+        .filter((name): name is string => Boolean(name))
+      if (snapshotNames.length > 0) {
+        event.teacherName = snapshotNames.join(', ')
+        continue
+      }
+    }
     if (event.classSubjectId) {
       event.teacherName = teacherNameByClassSubjectId.get(event.classSubjectId)
     }

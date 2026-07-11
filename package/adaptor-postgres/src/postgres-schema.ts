@@ -15,6 +15,8 @@ export const schools = pgTable('schools', {
   timetableExcludeBreakSlots: boolean('timetable_exclude_break_slots').notNull().default(true),
   timetableMinPeriodGapSameSubject: integer('timetable_min_period_gap_same_subject').notNull().default(2),
   timetablePreferredPeriodDefinitionIds: jsonb('timetable_preferred_period_definition_ids').notNull().default([]),
+  timetableAllowUnassignedTeacherPlacements: boolean('timetable_allow_unassigned_teacher_placements').notNull().default(false),
+  timetableUseHomeroomTeacherFallback: boolean('timetable_use_homeroom_teacher_fallback').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -282,6 +284,7 @@ export const lessonSessions = pgTable('lesson_sessions', {
   classGroupId: text('class_group_id').notNull(),
   scheduleId: text('schedule_id'),
   timetableGenerated: text('timetable_generated'),
+  timetableTeacherIds: jsonb('timetable_teacher_ids').notNull().default([]),
   classSubjectId: text('class_subject_id').notNull(),
   status: text('status').notNull(),
   isException: boolean('is_exception').notNull(),

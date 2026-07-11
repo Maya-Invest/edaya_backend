@@ -251,4 +251,51 @@ describe('buildClassGroupTimetable', () => {
     expect(activity?.subjectLabel).toBe('Chess Club')
     expect(activity?.teacherName).toBe('Coach Martin')
   })
+
+  test('prefers timetable teacher snapshots over live assignments for lesson display', async () => {
+    const repos = {
+      classGroups: {
+        findById: async () => ({
+          id: 'cg-1',
+          academicYearId: 'ay-2025',
+        }),
+      },
+      lessonSessions: {
+        list: async () => [lessonSession({
+          id: 'ls-1',
+          classSubjectId: 'cs-math',
+          timetableTeacherIds: ['teacher-snapshot'],
+        })],
+      },
+      activitySessions: { list: async () => [] },
+      assessments: { list: async () => [] },
+      teacherAssignments: {
+        list: async () => [new TeacherAssignment({
+          id: 'ta-1',
+          teacherId: 'teacher-live',
+          academicYearId: 'ay-2025',
+          kind: TeacherAssignmentKind.Subject,
+          classSubjectId: 'cs-math',
+          status: TeacherAssignmentStatus.Active,
+        })],
+      },
+      teachers: {
+        findByIds: async (ids: string[]) => ids.map(id => new Teacher({
+          id,
+          schoolId: 'school-1',
+          firstName: id === 'teacher-snapshot' ? 'Snapshot' : 'Live',
+          lastName: 'Teacher',
+        })),
+      },
+      activities: { findByIds: async () => [] },
+    } as unknown as SchoolRepositories
+
+    const timetable = await buildClassGroupTimetable(repos, {
+      classGroupId: 'cg-1',
+      startDate: new Date('2026-05-01T00:00:00.000Z'),
+      endDate: new Date('2026-05-31T23:59:59.999Z'),
+    })
+
+    expect(timetable.events[0]?.teacherName).toBe('Snapshot Teacher')
+  })
 })

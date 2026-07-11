@@ -98,6 +98,8 @@ describe('SchoolService setup workflows', () => {
       timetableExcludeBreakSlots: false,
       timetableMinPeriodGapSameSubject: 4,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
       createdAt: new Date('2025-01-01T00:00:00Z'),
     }))
 
@@ -114,6 +116,8 @@ describe('SchoolService setup workflows', () => {
     expect(updated.timetableExcludeBreakSlots).toBe(false)
     expect(updated.timetableMinPeriodGapSameSubject).toBe(4)
     expect(updated.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
+    expect(updated.timetableAllowUnassignedTeacherPlacements).toBe(true)
+    expect(updated.timetableUseHomeroomTeacherFallback).toBe(true)
     expect(schools.store.get('sch1')?.name).toBe('Renamed School')
   })
 

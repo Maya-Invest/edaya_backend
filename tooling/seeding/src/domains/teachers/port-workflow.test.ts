@@ -20,8 +20,19 @@ describe('teachers seed port workflow', () => {
 
     expect(teachers).toHaveLength(demoCiDataset.entities.teachers?.length ?? 0)
     expect(teacherAssignments).toHaveLength(demoCiDataset.entities.teacherAssignments?.length ?? 0)
-    expect(teachers.map(teacher => teacher.id)).toEqual(['ci-t1', 'ci-t2'])
+    expect(teachers.map(teacher => teacher.id)).toEqual([
+      'ci-t1',
+      'ci-t2',
+      'ci-t3',
+      'ci-t4',
+      'ci-t5',
+      'ci-t6',
+      'ci-t7',
+      'ci-t8',
+    ])
     expect(teacherAssignments.some(assignment => assignment.classSubjectId === 'ci-cs-6a-math')).toBe(true)
+    expect(teacherAssignments.some(assignment => assignment.classSubjectId === 'ci-cs-6a-fr')).toBe(true)
+    expect(teacherAssignments.some(assignment => assignment.classSubjectId === 'ci-cs-6a-eps')).toBe(true)
     expect(teacherAssignments.some(assignment => assignment.classGroupId === 'ci-6b')).toBe(true)
   })
 })

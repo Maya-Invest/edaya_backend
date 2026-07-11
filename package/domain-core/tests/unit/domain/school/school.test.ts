@@ -27,6 +27,8 @@ describe('School entity', () => {
     expect(school.timetableExcludeBreakSlots).toBe(true)
     expect(school.timetableMinPeriodGapSameSubject).toBe(2)
     expect(school.timetablePreferredPeriodDefinitionIds).toEqual([])
+    expect(school.timetableAllowUnassignedTeacherPlacements).toBe(false)
+    expect(school.timetableUseHomeroomTeacherFallback).toBe(false)
     expect(school.createdAt).toBeInstanceOf(Date)
   })
 
@@ -54,11 +56,15 @@ describe('School entity', () => {
       timetableExcludeBreakSlots: false,
       timetableMinPeriodGapSameSubject: 0,
       timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
     })
 
     expect(school.timetableEnforceWorkloadFulfillment).toBe(false)
     expect(school.timetableExcludeBreakSlots).toBe(false)
     expect(school.timetableMinPeriodGapSameSubject).toBe(0)
     expect(school.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
+    expect(school.timetableAllowUnassignedTeacherPlacements).toBe(true)
+    expect(school.timetableUseHomeroomTeacherFallback).toBe(true)
   })
 })
