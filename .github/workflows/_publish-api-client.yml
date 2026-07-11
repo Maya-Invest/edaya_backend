@@ -4,11 +4,12 @@ on:
   workflow_call:
     outputs:
       channel:
-        description: Published npm dist-tag (staging or production)
+        description: Published GitHub Packages dist-tag (staging or production)
         value: ${{ jobs.publish.outputs.channel }}
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   publish:
@@ -58,25 +59,23 @@ jobs:
           OPENAPI_INPUT: /tmp/openapi.json
         run: bun run generate:client
 
-      - name: Setup Node.js
+      - name: Setup Node.js for GitHub Packages
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: https://registry.npmjs.org
+          registry-url: https://npm.pkg.github.com
+          scope: "@maya-invest"
 
-      - name: Commit and publish client
+      - name: Build and publish client
         working-directory: edaya-client-codegen
         env:
           CHANNEL: ${{ steps.meta.outputs.channel }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
           if git diff --quiet -- clients/school-api/src; then
-            echo "No client source changes; skipping commit and npm publish."
+            echo "No client source changes; skipping publish."
             exit 0
           fi
 
@@ -92,13 +91,30 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n')
           "
 
-          git add clients/school-api/src clients/school-api/package.json
-          git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-
           bun run build:client
 
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-
           cd clients/school-api
-          npm publish --access public --tag "${CHANNEL}"
+          npm publish --tag "${CHANNEL}"
 
+      - name: Commit regenerated client to codegen repo
+        working-directory: edaya-client-codegen
+        env:
+          CODEGEN_REPO_TOKEN: ${{ secrets.CODEGEN_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CODEGEN_REPO_TOKEN:-}" ]; then
+            echo "CODEGEN_REPO_TOKEN not set; skipping codegen repo commit."
+            exit 0
+          fi
+
+          if git diff --quiet -- clients/school-api; then
+            echo "No codegen repo changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add clients/school-api
+          git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

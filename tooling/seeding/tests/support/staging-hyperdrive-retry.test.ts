@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { ApiError } from '@edaya/api-client'
+import { ApiError } from '@maya-invest/edaya-api-client'
 import { withStagingHyperdriveRetry } from '../../src/transport/http/staging-hyperdrive-retry'
 
 describe('withStagingHyperdriveRetry', () => {

@@ -191,7 +191,7 @@
       "name": "@edaya/integration-tests",
       "version": "0.0.1",
       "dependencies": {
-        "@edaya/api-client": "file:../../edaya-client-codegen/clients/school-api",
+        "@maya-invest/edaya-api-client": "file:../../edaya-client-codegen/clients/school-api",
       },
       "devDependencies": {
         "@edaya/adaptor-auth": "workspace:*",
@@ -259,11 +259,11 @@
       "name": "@edaya/seeding",
       "version": "0.0.1",
       "dependencies": {
-        "@edaya/api-client": "file:../../edaya-client-codegen/clients/school-api",
         "@edaya/authorization": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/fixtures": "workspace:*",
         "@edaya/service": "workspace:*",
+        "@maya-invest/edaya-api-client": "file:../../edaya-client-codegen/clients/school-api",
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
         "postgres": "^3.4.4",
@@ -273,6 +273,9 @@
         "typescript": "^6.0.2",
       },
     },
+  },
+  "overrides": {
+    "@maya-invest/edaya-api-client": "file:edaya-client-codegen/clients/school-api",
   },
   "packages": {
     "@antfu/eslint-config": ["@antfu/eslint-config@9.0.0", "", { "dependencies": { "@antfu/install-pkg": "^1.1.0", "@clack/prompts": "^1.3.0", "@e18e/eslint-plugin": "^0.4.1", "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1", "@eslint/markdown": "^8.0.1", "@stylistic/eslint-plugin": "^5.10.0", "@typescript-eslint/eslint-plugin": "^8.59.2", "@typescript-eslint/parser": "^8.59.2", "@vitest/eslint-plugin": "^1.6.17", "ansis": "^4.2.0", "cac": "^7.0.0", "eslint-config-flat-gitignore": "^2.3.0", "eslint-flat-config-utils": "^3.2.0", "eslint-merge-processors": "^2.0.0", "eslint-plugin-antfu": "^3.2.3", "eslint-plugin-command": "^3.5.2", "eslint-plugin-import-lite": "^0.6.0", "eslint-plugin-jsdoc": "^62.9.0", "eslint-plugin-jsonc": "^3.1.2", "eslint-plugin-n": "^18.0.1", "eslint-plugin-no-only-tests": "^3.4.0", "eslint-plugin-perfectionist": "^5.9.0", "eslint-plugin-pnpm": "^1.6.0", "eslint-plugin-regexp": "^3.1.0", "eslint-plugin-toml": "^1.3.1", "eslint-plugin-unicorn": "^64.0.0", "eslint-plugin-unused-imports": "^4.4.1", "eslint-plugin-vue": "^10.9.1", "eslint-plugin-yml": "^3.3.2", "eslint-processor-vue-blocks": "^2.0.0", "globals": "^17.6.0", "local-pkg": "^1.1.2", "parse-gitignore": "^2.0.0", "toml-eslint-parser": "^1.0.3", "vue-eslint-parser": "^10.4.0", "yaml-eslint-parser": "^2.0.0" }, "peerDependencies": { "@angular-eslint/eslint-plugin": "^21.1.0", "@angular-eslint/eslint-plugin-template": "^21.1.0", "@angular-eslint/template-parser": "^21.1.0", "@eslint-react/eslint-plugin": "^5.6.0", "@next/eslint-plugin-next": ">=15.0.0", "@prettier/plugin-xml": "^3.4.1", "@unocss/eslint-plugin": ">=0.50.0", "astro-eslint-parser": "^1.0.2", "eslint": "^9.10.0 || ^10.0.0", "eslint-plugin-astro": "^1.2.0", "eslint-plugin-format": ">=0.1.0", "eslint-plugin-jsx-a11y": ">=6.10.2", "eslint-plugin-react-refresh": "^0.5.0", "eslint-plugin-solid": "^0.14.3", "eslint-plugin-svelte": ">=2.35.1", "eslint-plugin-vuejs-accessibility": "^2.4.1", "prettier-plugin-astro": "^0.14.0", "prettier-plugin-slidev": "^1.0.5", "svelte-eslint-parser": ">=0.37.0" }, "optionalPeers": ["@angular-eslint/eslint-plugin", "@angular-eslint/eslint-plugin-template", "@angular-eslint/template-parser", "@eslint-react/eslint-plugin", "@next/eslint-plugin-next", "@prettier/plugin-xml", "@unocss/eslint-plugin", "astro-eslint-parser", "eslint-plugin-astro", "eslint-plugin-format", "eslint-plugin-jsx-a11y", "eslint-plugin-react-refresh", "eslint-plugin-solid", "eslint-plugin-svelte", "eslint-plugin-vuejs-accessibility", "prettier-plugin-astro", "prettier-plugin-slidev", "svelte-eslint-parser"], "bin": { "eslint-config": "bin/index.mjs" } }, "sha512-8aQW0UWHoNMdVxTfzs1+w10t26plsc9oFs8YhCyCtST5nnANJe/VAjqvR3hYI1l3PHBeo4tjVMg8wuu6g3OLlA=="],
@@ -1771,15 +1774,13 @@
 
     "@edaya/api/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
 
-    "@edaya/integration-tests/@edaya/api-client": ["@edaya/api-client@file:edaya-client-codegen/clients/school-api", {}],
-
     "@edaya/integration-tests/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
 
-    "@edaya/repo/@edaya/client-codegen": ["@edaya/client-codegen@github:Maya-Invest/edaya-client-codegen#b8c0d72", { "dependencies": { "openapi-typescript": "^7.13.0" }, "bin": { "edaya-codegen": "./bin/edaya-codegen.ts" } }, "Maya-Invest-edaya-client-codegen-b8c0d72", "sha512-wI6aD2otzngJx2dGz+iKgQXzP8tsZQQb4HJGyf/Nmcl2pPbkTjBkgFaPJrEHYp/VC3IGGQOyWW64rf2KFPDdFA=="],
+    "@edaya/integration-tests/@maya-invest/edaya-api-client": ["@maya-invest/edaya-api-client@file:edaya-client-codegen/clients/school-api", {}],
 
     "@edaya/repo/@electric-sql/pglite": ["@electric-sql/pglite@0.4.6", "", {}, "sha512-qmlmfN8UyKCee35qkV0r/MBp+Znl8FjBz7OpoglNvww3GJpw0/DLP0o1ZymvLNmcD5DTLOQdzKPtF8Hd3mdl1w=="],
 
-    "@edaya/seeding/@edaya/api-client": ["@edaya/api-client@file:edaya-client-codegen/clients/school-api", {}],
+    "@edaya/seeding/@maya-invest/edaya-api-client": ["@maya-invest/edaya-api-client@file:edaya-client-codegen/clients/school-api", {}],
 
     "@es-joy/jsdoccomment/comment-parser": ["comment-parser@1.4.5", "", {}, "sha512-aRDkn3uyIlCFfk5NUA+VdwMmMsh8JGhc4hapfV4yxymHGQ3BVskMQfoXGpCo5IoBuQ9tS5iiVKhCpTcB4pW4qw=="],
 

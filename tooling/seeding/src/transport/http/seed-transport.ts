@@ -1,6 +1,6 @@
-import type { Transport } from '@edaya/api-client'
+import type { Transport } from '@maya-invest/edaya-api-client'
 import type { HttpSeedClient } from './client'
-import { ApiError } from '@edaya/api-client'
+import { ApiError } from '@maya-invest/edaya-api-client'
 
 export interface SeedTransportOptions {
   serviceAccountApiKey?: string

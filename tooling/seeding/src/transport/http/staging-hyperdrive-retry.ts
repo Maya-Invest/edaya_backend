@@ -1,4 +1,4 @@
-import { ApiError } from '@edaya/api-client'
+import { ApiError } from '@maya-invest/edaya-api-client'
 
 const STAGING_READ_AFTER_WRITE_ATTEMPTS = 8
 const STAGING_READ_AFTER_WRITE_BASE_DELAY_MS = 750

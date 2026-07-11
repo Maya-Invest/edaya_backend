@@ -59,7 +59,7 @@ edaya_backend/
 | `@edaya/service` | `package/domain-service` | School orchestration (workflows, capabilities) |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |
-| `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |
+| `@maya-invest/edaya-api-client` | `package/generated-api-client` | Typed API SDK |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local dev `FileStoragePort` adapter (filesystem + signed HTTP URLs) |

@@ -1,38 +1,38 @@
 {
-	"name": "@edaya/integration-tests",
-	"type": "module",
-	"version": "0.0.1",
-	"private": true,
-	"scripts": {
-		"check": "tsc --noEmit",
-		"quality": "bun run lint && bun run check",
-		"test:integration": "bun run test:integration:api && bun run test:integration:http",
-		"test:integration:api": "bun test src/services src/runtime src/adaptor --parallel=1",
-		"test:integration:http": "bun test src/auth src/routes --parallel=1",
-		"test:integration:seed": "bun test src/seed --parallel=1",
-		"lint": "eslint src smoke",
-		"lint:fix": "eslint src smoke --fix"
-	},
-	"devDependencies": {
-		"@edaya/adaptor-auth": "workspace:*",
-		"@edaya/adaptor-novu": "workspace:*",
-		"@edaya/adaptor-postgres": "workspace:*",
-		"@edaya/api": "workspace:*",
-		"@edaya/authorization": "workspace:*",
-		"@edaya/core": "workspace:*",
-		"@edaya/service": "workspace:*",
-		"@edaya/fixtures": "workspace:*",
-		"@edaya/seeding": "workspace:*",
-		"@electric-sql/pglite": "^0.4.6",
-		"@types/bun": "^1.3.14",
-		"better-auth": "^1.6.16",
-		"dotenv": "^16.5.0",
-		"dotenv-expand": "^11.0.7",
-		"drizzle-orm": "^0.39.0",
-		"hono": "^4.7.9",
-		"zod": "^3.24.4"
-	},
-	"dependencies": {
-		"@edaya/api-client": "file:../../edaya-client-codegen/clients/school-api"
-	}
+  "name": "@edaya/integration-tests",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
+    "test:integration": "bun run test:integration:api && bun run test:integration:http",
+    "test:integration:api": "bun test src/services src/runtime src/adaptor --parallel=1",
+    "test:integration:http": "bun test src/auth src/routes --parallel=1",
+    "test:integration:seed": "bun test src/seed --parallel=1",
+    "lint": "eslint src smoke",
+    "lint:fix": "eslint src smoke --fix"
+  },
+  "devDependencies": {
+    "@edaya/adaptor-auth": "workspace:*",
+    "@edaya/adaptor-novu": "workspace:*",
+    "@edaya/adaptor-postgres": "workspace:*",
+    "@edaya/api": "workspace:*",
+    "@edaya/authorization": "workspace:*",
+    "@edaya/core": "workspace:*",
+    "@edaya/service": "workspace:*",
+    "@edaya/fixtures": "workspace:*",
+    "@edaya/seeding": "workspace:*",
+    "@electric-sql/pglite": "^0.4.6",
+    "@types/bun": "^1.3.14",
+    "better-auth": "^1.6.16",
+    "dotenv": "^16.5.0",
+    "dotenv-expand": "^11.0.7",
+    "drizzle-orm": "^0.39.0",
+    "hono": "^4.7.9",
+    "zod": "^3.24.4"
+  },
+  "dependencies": {
+    "@maya-invest/edaya-api-client": "file:../../edaya-client-codegen/clients/school-api"
+  }
 }
