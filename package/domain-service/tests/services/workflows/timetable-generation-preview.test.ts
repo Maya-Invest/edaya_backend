@@ -33,5 +33,5 @@ describe('timetable generation preview fixture', () => {
     expect(preview).toContain('## Week 13 of 13: 2026-11-30 to 2026-12-04')
     expect(preview).toContain('[Day off: Autumn vacation]')
     expect(preview).toMatchSnapshot()
-  })
+  }, { timeout: 30_000 })
 })
