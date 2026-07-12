@@ -142,6 +142,103 @@ describe('timetable resolver and solver', () => {
     expect(cells[0]).toMatchObject({ date: '2026-09-07', weekKey: '2026-09-07', weeklyIndex: 0 })
   })
 
+  test('resolves cells on partial closure days when isNonSchoolDay is false', async () => {
+    const classGroup = new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Class 1',
+    })
+    const repositories = {
+      classGroups: { findById: async () => classGroup },
+      academicYears: {
+        findById: async () => new AcademicYear({
+          id: 'year-1',
+          schoolId: 'school-1',
+          name: '2026',
+          startDate: weekStart,
+          endDate: weekEnd,
+          isActive: true,
+        }),
+      },
+      periodDefinitions: {
+        list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday)],
+      },
+      calendarEvents: {
+        list: async () => [new CalendarEvent({
+          id: 'staff-training',
+          schoolId: 'school-1',
+          academicYearId: 'year-1',
+          title: 'Teacher training day',
+          startDate: new Date('2026-09-08T12:00:00.000Z'),
+          endDate: new Date('2026-09-08T12:00:00.000Z'),
+          kind: CalendarEventKind.Other,
+          isNonSchoolDay: false,
+          scopeKind: CalendarEventScopeKind.School,
+        })],
+      },
+    } as unknown as SchoolRepositories
+
+    const cells = await resolveTimetableSpace(repositories, {
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(cells.map(cell => cell.date)).toEqual(['2026-09-07', '2026-09-08'])
+  })
+
+  test('resolves cells for other classes on class-scoped non-school days', async () => {
+    const classGroup = new ClassGroup({
+      id: 'class-2',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Class 2',
+    })
+    const repositories = {
+      classGroups: { findById: async () => classGroup },
+      academicYears: {
+        findById: async () => new AcademicYear({
+          id: 'year-1',
+          schoolId: 'school-1',
+          name: '2026',
+          startDate: weekStart,
+          endDate: weekEnd,
+          isActive: true,
+        }),
+      },
+      periodDefinitions: {
+        list: async () => [period(DayOfWeek.Monday), period(DayOfWeek.Tuesday)],
+      },
+      calendarEvents: {
+        list: async () => [new CalendarEvent({
+          id: 'closure-1',
+          schoolId: 'school-1',
+          academicYearId: 'year-1',
+          title: 'Tuesday closure',
+          startDate: new Date('2026-09-08T12:00:00.000Z'),
+          endDate: new Date('2026-09-08T12:00:00.000Z'),
+          kind: CalendarEventKind.Holiday,
+          isNonSchoolDay: true,
+          scopeKind: CalendarEventScopeKind.ClassGroup,
+          scopeId: 'class-1',
+        })],
+      },
+    } as unknown as SchoolRepositories
+
+    const cells = await resolveTimetableSpace(repositories, {
+      classGroupId: 'class-2',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+    })
+
+    expect(cells.map(cell => cell.date)).toEqual(['2026-09-07', '2026-09-08'])
+  })
+
   test('places deterministically, honors preferred cells and teacher occupancy, and reports unmet workload', () => {
     const cells = weekdays.slice(0, 3).map((day, index) => ({
       date: `2026-09-0${7 + index}`,
@@ -503,6 +600,8 @@ describe('timetable resolver and solver', () => {
 function createWorkflowContext(
   unavailabilities: TeacherUnavailability[] = [],
   config: { unassignedFirstSubject?: boolean, homeroomTeacherLinked?: boolean, omitPeriodsPerWeek?: boolean } = {},
+  calendarEvents: CalendarEvent[] = [],
+  academicYearRange?: { startDate: Date, endDate: Date },
 ) {
   const school = new School({
     id: 'school-1',
@@ -514,8 +613,8 @@ function createWorkflowContext(
     id: 'year-1',
     schoolId: school.id,
     name: '2026',
-    startDate: weekStart,
-    endDate: weekEnd,
+    startDate: academicYearRange?.startDate ?? weekStart,
+    endDate: academicYearRange?.endDate ?? weekEnd,
     isActive: true,
   })
   const grade = new GradeLevel({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', order: 1 })
@@ -583,7 +682,7 @@ function createWorkflowContext(
         : undefined,
     },
     periodDefinitions: { list: async () => periods },
-    calendarEvents: { list: async () => [] },
+    calendarEvents: { list: async () => calendarEvents },
     lessonSessions: {
       findById: async (id: string) => sessions.get(id),
       list: async (filter: {
@@ -669,6 +768,48 @@ describe('timetable generation workflow', () => {
     const startsAt = result.classGroups.flatMap(group => group.sessions.map(session => session.startsAt.toISOString()))
     expect(new Set(startsAt).size).toBe(4)
     expect(result.classGroups.flatMap(group => group.sessions).every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+  })
+
+  test('skips school-wide and class-scoped non-school days when generating weekly drafts', async () => {
+    const calendarEvents = [
+      new CalendarEvent({
+        id: 'school-holiday',
+        schoolId: 'school-1',
+        academicYearId: 'year-1',
+        title: 'School holiday',
+        startDate: new Date('2026-09-08T12:00:00.000Z'),
+        endDate: new Date('2026-09-08T12:00:00.000Z'),
+        kind: CalendarEventKind.Holiday,
+        isNonSchoolDay: true,
+        scopeKind: CalendarEventScopeKind.School,
+      }),
+      new CalendarEvent({
+        id: 'class-closure',
+        schoolId: 'school-1',
+        academicYearId: 'year-1',
+        title: 'Class closure',
+        startDate: new Date('2026-09-09T12:00:00.000Z'),
+        endDate: new Date('2026-09-09T12:00:00.000Z'),
+        kind: CalendarEventKind.Holiday,
+        isNonSchoolDay: true,
+        scopeKind: CalendarEventScopeKind.ClassGroup,
+        scopeId: 'class-1',
+      }),
+    ]
+    const { service } = createWorkflowContext([], {}, calendarEvents)
+
+    const classOne = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
+      classGroupId: 'class-1',
+      academicYearId: 'year-1',
+      startDate: weekStart,
+      endDate: weekEnd,
+      options: { enforceWorkloadFulfillment: false },
+    })
+
+    const classOneDates = classOne.sessions.map(session => session.startsAt.toISOString().slice(0, 10))
+    expect(classOneDates.length).toBeGreaterThan(0)
+    expect(classOneDates).not.toContain('2026-09-08')
+    expect(classOneDates).not.toContain('2026-09-09')
   })
 
   test('does not place lessons in a recurring teacher-unavailable slot', async () => {

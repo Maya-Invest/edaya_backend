@@ -9,7 +9,9 @@ import {
   AttendanceRecord,
   BusinessRuleViolationError,
   CalendarEvent,
+  calendarEventBlocksTimetable,
   CalendarEventScopeKind,
+  civilDateKey,
   DayOfWeek,
   isSameDate,
   LessonSession,
@@ -169,7 +171,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       const endDate = normalizeDate(academicYear.endDate)
 
       while (currentDate <= endDate) {
-        if (!nonSchoolDates.has(currentDate.toDateString()) && this.scheduleMatchesDate(schedule, currentDate)) {
+        if (!nonSchoolDates.has(civilDateKey(currentDate)) && this.scheduleMatchesDate(schedule, currentDate)) {
           const cancelledExisting = await this.findCancelledLessonSession(schedule.id, currentDate)
           if (!cancelledExisting) {
             const { startsAt, endsAt } = this.buildOccurrenceTimes(schedule, currentDate)
@@ -240,7 +242,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       const endDate = normalizeDate(academicYear.endDate)
 
       while (currentDate <= endDate) {
-        if (!nonSchoolDates.has(currentDate.toDateString()) && this.scheduleMatchesDate(schedule, currentDate)) {
+        if (!nonSchoolDates.has(civilDateKey(currentDate)) && this.scheduleMatchesDate(schedule, currentDate)) {
           const cancelledExisting = await this.findCancelledActivitySession(schedule.id, currentDate)
           if (!cancelledExisting) {
             const { startsAt, endsAt } = this.buildOccurrenceTimes(schedule, currentDate)
@@ -747,11 +749,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       const appliesToClass = event.scopeKind === CalendarEventScopeKind.School
         || (event.scopeKind === CalendarEventScopeKind.ClassGroup && event.scopeId === classGroup.id)
         || (event.scopeKind === CalendarEventScopeKind.GradeLevel && event.scopeId === classGroup.gradeLevelId)
-      if (event.isNonSchoolDay && appliesToClass) {
+      if (calendarEventBlocksTimetable(event) && appliesToClass) {
         let current = normalizeDate(event.startDate)
         const eventEndDate = normalizeDate(event.endDate)
         while (current <= eventEndDate) {
-          nonSchoolDates.add(current.toDateString())
+          nonSchoolDates.add(civilDateKey(current))
           current = nextUtcCalendarDate(current)
         }
       }

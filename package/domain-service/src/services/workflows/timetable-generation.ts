@@ -15,7 +15,9 @@ import { operationModule, SchedulingOperations } from '@edaya/authorization'
 import {
   AssessmentKind,
   BusinessRuleViolationError,
+  calendarEventBlocksTimetable,
   CalendarEventScopeKind,
+  civilDateKey,
   DayOfWeek,
   LessonSession,
   normalizeDate,
@@ -202,7 +204,7 @@ const DAY_BY_UTC_INDEX: Record<number, DayOfWeek> = {
 }
 
 function dateKey(date: Date): string {
-  return date.toISOString().slice(0, 10)
+  return civilDateKey(date)
 }
 
 function nextDate(date: Date): Date {
@@ -433,7 +435,7 @@ export async function resolveTimetableSpace(
   ])
   const nonSchoolDates = new Set<string>()
   for (const event of events) {
-    if (!event.isNonSchoolDay || !calendarEventAppliesToClass(event, classGroup)) {
+    if (!calendarEventBlocksTimetable(event) || !calendarEventAppliesToClass(event, classGroup)) {
       continue
     }
     let current = normalizeDate(event.startDate)
@@ -526,7 +528,7 @@ async function collectNonSchoolDates(
   const events = await repositories.calendarEvents.list({ academicYearId })
   const nonSchoolDates = new Set<string>()
   for (const event of events) {
-    if (!event.isNonSchoolDay || !calendarEventAppliesToClass(event, classGroup)) {
+    if (!calendarEventBlocksTimetable(event) || !calendarEventAppliesToClass(event, classGroup)) {
       continue
     }
     let current = normalizeDate(event.startDate)
