@@ -1,5 +1,7 @@
 # Authorization and school-service decoupling plan
 
+> This document is the detailed execution plan for the authorization workstream in the broader [backend architecture improvement proposal](./backend-architecture-improvement-proposal.md).
+
 ## Status
 
 - **State:** proposed
@@ -446,4 +448,3 @@ The following must remain true throughout the migration:
 - [ ] `@edaya/core` contains no RBAC-specific persistence model.
 - [ ] Staff, portal, system, and cross-tenant integration suites pass.
 - [ ] Repository boundary checks prevent the old dependency direction from returning.
-
