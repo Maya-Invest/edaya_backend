@@ -1,5 +1,5 @@
+import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
 import {
-  type AuthSecondaryStoragePort,
   createKvAuthSecondaryStorage,
   isAuthKeyValueStore,
 } from "@edaya/adaptor-auth";
