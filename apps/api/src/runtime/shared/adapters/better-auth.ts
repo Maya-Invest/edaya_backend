@@ -1,4 +1,10 @@
 import * as authSchema from "@edaya/adaptor-auth/schema";
+import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
+import {
+  buildBetterAuthRateLimitOptions,
+  buildBetterAuthSessionOptions,
+  toBetterAuthSecondaryStorage,
+} from "@edaya/adaptor-auth";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -18,6 +24,10 @@ export type BetterAuthEnv = Pick<
   | "REQUIRE_EMAIL_VERIFICATION" | "AUTH_EMAIL_LOG_OTP"
 >;
 
+export interface BuildBetterAuthConfigOptions {
+  secondaryStorage?: AuthSecondaryStoragePort;
+}
+
 function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
   const configured = env.TRUSTED_ORIGINS?.split(",").map(origin => origin.trim()).filter(Boolean) ?? [];
   if (env.NODE_ENV === "development") {
@@ -31,11 +41,16 @@ function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
   return configured;
 }
 
-export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Parameters<typeof betterAuth>[0] {
+export function buildBetterAuthConfig(
+  db: unknown,
+  env: BetterAuthEnv,
+  options: BuildBetterAuthConfigOptions = {},
+): Parameters<typeof betterAuth>[0] {
   const fullEnv = env as Environment;
   const appLogger = createAppLogger(fullEnv);
   const authEmail = createAuthEmailSenders(fullEnv, appLogger);
   const requireEmailVerification = shouldRequireEmailVerification(fullEnv);
+  const rateLimit = buildBetterAuthRateLimitOptions(options);
 
   return {
     database: drizzleAdapter(db as never, {
@@ -98,11 +113,11 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
         },
       },
     },
-    session: {
-      cookieCache: {
-        enabled: false,
-      },
-    },
+    session: buildBetterAuthSessionOptions(options),
+    ...(options.secondaryStorage
+      ? { secondaryStorage: toBetterAuthSecondaryStorage(options.secondaryStorage) }
+      : {}),
+    ...(rateLimit ? { rateLimit } : {}),
     plugins: [
       openAPI({
         disableDefaultReference: true,
@@ -118,6 +133,10 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
   };
 }
 
-export function createBetterAuth(db: unknown, env: BetterAuthEnv): AuthService {
-  return betterAuth(buildBetterAuthConfig(db, env)) as AuthService;
+export function createBetterAuth(
+  db: unknown,
+  env: BetterAuthEnv,
+  options: BuildBetterAuthConfigOptions = {},
+): AuthService {
+  return betterAuth(buildBetterAuthConfig(db, env, options)) as AuthService;
 }

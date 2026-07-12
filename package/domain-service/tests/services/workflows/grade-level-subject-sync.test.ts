@@ -653,4 +653,66 @@ describe('grade level subject inheritance', () => {
     expect(disabled.gradeLevelSubjectId).toBe('gls-math')
     expect(classSubjects.get('cs-1')?.isOffered).toBe(false)
   })
+
+  it('configureClassSubjectTimetable updates inherited class subject span fields', async () => {
+    const classGroups = new Map<string, ClassGroup>()
+    const classSubjects = new Map<string, import('@edaya/core').ClassSubject>()
+
+    const repositories = {
+      classGroups: {
+        findById: async (id: string) => classGroups.get(id),
+        save: async (entity: ClassGroup) => { classGroups.set(entity.id, entity) },
+      },
+      subjects: {
+        findById: async () => new Subject({
+          id: 'subj-math',
+          schoolId: 'sch1',
+          name: 'Math',
+        }),
+      },
+      classSubjects: {
+        findById: async (id: string) => classSubjects.get(id),
+        save: async (entity: import('@edaya/core').ClassSubject) => {
+          classSubjects.set(entity.id, entity)
+        },
+      },
+    } as unknown as SchoolRepositories
+
+    const service = createAcademicsTestService(repositories)
+
+    await repositories.classGroups.save(new ClassGroup({
+      id: '6a',
+      schoolId: 'sch1',
+      academicYearId: 'ay1',
+      gradeLevelId: 'gl-6',
+      name: '6A',
+    }))
+
+    classSubjects.set('cs-1', new ClassSubject({
+      id: 'cs-1',
+      classGroupId: '6a',
+      subjectId: 'subj-math',
+      gradeLevelSubjectId: 'gls-math',
+      coefficient: 2,
+      periodsPerWeek: 3,
+      isOffered: true,
+    }))
+
+    const updated = await service.academicsWorkflow.configureClassSubjectTimetable({
+      classSubjectId: 'cs-1',
+      periodsPerWeek: 4,
+      minPeriodSpan: 1,
+      maxPeriodSpan: 2,
+    })
+
+    expect(updated.periodsPerWeek).toBe(4)
+    expect(updated.minPeriodSpan).toBe(1)
+    expect(updated.maxPeriodSpan).toBe(2)
+    expect(updated.gradeLevelSubjectId).toBe('gls-math')
+    expect(classSubjects.get('cs-1')).toMatchObject({
+      periodsPerWeek: 4,
+      minPeriodSpan: 1,
+      maxPeriodSpan: 2,
+    })
+  })
 })

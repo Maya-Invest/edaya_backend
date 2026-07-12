@@ -390,6 +390,13 @@ export const setClassSubjectOfferedCommandSchema = z.object({
   isOffered: z.boolean(),
 }).openapi("SetClassSubjectOfferedCommand");
 
+export const configureClassSubjectTimetableCommandSchema = z.object({
+  classSubjectId: field.id(),
+  periodsPerWeek: z.number().int().positive().nullable().optional(),
+  minPeriodSpan: z.number().int().positive().nullable().optional(),
+  maxPeriodSpan: z.number().int().positive().nullable().optional(),
+}).openapi("ConfigureClassSubjectTimetableCommand");
+
 export const assignMatterToClassSubjectCommandSchema = objectFromSchema(classSubjectMatterSchema)
   .omit({ status: true, completedPercentage: true, updatedByStaffId: true, startedAt: true, completedAt: true })
   .openapi("AssignMatterToClassSubjectCommand");

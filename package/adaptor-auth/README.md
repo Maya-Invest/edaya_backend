@@ -8,7 +8,7 @@ Migration apply scripts live in `@edaya/db-migrate` (`tooling/db-migrate`).
 
 | Runtime | Auth storage |
 |---------|----------------|
-| **Worker** | Postgres via Hyperdrive (`auth` schema on the school Neon DB) |
+| **Worker** | Postgres via Hyperdrive (`auth` schema on the school Neon DB); optional KV secondary storage for session hot reads |
 | **Node dev / tests** | Same PGlite/Postgres database as school (`auth` schema) |
 
 ```sh
@@ -35,6 +35,19 @@ betterAuth({
     schemaName: 'auth',
   }),
   // ...
+})
+
+// Worker session acceleration (optional):
+import {
+  createKvAuthSecondaryStorage,
+  toBetterAuthSecondaryStorage,
+  buildBetterAuthSessionOptions,
+} from '@edaya/adaptor-auth'
+
+const secondaryStorage = createKvAuthSecondaryStorage(env.AUTH_KV)
+betterAuth({
+  secondaryStorage: toBetterAuthSecondaryStorage(secondaryStorage),
+  session: buildBetterAuthSessionOptions({ secondaryStorage }),
 })
 ```
 

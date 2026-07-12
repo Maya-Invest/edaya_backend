@@ -22,7 +22,7 @@
   },
   //
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
-  // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), CRON_JOBS
+  // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), AUTH_KV, CRON_JOBS
   // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
   // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
@@ -49,6 +49,12 @@
         {
           "binding": "HYPERDRIVE_AUTH",
           "id": "e08656297f69446c8eea3d1ded0268d5"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "REPLACE_WITH_STAGING_AUTH_KV_ID"
         }
       ],
       "vars": {
@@ -121,6 +127,12 @@
         {
           "binding": "HYPERDRIVE_AUTH",
           "id": "d355a17a3bcc4369b3394f9f86f2ee47"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "REPLACE_WITH_PRODUCTION_AUTH_KV_ID"
         }
       ],
       "routes": [

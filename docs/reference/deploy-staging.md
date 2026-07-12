@@ -43,6 +43,19 @@ Auth must use a cache-disabled Hyperdrive path. Hyperdrive does not invalidate c
 
 School `HYPERDRIVE` may keep query cache enabled. Staging seed retries a few read-after-write 403s (domain maps missing rows to forbidden) when Hyperdrive serves stale school reads during population.
 
+### 2b. Auth KV (staging)
+
+Create a KV namespace for Better Auth secondary storage (session hot reads):
+
+```sh
+cd apps/api
+bunx wrangler kv namespace create edaya-auth-staging
+```
+
+Copy the returned id into `apps/api/wrangler.jsonc` → `env.staging.kv_namespaces` binding `AUTH_KV`.
+
+Worker runtime resolves the `AUTH_KV` binding through `AuthSecondaryStoragePort` (`@edaya/adaptor-auth`). Postgres remains the source of truth via `HYPERDRIVE_AUTH` (cache-disabled); KV accelerates `getSession` without re-enabling Hyperdrive query cache.
+
 ### 3. Custom domains
 
 Attach routes in Cloudflare for:

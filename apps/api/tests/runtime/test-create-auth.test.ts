@@ -1,5 +1,5 @@
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
+import { createInMemoryAuthSecondaryStorage, runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
@@ -25,10 +25,11 @@ function collectSetCookieHeaders(response: Response): string[] {
 describe("createBetterAuth", () => {
   let auth: ReturnType<typeof createBetterAuth>;
   let pglite: PGlite;
+  let db: ReturnType<typeof drizzle>;
 
   beforeEach(async () => {
     pglite = new PGlite();
-    const db = drizzle(pglite);
+    db = drizzle(pglite);
     await runAuthMigrations(db, { driver: "pglite" });
     auth = createBetterAuth(db, testEnv);
   });
@@ -123,5 +124,35 @@ describe("createBetterAuth", () => {
     );
 
     expect(referenceResponse.status).toBe(404);
+  });
+
+  it("supports optional secondary storage without changing sign-in behavior", async () => {
+    const secondaryStorage = createInMemoryAuthSecondaryStorage();
+    const authWithStorage = createBetterAuth(db, testEnv, { secondaryStorage });
+
+    const signUpResponse = await authWithStorage.handler(new Request("http://localhost:9999/auth/sign-up/email", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "kv-user@school.edu",
+        password: DEV_AUTH_PASSWORD,
+        name: "KV User",
+      }),
+    }));
+
+    expect(signUpResponse.status).toBe(200);
+
+    const cookies = collectSetCookieHeaders(signUpResponse);
+    const sessionResponse = await authWithStorage.handler(new Request("http://localhost:9999/auth/get-session", {
+      method: "GET",
+      headers: {
+        cookie: cookies.join("; "),
+      },
+    }));
+
+    expect(sessionResponse.status).toBe(200);
+    expect(secondaryStorage.snapshot().size).toBeGreaterThan(0);
   });
 });

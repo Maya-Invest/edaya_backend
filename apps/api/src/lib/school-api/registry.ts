@@ -203,6 +203,7 @@ export const coreCommands = [
   command("assign-matter-to-grade-level-subject", "assignMatterToGradeLevelSubject", commandSchemas.assignMatterToGradeLevelSubjectCommandSchema),
   command("add-custom-class-subject", "addCustomClassSubject", commandSchemas.addCustomClassSubjectCommandSchema),
   command("set-class-subject-offered", "setClassSubjectOffered", commandSchemas.setClassSubjectOfferedCommandSchema),
+  command("configure-class-subject-timetable", "configureClassSubjectTimetable", commandSchemas.configureClassSubjectTimetableCommandSchema),
   command("record-lesson-session-progress", "recordLessonSessionProgress", commandSchemas.recordLessonSessionProgressCommandSchema),
   command("create-grade-scale", "createGradeScale", commandSchemas.createGradeScaleCommandSchema),
   command("create-report-card-definition", "createReportCardDefinition", commandSchemas.createReportCardDefinitionCommandSchema),

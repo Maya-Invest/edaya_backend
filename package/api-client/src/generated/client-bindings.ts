@@ -570,6 +570,11 @@ export const clientBindings = {
         "requestSchemaName": "SetClassSubjectOfferedCommand",
         "responseSchemaName": "ClassSubject"
       },
+      "configureClassSubjectTimetable": {
+        "publicName": "configure-class-subject-timetable",
+        "requestSchemaName": "ConfigureClassSubjectTimetableCommand",
+        "responseSchemaName": "ClassSubject"
+      },
       "recordLessonSessionProgress": {
         "publicName": "record-lesson-session-progress",
         "requestSchemaName": "RecordLessonSessionProgressCommand",

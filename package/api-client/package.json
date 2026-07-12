@@ -3,12 +3,12 @@
   "type": "module",
   "version": "0.0.0",
   "description": "Generated Edaya school API client",
+  "license": "UNLICENSED",
   "repository": {
     "type": "git",
     "url": "https://github.com/Maya-Invest/edaya_backend.git",
     "directory": "package/api-client"
   },
-  "license": "UNLICENSED",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },

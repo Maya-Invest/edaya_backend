@@ -527,6 +527,44 @@ describe('timetable resolver and solver', () => {
     ])
   })
 
+  test('prefers non-overlapping double blocks when a preferred middle double would block completion', () => {
+    const mondayCells = Array.from({ length: 4 }, (_, index) => ({
+      date: '2026-09-07',
+      weekKey: '2026-09-07',
+      weeklyIndex: index,
+      periodDefinitionId: index === 1 ? 'preferred-period' : `monday-p${index}`,
+      startsAt: new Date(Date.UTC(2026, 8, 7, 8 + index)),
+      endsAt: new Date(Date.UTC(2026, 8, 7, 9 + index)),
+    }))
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells: mondayCells,
+      subjects: [subjectDemand({
+        classSubjectId: 'subject-math',
+        displayLabel: 'Math',
+        periodsPerWeek: 4,
+        minPeriodSpan: 2,
+        maxPeriodSpan: 2,
+        teacherIds: ['teacher-1'],
+      })],
+      occupiedIntervals: [],
+      options: solverOptions({
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+        minDayGapSameSubject: 0,
+        preferredPeriodDefinitionIds: ['preferred-period'],
+      }),
+    })
+
+    expect(result.unmetWorkloads).toEqual([])
+    expect(result.placements).toHaveLength(2)
+    expect(result.placements.map(placement => placement.span)).toEqual([2, 2])
+    expect(result.placements.map(placement => placement.cell.periodDefinitionId)).toEqual([
+      'monday-p0',
+      'monday-p2',
+    ])
+  })
+
   test('spreads a weekly template across calendar weeks and drops closure days', () => {
     const templateCell = {
       date: '2026-01-05',

@@ -175,6 +175,7 @@ Placement rules:
 - Never move existing, completed, or pinned sessions.
 - If workload enforcement is enabled, fail without writes when any required workload cannot be placed.
 - If disabled, return the maximal deterministic placement plus diagnostics for unmet workload.
+- **Span packing (greedy lookahead):** when several block sizes or candidate slots fit, score each choice by simulating a largest-first fill for the remaining weekly quota on a copy of occupancy. Pick the candidate that maximizes total placeable slots, then larger span, then preferred periods. Still no backtracking or CP-SAT — one committed placement per loop iteration.
 
 Unit-test the solver independently from dates, repositories, and command authorization.
 

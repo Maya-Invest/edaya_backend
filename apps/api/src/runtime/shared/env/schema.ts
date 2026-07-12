@@ -1,4 +1,6 @@
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
+import { resolveAuthSecondaryStorage } from "@/runtime/shared/adapters/auth-secondary-storage";
+import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
 import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import { z } from "zod";
@@ -72,6 +74,7 @@ export const EnvSchema = z.object({
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
+  authSecondaryStorage?: AuthSecondaryStoragePort;
 };
 
 export function parseEnv(data: Record<string, unknown>) {
@@ -100,9 +103,11 @@ export function parseRuntimeEnv(
   const bindings = prepareRuntimeBindings(source, runtime);
   const env = parseEnv(bindings);
   const cronJobs = readCronJobsQueueBinding(source);
+  const authSecondaryStorage = resolveAuthSecondaryStorage(runtime, source);
 
   return {
     ...env,
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
+    ...(authSecondaryStorage ? { authSecondaryStorage } : {}),
   };
 }

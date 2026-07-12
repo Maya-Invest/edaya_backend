@@ -151,5 +151,10 @@ const demoCiClassSubjectDefinitions = [
 
 export const demoCiClassSubjects = demoCiClassSubjectDefinitions.map(classSubject => ({
   ...classSubject,
-  periodsPerWeek: Math.max(2, classSubject.coefficient + 1),
+  periodsPerWeek: classSubject.subjectId === 'ci-subj-math'
+    ? 4
+    : Math.max(2, classSubject.coefficient + 1),
+  ...(classSubject.subjectId === 'ci-subj-math'
+    ? { minPeriodSpan: 1, maxPeriodSpan: 2 }
+    : {}),
 })) satisfies readonly ClassSubjectInput[]

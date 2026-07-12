@@ -29,7 +29,7 @@
 | 4 | **C** — School orchestration | ✅ Done | School-wide template solve (shared-teacher occupancy), then per-class spread |
 | 5 | **C** — API + web | ✅ Done | `generationMode` (`weekly` default), mode selector in advanced panel |
 | 6 | **B** — Session span domain + solver | ✅ Done | `minPeriodSpan` / `maxPeriodSpan`; block placement on template week and `free` mode |
-| 7 | **B** — UI + fixtures | After 6 | Advanced panel, `ClassSubject` config, demo-ci Math 1–2 spans |
+| 7 | **B** — UI + fixtures | ✅ Done | Advanced panel, `ClassSubject` config, demo-ci Math 1–2 spans |
 
 **Rationale:** `weekly` is the default generation mode — ship template solve + spread before double-period blocks. Phase B builds on the weekly template solver once single-period weekly timetables are stable.
 
@@ -183,4 +183,4 @@ interface TimetableGenerationDefaults {
 
 **Phase C:** template stable across identical teaching weeks; short-week drops; spread respects existing occupancy; school shared-teacher slots; `free` mode regression.
 
-**Phase B:** span-2 Math filling `periodsPerWeek: 4` as 2+2 or 2+1+1; unmet slot counts on partial weeks; demo-ci Math with `minPeriodSpan: 1`, `maxPeriodSpan: 2`.
+**Phase B:** span-2 Math filling `periodsPerWeek: 4` as 2+2 or 2+1+1; unmet slot counts on partial weeks; demo-ci Math with `minPeriodSpan: 1`, `maxPeriodSpan: 2`. Solver uses greedy lookahead (no backtracking) to prefer span packings that still allow the weekly quota to complete — e.g. non-overlapping doubles on one day instead of a preferred middle double that blocks the second double.

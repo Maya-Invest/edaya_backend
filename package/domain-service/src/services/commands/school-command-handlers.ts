@@ -12,6 +12,7 @@ import type {
   RecordLessonSessionProgressInput,
   RemoveSubjectFromGradeLevelInput,
   SetClassSubjectOfferedInput,
+  ConfigureClassSubjectTimetableInput,
   UpdateGradeLevelSubjectInput,
 } from '../workflows/academics'
 import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from '../workflows/access-control'
@@ -205,6 +206,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     assignMatterToGradeLevelSubject: payload => workflows.academics.assignMatterToGradeLevelSubject(payload as AssignMatterToGradeLevelSubjectInput),
     addCustomClassSubject: payload => workflows.academics.addCustomClassSubject(payload as AddCustomClassSubjectInput),
     setClassSubjectOffered: payload => workflows.academics.setClassSubjectOffered(payload as SetClassSubjectOfferedInput),
+    configureClassSubjectTimetable: payload => workflows.academics.configureClassSubjectTimetable(payload as ConfigureClassSubjectTimetableInput),
     recordLessonSessionProgress: payload => workflows.academics.recordLessonSessionProgress(payload as RecordLessonSessionProgressInput),
     // assessments
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),

@@ -14,7 +14,11 @@ export interface CreateApiRuntimeOptions {
 export async function createApiRuntime(options: CreateApiRuntimeOptions): Promise<ApiRuntime> {
   let schoolApp: ApiSchoolApplication | null = null;
   let resolvedSchoolHandle: DatabaseHandle | null = null;
-  const auth = createBetterAuth(options.authHandle.db, options.env);
+  const auth = createBetterAuth(options.authHandle.db, options.env, {
+    ...(options.env.authSecondaryStorage
+      ? { secondaryStorage: options.env.authSecondaryStorage }
+      : {}),
+  });
 
   async function getResolvedSchoolHandle(): Promise<DatabaseHandle> {
     resolvedSchoolHandle ??= await options.resolveSchoolHandle();

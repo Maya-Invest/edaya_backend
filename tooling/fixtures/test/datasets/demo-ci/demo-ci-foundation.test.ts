@@ -65,6 +65,16 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiSchool.name).toBe('École Edaya — Cocody')
   })
 
+  it('configures demo-ci mathematics with double-period span bounds', () => {
+    const math = demoCiClassSubjects.find(entry => entry.id === 'ci-cs-6a-math')
+    expect(math).toMatchObject({
+      periodsPerWeek: 4,
+      minPeriodSpan: 1,
+      maxPeriodSpan: 2,
+    })
+    expect(demoCiClassSubjects.filter(entry => entry.subjectId === 'ci-subj-math')).toHaveLength(5)
+  })
+
   it('uses a realistic default min day gap for timetable generation', () => {
     expect(demoCiSchool.timetableMinDayGapSameSubject).toBe(1)
   })

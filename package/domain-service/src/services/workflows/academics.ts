@@ -64,6 +64,13 @@ export interface SetClassSubjectOfferedInput {
   isOffered: boolean
 }
 
+export interface ConfigureClassSubjectTimetableInput {
+  classSubjectId: string
+  periodsPerWeek?: number | null
+  minPeriodSpan?: number | null
+  maxPeriodSpan?: number | null
+}
+
 export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput & {
   classSubjectMatterIdsByClassGroupId?: Record<string, string>
 }
@@ -190,8 +197,52 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       subjectId: existing.subjectId,
       gradeLevelSubjectId: existing.gradeLevelSubjectId,
       coefficient: existing.coefficient,
+      periodsPerWeek: existing.periodsPerWeek,
+      minPeriodSpan: existing.minPeriodSpan,
+      maxPeriodSpan: existing.maxPeriodSpan,
       completedPercentage: existing.completedPercentage,
       isOffered,
+      createdAt: existing.createdAt,
+    })
+    await this.baseService.entities.classSubjects.save(updated, { moduleChecked: true })
+    return updated
+  }
+
+  async configureClassSubjectTimetable({
+    classSubjectId,
+    periodsPerWeek,
+    minPeriodSpan,
+    maxPeriodSpan,
+  }: ConfigureClassSubjectTimetableInput): Promise<ClassSubject> {
+    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    const existing = await this.requireClassSubject(classSubjectId)
+    const nextMinPeriodSpan = minPeriodSpan === undefined
+      ? existing.minPeriodSpan
+      : (minPeriodSpan ?? undefined)
+    const nextMaxPeriodSpan = maxPeriodSpan === undefined
+      ? existing.maxPeriodSpan
+      : (maxPeriodSpan ?? undefined)
+    if (nextMinPeriodSpan !== undefined
+      && nextMaxPeriodSpan !== undefined
+      && nextMaxPeriodSpan < nextMinPeriodSpan) {
+      throw new BusinessRuleViolationError(
+        'CLASS_SUBJECT_PERIOD_SPAN_INVALID',
+        'maxPeriodSpan must be greater than or equal to minPeriodSpan',
+      )
+    }
+    const updated = new ClassSubject({
+      id: existing.id,
+      classGroupId: existing.classGroupId,
+      subjectId: existing.subjectId,
+      gradeLevelSubjectId: existing.gradeLevelSubjectId,
+      coefficient: existing.coefficient,
+      periodsPerWeek: periodsPerWeek === undefined
+        ? existing.periodsPerWeek
+        : (periodsPerWeek ?? undefined),
+      minPeriodSpan: nextMinPeriodSpan,
+      maxPeriodSpan: nextMaxPeriodSpan,
+      completedPercentage: existing.completedPercentage,
+      isOffered: existing.isOffered,
       createdAt: existing.createdAt,
     })
     await this.baseService.entities.classSubjects.save(updated, { moduleChecked: true })

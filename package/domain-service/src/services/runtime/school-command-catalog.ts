@@ -41,6 +41,7 @@ export type SchoolCommandKey
     | 'assignMatterToGradeLevelSubject'
     | 'addCustomClassSubject'
     | 'setClassSubjectOffered'
+    | 'configureClassSubjectTimetable'
     | 'recordLessonSessionProgress'
     | 'createGradeScale'
     | 'createReportCardDefinition'
@@ -166,6 +167,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'assignMatterToGradeLevelSubject',
   'addCustomClassSubject',
   'setClassSubjectOffered',
+  'configureClassSubjectTimetable',
   'recordLessonSessionProgress',
   'createGradeScale',
   'createReportCardDefinition',

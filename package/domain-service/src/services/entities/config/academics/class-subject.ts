@@ -43,6 +43,20 @@ function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: C
     && classSubject.isOffered !== existing.isOffered
 }
 
+function isTimetableOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
+  return existing.classGroupId === classSubject.classGroupId
+    && existing.subjectId === classSubject.subjectId
+    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
+    && existing.coefficient === classSubject.coefficient
+    && existing.completedPercentage === classSubject.completedPercentage
+    && existing.isOffered === classSubject.isOffered
+    && (
+      classSubject.periodsPerWeek !== existing.periodsPerWeek
+      || classSubject.minPeriodSpan !== existing.minPeriodSpan
+      || classSubject.maxPeriodSpan !== existing.maxPeriodSpan
+    )
+}
+
 function isCustomClassSubject(classSubject: ClassSubject): boolean {
   return !classSubject.gradeLevelSubjectId
 }
@@ -66,6 +80,9 @@ async function validateClassSubjectSave(
     return
   }
   if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
+    return
+  }
+  if (existing && isTimetableOnlyClassSubjectUpdate(existing, classSubject)) {
     return
   }
   if (!classSubject.gradeLevelSubjectId) {

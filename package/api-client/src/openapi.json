@@ -799,6 +799,18 @@
             ],
             "default": "weekly"
           },
+          "timetableMinPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
+          },
+          "timetableMaxPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
+          },
           "createdAt": {}
         },
         "required": [
@@ -1590,6 +1602,15 @@
           "apiKey"
         ]
       },
+      "RotateServiceAccountKeyRequest": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
       "NotificationDeliveryWebhookResponse": {
         "type": "object",
         "properties": {
@@ -1914,6 +1935,18 @@
             ],
             "default": "weekly"
           },
+          "timetableMinPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
+          },
+          "timetableMaxPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
+          },
           "createdAt": {}
         },
         "required": [
@@ -1997,6 +2030,18 @@
               "free"
             ],
             "default": "weekly"
+          },
+          "timetableMinPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
+          },
+          "timetableMaxPeriodSpan": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 1
           },
           "schoolId": {
             "type": "string",
@@ -6319,6 +6364,18 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "completedPercentage": {
             "type": "number",
             "nullable": true,
@@ -6365,6 +6422,18 @@
             "exclusiveMinimum": true
           },
           "periodsPerWeek": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
             "type": "integer",
             "nullable": true,
             "minimum": 0,
@@ -6495,6 +6564,18 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "isOptional": {
             "type": "boolean",
             "default": false
@@ -6534,6 +6615,18 @@
             "exclusiveMinimum": true
           },
           "periodsPerWeek": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
             "type": "integer",
             "nullable": true,
             "minimum": 0,
@@ -6678,6 +6771,18 @@
             "minimum": 0,
             "exclusiveMinimum": true
           },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "isOffered": {
             "type": "boolean",
             "default": true
@@ -6704,6 +6809,36 @@
         "required": [
           "classSubjectId",
           "isOffered"
+        ]
+      },
+      "ConfigureClassSubjectTimetableCommand": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodsPerWeek": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "minPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "maxPeriodSpan": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          }
+        },
+        "required": [
+          "classSubjectId"
         ]
       },
       "ClassSubjectProgress": {
@@ -9968,6 +10103,22 @@
         "type": "object",
         "properties": {
           "periodsPerWeekByClassSubjectId": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            }
+          },
+          "minPeriodSpanByClassSubjectId": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            }
+          },
+          "maxPeriodSpanByClassSubjectId": {
             "type": "object",
             "additionalProperties": {
               "type": "integer",
@@ -14200,6 +14351,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "description": "Optional fixed API key for dev seeding",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotateServiceAccountKeyRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Rotated API key",
@@ -22970,6 +23131,136 @@
         "responses": {
           "200": {
             "description": "Executed set-class-subject-offered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSubject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-class-subject-timetable": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-class-subject-timetable",
+        "operationId": "commands.configureClassSubjectTimetable",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureClassSubjectTimetable",
+        "x-edaya-command-public-name": "configure-class-subject-timetable",
+        "x-edaya-request-schema": "ConfigureClassSubjectTimetableCommand",
+        "x-edaya-response-schema": "ClassSubject",
+        "requestBody": {
+          "description": "configure-class-subject-timetable payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureClassSubjectTimetableCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-class-subject-timetable",
             "content": {
               "application/json": {
                 "schema": {

@@ -260,6 +260,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   assignMatterToGradeLevelSubject: gradeLevelSubjectMatterResponseSchema,
   addCustomClassSubject: classSubjectResponseSchema,
   setClassSubjectOffered: classSubjectResponseSchema,
+  configureClassSubjectTimetable: classSubjectResponseSchema,
   recordLessonSessionProgress: classSubjectProgressResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
   createReportCardDefinition: definitionResponseSchema,

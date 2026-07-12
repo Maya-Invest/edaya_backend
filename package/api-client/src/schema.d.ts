@@ -1624,6 +1624,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-class-subject-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-class-subject-timetable */
+        post: operations["commands.configureClassSubjectTimetable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/record-lesson-session-progress": {
         parameters: {
             query?: never;
@@ -10234,6 +10251,10 @@ export interface components {
              * @enum {string}
              */
             timetableGenerationMode: "weekly" | "free";
+            /** @default 1 */
+            timetableMinPeriodSpan: number;
+            /** @default 1 */
+            timetableMaxPeriodSpan: number;
             createdAt?: unknown;
         };
         BusinessRuleViolationResponse: {
@@ -10380,6 +10401,9 @@ export interface components {
         RotateServiceAccountKeyResponse: {
             apiKey: string;
         };
+        RotateServiceAccountKeyRequest: {
+            apiKey?: string;
+        };
         NotificationDeliveryWebhookResponse: {
             processed: number;
             ignored: number;
@@ -10471,6 +10495,10 @@ export interface components {
              * @enum {string}
              */
             timetableGenerationMode: "weekly" | "free";
+            /** @default 1 */
+            timetableMinPeriodSpan: number;
+            /** @default 1 */
+            timetableMaxPeriodSpan: number;
             createdAt?: unknown;
         };
         UpdateSchoolConfigurationCommand: {
@@ -10500,6 +10528,10 @@ export interface components {
              * @enum {string}
              */
             timetableGenerationMode: "weekly" | "free";
+            /** @default 1 */
+            timetableMinPeriodSpan: number;
+            /** @default 1 */
+            timetableMaxPeriodSpan: number;
             schoolId: string;
         };
         AcademicYear: {
@@ -11470,6 +11502,8 @@ export interface components {
             gradeLevelSubjectId?: string | null;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
             /** @default 0 */
             completedPercentage: number | null;
             /** @default true */
@@ -11483,6 +11517,8 @@ export interface components {
             gradeLevelSubjectId?: string | null;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -11514,6 +11550,8 @@ export interface components {
             subjectId: string;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
             /** @default false */
             isOptional: boolean;
             createdAt?: unknown;
@@ -11525,6 +11563,8 @@ export interface components {
             subjectId: string;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
             /** @default false */
             isOptional: boolean;
             createdAt?: unknown;
@@ -11564,6 +11604,8 @@ export interface components {
             subjectId: string;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -11571,6 +11613,12 @@ export interface components {
         SetClassSubjectOfferedCommand: {
             classSubjectId: string;
             isOffered: boolean;
+        };
+        ConfigureClassSubjectTimetableCommand: {
+            classSubjectId: string;
+            periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
         };
         ClassSubjectProgress: {
             id: string;
@@ -12420,6 +12468,12 @@ export interface components {
         };
         TimetablePlacementParameters: {
             periodsPerWeekByClassSubjectId?: {
+                [key: string]: number;
+            };
+            minPeriodSpanByClassSubjectId?: {
+                [key: string]: number;
+            };
+            maxPeriodSpanByClassSubjectId?: {
                 [key: string]: number;
             };
         };
@@ -14013,7 +14067,12 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        /** @description Optional fixed API key for dev seeding */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RotateServiceAccountKeyRequest"];
+            };
+        };
         responses: {
             /** @description Rotated API key */
             200: {
@@ -19002,6 +19061,84 @@ export interface operations {
         };
         responses: {
             /** @description Executed set-class-subject-offered */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassSubject"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureClassSubjectTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-class-subject-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigureClassSubjectTimetableCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-class-subject-timetable */
             200: {
                 headers: {
                     [name: string]: unknown;
