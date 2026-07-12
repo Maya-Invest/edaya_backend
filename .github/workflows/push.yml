@@ -4,7 +4,6 @@ on:
   push:
     branches-ignore:
       - main
-      - master
       - staging
   workflow_dispatch:
 
@@ -22,3 +21,4 @@ jobs:
     uses: ./.github/workflows/_verify.yml
   publish_api_client:
     uses: ./.github/workflows/_publish-api-client.yml
+    

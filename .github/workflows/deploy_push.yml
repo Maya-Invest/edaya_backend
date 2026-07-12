@@ -2,7 +2,7 @@ name: Push / Merge
 
 on:
   push:
-    branches: [main, master, staging]
+    branches: [main, staging]
   workflow_dispatch:
     inputs:
       run_migrate:
