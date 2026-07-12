@@ -1,6 +1,7 @@
 import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { AtomicExecutionPort, SchoolInput } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
+import type { ResolvedTimetableCell, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../../src/services/workflows/timetable-generation'
 import {
   AcademicYear,
   CalendarEvent,
@@ -29,8 +30,7 @@ import {
 } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
-import { resolveTimetableSpace, solveTimetable, spreadWeeklyTemplate, resolveWeeklyTemplateSpace, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
-import type { ResolvedTimetableCell, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../../src/services/workflows/timetable-generation'
+import { resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 

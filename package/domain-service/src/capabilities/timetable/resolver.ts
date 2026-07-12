@@ -1,13 +1,5 @@
 import type { AcademicYear, ClassGroup, PeriodDefinition } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import {
-  BusinessRuleViolationError,
-  calendarEventBlocksTimetable,
-  CalendarEventScopeKind,
-  civilDateKey,
-  DayOfWeek,
-  normalizeDate,
-} from '@edaya/core'
 import type {
   OccupiedInterval,
   ResolvedTimetableCell,
@@ -19,6 +11,14 @@ import type {
   TimetableSubjectDemand,
   UnmetTimetableWorkload,
 } from './types'
+import {
+  BusinessRuleViolationError,
+  calendarEventBlocksTimetable,
+  CalendarEventScopeKind,
+  civilDateKey,
+  DayOfWeek,
+  normalizeDate,
+} from '@edaya/core'
 import { WEEKLY_TEMPLATE_WEEK_KEY } from './types'
 
 const TEMPLATE_REFERENCE_MONDAY = normalizeDate(new Date('2026-01-05T00:00:00.000Z'))
@@ -681,7 +681,6 @@ function cellIsAvailable(
       || (interval.layer === 'teacher' && teacherIds.includes(interval.layerKey)))
     && occurrenceOverlaps(cell.startsAt, cell.endsAt, interval.startsAt, interval.endsAt))
 }
-
 
 export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult {
   const occupied = [...input.occupiedIntervals]

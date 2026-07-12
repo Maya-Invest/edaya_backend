@@ -5,6 +5,7 @@ import type {
   AddCustomClassSubjectInput,
   AssignMatterToClassSubjectInput,
   AssignMatterToGradeLevelSubjectInput,
+  ConfigureClassSubjectTimetableInput,
   ConfigureSubjectInput,
   ConfigureSubjectMatterInput,
   OfferSubjectToClassInput,
@@ -12,7 +13,6 @@ import type {
   RecordLessonSessionProgressInput,
   RemoveSubjectFromGradeLevelInput,
   SetClassSubjectOfferedInput,
-  ConfigureClassSubjectTimetableInput,
   UpdateGradeLevelSubjectInput,
 } from '../workflows/academics'
 import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from '../workflows/access-control'

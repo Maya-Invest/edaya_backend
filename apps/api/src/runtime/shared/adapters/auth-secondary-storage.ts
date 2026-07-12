@@ -1,7 +1,7 @@
 import {
+  type AuthSecondaryStoragePort,
   createKvAuthSecondaryStorage,
   isAuthKeyValueStore,
-  type AuthSecondaryStoragePort,
 } from "@edaya/adaptor-auth";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 

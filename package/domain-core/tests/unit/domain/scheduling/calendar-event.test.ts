@@ -1,4 +1,4 @@
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, calendarEventBlocksTimetable } from '@edaya/core'
+import { CalendarEvent, calendarEventBlocksTimetable, CalendarEventKind, CalendarEventScopeKind } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('CalendarEvent entity', () => {

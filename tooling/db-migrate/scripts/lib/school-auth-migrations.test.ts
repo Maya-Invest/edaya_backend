@@ -1,11 +1,11 @@
-import { PGlite } from '@electric-sql/pglite'
-import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
-import { runMigrations as runSchoolMigrations } from '@edaya/adaptor-postgres'
-import { describe, expect, test } from 'bun:test'
-import { drizzle } from 'drizzle-orm/pglite'
 import { rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
+import { runMigrations as runSchoolMigrations } from '@edaya/adaptor-postgres'
+import { PGlite } from '@electric-sql/pglite'
+import { describe, expect, test } from 'bun:test'
+import { drizzle } from 'drizzle-orm/pglite'
 
 describe('local school + auth migrations', () => {
   test('applies auth schema after school schema on the same PGlite database', async () => {

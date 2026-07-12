@@ -16,6 +16,7 @@ import {
   TeacherAssignment,
   TeacherAssignmentKind,
   TimetableGenerated,
+  TimetableGenerationMode,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -33,6 +34,7 @@ describeIntegration('timetable generation lifecycle', () => {
       name: 'Edaya',
       timeZone: 'UTC',
       timetableMinDayGapSameSubject: 1,
+      timetableGenerationMode: TimetableGenerationMode.Free,
     })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',

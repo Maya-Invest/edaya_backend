@@ -15,8 +15,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -24,9 +24,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -34,8 +34,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 2 of 13: 2026-09-14 to 2026-09-18
@@ -44,8 +44,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -53,9 +53,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -63,8 +63,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 3 of 13: 2026-09-21 to 2026-09-25
@@ -73,8 +73,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -82,9 +82,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -92,8 +92,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 4 of 13: 2026-09-28 to 2026-10-02
@@ -102,8 +102,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -111,9 +111,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -121,8 +121,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 5 of 13: 2026-10-05 to 2026-10-09
@@ -131,8 +131,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -140,9 +140,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -150,8 +150,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 6 of 13: 2026-10-12 to 2026-10-16
@@ -160,8 +160,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | [Day off: Thanksgiving] | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Science (Ada + Grace) |
-| 09:00-10:00 | [Day off: Thanksgiving] | Mathematics (Ada) | English (Grace) | Science (Ada + Grace) | Available |
+| 08:00-09:00 | [Day off: Thanksgiving] | Mathematics (Ada) | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) |
+| 09:00-10:00 | [Day off: Thanksgiving] | English (Grace) | English (Grace) | Science (Ada + Grace) | Available |
 | 10:00-11:00 | [Day off: Thanksgiving] | Available | Available | Available | Available |
 | 11:00-12:00 | [Day off: Thanksgiving] | Available | [Blocked: Assembly] | Available | Available |
 
@@ -169,8 +169,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | [Day off: Thanksgiving] | French (Turing) | History (Nadia) | Mathematics (Ada) | Available |
-| 09:00-10:00 | [Day off: Thanksgiving] | French (Turing) | Mathematics (Ada) | History (Nadia) | Mathematics (Ada) |
+| 08:00-09:00 | [Day off: Thanksgiving] | French (Turing) | French (Turing) | History (Nadia) | History (Nadia) |
+| 09:00-10:00 | [Day off: Thanksgiving] | Mathematics (Ada) | Mathematics (Ada) | Available | Mathematics (Ada) |
 | 10:00-11:00 | [Day off: Thanksgiving] | Available | Available | Available | Available |
 | 11:00-12:00 | [Day off: Thanksgiving] | Available | Available | Available | Available |
 
@@ -178,10 +178,10 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | [Day off: Thanksgiving] | English (Grace) | Mathematics (Euclid) | Mathematics (Euclid) | Available |
-| 09:00-10:00 | [Day off: Thanksgiving] | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 10:00-11:00 | [Day off: Thanksgiving] | Science (Ada + Grace) | Available | Available | Available |
-| 11:00-12:00 | [Day off: Thanksgiving] | Science (Ada + Grace) | Available | Available | Available |
+| 08:00-09:00 | [Day off: Thanksgiving] | English (Grace) | English (Grace) | Mathematics (Euclid) | Available |
+| 09:00-10:00 | [Day off: Thanksgiving] | Mathematics (Euclid) | Mathematics (Euclid) | Available | Available |
+| 10:00-11:00 | [Day off: Thanksgiving] | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
+| 11:00-12:00 | [Day off: Thanksgiving] | Available | Available | Available | Available |
 
 ## Week 7 of 13: 2026-10-19 to 2026-10-23
 
@@ -189,8 +189,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -198,9 +198,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -208,8 +208,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 8 of 13: 2026-10-26 to 2026-10-30
@@ -218,8 +218,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -227,9 +227,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -237,8 +237,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 9 of 13: 2026-11-02 to 2026-11-06
@@ -276,8 +276,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -285,9 +285,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -295,8 +295,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 11 of 13: 2026-11-16 to 2026-11-20
@@ -305,8 +305,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -314,9 +314,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -324,8 +324,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 12 of 13: 2026-11-23 to 2026-11-27
@@ -334,8 +334,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -343,9 +343,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -353,8 +353,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ## Week 13 of 13: 2026-11-30 to 2026-12-04
@@ -363,8 +363,8 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Science (Ada + Grace) | English (Grace) | Available |
-| 09:00-10:00 | Mathematics (Ada) | Mathematics (Ada) | Science (Ada + Grace) | Available | Available |
+| 08:00-09:00 | English (Grace); Ada busy | Mathematics (Ada) | Mathematics (Ada) | English (Grace) | Available |
+| 09:00-10:00 | Mathematics (Ada) | Science (Ada + Grace) | Science (Ada + Grace) | Available | Available |
 | 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | [Blocked: Assembly] | Available | Available |
 
@@ -372,9 +372,9 @@ Calendar closures:
 
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
-| 08:00-09:00 | French (Turing); Ada busy | History (Nadia) | Available | Mathematics (Ada) | Mathematics (Ada) |
-| 09:00-10:00 | French (Turing) | History (Nadia) | Available | Mathematics (Ada) | Available |
-| 10:00-11:00 | Available | Available | Available | Available | Available |
+| 08:00-09:00 | French (Turing); Ada busy | French (Turing) | Available | Mathematics (Ada) | Mathematics (Ada) |
+| 09:00-10:00 | History (Nadia) | History (Nadia) | Available | Available | Available |
+| 10:00-11:00 | Mathematics (Ada) | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 ### Grade 6 C
@@ -382,8 +382,8 @@ Calendar closures:
 | Period | Monday | Tuesday | Wednesday | Thursday | Friday |
 | --- | --- | --- | --- | --- | --- |
 | 08:00-09:00 | Mathematics (Euclid); Ada busy | English (Grace) | Mathematics (Euclid) | Available | Available |
-| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Available | Science (Ada + Grace) |
-| 10:00-11:00 | Science (Ada + Grace) | Available | Available | Available | Available |
+| 09:00-10:00 | English (Grace) | Mathematics (Euclid) | Available | Science (Ada + Grace) | Science (Ada + Grace) |
+| 10:00-11:00 | Available | Available | Available | Available | Available |
 | 11:00-12:00 | Available | Available | Available | Available | Available |
 
 Classes: 3; closed weekdays: 6

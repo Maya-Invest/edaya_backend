@@ -55,15 +55,14 @@ Bindings are embedded in the OpenAPI document under `info.x-edaya-client-binding
 
 After merging API changes here:
 
-1. Copy or re-export the updated `openapi.json` into **edaya_web** (`apps/webapp/src/lib/api/openapi.json`).
-2. In edaya_web: `bun repo openapi generate` (schema types + saas-admin copies).
-3. Run `bun run verify` in both repos.
+1. Merge or sync the updated `@maya-invest/edaya-api-client` (file link or published package).
+2. In **edaya_web**: `bun install` (if using file link) and `bun run verify`.
 
 Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](../../edaya_web/docs/reference/cross-repo-workflow.md).
 
 ## CI independence
 
-Each repo runs `bun run verify` from its own checkout. **edaya_web** CI uses committed `openapi.json` and checks out **edaya_backend** for the shared api-client package. **edaya_backend** CI exports and checks generated artifacts from the in-repo API.
+Each repo runs `bun run verify` from its own checkout. **edaya_web** CI checks out **edaya_backend** for the `@maya-invest/edaya-api-client` file link. **edaya_backend** CI exports and checks generated artifacts from the in-repo API.
 
 ## Hand-written client runtime
 

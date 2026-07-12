@@ -1,5 +1,4 @@
-import type { PeriodDefinition } from '@edaya/core'
-import type { TimetableGenerationMode } from '@edaya/core'
+import type { PeriodDefinition, TimetableGenerationMode } from '@edaya/core'
 
 export interface ResolveTimetableSpaceInput {
   classGroupId: string

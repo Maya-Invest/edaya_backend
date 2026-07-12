@@ -442,7 +442,7 @@ export const rescheduleOccurrenceCommandSchema = z.object({
 }).openapi("RescheduleOccurrenceCommand");
 
 const timetableGenerationOptionsSchema = z.object({
-  generationMode: z.enum(['weekly', 'free']).optional(),
+  generationMode: z.enum(["weekly", "free"]).optional(),
   enforceWorkloadFulfillment: z.boolean().optional(),
   excludeBreakSlots: z.boolean().optional(),
   minDayGapSameSubject: z.number().int().nonnegative().optional(),

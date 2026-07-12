@@ -7,8 +7,9 @@ import type {
   LessonSession as LessonSessionEntity,
   School,
   TeacherAssignment,
+
+  TeacherUnavailability,
 } from '@edaya/core'
-import type { SchoolRepositories } from '../../ports/school-repositories'
 import type {
   OccupiedInterval,
   ResolveTimetableSpaceInput,
@@ -17,6 +18,21 @@ import type {
   TimetablePlacement,
   TimetableSubjectDemand,
 } from '../../capabilities/timetable'
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import { randomUUID } from 'node:crypto'
+import { operationModule, SchedulingOperations } from '@edaya/authorization'
+import {
+  AssessmentKind,
+  BusinessRuleViolationError,
+  LessonSession,
+  normalizeDate,
+  OccurrenceStatus,
+  TeacherAssignmentKind,
+  TeacherAssignmentStatus,
+  TeacherUnavailabilityRecurrence,
+  TimetableGenerated,
+  TimetableGenerationMode,
+} from '@edaya/core'
 import {
   collectNonSchoolDates,
   countSessionPeriodSlots,
@@ -31,21 +47,6 @@ import {
   validateRange,
   weekKey,
 } from '../../capabilities/timetable'
-import { randomUUID } from 'node:crypto'
-import { operationModule, SchedulingOperations } from '@edaya/authorization'
-import {
-  AssessmentKind,
-  BusinessRuleViolationError,
-  LessonSession,
-  normalizeDate,
-  OccurrenceStatus,
-  TeacherAssignmentKind,
-  TeacherAssignmentStatus,
-  TeacherUnavailability,
-  TeacherUnavailabilityRecurrence,
-  TimetableGenerated,
-  TimetableGenerationMode,
-} from '@edaya/core'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { assertNoSessionConflict } from './schedule-conflicts'
 import { expandTeacherUnavailability } from './teacher-unavailability'
@@ -171,9 +172,9 @@ function resolveClassSubjectPeriodSpan(
   const maxPeriodSpan = Math.max(
     minPeriodSpan,
     resolvePositiveSpan(placementParameters?.maxPeriodSpanByClassSubjectId?.[subject.id])
-      ?? resolvePositiveSpan(subject.maxPeriodSpan)
-      ?? resolvePositiveSpan(gradeLevelSubject?.maxPeriodSpan)
-      ?? defaults.defaultMaxPeriodSpan,
+    ?? resolvePositiveSpan(subject.maxPeriodSpan)
+    ?? resolvePositiveSpan(gradeLevelSubject?.maxPeriodSpan)
+    ?? defaults.defaultMaxPeriodSpan,
   )
   return { minPeriodSpan, maxPeriodSpan }
 }
@@ -529,7 +530,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       cells: templateCells,
       subjects: demands,
       occupiedIntervals: templateUnavailability,
-      options: { ...options, enforceWorkloadFulfillment: false },
+      options,
     })
     const nonSchoolDates = await collectNonSchoolDates(
       this.baseService.repositories,
@@ -576,7 +577,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       this.baseService.repositories.periodDefinitions.list({ academicYearId: input.academicYearId }),
     ])
     const periodById = new Map(periods.map(period => [period.id, period]))
-    let sharedTemplateOccupied: OccupiedInterval[] = []
+    const sharedTemplateOccupied: OccupiedInterval[] = []
     const prepared = []
     for (const group of groups) {
       const classInput = { ...input, classGroupId: group.id }

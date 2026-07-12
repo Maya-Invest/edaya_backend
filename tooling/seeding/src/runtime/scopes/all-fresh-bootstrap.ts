@@ -14,8 +14,8 @@ import { runDevAuthProvision } from '../../orchestration/run-dev-auth-provision'
 import { runDevSchoolSeed } from '../../orchestration/run-dev-school-seed'
 import { logDevSeedResults } from '../../orchestration/run-dev-seeds'
 import { runSeedProgressStep } from '../../support/seed-progress'
-import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
 import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-service-account'
+import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
 
 /** Fresh-database `all` path: auth → bootstrap session → roles → service account → school → access. */

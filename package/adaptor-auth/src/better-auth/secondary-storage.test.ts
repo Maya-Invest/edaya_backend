@@ -21,7 +21,7 @@ describe('resolveKvExpirationTtlSeconds', () => {
 
 describe('createKvAuthSecondaryStorage', () => {
   it('maps ttlMs to KV expirationTtl seconds', async () => {
-    const writes: Array<{ key: string; value: string; expirationTtl?: number }> = []
+    const writes: Array<{ key: string, value: string, expirationTtl?: number }> = []
     const store = createKvAuthSecondaryStorage({
       get: async () => null,
       put: async (key, value, options) => {

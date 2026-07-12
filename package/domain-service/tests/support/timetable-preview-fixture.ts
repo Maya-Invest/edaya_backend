@@ -5,8 +5,8 @@ import type {
   TimetableGenerationDefaults,
   TimetableSubjectDemand,
 } from '../../src/services/workflows/timetable-generation'
-import { solveTimetable } from '../../src/services/workflows/timetable-generation'
 import { TimetableGenerationMode } from '@edaya/core'
+import { solveTimetable } from '../../src/services/workflows/timetable-generation'
 
 const RANGE_START = new Date('2026-09-07T00:00:00.000Z')
 const RANGE_END_EXCLUSIVE = new Date('2026-12-07T00:00:00.000Z')
