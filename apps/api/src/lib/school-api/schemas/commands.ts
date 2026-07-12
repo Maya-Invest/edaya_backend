@@ -446,6 +446,8 @@ const timetableGenerationOptionsSchema = z.object({
 
 const timetablePlacementParametersSchema = z.object({
   periodsPerWeekByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+  minPeriodSpanByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+  maxPeriodSpanByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
 }).openapi("TimetablePlacementParameters");
 
 export const generateClassGroupTimetableCommandSchema = z.object({

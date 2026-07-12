@@ -28,7 +28,7 @@
 | 3 | **A** — Weekly gap scope | ✅ Done | Day gap restricted to template week (single `WEEKLY_TEMPLATE_WEEK_KEY` solve) |
 | 4 | **C** — School orchestration | ✅ Done | School-wide template solve (shared-teacher occupancy), then per-class spread |
 | 5 | **C** — API + web | ✅ Done | `generationMode` (`weekly` default), mode selector in advanced panel |
-| 6 | **B** — Session span domain + solver | After C | `minPeriodSpan` / `maxPeriodSpan`; block placement on template week and `free` mode |
+| 6 | **B** — Session span domain + solver | ✅ Done | `minPeriodSpan` / `maxPeriodSpan`; block placement on template week and `free` mode |
 | 7 | **B** — UI + fixtures | After 6 | Advanced panel, `ClassSubject` config, demo-ci Math 1–2 spans |
 
 **Rationale:** `weekly` is the default generation mode — ship template solve + spread before double-period blocks. Phase B builds on the weekly template solver once single-period weekly timetables are stable.

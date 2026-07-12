@@ -18,6 +18,8 @@ export const schools = pgTable('schools', {
   timetableAllowUnassignedTeacherPlacements: boolean('timetable_allow_unassigned_teacher_placements').notNull().default(false),
   timetableUseHomeroomTeacherFallback: boolean('timetable_use_homeroom_teacher_fallback').notNull().default(false),
   timetableGenerationMode: text('timetable_generation_mode').notNull().default('weekly'),
+  timetableMinPeriodSpan: integer('timetable_min_period_span').notNull().default(1),
+  timetableMaxPeriodSpan: integer('timetable_max_period_span').notNull().default(1),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 
@@ -494,6 +496,8 @@ export const gradeLevelSubjects = pgTable('grade_level_subjects', {
   subjectId: text('subject_id').notNull(),
   coefficient: integer('coefficient'),
   periodsPerWeek: integer('periods_per_week'),
+  minPeriodSpan: integer('min_period_span'),
+  maxPeriodSpan: integer('max_period_span'),
   isOptional: boolean('is_optional').notNull().default(false),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('grade_level_subjects', table))
@@ -513,6 +517,8 @@ export const classSubjects = pgTable('class_subjects', {
   gradeLevelSubjectId: text('grade_level_subject_id'),
   coefficient: integer('coefficient'),
   periodsPerWeek: integer('periods_per_week'),
+  minPeriodSpan: integer('min_period_span'),
+  maxPeriodSpan: integer('max_period_span'),
   isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),

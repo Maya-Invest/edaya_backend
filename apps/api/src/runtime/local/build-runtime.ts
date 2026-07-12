@@ -3,6 +3,7 @@ import { buildSchoolApplication } from "@/runtime/shared/school-application";
 import { runMigrationsOnStartup } from "@/runtime/local/profile";
 import { createAuthDatabase } from "@/runtime/local/auth-database";
 import { createSchoolDatabase } from "@/runtime/local/school-database";
+import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
 
@@ -13,7 +14,10 @@ export async function buildLocalApiRuntime(env: Environment): Promise<ApiRuntime
 
   const runMigrations = runMigrationsOnStartup(env);
   const schoolHandle = await createSchoolDatabase(env);
-  const authHandle = await createAuthDatabase(schoolHandle, env, { runMigrations });
+  if (runMigrations) {
+    await runStartupMigrations(schoolHandle.db, env.DATABASE_URL);
+  }
+  const authHandle = await createAuthDatabase(schoolHandle, env, { runMigrations: false });
 
   return createApiRuntime({
     env,
@@ -23,7 +27,7 @@ export async function buildLocalApiRuntime(env: Environment): Promise<ApiRuntime
       databaseUrl: env.DATABASE_URL,
       env,
       authDb: authHandle.db,
-      runMigrations,
+      runMigrations: false,
     }),
   });
 }

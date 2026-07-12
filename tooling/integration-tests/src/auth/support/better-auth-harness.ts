@@ -75,8 +75,8 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
   const authDb = db
   const repositories = new PostgresSchoolRepositories(db)
 
-  await runAuthMigrations(authDb, { driver: 'pglite' })
   await repositories.init({ driver: 'pglite' })
+  await runAuthMigrations(authDb, { driver: 'pglite' })
 
   const application = new SchoolApplication({
     atomicExecution: new PostgresAtomicExecution(db as PostgresTransactionalDb),

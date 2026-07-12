@@ -98,27 +98,27 @@ const classGroups: PreviewClassFixture[] = [
     classGroupId: 'class-6a',
     className: 'Grade 6 A',
     subjects: [
-      { classSubjectId: '6a-math', displayLabel: 'Mathematics', periodsPerWeek: 3, teacherIds: ['teacher-ada'] },
-      { classSubjectId: '6a-english', displayLabel: 'English', periodsPerWeek: 2, teacherIds: ['teacher-grace'] },
-      { classSubjectId: '6a-science', displayLabel: 'Science', periodsPerWeek: 2, teacherIds: ['teacher-ada', 'teacher-grace'] },
+      { classSubjectId: '6a-math', displayLabel: 'Mathematics', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-ada'] },
+      { classSubjectId: '6a-english', displayLabel: 'English', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-grace'] },
+      { classSubjectId: '6a-science', displayLabel: 'Science', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-ada', 'teacher-grace'] },
     ],
   },
   {
     classGroupId: 'class-6b',
     className: 'Grade 6 B',
     subjects: [
-      { classSubjectId: '6b-math', displayLabel: 'Mathematics', periodsPerWeek: 3, teacherIds: ['teacher-ada'] },
-      { classSubjectId: '6b-french', displayLabel: 'French', periodsPerWeek: 2, teacherIds: ['teacher-turing'] },
-      { classSubjectId: '6b-history', displayLabel: 'History', periodsPerWeek: 2, teacherIds: ['teacher-nadia'] },
+      { classSubjectId: '6b-math', displayLabel: 'Mathematics', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-ada'] },
+      { classSubjectId: '6b-french', displayLabel: 'French', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-turing'] },
+      { classSubjectId: '6b-history', displayLabel: 'History', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-nadia'] },
     ],
   },
   {
     classGroupId: 'class-6c',
     className: 'Grade 6 C',
     subjects: [
-      { classSubjectId: '6c-math', displayLabel: 'Mathematics', periodsPerWeek: 3, teacherIds: ['teacher-euclid'] },
-      { classSubjectId: '6c-english', displayLabel: 'English', periodsPerWeek: 2, teacherIds: ['teacher-grace'] },
-      { classSubjectId: '6c-science', displayLabel: 'Science', periodsPerWeek: 2, teacherIds: ['teacher-ada', 'teacher-grace'] },
+      { classSubjectId: '6c-math', displayLabel: 'Mathematics', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-euclid'] },
+      { classSubjectId: '6c-english', displayLabel: 'English', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-grace'] },
+      { classSubjectId: '6c-science', displayLabel: 'Science', periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: 1, teacherIds: ['teacher-ada', 'teacher-grace'] },
     ],
   },
 ]
@@ -134,6 +134,8 @@ const options: TimetableGenerationDefaults = {
   ]),
   allowUnassignedTeacherPlacements: false,
   useHomeroomTeacherFallback: false,
+  defaultMinPeriodSpan: 1,
+  defaultMaxPeriodSpan: 1,
 }
 
 export const timetablePreviewFixture = {

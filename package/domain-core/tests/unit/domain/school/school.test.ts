@@ -30,6 +30,8 @@ describe('School entity', () => {
     expect(school.timetableAllowUnassignedTeacherPlacements).toBe(false)
     expect(school.timetableUseHomeroomTeacherFallback).toBe(false)
     expect(school.timetableGenerationMode).toBe(TimetableGenerationMode.Weekly)
+    expect(school.timetableMinPeriodSpan).toBe(1)
+    expect(school.timetableMaxPeriodSpan).toBe(1)
     expect(school.createdAt).toBeInstanceOf(Date)
   })
 

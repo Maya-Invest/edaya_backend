@@ -30,12 +30,51 @@ import {
 import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { resolveTimetableSpace, solveTimetable, spreadWeeklyTemplate, resolveWeeklyTemplateSpace, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
+import type { ResolvedTimetableCell, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../../src/services/workflows/timetable-generation'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
 const weekStart = new Date('2026-09-07T00:00:00.000Z')
 const weekEnd = new Date('2026-09-11T00:00:00.000Z')
 const weekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday]
+
+function solverOptions(overrides: Partial<TimetableGenerationDefaults> = {}): TimetableGenerationDefaults {
+  return {
+    generationMode: TimetableGenerationMode.Free,
+    enforceWorkloadFulfillment: false,
+    excludeBreakSlots: true,
+    minDayGapSameSubject: 1,
+    preferredPeriodDefinitionIds: [],
+    allowUnassignedTeacherPlacements: false,
+    useHomeroomTeacherFallback: false,
+    defaultMinPeriodSpan: 1,
+    defaultMaxPeriodSpan: 1,
+    ...overrides,
+  }
+}
+
+function subjectDemand(
+  base: Pick<TimetableSubjectDemand, 'classSubjectId' | 'displayLabel' | 'periodsPerWeek' | 'teacherIds'>
+    & Partial<Pick<TimetableSubjectDemand, 'minPeriodSpan' | 'maxPeriodSpan'>>,
+): TimetableSubjectDemand {
+  return {
+    minPeriodSpan: 1,
+    maxPeriodSpan: 1,
+    ...base,
+  }
+}
+
+function singlePlacement(
+  base: Pick<TimetablePlacement, 'classSubjectId' | 'displayLabel' | 'teacherIds'>,
+  cell: ResolvedTimetableCell,
+): TimetablePlacement {
+  return {
+    ...base,
+    cell,
+    span: 1,
+    cells: [cell],
+  }
+}
 
 function period(dayOfWeek: DayOfWeek, suffix = '') {
   return new PeriodDefinition({
@@ -115,22 +154,16 @@ describe('timetable resolver and solver', () => {
     const result = solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 3, teacherIds: ['teacher-1', 'teacher-2'] }],
+      subjects: [subjectDemand({ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 3, teacherIds: ['teacher-1', 'teacher-2'] })],
       occupiedIntervals: [{
         layer: 'teacher',
         layerKey: 'teacher-2',
         startsAt: cells[0]!.startsAt,
         endsAt: cells[0]!.endsAt,
       }],
-      options: {
-        generationMode: TimetableGenerationMode.Free,
-        enforceWorkloadFulfillment: false,
-        excludeBreakSlots: true,
-        minDayGapSameSubject: 1,
+      options: solverOptions({
         preferredPeriodDefinitionIds: [cells[2]!.periodDefinitionId],
-        allowUnassignedTeacherPlacements: false,
-        useHomeroomTeacherFallback: false,
-      },
+      }),
     })
 
     expect(result.placements.map(item => item.cell.periodDefinitionId)).toEqual([
@@ -153,17 +186,13 @@ describe('timetable resolver and solver', () => {
     expect(() => solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] }],
+      subjects: [subjectDemand({ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] })],
       occupiedIntervals: [],
-      options: {
+      options: solverOptions({
         generationMode: TimetableGenerationMode.Free,
         enforceWorkloadFulfillment: true,
-        excludeBreakSlots: true,
         minDayGapSameSubject: 8,
-        preferredPeriodDefinitionIds: [],
-        allowUnassignedTeacherPlacements: false,
-        useHomeroomTeacherFallback: false,
-      },
+      }),
     })).toThrow('Could not place 1/4 periods for class subject ci-cs-6a-fr in week 2025-12-15')
   })
 
@@ -180,17 +209,12 @@ describe('timetable resolver and solver', () => {
     const result = solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] }],
+      subjects: [subjectDemand({ classSubjectId: 'ci-cs-6a-fr', displayLabel: 'Français', periodsPerWeek: 4, teacherIds: ['ci-t3'] })],
       occupiedIntervals: [],
-      options: {
+      options: solverOptions({
         generationMode: TimetableGenerationMode.Free,
         enforceWorkloadFulfillment: true,
-        excludeBreakSlots: true,
-        minDayGapSameSubject: 1,
-        preferredPeriodDefinitionIds: [],
-        allowUnassignedTeacherPlacements: false,
-        useHomeroomTeacherFallback: false,
-      },
+      }),
     })
 
     expect(result.unmetWorkloads).toEqual([])
@@ -220,7 +244,7 @@ describe('timetable resolver and solver', () => {
     const result = solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 1, teacherIds: ['teacher-1'] }],
+      subjects: [subjectDemand({ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 1, teacherIds: ['teacher-1'] })],
       occupiedIntervals: [],
       options: {
         generationMode: TimetableGenerationMode.Free,
@@ -230,6 +254,8 @@ describe('timetable resolver and solver', () => {
         preferredPeriodDefinitionIds: [],
         allowUnassignedTeacherPlacements: false,
         useHomeroomTeacherFallback: false,
+        defaultMinPeriodSpan: 1,
+        defaultMaxPeriodSpan: 1,
       },
     })
 
@@ -266,7 +292,7 @@ describe('timetable resolver and solver', () => {
     const result = solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] }],
+      subjects: [subjectDemand({ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] })],
       occupiedIntervals: [],
       options: {
         generationMode: TimetableGenerationMode.Free,
@@ -276,6 +302,8 @@ describe('timetable resolver and solver', () => {
         preferredPeriodDefinitionIds: [],
         allowUnassignedTeacherPlacements: false,
         useHomeroomTeacherFallback: false,
+        defaultMinPeriodSpan: 1,
+        defaultMaxPeriodSpan: 1,
       },
     })
 
@@ -315,7 +343,7 @@ describe('timetable resolver and solver', () => {
     const result = solveTimetable({
       classGroupId: 'class-1',
       cells,
-      subjects: [{ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] }],
+      subjects: [subjectDemand({ classSubjectId: 'subject-fr', displayLabel: 'Français', periodsPerWeek: 2, teacherIds: ['teacher-1'] })],
       occupiedIntervals: [],
       options: {
         generationMode: TimetableGenerationMode.Free,
@@ -325,6 +353,8 @@ describe('timetable resolver and solver', () => {
         preferredPeriodDefinitionIds: [],
         allowUnassignedTeacherPlacements: false,
         useHomeroomTeacherFallback: false,
+        defaultMinPeriodSpan: 1,
+        defaultMaxPeriodSpan: 1,
       },
     })
 
@@ -354,20 +384,66 @@ describe('timetable resolver and solver', () => {
     expect(classGroup.id).toBe('class-1')
   })
 
+  test('places double-period blocks when maxPeriodSpan is 2', () => {
+    const mondayCells = Array.from({ length: 2 }, (_, index) => ({
+      date: '2026-09-07',
+      weekKey: '2026-09-07',
+      weeklyIndex: index,
+      periodDefinitionId: `monday-p${index}`,
+      startsAt: new Date(Date.UTC(2026, 8, 7, 8 + index)),
+      endsAt: new Date(Date.UTC(2026, 8, 7, 9 + index)),
+    }))
+    const tuesdayCells = Array.from({ length: 2 }, (_, index) => ({
+      date: '2026-09-08',
+      weekKey: '2026-09-07',
+      weeklyIndex: index + 2,
+      periodDefinitionId: `tuesday-p${index}`,
+      startsAt: new Date(Date.UTC(2026, 8, 8, 8 + index)),
+      endsAt: new Date(Date.UTC(2026, 8, 8, 9 + index)),
+    }))
+    const result = solveTimetable({
+      classGroupId: 'class-1',
+      cells: [...mondayCells, ...tuesdayCells],
+      subjects: [subjectDemand({
+        classSubjectId: 'subject-math',
+        displayLabel: 'Math',
+        periodsPerWeek: 4,
+        minPeriodSpan: 1,
+        maxPeriodSpan: 2,
+        teacherIds: ['teacher-1'],
+      })],
+      occupiedIntervals: [],
+      options: solverOptions({
+        generationMode: TimetableGenerationMode.Free,
+        enforceWorkloadFulfillment: true,
+      }),
+    })
+
+    expect(result.unmetWorkloads).toEqual([])
+    expect(result.placements).toHaveLength(2)
+    expect(result.placements.map(placement => placement.span)).toEqual([2, 2])
+    expect(result.placements.flatMap(placement => placement.cells.map(cell => cell.date))).toEqual([
+      '2026-09-07',
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-08',
+    ])
+  })
+
   test('spreads a weekly template across calendar weeks and drops closure days', () => {
-    const templatePlacements = [{
+    const templateCell = {
+      date: '2026-01-05',
+      weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
+      weeklyIndex: 0,
+      periodDefinitionId: 'period-Monday',
+      startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+      endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+    }
+    const templatePlacements = [singlePlacement({
       classSubjectId: 'subject-1',
       displayLabel: 'Math',
       teacherIds: ['teacher-1'],
-      cell: {
-        date: '2026-01-05',
-        weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
-        weeklyIndex: 0,
-        periodDefinitionId: 'period-Monday',
-        startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
-        endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
-      },
-    }]
+    }, templateCell)]
     const spread = spreadWeeklyTemplate({
       classGroupId: 'class-1',
       templatePlacements,
@@ -376,16 +452,10 @@ describe('timetable resolver and solver', () => {
       endDate: new Date('2026-09-18T00:00:00.000Z'),
       nonSchoolDates: new Set(['2026-09-14']),
       occupiedIntervals: [],
-      subjects: [{ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 1, teacherIds: ['teacher-1'] }],
-      options: {
+      subjects: [subjectDemand({ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 1, teacherIds: ['teacher-1'] })],
+      options: solverOptions({
         generationMode: TimetableGenerationMode.Weekly,
-        enforceWorkloadFulfillment: false,
-        excludeBreakSlots: true,
-        minDayGapSameSubject: 1,
-        preferredPeriodDefinitionIds: [],
-        allowUnassignedTeacherPlacements: false,
-        useHomeroomTeacherFallback: false,
-      },
+      }),
     })
 
     expect(spread.placements.map(placement => placement.cell.date)).toEqual(['2026-09-07'])
@@ -398,36 +468,31 @@ describe('timetable resolver and solver', () => {
   })
 
   test('does not report unmet workload for weeks with no teaching days', () => {
+    const templateCell = {
+      date: '2026-01-05',
+      weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
+      weeklyIndex: 0,
+      periodDefinitionId: 'period-Monday',
+      startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
+      endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
+    }
     const spread = spreadWeeklyTemplate({
       classGroupId: 'class-1',
-      templatePlacements: [{
+      templatePlacements: [singlePlacement({
         classSubjectId: 'subject-1',
         displayLabel: 'Math',
         teacherIds: ['teacher-1'],
-        cell: {
-          date: '2026-01-05',
-          weekKey: WEEKLY_TEMPLATE_WEEK_KEY,
-          weeklyIndex: 0,
-          periodDefinitionId: 'period-Monday',
-          startsAt: new Date(Date.UTC(2026, 0, 5, 8)),
-          endsAt: new Date(Date.UTC(2026, 0, 5, 9)),
-        },
-      }],
+      }, templateCell)],
       periodById: new Map([['period-Monday', period(DayOfWeek.Monday)]]),
       startDate: new Date('2025-10-20T00:00:00.000Z'),
       endDate: new Date('2025-10-24T00:00:00.000Z'),
       nonSchoolDates: new Set(['2025-10-20', '2025-10-21', '2025-10-22', '2025-10-23', '2025-10-24']),
       occupiedIntervals: [],
-      subjects: [{ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 4, teacherIds: ['teacher-1'] }],
-      options: {
+      subjects: [subjectDemand({ classSubjectId: 'subject-1', displayLabel: 'Math', periodsPerWeek: 4, teacherIds: ['teacher-1'] })],
+      options: solverOptions({
         generationMode: TimetableGenerationMode.Weekly,
         enforceWorkloadFulfillment: true,
-        excludeBreakSlots: true,
-        minDayGapSameSubject: 1,
-        preferredPeriodDefinitionIds: [],
-        allowUnassignedTeacherPlacements: false,
-        useHomeroomTeacherFallback: false,
-      },
+      }),
     })
 
     expect(spread.placements).toEqual([])

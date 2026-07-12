@@ -3,6 +3,7 @@ import {
   resolvePgliteDataDir,
   runMigrations,
 } from '@edaya/adaptor-postgres'
+import { mkdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
@@ -16,10 +17,30 @@ export async function applySchoolMigrations(databaseUrl: string): Promise<void> 
 
   if (driver === 'pglite') {
     const dataDir = resolvePgliteDataDir(databaseUrl)
-    const pglite = dataDir ? new PGlite(dataDir) : new PGlite()
-    const db = drizzlePglite(pglite)
-    await runMigrations(db, { driver: 'pglite' })
-    await pglite.close()
+    let pglite: PGlite | undefined
+    try {
+      if (dataDir) {
+        mkdirSync(dataDir, { recursive: true })
+      }
+      pglite = dataDir ? new PGlite(dataDir) : new PGlite()
+      const db = drizzlePglite(pglite)
+      await runMigrations(db, { driver: 'pglite' })
+    }
+    catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      if (/mutex|Aborted\(\)/i.test(detail)) {
+        throw new Error(
+          'Could not open local PGlite database — it is locked by a running API process. '
+          + 'Stop `bun dev` completely, then rerun `bun repo db migrate local`. '
+          + 'Alternatively: `bun repo seed clean --yes`, then `bun dev` (migrations apply on startup).',
+          { cause: error },
+        )
+      }
+      throw error
+    }
+    finally {
+      await pglite?.close()
+    }
     return
   }
 

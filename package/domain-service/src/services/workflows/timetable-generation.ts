@@ -55,10 +55,14 @@ export interface TimetableGenerationDefaults {
   preferredPeriodDefinitionIds: string[]
   allowUnassignedTeacherPlacements: boolean
   useHomeroomTeacherFallback: boolean
+  defaultMinPeriodSpan: number
+  defaultMaxPeriodSpan: number
 }
 
 export interface TimetablePlacementParameters {
   periodsPerWeekByClassSubjectId?: Record<string, number>
+  minPeriodSpanByClassSubjectId?: Record<string, number>
+  maxPeriodSpanByClassSubjectId?: Record<string, number>
 }
 
 export interface GenerateClassGroupTimetableInput extends ResolveTimetableSpaceInput {
@@ -89,6 +93,8 @@ export interface TimetableSubjectDemand {
   classSubjectId: string
   displayLabel: string
   periodsPerWeek: number
+  minPeriodSpan: number
+  maxPeriodSpan: number
   teacherIds: string[]
 }
 
@@ -113,6 +119,8 @@ export interface TimetablePlacement {
   displayLabel: string
   teacherIds: string[]
   cell: ResolvedTimetableCell
+  span: number
+  cells: readonly ResolvedTimetableCell[]
 }
 
 export interface UnmetTimetableWorkload {
@@ -224,6 +232,142 @@ function violatesSameSubjectDayGap(
   return placements.some(placement =>
     placement.classSubjectId === classSubjectId
     && calendarDaysBetween(placement.cell.date, date) < minDayGapSameSubject)
+}
+
+function makePlacement(
+  base: Pick<TimetablePlacement, 'classSubjectId' | 'displayLabel' | 'teacherIds'>,
+  cells: readonly ResolvedTimetableCell[],
+): TimetablePlacement {
+  const firstCell = cells[0]
+  if (!firstCell) {
+    throw new BusinessRuleViolationError('TIMETABLE_PLACEMENT_INVALID', 'A timetable placement requires at least one cell')
+  }
+  return {
+    ...base,
+    cell: firstCell,
+    span: cells.length,
+    cells,
+  }
+}
+
+function placementSlotCount(placement: TimetablePlacement): number {
+  return placement.span
+}
+
+const UTC_DAY_TO_DAY_OF_WEEK: Record<number, DayOfWeek> = {
+  0: DayOfWeek.Sunday,
+  1: DayOfWeek.Monday,
+  2: DayOfWeek.Tuesday,
+  3: DayOfWeek.Wednesday,
+  4: DayOfWeek.Thursday,
+  5: DayOfWeek.Friday,
+  6: DayOfWeek.Saturday,
+}
+
+function dayOfWeekFromUtcDate(date: Date): DayOfWeek {
+  return UTC_DAY_TO_DAY_OF_WEEK[normalizeDate(date).getUTCDay()]!
+}
+
+function countSessionPeriodSlots(
+  session: { startsAt: Date, endsAt: Date },
+  periods: readonly PeriodDefinition[],
+  excludeBreakSlots: boolean,
+): number {
+  const sessionDay = dayOfWeekFromUtcDate(session.startsAt)
+  const sessionDate = normalizeDate(session.startsAt)
+  const dayPeriods = periods
+    .filter(period => period.dayOfWeek === sessionDay
+      && period.isTeachingSlot
+      && (!(excludeBreakSlots) || !period.isBreak))
+    .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+  const overlapping = dayPeriods.filter((period) => {
+    const times = buildCellTimes(sessionDate, period)
+    return occurrenceOverlaps(session.startsAt, session.endsAt, times.startsAt, times.endsAt)
+  })
+  return overlapping.length > 0 ? overlapping.length : 1
+}
+
+function groupCellsByDate(cells: readonly ResolvedTimetableCell[]): Map<string, ResolvedTimetableCell[]> {
+  const grouped = new Map<string, ResolvedTimetableCell[]>()
+  for (const cell of cells) {
+    grouped.set(cell.date, [...(grouped.get(cell.date) ?? []), cell])
+  }
+  for (const [date, dayCells] of grouped) {
+    grouped.set(date, dayCells.sort((left, right) =>
+      left.weeklyIndex - right.weeklyIndex
+      || left.startsAt.getTime() - right.startsAt.getTime()
+      || left.periodDefinitionId.localeCompare(right.periodDefinitionId)))
+  }
+  return grouped
+}
+
+function isConsecutiveCellRun(cells: readonly ResolvedTimetableCell[]): boolean {
+  for (let index = 1; index < cells.length; index++) {
+    if (cells[index]!.weeklyIndex !== cells[index - 1]!.weeklyIndex + 1) {
+      return false
+    }
+  }
+  return true
+}
+
+function buildCandidateBlocks(
+  weekCells: readonly ResolvedTimetableCell[],
+  minSpan: number,
+  maxSpan: number,
+): ResolvedTimetableCell[][] {
+  const blocks: ResolvedTimetableCell[][] = []
+  for (const dayCells of groupCellsByDate(weekCells).values()) {
+    for (let start = 0; start < dayCells.length; start++) {
+      for (let span = minSpan; span <= maxSpan && start + span <= dayCells.length; span++) {
+        const candidate = dayCells.slice(start, start + span)
+        if (isConsecutiveCellRun(candidate)) {
+          blocks.push(candidate)
+        }
+      }
+    }
+  }
+  return blocks
+}
+
+function blockIsAvailable(
+  block: readonly ResolvedTimetableCell[],
+  classGroupId: string,
+  teacherIds: readonly string[],
+  occupied: readonly OccupiedInterval[],
+): boolean {
+  return block.every(cell => cellIsAvailable(cell, classGroupId, teacherIds, occupied))
+}
+
+function sortCandidateBlocks(
+  blocks: readonly ResolvedTimetableCell[][],
+  preferredIds: Set<string>,
+): ResolvedTimetableCell[][] {
+  return [...blocks].sort((left, right) =>
+    Number(preferredIds.has(right[0]!.periodDefinitionId)) - Number(preferredIds.has(left[0]!.periodDefinitionId))
+    || left[0]!.startsAt.getTime() - right[0]!.startsAt.getTime()
+    || right.length - left.length
+    || left[0]!.periodDefinitionId.localeCompare(right[0]!.periodDefinitionId))
+}
+
+function candidateBlocks(
+  weekCells: readonly ResolvedTimetableCell[],
+  subject: TimetableSubjectDemand,
+  classGroupId: string,
+  occupied: readonly OccupiedInterval[],
+  preferredIds: Set<string>,
+  placements: readonly TimetablePlacement[],
+  minDayGapSameSubject: number,
+  blockSize?: number,
+): ResolvedTimetableCell[][] {
+  const minSpan = subject.minPeriodSpan
+  const maxSpan = subject.maxPeriodSpan
+  return sortCandidateBlocks(
+    buildCandidateBlocks(weekCells, minSpan, maxSpan)
+      .filter(block => blockSize === undefined || block.length === blockSize)
+      .filter(block => blockIsAvailable(block, classGroupId, subject.teacherIds, occupied))
+      .filter(block => !violatesSameSubjectDayGap(placements, subject.classSubjectId, block[0]!.date, minDayGapSameSubject)),
+    preferredIds,
+  )
 }
 
 function weekKey(date: Date): string {
@@ -433,19 +577,22 @@ function placementOccupiedIntervals(
   classGroupId: string,
   placement: TimetablePlacement,
 ): OccupiedInterval[] {
-  const intervals: OccupiedInterval[] = [{
-    layer: 'class_group',
-    layerKey: classGroupId,
-    startsAt: placement.cell.startsAt,
-    endsAt: placement.cell.endsAt,
-  }]
-  for (const teacherId of placement.teacherIds) {
+  const intervals: OccupiedInterval[] = []
+  for (const cell of placement.cells) {
     intervals.push({
-      layer: 'teacher',
-      layerKey: teacherId,
-      startsAt: placement.cell.startsAt,
-      endsAt: placement.cell.endsAt,
+      layer: 'class_group',
+      layerKey: classGroupId,
+      startsAt: cell.startsAt,
+      endsAt: cell.endsAt,
     })
+    for (const teacherId of placement.teacherIds) {
+      intervals.push({
+        layer: 'teacher',
+        layerKey: teacherId,
+        startsAt: cell.startsAt,
+        endsAt: cell.endsAt,
+      })
+    }
   }
   return intervals
 }
@@ -478,39 +625,50 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
   const weeks = weekKeysInRange(input.startDate, input.endDate)
 
   for (const templatePlacement of input.templatePlacements) {
-    const period = input.periodById.get(templatePlacement.cell.periodDefinitionId)
-    if (!period) {
-      continue
-    }
     for (const currentWeekKey of weeks) {
-      const concreteDate = dateInWeek(currentWeekKey, templatePlacement.cell.date)
-      if (concreteDate < rangeStartKey || concreteDate > rangeEndKey) {
+      const concreteCells: ResolvedTimetableCell[] = []
+      let blockAvailable = true
+      for (const templateCell of templatePlacement.cells) {
+        const period = input.periodById.get(templateCell.periodDefinitionId)
+        if (!period) {
+          blockAvailable = false
+          break
+        }
+        const concreteDate = dateInWeek(currentWeekKey, templateCell.date)
+        if (concreteDate < rangeStartKey || concreteDate > rangeEndKey) {
+          blockAvailable = false
+          break
+        }
+        if (input.nonSchoolDates.has(concreteDate)) {
+          blockAvailable = false
+          break
+        }
+        const times = buildCellTimes(dateFromKey(concreteDate), period)
+        const cell: ResolvedTimetableCell = {
+          date: concreteDate,
+          weekKey: currentWeekKey,
+          weeklyIndex: templateCell.weeklyIndex,
+          periodDefinitionId: templateCell.periodDefinitionId,
+          ...times,
+        }
+        if (!cellIsAvailable(cell, input.classGroupId, templatePlacement.teacherIds, occupied)) {
+          blockAvailable = false
+          break
+        }
+        concreteCells.push(cell)
+      }
+      if (!blockAvailable || concreteCells.length === 0) {
         continue
       }
-      if (input.nonSchoolDates.has(concreteDate)) {
-        continue
-      }
-      const times = buildCellTimes(dateFromKey(concreteDate), period)
-      const cell: ResolvedTimetableCell = {
-        date: concreteDate,
-        weekKey: currentWeekKey,
-        weeklyIndex: templatePlacement.cell.weeklyIndex,
-        periodDefinitionId: templatePlacement.cell.periodDefinitionId,
-        ...times,
-      }
-      if (!cellIsAvailable(cell, input.classGroupId, templatePlacement.teacherIds, occupied)) {
-        continue
-      }
-      const placement = {
+      const placement = makePlacement({
         classSubjectId: templatePlacement.classSubjectId,
         displayLabel: templatePlacement.displayLabel,
         teacherIds: templatePlacement.teacherIds,
-        cell,
-      }
+      }, concreteCells)
       placements.push(placement)
       occupied.push(...placementOccupiedIntervals(input.classGroupId, placement))
       const byWeek = placedBySubjectWeek[placement.classSubjectId] ?? {}
-      byWeek[currentWeekKey] = (byWeek[currentWeekKey] ?? 0) + 1
+      byWeek[currentWeekKey] = (byWeek[currentWeekKey] ?? 0) + placementSlotCount(placement)
       placedBySubjectWeek[placement.classSubjectId] = byWeek
     }
   }
@@ -557,20 +715,6 @@ function cellIsAvailable(
     && occurrenceOverlaps(cell.startsAt, cell.endsAt, interval.startsAt, interval.endsAt))
 }
 
-function candidateCells(
-  cells: readonly ResolvedTimetableCell[],
-  subject: TimetableSubjectDemand,
-  classGroupId: string,
-  occupied: readonly OccupiedInterval[],
-  preferredIds: Set<string>,
-): ResolvedTimetableCell[] {
-  return cells
-    .filter(cell => cellIsAvailable(cell, classGroupId, subject.teacherIds, occupied))
-    .sort((left, right) =>
-      Number(preferredIds.has(right.periodDefinitionId)) - Number(preferredIds.has(left.periodDefinitionId))
-      || left.startsAt.getTime() - right.startsAt.getTime()
-      || left.periodDefinitionId.localeCompare(right.periodDefinitionId))
-}
 
 export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult {
   const occupied = [...input.occupiedIntervals]
@@ -585,8 +729,24 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
   for (const currentWeekKey of [...cellsByWeek.keys()].sort()) {
     const weekCells = cellsByWeek.get(currentWeekKey)!
     const subjects = [...input.subjects].sort((left, right) => {
-      const leftCount = candidateCells(weekCells, left, input.classGroupId, occupied, preferredIds).length
-      const rightCount = candidateCells(weekCells, right, input.classGroupId, occupied, preferredIds).length
+      const leftCount = candidateBlocks(
+        weekCells,
+        left,
+        input.classGroupId,
+        occupied,
+        preferredIds,
+        placements,
+        input.options.minDayGapSameSubject,
+      ).length
+      const rightCount = candidateBlocks(
+        weekCells,
+        right,
+        input.classGroupId,
+        occupied,
+        preferredIds,
+        placements,
+        input.options.minDayGapSameSubject,
+      ).length
       return leftCount - rightCount
         || right.periodsPerWeek - left.periodsPerWeek
         || left.classSubjectId.localeCompare(right.classSubjectId)
@@ -594,37 +754,47 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
 
     for (const subject of subjects) {
       const existingCount = input.existingWorkloadByClassSubjectAndWeek?.[subject.classSubjectId]?.[currentWeekKey] ?? 0
-      const periodsToPlace = Math.max(0, subject.periodsPerWeek - existingCount)
-      const subjectPlacements: TimetablePlacement[] = []
-      for (const cell of candidateCells(weekCells, subject, input.classGroupId, occupied, preferredIds)) {
-        if (subjectPlacements.length >= periodsToPlace) {
+      const slotsToPlace = Math.max(0, subject.periodsPerWeek - existingCount)
+      let slotsPlaced = 0
+      while (slotsPlaced < slotsToPlace) {
+        const remaining = slotsToPlace - slotsPlaced
+        const maxBlockSize = Math.min(subject.maxPeriodSpan, remaining)
+        let placedBlock = false
+        for (let blockSize = maxBlockSize; blockSize >= subject.minPeriodSpan; blockSize--) {
+          const block = candidateBlocks(
+            weekCells,
+            subject,
+            input.classGroupId,
+            occupied,
+            preferredIds,
+            placements,
+            input.options.minDayGapSameSubject,
+            blockSize,
+          )[0]
+          if (!block) {
+            continue
+          }
+          const placement = makePlacement({
+            classSubjectId: subject.classSubjectId,
+            displayLabel: subject.displayLabel,
+            teacherIds: subject.teacherIds,
+          }, block)
+          placements.push(placement)
+          occupied.push(...placementOccupiedIntervals(input.classGroupId, placement))
+          slotsPlaced += placementSlotCount(placement)
+          placedBlock = true
           break
         }
-        if (!cellIsAvailable(cell, input.classGroupId, subject.teacherIds, occupied)) {
-          continue
-        }
-        if (violatesSameSubjectDayGap(placements, subject.classSubjectId, cell.date, input.options.minDayGapSameSubject)) {
-          continue
-        }
-        const placement = { classSubjectId: subject.classSubjectId, displayLabel: subject.displayLabel, teacherIds: subject.teacherIds, cell }
-        subjectPlacements.push(placement)
-        placements.push(placement)
-        occupied.push({
-          layer: 'class_group',
-          layerKey: input.classGroupId,
-          startsAt: cell.startsAt,
-          endsAt: cell.endsAt,
-        })
-        for (const teacherId of subject.teacherIds) {
-          occupied.push({ layer: 'teacher', layerKey: teacherId, startsAt: cell.startsAt, endsAt: cell.endsAt })
+        if (!placedBlock) {
+          break
         }
       }
-      if (existingCount + subjectPlacements.length < subject.periodsPerWeek) {
+      if (existingCount + slotsPlaced < subject.periodsPerWeek) {
         unmetWorkloads.push({
           classSubjectId: subject.classSubjectId,
           weekKey: currentWeekKey,
           required: subject.periodsPerWeek,
-          placed: existingCount + subjectPlacements.length,
+          placed: existingCount + slotsPlaced,
         })
       }
     }
@@ -666,6 +836,33 @@ function resolveClassSubjectPeriodsPerWeek(
     return Math.max(2, Math.round(subject.coefficient) + 1)
   }
   return undefined
+}
+
+function resolvePositiveSpan(value: number | undefined): number | undefined {
+  if (value !== undefined && Number.isInteger(value) && value > 0) {
+    return value
+  }
+  return undefined
+}
+
+function resolveClassSubjectPeriodSpan(
+  subject: ClassSubject,
+  placementParameters: TimetablePlacementParameters | undefined,
+  gradeLevelSubject: GradeLevelSubject | undefined,
+  defaults: Pick<TimetableGenerationDefaults, 'defaultMinPeriodSpan' | 'defaultMaxPeriodSpan'>,
+): { minPeriodSpan: number, maxPeriodSpan: number } {
+  const minPeriodSpan = resolvePositiveSpan(placementParameters?.minPeriodSpanByClassSubjectId?.[subject.id])
+    ?? resolvePositiveSpan(subject.minPeriodSpan)
+    ?? resolvePositiveSpan(gradeLevelSubject?.minPeriodSpan)
+    ?? defaults.defaultMinPeriodSpan
+  const maxPeriodSpan = Math.max(
+    minPeriodSpan,
+    resolvePositiveSpan(placementParameters?.maxPeriodSpanByClassSubjectId?.[subject.id])
+      ?? resolvePositiveSpan(subject.maxPeriodSpan)
+      ?? resolvePositiveSpan(gradeLevelSubject?.maxPeriodSpan)
+      ?? defaults.defaultMaxPeriodSpan,
+  )
+  return { minPeriodSpan, maxPeriodSpan }
 }
 
 function teacherIdsForClassSubjectAt(
@@ -890,6 +1087,8 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       preferredPeriodDefinitionIds: input.options?.preferredPeriodDefinitionIds ?? school.timetablePreferredPeriodDefinitionIds,
       allowUnassignedTeacherPlacements: input.options?.allowUnassignedTeacherPlacements ?? school.timetableAllowUnassignedTeacherPlacements,
       useHomeroomTeacherFallback: input.options?.useHomeroomTeacherFallback ?? school.timetableUseHomeroomTeacherFallback,
+      defaultMinPeriodSpan: school.timetableMinPeriodSpan,
+      defaultMaxPeriodSpan: school.timetableMaxPeriodSpan,
     }
   }
 
@@ -936,6 +1135,8 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<LessonSessionEntity[]> {
     const sessions: LessonSessionEntity[] = []
     for (const placement of placements) {
+      const firstCell = placement.cells[0]!
+      const lastCell = placement.cells[placement.cells.length - 1]!
       const session = new LessonSession({
         id: randomUUID(),
         schoolId: context.classGroup.schoolId,
@@ -945,8 +1146,8 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
         timetableTeacherIds: placement.teacherIds,
         status: OccurrenceStatus.Pending,
         isException: false,
-        startsAt: placement.cell.startsAt,
-        endsAt: placement.cell.endsAt,
+        startsAt: firstCell.startsAt,
+        endsAt: lastCell.endsAt,
         displayLabel: placement.displayLabel,
       })
       await this.baseService.repositories.lessonSessions.save(session)
@@ -972,7 +1173,13 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     const cells = await resolveTimetableSpace(this.baseService.repositories, input, { excludeBreakSlots: options.excludeBreakSlots })
     const demands = await this.buildClassDemands(input, context, options, rangeStart, rangeEnd)
     const occupiedIntervals = await buildOccupiedIntervals(this.baseService.repositories, input.classGroupId, rangeStart, rangeEnd, demands)
-    const existingWorkloadByClassSubjectAndWeek = await this.buildExistingWorkload(input.classGroupId, rangeStart, rangeEnd)
+    const existingWorkloadByClassSubjectAndWeek = await this.buildExistingWorkload(
+      input.classGroupId,
+      input.academicYearId,
+      rangeStart,
+      rangeEnd,
+      options.excludeBreakSlots,
+    )
     const solved = solveTimetable({
       classGroupId: input.classGroupId,
       cells,
@@ -1143,7 +1350,20 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     if (!periodsPerWeek) {
       throw new BusinessRuleViolationError('TIMETABLE_WORKLOAD_REQUIRED', `Class subject ${displayLabel} has no valid periodsPerWeek`)
     }
-    return { classSubjectId: subject.id, displayLabel, periodsPerWeek, teacherIds }
+    const { minPeriodSpan, maxPeriodSpan } = resolveClassSubjectPeriodSpan(
+      subject,
+      input.placementParameters,
+      gradeLevelSubject,
+      options,
+    )
+    return {
+      classSubjectId: subject.id,
+      displayLabel,
+      periodsPerWeek,
+      minPeriodSpan,
+      maxPeriodSpan,
+      teacherIds,
+    }
   }
 
   private async resolveHomeroomTeacherId(classGroup: ClassGroup): Promise<string | undefined> {
@@ -1212,12 +1432,21 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     return { classGroupId: classGroup.id, publishedSessionIds, skippedSessionIds }
   }
 
-  private async buildExistingWorkload(classGroupId: string, startsAt: Date, endsAt: Date): Promise<Record<string, Record<string, number>>> {
-    const sessions = await this.baseService.repositories.lessonSessions.list({
-      classGroupId,
-      startsAt: { $lt: endsAt },
-      endsAt: { $gt: startsAt },
-    })
+  private async buildExistingWorkload(
+    classGroupId: string,
+    academicYearId: string,
+    startsAt: Date,
+    endsAt: Date,
+    excludeBreakSlots: boolean,
+  ): Promise<Record<string, Record<string, number>>> {
+    const [sessions, periods] = await Promise.all([
+      this.baseService.repositories.lessonSessions.list({
+        classGroupId,
+        startsAt: { $lt: endsAt },
+        endsAt: { $gt: startsAt },
+      }),
+      this.baseService.repositories.periodDefinitions.list({ academicYearId }),
+    ])
     const workload: Record<string, Record<string, number>> = {}
     for (const session of sessions) {
       if (session.status === OccurrenceStatus.Cancelled) {
@@ -1225,7 +1454,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       }
       const sessionWeek = weekKey(session.startsAt)
       const byWeek = workload[session.classSubjectId] ?? {}
-      byWeek[sessionWeek] = (byWeek[sessionWeek] ?? 0) + 1
+      byWeek[sessionWeek] = (byWeek[sessionWeek] ?? 0) + countSessionPeriodSlots(session, periods, excludeBreakSlots)
       workload[session.classSubjectId] = byWeek
     }
     return workload

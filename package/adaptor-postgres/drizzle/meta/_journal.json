@@ -337,6 +337,13 @@
       "when": 1781104996449,
       "tag": "0047_timetable_generation_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781104996450,
+      "tag": "0048_timetable_period_span",
+      "breakpoints": true
     }
   ]
 }
