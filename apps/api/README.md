@@ -42,9 +42,9 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 
 ## Build & deploy
 
-| Target     | Command                 | Output                                                                   |
-| ---------- | ----------------------- | ------------------------------------------------------------------------ |
-| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api-prod.edaya.softilab.dev` |
+| Target     | Command                     | Output                                                         |
+| ---------- | --------------------------- | -------------------------------------------------------------- |
+| **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api.edayaplus.com` |
 
 `bun run build` produces a Node bundle of the **local** entry (`dist/node.js`) for CI/typecheck only — not used in production deploy.
 

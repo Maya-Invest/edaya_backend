@@ -36,8 +36,8 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-06-16` in `@edaya/fixtures` |
 | `SEED_API_URL` | `bun repo seed`, `bun repo seed --scope doctor`, … | `BETTER_AUTH_URL` → `http://localhost:9999` |
 | `SEED_APP_ORIGIN` | Local Better Auth `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://api-staging.edaya.softilab.dev` |
-| `SEED_STAGING_APP_ORIGIN` | Staging Better Auth `Origin` header | `https://app-staging.edaya.softilab.dev` |
+| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | Staging Better Auth `Origin` header | `https://staging.app.edayaplus.com` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 

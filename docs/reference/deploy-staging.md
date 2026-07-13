@@ -2,7 +2,7 @@
 
 Isolated Cloudflare staging environment for validating deploys before production. See [staging-environment-plan.md](../sprints/staging-environment-plan.md) for goals and architecture.
 
-**Domains:** `api-staging.edaya.softilab.dev` · `app-staging.edaya.softilab.dev`
+**Domains:** `staging.api.edayaplus.com` · `staging.app.edayaplus.com`
 
 ---
 
@@ -62,8 +62,8 @@ Attach routes in Cloudflare for:
 
 | Host | Worker |
 |------|--------|
-| `api-staging.edaya.softilab.dev` | `edaya-api-staging` |
-| `app-staging.edaya.softilab.dev` | `edaya-webapp-staging` |
+| `staging.api.edayaplus.com` | `edaya-api-staging` |
+| `staging.app.edayaplus.com` | `edaya-webapp-staging` |
 
 Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
 
@@ -142,8 +142,8 @@ Reads repo root `.env` when present, or env vars:
 
 | Variable | Default |
 |----------|---------|
-| `SEED_STAGING_API_URL` | `https://api-staging.edaya.softilab.dev` |
-| `SEED_STAGING_APP_ORIGIN` | `https://app-staging.edaya.softilab.dev` |
+| `SEED_STAGING_API_URL` | `https://staging.api.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.edayaplus.com` |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 
