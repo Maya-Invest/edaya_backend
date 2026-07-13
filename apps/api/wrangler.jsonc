@@ -54,7 +54,7 @@
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
-          "id": "REPLACE_WITH_STAGING_AUTH_KV_ID"
+          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
         }
       ],
       "vars": {
@@ -132,7 +132,7 @@
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
-          "id": "REPLACE_WITH_PRODUCTION_AUTH_KV_ID"
+          "id": "5381bed94af74b478886d49ef52f1a52"
         }
       ],
       "routes": [
