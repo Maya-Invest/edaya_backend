@@ -5,6 +5,7 @@ import type {
   AddCustomClassSubjectInput,
   AssignMatterToClassSubjectInput,
   AssignMatterToGradeLevelSubjectInput,
+  ConfigureClassSubjectTimetableInput,
   ConfigureSubjectInput,
   ConfigureSubjectMatterInput,
   OfferSubjectToClassInput,
@@ -131,6 +132,13 @@ import type {
   UpdateStudentStatusInput,
   UpsertStudentHealthProfileInput,
 } from '../workflows/student'
+import type {
+  GenerateClassGroupTimetableInput,
+  GenerateSchoolTimetableInput,
+  PublishClassGroupTimetableInput,
+  RepublishClassGroupTimetableInput,
+  TimetableGenerationServiceWorkflow,
+} from '../workflows/timetable-generation'
 
 export interface SchoolWorkflowHandlers {
   readonly setup: SetupServiceWorkflow
@@ -140,6 +148,7 @@ export interface SchoolWorkflowHandlers {
   readonly assessments: AssessmentsServiceWorkflow
   readonly student: StudentServiceWorkflow
   readonly scheduling: SchedulingServiceWorkflow
+  readonly timetableGeneration: TimetableGenerationServiceWorkflow
   readonly communications: CommunicationsServiceWorkflow
   readonly behavior: BehaviorServiceWorkflow
   readonly finance: FinanceServiceWorkflow
@@ -197,6 +206,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     assignMatterToGradeLevelSubject: payload => workflows.academics.assignMatterToGradeLevelSubject(payload as AssignMatterToGradeLevelSubjectInput),
     addCustomClassSubject: payload => workflows.academics.addCustomClassSubject(payload as AddCustomClassSubjectInput),
     setClassSubjectOffered: payload => workflows.academics.setClassSubjectOffered(payload as SetClassSubjectOfferedInput),
+    configureClassSubjectTimetable: payload => workflows.academics.configureClassSubjectTimetable(payload as ConfigureClassSubjectTimetableInput),
     recordLessonSessionProgress: payload => workflows.academics.recordLessonSessionProgress(payload as RecordLessonSessionProgressInput),
     // assessments
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),
@@ -241,6 +251,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     recordClassDailyAttendance: payload => workflows.scheduling.recordClassDailyAttendance(payload as RecordClassDailyAttendanceInput),
     reviewAttendanceJustification: payload => workflows.scheduling.reviewAttendanceJustification(payload as ReviewAttendanceJustificationInput),
     requestAttendanceJustification: payload => workflows.scheduling.requestAttendanceJustification(payload as RequestAttendanceJustificationInput),
+    generateClassGroupTimetable: payload => workflows.timetableGeneration.generateClassGroupTimetable(payload as GenerateClassGroupTimetableInput),
+    generateSchoolTimetable: payload => workflows.timetableGeneration.generateSchoolTimetable(payload as GenerateSchoolTimetableInput),
+    publishClassGroupTimetable: payload => workflows.timetableGeneration.publishClassGroupTimetable(payload as PublishClassGroupTimetableInput),
+    republishClassGroupTimetable: payload => workflows.timetableGeneration.republishClassGroupTimetable(payload as RepublishClassGroupTimetableInput),
     // communications
     createAnnouncement: payload => workflows.communications.createAnnouncement(payload as CreateAnnouncementInput),
     addTarget: payload => workflows.communications.addTarget(payload as AddAnnouncementTargetInput),

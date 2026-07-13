@@ -31,6 +31,11 @@ export const PG_LITE_AUTH_ENV: AuthTestEnv = {
 export interface AuthService {
   handler: (request: Request) => Promise<Response>
   api: AuthSessionProvider['api']
+  $context?: Promise<{
+    internalAdapter: {
+      updateUser: (userId: string, data: { emailVerified?: boolean }) => Promise<unknown>
+    }
+  }>
 }
 
 export type AuthDb = ReturnType<typeof drizzlePglite>
@@ -70,8 +75,8 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
   const authDb = db
   const repositories = new PostgresSchoolRepositories(db)
 
-  await runAuthMigrations(authDb, { driver: 'pglite' })
   await repositories.init({ driver: 'pglite' })
+  await runAuthMigrations(authDb, { driver: 'pglite' })
 
   const application = new SchoolApplication({
     atomicExecution: new PostgresAtomicExecution(db as PostgresTransactionalDb),
@@ -121,6 +126,7 @@ export async function ensureAuthUser(
   if (signInResponse.ok) {
     const signInBody = await signInResponse.json() as { user?: { id?: string } }
     if (signInBody.user?.id) {
+      await markAuthUserEmailVerified(auth, authDb, signInBody.user.id)
       return signInBody.user.id
     }
   }
@@ -129,6 +135,7 @@ export async function ensureAuthUser(
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      'x-edaya-seed-provision': '1',
     },
     body: JSON.stringify(account),
   }))
@@ -144,7 +151,24 @@ export async function ensureAuthUser(
     throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`)
   }
 
+  await markAuthUserEmailVerified(auth, authDb, userId)
   return userId
+}
+
+async function markAuthUserEmailVerified(
+  auth: AuthService,
+  authDb: AuthDb,
+  userId: string,
+): Promise<void> {
+  if (auth.$context) {
+    const context = await auth.$context
+    await context.internalAdapter.updateUser(userId, { emailVerified: true })
+    return
+  }
+
+  await authDb.execute(
+    sql`UPDATE auth."user" SET email_verified = true WHERE id = ${userId}`,
+  )
 }
 
 export async function linkStaffMemberToAuthUser(
@@ -282,11 +306,19 @@ export async function countAuthTableRows(
 export async function findUserByEmail(
   authDb: AuthDb,
   email: string,
-): Promise<{ id: string, email: string } | null> {
-  const rows = await authDb.execute<{ id: string, email: string }>(
-    sql`SELECT id, email FROM auth."user" WHERE email = ${email}`,
+): Promise<{ id: string, email: string, emailVerified: boolean } | null> {
+  const rows = await authDb.execute<{ id: string, email: string, email_verified: boolean }>(
+    sql`SELECT id, email, email_verified FROM auth."user" WHERE email = ${email}`,
   )
-  return rows.rows[0] ?? null
+  const row = rows.rows[0]
+  if (!row) {
+    return null
+  }
+  return {
+    id: row.id,
+    email: row.email,
+    emailVerified: row.email_verified,
+  }
 }
 
 export async function countAccountRowsForUser(authDb: AuthDb, userId: string): Promise<number> {

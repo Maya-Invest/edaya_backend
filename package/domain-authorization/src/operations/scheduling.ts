@@ -42,4 +42,9 @@ export const SchedulingOperations = defineOperationFamily({
     requiresContext: ['classGroupId'],
     staff: { permission: Permission.TIMETABLE_CREATE, scopeFrom: 'classGroup' },
   },
+  timetablePublish: {
+    id: 'scheduling.timetable.publish',
+    requiresContext: ['classGroupId'],
+    staff: { permission: Permission.TIMETABLE_UPDATE, scopeFrom: 'classGroup' },
+  },
 })

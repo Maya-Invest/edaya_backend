@@ -31,7 +31,8 @@
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix"
+    "lint:fix": "eslint src tests --fix",
+    "preview:timetable": "bun scripts/preview-timetable.ts"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

@@ -16,6 +16,7 @@ import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
 import type { TeachersSeedPort } from '../domains/teachers/port'
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { DevAccessSeedResult } from './run-dev-access-seed'
 import type { DevAuthLinkResult } from './run-dev-auth-link'
@@ -101,7 +102,10 @@ export interface RunDevSeedsOptions {
   apiBaseUrl?: string
   /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
   skipProfilePhotos?: boolean
+  /** Skip fixture attachment registration. */
+  skipAttachments?: boolean
   profilePhotosSkipReason?: string
+  progress?: SeedProgressReporter
 }
 
 export interface RunDevSeedsResults {
@@ -189,7 +193,10 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
 
   if (scope === 'all') {
     if (!options.skipAuthProvision) {
-      results.authProvision = await runDevAuthProvision(auth)
+      results.authProvision = await runDevAuthProvision(auth, {
+        baseUrl: options.apiBaseUrl,
+        progress: options.progress,
+      })
     }
     const ownerSubjectId = options.ownerSubjectId ?? (
       results.authProvision ? ownerSubjectIdFromAuthProvision(results.authProvision) : undefined
@@ -216,6 +223,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
+      progress: options.progress,
     })
     if (options.skipProfilePhotos) {
       results.profilePhotos = 0
@@ -230,6 +239,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         authLinkPort,
         assignmentsPort: options.accessAssignmentsSeedPort,
         beforeAssignments: options.beforeAccessAssignments,
+        progress: options.progress,
       },
     )
     return results
@@ -257,6 +267,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
+      progress: options.progress,
     })
     if (options.skipProfilePhotos) {
       results.profilePhotos = 0
@@ -266,7 +278,10 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
   }
 
   if (scope === 'auth') {
-    results.authProvision = await runDevAuthProvision(auth)
+    results.authProvision = await runDevAuthProvision(auth, {
+      baseUrl: options.apiBaseUrl,
+      progress: options.progress,
+    })
   }
 
   if (scope === 'auth:link') {
@@ -283,6 +298,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         authLinkPort,
         assignmentsPort: options.accessAssignmentsSeedPort,
         beforeAssignments: options.beforeAccessAssignments,
+        progress: options.progress,
       },
     )
   }
@@ -298,11 +314,21 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       throw new Error('profilePicturesPort must be provided for profile-pictures seed scope')
     }
     const context = resolveDevSeedContext()
-    const counts = await seedDevProfilePictures(
-      profilePicturesPort,
-      { apiBaseUrl: options.apiBaseUrl ?? '' },
-      context.dataset,
-    )
+    const profilePhotoTotal = (context.dataset.entities.staffMembers?.length ?? 0)
+      + (context.dataset.entities.students?.length ?? 0)
+      + (context.dataset.entities.guardians?.length ?? 0)
+    const runProfilePictures = async (tick: (by?: number) => void) =>
+      seedDevProfilePictures(
+        profilePicturesPort,
+        {
+          apiBaseUrl: options.apiBaseUrl ?? '',
+          onProgress: tick,
+        },
+        context.dataset,
+      )
+    const counts = options.progress
+      ? await options.progress.step(runProfilePictures, { total: profilePhotoTotal })
+      : await runProfilePictures(() => {})
     results.profilePhotos = counts.profilePhotos
   }
 

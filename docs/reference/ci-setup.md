@@ -64,7 +64,11 @@ bun repo verify && turbo run quality && turbo run build && turbo run test -- --d
 
 Repo hygiene (doctor, OpenAPI drift, boundaries, test naming) runs **first** and fails fast before the Turbo graph. See [repo-cli.md](./repo-cli.md).
 
-Integration tests (`bun run test:integration`) are a **separate** PR job after verify — not part of `bun run verify`.
+Integration tests (`bun run test:integration`) are a **separate** PR job after verify — not part of `bun run verify`. Locally, run both blocking PR jobs with:
+
+```sh
+bun repo verify --full
+```
 
 After the first successful publish of `edaya-api-dev`, grant consumer repos read access to the GHCR package (one-time, org admin):
 
@@ -79,3 +83,42 @@ Or set the package to **Public** so CI can pull without cross-repo token setup.
 2. Set `cache-prefix` to a repo-specific value.
 3. Replace inline `setup-bun` + `bun install` in `_verify.yml` with the composite action.
 4. Keep `bun run verify` as the only verify-step command (no workflow-specific check logic).
+
+
+
+## API client GitHub Packages (`@maya-invest/edaya-api-client`)
+
+[`_publish-api-client.yml`](../../.github/workflows/_publish-api-client.yml) runs on merge to `staging` / `main` when API-related paths change (same gate as `edaya-api-dev`). It exports OpenAPI in-process, regenerates `package/api-client/src/`, and publishes to **GitHub Packages** (`npm.pkg.github.com`) with dist-tags `staging` / `production`.
+
+### Secrets (`edaya_backend` repo settings)
+
+Publish uses `GITHUB_TOKEN` (`packages: write` and `contents: write` on `deploy_push`) — no extra tokens required.
+
+### Consumer package access (one-time, org admin)
+
+After the first publish, grant consumer repos **Read** on the `@maya-invest/edaya-api-client` GitHub Package (same flow as [edaya-api-dev](#adopting-in-another-repo) GHCR access). Or set the package to **Public**.
+
+### Consumer `.npmrc` (repo root)
+
+```ini
+@maya-invest:registry=https://npm.pkg.github.com
+```
+
+CI adds `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}` during install when resolving from the registry.
+
+### Install
+
+```sh
+bun add @maya-invest/edaya-api-client@staging
+bun add @maya-invest/edaya-api-client@production
+```
+
+**Local development in this monorepo** — root `package.json` override:
+
+```json
+"overrides": {
+  "@maya-invest/edaya-api-client": "workspace:*"
+}
+```
+
+**Sibling repos** — `file:../edaya_backend/package/api-client`.

@@ -19,8 +19,11 @@ BETTER_AUTH_SECRET=dev-secret-change-in-production
 
 # --- Hyperdrive local origin (wrangler dev only; must match --env Neon branch) ---
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
+# Same origin for auth (cache-disabled binding in deployed Workers; local wrangler ignores Hyperdrive cache)
+CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:password@host/neondb?sslmode=require
 
-# --- R2 (required on RUNTIME=worker; bucket name in wrangler.jsonc [vars]) ---
+# --- R2 (required on RUNTIME=worker; also used by `bun repo smoke-test r2`) ---
+# R2_BUCKET_NAME=edaya-files-staging
 # R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 # R2_ACCOUNT_ID=
 # R2_ACCESS_KEY_ID=

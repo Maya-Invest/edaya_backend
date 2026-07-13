@@ -25,6 +25,10 @@ describe('buildFixtureCurriculumPlan', () => {
     expect(mathLinks[0]?.classSubjectMatterIdsByClassGroupId['ci-6a']).toBe(
       classSubjectMatterSeedId('ci-cs-6a-math', mathMatters[0]!.id),
     )
+    const frenchGradeLevelSubject = plan.gradeLevelSubjects.find(
+      entry => entry.subjectId === 'ci-subj-fr' && entry.gradeLevelId === 'ci-gl-6',
+    )
+    expect(frenchGradeLevelSubject?.periodsPerWeek).toBe(4)
   })
 
   test('central demo exposes multiple math chapters for 6a', () => {

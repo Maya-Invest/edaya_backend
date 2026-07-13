@@ -39,13 +39,17 @@ describe('resolveInteractiveActorIdentity', () => {
   })
 
   test('resolves staff when X-Actor-Kind is staff and guardian also exists', async () => {
+    const staffFindOne = async () => ({ id: 'staff-1', schoolId: 'school-1', subjectId: 'user-1' })
+    const guardianFindOne = async () => {
+      throw new Error('guardian findOne should not run when actorKind is staff')
+    }
     const repositories = {
       staffMembers: {
-        findOne: async () => ({ id: 'staff-1', schoolId: 'school-1', subjectId: 'user-1' }),
+        findOne: staffFindOne,
         findById: async () => undefined,
       },
       guardians: {
-        findOne: async () => ({ id: 'guardian-1', schoolId: 'school-1', subjectId: 'user-1' }),
+        findOne: guardianFindOne,
       },
       students: { findOne: async () => undefined },
       teachers: { findOne: async () => undefined },
@@ -60,6 +64,54 @@ describe('resolveInteractiveActorIdentity', () => {
       schoolId: 'school-1',
       actorId: 'staff-1',
     })
+  })
+
+  test('queries only the matching actor table when X-Actor-Kind is set without X-Actor-Id', async () => {
+    const calls = {
+      staff: 0,
+      guardian: 0,
+      student: 0,
+      teacher: 0,
+    }
+    const repositories = {
+      staffMembers: {
+        findOne: async () => {
+          calls.staff += 1
+          return { id: 'staff-1', schoolId: 'school-1', subjectId: 'user-1' }
+        },
+        findById: async () => undefined,
+      },
+      guardians: {
+        findOne: async () => {
+          calls.guardian += 1
+          return { id: 'guardian-1', schoolId: 'school-1', subjectId: 'user-1' }
+        },
+      },
+      students: {
+        findOne: async () => {
+          calls.student += 1
+          return undefined
+        },
+      },
+      teachers: {
+        findOne: async () => {
+          calls.teacher += 1
+          return undefined
+        },
+      },
+    }
+
+    await expect(resolveInteractiveActorIdentity(repositories as never, {
+      subjectId: 'user-1',
+      actorKind: 'staff',
+      schoolId: 'school-1',
+    })).resolves.toEqual({
+      kind: 'staff',
+      schoolId: 'school-1',
+      actorId: 'staff-1',
+    })
+
+    expect(calls).toEqual({ staff: 1, guardian: 0, student: 0, teacher: 0 })
   })
 
   test('resolves teacher when X-Actor-Kind is teacher and staff also exists', async () => {

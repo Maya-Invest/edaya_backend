@@ -52,6 +52,7 @@ describe('school command keys', () => {
       assessments: service.assessmentsWorkflow,
       student: service.studentWorkflow,
       scheduling: service.schedulingWorkflow,
+      timetableGeneration: service.timetableGenerationWorkflow,
       communications: service.communicationsWorkflow,
       behavior: service.behaviorWorkflow,
       finance: service.financeWorkflow,

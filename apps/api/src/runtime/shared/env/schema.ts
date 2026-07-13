@@ -1,4 +1,6 @@
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
+import { resolveAuthSecondaryStorage } from "@/runtime/shared/adapters/auth-secondary-storage";
+import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
 import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import { z } from "zod";
@@ -26,6 +28,8 @@ export const EnvSchema = z.object({
   PORT: z.coerce.number().default(9999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DATABASE_URL: z.string(),
+  /** Worker auth DB (cache-disabled Hyperdrive). Falls back to DATABASE_URL when unset. */
+  AUTH_DATABASE_URL: z.string().optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   BETTER_AUTH_SECRET: z.string().default("super-secret-placeholder-key-for-local-testing"),
   BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
@@ -70,6 +74,7 @@ export const EnvSchema = z.object({
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
+  authSecondaryStorage?: AuthSecondaryStoragePort;
 };
 
 export function parseEnv(data: Record<string, unknown>) {
@@ -98,9 +103,11 @@ export function parseRuntimeEnv(
   const bindings = prepareRuntimeBindings(source, runtime);
   const env = parseEnv(bindings);
   const cronJobs = readCronJobsQueueBinding(source);
+  const authSecondaryStorage = resolveAuthSecondaryStorage(runtime, source);
 
   return {
     ...env,
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
+    ...(authSecondaryStorage ? { authSecondaryStorage } : {}),
   };
 }

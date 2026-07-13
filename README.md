@@ -19,7 +19,7 @@ edaya_backend/
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
-│   └── generated-api-client/             @edaya/api-client — typed API SDK
+│   └── generated-api-client/             @maya-invest/edaya-api-client — typed API SDK
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
     ├── fixtures/                         @edaya/fixtures
@@ -33,7 +33,7 @@ edaya_backend/
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; Better Auth persistence lives in `@edaya/adaptor-auth`; migration CLI lives in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@edaya/api-client` in **edaya_web**.
+The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; Better Auth persistence lives in `@edaya/adaptor-auth`; migration CLI lives in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@maya-invest/edaya-api-client` in **edaya_web**.
 
 ```mermaid
 flowchart TB
@@ -43,7 +43,7 @@ flowchart TB
 
   subgraph api_layer["API"]
     API["@edaya/api<br/>Hono · Node + Worker"]
-    Client["@edaya/api-client"]
+    Client["@maya-invest/edaya-api-client"]
     WorkerHost["runtime + http/di<br/>Hyperdrive · DI · request cache"]
   end
 
@@ -70,7 +70,7 @@ flowchart TB
 
 ### Request flow
 
-1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@edaya/api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
+1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@maya-invest/edaya-api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
 3. **Runtime** — Opens the school Postgres DB and auth store (same Neon/PGlite, `auth` schema), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
 4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
@@ -111,7 +111,7 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth Drizzle schema, SQL migrations, runtime `runMigrations()` |
-| `@edaya/api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+| `@maya-invest/edaya-api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
 
 ### Tooling
 
@@ -172,6 +172,7 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 | Command | Description |
 |---------|-------------|
 | `bun run verify` | Pre-PR gate: `bun repo verify` + quality + build + test |
+| `bun repo verify --full` | Local PR CI: `bun run verify` + `test:integration` |
 | `bun run lint` | ESLint across workspaces |
 | `bun run lint:fix` | ESLint with auto-fix |
 | `bun run check` | TypeScript checks |
@@ -185,9 +186,10 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 ### Pre-PR verification
 
 ```sh
-bun run verify               # pre-PR gate (CI verify job)
+bun repo verify --full       # PR blocking CI locally (verify + integration)
+bun run verify               # CI verify job only (no integration)
 bun repo verify              # repo hygiene only (doctor + repo check *)
-bun run test:integration     # recommended when touching HTTP / PGlite
+bun run test:integration     # integration slices alone
 ```
 
 Full command tree: **[docs/reference/repo-cli.md](./docs/reference/repo-cli.md)**. CI workflow details: **[docs/reference/ci-setup.md](./docs/reference/ci-setup.md)**.

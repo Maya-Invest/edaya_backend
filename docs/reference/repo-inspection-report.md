@@ -335,7 +335,7 @@ Split scripts:
 
 Update root README and API client README to match current browser SPA behavior:
 
-- Browser client calls API via `@edaya/api-client`.
+- Browser client calls API via `@maya-invest/edaya-api-client`.
 - Local Vite proxy forwards `/core`, `/auth`, `/doc`, and `/reference`.
 - `API_URL` is the Vite proxy target.
 - `PUBLIC_API_URL` is the browser-facing API origin when not same-origin.

@@ -115,6 +115,8 @@ export interface FixtureDatasetExtensions {
   announcementMaterializePlans?: readonly FixtureAnnouncementMaterializePlan[]
   classSubjectStaffAssignments?: readonly StaffAssignmentInput[]
   classResourceAssignments?: readonly ResourceAssignmentInput[]
+  /** When true, schedules may still be created but lesson sessions are not materialized (timetable generation QA). */
+  skipLessonSessionSeeding?: boolean
 }
 
 export interface FixtureDatasetEntities {

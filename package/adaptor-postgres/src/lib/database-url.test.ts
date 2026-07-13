@@ -61,8 +61,8 @@ describe('database-url', () => {
       expect(resolveMigrationDriver('file://.data/school')).toBe('pglite')
     })
 
-    it('uses postgres-js for real postgres URLs', () => {
-      expect(resolveMigrationDriver('postgres://admin:admin@localhost:5432/edaya')).toBe('postgres-js')
+    it('uses node-postgres for real postgres URLs', () => {
+      expect(resolveMigrationDriver('postgres://admin:admin@localhost:5432/edaya')).toBe('node-postgres')
     })
   })
 })

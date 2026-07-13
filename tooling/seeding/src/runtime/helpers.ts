@@ -5,7 +5,7 @@ import {
   provisionSeedingServiceAccountHttp,
 } from '../bootstrap/service-account'
 import { postEntityList } from '../transport/http/core-entity'
-import { isServiceAccountApiKeyValid } from '../transport/http/verify-service-account'
+import { isSeedingServiceAccountApiKeyReady } from '../transport/http/verify-service-account'
 
 export function createEmptyHttpSeedResults(): RunHttpDevSeedsResults {
   return {
@@ -28,10 +28,10 @@ export async function resolveServiceAccountApiKey(
 ): Promise<string | undefined> {
   let serviceAccountApiKey: string | undefined = options.serviceAccountApiKey ?? profileSeedingApiKey
   if (serviceAccountApiKey && options.scope !== 'auth') {
-    const valid = await isServiceAccountApiKeyValid(client, serviceAccountApiKey)
+    const valid = await isSeedingServiceAccountApiKeyReady(client, serviceAccountApiKey)
     if (!valid) {
       console.warn(
-        'Seeding API key from the school profile in @edaya/fixtures was rejected by the API (401). '
+        'Seeding API key from the school profile in @edaya/fixtures was rejected or lacks attachment permissions. '
         + 'Using session bootstrap to register the school and provision the seeding service account.',
       )
       serviceAccountApiKey = undefined
@@ -59,12 +59,7 @@ export async function canUseSeedingServiceAccount(
   client: HttpSeedClient,
   apiKey: string,
 ): Promise<boolean> {
-  const grants = await client.jsonRequest('/core/authorization/effective-grants', {
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-    },
-  })
-  return grants.response.ok
+  return isSeedingServiceAccountApiKeyReady(client, apiKey)
 }
 
 export async function maybeProvisionSeedingServiceAccount(

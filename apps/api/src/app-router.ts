@@ -45,6 +45,10 @@ import {
   invitationPreviewRoute,
 } from "@/routes/invitation.routes";
 import {
+  markSeedEmailVerifiedHandler,
+  markSeedEmailVerifiedRoute,
+} from "@/routes/seed-auth.routes";
+import {
   createFileUploadIntentHandler,
   createFileUploadIntentRoute,
   getFileContentHandler,
@@ -107,7 +111,8 @@ router
   .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler)
   .openapi(putMemoryFileRoute, putMemoryFileHandler)
   .openapi(getMemoryFileRoute, getMemoryFileHandler)
-  .openapi(getFileContentRoute, getFileContentHandler);
+  .openapi(getFileContentRoute, getFileContentHandler)
+  .openapi(markSeedEmailVerifiedRoute, markSeedEmailVerifiedHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]

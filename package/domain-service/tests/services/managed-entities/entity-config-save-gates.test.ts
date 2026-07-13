@@ -3,7 +3,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectProgress, EnrollmentEndReason, Fee, FeeStatus, GradeLevel, GradeScale, Incident, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectProgress, EnrollmentEndReason, Fee, FeeStatus, GradeLevel, GradeScale, Incident, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
 import {
   describe,
   expect,
@@ -14,6 +14,45 @@ import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'
 
 describe('Entity config save gates', () => {
+  test('allows progress-only updates on inherited class subjects with periodsPerWeek', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.classGroupRepository.save(new ClassGroup({
+      id: 'class-1',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: 'Grade 1',
+    }))
+    await repositories.subjectRepository.save(new Subject({
+      id: 'subject-1',
+      schoolId: 'school',
+      name: 'French',
+      category: SubjectCategory.Literary,
+      color: SubjectColor.Warm,
+    }))
+    await repositories.classSubjectRepository.save(new ClassSubject({
+      id: 'class-subject-1',
+      classGroupId: 'class-1',
+      subjectId: 'subject-1',
+      gradeLevelSubjectId: 'grade-subject-1',
+      coefficient: 3,
+      periodsPerWeek: 4,
+      completedPercentage: 0,
+    }))
+
+    const updated = await app.baseService.entities.classSubjects.save(new ClassSubject({
+      id: 'class-subject-1',
+      classGroupId: 'class-1',
+      subjectId: 'subject-1',
+      gradeLevelSubjectId: 'grade-subject-1',
+      coefficient: 3,
+      periodsPerWeek: 4,
+      completedPercentage: 25,
+    }))
+    expect(updated).toBeUndefined()
+    expect((await repositories.classSubjectRepository.findById('class-subject-1'))?.completedPercentage).toBe(25)
+  })
+
   test('rejects orphan class subject progress before save', async () => {
     const { app } = createTestApp(actor)
 

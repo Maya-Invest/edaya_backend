@@ -43,6 +43,10 @@ export const createServiceAccountResponseSchema = serviceAccountResponseSchema.e
   apiKey: z.string(),
 }).openapi("CreateServiceAccountResponse");
 
+export const rotateServiceAccountKeyRequestSchema = z.object({
+  apiKey: z.string().trim().min(1).optional(),
+}).openapi("RotateServiceAccountKeyRequest");
+
 export const rotateServiceAccountKeyResponseSchema = z.object({
   apiKey: z.string(),
 }).openapi("RotateServiceAccountKeyResponse");

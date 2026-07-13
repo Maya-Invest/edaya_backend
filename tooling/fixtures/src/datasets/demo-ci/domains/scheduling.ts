@@ -111,7 +111,7 @@ export const demoCiSchedulingSlots = [
   },
   {
     slotId: 'ci-p-6b-fr-mon',
-    teacherId: 'ci-t1',
+    teacherId: 'ci-t3',
     resourceId: undefined,
     schedule: {
       id: 'sch-ci-6b-fr-mon',

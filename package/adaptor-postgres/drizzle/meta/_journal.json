@@ -302,6 +302,48 @@
       "when": 1781104996444,
       "tag": "0042_drop_class_group_homeroom_teacher_id",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1781104996445,
+      "tag": "0043_timetable_generation_preparation",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1781104996446,
+      "tag": "0044_teacher_unavailabilities",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1781104996447,
+      "tag": "0045_timetable_teacher_resolution",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1781104996448,
+      "tag": "0046_timetable_min_day_gap_same_subject",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781104996449,
+      "tag": "0047_timetable_generation_mode",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781104996450,
+      "tag": "0048_timetable_period_span",
+      "breakpoints": true
     }
   ]
 }

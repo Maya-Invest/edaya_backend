@@ -4,7 +4,7 @@ import * as commandResponseSchemas from "@/lib/school-api/schemas/command-respon
 import * as commandSchemas from "@/lib/school-api/schemas/commands";
 import * as entitySchemas from "@/lib/school-api/schemas/entities";
 import * as querySchemas from "@/lib/school-api/schemas/queries";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 
@@ -18,7 +18,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getClassGroupTimetable";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -114,6 +114,7 @@ const apiEntityDecorations = {
   guardians: decoration("guardians", "Guardians", entitySchemas.guardianQuerySchema, entitySchemas.guardianResponseSchema, Guardian),
   teachers: decoration("teachers", "Teachers", entitySchemas.teacherQuerySchema, entitySchemas.teacherResponseSchema, Teacher),
   teacherAssignments: decoration("teacher-assignments", "Teacher Assignments", entitySchemas.teacherAssignmentQuerySchema, entitySchemas.teacherAssignmentResponseSchema, TeacherAssignment),
+  teacherUnavailabilities: decoration("teacher-unavailabilities", "Teacher Unavailabilities", entitySchemas.teacherUnavailabilityQuerySchema, entitySchemas.teacherUnavailabilityResponseSchema, TeacherUnavailability),
   guardianLinks: decoration("guardian-links", "Guardian Student Links", entitySchemas.guardianLinkQuerySchema, entitySchemas.guardianLinkResponseSchema, GuardianStudentLink),
   studentNotes: decoration("student-notes", "Student Notes", entitySchemas.studentNoteQuerySchema, entitySchemas.studentNoteResponseSchema, StudentNote),
   studentHealthProfiles: decoration("student-health-profiles", "Student Health Profiles", entitySchemas.studentHealthProfileQuerySchema, entitySchemas.studentHealthProfileResponseSchema, StudentHealthProfile),
@@ -202,6 +203,7 @@ export const coreCommands = [
   command("assign-matter-to-grade-level-subject", "assignMatterToGradeLevelSubject", commandSchemas.assignMatterToGradeLevelSubjectCommandSchema),
   command("add-custom-class-subject", "addCustomClassSubject", commandSchemas.addCustomClassSubjectCommandSchema),
   command("set-class-subject-offered", "setClassSubjectOffered", commandSchemas.setClassSubjectOfferedCommandSchema),
+  command("configure-class-subject-timetable", "configureClassSubjectTimetable", commandSchemas.configureClassSubjectTimetableCommandSchema),
   command("record-lesson-session-progress", "recordLessonSessionProgress", commandSchemas.recordLessonSessionProgressCommandSchema),
   command("create-grade-scale", "createGradeScale", commandSchemas.createGradeScaleCommandSchema),
   command("create-report-card-definition", "createReportCardDefinition", commandSchemas.createReportCardDefinitionCommandSchema),
@@ -241,6 +243,10 @@ export const coreCommands = [
   command("record-class-daily-attendance", "recordClassDailyAttendance", commandSchemas.recordClassDailyAttendanceCommandSchema),
   command("review-attendance-justification", "reviewAttendanceJustification", commandSchemas.reviewAttendanceJustificationCommandSchema),
   command("request-attendance-justification", "requestAttendanceJustification", commandSchemas.requestAttendanceJustificationCommandSchema),
+  command("generate-class-group-timetable", "generateClassGroupTimetable", commandSchemas.generateClassGroupTimetableCommandSchema),
+  command("generate-school-timetable", "generateSchoolTimetable", commandSchemas.generateSchoolTimetableCommandSchema),
+  command("publish-class-group-timetable", "publishClassGroupTimetable", commandSchemas.publishClassGroupTimetableCommandSchema),
+  command("republish-class-group-timetable", "republishClassGroupTimetable", commandSchemas.republishClassGroupTimetableCommandSchema),
   command("create-announcement", "createAnnouncement", commandSchemas.createAnnouncementCommandSchema),
   command("add-target", "addTarget", commandSchemas.addTargetCommandSchema),
   command("publish-announcement", "publishAnnouncement", commandSchemas.publishAnnouncementCommandSchema),
@@ -278,10 +284,24 @@ export const coreQueries = [
     responseShape: "body",
   },
   {
+    publicName: "get-app-shell-counts",
+    methodName: "getAppShellCounts",
+    requestSchema: querySchemas.getAppShellCountsQuerySchema,
+    responseSchema: querySchemas.appShellCountsResponseSchema,
+    responseShape: "body",
+  },
+  {
     publicName: "get-class-group-timetable",
     methodName: "getClassGroupTimetable",
     requestSchema: querySchemas.getClassGroupTimetableQuerySchema,
     responseSchema: querySchemas.classGroupTimetableResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "resolve-timetable-space",
+    methodName: "resolveTimetableSpace",
+    requestSchema: querySchemas.resolveTimetableSpaceQuerySchema,
+    responseSchema: querySchemas.resolvedTimetableSpaceResponseSchema,
     responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];

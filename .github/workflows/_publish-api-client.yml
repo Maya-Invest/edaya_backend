@@ -1,0 +1,89 @@
+name: Publish API client
+
+on:
+  workflow_call:
+    outputs:
+      channel:
+        description: Published GitHub Packages dist-tag (staging or production)
+        value: ${{ jobs.publish.outputs.channel }}
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      channel: ${{ steps.meta.outputs.channel }}
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v5
+
+      - name: Resolve channel
+        id: meta
+        run: |
+          REF="${GITHUB_REF_NAME}"
+          case "$REF" in
+            main|master)
+              CHANNEL=production
+              ;;
+            *)
+              CHANNEL=staging
+              ;;
+          esac
+          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Bun and Turbo cache
+        uses: ./.github/actions/ci-bun-turbo
+
+      - name: Export and generate client
+        run: bun repo openapi generate
+
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://npm.pkg.github.com
+          scope: "@maya-invest"
+
+      - name: Build and publish client
+        env:
+          CHANNEL: ${{ steps.meta.outputs.channel }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          VERSION="0.0.0-${CHANNEL}.${SHORT_SHA}"
+          export VERSION
+
+          node -e "
+            const fs = require('node:fs')
+            const path = 'package/api-client/package.json'
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+            pkg.version = process.env.VERSION
+            fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n')
+          "
+
+          bun --filter @maya-invest/edaya-api-client build
+
+          cd package/api-client
+          npm publish --tag "${CHANNEL}"
+          echo "Published @maya-invest/edaya-api-client@${VERSION} (tag: ${CHANNEL})"
+
+      # - name: Commit regenerated client
+      #   run: |
+      #     set -euo pipefail
+
+      #     if git diff --quiet -- package/api-client tooling/repo/fixtures/openapi.json; then
+      #       echo "No api-client changes to commit."
+      #       exit 0
+      #     fi
+
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+      #     git add package/api-client tooling/repo/fixtures/openapi.json
+      #     git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+      #     git push origin "HEAD:${GITHUB_REF_NAME}"

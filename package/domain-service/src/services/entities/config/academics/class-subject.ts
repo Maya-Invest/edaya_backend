@@ -24,6 +24,9 @@ function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: 
     && existing.subjectId === classSubject.subjectId
     && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
+    && existing.periodsPerWeek === classSubject.periodsPerWeek
+    && existing.minPeriodSpan === classSubject.minPeriodSpan
+    && existing.maxPeriodSpan === classSubject.maxPeriodSpan
     && existing.isOffered === classSubject.isOffered
     && classSubject.completedPercentage !== existing.completedPercentage
 }
@@ -33,8 +36,25 @@ function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: C
     && existing.subjectId === classSubject.subjectId
     && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
+    && existing.periodsPerWeek === classSubject.periodsPerWeek
+    && existing.minPeriodSpan === classSubject.minPeriodSpan
+    && existing.maxPeriodSpan === classSubject.maxPeriodSpan
     && existing.completedPercentage === classSubject.completedPercentage
     && classSubject.isOffered !== existing.isOffered
+}
+
+function isTimetableOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
+  return existing.classGroupId === classSubject.classGroupId
+    && existing.subjectId === classSubject.subjectId
+    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
+    && existing.coefficient === classSubject.coefficient
+    && existing.completedPercentage === classSubject.completedPercentage
+    && existing.isOffered === classSubject.isOffered
+    && (
+      classSubject.periodsPerWeek !== existing.periodsPerWeek
+      || classSubject.minPeriodSpan !== existing.minPeriodSpan
+      || classSubject.maxPeriodSpan !== existing.maxPeriodSpan
+    )
 }
 
 function isCustomClassSubject(classSubject: ClassSubject): boolean {
@@ -60,6 +80,9 @@ async function validateClassSubjectSave(
     return
   }
   if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
+    return
+  }
+  if (existing && isTimetableOnlyClassSubjectUpdate(existing, classSubject)) {
     return
   }
   if (!classSubject.gradeLevelSubjectId) {

@@ -46,6 +46,10 @@ export async function seedDevAttendance(
   port: AttendanceSeedPort,
   dataset: FixtureDataset,
 ): Promise<number> {
+  if (dataset.extensions?.skipLessonSessionSeeding) {
+    return 0
+  }
+
   const attendanceSessions = dataset.extensions?.attendanceSessions
   if (!attendanceSessions) {
     return 0

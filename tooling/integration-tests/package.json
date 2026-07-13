@@ -8,7 +8,7 @@
     "quality": "bun run lint && bun run check",
     "test:integration": "bun run test:integration:api && bun run test:integration:http",
     "test:integration:api": "bun test src/services src/runtime src/adaptor --parallel=1",
-    "test:integration:http": "bun test src/auth src/routes src/generated/api-client --parallel=1",
+    "test:integration:http": "bun test src/auth src/routes --parallel=1",
     "test:integration:seed": "bun test src/seed --parallel=1",
     "lint": "eslint src smoke",
     "lint:fix": "eslint src smoke --fix"
@@ -18,7 +18,6 @@
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/api": "workspace:*",
-    "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
     "@edaya/authorization": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*",
@@ -32,5 +31,8 @@
     "drizzle-orm": "^0.39.0",
     "hono": "^4.7.9",
     "zod": "^3.24.4"
+  },
+  "dependencies": {
+    "@maya-invest/edaya-api-client": "workspace:*"
   }
 }

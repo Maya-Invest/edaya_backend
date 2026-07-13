@@ -90,7 +90,7 @@ All generated routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/school-api
 | `dev` | `bun --watch src/entries/local.ts` |
 | `dev:worker` | `wrangler dev --env staging --env-file .dev.vars` |
 | `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
-| `deploy:production` | `wrangler deploy --env production` |
+| `deploy:production` | `wrangler deploy --env prod` |
 | `deploy:staging` | `wrangler deploy --env staging` |
 
 TypeScript client bindings are generated at the repo root from the exported OpenAPI document: `bun tooling/repo/openapi/generate-bindings.ts`. OpenAPI export: `bun tooling/repo/openapi/export.ts`.

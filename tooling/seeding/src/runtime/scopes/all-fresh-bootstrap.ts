@@ -13,6 +13,8 @@ import {
 import { runDevAuthProvision } from '../../orchestration/run-dev-auth-provision'
 import { runDevSchoolSeed } from '../../orchestration/run-dev-school-seed'
 import { logDevSeedResults } from '../../orchestration/run-dev-seeds'
+import { runSeedProgressStep } from '../../support/seed-progress'
+import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-service-account'
 import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
 
@@ -22,6 +24,7 @@ export async function tryRunAllFreshBootstrap(
 ): Promise<RunHttpDevSeedsResults | null> {
   const { auth, client, options, seedContext, serviceAccountApiKey } = ctx
   const seedingApiKey = ctx.profileSeedingApiKey
+  const progress = options.progress
 
   if (
     ctx.scope !== 'all'
@@ -32,25 +35,35 @@ export async function tryRunAllFreshBootstrap(
   }
 
   const results = createEmptyHttpSeedResults()
-  results.authProvision = await runDevAuthProvision(auth, { baseUrl: client.origin })
+  results.authProvision = await runDevAuthProvision(auth, {
+    baseUrl: client.origin,
+    progress,
+  })
 
-  try {
-    await bootstrapHttpCoreSession(client)
-  }
-  catch (error) {
-    throwHttpBootstrapFailure(error)
-  }
+  await runSeedProgressStep(progress, async () => {
+    try {
+      await bootstrapHttpCoreSession(client)
+    }
+    catch (error) {
+      throwHttpBootstrapFailure(error, {
+        staging: client.origin.includes('api-staging.'),
+      })
+    }
+  })
 
   const ownerSubjectId = results.authProvision
     ? ownerSubjectIdFromAuthProvision(results.authProvision)
     : undefined
 
-  await runDevAccessRolesSeedWithPort(createHttpAccessSeedPort({ client }))
-
-  const provision = await provisionSeedingServiceAccountHttp(client, {
-    schoolId: seedContext.schoolId,
-    apiKey: seedingApiKey,
+  await runSeedProgressStep(progress, async () => {
+    await runDevAccessRolesSeedWithPort(createHttpAccessSeedPort({ client }))
   })
+
+  const provision = await runSeedProgressStep(progress, async () =>
+    provisionSeedingServiceAccountHttp(client, {
+      schoolId: seedContext.schoolId,
+      apiKey: seedingApiKey,
+    }))
   logProvisionedServiceAccountKey(provision)
 
   const serviceAccountApiKeyFromProvision = provision.apiKey ?? seedingApiKey
@@ -61,7 +74,18 @@ export async function tryRunAllFreshBootstrap(
     )
   }
 
-  const ports = createHttpDomainSeedPorts(client, serviceAccountApiKeyFromProvision)
+  const seedingAuthKey = await isSeedingServiceAccountApiKeyReady(client, serviceAccountApiKeyFromProvision)
+    ? serviceAccountApiKeyFromProvision
+    : undefined
+
+  if (!seedingAuthKey) {
+    throw new Error(
+      'Seeding service account is not ready after provisioning. '
+      + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+    )
+  }
+
+  const ports = createHttpDomainSeedPorts(client, seedingAuthKey)
 
   results.school = await runDevSchoolSeed(undefined, {
     auth,
@@ -69,9 +93,12 @@ export async function tryRunAllFreshBootstrap(
     ...ports,
     apiBaseUrl: client.origin,
     skipProfilePhotos: options.skipProfilePhotos,
+    skipAttachments: options.skipAttachments,
+    progress,
   })
   results.access = await runDevAccessAssignmentsSeedWithPort(
-    createHttpAccessSeedPort({ client, serviceAccountApiKey: serviceAccountApiKeyFromProvision }),
+    createHttpAccessSeedPort({ client, serviceAccountApiKey: seedingAuthKey }),
+    { progress },
   )
   if (options.skipProfilePhotos) {
     results.profilePhotos = 0
@@ -87,7 +114,7 @@ export async function tryRunAllFreshBootstrap(
       access: results.access,
       profilePhotos: results.profilePhotos,
       profilePhotosSkipped: results.profilePhotosSkipped,
-      profilePhotosSkipReason: results.profilePhotosSkipReason,
+      profilePhotosSkipReason: options.profilePhotosSkipReason,
     }, options.log)
   }
 

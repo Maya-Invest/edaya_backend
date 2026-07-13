@@ -28,6 +28,6 @@ export function smokeTestCliUsage(): string {
     'Targets:',
     '  staging      Tier-1 HTTP vs deployed staging API',
     '  novu         Novu outbound + webhook e2e',
-    '  r2           R2 credentials smoke check',
+    '  r2           Staging R2 PUT check (apps/api/secrets.staging.json + wrangler staging bucket)',
   ].join('\n')
 }

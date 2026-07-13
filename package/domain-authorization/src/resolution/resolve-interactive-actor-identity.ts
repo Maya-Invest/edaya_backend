@@ -47,18 +47,55 @@ async function resolveByActorKind(
     })
   }
 
-  const identities = (await listIdentitiesForSubject(repositories, args.subjectId))
-    .filter(identity => identity.kind === args.actorKind)
+  return resolveByActorKindAndSubject(repositories, {
+    subjectId: args.subjectId,
+    actorKind: args.actorKind,
+    ...(args.schoolId ? { schoolId: args.schoolId } : {}),
+  })
+}
 
-  const scoped = args.schoolId
-    ? identities.filter(identity => identity.schoolId === args.schoolId)
-    : identities
+async function resolveByActorKindAndSubject(
+  repositories: ActorRepositories,
+  args: {
+    subjectId: string
+    actorKind: InteractiveActorKind
+    schoolId?: string
+  },
+): Promise<ResolvedInteractiveActorIdentity | null> {
+  const filter = args.schoolId
+    ? { subjectId: args.subjectId, schoolId: args.schoolId }
+    : { subjectId: args.subjectId }
 
-  if (scoped.length !== 1) {
-    return null
+  switch (args.actorKind) {
+    case 'staff': {
+      const staff = await repositories.staffMembers.findOne(filter)
+      if (!staff || (args.schoolId && staff.schoolId !== args.schoolId)) {
+        return null
+      }
+      return { kind: 'staff', schoolId: staff.schoolId, actorId: staff.id }
+    }
+    case 'guardian': {
+      const guardian = await repositories.guardians.findOne(filter)
+      if (!guardian || (args.schoolId && guardian.schoolId !== args.schoolId)) {
+        return null
+      }
+      return { kind: 'guardian', schoolId: guardian.schoolId, actorId: guardian.id }
+    }
+    case 'student': {
+      const student = await repositories.students.findOne(filter)
+      if (!student || (args.schoolId && student.schoolId !== args.schoolId)) {
+        return null
+      }
+      return { kind: 'student', schoolId: student.schoolId, actorId: student.id }
+    }
+    case 'teacher': {
+      const teacher = await repositories.teachers.findOne(filter)
+      if (!teacher?.isActive || (args.schoolId && teacher.schoolId !== args.schoolId)) {
+        return null
+      }
+      return { kind: 'teacher', schoolId: teacher.schoolId, actorId: teacher.id }
+    }
   }
-
-  return scoped[0] ?? null
 }
 
 async function resolveByActorKindAndId(

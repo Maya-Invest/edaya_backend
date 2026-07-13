@@ -105,10 +105,12 @@ export async function seedDevSchoolStructure(
       schoolId: dataset.schoolId,
       academicYearId: academicYear.id,
       label: slot.label,
+      dayOfWeek: slot.dayOfWeek,
       order: slot.order,
       startTime: slot.startTime,
       endTime: slot.endTime,
       isBreak: slot.isBreak ?? false,
+      isTeachingSlot: slot.isTeachingSlot ?? true,
     })
   }
 

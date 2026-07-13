@@ -31,6 +31,8 @@ export type SeedCliInvocation
       clean: boolean
       repair: boolean
       skipProfilePhotos: boolean
+      skipAttachments: boolean
+      noProgress: boolean
     }
 
 function isSeedCliScope(value: string): value is SeedCliScope {
@@ -89,12 +91,14 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
     clean: flagArgs.includes('--clean'),
     repair: flagArgs.includes('--repair'),
     skipProfilePhotos: flagArgs.includes('--skip-profile-photos'),
+    skipAttachments: flagArgs.includes('--skip-attachments'),
+    noProgress: flagArgs.includes('--no-progress'),
   }
 }
 
 export function seedCliUsage(): string {
   return [
-    'Usage: bun repo seed [clean] [--staging] [--scope <name>] [--clean] [--repair] [--skip-profile-photos]',
+    'Usage: bun repo seed [clean] [--staging] [--scope <name>] [--clean] [--repair] [--skip-profile-photos] [--skip-attachments]',
     '',
     'Commands:',
     '  bun repo seed                 Full local demo seed',
@@ -111,6 +115,8 @@ export function seedCliUsage(): string {
     '  --clean                  Wipe before seeding (local or staging when --staging)',
     '  --repair                 With --scope doctor: run minimal repair chain',
     '  --skip-profile-photos    Skip profile photo uploads',
+    '  --skip-attachments       Skip fixture attachment registration',
+    '  --no-progress            Disable interactive progress bars',
     '  --yes, -y                With clean: skip confirmation prompt',
     '  --school                 With clean --staging: truncate school DB only',
     '  --auth                   With clean --staging: wipe auth only',

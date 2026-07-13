@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@edaya/adaptor-r2": "workspace:*",
-    "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
+    "@edaya/client-codegen": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7"

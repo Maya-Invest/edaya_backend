@@ -43,10 +43,10 @@
     "@edaya/fixtures": "workspace:*",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",
-    "postgres": "^3.4.4"
+    "postgres": "^3.4.4",
+    "@maya-invest/edaya-api-client": "workspace:*"
   },
   "devDependencies": {
-    "@edaya/client-codegen": "https://github.com/Maya-Invest/edaya-client-codegen",
     "@types/bun": "^1.3.14",
     "typescript": "^6.0.2"
   }

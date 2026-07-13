@@ -103,7 +103,7 @@ describe('createServiceAccount', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('rejects duplicate service id within school', async () => {
+  test('rejects duplicate active service id within school', async () => {
     const { repositories } = createProvisionRepositories()
     repositories.staffMembers.findOne = mock(async () => ({ id: 'existing' }))
 
@@ -112,6 +112,21 @@ describe('createServiceAccount', () => {
       displayName: 'Duplicate',
       elevated: true,
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('allows creating a new account when only an inactive service id exists', async () => {
+    const { repositories } = createProvisionRepositories()
+    repositories.staffMembers.findOne = mock(async () => undefined)
+
+    const result = await createServiceAccount(repositories as never, adminActor(), {
+      serviceId: 'seeding',
+      displayName: 'Seeding Integration',
+      elevated: true,
+      apiKey: 'sk_live_dev_seeding_integration_key_01',
+    })
+
+    expect(result.staffMember.serviceId).toBe('seeding')
+    expect(result.apiKey).toBe('sk_live_dev_seeding_integration_key_01')
   })
 
   test('rejects second elevated service account for the same school', async () => {
@@ -229,6 +244,24 @@ describe('rotateServiceAccountKey', () => {
     const rotated = await rotateServiceAccountKey(repositories as never, adminActor(), created.staffMember.id)
     expect(rotated.apiKey).toMatch(/^sk_/)
     expect(rotated.apiKey).not.toBe(created.apiKey)
+  })
+
+  test('can rotate to a known profile api key', async () => {
+    const { repositories, staffMembers } = createProvisionRepositories()
+    const created = await createServiceAccount(repositories as never, adminActor(), {
+      serviceId: 'seeding',
+      displayName: 'Seeding',
+      elevated: true,
+      apiKey: 'sk_live_test_webhook_key_123456789012345678901234',
+    })
+    staffMembers.length = 0
+    staffMembers.push(created.staffMember)
+
+    const profileKey = 'sk_live_dev_edaya_ci_cocody_seeding_integration_key'
+    const rotated = await rotateServiceAccountKey(repositories as never, adminActor(), created.staffMember.id, {
+      apiKey: profileKey,
+    })
+    expect(rotated.apiKey).toBe(profileKey)
   })
 })
 

@@ -1,4 +1,4 @@
-import { School } from '@edaya/core'
+import { ClassSubject, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -23,6 +23,12 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       id: 'school-1',
       name: 'Edaya Academy',
       timeZone: 'Africa/Douala',
+      timetableEnforceWorkloadFulfillment: false,
+      timetableExcludeBreakSlots: false,
+      timetableMinDayGapSameSubject: 4,
+      timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
     })
 
@@ -32,6 +38,12 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       id: 'school-1',
       name: 'Edaya Academy',
       timeZone: 'Africa/Douala',
+      timetableEnforceWorkloadFulfillment: false,
+      timetableExcludeBreakSlots: false,
+      timetableMinDayGapSameSubject: 4,
+      timetablePreferredPeriodDefinitionIds: ['period-1'],
+      timetableAllowUnassignedTeacherPlacements: true,
+      timetableUseHomeroomTeacherFallback: true,
     })
   })
 
@@ -65,5 +77,78 @@ describe('PostgresSchoolRepositories with PGlite', () => {
 
     await repos.schoolsStore.delete('school-delete')
     await expect(repos.schoolsStore.findById('school-delete')).resolves.toBeUndefined()
+  })
+
+  test('round trips timetable preparation fields', async () => {
+    await repos.periodDefinitions.save(new PeriodDefinition({
+      id: 'period-1',
+      schoolId: 'school-1',
+      academicYearId: 'year-1',
+      label: 'Monday morning',
+      dayOfWeek: DayOfWeek.Monday,
+      order: 1,
+      startTime: '08:00',
+      endTime: '09:00',
+      isTeachingSlot: false,
+    }))
+    await repos.gradeLevelSubjects.save(new GradeLevelSubject({
+      id: 'grade-subject-1',
+      gradeLevelId: 'grade-1',
+      academicYearId: 'year-1',
+      subjectId: 'subject-1',
+      periodsPerWeek: 5,
+    }))
+    await repos.classSubjects.save(new ClassSubject({
+      id: 'class-subject-1',
+      classGroupId: 'class-1',
+      subjectId: 'subject-1',
+      periodsPerWeek: 5,
+    }))
+    await repos.lessonSessions.save(new LessonSession({
+      id: 'lesson-1',
+      schoolId: 'school-1',
+      classGroupId: 'class-1',
+      classSubjectId: 'class-subject-1',
+      timetableGenerated: TimetableGenerated.Draft,
+      timetableTeacherIds: ['teacher-1'],
+      startsAt: new Date('2026-09-07T08:00:00.000Z'),
+      endsAt: new Date('2026-09-07T09:00:00.000Z'),
+      displayLabel: 'Mathematics',
+    }))
+
+    expect(await repos.periodDefinitions.findById('period-1')).toMatchObject({
+      dayOfWeek: DayOfWeek.Monday,
+      isTeachingSlot: false,
+    })
+    expect((await repos.gradeLevelSubjects.findById('grade-subject-1'))?.periodsPerWeek).toBe(5)
+    expect((await repos.classSubjects.findById('class-subject-1'))?.periodsPerWeek).toBe(5)
+    expect(await repos.lessonSessions.findById('lesson-1')).toMatchObject({
+      scheduleId: undefined,
+      timetableGenerated: TimetableGenerated.Draft,
+      timetableTeacherIds: ['teacher-1'],
+    })
+  })
+
+  test('round trips weekly teacher unavailability', async () => {
+    await repos.teacherUnavailabilities.save(new TeacherUnavailability({
+      id: 'unavailability-1',
+      teacherId: 'teacher-1',
+      academicYearId: 'year-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Tuesday,
+      startTime: '08:30',
+      endTime: '11:00',
+      effectiveFrom: new Date('2026-09-01T00:00:00.000Z'),
+      effectiveUntil: new Date('2026-12-31T00:00:00.000Z'),
+      reason: 'Contract teaching hours',
+    }))
+
+    expect(await repos.teacherUnavailabilities.findById('unavailability-1')).toMatchObject({
+      teacherId: 'teacher-1',
+      recurrence: TeacherUnavailabilityRecurrence.Weekly,
+      dayOfWeek: DayOfWeek.Tuesday,
+      startTime: '08:30',
+      reason: 'Contract teaching hours',
+    })
   })
 })

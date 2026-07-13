@@ -38,5 +38,6 @@ export function resolvePgliteDataDir(databaseUrl: string): string | undefined {
 }
 
 export function resolveMigrationDriver(databaseUrl: string): MigrationDriver {
-  return isPgliteDatabase(databaseUrl) ? 'pglite' : 'postgres-js'
+  // App/Worker Postgres uses node-postgres (`pg`). CLI tooling may still pass `postgres-js` explicitly.
+  return isPgliteDatabase(databaseUrl) ? 'pglite' : 'node-postgres'
 }

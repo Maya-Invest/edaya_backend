@@ -1,7 +1,7 @@
 import { buildSeedValidationTargets } from '@edaya/fixtures/meta/validation-harness'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
+import { clientBindings } from '@maya-invest/edaya-api-client'
 import { describe, expect, test } from 'bun:test'
-import { clientBindings } from '../../generated/api-client'
 import { isSeedEntityKey, seedCommandPublicName, seedEntityPublicName } from './catalog'
 
 function keyDifference(actual: readonly string[], expected: readonly string[]) {

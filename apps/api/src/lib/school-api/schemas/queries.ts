@@ -7,6 +7,19 @@ export const getSchoolOverviewQuerySchema = z.object({
   referenceDate: z.string().date().optional(),
 }).openapi("GetSchoolOverviewQuery");
 
+export const getAppShellCountsQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  classGroupIds: z.array(z.string().min(1)).optional(),
+}).openapi("GetAppShellCountsQuery");
+
+export const appShellCountsResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  activeEnrollmentCountsByClass: z.record(z.string(), z.number().int().nonnegative()),
+  studentCount: z.number().int().nonnegative(),
+  guardianCount: z.number().int().nonnegative(),
+  staffCount: z.number().int().nonnegative(),
+}).openapi("AppShellCountsResponse");
+
 export const dashboardActionItemSchema = z.object({
   key: z.enum([
     "overdue_fees",
@@ -116,6 +129,25 @@ export const classGroupTimetableResponseSchema = z.object({
   endDate: z.string().date(),
   events: z.array(timetableEventSchema),
 }).openapi("ClassGroupTimetableResponse");
+
+export const resolveTimetableSpaceQuerySchema = z.object({
+  classGroupId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+}).openapi("ResolveTimetableSpaceQuery");
+
+export const resolvedTimetableCellSchema = z.object({
+  date: z.string().date(),
+  weekKey: z.string().date(),
+  weeklyIndex: z.number().int().nonnegative(),
+  periodDefinitionId: z.string().min(1),
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+}).openapi("ResolvedTimetableCell");
+
+export const resolvedTimetableSpaceResponseSchema = z.array(resolvedTimetableCellSchema)
+  .openapi("ResolvedTimetableSpaceResponse");
 
 export const schoolOverviewResponseSchema = z.object({
   schoolId: z.string().min(1),

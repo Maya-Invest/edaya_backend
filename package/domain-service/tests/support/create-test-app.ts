@@ -1,5 +1,5 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { AcademicPeriod, AcademicYear, AccountInvitation, AccountInvitationKind, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, BaseRepositoryInterface, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, Filter, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, QueryOptions, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, ServiceApiKey, StaffAssignment, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, AccountInvitation, AccountInvitationKind, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, BaseRepositoryInterface, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, Filter, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, QueryOptions, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, ServiceApiKey, StaffAssignment, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import {
   ActorAssuranceLevel,
@@ -176,6 +176,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
   const staffAssignments = createStore<StaffAssignment>(transactionParticipants)
   const teachers = createStore<Teacher>(transactionParticipants)
   const teacherAssignments = createStore<TeacherAssignment>(transactionParticipants)
+  const teacherUnavailabilities = createStore<TeacherUnavailability>(transactionParticipants)
   const serviceApiKeyStore = createStore<ServiceApiKey>(transactionParticipants)
   const serviceApiKeys = {
     ...serviceApiKeyStore,
@@ -274,6 +275,7 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     staffAssignments,
     teachers,
     teacherAssignments,
+    teacherUnavailabilities,
     serviceApiKeys,
     accountInvitations,
     cronJobSchedules: {

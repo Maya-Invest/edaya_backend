@@ -86,3 +86,10 @@ export class CalendarEvent {
     return dateRangeDurationDays(this.startDate, this.endDate)
   }
 }
+
+/** Whether this calendar event should block timetable placement and session materialization. */
+export function calendarEventBlocksTimetable(
+  event: Pick<CalendarEventData, 'isNonSchoolDay'>,
+): boolean {
+  return event.isNonSchoolDay
+}

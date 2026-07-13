@@ -140,12 +140,53 @@ describe('Better Auth session integration', () => {
         kind: string
         staffMemberId: string
         subjectId: string
+        assuranceLevel: string
       } | null
     }
 
     expect(body.actor?.kind).toBe('staff')
     expect(body.actor?.staffMemberId).toBe(MINIMAL_AUTH_FIXTURE_STAFF_ID)
     expect(body.actor?.subjectId).toBe(staff?.subjectId)
+    expect(body.actor?.assuranceLevel).toBe('verified')
+  }, 30_000)
+
+  it('keeps standard assurance for password sessions until email is verified', async () => {
+    const { authDb, application, auth, env } = await openContext()
+
+    await seedMinimalSchool(application)
+
+    const signUpResponse = await signUpEmail(auth, env, {
+      email: 'unverified-staff@school.edu',
+      password: DEV_AUTH_PASSWORD,
+      name: 'Unverified Staff',
+    })
+    expect(signUpResponse.status).toBe(200)
+
+    const user = await findUserByEmail(authDb, 'unverified-staff@school.edu')
+    expect(user).toBeTruthy()
+    expect(user?.emailVerified).toBe(false)
+    await linkStaffMemberToAuthUser(application, MINIMAL_AUTH_FIXTURE_STAFF_ID, user!.id)
+
+    const signInResponse = await signInEmail(auth, env, {
+      email: 'unverified-staff@school.edu',
+      password: DEV_AUTH_PASSWORD,
+    })
+    const cookies = collectSetCookieHeaders(signInResponse)
+
+    const app = createSessionActorApp(application, auth)
+    app.get('/actor', c => c.json({ actor: c.get('actor') }))
+
+    const actorResponse = await app.request('/actor', {
+      headers: {
+        cookie: cookies.join('; '),
+      },
+    })
+
+    expect(actorResponse.status).toBe(200)
+    const body = await actorResponse.json() as {
+      actor: { assuranceLevel: string } | null
+    }
+    expect(body.actor?.assuranceLevel).toBe('standard')
   }, 30_000)
 
   it('returns 401 on a protected route when subjectId is not linked', async () => {

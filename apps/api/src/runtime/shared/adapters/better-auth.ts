@@ -1,4 +1,10 @@
 import * as authSchema from "@edaya/adaptor-auth/schema";
+import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
+import {
+  buildBetterAuthRateLimitOptions,
+  buildBetterAuthSessionOptions,
+  toBetterAuthSecondaryStorage,
+} from "@edaya/adaptor-auth";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -7,6 +13,7 @@ import type { AuthService } from "@/runtime/types";
 import { createAppLogger, createBetterAuthLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthEmailSenders } from "@/runtime/shared/adapters/auth-otp-mailer";
 import { shouldRequireEmailVerification } from "@/runtime/shared/adapters/auth-email-delivery";
+import { isSeedAuthProvisionRequest } from "@/runtime/shared/adapters/seed-auth-provision";
 
 export type BetterAuthEnv = Pick<
   Environment,
@@ -16,6 +23,10 @@ export type BetterAuthEnv = Pick<
   "TRUSTED_ORIGINS" | "COOKIE_DOMAIN" | "NOVU_SECRET_KEY" | "NOVU_API_URL"
   | "REQUIRE_EMAIL_VERIFICATION" | "AUTH_EMAIL_LOG_OTP"
 >;
+
+export interface BuildBetterAuthConfigOptions {
+  secondaryStorage?: AuthSecondaryStoragePort;
+}
 
 function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
   const configured = env.TRUSTED_ORIGINS?.split(",").map(origin => origin.trim()).filter(Boolean) ?? [];
@@ -30,11 +41,16 @@ function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
   return configured;
 }
 
-export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Parameters<typeof betterAuth>[0] {
+export function buildBetterAuthConfig(
+  db: unknown,
+  env: BetterAuthEnv,
+  options: BuildBetterAuthConfigOptions = {},
+): Parameters<typeof betterAuth>[0] {
   const fullEnv = env as Environment;
   const appLogger = createAppLogger(fullEnv);
   const authEmail = createAuthEmailSenders(fullEnv, appLogger);
   const requireEmailVerification = shouldRequireEmailVerification(fullEnv);
+  const rateLimit = buildBetterAuthRateLimitOptions(options);
 
   return {
     database: drizzleAdapter(db as never, {
@@ -64,7 +80,10 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
     emailVerification: {
       sendOnSignUp: requireEmailVerification,
       sendOnSignIn: requireEmailVerification,
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url }, request) => {
+        if (isSeedAuthProvisionRequest(request?.headers)) {
+          return;
+        }
         void authEmail.sendAuthVerificationEmail({
           email: user.email,
           url,
@@ -77,11 +96,28 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
         });
       },
     },
-    session: {
-      cookieCache: {
-        enabled: false,
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user, ctx) => {
+            if (!isSeedAuthProvisionRequest(ctx?.headers)) {
+              return;
+            }
+            return {
+              data: {
+                ...user,
+                emailVerified: true,
+              },
+            };
+          },
+        },
       },
     },
+    session: buildBetterAuthSessionOptions(options),
+    ...(options.secondaryStorage
+      ? { secondaryStorage: toBetterAuthSecondaryStorage(options.secondaryStorage) }
+      : {}),
+    ...(rateLimit ? { rateLimit } : {}),
     plugins: [
       openAPI({
         disableDefaultReference: true,
@@ -97,6 +133,10 @@ export function buildBetterAuthConfig(db: unknown, env: BetterAuthEnv): Paramete
   };
 }
 
-export function createBetterAuth(db: unknown, env: BetterAuthEnv): AuthService {
-  return betterAuth(buildBetterAuthConfig(db, env)) as AuthService;
+export function createBetterAuth(
+  db: unknown,
+  env: BetterAuthEnv,
+  options: BuildBetterAuthConfigOptions = {},
+): AuthService {
+  return betterAuth(buildBetterAuthConfig(db, env, options)) as AuthService;
 }

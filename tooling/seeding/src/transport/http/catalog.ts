@@ -1,4 +1,4 @@
-import { clientBindings } from '../../generated/api-client'
+import { clientBindings } from '@maya-invest/edaya-api-client'
 
 export type SeedEntityKey = keyof typeof clientBindings.entities
 export type SeedCommandKey = keyof typeof clientBindings.commands

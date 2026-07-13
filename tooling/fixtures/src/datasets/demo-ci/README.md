@@ -37,7 +37,7 @@ demo-ci/
 | Élèves | 30 |
 | Parents | 21 |
 | Personnel | 5 |
-| Enseignants portail | 2 (`ci-t1`, `ci-t2`) |
+| Enseignants portail | 5 (`ci-t1` → `ci-t5`) |
 | Bulletins (T1) | 30 résultats (tous les élèves) |
 
 ## Domaines couverts
@@ -46,8 +46,8 @@ demo-ci/
 |---------|---------|
 | Scolarité | Structure, curriculum, 5 classes, 33 matières de classe |
 | Population | 30 élèves, 21 parents, liens famille |
-| Enseignants | 2 portail + affectations |
-| Emploi du temps | 5 créneaux, 3 ancres de progression |
+| Enseignants | 5 portail + affectations (toutes les matières de classe couvertes) |
+| Emploi du temps | 6 créneaux récurrents (schedules seulement — **pas de séances matérialisées** tant que `skipLessonSessionSeeding` est actif) |
 | Évaluations | Contrôles T1 (toutes classes) + devoirs maison |
 | Bulletins | 4 modèles (6ème→3ème), 30 résultats T1 |
 | Vie scolaire | Présences, absences, justificatifs en attente |
@@ -68,8 +68,8 @@ Le seed dev utilise **`demoCiDataset`** par défaut (`sch-edaya-ci-cocody`, 30 �
 | `a.kone@ecole-ci.edaya.dev` | Propriétaire (ci-st8) |
 | `j.aka@ecole-ci.edaya.dev` | Directeur (ci-st5) |
 | `f.assi@ecole-ci.edaya.dev` | Professeur principal / coord. (ci-st3) |
-| `a.toure@ecole-ci.edaya.dev` | Enseignante portail (ci-t1) — maths en 6ème A et 5ème A |
-| `k.diomande@ecole-ci.edaya.dev` | Enseignant portail (ci-t2) — PP 6ème B |
+| `a.toure@ecole-ci.edaya.dev` | Enseignante portail (ci-t1) — maths et physique-chimie |
+| `k.diomande@ecole-ci.edaya.dev` | Enseignant portail (ci-t2) — EPS, PP 6ème B |
 | `m.kone@mail.ci` | Parent (ci-g1) — enfants ci-s1, ci-s10 |
 
 Mot de passe : `DevPassword1!`

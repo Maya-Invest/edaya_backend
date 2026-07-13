@@ -62,6 +62,7 @@ describeStaffGlobalMatrices([
   { operation: SchoolStructureOperations.staffRead, permission: Permission.QUERY_WORKSPACE_READ },
   { operation: SchedulingOperations.timetableManage, permission: Permission.TIMETABLE_UPDATE, context: { classGroupId: 'class-1' } },
   { operation: SchedulingOperations.timetableCreate, permission: Permission.TIMETABLE_CREATE, context: { classGroupId: 'class-1' } },
+  { operation: SchedulingOperations.timetablePublish, permission: Permission.TIMETABLE_UPDATE, context: { classGroupId: 'class-1' } },
 ])
 
 describeMatrix(WorkspaceOperations.read, [

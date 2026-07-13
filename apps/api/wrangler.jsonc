@@ -22,10 +22,11 @@
   },
   //
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
-  // [env.*] bindings — HYPERDRIVE (Postgres), CRON_JOBS (queue)
+  // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), AUTH_KV, CRON_JOBS
   // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-  // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE (wrangler dev)
+  // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
+  //                    CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH
   // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, GRAPHQL_*
   "observability": {
     "logs": {
@@ -37,11 +38,23 @@
     // Staging (`wrangler deploy --env staging`):
     "staging": {
       "name": "edaya-api-staging",
-      // Replace with staging Hyperdrive config ID (Neon staging branch) before first deploy.
+      // School Hyperdrive. Add HYPERDRIVE_AUTH (cache-disabled) for Better Auth once created
+      // (see docs/reference/deploy-staging.md). Until then, disable caching on this config
+      // or auth sign-up → sign-in will fail after the pg driver switch.
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
           "id": "c6b9a94e449647d78f7c49591ba301e6"
+        },
+        {
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "e08656297f69446c8eea3d1ded0268d5"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
         }
       ],
       "vars": {
@@ -56,7 +69,7 @@
         "NOVU_API_URL": "https://eu.api.novu.co",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "false",
+        "REQUIRE_EMAIL_VERIFICATION": "true",
         "AUTH_EMAIL_LOG_OTP": "false",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
@@ -87,7 +100,7 @@
         ]
       }
     },
-    // Production (`wrangler deploy --env production`):
+    // Production (`wrangler deploy --env prod`):
     "prod": {
       "name": "edaya-api-prod",
       "vars": {
@@ -110,6 +123,16 @@
         {
           "binding": "HYPERDRIVE",
           "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
+        },
+        {
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "5381bed94af74b478886d49ef52f1a52"
         }
       ],
       "routes": [

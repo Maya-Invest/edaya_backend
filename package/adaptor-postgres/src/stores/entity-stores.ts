@@ -1,6 +1,6 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { PostgresStore } from '../postgres-store'
-import { AcademicPeriod as AcademicPeriodCtor, AcademicYear as AcademicYearCtor, Activity as ActivityCtor, ActivityEnrollment as ActivityEnrollmentCtor, ActivitySession as ActivitySessionCtor, Announcement as AnnouncementCtor, AnnouncementPriority, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetCtor, Assessment as AssessmentCtor, AssessmentKind, AssessmentResult as AssessmentResultCtor, Attachment as AttachmentCtor, Attendance as AttendanceCtor, AttendanceJustificationStatus, AttendanceRecord as AttendanceRecordCtor, AttendanceStatus, AttendanceSummary, CalendarEvent as CalendarEventCtor, CalendarEventKind, CalendarEventScopeKind, ClassActivityEnrollment as ClassActivityEnrollmentCtor, ClassGroup as ClassGroupCtor, ClassSubject as ClassSubjectCtor, ClassSubjectMatter as ClassSubjectMatterCtor, ClassSubjectMatterStatus, ClassSubjectProgress as ClassSubjectProgressCtor, DeadlineComplianceStatus, DisciplinaryAction as DisciplinaryActionCtor, FeeCategory, Fee as FeeCtor, FeeStatus, GradeLevel as GradeLevelCtor, GradeLevelSubject as GradeLevelSubjectCtor, GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor, GradeScale as GradeScaleCtor, Guardian as GuardianCtor, GuardianStudentLink as GuardianStudentLinkCtor, Incident as IncidentCtor, LessonSession as LessonSessionCtor, MessageDelivery as MessageDeliveryCtor, OccurrenceStatus, Payment as PaymentCtor, PaymentMethod, PaymentStatus, PeriodDefinition as PeriodDefinitionCtor, ReportCardDefinition as ReportCardDefinitionCtor, ReportCardDefinitionSection as ReportCardDefinitionSectionCtor, ReportCardDefinitionSectionKind, ReportCardResult as ReportCardResultCtor, ReportCardResultSection as ReportCardResultSectionCtor, ReportCardResultStatus, ResourceAssignment as ResourceAssignmentCtor, Resource as ResourceCtor, ResourceKind, Schedule as ScheduleCtor, School as SchoolCtor, StaffAssignment as StaffAssignmentCtor, StaffMember as StaffMemberCtor, StudentClassEnrollment as StudentClassEnrollmentCtor, Student as StudentCtor, StudentDisciplinaryAction as StudentDisciplinaryActionCtor, StudentFee as StudentFeeCtor, StudentHealthProfile as StudentHealthProfileCtor, StudentIncidentInvolvement as StudentIncidentInvolvementCtor, StudentNote as StudentNoteCtor, Subject as SubjectCtor, SubjectMatter as SubjectMatterCtor, TeacherAssignment as TeacherAssignmentCtor, TeacherAssignmentKind, TeacherAssignmentStatus, Teacher as TeacherCtor } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodCtor, AcademicYear as AcademicYearCtor, Activity as ActivityCtor, ActivityEnrollment as ActivityEnrollmentCtor, ActivitySession as ActivitySessionCtor, Announcement as AnnouncementCtor, AnnouncementPriority, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetCtor, Assessment as AssessmentCtor, AssessmentKind, AssessmentResult as AssessmentResultCtor, Attachment as AttachmentCtor, Attendance as AttendanceCtor, AttendanceJustificationStatus, AttendanceRecord as AttendanceRecordCtor, AttendanceStatus, AttendanceSummary, CalendarEvent as CalendarEventCtor, CalendarEventKind, CalendarEventScopeKind, ClassActivityEnrollment as ClassActivityEnrollmentCtor, ClassGroup as ClassGroupCtor, ClassSubject as ClassSubjectCtor, ClassSubjectMatter as ClassSubjectMatterCtor, ClassSubjectMatterStatus, ClassSubjectProgress as ClassSubjectProgressCtor, DeadlineComplianceStatus, DisciplinaryAction as DisciplinaryActionCtor, FeeCategory, Fee as FeeCtor, FeeStatus, GradeLevel as GradeLevelCtor, GradeLevelSubject as GradeLevelSubjectCtor, GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor, GradeScale as GradeScaleCtor, Guardian as GuardianCtor, GuardianStudentLink as GuardianStudentLinkCtor, Incident as IncidentCtor, LessonSession as LessonSessionCtor, MessageDelivery as MessageDeliveryCtor, OccurrenceStatus, Payment as PaymentCtor, PaymentMethod, PaymentStatus, PeriodDefinition as PeriodDefinitionCtor, ReportCardDefinition as ReportCardDefinitionCtor, ReportCardDefinitionSection as ReportCardDefinitionSectionCtor, ReportCardDefinitionSectionKind, ReportCardResult as ReportCardResultCtor, ReportCardResultSection as ReportCardResultSectionCtor, ReportCardResultStatus, ResourceAssignment as ResourceAssignmentCtor, Resource as ResourceCtor, ResourceKind, Schedule as ScheduleCtor, School as SchoolCtor, StaffAssignment as StaffAssignmentCtor, StaffMember as StaffMemberCtor, StudentClassEnrollment as StudentClassEnrollmentCtor, Student as StudentCtor, StudentDisciplinaryAction as StudentDisciplinaryActionCtor, StudentFee as StudentFeeCtor, StudentHealthProfile as StudentHealthProfileCtor, StudentIncidentInvolvement as StudentIncidentInvolvementCtor, StudentNote as StudentNoteCtor, Subject as SubjectCtor, SubjectMatter as SubjectMatterCtor, TeacherAssignment as TeacherAssignmentCtor, TeacherAssignmentKind, TeacherAssignmentStatus, Teacher as TeacherCtor, TeacherUnavailability as TeacherUnavailabilityCtor, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
@@ -79,6 +79,7 @@ export interface EntityStores {
   staffAssignments: PostgresStore<StaffAssignment>
   teachers: PostgresStore<Teacher>
   teacherAssignments: PostgresStore<TeacherAssignment>
+  teacherUnavailabilities: PostgresStore<TeacherUnavailability>
   attachments: PostgresStore<Attachment>
   resources: PostgresStore<Resource>
   resourceAssignments: PostgresStore<ResourceAssignment>
@@ -319,6 +320,45 @@ export function createEntityStores(db: any): EntityStores {
       }),
     ),
 
+    teacherUnavailabilities: customStore(
+      db,
+      schema.teacherUnavailabilities,
+      (entity: TeacherUnavailability) => ({
+        id: entity.id,
+        teacherId: entity.teacherId,
+        academicYearId: entity.academicYearId,
+        recurrence: entity.recurrence,
+        dayOfWeek: entity.dayOfWeek ?? null,
+        startTime: entity.startTime ?? null,
+        endTime: entity.endTime ?? null,
+        effectiveFrom: entity.effectiveFrom ?? null,
+        effectiveUntil: entity.effectiveUntil ?? null,
+        startsAt: entity.startsAt ?? null,
+        endsAt: entity.endsAt ?? null,
+        reason: entity.reason ?? null,
+        isActive: entity.isActive,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt ?? null,
+      }),
+      row => new TeacherUnavailabilityCtor({
+        id: row.id,
+        teacherId: row.teacherId,
+        academicYearId: row.academicYearId,
+        recurrence: enumValue(TeacherUnavailabilityRecurrence, row.recurrence, 'teacherUnavailabilities.recurrence'),
+        dayOfWeek: row.dayOfWeek as TeacherUnavailability['dayOfWeek'],
+        startTime: row.startTime ?? undefined,
+        endTime: row.endTime ?? undefined,
+        effectiveFrom: row.effectiveFrom ?? undefined,
+        effectiveUntil: row.effectiveUntil ?? undefined,
+        startsAt: row.startsAt ?? undefined,
+        endsAt: row.endsAt ?? undefined,
+        reason: row.reason ?? undefined,
+        isActive: row.isActive,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt ?? undefined,
+      }),
+    ),
+
     attachments: defaultStore(db, schema.attachments, AttachmentCtor),
 
     resources: customStore(
@@ -469,7 +509,9 @@ export function createEntityStores(db: any): EntityStores {
         id: entity.id,
         schoolId: entity.schoolId,
         classGroupId: entity.classGroupId,
-        scheduleId: entity.scheduleId,
+        scheduleId: entity.scheduleId ?? null,
+        timetableGenerated: entity.timetableGenerated ?? null,
+        timetableTeacherIds: entity.timetableTeacherIds,
         classSubjectId: entity.classSubjectId,
         status: entity.status,
         isException: entity.isException,
@@ -488,7 +530,11 @@ export function createEntityStores(db: any): EntityStores {
         id: row.id,
         schoolId: row.schoolId,
         classGroupId: row.classGroupId,
-        scheduleId: row.scheduleId,
+        scheduleId: row.scheduleId ?? undefined,
+        timetableGenerated: row.timetableGenerated
+          ? enumValue(TimetableGenerated, row.timetableGenerated, 'lessonSessions.timetableGenerated')
+          : undefined,
+        timetableTeacherIds: row.timetableTeacherIds as string[],
         classSubjectId: row.classSubjectId,
         status: enumValue(OccurrenceStatus, row.status, 'lessonSessions.status'),
         isException: row.isException,
@@ -681,6 +727,9 @@ export function createEntityStores(db: any): EntityStores {
         academicYearId: entity.academicYearId,
         subjectId: entity.subjectId,
         coefficient: entity.coefficient ?? null,
+        periodsPerWeek: entity.periodsPerWeek ?? null,
+        minPeriodSpan: entity.minPeriodSpan ?? null,
+        maxPeriodSpan: entity.maxPeriodSpan ?? null,
         isOptional: entity.isOptional,
         createdAt: entity.createdAt,
       }),
@@ -690,6 +739,9 @@ export function createEntityStores(db: any): EntityStores {
         academicYearId: row.academicYearId,
         subjectId: row.subjectId,
         coefficient: row.coefficient,
+        periodsPerWeek: row.periodsPerWeek,
+        minPeriodSpan: row.minPeriodSpan,
+        maxPeriodSpan: row.maxPeriodSpan,
         isOptional: row.isOptional,
         createdAt: row.createdAt,
       }),
@@ -708,6 +760,9 @@ export function createEntityStores(db: any): EntityStores {
         subjectId: entity.subjectId,
         gradeLevelSubjectId: entity.gradeLevelSubjectId ?? null,
         coefficient: entity.coefficient ?? null,
+        periodsPerWeek: entity.periodsPerWeek ?? null,
+        minPeriodSpan: entity.minPeriodSpan ?? null,
+        maxPeriodSpan: entity.maxPeriodSpan ?? null,
         completedPercentage: entity.completedPercentage,
         isOffered: entity.isOffered,
         createdAt: entity.createdAt,
@@ -718,6 +773,9 @@ export function createEntityStores(db: any): EntityStores {
         subjectId: row.subjectId,
         gradeLevelSubjectId: row.gradeLevelSubjectId,
         coefficient: row.coefficient,
+        periodsPerWeek: row.periodsPerWeek,
+        minPeriodSpan: row.minPeriodSpan,
+        maxPeriodSpan: row.maxPeriodSpan,
         completedPercentage: row.completedPercentage,
         isOffered: row.isOffered,
         createdAt: row.createdAt,

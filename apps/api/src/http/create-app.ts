@@ -29,6 +29,7 @@ export default function createApp() {
       "X-Academic-Year-Id",
       "X-Actor-Kind",
       "X-Actor-Id",
+      "X-School-Id",
       "X-Request-Id",
     ],
     credentials: true,

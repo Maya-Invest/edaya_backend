@@ -3,6 +3,7 @@ import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import {
   createServiceAccountRequestSchema,
   createServiceAccountResponseSchema,
+  rotateServiceAccountKeyRequestSchema,
   rotateServiceAccountKeyResponseSchema,
   serializeServiceAccount,
   serviceAccountResponseSchema,
@@ -113,6 +114,7 @@ export const rotateServiceAccountKeyRoute = createRoute({
   }),
   request: {
     params: z.object({ id: z.string().trim().min(1) }),
+    body: jsonContent(rotateServiceAccountKeyRequestSchema, "Optional fixed API key for dev seeding"),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(rotateServiceAccountKeyResponseSchema, "Rotated API key"),
@@ -206,7 +208,10 @@ export const rotateServiceAccountKeyHandler: AppRouteHandler<typeof rotateServic
 
   try {
     const { id } = c.req.valid("param");
-    const result = await rotateServiceAccountKey(c.get("schoolApp").repositories, actor, id);
+    const body = c.req.valid("json");
+    const result = await rotateServiceAccountKey(c.get("schoolApp").repositories, actor, id, {
+      ...(body.apiKey ? { apiKey: body.apiKey } : {}),
+    });
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {
