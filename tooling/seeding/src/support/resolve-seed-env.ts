@@ -3,8 +3,8 @@ import process from 'node:process'
 
 export const DEFAULT_LOCAL_API_URL = 'http://localhost:9999'
 export const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-export const DEFAULT_STAGING_API_URL = 'https://api-staging.edaya.softilab.dev'
-export const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
+export const DEFAULT_STAGING_API_URL = 'https://staging.api.edayaplus.com'
+export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.app.edayaplus.com'
 
 export type SeedHttpTarget = 'local' | 'staging'
 

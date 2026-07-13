@@ -56,7 +56,7 @@ describe('HttpSeedClient.request', () => {
   it('does not pace non-API presigned storage uploads on staging', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
-      baseUrl: 'https://api-staging.edaya.softilab.dev',
+      baseUrl: 'https://staging.api.edayaplus.com',
       fetch: async () => {
         requestCount += 1
         return new Response(null, { status: 200 })
