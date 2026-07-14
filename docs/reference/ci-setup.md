@@ -45,6 +45,7 @@ With a custom Turbo cache prefix (e.g. when copying into `edaya_web`):
 |----------|-----|-------|
 | [`_verify.yml`](../../.github/workflows/_verify.yml) | `verify` | Runs `bun run verify` |
 | [`_deploy-cloudflare.yml`](../../.github/workflows/_deploy-cloudflare.yml) | `deploy` | `wrangler deploy` for `@edaya/api` |
+| [`_smoke-test.yml`](../../.github/workflows/_smoke-test.yml) | `smoke` | Reusable only — not wired to merge (run `bun repo smoke-test staging` locally) |
 | [`_coverage.yml`](../../.github/workflows/_coverage.yml) | `coverage` | Informational; `continue-on-error: true` |
 
 Other jobs use inline `setup-bun` + `bun install` when they need extra steps (Docker login, GHCR, migrations) and do not benefit from Turbo cache alone.
@@ -133,6 +134,8 @@ Deploy runs from GitHub Actions — not Cloudflare Workers Builds. See [`deploy_
 | `verify` | `bun run verify` (same as PR CI) |
 | `migrate` | School + auth schema when enabled (before deploy) |
 | `deploy-api` | `wrangler deploy` for `@edaya/api` |
+
+**Smoke (manual):** API staging smoke (`bun repo smoke-test staging`) is not run in merge CI until staging seed is stable. Vendor smokes remain ad-hoc: `bun repo smoke-test novu`, `bun repo smoke-test r2`.
 
 **One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`BETTER_AUTH_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
 

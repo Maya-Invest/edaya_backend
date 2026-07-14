@@ -115,7 +115,13 @@ export class HttpSeedClient {
   }
 
   private isStaging(): boolean {
-    return this.baseUrl.includes('api-staging.')
+    try {
+      const host = new URL(this.baseUrl).hostname
+      return host.startsWith('staging.') || host.includes('api-staging.')
+    }
+    catch {
+      return false
+    }
   }
 
   cookieHeader(): string | undefined {

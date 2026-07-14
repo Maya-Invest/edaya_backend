@@ -53,6 +53,25 @@ describe('HttpSeedClient.request', () => {
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
 
+  it('paces API-origin requests on staging.api.edayaplus.com', async () => {
+    let requestCount = 0
+    const client = new HttpSeedClient({
+      baseUrl: 'https://staging.api.edayaplus.com',
+      fetch: async () => {
+        requestCount += 1
+        return new Response(null, { status: 200 })
+      },
+    })
+
+    const startedAt = Date.now()
+    await client.request('/core/entities/schools/list', { method: 'POST' })
+    await client.request('/core/entities/schools/list', { method: 'POST' })
+    const elapsedMs = Date.now() - startedAt
+
+    expect(requestCount).toBe(2)
+    expect(elapsedMs).toBeGreaterThanOrEqual(5)
+  })
+
   it('does not pace non-API presigned storage uploads on staging', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
