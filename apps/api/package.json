@@ -12,7 +12,9 @@
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
-    "build": "tsup"
+    "build": "tsup",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env prod"
   },
   "dependencies": {
     "@edaya/adaptor-auth": "workspace:*",

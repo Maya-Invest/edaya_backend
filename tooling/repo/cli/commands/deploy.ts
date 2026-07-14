@@ -4,10 +4,8 @@ import { runRepoCommand } from '../lib/spawn'
 
 export async function runDeployCommand(parsed: Exclude<ParsedDeployCli, { kind: 'help' }>): Promise<number> {
   if (parsed.kind === 'api') {
-    return runRepoCommand(
-      ['bun', 'wrangler', 'deploy', '--env', parsed.target],
-      { cwd: paths.apiRoot },
-    )
+    const script = parsed.target === 'production' ? 'deploy:production' : 'deploy:staging'
+    return runRepoCommand(['bun', 'run', script], { cwd: paths.apiRoot })
   }
   return 1
 }

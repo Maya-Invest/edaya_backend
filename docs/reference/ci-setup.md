@@ -44,6 +44,7 @@ With a custom Turbo cache prefix (e.g. when copying into `edaya_web`):
 | Workflow | Job | Notes |
 |----------|-----|-------|
 | [`_verify.yml`](../../.github/workflows/_verify.yml) | `verify` | Runs `bun run verify` |
+| [`_deploy-cloudflare.yml`](../../.github/workflows/_deploy-cloudflare.yml) | `deploy` | `wrangler deploy` for `@edaya/api` |
 | [`_coverage.yml`](../../.github/workflows/_coverage.yml) | `coverage` | Informational; `continue-on-error: true` |
 
 Other jobs use inline `setup-bun` + `bun install` when they need extra steps (Docker login, GHCR, migrations) and do not benefit from Turbo cache alone.
@@ -122,3 +123,26 @@ bun add @maya-invest/edaya-api-client@production
 ```
 
 **Sibling repos** — `file:../edaya_backend/package/api-client`.
+
+## Deploy API to Cloudflare (GitHub Actions)
+
+Deploy runs from GitHub Actions — not Cloudflare Workers Builds. See [`deploy_push.yml`](../../.github/workflows/deploy_push.yml) (push to `staging` / `main`).
+
+| Step | What happens |
+|------|----------------|
+| `verify` | `bun run verify` (same as PR CI) |
+| `migrate` | School + auth schema when enabled (before deploy) |
+| `deploy-api` | `wrangler deploy` for `@edaya/api` |
+
+**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`BETTER_AUTH_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
+
+Branch mapping:
+
+| Branch | Migrate target | Wrangler env |
+|--------|----------------|--------------|
+| `staging` | `staging` | `--env staging` |
+| `main` | `production` | `--env prod` |
+
+Manual deploy: **Actions → Push / Merge → Run workflow** (toggle migrate / publish / deploy independently).
+
+Local equivalent: `bun repo deploy api staging` or `bun repo deploy api production` after `bun run verify` and migrations when schema changed.
