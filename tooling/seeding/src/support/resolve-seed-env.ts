@@ -44,3 +44,23 @@ export function resolveSeedApiUrl(target: SeedHttpTarget): string {
 export function resolveSeedAppOrigin(target: SeedHttpTarget): string {
   return target === 'staging' ? resolveStagingAppOrigin() : resolveLocalAppOrigin()
 }
+
+/** True when the API base URL targets staging (current or legacy hostname patterns). */
+export function isStagingSeedApiUrl(apiUrl: string): boolean {
+  const trimmed = apiUrl.trim()
+  if (!trimmed) {
+    return false
+  }
+
+  try {
+    const hostname = new URL(trimmed).hostname.toLowerCase()
+    return hostname === 'staging.api.edayaplus.com'
+      || hostname.startsWith('staging.api.')
+      || hostname.startsWith('api-staging.')
+  }
+  catch {
+    const lower = trimmed.toLowerCase()
+    return lower.includes('staging.api.')
+      || lower.includes('api-staging.')
+  }
+}

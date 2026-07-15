@@ -2,7 +2,7 @@
 
 Shared libraries live under **`package/`**; **apps** wire them at runtime; **tooling/** holds harnesses.
 
-Web frontends (`@edaya/webapp`, `@edaya/saas-admin`) live in the sibling **[edaya_web](../../../edaya_web)** repo.
+Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_web](../../../edaya_web)** repo.
 
 ## Layout
 

@@ -50,7 +50,7 @@ A single heartbeat trigger is declared per deploy profile in `apps/api/wrangler.
 |-----------------|------|
 | `*/5 * * * *` | Heartbeat — loads due schedules from Postgres and enqueues work |
 
-Job schedules live in the `cron_job_schedules` table (seeded by migration `0035_cron_job_schedules.sql`):
+Job schedules live in the `cron_job_schedules` table (seeded after school migrations via `seedCronJobSchedules`):
 
 | `job_key` | `cron_expression` |
 |-----------|-------------------|

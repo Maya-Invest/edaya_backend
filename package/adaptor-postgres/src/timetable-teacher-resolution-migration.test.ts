@@ -12,7 +12,7 @@ describe('timetable teacher resolution migration', () => {
         INSERT INTO lesson_sessions VALUES ('lesson-1');
       `)
 
-      const migration = await Bun.file(new URL('../drizzle/0045_timetable_teacher_resolution.sql', import.meta.url)).text()
+      const migration = await Bun.file(new URL('./test-fixtures/migrations/timetable-teacher-resolution.sql', import.meta.url)).text()
       await db.exec(migration)
 
       const schools = await db.query<{

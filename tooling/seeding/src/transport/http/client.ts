@@ -1,3 +1,5 @@
+import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
+
 export type HttpFetch = (
   input: string | URL | Request,
   init?: RequestInit,
@@ -115,7 +117,7 @@ export class HttpSeedClient {
   }
 
   private isStaging(): boolean {
-    return this.baseUrl.includes('api-staging.')
+    return isStagingSeedApiUrl(this.baseUrl)
   }
 
   cookieHeader(): string | undefined {

@@ -23,6 +23,8 @@ export const paths = {
   novuBootstrap: path.join(repoRoot, 'tooling/novu-ops/bootstrap/cli.ts'),
   novuCleanup: path.join(repoRoot, 'tooling/novu-ops/cleanup/cli.ts'),
   dbMigrate: path.join(repoRoot, 'tooling/db-migrate/scripts/migrate-target.ts'),
+  dbReset: path.join(repoRoot, 'tooling/db-migrate/scripts/reset-target.ts'),
+  dbFlatten: path.join(repoRoot, 'tooling/db-migrate/scripts/flatten-school-migrations.ts'),
   devContainer: path.join(repoRoot, 'tooling/api-dev-container/run.sh'),
   apiRoot: path.join(repoRoot, 'apps/api'),
 } as const

@@ -116,6 +116,5 @@ export const demoCiDataset = {
     reportCardDefinitionFixtures: demoCiReportCardDefinitionFixtures,
     reportCardResults: demoCiReportCardResults,
     announcementMaterializePlans: demoCiAnnouncementMaterializePlans,
-    skipLessonSessionSeeding: true,
   },
 } satisfies FixtureDataset<'demo-ci'>

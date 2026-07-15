@@ -20,6 +20,23 @@ describe('parseDbCliArgs', () => {
     })
   })
 
+  it('parses reset commands', () => {
+    expect(parseDbCliArgs(['reset', 'staging', '--yes'])).toEqual({
+      kind: 'reset',
+      target: 'staging',
+      yes: true,
+    })
+    expect(parseDbCliArgs(['reset', 'production'])).toEqual({
+      kind: 'reset',
+      target: 'production',
+      yes: false,
+    })
+  })
+
+  it('parses flatten command', () => {
+    expect(parseDbCliArgs(['flatten'])).toEqual({ kind: 'flatten' })
+  })
+
   it('parses generate and browser', () => {
     expect(parseDbCliArgs(['generate', '--auth'])).toEqual({
       kind: 'generate',

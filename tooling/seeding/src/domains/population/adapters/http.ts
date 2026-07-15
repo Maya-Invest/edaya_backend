@@ -3,6 +3,7 @@ import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity
 import type { PopulationSeedPort } from '../port'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand } from '../../../transport/http/core-entity'
+import { isStagingSeedApiUrl } from '../../../support/resolve-seed-env'
 import { withStagingHyperdriveRetry } from '../../../transport/http/staging-hyperdrive-retry'
 
 export interface CreateHttpPopulationSeedPortOptions {
@@ -18,7 +19,7 @@ export function createHttpPopulationSeedPort(
     serviceAccountApiKey: options.serviceAccountApiKey,
     requestId: 'http-population-seed',
   }
-  const isStaging = options.client.origin.includes('api-staging.')
+  const isStaging = isStagingSeedApiUrl(options.client.origin)
 
   const runCommand = (
     operation: string,

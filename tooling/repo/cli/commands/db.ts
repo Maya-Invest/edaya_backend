@@ -11,6 +11,15 @@ export async function runDbCommand(parsed: Exclude<ParsedDbCli, { kind: 'help' }
       const sliceArg = parsed.slice === 'full' ? 'full' : parsed.slice
       return runBunScript(paths.dbMigrate, [parsed.target, sliceArg])
     }
+    case 'reset': {
+      const args = [parsed.target]
+      if (parsed.yes) {
+        args.push('--yes')
+      }
+      return runBunScript(paths.dbReset, args)
+    }
+    case 'flatten':
+      return runBunScript(paths.dbFlatten, [])
     case 'generate': {
       if (parsed.auth) {
         return runRepoCommand(['bun', '--filter', '@edaya/adaptor-auth', 'auth:db:generate'])

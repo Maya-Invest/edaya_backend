@@ -1,5 +1,6 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import process from 'node:process'
+import { isStagingSeedApiUrl } from '../support/resolve-seed-env'
 
 const LOCAL_DATABASE_URLS = new Set(['pglite', 'memory'])
 
@@ -17,8 +18,8 @@ export function isLocalDatabaseUrl(databaseUrl: string | undefined): boolean {
 }
 
 function isStagingSeedEnvironment(): boolean {
-  const apiUrl = process.env['SEED_STAGING_API_URL'] ?? ''
-  return apiUrl.includes('api-staging.') || apiUrl.includes('staging')
+  const configured = process.env['SEED_STAGING_API_URL']?.trim()
+  return configured ? isStagingSeedApiUrl(configured) : false
 }
 
 /** Block obvious production Neon URLs unless the operator explicitly opts in. */

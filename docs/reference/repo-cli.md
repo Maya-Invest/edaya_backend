@@ -84,13 +84,18 @@ Env: repo root `.env` — see `.env.example`. API runtime stays in `apps/api/.en
 bun repo db migrate local
 bun repo db migrate staging --auth
 bun repo db migrate staging --school
+bun repo db reset staging --yes      # drop schemas + re-apply migrations
+bun repo db reset production --yes   # destructive — production only
+bun repo db flatten                  # squash school migrations to one baseline
 bun repo db generate
 bun repo db generate --auth
 bun repo db browser school    # stop bun repo dev first
 bun repo db browser auth
 ```
 
-Migrate implementation: `tooling/db-migrate/scripts/migrate-target.ts`.
+`db reset` drops `drizzle`, `auth`, and `public` schemas, then re-applies school + auth migrations from scratch. After staging reset, run `bun repo seed --staging`.
+
+Migrate / reset implementation: `tooling/db-migrate/scripts/`.
 
 ## Validation
 

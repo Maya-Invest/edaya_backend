@@ -47,7 +47,7 @@ demo-ci/
 | Scolarité | Structure, curriculum, 5 classes, 33 matières de classe |
 | Population | 30 élèves, 21 parents, liens famille |
 | Enseignants | 5 portail + affectations (toutes les matières de classe couvertes) |
-| Emploi du temps | 6 créneaux récurrents (schedules seulement — **pas de séances matérialisées** tant que `skipLessonSessionSeeding` est actif) |
+| Emploi du temps | 6 créneaux récurrents matérialisés en séances sur l'année scolaire |
 | Évaluations | Contrôles T1 (toutes classes) + devoirs maison |
 | Bulletins | 4 modèles (6ème→3ème), 30 résultats T1 |
 | Vie scolaire | Présences, absences, justificatifs en attente |
