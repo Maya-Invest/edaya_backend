@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { parseCheckCliArgs } from '../../cli/parse-check-cli'
-import { parseDeployCliArgs } from '../../cli/parse-deploy-cli'
+import { parseDeployCliArgs, wranglerEnvNameForDeployTarget } from '../../cli/parse-deploy-cli'
 import { parseNovuCliArgs } from '../../cli/parse-novu-cli'
 // import { parseOpenapiCliArgs } from '../../cli/parse-openapi-cli'
 import { parseSmokeTestCliArgs } from '../../cli/parse-smoke-test-cli'
@@ -22,6 +22,14 @@ describe('parseSmokeTestCliArgs', () => {
 describe('parseDeployCliArgs', () => {
   it('parses api deploy targets', () => {
     expect(parseDeployCliArgs(['api', 'staging'])).toEqual({ kind: 'api', target: 'staging' })
+    expect(parseDeployCliArgs(['api', 'production'])).toEqual({ kind: 'api', target: 'production' })
+  })
+})
+
+describe('wranglerEnvNameForDeployTarget', () => {
+  it('maps production to wrangler prod env', () => {
+    expect(wranglerEnvNameForDeployTarget('staging')).toBe('staging')
+    expect(wranglerEnvNameForDeployTarget('production')).toBe('prod')
   })
 })
 
@@ -36,10 +44,3 @@ describe('parseNovuCliArgs', () => {
     })
   })
 })
-
-// describe('parseOpenapiCliArgs', () => {
-//   it('parses openapi actions', () => {
-//     expect(parseOpenapiCliArgs(['export'])).toEqual({ kind: 'run', action: 'export' })
-//     expect(parseOpenapiCliArgs(['generate'])).toEqual({ kind: 'run', action: 'generate' })
-//   })
-// })
