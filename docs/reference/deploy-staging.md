@@ -129,7 +129,7 @@ bun repo seed --staging   # if seed data needed
 bun repo smoke-test staging
 ```
 
-CI runs migrate → verify → `deploy-api` → `smoke-test` automatically on push when API paths change (see [ci-setup.md](./ci-setup.md)).
+CI runs migrate → `deploy-api` automatically on push when API paths change (see [ci-setup.md](./ci-setup.md)).
 
 ### Production promotion (after staging green)
 

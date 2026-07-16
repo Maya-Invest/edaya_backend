@@ -45,7 +45,6 @@ With a custom Turbo cache prefix (e.g. when copying into `edaya_web`):
 |----------|-----|-------|
 | [`_verify.yml`](../../.github/workflows/_verify.yml) | `verify` | Runs `bun run verify` |
 | [`_deploy-api.yml`](../../.github/workflows/_deploy-api.yml) | `deploy` | Wrangler deploy for `@edaya/api` |
-| [`_smoke-test.yml`](../../.github/workflows/_smoke-test.yml) | `smoke` | `bun repo smoke-test staging` after API deploy |
 | [`_coverage.yml`](../../.github/workflows/_coverage.yml) | `coverage` | Informational; `continue-on-error: true` |
 
 Other jobs use inline `setup-bun` + `bun install` when they need extra steps (Docker login, GHCR, migrations) and do not benefit from Turbo cache alone.
@@ -56,11 +55,9 @@ On push to `staging` / `main` (or manual **Run workflow**):
 
 ```text
 gate (path filter)
-  → verify (when API deploy planned)
   → migrate (school + auth schema)
   → publish-api-dev-image / publish-api-client (when API paths changed)
   → deploy-api (Wrangler → staging.api or api.edayaplus.com)
-  → smoke-test (staging only, after deploy-api succeeds)
 ```
 
 | Push branch | Channel | Migrate target |
@@ -68,7 +65,7 @@ gate (path filter)
 | `staging` | staging | staging Neon |
 | `main` | production | production Neon |
 
-On push, `dorny/paths-filter` sets `deploy_api` from `apps/api/**`, `package/**`, and root lockfiles. Manual dispatch keeps explicit toggles for migrate, API deploy, and api-dev image publish.
+On push, `dorny/paths-filter` sets `deploy_api` from `apps/api/**`, `package/**`, and root lockfiles. Manual dispatch keeps explicit toggles for migrate, API deploy, and api-dev image publish. Verify and integration run on PRs only (`deploy_pr.yml`), not on merge deploy.
 
 ### Secrets (`edaya_backend` → Settings → Secrets and variables → Actions)
 
