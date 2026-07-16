@@ -57,7 +57,7 @@ On push to `staging` / `main` (or manual **Run workflow**):
 gate (path filter)
   → migrate (school + auth schema)
   → publish-api-dev-image / publish-api-client (when API paths changed)
-  → deploy-api (Wrangler → staging.api or api.edayaplus.com)
+  → deploy-api (Wrangler → staging.api or api.edaya.app)
 ```
 
 | Push branch | Channel | Migrate target |

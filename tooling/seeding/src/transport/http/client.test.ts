@@ -53,10 +53,10 @@ describe('HttpSeedClient.request', () => {
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
 
-  it('paces API-origin requests on staging.api.edayaplus.com', async () => {
+  it('paces API-origin requests on staging.api.edaya.app', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
-      baseUrl: 'https://staging.api.edayaplus.com',
+      baseUrl: 'https://staging.api.edaya.app',
       fetch: async () => {
         requestCount += 1
         return new Response(null, { status: 200 })
@@ -75,7 +75,7 @@ describe('HttpSeedClient.request', () => {
   it('does not pace non-API presigned storage uploads on staging', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
-      baseUrl: 'https://staging.api.edayaplus.com',
+      baseUrl: 'https://staging.api.edaya.app',
       fetch: async () => {
         requestCount += 1
         return new Response(null, { status: 200 })

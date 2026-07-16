@@ -61,10 +61,10 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://staging.api.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
-        "COOKIE_DOMAIN": "edayaplus.com",
+        "BETTER_AUTH_URL": "https://staging.api.edaya.app",
+        "TRUSTED_ORIGINS": "https://staging.staff.edaya.app,https://staging.admin.edaya.app",
+        "WEBAPP_ORIGIN": "https://staging.staff.edaya.app",
+        "COOKIE_DOMAIN": "edaya.app",
         "GRANTS_CACHE_TTL_MS": "300000",
         "NOVU_API_URL": "https://eu.api.novu.co",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
@@ -75,7 +75,7 @@
       },
       "routes": [
         {
-          "pattern": "staging.api.edayaplus.com",
+          "pattern": "staging.api.edaya.app",
           "custom_domain": true
         }
       ],
@@ -107,10 +107,10 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://api.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://app.edayaplus.com",
-        "COOKIE_DOMAIN": "edayaplus.com",
+        "BETTER_AUTH_URL": "https://api.edaya.app",
+        "TRUSTED_ORIGINS": "https://staff.edaya.app,https://admin.edaya.app",
+        "WEBAPP_ORIGIN": "https://staff.edaya.app",
+        "COOKIE_DOMAIN": "edaya.app",
         "GRANTS_CACHE_TTL_MS": "300000",
         "NOVU_API_URL": "https://eu.api.novu.co",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
@@ -137,7 +137,7 @@
       ],
       "routes": [
         {
-          "pattern": "api.edayaplus.com",
+          "pattern": "api.edaya.app",
           "custom_domain": true
         }
       ],
