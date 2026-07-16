@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 
-/* eslint-disable no-console -- CLI progress output */
 import type { MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'

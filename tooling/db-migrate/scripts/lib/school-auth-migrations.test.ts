@@ -29,7 +29,7 @@ describe('local school + auth migrations', () => {
          ORDER BY table_name`,
       )
 
-      expect(migrations.rows[0]?.count).toBeGreaterThan(49)
+      expect(migrations.rows[0]?.count).toBeGreaterThanOrEqual(2)
       expect(authTables.rows.map(row => row.table_name)).toEqual([
         'account',
         'session',

@@ -1,9 +1,9 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { PopulationSeedPort } from '../port'
+import { isStagingSeedApiUrl } from '../../../support/resolve-seed-env'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand } from '../../../transport/http/core-entity'
-import { isStagingSeedApiUrl } from '../../../support/resolve-seed-env'
 import { withStagingHyperdriveRetry } from '../../../transport/http/staging-hyperdrive-retry'
 
 export interface CreateHttpPopulationSeedPortOptions {

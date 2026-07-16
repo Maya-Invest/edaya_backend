@@ -52,7 +52,7 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
   const sql = postgres(databaseUrl)
 
   try {
-    const [{ exists }] = await sql<{ exists: boolean }[]>`
+    const existsRows = await sql<{ exists: boolean }[]>`
       SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
@@ -60,7 +60,7 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
           AND table_name = '__drizzle_migrations'
       ) AS exists
     `
-    if (!exists) {
+    if (!existsRows[0]?.exists) {
       return
     }
 

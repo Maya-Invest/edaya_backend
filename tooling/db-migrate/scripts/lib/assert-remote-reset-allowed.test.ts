@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { assertRemoteResetAllowed } from './assert-remote-reset-allowed'
 
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 const originalEnv = { ...process.env }
 
 afterEach(() => {
@@ -30,7 +31,7 @@ describe('assertRemoteResetAllowed', () => {
   })
 
   it('allows override with SEED_ALLOW_DESTRUCTIVE', () => {
-    process.env.SEED_ALLOW_DESTRUCTIVE = 'true'
+    process.env['SEED_ALLOW_DESTRUCTIVE'] = 'true'
     expect(() => assertRemoteResetAllowed(
       'production',
       'postgres://user:pass@ep-staging-123.us-east-1.aws.neon.tech/neondb',
