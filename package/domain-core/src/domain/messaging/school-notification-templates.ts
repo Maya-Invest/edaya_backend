@@ -1,9 +1,8 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { schoolNotificationTemplateDocumentSchema } from '../../capabilities/notifications/templates/document-schema'
+
 import { parseDomain, zodDate } from '../shared/utils'
+
+import { schoolNotificationTemplateDocumentSchema } from './notification-template-document-schema'
 
 export const schoolNotificationTemplatesSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
@@ -33,21 +32,3 @@ export class SchoolNotificationTemplates {
     return new SchoolNotificationTemplates({ ...this.data, ...changes })
   }
 }
-
-async function denyTemplateEntityWrite(): Promise<void> {
-  denyResourceAccess()
-}
-
-/** Read-only entity — mutations go through template commands (Phase 3). */
-export const schoolNotificationTemplatesConfig: EntityConfigFactory<SchoolNotificationTemplates> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.schoolNotificationTemplates,
-    tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE), noopReadAccess),
-    write: write(
-      permissionAction(Permission.SCHOOL_LIFECYCLE_MANAGE),
-      denyTemplateEntityWrite,
-      denyTemplateEntityWrite,
-    ),
-    atomicExecution,
-  })

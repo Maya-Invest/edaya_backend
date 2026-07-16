@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum AnnouncementStatus {
@@ -96,33 +92,5 @@ export class Announcement {
 
   get effectiveDate(): Date {
     return this.publishedAt ?? this.createdAt
-  }
-}
-
-export const announcementConfig: EntityConfigFactory<Announcement> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.announcements,
-    Permission.QUERY_COMMUNICATIONS_READ,
-    Permission.COMMUNICATION_CREATE,
-  )
-  return {
-    ...config,
-    gates: {
-      preDelete: validateAnnouncementDelete,
-    },
-  }
-}
-
-async function validateAnnouncementDelete(
-  announcement: Announcement,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [targets, deliveries] = await Promise.all([
-    repositories.announcementTargets.list({ announcementId: announcement.id }),
-    repositories.messageDeliveries.list({ announcementId: announcement.id }),
-  ])
-  if (targets.length > 0 || deliveries.length > 0) {
-    throw new BusinessRuleViolationError('ANNOUNCEMENT_HAS_DEPENDENCIES', `Cannot delete announcement ${announcement.id}: dependent records still exist`)
   }
 }

@@ -1,5 +1,5 @@
+import { IncidentInvolvementRole, StudentIncidentInvolvement } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { IncidentInvolvementRole, StudentIncidentInvolvement } from '../../../../src/domain/students/student-incident-involvement'
 
 describe('StudentIncidentInvolvement entity roles and validation', () => {
   const baseArgs = {

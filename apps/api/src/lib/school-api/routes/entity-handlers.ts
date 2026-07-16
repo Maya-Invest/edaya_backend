@@ -1,5 +1,5 @@
 import type { AppBindings, AppRouteHandler } from "@/http/types";
-import type { CoreEntityKey } from "@edaya/core";
+import type { CoreEntityKey } from "@edaya/service";
 import { badRequestResponse, getErrorMessage, methodNotAllowedResponse, notFoundResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";

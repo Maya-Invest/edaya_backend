@@ -2,7 +2,7 @@
 
 Shared libraries live under **`package/`**; **apps** wire them at runtime; **tooling/** holds harnesses.
 
-Web frontends (`@edaya/webapp`, `@edaya/saas-admin`) live in the sibling **[edaya_web](../../../edaya_web)** repo.
+Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_web](../../../edaya_web)** repo.
 
 ## Layout
 
@@ -11,7 +11,9 @@ edaya_backend/
   apps/
     api/                            Hono HTTP, OpenAPI, scheduled cron, runtime, Worker host wiring
   package/
-    domain-core/                    Domain, services, authorization, ports
+    domain-core/                    Domain entities + ports
+    authorization/                  Auth engine, permissions, policy
+    school-service/                 Workflows, entity CRUD, notifications, cron
     adaptor-postgres/               School Drizzle schema, SQL, repos, runMigrations()
     adaptor-auth/                   Better Auth schema, SQL, runtime runMigrations()
     adaptor-novu/                   Novu notification gateway adapter
@@ -30,29 +32,38 @@ edaya_backend/
 
 | Layer | Owns | Does not own |
 |-------|------|--------------|
+| `@edaya/core` (`package/domain-core`) | Entity types, Zod schemas, ports, registry, shared utils | Workflows, entity `*Config` factories, notifications, cron dispatch |
+| `@edaya/authorization` (`package/authorization`) | Permissions, grants, policy, `AuthorizationRepositories` | School workflows, entity configs, notification templates |
+| `@edaya/service` (`package/domain-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, Better Auth runtime |
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `package/adaptor-auth` | Auth Drizzle schema, auth SQL, auth `runMigrations()` | Better Auth runtime config (lives in `apps/api`) |
 | `package/adaptor-novu` | Novu `NotificationGatewayPort` adapter, delivery ports | Workflow bootstrap, subscriber cleanup CLI |
 | `tooling/db-migrate` | Postgres `drizzle-kit migrate`, Hyperdrive / staging bootstrap | School SQL source files (those live in adaptor-postgres) |
 | `tooling/novu-ops` | Novu workflow bootstrap, subscriber cleanup | Runtime notification gateway |
-| `tooling/seeding` | HTTP seed scripts against running API (`seed:init`, …) | API route handlers |
+| `tooling/seeding` | HTTP seed scripts against running API (`bun repo seed`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts, Novu ops CLI, seed data |
 
-**Dependency direction:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth`. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
+**Domain dependency direction:** `school-service` → `authorization` → `core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
+
+**Dependency direction:** `package/domain-core`, `package/authorization`, `package/domain-service`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth` from domain/adaptor persistence layers. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
+
+**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/authorization/src`.
 
 ## Package map
 
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/api` | `apps/api` | Hono API + scheduled cron (Node + Worker) |
-| `@edaya/core` | `package/domain-core` | Domain + ports |
+| `@edaya/core` | `package/domain-core` | Domain entities + ports |
+| `@edaya/authorization` | `package/authorization` | Authorization engine |
+| `@edaya/service` | `package/domain-service` | School orchestration (workflows, capabilities) |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |
-| `@edaya/api-client` | `package/generated-api-client` | Typed API SDK |
+| `@maya-invest/edaya-api-client` | `package/generated-api-client` | Typed API SDK |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local dev `FileStoragePort` adapter (filesystem + signed HTTP URLs) |
-| `@edaya/local-files` | `tooling/local-files` | Local dev file storage HTTP service |
+| `@edaya/local-files-server` | `tooling/local-files` | Local dev file storage HTTP service |
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
 | `@edaya/fixtures` | `tooling/fixtures` | Fixture data |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed CLI |
@@ -78,23 +89,24 @@ edaya_backend/
 
 | Script | Package / target |
 |--------|------------------|
-| `bun dev` | `@edaya/api` watch mode |
-| `bun dev:worker-local` | `@edaya/api` `dev:worker-local` |
-| `bun seed` / `bun seed:init` / `bun seed:auth` / `bun seed:smoke` / `bun seed:remote` / `bun seed:smoke:staging` | `@edaya/seeding` |
-| `bun db:generate` | `@edaya/adaptor-postgres` |
-| `bun db:migrate` | `@edaya/db-migrate` (`migrate`) — school only |
-| `bun db:migrate:full` | `@edaya/db-migrate` (`migrate:full`) — school + auth |
-| `bun db:migrate:production` | `@edaya/db-migrate` (`migrate:production`) |
-| `bun db:migrate:staging` | `@edaya/db-migrate` (`migrate:staging`) |
-| `bun db:generate:auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
-| `bun auth:generate-schema` | `@edaya/adaptor-auth` |
-| `bun novu:bootstrap` / `bun novu:bootstrap:apply` / `bun novu:bootstrap:validate` | `@edaya/novu-ops` |
-| `bun novu:cleanup` / `bun novu:cleanup:apply` | `@edaya/novu-ops` |
-| `bun run openapi:generate` | Export OpenAPI + regenerate client bindings |
-| `bun run openapi:check` | Drift check for generated artifacts |
-| `bun deploy:api` | `@edaya/api` `deploy:worker` |
-| `bun deploy:api:staging` | `@edaya/api` `deploy:worker:staging` |
-| `bun smoke:staging` | `@edaya/integration-tests` |
+| `bun repo dev` | `@edaya/api` watch mode |
+| `bun --filter @edaya/api dev:worker` | `@edaya/api` `dev:worker` |
+| `bun repo seed` / `bun repo seed --staging` / `bun repo seed --scope doctor` / `bun repo smoke-test staging` | `@edaya/seeding` / `@edaya/integration-tests` |
+| `bun repo db generate` | `@edaya/adaptor-postgres` |
+| `bun repo db migrate local` | `@edaya/db-migrate` — school + auth (local) |
+| `bun repo db migrate staging` | `@edaya/db-migrate` — school + auth (staging) |
+| `bun repo db migrate production` | `@edaya/db-migrate` — school + auth (production) |
+| `bun repo db migrate <env> --school` | `@edaya/db-migrate` — school only (`local` / `staging` / `production`) |
+| `bun repo db migrate <env> --auth` | `@edaya/db-migrate` — auth only (`local` / `staging` / `production`) |
+| `bun repo db generate --auth` | `@edaya/adaptor-auth` (`auth:db:generate`) |
+| `bun repo db generate --auth` | `@edaya/adaptor-auth` |
+| `bun repo novu bootstrap` / `bun repo novu bootstrap apply` / `bun repo novu bootstrap validate` | `@edaya/novu-ops` |
+| `bun repo novu cleanup` / `bun repo novu cleanup apply` | `@edaya/novu-ops` |
+| `bun repo openapi generate` | Export OpenAPI + regenerate client bindings |
+| `bun repo check openapi` | Drift check for generated artifacts |
+| `bun repo deploy api production` | `@edaya/api` `deploy:production` |
+| `bun repo deploy api staging` | `@edaya/api` `deploy:staging` |
+| `bun repo smoke-test staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 
@@ -108,6 +120,6 @@ Webapp deploy scripts live in **edaya_web**. See [cross-repo-workflow.md](./cros
 ## School migration pipeline
 
 1. `db:generate` — Drizzle Kit in `@edaya/adaptor-postgres`
-2. `db:migrate` — apply school schema to `DATABASE_URL`
-3. `db:migrate:production` — Neon production from `tooling/seeding/.env.production` (school + auth)
-4. `db:migrate:full` — school + auth on explicit `DATABASE_URL`
+2. `db:migrate:local` / `db:migrate:staging` / `db:migrate:production` — school + auth
+3. `db:migrate:*:school` — school schema only
+4. `db:migrate:*:auth` — auth schema only

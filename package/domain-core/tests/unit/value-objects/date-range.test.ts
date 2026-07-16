@@ -1,6 +1,5 @@
+import { DateRange, DomainValidationError } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { DomainValidationError } from '../../../src/domain/shared/utils'
-import { DateRange } from '../../../src/domain/value-objects/date-range'
 
 describe('dateRange value object', () => {
   const startDate = new Date('2026-09-01T00:00:00.000Z')

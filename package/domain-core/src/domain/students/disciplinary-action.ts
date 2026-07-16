@@ -1,7 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum DisciplinaryActionKind {
@@ -49,11 +47,3 @@ export class DisciplinaryAction {
   get description() { return this.data.description }
   get createdAt() { return this.data.createdAt }
 }
-
-export const disciplinaryActionConfig: EntityConfigFactory<DisciplinaryAction> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.disciplinaryActions,
-    Permission.DISCIPLINE_READ,
-    Permission.DISCIPLINE_VALIDATE,
-  )

@@ -15,6 +15,8 @@ import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
+import type { TeachersSeedPort } from '../domains/teachers/port'
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import type { DevAccessSeedResult } from './run-dev-access-seed'
 import type { DevAuthLinkResult } from './run-dev-auth-link'
@@ -41,6 +43,7 @@ import { createInProcessSchedulingSeedPort } from '../domains/scheduling/in-proc
 import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/in-process'
 import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
+import { createInProcessTeachersSeedPort } from '../domains/teachers/in-process'
 import { runDevAccessSeedWithPort } from './run-dev-access-seed'
 import { runDevAuthLinkWithPort } from './run-dev-auth-link'
 import { runDevAuthProvision } from './run-dev-auth-provision'
@@ -70,6 +73,8 @@ export interface RunDevSeedsOptions {
   populationPort?: PopulationSeedPort
   /** Explicit curriculum adapter; defaults to the in-process application adapter. */
   curriculumPort?: CurriculumSeedPort
+  /** Explicit teacher portal adapter; defaults to the in-process application adapter. */
+  teachersPort?: TeachersSeedPort
   /** Explicit scheduling adapter; defaults to the in-process application adapter. */
   schedulingPort?: SchedulingSeedPort
   /** Explicit attendance adapter; defaults to the in-process application adapter. */
@@ -95,6 +100,12 @@ export interface RunDevSeedsOptions {
   profilePicturesPort?: ProfilePicturesSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
+  /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
+  skipProfilePhotos?: boolean
+  /** Skip fixture attachment registration. */
+  skipAttachments?: boolean
+  profilePhotosSkipReason?: string
+  progress?: SeedProgressReporter
 }
 
 export interface RunDevSeedsResults {
@@ -103,6 +114,8 @@ export interface RunDevSeedsResults {
   authLink: DevAuthLinkResult | null
   access: DevAccessSeedResult | null
   profilePhotos: number | null
+  profilePhotosSkipped?: boolean
+  profilePhotosSkipReason?: string
 }
 
 export interface LogDevSeedResultsOptions {
@@ -110,7 +123,7 @@ export interface LogDevSeedResultsOptions {
 }
 
 export function parseDevSeedScope(argv: string[]): DevSeedScope {
-  const arg = argv[2]
+  const arg = argv.slice(2).find(entry => !entry.startsWith('-'))
 
   if (!arg || arg === 'all') {
     return 'all'
@@ -120,7 +133,7 @@ export function parseDevSeedScope(argv: string[]): DevSeedScope {
     return arg
   }
 
-  throw new Error(`Unknown seed scope: ${arg}. Usage: bun seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
+  throw new Error(`Unknown seed scope: ${arg}. Usage: bun repo seed.ts [school|auth|auth:link|access|profile-pictures|all]`)
 }
 
 export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSeedsResults> {
@@ -141,6 +154,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessPopulationSeedPort(requireApplication('populationPort'))
   const curriculumPort = options.curriculumPort
     ?? createInProcessCurriculumSeedPort(requireApplication('curriculumPort'))
+  const teachersPort = options.teachersPort
+    ?? createInProcessTeachersSeedPort(requireApplication('teachersPort'))
   const schedulingPort = options.schedulingPort
     ?? createInProcessSchedulingSeedPort(requireApplication('schedulingPort'))
   const attendancePort = options.attendancePort
@@ -178,7 +193,10 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
 
   if (scope === 'all') {
     if (!options.skipAuthProvision) {
-      results.authProvision = await runDevAuthProvision(auth)
+      results.authProvision = await runDevAuthProvision(auth, {
+        baseUrl: options.apiBaseUrl,
+        progress: options.progress,
+      })
     }
     const ownerSubjectId = options.ownerSubjectId ?? (
       results.authProvision ? ownerSubjectIdFromAuthProvision(results.authProvision) : undefined
@@ -190,6 +208,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       schoolStructurePort,
       populationPort,
       curriculumPort,
+      teachersPort,
       schedulingPort,
       attendancePort,
       assessmentsPort,
@@ -203,7 +222,15 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       attachmentsPort,
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
+      skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
+      progress: options.progress,
     })
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+    }
     results.access = await runDevAccessSeedWithPort(
       accessSeedPort,
       {
@@ -212,6 +239,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         authLinkPort,
         assignmentsPort: options.accessAssignmentsSeedPort,
         beforeAssignments: options.beforeAccessAssignments,
+        progress: options.progress,
       },
     )
     return results
@@ -224,6 +252,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       schoolStructurePort,
       populationPort,
       curriculumPort,
+      teachersPort,
       schedulingPort,
       attendancePort,
       assessmentsPort,
@@ -237,15 +266,28 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       attachmentsPort,
       profilePicturesPort,
       apiBaseUrl: options.apiBaseUrl,
+      skipProfilePhotos: options.skipProfilePhotos,
+      skipAttachments: options.skipAttachments,
+      progress: options.progress,
     })
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+    }
   }
 
   if (scope === 'auth') {
-    results.authProvision = await runDevAuthProvision(auth)
+    results.authProvision = await runDevAuthProvision(auth, {
+      baseUrl: options.apiBaseUrl,
+      progress: options.progress,
+    })
   }
 
   if (scope === 'auth:link') {
-    results.authLink = await runDevAuthLinkWithPort(authLinkPort, auth)
+    results.authLink = await runDevAuthLinkWithPort(authLinkPort, auth, {
+      communicationsPort,
+    })
   }
 
   if (scope === 'access') {
@@ -256,20 +298,37 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         authLinkPort,
         assignmentsPort: options.accessAssignmentsSeedPort,
         beforeAssignments: options.beforeAccessAssignments,
+        progress: options.progress,
       },
     )
   }
 
   if (scope === 'profile-pictures') {
+    if (options.skipProfilePhotos) {
+      results.profilePhotos = 0
+      results.profilePhotosSkipped = true
+      results.profilePhotosSkipReason = options.profilePhotosSkipReason
+      return results
+    }
     if (!profilePicturesPort) {
       throw new Error('profilePicturesPort must be provided for profile-pictures seed scope')
     }
     const context = resolveDevSeedContext()
-    const counts = await seedDevProfilePictures(
-      profilePicturesPort,
-      { apiBaseUrl: options.apiBaseUrl ?? '' },
-      context.dataset,
-    )
+    const profilePhotoTotal = (context.dataset.entities.staffMembers?.length ?? 0)
+      + (context.dataset.entities.students?.length ?? 0)
+      + (context.dataset.entities.guardians?.length ?? 0)
+    const runProfilePictures = async (tick: (by?: number) => void) =>
+      seedDevProfilePictures(
+        profilePicturesPort,
+        {
+          apiBaseUrl: options.apiBaseUrl ?? '',
+          onProgress: tick,
+        },
+        context.dataset,
+      )
+    const counts = options.progress
+      ? await options.progress.step(runProfilePictures, { total: profilePhotoTotal })
+      : await runProfilePictures(() => {})
     results.profilePhotos = counts.profilePhotos
   }
 
@@ -301,7 +360,11 @@ export function logDevSeedResults(
     if (results.authLink.status === 'seeded') {
       const emails = results.authLink.accounts.map(account => account.email).join(', ')
       // eslint-disable-next-line no-console
-      console.log(`Auth link linked ${results.authLink.linkedStaff} staff and ${results.authLink.linkedGuardians} guardian(s): ${emails}`)
+      console.log(
+        `Auth link linked ${results.authLink.linkedStaff} staff, `
+        + `${results.authLink.linkedTeachers} teacher(s), and `
+        + `${results.authLink.linkedGuardians} guardian(s): ${emails}`,
+      )
     }
     else {
       // eslint-disable-next-line no-console
@@ -320,7 +383,11 @@ export function logDevSeedResults(
     }
   }
 
-  if (results.profilePhotos !== null) {
+  if (results.profilePhotosSkipped) {
+    // eslint-disable-next-line no-console
+    console.log(`Profile photos skipped${results.profilePhotosSkipReason ? `: ${results.profilePhotosSkipReason}` : ''}`)
+  }
+  else if (results.profilePhotos !== null) {
     // eslint-disable-next-line no-console
     console.log(`Profile photos seeded: ${results.profilePhotos}`)
   }

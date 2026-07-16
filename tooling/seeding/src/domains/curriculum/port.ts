@@ -1,7 +1,4 @@
-import type {
-  SubjectCategory,
-  SubjectColor,
-} from '@edaya/core'
+import type { SubjectCategory, SubjectColor } from '@edaya/core'
 
 export interface SubjectSeedRecord {
   id: string
@@ -28,6 +25,7 @@ export interface GradeLevelSubjectSeedRecord {
   academicYearId: string
   subjectId: string
   coefficient?: number
+  periodsPerWeek?: number
   classSubjectIdsByClassGroupId?: Record<string, string>
 }
 

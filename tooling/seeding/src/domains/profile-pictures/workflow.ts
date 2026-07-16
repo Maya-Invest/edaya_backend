@@ -16,6 +16,7 @@ const PROFILE_PHOTO_UPLOAD_CONCURRENCY = 8
 
 export interface SeedDevProfilePicturesOptions {
   apiBaseUrl: string
+  onProgress?: () => void
 }
 
 async function mapWithConcurrency<T>(
@@ -74,7 +75,7 @@ async function seedProfilePhotoForOwner(
 
 export async function seedDevProfilePictures(
   port: ProfilePicturesSeedPort,
-  _options: SeedDevProfilePicturesOptions,
+  options: SeedDevProfilePicturesOptions,
   dataset: FixtureDataset,
 ): Promise<{ profilePhotos: number }> {
   const pickPictureFile = createRandomProfilePictureAllocator()
@@ -108,6 +109,7 @@ export async function seedDevProfilePictures(
       pickPictureFile,
       target.setPhotoUrl,
     )
+    options.onProgress?.()
   })
 
   return { profilePhotos: targets.length }

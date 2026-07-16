@@ -15,7 +15,8 @@ import {
   entityOneHandler,
   entitySaveHandler,
 } from "./entity-handlers";
-import { coreRouteErrorResponses, type SchoolApiRoutePair } from "./shared";
+import { coreRouteErrorResponses } from "./shared";
+import type { SchoolApiRoutePair } from "./shared";
 import { schoolApiPath } from "./paths";
 
 const idParamSchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityIdParam");

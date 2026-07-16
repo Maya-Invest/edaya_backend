@@ -105,10 +105,12 @@ export async function seedDevSchoolStructure(
       schoolId: dataset.schoolId,
       academicYearId: academicYear.id,
       label: slot.label,
+      dayOfWeek: slot.dayOfWeek,
       order: slot.order,
       startTime: slot.startTime,
       endTime: slot.endTime,
       isBreak: slot.isBreak ?? false,
+      isTeachingSlot: slot.isTeachingSlot ?? true,
     })
   }
 
@@ -149,6 +151,7 @@ export async function seedDevSchoolStructure(
       name: classGroup.name,
       capacity: classGroup.capacity ?? undefined,
       homeroomStaffId: classGroup.homeroomStaffId ?? undefined,
+      attendanceMode: classGroup.attendanceMode,
     })
   }
 }

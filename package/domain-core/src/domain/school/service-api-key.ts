@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const serviceApiKeySchema = z.object({

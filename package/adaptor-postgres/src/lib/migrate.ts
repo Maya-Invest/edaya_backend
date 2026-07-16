@@ -1,9 +1,11 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { migrate as migrateNodePostgres } from 'drizzle-orm/node-postgres/migrator'
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator'
 import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
+import { seedCronJobSchedules } from './seed-cron-job-schedules'
 
-export type MigrationDriver = 'pglite' | 'postgres-js'
+export type MigrationDriver = 'pglite' | 'postgres-js' | 'node-postgres'
 
 function getPackageRoot(): string {
   if (typeof import.meta.url !== 'string' || import.meta.url.length === 0) {
@@ -23,6 +25,11 @@ export async function runMigrations(
   options: { driver: MigrationDriver },
 ): Promise<void> {
   const migrationsFolder = getMigrationsFolder()
-  const migrate = options.driver === 'pglite' ? migratePglite : migratePostgresJs
+  const migrate = options.driver === 'pglite'
+    ? migratePglite
+    : options.driver === 'node-postgres'
+      ? migrateNodePostgres
+      : migratePostgresJs
   await migrate(db as never, { migrationsFolder })
+  await seedCronJobSchedules(db as { execute: (query: unknown) => Promise<unknown> })
 }

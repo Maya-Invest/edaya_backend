@@ -1,14 +1,12 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import type { CleanupTarget } from './parse-cleanup-args'
 import process from 'node:process'
+import { isStagingSeedApiUrl } from '../support/resolve-seed-env'
 
 export function inferCleanupTargetFromEnv(): CleanupTarget {
-  const apiUrl = process.env['SEED_API_URL']
-    ?? process.env['STAGING_API_URL']
-    ?? process.env['BETTER_AUTH_URL']
-    ?? ''
+  const stagingApiUrl = process.env['SEED_STAGING_API_URL']?.trim()
 
-  if (apiUrl.includes('api-staging.')) {
+  if (stagingApiUrl && isStagingSeedApiUrl(stagingApiUrl)) {
     return 'staging'
   }
 

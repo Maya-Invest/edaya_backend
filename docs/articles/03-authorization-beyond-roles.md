@@ -66,7 +66,7 @@ flowchart LR
 The two checks remain visible in workflow code. Holding the enrollment capability is necessary, but the actor must also have access to both resources involved:
 
 ```ts
-await permissionAction(Permission.ENROLLMENT_CREATE)(actor)
+await operationModule(EnrollmentOperations.create)(actor)
 
 await authorizationPolicy.checkStudentAccess(
   actor,

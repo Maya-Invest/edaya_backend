@@ -1,4 +1,4 @@
-import { scheduleNotificationRecipientBackfillForActor } from "@edaya/core";
+import { scheduleNotificationRecipientBackfillForActor } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -13,7 +13,7 @@ import { schoolApiPath } from "@/lib/school-api/routes/paths";
 const commandMessageSchema = createMessageObjectSchema();
 
 const effectiveGrantsResponseSchema = z.object({
-  kind: z.enum(["staff", "guardian", "student"]),
+  kind: z.enum(["staff", "guardian", "student", "teacher"]),
   actorId: z.string(),
   schoolId: z.string(),
   assuranceLevel: z.enum(["standard", "verified", "strong", "service"]),

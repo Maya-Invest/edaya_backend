@@ -1,9 +1,5 @@
-import type { EffectiveGrants, InteractiveActorMetadata, Permission, ScopeGrant } from "@edaya/core";
-import {
-  isInteractiveActor,
-  legacyScopeGrantsFromScopeIdsByPermission,
-  mergeScopeGrants,
-} from "@edaya/core";
+import type { EffectiveGrants, InteractiveActorMetadata, Permission, ScopeGrant } from "@edaya/authorization";
+import { ALL_GUARDIAN_CAPABILITIES, ALL_HOMEROOM_CAPABILITIES, ALL_STUDENT_CAPABILITIES, ALL_TEACHING_CAPABILITIES, effectiveGrantsForActor, isInteractiveActor } from "@edaya/authorization";
 
 export interface SerializedEffectiveGrants {
   permissions: string[];
@@ -19,6 +15,8 @@ export interface SerializedActorAuthorization {
   schoolId: string;
   assuranceLevel: InteractiveActorMetadata["assuranceLevel"];
   effectiveGrants: SerializedEffectiveGrants;
+  capabilities?: string[];
+  scope?: Record<string, unknown>;
 }
 
 function serializeScopeIdsByPermission(
@@ -36,14 +34,9 @@ function serializeScopeIdsByPermission(
 }
 
 export function serializeEffectiveGrants(grants: EffectiveGrants): SerializedEffectiveGrants {
-  const scopeGrants = mergeScopeGrants([
-    ...grants.scopeGrants,
-    ...legacyScopeGrantsFromScopeIdsByPermission(grants.scopeIdsByPermission),
-  ]);
-
   return {
     permissions: [...grants.permissions],
-    scopeGrants: scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
+    scopeGrants: grants.scopeGrants.map(({ permission, scopeType, scopeEntityIds }) => ({
       permission,
       scopeType,
       scopeEntityIds: [...scopeEntityIds],
@@ -55,13 +48,52 @@ export function serializeEffectiveGrants(grants: EffectiveGrants): SerializedEff
 }
 
 export function serializeActorAuthorization(actor: InteractiveActorMetadata): SerializedActorAuthorization {
-  return {
+  const base = {
     kind: actor.kind,
     actorId: actor.actorId,
     schoolId: actor.schoolId,
     assuranceLevel: actor.assuranceLevel,
-    effectiveGrants: serializeEffectiveGrants(actor.effectiveGrants),
+    effectiveGrants: serializeEffectiveGrants(effectiveGrantsForActor(actor)),
   };
+
+  if (actor.kind === "guardian") {
+    return {
+      ...base,
+      capabilities: [...ALL_GUARDIAN_CAPABILITIES],
+      scope: {
+        studentIds: [...actor.guardianScope.studentIds],
+        classGroupIds: [...actor.guardianScope.classGroupIds],
+      },
+    };
+  }
+
+  if (actor.kind === "student") {
+    return {
+      ...base,
+      capabilities: [...ALL_STUDENT_CAPABILITIES],
+      scope: {
+        studentId: actor.studentScope.studentId,
+        ...(actor.studentScope.classGroupId ? { classGroupId: actor.studentScope.classGroupId } : {}),
+      },
+    };
+  }
+
+  if (actor.kind === "teacher") {
+    return {
+      ...base,
+      capabilities: [...ALL_TEACHING_CAPABILITIES, ...ALL_HOMEROOM_CAPABILITIES],
+      scope: {
+        teaching: {
+          classSubjectIds: [...actor.teacherScope.teaching.classSubjectIds],
+        },
+        homeroom: {
+          classGroupIds: [...actor.teacherScope.homeroom.classGroupIds],
+        },
+      },
+    };
+  }
+
+  return base;
 }
 
 export function requireInteractiveActor(actor: unknown): InteractiveActorMetadata | null {

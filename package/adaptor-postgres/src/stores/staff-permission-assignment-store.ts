@@ -1,4 +1,4 @@
-import type { Permission } from '@edaya/core'
+import type { Permission } from '@edaya/authorization'
 import { StaffPermissionAssignment } from '@edaya/core'
 import * as schema from '../postgres-schema'
 import { PostgresStore } from '../postgres-store'

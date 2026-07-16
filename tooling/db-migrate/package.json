@@ -6,14 +6,6 @@
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "migrate": "drizzle-kit migrate --config drizzle.school.config.ts",
-    "migrate:full": "bun ./scripts/migrate-full.ts",
-    "migrate:hyperdrive": "bun ./scripts/migrate-hyperdrive.ts",
-    "migrate:production": "bun ./scripts/migrate-production.ts",
-    "migrate:staging": "bun ./scripts/migrate-staging.ts",
-    "migrate:auth": "bun ./scripts/auth-migrate.ts",
-    "migrate:staff-access": "bun ./scripts/migrate-staff-access-to-permissions.ts",
-    "repair-journal": "bun ./scripts/repair-drizzle-journal.ts",
     "lint": "eslint scripts drizzle.school.config.ts",
     "lint:fix": "eslint scripts drizzle.school.config.ts --fix",
     "test": "bun test --pass-with-no-tests"
@@ -22,7 +14,7 @@
     "@edaya/adaptor-auth": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/core": "workspace:*",
-    "@electric-sql/pglite": "^0.3.14",
+    "@electric-sql/pglite": "^0.4.6",
     "drizzle-orm": "^0.39.0",
     "postgres": "^3.4.4"
   },

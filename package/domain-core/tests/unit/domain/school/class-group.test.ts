@@ -1,5 +1,5 @@
+import { AttendanceMode, ClassGroup } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { AttendanceMode, ClassGroup } from '../../../../src/domain/school/class-group'
 
 describe('ClassGroup entity', () => {
   const baseArgs = {

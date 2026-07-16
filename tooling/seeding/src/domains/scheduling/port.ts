@@ -1,7 +1,4 @@
-import type {
-  DayOfWeek,
-  ResourceKind,
-} from '@edaya/core'
+import type { DayOfWeek, ResourceKind, ScheduleKind } from '@edaya/core'
 
 export interface ResourceSeedRecord {
   id: string
@@ -16,12 +13,20 @@ export interface ScheduleSeedRecord {
   id: string
   schoolId: string
   classGroupId: string
+  scheduleKind?: ScheduleKind
   classSubjectId?: string
+  activityId?: string
   title: string
   isRecurring: boolean
   dayOfWeek: DayOfWeek
   startTime: string
   endTime: string
+}
+
+export interface ClassResourceAssignmentSeedRecord {
+  id: string
+  resourceId: string
+  classGroupId: string
 }
 
 export interface LessonSessionStaffAssignmentSeedRecord {
@@ -52,6 +57,7 @@ export interface SchedulingSeedPort {
   createSchedule: (record: ScheduleSeedRecord) => Promise<void>
   materializeSchedule: (input: { scheduleId: string }) => Promise<void>
   assignStaffToLessonSession: (record: LessonSessionStaffAssignmentSeedRecord) => Promise<void>
+  assignResourceToClass: (record: ClassResourceAssignmentSeedRecord) => Promise<void>
   assignResourceToLessonSession: (record: LessonSessionResourceAssignmentSeedRecord) => Promise<void>
   recordLessonSessionProgress: (record: LessonSessionProgressSeedRecord) => Promise<void>
 }

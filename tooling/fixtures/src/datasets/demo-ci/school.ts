@@ -1,16 +1,7 @@
-import type {
-  AcademicPeriodInput,
-  AcademicYearInput,
-  ClassGroupInput,
-  ClassSubjectInput,
-  GradeLevelInput,
-  PeriodDefinitionInput,
-  SchoolInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
-import { SubjectCategory, SubjectColor } from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
+import { AttendanceMode, DayOfWeek, SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
+import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 
 export const demoCiSchool = {
   id: DEMO_CI_SCHOOL_ID,
@@ -18,6 +9,7 @@ export const demoCiSchool = {
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
+  timetableMinDayGapSameSubject: 1,
 } satisfies SchoolInput
 
 export const demoCiAcademicYear = {
@@ -63,7 +55,7 @@ export const demoCiGradeLevels = [
   { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: '3ème', cycle: 'Collège', order: 4 },
 ] as const satisfies readonly GradeLevelInput[]
 
-export const demoCiPeriodDefinitions = [
+const demoCiDailyPeriodDefinitions = [
   { id: 'ci-pd-1', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 1', order: 1, startTime: '07:30', endTime: '08:15', isBreak: false },
   { id: 'ci-pd-2', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 2', order: 2, startTime: '08:15', endTime: '09:00', isBreak: false },
   { id: 'ci-pd-break-am', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Récréation', order: 3, startTime: '09:00', endTime: '09:15', isBreak: true },
@@ -75,12 +67,24 @@ export const demoCiPeriodDefinitions = [
   { id: 'ci-pd-7', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 7', order: 9, startTime: '13:45', endTime: '14:30', isBreak: false },
   { id: 'ci-pd-break-pm', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Récréation', order: 10, startTime: '14:30', endTime: '14:45', isBreak: true },
   { id: 'ci-pd-8', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, label: 'Période 8', order: 11, startTime: '14:45', endTime: '15:30', isBreak: false },
-] as const satisfies readonly PeriodDefinitionInput[]
+] as const
+
+const demoCiWeekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday] as const
+
+export const demoCiPeriodDefinitions = demoCiWeekdays.flatMap(dayOfWeek =>
+  demoCiDailyPeriodDefinitions.map(period => ({
+    ...period,
+    id: dayOfWeek === DayOfWeek.Monday ? period.id : `${period.id}__${dayOfWeek}`,
+    dayOfWeek,
+    isTeachingSlot: true,
+  }))) satisfies readonly PeriodDefinitionInput[]
 
 export const demoCiClassGroups = [
-  { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème A', capacity: 35, homeroomStaffId: 'ci-st3' },
-  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème B', capacity: 35, homeroomStaffId: 'ci-st2' },
+  { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème A', capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème B', capacity: 35, attendanceMode: AttendanceMode.Daily },
   { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: '5ème A', capacity: 35, homeroomStaffId: 'ci-st3' },
+  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: '4ème A', capacity: 35 },
+  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: '3ème A', capacity: 35 },
 ] as const satisfies readonly ClassGroupInput[]
 
 /** Matières du collège ivoirien (cf. template ci-college). */
@@ -95,18 +99,21 @@ export const demoCiSubjects = [
   { id: 'ci-subj-eps', schoolId: DEMO_CI_SCHOOL_ID, name: 'Éducation Physique et Sportive', code: 'EPS', defaultCoefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
 ] as const satisfies readonly SubjectInput[]
 
-export const demoCiSubjectMatters = [
-  { id: 'ci-sm-fr', subjectId: 'ci-subj-fr', name: 'Programme officiel', description: 'Lecture, grammaire et expression écrite selon le programme du MENA-CI.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'ci-sm-math', subjectId: 'ci-subj-math', name: 'Programme officiel', description: 'Arithmétique, géométrie plane et initiation aux probabilités.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'ci-sm-pc', subjectId: 'ci-subj-pc', name: 'Programme officiel', description: 'Forces, matière et électricité de base.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-svt', subjectId: 'ci-subj-svt', name: 'Programme officiel', description: 'Fonctionnement du corps humain et environnement ivoirien.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-ang', subjectId: 'ci-subj-ang', name: 'Programme officiel', description: 'Compréhension orale et écrite, vocabulaire scolaire.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-hg', subjectId: 'ci-subj-hg', name: 'Programme officiel', description: 'Histoire de l\'Afrique et géographie de la Côte d\'Ivoire.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'ci-sm-edhc', subjectId: 'ci-subj-edhc', name: 'Programme officiel', description: 'Citoyenneté, droits de l\'enfant et vie en société.', sequenceOrder: 1, estimatedHours: 2 },
-  { id: 'ci-sm-eps', subjectId: 'ci-subj-eps', name: 'Programme officiel', description: 'Athlétisme, sports collectifs et éducation à la santé.', sequenceOrder: 1, estimatedHours: 2 },
-] as const satisfies readonly SubjectMatterInput[]
+export const demoCiSubjectMatters = buildCatalogSubjectMatters(
+  ciCollegeSubjectMatterCatalog,
+  {
+    'ci-subj-fr': 'ci-sm-fr-',
+    'ci-subj-math': 'ci-sm-math-',
+    'ci-subj-pc': 'ci-sm-pc-',
+    'ci-subj-svt': 'ci-sm-svt-',
+    'ci-subj-ang': 'ci-sm-ang-',
+    'ci-subj-hg': 'ci-sm-hg-',
+    'ci-subj-edhc': 'ci-sm-edhc-',
+    'ci-subj-eps': 'ci-sm-eps-',
+  },
+) satisfies readonly SubjectMatterInput[]
 
-export const demoCiClassSubjects = [
+const demoCiClassSubjectDefinitions = [
   { id: 'ci-cs-6a-fr', classGroupId: 'ci-6a', subjectId: 'ci-subj-fr', coefficient: 3 },
   { id: 'ci-cs-6a-math', classGroupId: 'ci-6a', subjectId: 'ci-subj-math', coefficient: 2 },
   { id: 'ci-cs-6a-hg', classGroupId: 'ci-6a', subjectId: 'ci-subj-hg', coefficient: 2 },
@@ -126,4 +133,28 @@ export const demoCiClassSubjects = [
   { id: 'ci-cs-5a-hg', classGroupId: 'ci-5a', subjectId: 'ci-subj-hg', coefficient: 2 },
   { id: 'ci-cs-5a-ang', classGroupId: 'ci-5a', subjectId: 'ci-subj-ang', coefficient: 2 },
   { id: 'ci-cs-5a-eps', classGroupId: 'ci-5a', subjectId: 'ci-subj-eps', coefficient: 1 },
-] as const satisfies readonly ClassSubjectInput[]
+  { id: 'ci-cs-4a-fr', classGroupId: 'ci-4a', subjectId: 'ci-subj-fr', coefficient: 3 },
+  { id: 'ci-cs-4a-math', classGroupId: 'ci-4a', subjectId: 'ci-subj-math', coefficient: 2 },
+  { id: 'ci-cs-4a-pc', classGroupId: 'ci-4a', subjectId: 'ci-subj-pc', coefficient: 2 },
+  { id: 'ci-cs-4a-svt', classGroupId: 'ci-4a', subjectId: 'ci-subj-svt', coefficient: 2 },
+  { id: 'ci-cs-4a-hg', classGroupId: 'ci-4a', subjectId: 'ci-subj-hg', coefficient: 2 },
+  { id: 'ci-cs-4a-ang', classGroupId: 'ci-4a', subjectId: 'ci-subj-ang', coefficient: 2 },
+  { id: 'ci-cs-4a-eps', classGroupId: 'ci-4a', subjectId: 'ci-subj-eps', coefficient: 1 },
+  { id: 'ci-cs-3a-fr', classGroupId: 'ci-3a', subjectId: 'ci-subj-fr', coefficient: 3 },
+  { id: 'ci-cs-3a-math', classGroupId: 'ci-3a', subjectId: 'ci-subj-math', coefficient: 2 },
+  { id: 'ci-cs-3a-pc', classGroupId: 'ci-3a', subjectId: 'ci-subj-pc', coefficient: 2 },
+  { id: 'ci-cs-3a-svt', classGroupId: 'ci-3a', subjectId: 'ci-subj-svt', coefficient: 2 },
+  { id: 'ci-cs-3a-hg', classGroupId: 'ci-3a', subjectId: 'ci-subj-hg', coefficient: 2 },
+  { id: 'ci-cs-3a-ang', classGroupId: 'ci-3a', subjectId: 'ci-subj-ang', coefficient: 2 },
+  { id: 'ci-cs-3a-eps', classGroupId: 'ci-3a', subjectId: 'ci-subj-eps', coefficient: 1 },
+] as const
+
+export const demoCiClassSubjects = demoCiClassSubjectDefinitions.map(classSubject => ({
+  ...classSubject,
+  periodsPerWeek: classSubject.subjectId === 'ci-subj-math'
+    ? 4
+    : Math.max(2, classSubject.coefficient + 1),
+  ...(classSubject.subjectId === 'ci-subj-math'
+    ? { minPeriodSpan: 1, maxPeriodSpan: 2 }
+    : {}),
+})) satisfies readonly ClassSubjectInput[]

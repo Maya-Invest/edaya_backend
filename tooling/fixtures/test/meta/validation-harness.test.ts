@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { seedManifestEntitiesByStatus } from '../../src/meta/entity-manifest'
-import { countStudents } from '../../src/meta/fixture-counts'
+import { countGuardians, countStudents } from '../../src/meta/fixture-counts'
 import { resolveDevSeedContext } from '../../src/meta/resolve-dev-seed-context'
 import {
   assertSeedManifestComplete,
@@ -22,6 +22,6 @@ describe('seed validation harness', () => {
     expect(targets.length).toBeGreaterThan(40)
     expect(counts.students).toBe(countStudents(dataset))
     expect(targets.find(target => target.entity === 'students')?.minCount).toBe(countStudents(dataset))
-    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBeGreaterThanOrEqual(20)
+    expect(targets.find(target => target.entity === 'guardians')?.minCount).toBe(countGuardians(dataset))
   })
 })

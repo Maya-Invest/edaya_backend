@@ -147,6 +147,20 @@ async function checkSignIn(
   return { id: 'S5', label: 'Auth sign-in', status: 'passed' }
 }
 
+async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | undefined> {
+  const { response, body } = await client.jsonRequest<{
+    session?: { id?: string }
+    user?: { email?: string }
+  }>('/auth/get-session')
+
+  if (response.ok && body?.session && body?.user) {
+    const email = body.user.email ?? 'unknown'
+    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo seed --staging\``
+  }
+
+  return undefined
+}
+
 async function checkEffectiveGrants(client: HttpSeedClient): Promise<SmokeCheckResult> {
   const { response, body } = await client.jsonRequest<{
     kind?: string
@@ -154,11 +168,15 @@ async function checkEffectiveGrants(client: HttpSeedClient): Promise<SmokeCheckR
   }>('/core/authorization/effective-grants')
 
   if (!response.ok) {
+    const missingActor = response.status === 401
+      ? await diagnoseMissingActor(client)
+      : undefined
+
     return {
       id: 'S6',
       label: 'Effective grants',
       status: 'failed',
-      detail: `${response.status} ${truncateBody(JSON.stringify(body ?? {}))}`,
+      detail: missingActor ?? `${response.status} ${truncateBody(JSON.stringify(body ?? {}))}`,
     }
   }
 
@@ -190,7 +208,9 @@ async function checkServiceAccount(apiUrl: string, apiKey: string): Promise<Smok
       id: 'S7',
       label: 'Service account entity access',
       status: 'failed',
-      detail: `${response.status}`,
+      detail: response.status === 401 || response.status === 500
+        ? `${response.status} — service account key may be missing on staging; run \`bun repo seed --staging\``
+        : `${response.status}`,
     }
   }
 
@@ -211,11 +231,15 @@ async function checkSeededSchool(client: HttpSeedClient): Promise<SmokeCheckResu
   })
 
   if (!response.ok) {
+    const missingActor = response.status === 401
+      ? await diagnoseMissingActor(client)
+      : undefined
+
     return {
       id: 'S8',
       label: 'Hyperdrive seeded data',
       status: 'failed',
-      detail: `${response.status}`,
+      detail: missingActor ?? `${response.status}`,
     }
   }
 
@@ -236,7 +260,7 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   const env = loadSmokeStagingEnv()
   const staffEmail = env.staffEmail || MINIMAL_AUTH_FIXTURE_STAFF_EMAIL
   const staffPassword = env.staffPassword || DEV_AUTH_PASSWORD
-  const client = new HttpSeedClient({ baseUrl: env.apiUrl })
+  const client = new HttpSeedClient({ baseUrl: env.apiUrl, appOrigin: env.appOrigin })
   const checks: SmokeCheckResult[] = []
 
   checks.push(await checkHealth(client))

@@ -153,7 +153,7 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
             '<p id="auth-status">Better Auth session is active for '
             + (session.email ?? session.userId)
             + ', but no linked school actor was found.</p>'
-            + '<p>Run <code>bun run seed:auth:link</code> from the repo root, or sign in with a seeded staff account such as '
+            + '<p>Run <code>bun repo seed --scope auth:link</code> from the repo root, or sign in with a seeded staff account such as '
             + '<code>c.moreau@school.edu</code>.</p>'
             + '<button type="button" id="graphiql-logout">Sign out</button>';
           banner.style.background = '#fde8e8';

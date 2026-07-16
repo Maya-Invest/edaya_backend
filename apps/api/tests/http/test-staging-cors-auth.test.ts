@@ -61,6 +61,24 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
     expect(response.headers.get("access-control-allow-credentials")).toBe("true");
   });
 
+  it("allows portal actor headers used by Flutter web clients", async () => {
+    const app = createApp();
+    app.route("/", indexRouter);
+
+    const response = await app.fetch(new Request("https://api.edaya.test/core/entities/academic-years/list", {
+      method: "OPTIONS",
+      headers: {
+        "Origin": "http://localhost:52733",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,x-academic-year-id,x-actor-kind",
+      },
+    }), stagingEnv);
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-headers")).toContain("X-Actor-Kind");
+    expect(response.headers.get("access-control-allow-headers")).toContain("X-Academic-Year-Id");
+  });
+
   it("sets Better Auth session cookies on the configured parent domain", async () => {
     const auth = createBetterAuth(db, stagingEnv);
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { CORE_ENTITY_KEYS } from "@edaya/core";
+import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { commandMessageResponseSchema, commandResponseByMethod } from "@/lib/school-api/schemas/command-responses";
 import { getQueryOptionFields } from "@/lib/school-api/schemas/helpers";

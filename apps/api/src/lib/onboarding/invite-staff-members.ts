@@ -1,18 +1,7 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ActorMetadata } from "@edaya/core";
-import {
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AuthorizationError,
-  AuthorizationErrorCode,
-  BusinessRuleViolationError,
-  createBootstrapStaffActorMetadata,
-  Permission,
-  permissionAction,
-  permissionRowsFromTemplatePermissions,
-  StaffMember,
-  StaffPermissionAssignment,
-} from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from "@edaya/core";
+import { AccessControlOperations, AuthorizationError, AuthorizationErrorCode, createBootstrapStaffActorMetadata, operationModule, permissionRowsFromTemplatePermissions } from "@edaya/authorization";
 import { randomUUID } from "node:crypto";
 import {
   getStaffInvitePermissionPreset,
@@ -20,8 +9,9 @@ import {
 import {
   ACCESS_ROLE_ID_BY_INVITE_ROLE,
   isOnboardingStaffInviteRoleKey,
-  type OnboardingStaffInviteRoleKey,
+
 } from "./staff-invite-roles";
+import type { OnboardingStaffInviteRoleKey } from "./staff-invite-roles";
 
 export interface InviteStaffMemberInput {
   email: string;
@@ -129,7 +119,7 @@ async function assertCanManageOnboardingInvites(
     return;
   }
 
-  permissionAction(Permission.ACCESS_CONTROL_ASSIGN)(actor);
+  await operationModule(AccessControlOperations.assign)(actor);
 }
 
 async function rejectOwnerEmailInvites(

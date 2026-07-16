@@ -1,4 +1,5 @@
-import type { ActorMetadata, SchoolRepositories, SchoolService } from '@edaya/core'
+import type { ActorMetadata } from '@edaya/authorization'
+import type { SchoolRepositories, SchoolService } from '@edaya/service'
 
 export interface SeedApplication {
   repositories: SchoolRepositories

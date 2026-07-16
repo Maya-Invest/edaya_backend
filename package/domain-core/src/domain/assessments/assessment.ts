@@ -1,11 +1,7 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { assertNoClassGroupScheduleConflict } from '../../application/workflows/schedule-conflicts'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
+
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
 
 export enum AssessmentKind {
@@ -148,78 +144,5 @@ export class Assessment {
 
   get isInClassTimetableCandidate(): boolean {
     return !this.isHomework && !this.dueAt
-  }
-}
-
-export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.assessments,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.GRADE_READ), readByIds((actor, ids) => policy.checkAssessmentAccess(actor, ids))),
-    write: write(permissionAction(Permission.GRADE_INPUT), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateAssessmentSave,
-    },
-    atomicExecution,
-  })
-
-async function validateAssessmentSave(
-  assessment: Assessment,
-  existing: Assessment | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [classGroup, classSubject, period, lessonSession] = await Promise.all([
-    repositories.classGroups.findById(assessment.classGroupId),
-    repositories.classSubjects.findById(assessment.classSubjectId),
-    repositories.academicPeriods.findById(assessment.periodId),
-    assessment.lessonSessionId ? repositories.lessonSessions.findById(assessment.lessonSessionId) : Promise.resolve(undefined),
-  ])
-  if (
-    !classGroup
-    || !classSubject
-    || classSubject.classGroupId !== classGroup.id
-    || !period
-    || period.schoolId !== classGroup.schoolId
-    || period.academicYearId !== classGroup.academicYearId
-    || (assessment.lessonSessionId && (
-      !lessonSession
-      || lessonSession.classGroupId !== classGroup.id
-      || lessonSession.classSubjectId !== assessment.classSubjectId
-    ))
-  ) {
-    denyResourceAccess()
-  }
-
-  if (classSubject.isOffered === false) {
-    throw new BusinessRuleViolationError(
-      'CLASS_SUBJECT_NOT_OFFERED',
-      `Class subject ${classSubject.id} is not offered and cannot be assessed`,
-    )
-  }
-
-  if (
-    assessment.startsAt
-    && assessment.endsAt
-    && assessment.kind !== AssessmentKind.Homework
-  ) {
-    const school = await repositories.schools.findById(classGroup.schoolId)
-    if (school?.enforceScheduleConflicts) {
-      await assertNoClassGroupScheduleConflict(repositories, {
-        classGroupId: assessment.classGroupId,
-        startsAt: assessment.startsAt,
-        endsAt: assessment.endsAt,
-        excludeAssessmentId: existing?.id,
-      })
-    }
-  }
-
-  if (existing && !existing.completedAt && assessment.completedAt) {
-    const results = await repositories.assessmentResults.list({ assessmentId: assessment.id })
-    if (results.length > 0) {
-      throw new BusinessRuleViolationError(
-        'ASSESSMENT_RESULTS_ALREADY_RECORDED',
-        `Assessment ${assessment.id} cannot be changed after results have been recorded`,
-      )
-    }
   }
 }

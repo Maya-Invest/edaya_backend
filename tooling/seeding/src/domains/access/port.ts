@@ -1,4 +1,4 @@
-import type { Permission, ScopeGrantInput } from '@edaya/core'
+import type { Permission, ScopeGrantInput } from '@edaya/authorization'
 
 export interface StaffPermissionAssignmentSeedRecord {
   id: string
@@ -27,7 +27,6 @@ export interface AccessSeedPort {
   saveStaffAssignment: (record: StaffAssignmentSeedRecord) => Promise<void>
 }
 
-/** @deprecated Preset permission list used when expanding dev seeds. */
 export interface AccessRolePresetRecord {
   id: string
   schoolId: string
@@ -35,7 +34,6 @@ export interface AccessRolePresetRecord {
   permissions: readonly Permission[]
 }
 
-/** @deprecated Used only to expand preset rows into permission assignments. */
 export interface StaffRoleAssignmentPresetRecord {
   staffId: string
   schoolId: string

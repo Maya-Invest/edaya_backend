@@ -3,6 +3,7 @@ import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import {
   createServiceAccountRequestSchema,
   createServiceAccountResponseSchema,
+  rotateServiceAccountKeyRequestSchema,
   rotateServiceAccountKeyResponseSchema,
   serializeServiceAccount,
   serviceAccountResponseSchema,
@@ -11,13 +12,7 @@ import {
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import {
-  createServiceAccount,
-  listServiceAccounts,
-  revokeServiceAccount,
-  rotateServiceAccountKey,
-  updateServiceAccount,
-} from "@edaya/core";
+import { createServiceAccount, listServiceAccounts, revokeServiceAccount, rotateServiceAccountKey, updateServiceAccount } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -119,6 +114,7 @@ export const rotateServiceAccountKeyRoute = createRoute({
   }),
   request: {
     params: z.object({ id: z.string().trim().min(1) }),
+    body: jsonContent(rotateServiceAccountKeyRequestSchema, "Optional fixed API key for dev seeding"),
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(rotateServiceAccountKeyResponseSchema, "Rotated API key"),
@@ -212,7 +208,10 @@ export const rotateServiceAccountKeyHandler: AppRouteHandler<typeof rotateServic
 
   try {
     const { id } = c.req.valid("param");
-    const result = await rotateServiceAccountKey(c.get("schoolApp").repositories, actor, id);
+    const body = c.req.valid("json");
+    const result = await rotateServiceAccountKey(c.get("schoolApp").repositories, actor, id, {
+      ...(body.apiKey ? { apiKey: body.apiKey } : {}),
+    });
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {

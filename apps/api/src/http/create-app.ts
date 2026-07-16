@@ -22,7 +22,16 @@ export default function createApp() {
   app.use(cors({
     origin: (origin, c) => resolveCorsOrigin(origin, c.env),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Cookie", "Authorization", "X-Academic-Year-Id", "X-Request-Id"],
+    allowHeaders: [
+      "Content-Type",
+      "Cookie",
+      "Authorization",
+      "X-Academic-Year-Id",
+      "X-Actor-Kind",
+      "X-Actor-Id",
+      "X-School-Id",
+      "X-Request-Id",
+    ],
     credentials: true,
   }));
   app.use(dependenciesInjection);

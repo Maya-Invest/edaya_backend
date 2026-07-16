@@ -83,6 +83,16 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     }
   }
 
+  const localLoader = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/env/local-loader.ts')
+  if (localLoader) {
+    if (localLoader.includes('loadEnvFile(".dev.vars")') || localLoader.includes('loadEnvFile(\'.dev.vars\')')) {
+      violations.push({
+        label: 'local env loader',
+        message: 'local-loader.ts must not load apps/api/.dev.vars (Wrangler-only)',
+      })
+    }
+  }
+
   const fileStorage = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/adapters/file-storage.ts')
   if (fileStorage) {
     if (!/switch\s*\(\s*env\.RUNTIME\s*\)/.test(fileStorage)) {
@@ -110,10 +120,16 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
 
   const startLocalDev = readRepoFile(repoRoot, 'tooling/repo/dev/start-local-dev.ts')
   if (startLocalDev) {
-    if (!startLocalDev.includes('@edaya/local-files')) {
+    if (!startLocalDev.includes('@edaya/local-files-server')) {
       violations.push({
         label: 'local dev orchestrator',
-        message: 'start-local-dev.ts must start @edaya/local-files with bun dev',
+        message: 'start-local-dev.ts must start @edaya/local-files-server with bun repo dev',
+      })
+    }
+    if (startLocalDev.includes('.dev.vars')) {
+      violations.push({
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not load apps/api/.dev.vars (Wrangler-only)',
       })
     }
     if (startLocalDev.includes('isR2FileStorageConfigured')) {

@@ -11,6 +11,20 @@ export interface AuthHandler {
   api: {
     getSession: (args: { headers: Headers }) => Promise<unknown>
   }
+  $context?: Promise<{
+    internalAdapter: {
+      updateUser: (userId: string, data: { emailVerified?: boolean }) => Promise<unknown>
+    }
+  }>
+}
+
+async function markAuthUserEmailVerified(auth: AuthHandler, subjectId: string): Promise<void> {
+  if (!auth.$context) {
+    return
+  }
+
+  const context = await auth.$context
+  await context.internalAdapter.updateUser(subjectId, { emailVerified: true })
 }
 
 function collectSetCookieHeaders(response: Response): string[] {
@@ -97,11 +111,13 @@ async function ensureAuthUser(
   if (signInResponse.ok) {
     const userId = await readSessionUserId(auth, signInResponse)
     if (userId) {
+      await markAuthUserEmailVerified(auth, userId)
       return userId
     }
 
     const recoveredUserId = await lookupAuthUserIdByEmail(auth, baseUrl, account.email, account.password)
     if (recoveredUserId) {
+      await markAuthUserEmailVerified(auth, recoveredUserId)
       return recoveredUserId
     }
   }
@@ -110,6 +126,7 @@ async function ensureAuthUser(
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      'x-edaya-seed-provision': '1',
     },
     body: JSON.stringify({
       email: account.email,
@@ -121,6 +138,7 @@ async function ensureAuthUser(
   if (!signUpResponse.ok) {
     const existingUserId = await lookupAuthUserIdByEmail(auth, baseUrl, account.email, account.password)
     if (existingUserId) {
+      await markAuthUserEmailVerified(auth, existingUserId)
       return existingUserId
     }
 
@@ -133,6 +151,7 @@ async function ensureAuthUser(
     throw new Error(`Better Auth sign-up for ${account.email} did not return a user id`)
   }
 
+  await markAuthUserEmailVerified(auth, userId)
   return userId
 }
 

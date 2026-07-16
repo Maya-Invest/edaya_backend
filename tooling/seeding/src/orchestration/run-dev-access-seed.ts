@@ -4,11 +4,9 @@ import type {
   StaffRoleAssignmentPresetRecord,
 } from '../domains/access/port'
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import {
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  permissionRowsFromTemplatePermissions,
-} from '@edaya/core'
+import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromTemplatePermissions } from '@edaya/authorization'
 import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
@@ -22,6 +20,7 @@ async function seedStaffPermissionAssignments(
   port: AccessSeedPort,
   accessRolePresets: readonly AccessRolePresetRecord[],
   staffRoleAssignmentPresets: readonly StaffRoleAssignmentPresetRecord[],
+  onProgress?: () => void,
 ): Promise<number> {
   const presetsById = new Map(accessRolePresets.map(role => [role.id, role]))
   let count = 0
@@ -47,7 +46,34 @@ async function seedStaffPermissionAssignments(
         status: 'active',
       })
       count += 1
+      onProgress?.()
     }
+  }
+
+  return count
+}
+
+function countStaffPermissionAssignments(
+  accessRolePresets: readonly AccessRolePresetRecord[],
+  staffRoleAssignmentPresets: readonly StaffRoleAssignmentPresetRecord[],
+): number {
+  const presetsById = new Map(accessRolePresets.map(role => [role.id, role]))
+  let count = 0
+
+  for (const assignment of staffRoleAssignmentPresets) {
+    const role = presetsById.get(assignment.roleId)
+    if (!role) {
+      continue
+    }
+
+    const rows = permissionRowsFromTemplatePermissions(
+      assignment.staffId,
+      assignment.schoolId,
+      assignment.academicYearId,
+      role.permissions,
+      assignment.scopeGrants ?? [],
+    )
+    count += rows.length
   }
 
   return count
@@ -67,6 +93,7 @@ export interface RunDevAccessSeedOptions {
   beforeAssignments?: () => Promise<void>
   /** When false, skip class-subject teacher assignments (integration light fixture). */
   includeClassSubjectStaffAssignments?: boolean
+  progress?: SeedProgressReporter
 }
 
 /** Access roles only — used before service-account provisioning in HTTP bootstrap. */
@@ -108,31 +135,54 @@ export async function runDevAccessAssignmentsSeedWithPort(
     )
   }
 
-  const permissionAssignments = await seedStaffPermissionAssignments(
-    port,
+  const permissionAssignmentTotal = countStaffPermissionAssignments(
     accessRoleRecords,
     staffRoleAssignmentRecords,
+  ) + baseStaffAssignmentRecords.length + (
+    options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID
+      ? (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0)
+      : 0
   )
 
-  for (const assignment of baseStaffAssignmentRecords) {
-    await port.saveStaffAssignment({
-      ...assignment,
-      permissions: assignment.permissions ?? [...ASSIGNMENT_SCOPED_PERMISSIONS],
-    })
-  }
+  const runAssignments = async (tick: (by?: number) => void) => {
+    const permissionAssignments = await seedStaffPermissionAssignments(
+      port,
+      accessRoleRecords,
+      staffRoleAssignmentRecords,
+      tick,
+    )
 
-  let classSubjectStaffAssignments = 0
-  if (options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID) {
-    for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
-      await port.saveStaffAssignment(assignment)
-      classSubjectStaffAssignments += 1
+    for (const assignment of baseStaffAssignmentRecords) {
+      await port.saveStaffAssignment({
+        ...assignment,
+        permissions: assignment.permissions ?? [...ASSIGNMENT_SCOPED_PERMISSIONS],
+      })
+      tick()
+    }
+
+    let classSubjectStaffAssignments = 0
+    if (options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID) {
+      for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
+        await port.saveStaffAssignment(assignment)
+        classSubjectStaffAssignments += 1
+        tick()
+      }
+    }
+
+    return {
+      permissionAssignments,
+      staffAssignments: baseStaffAssignmentRecords.length + classSubjectStaffAssignments,
     }
   }
 
+  const assignmentCounts = options?.progress
+    ? await options.progress.step(runAssignments, { total: permissionAssignmentTotal })
+    : await runAssignments(() => {})
+
   return {
     status: 'seeded',
-    permissionAssignments,
-    staffAssignments: baseStaffAssignmentRecords.length + classSubjectStaffAssignments,
+    permissionAssignments: assignmentCounts.permissionAssignments,
+    staffAssignments: assignmentCounts.staffAssignments,
   }
 }
 

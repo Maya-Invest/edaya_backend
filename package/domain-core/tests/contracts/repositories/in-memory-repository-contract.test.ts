@@ -1,4 +1,4 @@
-import { createStore } from '../../support/create-test-app'
+import { createStore } from '../../support/in-memory-store'
 import { runBaseRepositoryContract } from './base-repository-contract'
 
 runBaseRepositoryContract(

@@ -97,4 +97,82 @@ describe("createLocalFileStorageApp", () => {
     expect(head?.sizeBytes).toBe(4);
     expect(head?.contentType).toBe("application/pdf");
   });
+
+  it("returns health status", async () => {
+    const response = await fetch(`${baseUrl}/health`);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ status: "ok" });
+  });
+
+  it("rejects upload and download requests without tokens", async () => {
+    await expect(fetch(`${baseUrl}/upload`, { method: "PUT" })).resolves.toMatchObject({ status: 400 });
+    await expect(fetch(`${baseUrl}/download`)).resolves.toMatchObject({ status: 400 });
+  });
+
+  it("rejects invalid upload tokens and content-type mismatches", async () => {
+    await expect(fetch(`${baseUrl}/upload?token=invalid`, {
+      method: "PUT",
+      headers: { "Content-Type": "image/jpeg" },
+      body: new Uint8Array([1]),
+    })).resolves.toMatchObject({ status: 403 });
+
+    const downloadToken = createLocalFileToken(secret, {
+      op: "download",
+      key: "school-1/uploads/staff/staff-1/att-1/photo.jpg",
+      exp: Math.floor(Date.now() / 1000) + 60,
+    });
+
+    await expect(fetch(`${baseUrl}/upload?token=${downloadToken}`, {
+      method: "PUT",
+      headers: { "Content-Type": "image/jpeg" },
+      body: new Uint8Array([1]),
+    })).resolves.toMatchObject({ status: 400 });
+  });
+
+  it("returns not found for missing download objects", async () => {
+    const token = createLocalFileToken(secret, {
+      op: "download",
+      key: "school-1/uploads/missing/file.bin",
+      exp: Math.floor(Date.now() / 1000) + 60,
+    });
+
+    await expect(fetch(`${baseUrl}/download?token=${token}`)).resolves.toMatchObject({ status: 404 });
+  });
+
+  it("guards internal object routes with bearer auth", async () => {
+    await expect(fetch(`${baseUrl}/internal/objects`, { method: "PUT" })).resolves.toMatchObject({ status: 401 });
+    await expect(fetch(`${baseUrl}/internal/objects/metadata`)).resolves.toMatchObject({ status: 401 });
+    await expect(fetch(`${baseUrl}/internal/objects`, { method: "DELETE" })).resolves.toMatchObject({ status: 401 });
+  });
+
+  it("supports internal metadata lookup and deletion", async () => {
+    const key = "school-1/uploads/staff/staff-1/att-3/report.pdf";
+    const authHeaders = {
+      "authorization": `Bearer ${secret}`,
+      "content-type": "application/pdf",
+      "x-storage-key": key,
+    };
+
+    const putResponse = await fetch(`${baseUrl}/internal/objects`, {
+      method: "PUT",
+      headers: authHeaders,
+      body: new Uint8Array([5, 6, 7]),
+    });
+    expect(putResponse.status).toBe(200);
+
+    const metadataResponse = await fetch(`${baseUrl}/internal/objects/metadata?key=${encodeURIComponent(key)}`, {
+      headers: { authorization: `Bearer ${secret}` },
+    });
+    expect(metadataResponse.status).toBe(200);
+    await expect(metadataResponse.json()).resolves.toMatchObject({
+      sizeBytes: 3,
+      contentType: "application/pdf",
+    });
+
+    const deleteResponse = await fetch(`${baseUrl}/internal/objects?key=${encodeURIComponent(key)}`, {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${secret}` },
+    });
+    expect(deleteResponse.status).toBe(204);
+  });
 });

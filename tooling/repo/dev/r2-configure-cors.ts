@@ -8,11 +8,10 @@ import {
   buildBrowserUploadCorsOrigins,
   buildWranglerR2CorsPolicy,
   configureR2BucketCors,
-  isR2FileStorageConfigured,
   resolveR2EndpointFromEnv,
 } from '@edaya/adaptor-r2'
 import { trustedOriginsFromEnv } from '../../../apps/api/src/http/cors.ts'
-import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
+import { loadR2DevEnv } from './load-r2-dev-env.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
@@ -38,12 +37,12 @@ function configureWithWrangler(bucketName: string, corsFile: string): boolean {
 }
 
 async function main() {
-  const env = loadLocalProcessEnv()
-
-  if (!isR2FileStorageConfigured(env)) {
-    console.error(
-      'R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME in apps/api/.dev.vars',
-    )
+  let env
+  try {
+    env = loadR2DevEnv()
+  }
+  catch (error) {
+    console.error(error instanceof Error ? error.message : error)
     process.exit(1)
   }
 
@@ -77,7 +76,7 @@ async function main() {
     console.error(error instanceof Error ? error.message : error)
     console.error('')
     console.error('Could not configure CORS automatically. Either:')
-    console.error('  1. Run `wrangler login`, then retry `bun run configure:r2-cors`')
+    console.error('  1. Run `wrangler login`, then retry `bun repo smoke-test r2` or tooling/repo/dev/r2-configure-cors.ts')
     console.error('  2. Set CORS manually in Cloudflare dashboard (R2 → bucket → Settings → CORS)')
     console.error(`  3. Apply this policy: ${corsFile}`)
     process.exit(1)

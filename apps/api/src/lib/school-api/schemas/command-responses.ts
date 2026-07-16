@@ -3,6 +3,8 @@ import {
   academicPeriodResponseSchema,
   academicYearResponseSchema,
   accountInvitationResponseSchema,
+  activityEnrollmentResponseSchema,
+  activityResponseSchema,
   activitySessionResponseSchema,
   announcementResponseSchema,
   announcementTargetResponseSchema,
@@ -16,8 +18,10 @@ import {
   classSubjectProgressResponseSchema,
   classSubjectResponseSchema,
   definitionResponseSchema,
+  disciplinaryActionResponseSchema,
   enrollmentResponseSchema,
   feeResponseSchema,
+  gradeLevelResponseSchema,
   gradeLevelSubjectMatterResponseSchema,
   gradeLevelSubjectResponseSchema,
   gradeScaleResponseSchema,
@@ -27,7 +31,9 @@ import {
   lessonSessionResponseSchema,
   messageDeliveryResponseSchema,
   paymentResponseSchema,
+  periodDefinitionResponseSchema,
   resourceAssignmentResponseSchema,
+  resourceResponseSchema,
   resultResponseSchema,
   scheduleResponseSchema,
   schoolNotificationTemplatesResponseSchema,
@@ -35,12 +41,16 @@ import {
   sectionResponseSchema,
   staffAssignmentResponseSchema,
   staffMemberResponseSchema,
+  staffPermissionAssignmentResponseSchema,
   studentDisciplinaryActionResponseSchema,
   studentFeeResponseSchema,
   studentHealthProfileResponseSchema,
   studentIncidentInvolvementResponseSchema,
   studentNoteResponseSchema,
   studentResponseSchema,
+  subjectMatterResponseSchema,
+  subjectResponseSchema,
+  teacherResponseSchema,
 } from "./entities";
 
 export const resolveIncidentWithOutcomesResponseSchema = z.object({
@@ -65,6 +75,51 @@ export const attendanceCommandListResponseSchema = z.array(attendanceResponseSch
 export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
 export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
 
+const timetablePlacementSchema = z.object({
+  classSubjectId: z.string().min(1),
+  displayLabel: z.string().min(1),
+  teacherIds: z.array(z.string().min(1)),
+  cell: z.object({
+    date: z.string().date(),
+    weekKey: z.string().date(),
+    weeklyIndex: z.number().int().nonnegative(),
+    periodDefinitionId: z.string().min(1),
+    startsAt: z.string().datetime(),
+    endsAt: z.string().datetime(),
+  }),
+}).openapi("TimetablePlacement");
+
+const unmetTimetableWorkloadSchema = z.object({
+  classSubjectId: z.string().min(1),
+  weekKey: z.string().date(),
+  required: z.number().int().positive(),
+  placed: z.number().int().nonnegative(),
+}).openapi("UnmetTimetableWorkload");
+
+export const generateClassGroupTimetableResponseSchema = z.object({
+  classGroupId: z.string().min(1),
+  sessions: z.array(lessonSessionResponseSchema),
+  placements: z.array(timetablePlacementSchema),
+  unmetWorkloads: z.array(unmetTimetableWorkloadSchema),
+}).openapi("GenerateClassGroupTimetableResponse");
+
+export const generateSchoolTimetableResponseSchema = z.object({
+  academicYearId: z.string().min(1),
+  classGroups: z.array(generateClassGroupTimetableResponseSchema),
+  skippedClassGroupIds: z.array(z.string().min(1)),
+}).openapi("GenerateSchoolTimetableResponse");
+
+export const publishClassGroupTimetableResponseSchema = z.object({
+  classGroupId: z.string().min(1),
+  publishedSessionIds: z.array(z.string().min(1)),
+  skippedSessionIds: z.array(z.string().min(1)),
+}).openapi("PublishClassGroupTimetableResponse");
+
+export const republishClassGroupTimetableResponseSchema = z.object({
+  generation: generateClassGroupTimetableResponseSchema,
+  publication: publishClassGroupTimetableResponseSchema,
+}).openapi("RepublishClassGroupTimetableResponse");
+
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   registerSchool: schoolResponseSchema,
@@ -73,6 +128,11 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   activateAcademicYear: academicYearResponseSchema,
   createAcademicPeriod: academicPeriodResponseSchema,
   publishAcademicPeriod: academicPeriodResponseSchema,
+  configureGradeLevel: gradeLevelResponseSchema,
+  configurePeriodDefinition: periodDefinitionResponseSchema,
+  configureResource: resourceResponseSchema,
+  configureActivity: activityResponseSchema,
+  enrollStudentInActivity: activityEnrollmentResponseSchema,
   createClassGroup: classGroupResponseSchema,
   updateClassGroupConfiguration: classGroupResponseSchema,
   registerStaffMember: staffMemberResponseSchema,
@@ -91,7 +151,56 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
       kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
+    }),
   ]).openapi("LinkActorSubjectResponse"),
+  relinkActorSubject: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("staff"),
+      entity: staffMemberResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("guardian"),
+      entity: guardianResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("student"),
+      entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
+    }),
+  ]).openapi("RelinkActorSubjectResponse"),
+  unlinkActorSubject: z.discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("staff"),
+      entity: staffMemberResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("guardian"),
+      entity: guardianResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("student"),
+      entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
+    }),
+  ]).openapi("UnlinkActorSubjectResponse"),
+  assignStaffPermission: staffPermissionAssignmentResponseSchema,
+  configureSubject: subjectResponseSchema,
+  configureSubjectMatter: subjectMatterResponseSchema,
+  configureDisciplinaryAction: disciplinaryActionResponseSchema,
+  requestAttendanceJustification: attendanceResponseSchema,
+  generateClassGroupTimetable: generateClassGroupTimetableResponseSchema,
+  generateSchoolTimetable: generateSchoolTimetableResponseSchema,
+  publishClassGroupTimetable: publishClassGroupTimetableResponseSchema,
+  republishClassGroupTimetable: republishClassGroupTimetableResponseSchema,
   sendAccountInvitation: z.object({
     invitation: accountInvitationResponseSchema,
     token: z.string(),
@@ -113,6 +222,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     z.object({
       kind: z.literal("student"),
       entity: studentResponseSchema,
+    }),
+    z.object({
+      kind: z.literal("teacher"),
+      entity: teacherResponseSchema,
     }),
   ]).openapi("AcceptAccountInvitationResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,
@@ -147,6 +260,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   assignMatterToGradeLevelSubject: gradeLevelSubjectMatterResponseSchema,
   addCustomClassSubject: classSubjectResponseSchema,
   setClassSubjectOffered: classSubjectResponseSchema,
+  configureClassSubjectTimetable: classSubjectResponseSchema,
   recordLessonSessionProgress: classSubjectProgressResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
   createReportCardDefinition: definitionResponseSchema,
@@ -157,6 +271,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   recordAssessmentResultCompliance: assessmentResultResponseSchema,
   listClassSubjectAssessmentResultsForPeriod: assessmentResultCommandListResponseSchema,
   generateReportCardResult: resultResponseSchema,
+  writeHomeroomReportComment: resultResponseSchema,
   publishReportCardResult: resultResponseSchema,
   recordIncident: incidentResponseSchema,
   addStudentInvolvement: studentIncidentInvolvementResponseSchema,

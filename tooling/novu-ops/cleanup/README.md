@@ -6,15 +6,15 @@ Delete stale Novu subscribers created during local dev, smoke tests, or invitati
 
 ```sh
 # Preview matches (safe)
-bun novu:cleanup -- --transient-invites
-bun novu:cleanup -- --prefix smoke-
+bun repo novu cleanup -- --transient-invites
+bun repo novu cleanup -- --prefix smoke-
 
 # Delete (requires confirmation, or --yes in CI)
-bun novu:cleanup:apply -- --transient-invites --yes
-bun novu:cleanup:apply -- --ids auth-g1,invite:inv-123 --yes
+bun repo novu cleanup apply -- --transient-invites --yes
+bun repo novu cleanup apply -- --ids auth-g1,invite:inv-123 --yes
 
 # Wipe every subscriber in the environment (dev only)
-bun novu:cleanup:apply -- --all --yes
+bun repo novu cleanup apply -- --all --yes
 ```
 
 ## Selectors

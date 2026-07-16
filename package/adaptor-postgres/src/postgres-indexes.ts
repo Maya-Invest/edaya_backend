@@ -1,5 +1,5 @@
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
-import { index } from 'drizzle-orm/pg-core'
+import { index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 function col(table: Record<string, AnyPgColumn>, name: string): AnyPgColumn {
   return table[name]!
@@ -202,6 +202,16 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('incidents_school_id_idx').on(col(table, 'schoolId')),
         index('incidents_class_group_id_idx').on(col(table, 'classGroupId')),
+      ]
+    case 'cron_job_schedules':
+      return [
+        uniqueIndex('cron_job_schedules_job_key_idx').on(col(table, 'jobKey')),
+        index('cron_job_schedules_due_idx').on(col(table, 'enabled'), col(table, 'nextRunAt')),
+      ]
+    case 'teacher_unavailabilities':
+      return [
+        index('teacher_unavailabilities_teacher_id_idx').on(col(table, 'teacherId')),
+        index('teacher_unavailabilities_academic_year_id_idx').on(col(table, 'academicYearId')),
       ]
     default:
       return []

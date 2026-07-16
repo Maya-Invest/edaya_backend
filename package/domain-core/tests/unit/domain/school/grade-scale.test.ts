@@ -1,5 +1,5 @@
+import { GradeScale } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { GradeScale } from '../../../../src/domain/school/grade-scale'
 
 describe('GradeScale entity', () => {
   const baseArgs = {

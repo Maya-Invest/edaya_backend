@@ -1,20 +1,23 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+
 import { refineTimeRangeStrictAfter, timeRangeDurationMinutes } from '../../domain/value-objects/time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
+import { DayOfWeek } from './schedule'
 
 export const periodDefinitionBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   label: z.string().trim().min(1, 'label must not be blank'),
+  dayOfWeek: z.nativeEnum(DayOfWeek),
   order: z.number().int().positive('order must be a strictly positive integer'),
   startTime: zodTimeOfDay('startTime'),
   endTime: zodTimeOfDay('endTime'),
   isBreak: z.boolean().default(false),
+  isTeachingSlot: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -48,21 +51,15 @@ export class PeriodDefinition {
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }
   get label() { return this.data.label }
+  get dayOfWeek() { return this.data.dayOfWeek }
   get order() { return this.data.order }
   get startTime() { return this.data.startTime }
   get endTime() { return this.data.endTime }
   get isBreak() { return this.data.isBreak }
+  get isTeachingSlot() { return this.data.isTeachingSlot }
   get createdAt() { return this.data.createdAt }
 
   get durationMinutes(): number {
     return timeRangeDurationMinutes(this.startTime, this.endTime)
   }
 }
-
-export const periodDefinitionConfig: EntityConfigFactory<PeriodDefinition> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.periodDefinitions,
-    Permission.QUERY_WORKSPACE_READ,
-    Permission.SCHOOL_STRUCTURE_CONFIGURE,
-  )

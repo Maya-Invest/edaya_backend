@@ -77,6 +77,54 @@ describe('findBoundaryViolations', () => {
     }])
   })
 
+  test('reports core imports of school-service', () => {
+    const root = createRepoRoot()
+    writeSource(root, 'package/domain-core/src/foo.ts', `import { SchoolService } from '@edaya/service'\n`)
+
+    expect(findBoundaryViolations([
+      {
+        label: 'core imports school-service',
+        pattern: /from ["']@edaya\/service/,
+        searchPath: 'package/domain-core/src',
+      },
+    ], root)).toEqual([{
+      label: 'core imports school-service',
+      matches: ['package/domain-core/src/foo.ts:1:import { SchoolService } from \'@edaya/service\''],
+    }])
+  })
+
+  test('reports authorization imports of school-service', () => {
+    const root = createRepoRoot()
+    writeSource(root, 'package/authorization/src/policy.ts', `import { staffPermissionAssignmentConfig } from '@edaya/service'\n`)
+
+    expect(findBoundaryViolations([
+      {
+        label: 'authorization imports school-service',
+        pattern: /from ["']@edaya\/service/,
+        searchPath: 'package/authorization/src',
+      },
+    ], root)).toEqual([{
+      label: 'authorization imports school-service',
+      matches: ['package/authorization/src/policy.ts:1:import { staffPermissionAssignmentConfig } from \'@edaya/service\''],
+    }])
+  })
+
+  test('reports core imports of authorization', () => {
+    const root = createRepoRoot()
+    writeSource(root, 'package/domain-core/src/domain/foo.ts', `import { Permission } from '@edaya/authorization'\n`)
+
+    expect(findBoundaryViolations([
+      {
+        label: 'core imports authorization',
+        pattern: /from ["']@edaya\/authorization/,
+        searchPath: 'package/domain-core/src',
+      },
+    ], root)).toEqual([{
+      label: 'core imports authorization',
+      matches: ['package/domain-core/src/domain/foo.ts:1:import { Permission } from \'@edaya/authorization\''],
+    }])
+  })
+
   test('ignores files under excluded directories', () => {
     const root = createRepoRoot()
     writeSource(root, 'apps/api/src/runtime/node_modules/bad.ts', `import { app } from '@/http/app'\n`)

@@ -1,12 +1,12 @@
 import {
-  type GraphQLFieldConfigArgumentMap,
-  type GraphQLFieldConfigMap,
+
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLSchema,
   GraphQLString,
 } from "graphql";
+import type { GraphQLFieldConfigArgumentMap, GraphQLFieldConfigMap } from "graphql";
 import type { Context } from "hono";
 import { coreEntities } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";

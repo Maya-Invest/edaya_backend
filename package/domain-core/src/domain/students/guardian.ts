@@ -1,10 +1,4 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { anyPermissionAction, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { AttachmentOwnerKind } from '../../domain'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
 import { parseDomain, zodDate } from '../shared/utils'
 import {
   GuardianContactMethod,
@@ -135,38 +129,5 @@ export class Guardian {
     const normalizedValue
       = type === GuardianContactMethodType.Email ? value.toLocaleLowerCase() : value
     return `${type}:${normalizedValue}`
-  }
-}
-
-export const guardianConfig: EntityConfigFactory<Guardian> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.guardians,
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.PARENT_UPDATE,
-    readByIds((actor, ids) => input.policy.checkGuardianAccess(actor, ids)),
-  )
-  config.read.checkModule = anyPermissionAction([
-    Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ,
-    Permission.QUERY_GUARDIAN_SELF_READ,
-  ])
-  return {
-    ...config,
-    gates: {
-      preDelete: validateGuardianDelete,
-    },
-  }
-}
-
-async function validateGuardianDelete(
-  guardian: Guardian,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [links, attachments] = await Promise.all([
-    repositories.guardianLinks.list({ guardianId: guardian.id }),
-    repositories.attachments.list({ ownerKind: AttachmentOwnerKind.Guardian, ownerId: guardian.id }),
-  ])
-  if (links.length > 0 || attachments.length > 0) {
-    throw new BusinessRuleViolationError('GUARDIAN_HAS_DEPENDENCIES', `Cannot delete guardian ${guardian.id}: dependent records still exist`)
   }
 }

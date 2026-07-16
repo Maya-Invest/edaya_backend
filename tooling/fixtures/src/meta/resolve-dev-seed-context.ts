@@ -4,22 +4,34 @@ import process from 'node:process'
 import { bulkDataset } from '../datasets/bulk'
 import { bulkCiDataset } from '../datasets/bulk/index-ci'
 import { demoDataset } from '../datasets/demo'
+import { demoCiDataset } from '../datasets/demo-ci'
+import { demoCiSchoolOwnerStaffId } from '../datasets/demo-ci/people'
 import { demoSchoolOwnerStaffId } from '../datasets/demo/people'
-import { DEMO_CENTRAL_SCHOOL_ID } from '../shared/ids'
+import { DEMO_CENTRAL_SCHOOL_ID, DEMO_CI_SCHOOL_ID } from '../shared/ids'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
 } from './dev-auth-fixtures'
+import {
+  DEV_CI_AUTH_GUARDIAN_ACCOUNTS,
+  DEV_CI_AUTH_PASSWORD,
+  DEV_CI_AUTH_STAFF_ACCESS_ROLE_IDS,
+  DEV_CI_AUTH_STAFF_ACCOUNTS,
+  DEV_CI_AUTH_TEACHER_ACCOUNTS,
+  MINIMAL_CI_AUTH_FIXTURE_STAFF_EMAIL,
+  MINIMAL_CI_AUTH_FIXTURE_STAFF_ID,
+} from './dev-auth-fixtures-ci'
 import {
   syncGuardianAuthDisplayNames,
   syncStaffAuthDisplayNames,
 } from './sync-auth-display-names'
 
-export type DevSeedDatasetId = 'ci' | 'central' | 'demo'
+export type DevSeedDatasetId = 'ci' | 'central' | 'demo' | 'demo-ci'
 export interface DevAuthStaffAccount {
   staffId: string
   email: string
@@ -27,6 +39,11 @@ export interface DevAuthStaffAccount {
 }
 export interface DevAuthGuardianAccount {
   guardianId: string
+  email: string
+  name: string
+}
+export interface DevAuthTeacherAccount {
+  teacherId: string
   email: string
   name: string
 }
@@ -39,27 +56,48 @@ export interface DevSeedContext {
   minimalStaffEmail: string
   authPassword: string
   staffAccounts: readonly DevAuthStaffAccount[]
+  teacherAccounts: readonly DevAuthTeacherAccount[]
   guardianAccounts: readonly DevAuthGuardianAccount[]
   staffAccessRoleIds: Record<string, string>
   bootstrapSignInStaffIds: readonly string[]
 }
-const CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st1', 'st3', 'st7'] as const
-/** Reads `SEED_DATASET` (`ci` | `central` | `demo`). Defaults to `central` (local bulk demo). */
+const CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['st5', 'st8', 'st3', 'st7'] as const
+const DEMO_CI_BOOTSTRAP_SIGN_IN_STAFF_IDS = ['ci-st5', 'ci-st8', 'ci-st3', 'ci-st7'] as const
+/** Reads `SEED_DATASET` (`demo-ci` | `ci` | `central` | `demo`). Defaults to `demo-ci` (compact Abidjan collège). */
 export function resolveDevSeedDatasetId(): DevSeedDatasetId {
   const raw = process.env['SEED_DATASET']?.trim().toLowerCase()
   if (raw === 'demo' || raw === 'integration') {
     return 'demo'
   }
-  if (!raw || raw === 'central' || raw === 'legacy' || raw === 'default' || raw === 'local') {
+  if (!raw || raw === 'demo-ci' || raw === 'default' || raw === 'local') {
+    return 'demo-ci'
+  }
+  if (raw === 'central' || raw === 'legacy') {
     return 'central'
   }
-  if (raw === 'ci' || raw === 'civ' || raw === 'cote-divoire' || raw === 'ivory-coast') {
+  if (raw === 'ci' || raw === 'civ' || raw === 'cote-divoire' || raw === 'ivory-coast' || raw === 'bulk-ci') {
     return 'ci'
   }
-  throw new Error(`Unknown SEED_DATASET "${raw}". Expected "central", "ci", or "demo".`)
+  throw new Error(`Unknown SEED_DATASET "${raw}". Expected "demo-ci", "central", "ci", or "demo".`)
 }
 export function resolveDevSeedContext(): DevSeedContext {
   const datasetId = resolveDevSeedDatasetId()
+  if (datasetId === 'demo-ci') {
+    return {
+      datasetId,
+      dataset: demoCiDataset,
+      schoolId: DEMO_CI_SCHOOL_ID,
+      ownerStaffId: demoCiSchoolOwnerStaffId,
+      minimalStaffId: MINIMAL_CI_AUTH_FIXTURE_STAFF_ID,
+      minimalStaffEmail: MINIMAL_CI_AUTH_FIXTURE_STAFF_EMAIL,
+      authPassword: DEV_CI_AUTH_PASSWORD,
+      staffAccounts: DEV_CI_AUTH_STAFF_ACCOUNTS,
+      teacherAccounts: DEV_CI_AUTH_TEACHER_ACCOUNTS,
+      guardianAccounts: DEV_CI_AUTH_GUARDIAN_ACCOUNTS,
+      staffAccessRoleIds: DEV_CI_AUTH_STAFF_ACCESS_ROLE_IDS,
+      bootstrapSignInStaffIds: DEMO_CI_BOOTSTRAP_SIGN_IN_STAFF_IDS,
+    }
+  }
   if (datasetId === 'demo') {
     return {
       datasetId,
@@ -70,6 +108,7 @@ export function resolveDevSeedContext(): DevSeedContext {
       minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       authPassword: DEV_AUTH_PASSWORD,
       staffAccounts: DEV_AUTH_STAFF_ACCOUNTS,
+      teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
       guardianAccounts: DEV_AUTH_GUARDIAN_ACCOUNTS,
       staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
       bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,
@@ -86,6 +125,7 @@ export function resolveDevSeedContext(): DevSeedContext {
       minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
       authPassword: DEV_AUTH_PASSWORD,
       staffAccounts: syncStaffAuthDisplayNames(dataset, DEV_AUTH_STAFF_ACCOUNTS),
+      teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
       guardianAccounts: syncGuardianAuthDisplayNames(dataset, DEV_AUTH_GUARDIAN_ACCOUNTS),
       staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
       bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,
@@ -100,6 +140,7 @@ export function resolveDevSeedContext(): DevSeedContext {
     minimalStaffEmail: MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
     authPassword: DEV_AUTH_PASSWORD,
     staffAccounts: DEV_AUTH_STAFF_ACCOUNTS,
+    teacherAccounts: DEV_AUTH_TEACHER_ACCOUNTS,
     guardianAccounts: DEV_AUTH_GUARDIAN_ACCOUNTS,
     staffAccessRoleIds: DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
     bootstrapSignInStaffIds: CENTRAL_BOOTSTRAP_SIGN_IN_STAFF_IDS,

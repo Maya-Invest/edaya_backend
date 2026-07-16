@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ActivityCategory {
@@ -82,35 +78,4 @@ export class Activity {
   get startDate() { return this.data.startDate }
   get endDate() { return this.data.endDate }
   get createdAt() { return this.data.createdAt }
-}
-
-export const activityConfig: EntityConfigFactory<Activity> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.activities,
-    Permission.QUERY_CALENDAR_READ,
-    Permission.DISCIPLINE_CREATE,
-  )
-  return {
-    ...config,
-    gates: {
-      preDelete: validateActivityDelete,
-    },
-  }
-}
-
-async function validateActivityDelete(
-  activity: Activity,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [studentEnrollments, classEnrollments] = await Promise.all([
-    repositories.activityEnrollments.list({ activityId: activity.id }),
-    repositories.classActivityEnrollments.list({ activityId: activity.id }),
-  ])
-  if (studentEnrollments.length > 0 || classEnrollments.length > 0) {
-    throw new BusinessRuleViolationError(
-      'ACTIVITY_HAS_DEPENDENCIES',
-      `Cannot delete activity ${activity.id}: enrollments still exist`,
-    )
-  }
 }

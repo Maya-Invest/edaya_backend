@@ -1,4 +1,4 @@
-import type { ResourceInput, ScheduleInput } from '@edaya/core'
+import type { ResourceAssignmentInput, ResourceInput, ScheduleInput } from '@edaya/core'
 import type { FixtureSchedulingSessionProgressAnchor, FixtureSchedulingSlot } from '../../types'
 import { DayOfWeek, ResourceKind } from '@edaya/core'
 import { DEMO_CENTRAL_SCHOOL_ID } from '../../../shared/ids'
@@ -60,6 +60,25 @@ export const demoResources = [
     description: 'Lab — Physics',
   },
 ] as const satisfies readonly ResourceInput[]
+
+/** Default homeroom / shared resources for foundation classes (6a, 6b, 5a). */
+export const demoClassResourceAssignments = [
+  {
+    id: 'ra-6a-r6',
+    resourceId: 'r6',
+    classGroupId: '6a',
+  },
+  {
+    id: 'ra-6b-r1',
+    resourceId: 'r1',
+    classGroupId: '6b',
+  },
+  {
+    id: 'ra-5a-r4',
+    resourceId: 'r4',
+    classGroupId: '5a',
+  },
+] as const satisfies readonly ResourceAssignmentInput[]
 
 export const demoSchedules = [
   {
@@ -244,6 +263,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-p1',
@@ -260,6 +280,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-p2',
@@ -276,6 +297,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p3',
     teacherId: 'st3',
+    lessonSessionStaffId: 'st3',
     resourceId: undefined,
     schedule: {
       id: 'sch-p3',
@@ -292,6 +314,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p4',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: 'r2',
     schedule: {
       id: 'sch-p4',
@@ -308,6 +331,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5',
     teacherId: 'st7',
+    lessonSessionStaffId: 'st7',
     resourceId: undefined,
     schedule: {
       id: 'sch-p5',
@@ -324,6 +348,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6',
     teacherId: 'st7',
+    lessonSessionStaffId: 'st7',
     resourceId: 'r3',
     schedule: {
       id: 'sch-p6',
@@ -340,6 +365,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p7',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-p7',
@@ -356,6 +382,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p8',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-p8',
@@ -372,6 +399,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-1',
@@ -388,6 +416,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-2',
@@ -404,6 +433,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-3',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-3',
@@ -420,6 +450,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p6b-4',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-6b-4',
@@ -436,6 +467,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-1',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-1',
@@ -452,6 +484,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-2',
     teacherId: 'st2',
+    lessonSessionStaffId: 'st2',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-2',
@@ -468,6 +501,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-3',
     teacherId: 'st3',
+    lessonSessionStaffId: 'st3',
     resourceId: undefined,
     schedule: {
       id: 'sch-5a-3',
@@ -484,6 +518,7 @@ export const demoSchedulingSlots = [
   {
     slotId: 'p5a-4',
     teacherId: 'st1',
+    lessonSessionStaffId: 'st1',
     resourceId: 'r2',
     schedule: {
       id: 'sch-5a-4',
@@ -502,9 +537,9 @@ export const demoSchedulingSlots = [
 export const demoSchedulingSessionProgressAnchor = {
   progress: {
     id: 'csp-p1',
-    classSubjectMatterId: 'csm-cs-6a-math',
-    completedPercentage: 25,
-    notes: 'Introduced algebra basics.',
+    classSubjectMatterId: 'csm-cs-6a-math-sm-math-algebra',
+    completedPercentage: 35,
+    notes: 'Introduced linear equations and balance method.',
   },
   scheduleId: 'sch-p1',
   dayOfWeek: DayOfWeek.Monday,

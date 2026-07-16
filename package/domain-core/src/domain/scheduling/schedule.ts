@@ -1,12 +1,9 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { zodTimeOfDay } from '../../domain/value-objects/time-of-day'
+
 import { refineTimeRangeStrictAfter } from '../../domain/value-objects/time-range'
-import { isActivityAvailableForClassGroup } from '../school-life/class-activity-enrollment'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ScheduleKind {
@@ -120,61 +117,4 @@ export class Schedule {
   get endTime() { return this.data.endTime }
   get specificDate() { return this.data.specificDate }
   get createdAt() { return this.data.createdAt }
-}
-
-export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.schedules,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.QUERY_TIMETABLE_READ), noopReadAccess),
-    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateScheduleSave,
-    },
-    atomicExecution,
-  })
-
-export async function validateScheduleSave(
-  schedule: Schedule,
-  _existing: Schedule | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const classGroup = await repositories.classGroups.findById(schedule.classGroupId)
-  if (!classGroup || classGroup.schoolId !== schedule.schoolId) {
-    denyResourceAccess()
-  }
-  if (schedule.scheduleKind === ScheduleKind.Lesson) {
-    await requireValidClassSubject(schedule.classSubjectId, schedule.classGroupId, repositories)
-  }
-  if (schedule.scheduleKind === ScheduleKind.Activity && schedule.activityId) {
-    const activity = await repositories.activities.findById(schedule.activityId)
-    if (!activity || activity.schoolId !== schedule.schoolId) {
-      throw new BusinessRuleViolationError('ACTIVITY_REQUIRED', `Activity ${schedule.activityId} is not valid for this school`)
-    }
-    const available = await isActivityAvailableForClassGroup(
-      schedule.activityId,
-      schedule.classGroupId,
-      repositories,
-    )
-    if (!available) {
-      throw new BusinessRuleViolationError(
-        'ACTIVITY_NOT_ENROLLED_IN_CLASS',
-        `Activity ${schedule.activityId} is not enrolled in class group ${schedule.classGroupId}`,
-      )
-    }
-  }
-}
-
-async function requireValidClassSubject(
-  classSubjectId: string | undefined,
-  classGroupId: string,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (!classSubjectId) {
-    return
-  }
-  const classSubject = await repositories.classSubjects.findById(classSubjectId)
-  if (!classSubject || classSubject.classGroupId !== classGroupId) {
-    denyResourceAccess()
-  }
 }

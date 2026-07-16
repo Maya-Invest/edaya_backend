@@ -1,18 +1,17 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
-import { config } from 'dotenv'
-import { expand } from 'dotenv-expand'
+import { loadRepoEnvFile } from '../../../seeding/src/support/load-repo-env'
+import {
+  resolveStagingAppOrigin,
+  resolveStagingSeedApiUrl,
+} from '../../../seeding/src/support/resolve-seed-env'
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const repoRoot = path.resolve(packageRoot, '../..')
-
-const DEFAULT_STAGING_API_URL = 'https://api-staging.edaya.softilab.dev'
-const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
 
 export interface SmokeStagingEnv {
   apiUrl: string
@@ -23,23 +22,13 @@ export interface SmokeStagingEnv {
 }
 
 export function loadSmokeStagingEnv(options?: { loadEnvFile?: boolean }): SmokeStagingEnv {
-  const loadEnvFile = options?.loadEnvFile ?? process.env['SMOKE_STAGING_LOAD_ENV_FILE'] !== '0'
-  const stagingEnvPath = path.join(repoRoot, 'tooling/seeding/.env.staging')
-  if (loadEnvFile && existsSync(stagingEnvPath)) {
-    expand(config({ path: stagingEnvPath }))
+  const shouldLoadEnvFile = options?.loadEnvFile ?? process.env['SMOKE_STAGING_LOAD_ENV_FILE'] !== '0'
+  if (shouldLoadEnvFile) {
+    loadRepoEnvFile(repoRoot)
   }
 
-  const apiUrl = (
-    process.env['STAGING_API_URL']
-    ?? process.env['SEED_API_URL']
-    ?? DEFAULT_STAGING_API_URL
-  ).replace(/\/+$/, '')
-
-  const appOrigin = (
-    process.env['STAGING_APP_ORIGIN']
-    ?? DEFAULT_STAGING_APP_ORIGIN
-  ).replace(/\/+$/, '')
-
+  const apiUrl = resolveStagingSeedApiUrl()
+  const appOrigin = resolveStagingAppOrigin()
   const schoolId = process.env['SEED_SCHOOL_ID']?.trim() || SEED_SCHOOL_ID
 
   return {

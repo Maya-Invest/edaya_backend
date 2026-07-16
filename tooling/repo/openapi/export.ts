@@ -2,14 +2,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import process from 'node:process'
-import app from '../../../apps/api/src/app.ts'
-import { resetApiRuntimesForTests } from '../../../apps/api/src/runtime/local/registry.ts'
-import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
+import appRouter from '../../../apps/api/src/app-router.ts'
+import { createRouter } from '../../../apps/api/src/http/create-app.ts'
+import configureOpenAPI from '../../../apps/api/src/http/openapi.ts'
 import { resolveArgvPath, trackedOpenApiPath } from './paths.ts'
 
 export async function exportOpenApi(outputPath = trackedOpenApiPath): Promise<void> {
-  const env = loadLocalProcessEnv()
-  const res = await app.request('/doc', undefined, env)
+  const app = createRouter()
+  configureOpenAPI(app)
+  app.route('/', appRouter)
+
+  const res = await app.request('/doc')
   if (!res.ok) {
     const body = await res.text()
     throw new Error(`Failed to fetch OpenAPI doc: ${res.status}\nBody: ${body}`)
@@ -18,7 +21,6 @@ export async function exportOpenApi(outputPath = trackedOpenApiPath): Promise<vo
 
   mkdirSync(dirname(outputPath), { recursive: true })
   writeFileSync(outputPath, JSON.stringify(schema, null, 2))
-  await resetApiRuntimesForTests()
 }
 
 if (import.meta.main) {

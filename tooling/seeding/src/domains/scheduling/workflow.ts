@@ -1,5 +1,6 @@
 import type { FixtureDataset, FixtureSchedulingSlot } from '@edaya/fixtures'
 import type { SchedulingSeedPort } from './port'
+import { ScheduleKind } from '@edaya/core'
 import { planningSessionDateForDayOfWeek } from '@edaya/fixtures/meta/dates'
 import { seedDateAndTime } from '../../support/seed-date'
 
@@ -16,6 +17,7 @@ export async function seedDevScheduling(
 ): Promise<void> {
   const resources = dataset.entities.resources ?? []
   const slots = dataset.extensions?.schedulingSlots ?? []
+  const skipLessonSessions = dataset.extensions?.skipLessonSessionSeeding === true
   const anchor = dataset.extensions?.schedulingSessionProgressAnchor
   const academicYearId = dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Fixture dataset must include academicYear for scheduling seed') })()
@@ -31,6 +33,17 @@ export async function seedDevScheduling(
     })
   }
 
+  for (const assignment of dataset.extensions?.classResourceAssignments ?? []) {
+    if (!assignment.classGroupId) {
+      throw new Error(`Class resource assignment ${assignment.id} is missing classGroupId`)
+    }
+    await port.assignResourceToClass({
+      id: assignment.id,
+      resourceId: assignment.resourceId,
+      classGroupId: assignment.classGroupId,
+    })
+  }
+
   for (const slot of slots) {
     const { schedule } = slot
     if (!schedule.dayOfWeek) {
@@ -41,7 +54,9 @@ export async function seedDevScheduling(
       id: schedule.id,
       schoolId: schedule.schoolId,
       classGroupId: schedule.classGroupId,
+      scheduleKind: schedule.scheduleKind,
       classSubjectId: schedule.classSubjectId ?? undefined,
+      activityId: schedule.activityId ?? undefined,
       title: schedule.title,
       isRecurring: schedule.isRecurring,
       dayOfWeek: schedule.dayOfWeek,
@@ -50,22 +65,33 @@ export async function seedDevScheduling(
     })
   }
 
+  if (skipLessonSessions) {
+    return
+  }
+
   for (const slot of slots) {
-    const { schedule, teacherId, resourceId } = slot
+    const { schedule, lessonSessionStaffId, resourceId } = slot
     if (!schedule.dayOfWeek) {
       throw new Error(`Scheduling slot ${slot.slotId} is missing dayOfWeek`)
     }
 
     await port.materializeSchedule({ scheduleId: schedule.id })
+
+    if (schedule.scheduleKind === ScheduleKind.Activity || schedule.activityId) {
+      continue
+    }
+
     const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek)
 
-    await port.assignStaffToLessonSession({
-      id: `sa-${lessonSessionId}-${teacherId}`,
-      staffId: teacherId,
-      academicYearId,
-      responsibility: 'Teacher',
-      lessonSessionId,
-    })
+    if (lessonSessionStaffId) {
+      await port.assignStaffToLessonSession({
+        id: `sa-${lessonSessionId}-${lessonSessionStaffId}`,
+        staffId: lessonSessionStaffId,
+        academicYearId,
+        responsibility: 'Teacher',
+        lessonSessionId,
+      })
+    }
 
     if (resourceId) {
       await port.assignResourceToLessonSession({
@@ -76,17 +102,30 @@ export async function seedDevScheduling(
     }
   }
 
-  if (!anchor) {
+  if (!anchor && !(dataset.extensions?.schedulingSessionProgressAnchors?.length)) {
     return
   }
 
-  const progressLessonSessionId = lessonSessionIdForSlot(anchor.scheduleId, anchor.dayOfWeek)
-  await port.recordLessonSessionProgress({
-    id: anchor.progress.id,
-    classSubjectMatterId: anchor.progress.classSubjectMatterId,
-    lessonSessionId: progressLessonSessionId,
-    completedPercentage: anchor.progress.completedPercentage,
-    notes: anchor.progress.notes,
-    recordedAt: seedDateAndTime(planningSessionDateForDayOfWeek(anchor.dayOfWeek), anchor.recordedAtTime),
-  })
+  const progressAnchors = [
+    ...(dataset.extensions?.schedulingSessionProgressAnchors ?? []),
+    ...(anchor ? [anchor] : []),
+  ]
+
+  for (const progressAnchor of progressAnchors) {
+    const progressLessonSessionId = lessonSessionIdForSlot(
+      progressAnchor.scheduleId,
+      progressAnchor.dayOfWeek,
+    )
+    await port.recordLessonSessionProgress({
+      id: progressAnchor.progress.id,
+      classSubjectMatterId: progressAnchor.progress.classSubjectMatterId,
+      lessonSessionId: progressLessonSessionId,
+      completedPercentage: progressAnchor.progress.completedPercentage,
+      notes: progressAnchor.progress.notes,
+      recordedAt: seedDateAndTime(
+        planningSessionDateForDayOfWeek(progressAnchor.dayOfWeek),
+        progressAnchor.recordedAtTime,
+      ),
+    })
+  }
 }

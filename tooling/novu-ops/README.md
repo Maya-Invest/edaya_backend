@@ -14,7 +14,7 @@ bun run bootstrap:apply        # push to Novu
 bun run bootstrap:validate     # validate catalog only
 ```
 
-From the monorepo root: `bun novu:bootstrap`, `bun novu:bootstrap:apply`, `bun novu:bootstrap:validate`.
+From the monorepo root: `bun repo novu bootstrap`, `bun repo novu bootstrap apply`, `bun repo novu bootstrap validate`.
 
 See [bootstrap/README.md](./bootstrap/README.md).
 
@@ -25,6 +25,6 @@ bun run cleanup -- --transient-invites
 bun run cleanup:apply -- --transient-invites --yes
 ```
 
-From the monorepo root: `bun novu:cleanup`, `bun novu:cleanup:apply`.
+From the monorepo root: `bun repo novu cleanup`, `bun repo novu cleanup apply`.
 
 See [cleanup/README.md](./cleanup/README.md).

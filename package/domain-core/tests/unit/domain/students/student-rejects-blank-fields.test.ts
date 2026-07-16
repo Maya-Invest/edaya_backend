@@ -1,6 +1,5 @@
+import { DomainValidationError, Student, StudentStatus } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
-import { Student, StudentStatus } from '../../../../src/domain/students/student'
 
 describe('Student biographical fields validation', () => {
   it('instantiates successfully with valid inputs', () => {

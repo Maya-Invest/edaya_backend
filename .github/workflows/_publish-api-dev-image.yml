@@ -1,0 +1,70 @@
+name: Publish API dev image
+
+on:
+  workflow_call:
+    outputs:
+      channel:
+        description: Published image channel (staging or production)
+        value: ${{ jobs.publish.outputs.channel }}
+      image:
+        description: Published image name without tag
+        value: ${{ jobs.publish.outputs.image }}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      channel: ${{ steps.meta.outputs.channel }}
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Resolve image tags
+        id: meta
+        run: |
+          OWNER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${{ env.REGISTRY }}/${OWNER}/edaya-api-dev"
+          REF="${GITHUB_REF_NAME}"
+          case "$REF" in
+            main|master)
+              CHANNEL=production
+              ;;
+            *)
+              CHANNEL=staging
+              ;;
+          esac
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: tooling/api-dev-container/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.channel }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,22 +1,17 @@
-import type { EffectiveGrants, InteractiveActorMetadata, SchoolRepositories } from '@edaya/core'
+import type { EffectiveGrants, GuardianScope, InteractiveActorMetadata, StudentScope, TeacherActorScope } from '@edaya/authorization'
+import type { SchoolRepositories } from '@edaya/service'
 import type { MiddlewareHandler } from 'hono'
 import { randomUUID } from 'node:crypto'
-import {
-  ActorAssuranceLevel,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-
-} from '@edaya/core'
+import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, parseInteractiveActorKind, resolveActorScope, resolveInteractiveActorIdentity } from '@edaya/authorization'
 
 export interface AuthSession {
   user: {
     id: string
+    emailVerified?: boolean | null
   }
   session: {
     id?: string
     createdAt: string | Date
-    assuranceLevel?: ActorAssuranceLevel | string
   }
 }
 
@@ -40,23 +35,104 @@ type ActorIdentity
     kind: 'staff'
     schoolId: string
     staffMemberId: string
+    effectiveGrants: EffectiveGrants
   }
   | {
     kind: 'guardian'
     schoolId: string
     guardianId: string
+    guardianScope: GuardianScope
   }
   | {
     kind: 'student'
     schoolId: string
     studentId: string
+    studentScope: StudentScope
+  }
+  | {
+    kind: 'teacher'
+    schoolId: string
+    teacherId: string
+    teacherScope: TeacherActorScope
   }
 
-function normalizeAssuranceLevel(input: unknown): ActorAssuranceLevel {
-  if (input === ActorAssuranceLevel.Verified || input === ActorAssuranceLevel.Strong) {
-    return input
+async function resolveActorIdentity(
+  repos: SchoolRepositories,
+  subjectId: string,
+  academicYearId: string | undefined,
+  resolution: {
+    actorKind?: ReturnType<typeof parseInteractiveActorKind>
+    schoolId?: string
+    actorId?: string
+  },
+): Promise<ActorIdentity | null> {
+  const resolved = await resolveInteractiveActorIdentity(repos, {
+    subjectId,
+    ...(resolution.actorKind ? { actorKind: resolution.actorKind } : {}),
+    ...(resolution.schoolId ? { schoolId: resolution.schoolId } : {}),
+    ...(resolution.actorId ? { actorId: resolution.actorId } : {}),
+  })
+
+  if (!resolved) {
+    return null
   }
-  return ActorAssuranceLevel.Standard
+
+  if (resolved.kind === 'staff') {
+    const effectiveGrants = await repos.authorization.resolveActorGrants({
+      actorId: resolved.actorId,
+      actorType: resolved.kind,
+      schoolId: resolved.schoolId,
+      ...(academicYearId ? { academicYearId } : {}),
+    })
+
+    return {
+      kind: 'staff',
+      schoolId: resolved.schoolId,
+      staffMemberId: resolved.actorId,
+      effectiveGrants,
+    }
+  }
+
+  const scope = await resolveActorScope({
+    actorKind: resolved.kind,
+    actorId: resolved.actorId,
+    schoolId: resolved.schoolId,
+    repositories: repos,
+    ...(academicYearId ? { academicYearId } : {}),
+  })
+
+  if (resolved.kind === 'guardian') {
+    return {
+      kind: 'guardian',
+      schoolId: resolved.schoolId,
+      guardianId: resolved.actorId,
+      guardianScope: scope as GuardianScope,
+    }
+  }
+
+  if (resolved.kind === 'student') {
+    return {
+      kind: 'student',
+      schoolId: resolved.schoolId,
+      studentId: resolved.actorId,
+      studentScope: scope as StudentScope,
+    }
+  }
+
+  return {
+    kind: 'teacher',
+    schoolId: resolved.schoolId,
+    teacherId: resolved.actorId,
+    teacherScope: scope as TeacherActorScope,
+  }
+}
+
+function resolveAssuranceFromEmailVerified(
+  emailVerified: boolean | undefined | null,
+): ActorAssuranceLevel {
+  return emailVerified === true
+    ? ActorAssuranceLevel.Verified
+    : ActorAssuranceLevel.Standard
 }
 
 function normalizeAuthSession(input: AuthSession | null | undefined) {
@@ -77,81 +153,18 @@ function normalizeAuthSession(input: AuthSession | null | undefined) {
     return null
   }
 
+  const emailVerified = input.user.emailVerified === true
+
   return {
     user: {
       id: input.user.id,
+      emailVerified,
     },
     session: {
       ...(input.session.id ? { id: input.session.id } : {}),
       createdAt: authenticatedAt,
-      assuranceLevel: normalizeAssuranceLevel(input.session.assuranceLevel),
+      assuranceLevel: resolveAssuranceFromEmailVerified(emailVerified),
     },
-  }
-}
-
-async function resolveActorIdentity(
-  repos: SchoolRepositories,
-  subjectId: string,
-  academicYearId: string | undefined,
-): Promise<(ActorIdentity & { effectiveGrants: EffectiveGrants }) | null> {
-  const [staff, guardian, student] = await Promise.all([
-    repos.staffMembers.findOne({ subjectId }),
-    repos.guardians.findOne({ subjectId }),
-    repos.students.findOne({ subjectId }),
-  ])
-
-  const identities: ActorIdentity[] = []
-
-  if (staff) {
-    identities.push({
-      kind: 'staff',
-      schoolId: staff.schoolId,
-      staffMemberId: staff.id,
-    })
-  }
-
-  if (guardian) {
-    identities.push({
-      kind: 'guardian',
-      schoolId: guardian.schoolId,
-      guardianId: guardian.id,
-    })
-  }
-
-  if (student) {
-    identities.push({
-      kind: 'student',
-      schoolId: student.schoolId,
-      studentId: student.id,
-    })
-  }
-
-  if (identities.length !== 1) {
-    return null
-  }
-
-  const [identity] = identities
-  if (!identity) {
-    return null
-  }
-
-  const actorId
-    = identity.kind === 'staff'
-      ? identity.staffMemberId
-      : identity.kind === 'guardian'
-        ? identity.guardianId
-        : identity.studentId
-
-  const effectiveGrants = await repos.authorization.resolveActorGrants({
-    actorId,
-    actorType: identity.kind,
-    schoolId: identity.schoolId,
-    ...(academicYearId ? { academicYearId } : {}),
-  })
-
-  return {
-    ...identity,
-    effectiveGrants,
   }
 }
 
@@ -182,6 +195,11 @@ export function createSessionActorMiddleware(
       c.var.schoolApp.repositories,
       session.user.id,
       academicYearId,
+      {
+        actorKind: parseInteractiveActorKind(c.req.header('x-actor-kind')),
+        schoolId: c.req.header('x-school-id')?.trim() || undefined,
+        actorId: c.req.header('x-actor-id')?.trim() || undefined,
+      },
     )
 
     if (!identity) {
@@ -204,7 +222,7 @@ export function createSessionActorMiddleware(
           ...interactiveContext,
           schoolId: identity.schoolId,
           guardianId: identity.guardianId,
-          effectiveGrants: identity.effectiveGrants,
+          guardianScope: identity.guardianScope,
         }))
         break
       case 'student':
@@ -212,7 +230,15 @@ export function createSessionActorMiddleware(
           ...interactiveContext,
           schoolId: identity.schoolId,
           studentId: identity.studentId,
-          effectiveGrants: identity.effectiveGrants,
+          studentScope: identity.studentScope,
+        }))
+        break
+      case 'teacher':
+        c.set('actor', createTeacherActorMetadata({
+          ...interactiveContext,
+          schoolId: identity.schoolId,
+          teacherId: identity.teacherId,
+          teacherScope: identity.teacherScope,
         }))
         break
     }

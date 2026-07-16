@@ -1,6 +1,5 @@
+import { DomainValidationError, Fee, FeeCategory } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { Fee, FeeCategory } from '../../../../src/domain/finances/fee'
-import { DomainValidationError } from '../../../../src/domain/shared/utils'
 
 describe('Fee amount and installment validations', () => {
   const baseArgs = {

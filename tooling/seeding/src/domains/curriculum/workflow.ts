@@ -43,6 +43,7 @@ export async function seedDevCurriculum(
       academicYearId: offering.academicYearId,
       subjectId: offering.subjectId,
       coefficient: offering.coefficient,
+      periodsPerWeek: offering.periodsPerWeek,
       classSubjectIdsByClassGroupId: offering.classSubjectIdsByClassGroupId,
     })
   }

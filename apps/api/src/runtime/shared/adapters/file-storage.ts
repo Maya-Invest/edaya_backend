@@ -1,7 +1,4 @@
-import {
-  createInMemoryFileStorage,
-  noOpFileStorage,
-} from "@edaya/core";
+import { createInMemoryFileStorage, noOpFileStorage } from "@edaya/core";
 import {
   createLocalFileStorageFromEnv,
   resolveLocalFileStorageConfig,

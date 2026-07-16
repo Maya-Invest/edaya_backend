@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const classSubjectSchema = z.object({
@@ -12,6 +8,9 @@ export const classSubjectSchema = z.object({
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
   gradeLevelSubjectId: z.string().trim().min(1, 'gradeLevelSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
+  periodsPerWeek: z.number().int().positive('periodsPerWeek must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  minPeriodSpan: z.number().int().positive('minPeriodSpan must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
+  maxPeriodSpan: z.number().int().positive('maxPeriodSpan must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
   completedPercentage: z.preprocess(
     val => val === null ? undefined : val,
     z.number().min(0, 'completedPercentage must be a finite, non-negative number').max(100, 'completedPercentage must be between 0 and 100').default(0),
@@ -42,93 +41,10 @@ export class ClassSubject {
   get subjectId() { return this.data.subjectId }
   get gradeLevelSubjectId() { return this.data.gradeLevelSubjectId ?? undefined }
   get coefficient() { return this.data.coefficient ?? undefined }
+  get periodsPerWeek() { return this.data.periodsPerWeek ?? undefined }
+  get minPeriodSpan() { return this.data.minPeriodSpan ?? undefined }
+  get maxPeriodSpan() { return this.data.maxPeriodSpan ?? undefined }
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
   get isOffered() { return this.data.isOffered }
-}
-
-export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.classSubjects,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(permissionAction(Permission.QUERY_CLASS_CURRICULUM_READ), noopReadAccess),
-    write: write(permissionAction(Permission.ACADEMIC_PROGRAM_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateClassSubjectSave,
-    },
-    atomicExecution,
-  })
-
-function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
-  return existing.classGroupId === classSubject.classGroupId
-    && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
-    && existing.coefficient === classSubject.coefficient
-    && existing.isOffered === classSubject.isOffered
-    && classSubject.completedPercentage !== existing.completedPercentage
-}
-
-function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
-  return existing.classGroupId === classSubject.classGroupId
-    && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
-    && existing.coefficient === classSubject.coefficient
-    && existing.completedPercentage === classSubject.completedPercentage
-    && classSubject.isOffered !== existing.isOffered
-}
-
-function isCustomClassSubject(classSubject: ClassSubject): boolean {
-  return !classSubject.gradeLevelSubjectId
-}
-
-async function validateClassSubjectSave(
-  classSubject: ClassSubject,
-  existing: ClassSubject | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (!repositories.classGroups || !repositories.subjects) {
-    return
-  }
-  const [classGroup, subject] = await Promise.all([
-    repositories.classGroups.findById(classSubject.classGroupId),
-    repositories.subjects.findById(classSubject.subjectId),
-  ])
-  if (!classGroup || !subject || subject.schoolId !== classGroup.schoolId) {
-    denyResourceAccess()
-  }
-  if (existing && isProgressOnlyClassSubjectUpdate(existing, classSubject)) {
-    return
-  }
-  if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
-    return
-  }
-  if (!classSubject.gradeLevelSubjectId) {
-    if (existing && !isCustomClassSubject(existing)) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_INHERITED_FROM_GRADE_LEVEL',
-        'Inherited class subjects cannot be converted to custom subjects',
-      )
-    }
-    const duplicate = await repositories.classSubjects.findOne({
-      classGroupId: classSubject.classGroupId,
-      subjectId: classSubject.subjectId,
-    })
-    if (duplicate && duplicate.id !== classSubject.id) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_ALREADY_EXISTS',
-        `Subject ${classSubject.subjectId} is already offered in class group ${classSubject.classGroupId}`,
-      )
-    }
-    return
-  }
-  if (!existing) {
-    throw new BusinessRuleViolationError(
-      'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-      'Class subjects are inherited from grade level allocation and cannot be created directly',
-    )
-  }
-  throw new BusinessRuleViolationError(
-    'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-    'Inherited class subjects can only be updated through grade level sync or setClassSubjectOffered',
-  )
 }

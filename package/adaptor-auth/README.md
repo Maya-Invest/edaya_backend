@@ -8,7 +8,7 @@ Migration apply scripts live in `@edaya/db-migrate` (`tooling/db-migrate`).
 
 | Runtime | Auth storage |
 |---------|----------------|
-| **Worker** | Postgres via Hyperdrive (`auth` schema on the school Neon DB) |
+| **Worker** | Postgres via Hyperdrive (`auth` schema on the school Neon DB); optional KV secondary storage for session hot reads |
 | **Node dev / tests** | Same PGlite/Postgres database as school (`auth` schema) |
 
 ```sh
@@ -16,7 +16,7 @@ bun run auth:generate-schema   # Regenerate Drizzle schema after Better Auth plu
 bun run auth:db:generate       # Generate SQL migration from schema changes (requires DATABASE_URL)
 ```
 
-From the monorepo root: `bun auth:generate-schema`, `bun db:generate:auth`.
+From the monorepo root: `bun repo db generate --auth`, `bun repo db generate --auth`.
 
 ## Usage
 
@@ -25,7 +25,8 @@ import { authSchema, runMigrations } from '@edaya/adaptor-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 
 await runMigrations(db, { driver: 'pglite' }) // PGlite local/tests
-// or { driver: 'postgres-js' } with drizzle-orm/postgres-js
+// or { driver: 'node-postgres' } with drizzle-orm/node-postgres (Worker / Hyperdrive)
+// or { driver: 'postgres-js' } with drizzle-orm/postgres-js (CLI migrate tooling)
 
 betterAuth({
   database: drizzleAdapter(db, {
@@ -34,6 +35,19 @@ betterAuth({
     schemaName: 'auth',
   }),
   // ...
+})
+
+// Worker session acceleration (optional):
+import {
+  createKvAuthSecondaryStorage,
+  toBetterAuthSecondaryStorage,
+  buildBetterAuthSessionOptions,
+} from '@edaya/adaptor-auth'
+
+const secondaryStorage = createKvAuthSecondaryStorage(env.AUTH_KV)
+betterAuth({
+  secondaryStorage: toBetterAuthSecondaryStorage(secondaryStorage),
+  session: buildBetterAuthSessionOptions({ secondaryStorage }),
 })
 ```
 

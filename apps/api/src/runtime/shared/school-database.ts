@@ -1,14 +1,18 @@
+import { mkdirSync } from "node:fs";
 import type { DatabaseHandle } from "@/runtime/types";
 
-/** Required for Hyperdrive query caching (see Cloudflare postgres.js docs). */
-export const postgresDriverOptions = {
-  prepare: true,
-  fetch_types: false,
+/** Worker/Hyperdrive pool options for node-postgres (`pg`). */
+export const postgresPoolOptions = {
+  max: 1,
 } as const;
 
 export async function createPgliteSchoolDatabase(dataDir: string | null): Promise<DatabaseHandle> {
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
+
+  if (dataDir) {
+    mkdirSync(dataDir, { recursive: true });
+  }
 
   const pglite = dataDir ? new PGlite(dataDir) : new PGlite();
   return {
@@ -20,16 +24,22 @@ export async function createPgliteSchoolDatabase(dataDir: string | null): Promis
   };
 }
 
-export async function createPostgresSchoolDatabase(databaseUrl: string): Promise<DatabaseHandle> {
-  const { drizzle } = await import("drizzle-orm/postgres-js");
-  const { default: postgres } = await import("postgres");
+export async function createPostgresSchoolDatabase(
+  databaseUrl: string,
+  options: { max?: number } = {},
+): Promise<DatabaseHandle> {
+  const { drizzle } = await import("drizzle-orm/node-postgres");
+  const { default: pg } = await import("pg");
 
-  const sqlClient = postgres(databaseUrl, postgresDriverOptions);
+  const pool = new pg.Pool({
+    connectionString: databaseUrl,
+    max: options.max ?? postgresPoolOptions.max,
+  });
   return {
-    db: drizzle(sqlClient),
-    sqlClient,
+    db: drizzle(pool),
+    sqlClient: pool,
     async dispose() {
-      await sqlClient.end({ timeout: 5 });
+      await pool.end();
     },
   };
 }

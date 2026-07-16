@@ -27,12 +27,12 @@ describe('database-url-guard', () => {
     )).not.toThrow()
   })
 
-  it('allows wipe when SEED_API_URL targets staging', () => {
-    process.env['SEED_API_URL'] = 'https://api-staging.edaya.softilab.dev'
+  it('allows wipe when SEED_STAGING_API_URL targets staging', () => {
+    process.env['SEED_STAGING_API_URL'] = 'https://staging.api.edaya.app'
     expect(() => assertStagingSchoolDatabaseUrl(
       'postgres://user:pass@ep-ancient-darkness-ahtbz5cm.us-east-1.aws.neon.tech/neondb',
     )).not.toThrow()
-    delete process.env['SEED_API_URL']
+    delete process.env['SEED_STAGING_API_URL']
   })
 
   it('blocks non-staging urls unless explicitly allowed', () => {

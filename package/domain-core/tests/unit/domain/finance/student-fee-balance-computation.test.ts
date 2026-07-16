@@ -1,5 +1,5 @@
+import { buildStudentFeeSummary, FeeStatus, StudentFee } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { buildStudentFeeSummary, FeeStatus, StudentFee } from '../../../../src/domain/finances/student-fee'
 
 describe('Student fee balance computation and state transitions', () => {
   const baseArgs = {

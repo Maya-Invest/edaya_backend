@@ -1,11 +1,9 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, classGroupLinkedTenant, config, permissionAction, read, readByIds, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { dateTimeRangeDurationMinutes, refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
+
 import { parseDomain, zodDate } from '../shared/utils'
+
 import { OccurrenceStatus } from './occurrence-status'
 
 export const activitySessionBaseSchema = z.object({
@@ -84,40 +82,5 @@ export class ActivitySession {
       createdAt: this.createdAt,
       ...changes,
     })
-  }
-}
-
-export const activitySessionConfig: EntityConfigFactory<ActivitySession> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.activitySessions,
-    tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(
-      permissionAction(Permission.QUERY_TIMETABLE_READ),
-      readByIds((actor, ids) => policy.checkActivitySessionAccess(actor, ids)),
-    ),
-    write: write(permissionAction(Permission.TIMETABLE_UPDATE), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
-    gates: {
-      preSave: validateActivitySessionSave,
-    },
-    atomicExecution,
-  })
-
-export async function validateActivitySessionSave(
-  activitySession: ActivitySession,
-  existing: ActivitySession | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  if (existing && (existing.status === OccurrenceStatus.Completed || existing.status === OccurrenceStatus.Cancelled)) {
-    if (
-      activitySession.status !== existing.status
-      || activitySession.startsAt.getTime() !== existing.startsAt.getTime()
-      || activitySession.endsAt.getTime() !== existing.endsAt.getTime()
-    ) {
-      throw new BusinessRuleViolationError('OCCURRENCE_IMMUTABLE', `Activity session ${existing.id} is ${existing.status} and cannot be modified`)
-    }
-  }
-  const activity = await repositories.activities.findById(activitySession.activityId)
-  if (!activity || activity.schoolId !== activitySession.schoolId) {
-    denyResourceAccess()
   }
 }

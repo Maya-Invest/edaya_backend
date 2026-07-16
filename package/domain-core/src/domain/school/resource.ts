@@ -1,9 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { BusinessRuleViolationError } from '../../domain/shared/business-rule-error'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ResourceKind {
@@ -51,29 +47,4 @@ export class Resource {
   get kind() { return this.data.kind }
   get capacity() { return this.data.capacity }
   get createdAt() { return this.data.createdAt }
-}
-
-export const resourceConfig: EntityConfigFactory<Resource> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.resources,
-    Permission.RESOURCE_READ,
-    Permission.RESOURCE_CONFIGURE,
-  )
-  return {
-    ...config,
-    gates: {
-      preDelete: validateResourceDelete,
-    },
-  }
-}
-
-async function validateResourceDelete(
-  resource: Resource,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const assignments = await repositories.resourceAssignments.list({ resourceId: resource.id })
-  if (assignments.length > 0) {
-    throw new BusinessRuleViolationError('RESOURCE_HAS_DEPENDENCIES', `Cannot delete resource ${resource.id}: dependent records still exist`)
-  }
 }

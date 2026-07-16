@@ -1,4 +1,6 @@
-import type { AccountInvitationData, ActorMetadata, CoreEntityKey } from "@edaya/core";
+import type { AccountInvitationData } from "@edaya/core";
+import type { ActorMetadata } from "@edaya/authorization";
+import type { CoreEntityKey } from "@edaya/service";
 import { toPublicAccountInvitationData } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";

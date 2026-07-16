@@ -1,7 +1,5 @@
+import { parseDomain, Permission, scopeGrantSchema } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { Permission } from '../../../src/capabilities/authorization'
-import { parseDomain } from '../../../src/domain/shared/utils'
-import { scopeGrantSchema } from '../../../src/domain/value-objects/scope-grant'
 
 describe('scopeGrant value object', () => {
   test('parses a valid scope grant', () => {

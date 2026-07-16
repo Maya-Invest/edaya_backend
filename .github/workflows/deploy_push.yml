@@ -1,0 +1,131 @@
+name: Push / Merge deploy
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Deploy channel
+        type: choice
+        options: [staging, production]
+        default: staging
+      run_migrate:
+        description: Run database migrations
+        type: boolean
+        default: true
+      deploy_api:
+        description: Deploy API Worker to Cloudflare
+        type: boolean
+        default: true
+      run_publish_api_dev:
+        description: Build and publish edaya-api-dev image
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.plan.outputs.channel }}
+      run_migrate: ${{ steps.plan.outputs.run_migrate }}
+      deploy_api: ${{ steps.plan.outputs.deploy_api }}
+      run_publish_api_dev: ${{ steps.plan.outputs.run_publish_api_dev }}
+      migrate_target: ${{ steps.plan.outputs.migrate_target }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Detect deploy changes
+        uses: dorny/paths-filter@v4
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            api_deploy:
+              - apps/api/**
+              - package/**
+              - package.json
+              - bun.lock
+              - turbo.json
+              - .github/workflows/**
+              - .github/actions/**
+            api_dev_image:
+              - .dockerignore
+              - apps/**
+              - package/**
+              - tooling/**
+              - package.json
+              - bun.lock
+              - bunfig.toml
+              - turbo.json
+
+      - name: Plan jobs
+        id: plan
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CHANNEL="${{ inputs.channel }}"
+            echo "run_migrate=${{ inputs.run_migrate }}" >> "$GITHUB_OUTPUT"
+            echo "deploy_api=${{ inputs.deploy_api }}" >> "$GITHUB_OUTPUT"
+            echo "run_publish_api_dev=${{ inputs.run_publish_api_dev }}" >> "$GITHUB_OUTPUT"
+          else
+            case "$REF_NAME" in
+              main|master) CHANNEL=production ;;
+              *) CHANNEL=staging ;;
+            esac
+            echo "run_migrate=true" >> "$GITHUB_OUTPUT"
+            echo "deploy_api=${{ steps.filter.outputs.api_deploy == 'true' }}" >> "$GITHUB_OUTPUT"
+            echo "run_publish_api_dev=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
+          fi
+
+          case "$CHANNEL" in
+            production) MIGRATE_TARGET=production ;;
+            *) MIGRATE_TARGET=staging ;;
+          esac
+          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+          echo "migrate_target=${MIGRATE_TARGET}" >> "$GITHUB_OUTPUT"
+
+  migrate:
+    needs: gate
+    if: needs.gate.outputs.run_migrate == 'true'
+    uses: ./.github/workflows/_migrate.yml
+    with:
+      migrate_target: ${{ needs.gate.outputs.migrate_target }}
+    secrets:
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+  publish-api-dev-image:
+    needs: gate
+    if: needs.gate.outputs.run_publish_api_dev == 'true'
+    uses: ./.github/workflows/_publish-api-dev-image.yml
+    secrets: inherit
+
+  publish-api-client:
+    needs: gate
+    if: needs.gate.outputs.run_publish_api_dev == 'true'
+    uses: ./.github/workflows/_publish-api-client.yml
+    secrets: inherit
+
+  deploy-api:
+    needs: [gate, migrate]
+    if: >-
+      always() &&
+      needs.gate.outputs.deploy_api == 'true' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    uses: ./.github/workflows/_deploy-api.yml
+    with:
+      channel: ${{ needs.gate.outputs.channel }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -3,20 +3,21 @@ import { spawnSync } from 'node:child_process'
 import process from 'node:process'
 import {
   createR2FileStorageFromEnv,
-  isR2FileStorageConfigured,
   resolveR2EndpointFromEnv,
 } from '@edaya/adaptor-r2'
-import { loadLocalProcessEnv } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
+import { loadR2StagingEnv, r2StagingSecretsPath } from './load-r2-dev-env.ts'
 
 const TEST_BODY = 'r2-credential-check'
 const TEST_CONTENT_TYPE = 'text/plain'
 
 async function main() {
   const curlOnly = process.argv.includes('--curl-only')
-  const env = loadLocalProcessEnv()
-
-  if (!isR2FileStorageConfigured(env)) {
-    console.error('R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME in apps/api/.dev.vars')
+  let env
+  try {
+    env = loadR2StagingEnv()
+  }
+  catch (error) {
+    console.error(error instanceof Error ? error.message : error)
     process.exit(1)
   }
 
@@ -45,7 +46,8 @@ async function main() {
     presigned.uploadUrl,
   ]
 
-  console.log('R2 credential check')
+  console.log('R2 credential check (staging)')
+  console.log(`  secrets:  ${r2StagingSecretsPath}`)
   console.log(`  endpoint: ${endpoint}`)
   console.log(`  bucket:   ${env.R2_BUCKET_NAME}`)
   if (env.R2_ACCOUNT_ID) {

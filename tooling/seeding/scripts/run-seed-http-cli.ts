@@ -1,61 +1,43 @@
 #!/usr/bin/env bun
-/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 
 import type { HttpDevSeedScope } from '../src/http/index.ts'
-import process from 'node:process'
+import type { SeedCliInvocation } from '../src/support/parse-seed-cli.ts'
+import type { SeedHttpTarget } from '../src/support/resolve-seed-env.ts'
 import { resolveActiveSeedSchoolId } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import {
+  resolveProfilePhotoSeedPlan,
+  seedScopeUsesProfilePhotos,
+} from '../src/diagnostics/profile-photo-preflight.ts'
+import {
   HttpSeedClient,
   logHttpDevSeedResults,
-  parseHttpDevSeedScope,
   runHttpDevSeeds,
 } from '../src/http/index.ts'
 import { waitForApi } from '../src/http/wait-for-api.ts'
 import { loadSeedEnvFiles } from '../src/support/load-seed-env.ts'
+import {
+  resolveSeedApiUrl,
+  resolveSeedAppOrigin,
 
-const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-const DEFAULT_STAGING_APP_ORIGIN = 'https://app-staging.edaya.softilab.dev'
+} from '../src/support/resolve-seed-env.ts'
 
-function resolveAppOrigin(baseUrl: string): string {
-  const explicit = process.env['SEED_APP_ORIGIN']?.trim()
-  if (explicit) {
-    return explicit.replace(/\/+$/, '')
-  }
-
-  if (baseUrl.includes('api-staging.')) {
-    return (
-      process.env['STAGING_APP_ORIGIN']?.trim().replace(/\/+$/, '')
-      || DEFAULT_STAGING_APP_ORIGIN
-    )
-  }
-
-  return DEFAULT_LOCAL_APP_ORIGIN
-}
-
-export function resolveSeedHttpConfig() {
+export function resolveSeedHttpConfig(target: SeedHttpTarget) {
   loadSeedEnvFiles()
-  const baseUrl = process.env['SEED_API_URL'] ?? process.env['BETTER_AUTH_URL'] ?? 'http://localhost:9999'
   const schoolId = resolveActiveSeedSchoolId()
   return {
-    baseUrl,
-    appOrigin: resolveAppOrigin(baseUrl),
+    baseUrl: resolveSeedApiUrl(target),
+    appOrigin: resolveSeedAppOrigin(target),
     schoolId,
     serviceAccountApiKey: resolveSeedingApiKeyForSchool(schoolId),
   }
 }
 
-export async function runSeedHttpCli(argv: string[]): Promise<number> {
-  const { baseUrl, appOrigin, serviceAccountApiKey } = resolveSeedHttpConfig()
-
-  let scope: HttpDevSeedScope
-  try {
-    scope = parseHttpDevSeedScope(argv)
-  }
-  catch (error) {
-    console.error(error instanceof Error ? error.message : error)
-    return 1
-  }
+export async function runSeedHttpCli(
+  invocation: Extract<SeedCliInvocation, { kind: 'seed' }>,
+): Promise<number> {
+  const { baseUrl, appOrigin, serviceAccountApiKey } = resolveSeedHttpConfig(invocation.target)
+  const scope: HttpDevSeedScope = invocation.scope
 
   const client = new HttpSeedClient({ baseUrl, appOrigin })
 
@@ -64,16 +46,45 @@ export async function runSeedHttpCli(argv: string[]): Promise<number> {
     await waitForApi(baseUrl)
   }
 
+  let skipProfilePhotos = invocation.skipProfilePhotos
+  let profilePhotosSkipReason: string | undefined
+
+  if (seedScopeUsesProfilePhotos(scope) || (scope === 'validate' && invocation.skipProfilePhotos)) {
+    const plan = await resolveProfilePhotoSeedPlan({
+      apiBaseUrl: baseUrl,
+      skipProfilePhotos: invocation.skipProfilePhotos,
+      requirePhotoUpload: scope === 'profile-pictures',
+    })
+    skipProfilePhotos = !plan.seedProfilePhotos
+    profilePhotosSkipReason = plan.reason
+    if (skipProfilePhotos && plan.reason) {
+      console.log(`Profile photos: ${plan.reason}`)
+    }
+  }
+
   const results = await runHttpDevSeeds({
     client,
     scope,
     serviceAccountApiKey,
     provisionServiceAccount: scope === 'all',
+    skipProfilePhotos: skipProfilePhotos || undefined,
+    skipAttachments: invocation.skipAttachments || undefined,
+    profilePhotosSkipReason,
+    noProgress: invocation.noProgress,
+    repair: scope === 'doctor' ? invocation.repair : undefined,
   })
 
   logHttpDevSeedResults(results)
 
-  if (results.smoke?.status === 'failed' || results.validation?.status === 'failed') {
+  if (
+    results.validation?.status === 'failed'
+    || results.doctor?.status === 'broken'
+    || (
+      results.doctorRepair
+      && results.doctorRepair.repairs.length > 0
+      && results.doctorRepair.after.status !== 'healthy'
+    )
+  ) {
     return 1
   }
 

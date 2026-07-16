@@ -1,16 +1,7 @@
-import type {
-  AcademicPeriodInput,
-  AcademicYearInput,
-  ClassGroupInput,
-  ClassSubjectInput,
-  GradeLevelInput,
-  PeriodDefinitionInput,
-  SchoolInput,
-  SubjectInput,
-  SubjectMatterInput,
-} from '@edaya/core'
-import { SubjectCategory, SubjectColor } from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
+import { DayOfWeek, SubjectCategory, SubjectColor } from '@edaya/core'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, DEMO_CENTRAL_SCHOOL_ID } from '../../shared/ids'
+import { buildCatalogSubjectMatters, centralSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 import { minimalSchool } from '../minimal/school'
 
 export const demoSchool = minimalSchool satisfies SchoolInput
@@ -60,8 +51,8 @@ export const demoGradeLevels = [
   { id: 'gl-t', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale', cycle: 'High School', order: 7 },
 ] as const satisfies readonly GradeLevelInput[]
 
-/** Daily time-slot grid — not trimester labels (`academic-periods`). */
-export const demoPeriodDefinitions = [
+/** Daily template expanded into the Monday-Friday timetable grid. */
+const demoDailyPeriodDefinitions = [
   { id: 'pd-1', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Période 1', order: 1, startTime: '08:00', endTime: '08:45', isBreak: false },
   { id: 'pd-2', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Période 2', order: 2, startTime: '08:45', endTime: '09:30', isBreak: false },
   { id: 'pd-break-am', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Récréation', order: 3, startTime: '09:30', endTime: '09:45', isBreak: true },
@@ -73,7 +64,17 @@ export const demoPeriodDefinitions = [
   { id: 'pd-7', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Période 7', order: 9, startTime: '14:15', endTime: '15:00', isBreak: false },
   { id: 'pd-break-pm', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Récréation', order: 10, startTime: '15:00', endTime: '15:15', isBreak: true },
   { id: 'pd-8', schoolId: DEMO_CENTRAL_SCHOOL_ID, academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID, label: 'Période 8', order: 11, startTime: '15:15', endTime: '16:00', isBreak: false },
-] as const satisfies readonly PeriodDefinitionInput[]
+] as const
+
+const demoWeekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday] as const
+
+export const demoPeriodDefinitions = demoWeekdays.flatMap(dayOfWeek =>
+  demoDailyPeriodDefinitions.map(period => ({
+    ...period,
+    id: dayOfWeek === DayOfWeek.Monday ? period.id : `${period.id}__${dayOfWeek}`,
+    dayOfWeek,
+    isTeachingSlot: !(dayOfWeek === DayOfWeek.Wednesday && period.startTime >= '12:00'),
+  }))) satisfies readonly PeriodDefinitionInput[]
 
 /** Core classes — upper grades and extra offerings live in `people.ts`. */
 export const demoFoundationClassGroups = [
@@ -91,16 +92,26 @@ export const demoFoundationSubjects = [
   { id: 'subj-eps', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Physical Education', code: 'EPS', defaultCoefficient: 1, category: SubjectCategory.Sport, color: SubjectColor.Mint },
 ] as const satisfies readonly SubjectInput[]
 
-export const demoFoundationSubjectMatters = [
-  { id: 'sm-math', subjectId: 'subj-math', name: 'Core programme', description: 'Algebra fundamentals, geometry and problem solving.', sequenceOrder: 1, estimatedHours: 5 },
-  { id: 'sm-fr', subjectId: 'subj-fr', name: 'Core programme', description: 'Reading, writing and analysis of classical texts.', sequenceOrder: 1, estimatedHours: 4 },
-  { id: 'sm-hist', subjectId: 'subj-hist', name: 'Core programme', description: 'Antiquity to medieval Europe; world geography.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-sci', subjectId: 'subj-sci', name: 'Core programme', description: 'Biology, ecology and earth sciences.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-en', subjectId: 'subj-en', name: 'Core programme', description: 'Communication, comprehension and culture.', sequenceOrder: 1, estimatedHours: 3 },
-  { id: 'sm-eps', subjectId: 'subj-eps', name: 'Core programme', description: 'Athletics, team sports and wellbeing.', sequenceOrder: 1, estimatedHours: 2 },
-] as const satisfies readonly SubjectMatterInput[]
+export const demoFoundationSubjectMatters = buildCatalogSubjectMatters(
+  {
+    'subj-math': centralSubjectMatterCatalog['subj-math'],
+    'subj-fr': centralSubjectMatterCatalog['subj-fr'],
+    'subj-hist': centralSubjectMatterCatalog['subj-hist'],
+    'subj-sci': centralSubjectMatterCatalog['subj-sci'],
+    'subj-en': centralSubjectMatterCatalog['subj-en'],
+    'subj-eps': centralSubjectMatterCatalog['subj-eps'],
+  },
+  {
+    'subj-math': 'sm-math-',
+    'subj-fr': 'sm-fr-',
+    'subj-hist': 'sm-hist-',
+    'subj-sci': 'sm-sci-',
+    'subj-en': 'sm-en-',
+    'subj-eps': 'sm-eps-',
+  },
+) satisfies readonly SubjectMatterInput[]
 
-export const demoFoundationClassSubjects = [
+const demoFoundationClassSubjectDefinitions = [
   { id: 'cs-6a-math', classGroupId: '6a', subjectId: 'subj-math', coefficient: 3 },
   { id: 'cs-6a-fr', classGroupId: '6a', subjectId: 'subj-fr', coefficient: 2 },
   { id: 'cs-6a-hist', classGroupId: '6a', subjectId: 'subj-hist', coefficient: 2 },
@@ -115,4 +126,9 @@ export const demoFoundationClassSubjects = [
   { id: 'cs-5a-sci', classGroupId: '5a', subjectId: 'subj-sci', coefficient: 2 },
   { id: 'cs-5a-en', classGroupId: '5a', subjectId: 'subj-en', coefficient: 2 },
   { id: 'cs-5a-eps', classGroupId: '5a', subjectId: 'subj-eps', coefficient: 1 },
-] as const satisfies readonly ClassSubjectInput[]
+] as const
+
+export const demoFoundationClassSubjects = demoFoundationClassSubjectDefinitions.map(classSubject => ({
+  ...classSubject,
+  periodsPerWeek: Math.max(2, classSubject.coefficient + 1),
+})) satisfies readonly ClassSubjectInput[]

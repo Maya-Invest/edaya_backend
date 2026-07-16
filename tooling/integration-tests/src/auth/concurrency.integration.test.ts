@@ -1,16 +1,6 @@
-import {
-  ActorAssuranceLevel,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  AttendanceStatus,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createStudentActorMetadata,
-  GradeLevel,
-  PaymentMethod,
-  Permission,
-  resolveEffectiveGrants,
-  Subject,
-} from '@edaya/core'
+import type { GuardianScope, StudentScope } from '@edaya/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, Permission, resolveActorScope, resolveEffectiveGrants } from '@edaya/authorization'
+import { AttendanceStatus, GradeLevel, PaymentMethod, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -165,16 +155,18 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       repositories: schoolRepositories,
     })
 
-    const guardianGrants = await schoolRepositories.authorization.resolveActorGrants({
+    const guardianScope = await resolveActorScope({
+      actorKind: 'guardian',
       actorId: 'guardian',
-      actorType: 'guardian',
       schoolId: 'school',
+      repositories: schoolRepositories,
     })
 
-    const studentGrants = await schoolRepositories.authorization.resolveActorGrants({
+    const studentScope = await resolveActorScope({
+      actorKind: 'student',
       actorId: 'student',
-      actorType: 'student',
       schoolId: 'school',
+      repositories: schoolRepositories,
     })
 
     // Instantiate concurrent actor-bound facades
@@ -204,7 +196,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       schoolId: 'school',
       requestId: 'guardian-request-303',
       authenticatedAt: new Date(),
-      effectiveGrants: guardianGrants,
+      guardianScope: guardianScope as GuardianScope,
     }))
 
     const studentApp = forActor(createStudentActorMetadata({
@@ -213,7 +205,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       schoolId: 'school',
       requestId: 'student-request-404',
       authenticatedAt: new Date(),
-      effectiveGrants: studentGrants,
+      studentScope: studentScope as StudentScope,
     }))
 
     // Execute multiple overlapping read & write actions concurrently

@@ -1,4 +1,5 @@
 import type { ZodError, ZodType } from 'zod'
+
 import { z } from 'zod'
 
 export class DomainValidationError extends Error {
@@ -10,6 +11,15 @@ export class DomainValidationError extends Error {
 
 export function normalizeDate(value: Date): Date {
   return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()))
+}
+
+/** Stable `YYYY-MM-DD` key for civil calendar dates stored as UTC midnight. */
+export function civilDateKey(value: Date): string {
+  const date = normalizeDate(value)
+  const year = date.getUTCFullYear()
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getUTCDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 export function isSameDate(left: Date, right: Date): boolean {

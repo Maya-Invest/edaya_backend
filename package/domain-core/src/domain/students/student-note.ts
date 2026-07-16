@@ -1,11 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { ActorMetadata, AuthorizationPolicy } from '../../capabilities/authorization'
-import type { StudentClassEnrollment } from '../../domain'
-import type { SchoolRepositories } from '../../ports'
 import { z } from 'zod'
-import { dateTime, directPermissionEntityConfig, readByIds } from '../../application/entities/entity-config'
-import { actorHasSchoolWideGrant, denyResourceAccess, Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum StudentNoteVisibility {
@@ -71,80 +65,4 @@ export class StudentNote {
   get visibility() { return this.data.visibility }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
-}
-
-export const studentNoteConfig: EntityConfigFactory<StudentNote> = (input) => {
-  const config = directPermissionEntityConfig(
-    input,
-    input.repositories.studentNotes,
-    Permission.QUERY_STUDENT_DETAIL_READ,
-    Permission.CLASS_LOGBOOK_UPDATE,
-    readByIds((actor, ids) => input.policy.checkStudentNoteAccess(actor, ids)),
-  )
-  return {
-    ...config,
-    write: {
-      ...config.write,
-      authorizeSave: authorizeStudentNote(input.policy),
-    },
-    gates: {
-      preSave: validateStudentNoteSave,
-    },
-  }
-}
-
-function authorizeStudentNote(policy: AuthorizationPolicy): EntityWriteAuthorization<StudentNote>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    if (existing)
-      await policy.checkStudentNoteAccess(actor, [existing.id])
-  }
-}
-
-export async function validateStudentNoteSave(
-  note: StudentNote,
-  existing: StudentNote | undefined,
-  repositories: SchoolRepositories,
-  actor: ActorMetadata,
-): Promise<void> {
-  const student = await repositories.students.findById(note.studentId)
-  if (!student || student.schoolId !== note.schoolId) {
-    denyResourceAccess()
-  }
-  const staffActorId = requireStaffActorId(actor)
-  if (note.visibility === StudentNoteVisibility.AdminOnly && !hasFullStudentRecordAccess(actor)) {
-    denyResourceAccess()
-  }
-  if (existing) {
-    if (existing.schoolId !== note.schoolId || existing.studentId !== note.studentId || existing.authorStaffId !== note.authorStaffId) {
-      denyResourceAccess()
-    }
-    if (existing.authorStaffId !== staffActorId && !hasFullStudentRecordAccess(actor)) {
-      denyResourceAccess()
-    }
-  }
-}
-
-function requireStaffActorId(actor: ActorMetadata): string {
-  if (actor.kind !== 'staff') {
-    denyResourceAccess()
-  }
-  return actor.staffMemberId
-}
-
-function hasFullStudentRecordAccess(actor: ActorMetadata): boolean {
-  return actorHasSchoolWideGrant(
-    actor,
-    [Permission.QUERY_STUDENT_DETAIL_READ],
-  )
-}
-
-export function progressionDecisionChanged(
-  entity: StudentClassEnrollment,
-  existing: StudentClassEnrollment,
-): boolean {
-  return entity.progressionDecision !== existing.progressionDecision
-    || dateTime(entity.progressionDecidedAt) !== dateTime(existing.progressionDecidedAt)
-    || entity.progressionDecidedBy !== existing.progressionDecidedBy
-    || entity.progressionNotes !== existing.progressionNotes
 }

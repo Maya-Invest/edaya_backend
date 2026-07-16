@@ -1,65 +1,7 @@
 import { z } from "@hono/zod-openapi";
-import {
-  academicPeriodSchema,
-  academicYearSchema,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  announcementSchema,
-  announcementTargetSchema,
-  assessmentResultSchema,
-  assessmentSchema,
-  attachmentSchema,
-  AttendanceJustificationStatus,
-  attendanceRecordSchema,
-  AttendanceStatus,
-  calendarEventSchema,
-  classGroupSchema,
-  classSubjectMatterSchema,
-  classSubjectProgressSchema,
-  classSubjectSchema,
-  gradeScaleRangeSchema as coreGradeScaleRangeSchema,
-  DeadlineComplianceStatus,
-  disciplinaryActionSchema,
-  EnrollmentEndReason,
-  feeSchema,
-  gradeLevelSchema,
-  gradeLevelSubjectMatterSchema,
-  gradeLevelSubjectSchema,
-  gradeScaleSchema,
-  guardianContactMethodSchema,
-  guardianSchema,
-  guardianStudentLinkSchema,
-  IncidentInvolvementRole,
-  incidentSchema,
-  messageDeliverySchema,
-  NOTIFICATION_TEMPLATE_KEYS,
-  paymentSchema,
-  periodDefinitionSchema,
-  ProgressionDecision,
-  reportCardDefinitionSchema,
-  reportCardDefinitionSectionSchema,
-  reportCardResultSchema,
-  resourceAssignmentSchema,
-  resourceSchema,
-  scheduleSchema,
-  // Zod schemas from core
-  schoolSchema,
-  SchoolType,
-  staffAssignmentSchema,
-  staffMemberSchema,
-  staffPermissionAssignmentSchema,
-  studentClassEnrollmentSchema,
-  studentDisciplinaryActionSchema,
-  StudentDisciplinaryActionStatus,
-  studentFeeSchema,
-  studentHealthProfileSchema,
-  studentIncidentInvolvementSchema,
-  studentNoteSchema,
-  studentSchema,
-  StudentStatus,
-  subjectMatterSchema,
-  subjectSchema,
-} from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, feeSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
+  schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentFeeSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectMatterSchema, subjectSchema } from "@edaya/core";
+import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
 
 const optionalText = () => z.string().optional();
@@ -85,6 +27,35 @@ export const subjectMatterConfigCommandSchema = objectFromSchema(subjectMatterSc
 export const disciplinaryActionConfigCommandSchema = objectFromSchema(disciplinaryActionSchema)
   .omit({ schoolId: true })
   .openapi("DisciplinaryActionConfigCommand");
+
+export const activityConfigCommandSchema = objectFromSchema(activitySchema)
+  .omit({ schoolId: true })
+  .openapi("ActivityConfigCommand");
+
+export const activityEnrollmentConfigCommandSchema = objectFromSchema(activityEnrollmentSchema)
+  .openapi("ActivityEnrollmentConfigCommand");
+
+export const relinkActorSubjectCommandSchema = z.object({
+  subjectId: field.id(),
+  staffMemberId: field.id().optional(),
+  guardianId: field.id().optional(),
+  studentId: field.id().optional(),
+  teacherId: field.id().optional(),
+}).superRefine((data, ctx) => {
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
+  if (targetCount !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
+    });
+  }
+}).openapi("RelinkActorSubjectCommand");
+
+export const requestAttendanceJustificationCommandSchema = z.object({
+  studentId: field.id(),
+  attendanceId: field.id(),
+  reason: field.text(),
+}).openapi("RequestAttendanceJustificationCommand");
 
 export const registerSchoolCommandSchema = objectFromSchema(schoolSchema)
   .extend({
@@ -169,15 +140,31 @@ export const linkActorSubjectCommandSchema = z.object({
   staffMemberId: field.id().optional(),
   guardianId: field.id().optional(),
   studentId: field.id().optional(),
+  teacherId: field.id().optional(),
 }).superRefine((data, ctx) => {
-  const targetCount = [data.staffMemberId, data.guardianId, data.studentId].filter(Boolean).length;
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
   if (targetCount !== 1) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Exactly one of staffMemberId, guardianId, or studentId is required",
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
     });
   }
 }).openapi("LinkActorSubjectCommand");
+
+export const unlinkActorSubjectCommandSchema = z.object({
+  staffMemberId: field.id().optional(),
+  guardianId: field.id().optional(),
+  studentId: field.id().optional(),
+  teacherId: field.id().optional(),
+}).superRefine((data, ctx) => {
+  const targetCount = [data.staffMemberId, data.guardianId, data.studentId, data.teacherId].filter(Boolean).length;
+  if (targetCount !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Exactly one of staffMemberId, guardianId, studentId, or teacherId is required",
+    });
+  }
+}).openapi("UnlinkActorSubjectCommand");
 
 export const sendAccountInvitationCommandSchema = z.object({
   kind: field.enumValue(AccountInvitationKind),
@@ -403,6 +390,13 @@ export const setClassSubjectOfferedCommandSchema = z.object({
   isOffered: z.boolean(),
 }).openapi("SetClassSubjectOfferedCommand");
 
+export const configureClassSubjectTimetableCommandSchema = z.object({
+  classSubjectId: field.id(),
+  periodsPerWeek: z.number().int().positive().nullable().optional(),
+  minPeriodSpan: z.number().int().positive().nullable().optional(),
+  maxPeriodSpan: z.number().int().positive().nullable().optional(),
+}).openapi("ConfigureClassSubjectTimetableCommand");
+
 export const assignMatterToClassSubjectCommandSchema = objectFromSchema(classSubjectMatterSchema)
   .omit({ status: true, completedPercentage: true, updatedByStaffId: true, startedAt: true, completedAt: true })
   .openapi("AssignMatterToClassSubjectCommand");
@@ -446,6 +440,46 @@ export const rescheduleOccurrenceCommandSchema = z.object({
   startsAt: field.date(),
   endsAt: field.date(),
 }).openapi("RescheduleOccurrenceCommand");
+
+const timetableGenerationOptionsSchema = z.object({
+  generationMode: z.enum(["weekly", "free"]).optional(),
+  enforceWorkloadFulfillment: z.boolean().optional(),
+  excludeBreakSlots: z.boolean().optional(),
+  minDayGapSameSubject: z.number().int().nonnegative().optional(),
+  preferredPeriodDefinitionIds: z.array(field.id()).optional(),
+  allowUnassignedTeacherPlacements: z.boolean().optional(),
+  useHomeroomTeacherFallback: z.boolean().optional(),
+}).openapi("TimetableGenerationOptions");
+
+const timetablePlacementParametersSchema = z.object({
+  periodsPerWeekByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+  minPeriodSpanByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+  maxPeriodSpanByClassSubjectId: z.record(field.id(), z.number().int().positive()).optional(),
+}).openapi("TimetablePlacementParameters");
+
+export const generateClassGroupTimetableCommandSchema = z.object({
+  classGroupId: field.id(),
+  academicYearId: field.id(),
+  startDate: field.date(),
+  endDate: field.date(),
+  placementParameters: timetablePlacementParametersSchema.optional(),
+  options: timetableGenerationOptionsSchema.optional(),
+}).openapi("GenerateClassGroupTimetableCommand");
+
+export const generateSchoolTimetableCommandSchema = generateClassGroupTimetableCommandSchema
+  .omit({ classGroupId: true })
+  .openapi("GenerateSchoolTimetableCommand");
+
+export const publishClassGroupTimetableCommandSchema = z.object({
+  classGroupId: field.id(),
+  startDate: field.date(),
+  endDate: field.date(),
+  sessionConflictPolicy: z.enum(["fail", "skip"]).optional(),
+}).openapi("PublishClassGroupTimetableCommand");
+
+export const republishClassGroupTimetableCommandSchema = generateClassGroupTimetableCommandSchema
+  .extend({ sessionConflictPolicy: z.enum(["fail", "skip"]).optional() })
+  .openapi("RepublishClassGroupTimetableCommand");
 
 export const recordAttendanceCommandSchema = objectFromSchema(attendanceRecordSchema)
   .omit({
@@ -565,6 +599,11 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
     periodId: field.id(),
   })
   .openapi("GenerateReportCardResultCommand");
+
+export const writeHomeroomReportCommentCommandSchema = z.object({
+  id: field.id(),
+  teacherComment: field.text(),
+}).openapi("WriteHomeroomReportCommentCommand");
 
 export const publishReportCardResultCommandSchema = z.object({
   id: field.id(),

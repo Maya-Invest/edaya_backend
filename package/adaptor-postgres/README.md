@@ -8,7 +8,7 @@ Migration apply scripts for Neon / Hyperdrive and Better Auth D1 live in `@edaya
 
 ```sh
 # Generate SQL migration from schema changes
-bun run db:generate
+bun repo db generate
 
 # Push schema (requires DATABASE_URL)
 DATABASE_URL=postgres://... bun run db:push
@@ -17,14 +17,14 @@ DATABASE_URL=postgres://... bun run db:push
 From the monorepo root:
 
 ```sh
-bun db:generate
+bun repo db generate
 
 # Browse local dev tables (loads apps/api/.env; stop the API first for PGlite)
-bun db:browser:school
-bun db:browser:auth
+bun repo db browser school
+bun repo db browser auth
 ```
 
-Apply migrations with `@edaya/db-migrate` (`bun db:migrate`, `bun db:migrate:hyperdrive`).
+Apply migrations with `@edaya/db-migrate` (`bun repo db migrate staging`, `bun repo db migrate production`).
 
 ## Runtime usage
 
@@ -34,7 +34,7 @@ Apply migrations with `@edaya/db-migrate` (`bun db:migrate`, `bun db:migrate:hyp
 |-------|-------------|
 | `pglite`, `memory`, `memory://` | In-memory (tests) |
 | `pglite:.data/school`, `file://…` | Persisted filesystem directory |
-| `postgres://…` | Real Postgres via `postgres-js` |
+| `postgres://…` | Real Postgres (app/Worker: `node-postgres` / `pg`; CLI migrate: `postgres-js`) |
 
 ```ts
 import {

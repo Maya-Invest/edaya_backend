@@ -1,8 +1,5 @@
+import { ReportCardDefinition, ReportCardDefinitionStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import {
-  ReportCardDefinition,
-  ReportCardDefinitionStatus,
-} from '../../../../src/domain/assessments/report-card-definition'
 
 describe('ReportCardDefinition entity', () => {
   const baseArgs = {

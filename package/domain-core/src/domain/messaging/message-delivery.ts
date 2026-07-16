@@ -1,7 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { config, directSchoolTenant, noopDeleteAccess, noopReadAccess, noopSaveAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum MessageDeliveryChannel {
@@ -16,6 +14,7 @@ export enum MessageDeliveryRecipientKind {
   Staff = 'staff',
   Guardian = 'guardian',
   Student = 'student',
+  Teacher = 'teacher',
 }
 
 export enum MessageDeliveryStatus {
@@ -141,12 +140,3 @@ export function buildDeliverySummary(deliveries: MessageDelivery[]): Announcemen
     return summary
   }, { total: 0, pending: 0, sent: 0, failed: 0, read: 0, cancelled: 0 })
 }
-
-export const messageDeliveryConfig: EntityConfigFactory<MessageDelivery> = ({ repositories, atomicExecution }) =>
-  config({
-    repository: repositories.messageDeliveries,
-    tenant: directSchoolTenant(),
-    read: read(permissionAction(Permission.QUERY_COMMUNICATIONS_READ), noopReadAccess),
-    write: write(permissionAction(Permission.COMMUNICATION_CREATE), noopSaveAccess, noopDeleteAccess),
-    atomicExecution,
-  })

@@ -1,12 +1,28 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { AttachmentsSeedPort } from './port'
+import { AttachmentOwnerKind } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
+
+function shouldSeedAttachment(
+  attachment: NonNullable<FixtureDataset['entities']['attachments']>[number],
+  dataset: FixtureDataset,
+): boolean {
+  if (
+    dataset.extensions?.skipLessonSessionSeeding
+    && attachment.ownerKind === AttachmentOwnerKind.AttendanceRecord
+  ) {
+    return false
+  }
+
+  return true
+}
 
 export async function seedDevAttachments(
   port: AttachmentsSeedPort,
   dataset: FixtureDataset,
 ): Promise<{ attachments: number }> {
-  const attachments = dataset.entities.attachments ?? []
+  const attachments = (dataset.entities.attachments ?? []).filter(attachment =>
+    shouldSeedAttachment(attachment, dataset))
 
   for (const attachment of attachments) {
     await port.saveAttachment({

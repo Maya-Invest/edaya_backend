@@ -2,8 +2,9 @@ import type { LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
 import {
   resolveAuthEmailDelivery,
-  type ResolvedAuthEmailDelivery,
+
 } from "@/runtime/shared/adapters/auth-email-delivery";
+import type { ResolvedAuthEmailDelivery } from "@/runtime/shared/adapters/auth-email-delivery";
 
 export type AuthOtpType = "sign-in" | "email-verification" | "forget-password" | "change-email";
 

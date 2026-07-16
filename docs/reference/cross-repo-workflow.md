@@ -4,26 +4,50 @@ Edaya spans multiple repositories:
 
 | Repo | Role |
 |------|------|
-| **edaya_backend** (this repo) | API, cron, domain packages, adaptors, seeding, integration tests |
-| **edaya_web** | SvelteKit webapp + saas-admin, browser OpenAPI types |
-| **edaya-client-codegen** | OpenAPI artifact generator (`@edaya/client-codegen`) |
+| **edaya_backend** (this repo) | API, cron, domain packages, adaptors, `@maya-invest/edaya-api-client`, client codegen tooling |
+| **edaya_web** | SvelteKit webapp + webadmin, browser OpenAPI types |
 | **edaya_mobile** | Flutter app (consumes OpenAPI client bindings extension) |
 
-## Backend-only OpenAPI pipeline
+## Backend OpenAPI pipeline
 
 When API routes or registry metadata change in **this repo**:
 
 ```sh
-bun run export-openapi          # tooling/repo/fixtures/openapi.json
-bun run openapi:generate          # package/generated-api-client/src/generated/*
+bun repo openapi export          # tooling/repo/fixtures/openapi.json
+bun repo openapi generate        # package/api-client/src/
 bun run verify
 ```
 
 | Step | Script | Output |
 |------|--------|--------|
-| Export spec | `bun run export-openapi` | `tooling/repo/fixtures/openapi.json` |
-| Generate bindings | `bun run openapi:generate` | `package/generated-api-client/src/generated/client-bindings.ts` |
-| Drift check | `bun run openapi:check` | Compares temp output to tracked files (non-mutating) |
+| Export spec | `bun repo openapi export` | `tooling/repo/fixtures/openapi.json` |
+| Generate client | `bun repo openapi generate` | `package/api-client/src/` |
+| Drift check | `bun repo check openapi` | Compares temp output to tracked files (non-mutating) |
+
+### Published client (`@maya-invest/edaya-api-client`)
+
+The generated client lives in `package/api-client/`. On merge to `staging` / `main`, CI regenerates and publishes to **GitHub Packages** (`npm.pkg.github.com`) with dist-tags `staging` / `production`. See [ci-setup.md](./ci-setup.md#api-client-github-packages-maya-investedaya-api-client).
+
+Consumers can install:
+
+```sh
+bun add @maya-invest/edaya-api-client@staging
+bun add @maya-invest/edaya-api-client@production
+```
+
+**Local development in this monorepo** — workspace resolution via root override:
+
+```json
+"overrides": {
+  "@maya-invest/edaya-api-client": "workspace:*"
+}
+```
+
+**Sibling repos** — point `package.json` at the backend client folder:
+
+```json
+"@maya-invest/edaya-api-client": "file:../edaya_backend/package/api-client"
+```
 
 Bindings are embedded in the OpenAPI document under `info.x-edaya-client-bindings`. The export step reads route metadata from `apps/api/src/lib/school-api/client-bindings.ts`.
 
@@ -31,16 +55,15 @@ Bindings are embedded in the OpenAPI document under `info.x-edaya-client-binding
 
 After merging API changes here:
 
-1. Copy or re-export the updated `openapi.json` into **edaya_web** (`apps/webapp/src/lib/api/openapi.json`).
-2. In edaya_web: `bun run openapi:generate` (schema types + web copy of client bindings).
-3. Run `bun run verify` in both repos.
+1. Merge or sync the updated `@maya-invest/edaya-api-client` (file link or published package).
+2. In **edaya_web**: `bun install` (if using file link) and `bun run verify`.
 
 Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](../../edaya_web/docs/reference/cross-repo-workflow.md).
 
 ## CI independence
 
-Each repo runs `bun run verify` from its own checkout. **edaya_web** CI uses committed `openapi.json` and does not require a sibling backend checkout. **edaya_backend** CI exports and checks generated artifacts from the in-repo API.
+Each repo runs `bun run verify` from its own checkout. **edaya_web** CI checks out **edaya_backend** for the `@maya-invest/edaya-api-client` file link. **edaya_backend** CI exports and checks generated artifacts from the in-repo API.
 
 ## Hand-written client runtime
 
-Generated files are regen-only. The handwritten runtime (`Transport`, `EntityResource`, `createSchoolClient`, …) lives in `package/generated-api-client/src/`. **edaya_web** maintains a synced copy under `packages/api-client/src/` until a shared publish workflow ships.
+Generated files are regen-only. The handwritten runtime (`Transport`, `EntityResource`, `createSchoolClient`, …) lives in `tooling/client-codegen/templates/runtime/` and is copied into `package/api-client/src/runtime/` on generate.

@@ -1,5 +1,5 @@
+import { CalendarEvent, calendarEventBlocksTimetable, CalendarEventKind, CalendarEventScopeKind } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind } from '../../../../src/domain/scheduling/calendar-event'
 
 describe('CalendarEvent entity', () => {
   const baseArgs = {
@@ -69,5 +69,12 @@ describe('CalendarEvent entity', () => {
       scopeId: 'gl1',
     })
     expect(event.scopeId).toBe('gl1')
+  })
+})
+
+describe('calendarEventBlocksTimetable', () => {
+  test('follows the isNonSchoolDay flag', () => {
+    expect(calendarEventBlocksTimetable({ isNonSchoolDay: false })).toBe(false)
+    expect(calendarEventBlocksTimetable({ isNonSchoolDay: true })).toBe(true)
   })
 })

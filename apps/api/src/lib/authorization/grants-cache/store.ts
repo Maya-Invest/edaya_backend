@@ -1,4 +1,4 @@
-import type { EffectiveGrants } from "@edaya/core";
+import type { EffectiveGrants } from "@edaya/authorization";
 
 export interface EffectiveGrantsCacheEntry {
   grants: EffectiveGrants;

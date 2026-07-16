@@ -1,13 +1,5 @@
+import { AttendanceSummary, ReportCardAggregationSource, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardDefinitionSectionRole, ReportCardResult, ReportCardResultStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import {
-  ReportCardAggregationSource,
-  ReportCardDefinitionSection,
-  ReportCardDefinitionSectionKind,
-  ReportCardDefinitionSectionRole,
-  ReportCardResult,
-  ReportCardResultStatus,
-} from '../../../../src/domain'
-import { AttendanceSummary } from '../../../../src/domain/value-objects/attendance-summary'
 
 describe('ReportCardDefinitionSection role and coefficient', () => {
   test('persists role and coefficient on group sections', () => {

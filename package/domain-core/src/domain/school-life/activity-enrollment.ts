@@ -1,10 +1,5 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
-import type { EntityTenantResolver, EntityWriteAuthorization } from '../../application/entities/managed-entity-service'
-import type { AuthorizationPolicy } from '../../capabilities/authorization'
-import type { SchoolRepositories } from '../../ports/repositories/school-repositories'
 import { z } from 'zod'
-import { config, indirectTenant, noopReadAccess, permissionAction, read, write } from '../../application/entities/entity-config'
-import { denyResourceAccess, Permission } from '../../capabilities/authorization'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum ActivityEnrollmentStatus {
@@ -44,61 +39,4 @@ export class ActivityEnrollment {
   get studentId() { return this.data.studentId }
   get status() { return this.data.status }
   get createdAt() { return this.data.createdAt }
-}
-
-export const activityEnrollmentConfig: EntityConfigFactory<ActivityEnrollment> = ({ repositories, policy, atomicExecution }) =>
-  config({
-    repository: repositories.activityEnrollments,
-    tenant: activityEnrollmentTenant(),
-    read: read(permissionAction(Permission.QUERY_CALENDAR_READ), noopReadAccess),
-    write: write(
-      permissionAction(Permission.DISCIPLINE_CREATE),
-      authorizeActivityEnrollmentSave(policy),
-      authorizeActivityEnrollmentDelete(policy),
-    ),
-    gates: {
-      preSave: validateActivityEnrollmentSave,
-    },
-    atomicExecution,
-  })
-
-function activityEnrollmentTenant(): EntityTenantResolver<ActivityEnrollment> {
-  return indirectTenant(async (entity, repos) => {
-    const activity = await repos.activities.findById(entity.activityId)
-    return activity?.schoolId
-  })
-}
-
-function authorizeActivityEnrollmentSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<ActivityEnrollment>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-    if (existing) {
-      await policy.checkStudentAccess(actor, [existing.studentId])
-    }
-  }
-}
-
-function authorizeActivityEnrollmentDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<ActivityEnrollment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-  }
-}
-
-async function validateActivityEnrollmentSave(
-  enrollment: ActivityEnrollment,
-  _existing: ActivityEnrollment | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
-  const [activity, student] = await Promise.all([
-    repositories.activities.findById(enrollment.activityId),
-    repositories.students.findById(enrollment.studentId),
-  ])
-
-  if (!activity || !student || student.schoolId !== activity.schoolId) {
-    denyResourceAccess()
-  }
 }

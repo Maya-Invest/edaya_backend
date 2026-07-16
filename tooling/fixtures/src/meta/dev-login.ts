@@ -1,11 +1,6 @@
-import { demoSchoolOwnerStaffId } from '../datasets/demo/people'
-import {
-  DEV_AUTH_PASSWORD,
-  DEV_AUTH_STAFF_ACCESS_ROLE_IDS,
-  DEV_AUTH_STAFF_ACCOUNTS,
-} from '../meta/dev-auth-fixtures'
+import { resolveDevSeedContext } from './resolve-dev-seed-context'
 
-export { DEV_AUTH_PASSWORD }
+export { DEV_AUTH_PASSWORD } from './dev-auth-fixtures'
 
 export type DevDemoLoginRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur'
 
@@ -21,7 +16,6 @@ const ACCESS_ROLE_TO_DEMO_ROLE: Record<string, DevDemoLoginRole> = {
   'role-director': 'directeur',
   'role-coordinator': 'prof_principal',
   'role-educator': 'educateur',
-  'role-teacher': 'professeur',
 }
 
 const DEMO_ROLE_DISPLAY_ORDER: Record<DevDemoLoginRole, number> = {
@@ -41,19 +35,16 @@ export function initialsForName(name: string): string {
 
 export function resolveDevDemoStaffRole(
   staffId: string,
+  context = resolveDevSeedContext(),
 ): { role: DevDemoLoginRole, accessRoleId?: string } {
-  if (staffId === demoSchoolOwnerStaffId) {
+  if (staffId === context.ownerStaffId) {
     return {
       role: 'owner',
-      accessRoleId: DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
-        staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
-      ],
+      accessRoleId: context.staffAccessRoleIds[staffId],
     }
   }
 
-  const accessRoleId = DEV_AUTH_STAFF_ACCESS_ROLE_IDS[
-    staffId as keyof typeof DEV_AUTH_STAFF_ACCESS_ROLE_IDS
-  ]
+  const accessRoleId = context.staffAccessRoleIds[staffId]
   const role = accessRoleId && ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
     ? ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
     : 'professeur'
@@ -62,19 +53,12 @@ export function resolveDevDemoStaffRole(
 }
 
 export function buildDevDemoLoginAccounts(): DevDemoLoginAccount[] {
-  let teacherAccountIncluded = false
+  const context = resolveDevSeedContext()
 
-  const accounts = DEV_AUTH_STAFF_ACCOUNTS.flatMap((account) => {
-    const { role, accessRoleId } = resolveDevDemoStaffRole(account.staffId)
+  const accounts = context.staffAccounts.flatMap((account) => {
+    const { role, accessRoleId } = resolveDevDemoStaffRole(account.staffId, context)
     if (!accessRoleId) {
       return []
-    }
-
-    if (accessRoleId === 'role-teacher') {
-      if (teacherAccountIncluded) {
-        return []
-      }
-      teacherAccountIncluded = true
     }
 
     return [{
@@ -95,5 +79,7 @@ export function buildDevDemoLoginAccounts(): DevDemoLoginAccount[] {
   })
 }
 
-/** Pre-built dev login picker accounts for the webapp `/login` page. */
-export const DEV_DEMO_LOGIN_ACCOUNTS = buildDevDemoLoginAccounts()
+/** Dev login picker accounts for the webapp `/login` page (honours current `SEED_DATASET`). */
+export function getDevDemoLoginAccounts(): DevDemoLoginAccount[] {
+  return buildDevDemoLoginAccounts()
+}

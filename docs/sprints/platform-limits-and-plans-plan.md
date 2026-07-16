@@ -3,9 +3,9 @@
 > **Status:** Phase 0 — proposal draft  
 > **Created:** 2026-06-30  
 > **Last updated:** 2026-06-30 (§7.1 single `UsageCounter`; no `UsageSnapshot` / nightly cron in v1)  
-> **Scope:** Edaya **SaaS** entitlements per school — feature flags, numeric quotas, usage metering, enforcement in API/workflows, `saas-admin` plan management  
+> **Scope:** Edaya **SaaS** entitlements per school — feature flags, numeric quotas, usage metering, enforcement in API/workflows, `webadmin` plan management  
 > **Out of scope:** School → family billing (`Fee` / `CatalogService`, `StudentCharge`, etc.) — separate domain  
-> **Related:** `edaya_web/apps/saas-admin`, school API `ServiceArgs`, Cloudflare KV (rate limits), R2/storage metering
+> **Related:** `edaya_web/apps/webadmin`, school API `ServiceArgs`, Cloudflare KV (rate limits), R2/storage metering
 
 This plan defines how Edaya bills and constrains **its own customers** (schools on the platform): which modules they can use, how much they can scale, and when operations are blocked vs metered for overage.
 
@@ -19,7 +19,7 @@ This plan defines how Edaya bills and constrains **its own customers** (schools 
 |-------|-------|--------|
 | No plan model | Every school has full product access | Cannot price by size or module |
 | No enforcement | Limits exist only as ad-hoc validation (e.g. upload size) | Cost exposure on storage, notifications, materialization |
-| `saas-admin` placeholder | Billing page is static copy | No ops control plane |
+| `webadmin` placeholder | Billing page is static copy | No ops control plane |
 | Feature vs quota confusion | — | Risk of 50+ interdependent flags |
 | School finance ≠ SaaS billing | Finance module is tenant-scoped | Must not mix `CatalogService` with platform plans |
 
@@ -353,7 +353,7 @@ flowchart LR
 
 - **Platform tables** — no `schoolId` filtering mistakes in tenant repos; platform service owns resolution.
 - **Single usage store** — `UsageCounter` for all measurable limits (stock, usage windows, throughput). No separate snapshot table or nightly capacity cron in v1.
-- **Hot throughput path** — Cloudflare KV or Durable Object for `minute` / `hour` limits; async flush to `UsageCounter` for durability and `saas-admin` display.
+- **Hot throughput path** — Cloudflare KV or Durable Object for `minute` / `hour` limits; async flush to `UsageCounter` for durability and `webadmin` display.
 
 #### Usage accounting model
 
@@ -598,7 +598,7 @@ Resolve `schoolId` from actor metadata (existing tenant boundary). Platform oper
 
 ---
 
-## 8. `saas-admin` integration
+## 8. `webadmin` integration
 
 ### 8.1 Screens
 
@@ -652,7 +652,7 @@ GET /core/school/entitlements   // { features, limits } — resolved effective v
 - [ ] **Phase 2** — `EntitlementService`; `assertFeatureEnabled` on 11 modules; API + webapp nav gating
 - [ ] **Phase 3** — Stock limits via `UsageCounter` (`period: null`) + `recordUsage` on enroll/archive/upload; assert before mutate
 - [ ] **Phase 4** — Period limits (`notification.sent`, `api.command.requests`); period flush; KV for throughput
-- [ ] **Phase 5** — `saas-admin` plans + school subscription UI; effective limits API
+- [ ] **Phase 5** — `webadmin` plans + school subscription UI; effective limits API
 - [ ] **Phase 6** — Guardian/staff app entitlement bootstrap; upgrade messaging
 - [ ] **Phase 7** — Optional reconcile job (ops); usage dashboard; trial expiry + suspend automation
 
@@ -689,7 +689,7 @@ GET /core/school/entitlements   // { features, limits } — resolved effective v
 3. **Platform entities** — separate feature and limit plan rows, overrides, subscriptions, usage.
 4. **Split enforcement** — `assertFeatureEnabled` vs `assertWithinLimit`; combined `resolveEntitlements`.
 5. **Mobile inheritance** — two portal flags; screens from school entitlements.
-6. **`saas-admin` control plane** — assign plans, overrides, view usage.
+6. **`webadmin` control plane** — assign plans, overrides, view usage.
 7. **Clear boundary** — platform billing ≠ school `finance` module.
 
 ---
@@ -745,7 +745,7 @@ GET /core/school/entitlements   // { features, limits } — resolved effective v
 
 ## 13. References
 
-- SaaS admin placeholder: `edaya_web/apps/saas-admin`
+- Webadmin placeholder: `edaya_web/apps/webadmin`
 - Upload limits (pattern): `package/domain-core/src/storage/upload-policy.ts`
 - School entity: `package/domain-core/src/domains/school/school.ts`
 - Service args injection: `package/domain-core/src/shared/service-args.ts`

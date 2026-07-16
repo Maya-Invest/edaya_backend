@@ -14,14 +14,16 @@ import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
 import type { SchoolStructureSeedPort } from '../domains/school-structure/port'
 import type { StudentSupportSeedPort } from '../domains/student-support/port'
+import type { TeachersSeedPort } from '../domains/teachers/port'
+import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
-import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
+import { syncDevAuthAndGuardianInboxProbes } from '../bootstrap/sync-dev-auth-inbox'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
 import { createInProcessAssessmentsSeedPort } from '../domains/assessments/in-process'
-import { seedDevAssessments } from '../domains/assessments/workflow'
+import { countDevAssessmentSeedOperations, seedDevAssessments } from '../domains/assessments/workflow'
 import { createInProcessAttachmentsSeedPort } from '../domains/attachments/in-process'
 import { seedDevAttachments } from '../domains/attachments/workflow'
 import { createInProcessAttendanceSeedPort } from '../domains/attendance/in-process'
@@ -49,7 +51,10 @@ import { createInProcessSchoolStructureSeedPort } from '../domains/school-struct
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
 import { createInProcessStudentSupportSeedPort } from '../domains/student-support/in-process'
 import { seedDevStudentSupport } from '../domains/student-support/workflow'
+import { createInProcessTeachersSeedPort } from '../domains/teachers/in-process'
+import { seedDevTeachers } from '../domains/teachers/workflow'
 import { buildFixtureCurriculumPlan } from '../support/curriculum-plan'
+import { runSeedProgressStep } from '../support/seed-progress'
 
 export type DevSchoolSeedResult
   = | { status: 'skipped', reason: 'already-seeded', schoolCount: number }
@@ -102,6 +107,7 @@ export interface RunDevSchoolSeedOptions {
   schoolStructurePort?: SchoolStructureSeedPort
   populationPort?: PopulationSeedPort
   curriculumPort?: CurriculumSeedPort
+  teachersPort?: TeachersSeedPort
   schedulingPort?: SchedulingSeedPort
   attendancePort?: AttendanceSeedPort
   assessmentsPort?: AssessmentsSeedPort
@@ -116,6 +122,17 @@ export interface RunDevSchoolSeedOptions {
   profilePicturesPort?: ProfilePicturesSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
+  skipProfilePhotos?: boolean
+  skipAttachments?: boolean
+  progress?: SeedProgressReporter
+}
+
+async function runSchoolSeedStep<T>(
+  progress: SeedProgressReporter | undefined,
+  work: (tick: (by?: number) => void) => Promise<T>,
+  options?: { label?: string, total?: number },
+): Promise<T> {
+  return runSeedProgressStep(progress, work, options)
 }
 
 function requireSeedApplication(
@@ -138,6 +155,8 @@ export async function runDevSchoolSeed(
     ?? createInProcessPopulationSeedPort(requireSeedApplication(application, 'populationPort'))
   const curriculumPort = options?.curriculumPort
     ?? createInProcessCurriculumSeedPort(requireSeedApplication(application, 'curriculumPort'))
+  const teachersPort = options?.teachersPort
+    ?? createInProcessTeachersSeedPort(requireSeedApplication(application, 'teachersSeedPort'))
   const schedulingPort = options?.schedulingPort
     ?? createInProcessSchedulingSeedPort(requireSeedApplication(application, 'schedulingPort'))
   const attendancePort = options?.attendancePort
@@ -172,14 +191,16 @@ export async function runDevSchoolSeed(
 
   if (structureInspection.status === 'skipped') {
     if (options?.auth) {
-      await syncDevStaffAuthAndOwner(
+      await syncDevAuthAndGuardianInboxProbes(
         options.authLinkPort ?? createInProcessAuthLinkSeedPort(
           requireSeedApplication(application, 'authLinkPort'),
         ),
+        communicationsPort,
         options.auth,
         options.ownerSubjectId,
       )
     }
+    options?.progress?.finish()
     return {
       status: 'skipped',
       reason: 'already-seeded',
@@ -197,36 +218,69 @@ export async function runDevSchoolSeed(
     }
   }
 
-  await seedDevSchoolStructure(schoolStructurePort, {
-    demoSchoolExists: structureInspection.demoSchoolExists,
-    ownerSubjectId,
-  }, seedDataset)
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevSchoolStructure(schoolStructurePort, {
+      demoSchoolExists: structureInspection.demoSchoolExists,
+      ownerSubjectId,
+    }, seedDataset)
+  })
 
-  await seedDevPopulation(populationPort, seedDataset)
-  await seedDevCurriculum(curriculumPort, seedDataset)
-  await seedDevScheduling(schedulingPort, seedDataset)
-  await seedDevAssessments(assessmentsPort, seedDataset)
-  const activitiesCounts = await seedDevActivities(activitiesPort, seedDataset)
-  const schoolLifeCounts = await seedDevSchoolLife(schoolLifePort, seedDataset)
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevPopulation(populationPort, seedDataset)
+  })
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevCurriculum(curriculumPort, seedDataset)
+  })
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevTeachers(teachersPort, seedDataset)
+  })
+  const activitiesCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevActivities(activitiesPort, seedDataset))
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevScheduling(schedulingPort, seedDataset)
+  })
+  await runSchoolSeedStep(options?.progress, async (tick) => {
+    await seedDevAssessments(assessmentsPort, seedDataset, { onProgress: tick })
+  }, { total: countDevAssessmentSeedOperations(seedDataset) })
+  const schoolLifeCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevSchoolLife(schoolLifePort, seedDataset))
 
-  const disciplineCounts = await seedDevDiscipline(disciplinePort, seedDataset)
+  const disciplineCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevDiscipline(disciplinePort, seedDataset))
 
-  const attendanceRecordCount = await seedDevAttendance(attendancePort, seedDataset)
-  const studentSupportCounts = await seedDevStudentSupport(studentSupportPort, seedDataset)
+  const attendanceRecordCount = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevAttendance(attendancePort, seedDataset))
+  const studentSupportCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevStudentSupport(studentSupportPort, seedDataset))
 
-  const reportCardCounts = await seedDevReportCards(reportCardsPort, seedDataset)
-  const financeCounts = await seedDevFinance(financePort, seedDataset)
+  const reportCardCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevReportCards(reportCardsPort, seedDataset))
+  const financeCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevFinance(financePort, seedDataset))
 
-  const communicationsCounts = await seedDevCommunications(communicationsPort, seedDataset)
-  const attachmentCounts = await seedDevAttachments(attachmentsPort, seedDataset)
-  const profilePictureCounts = await seedDevProfilePictures(profilePicturesPort, {
-    apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
-  }, seedDataset)
+  const communicationsCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevCommunications(communicationsPort, seedDataset))
+  const attachmentCounts = options?.skipAttachments
+    ? { attachments: 0 }
+    : await runSchoolSeedStep(options?.progress, async () =>
+        seedDevAttachments(attachmentsPort, seedDataset))
+  const profilePictureCounts = options?.skipProfilePhotos
+    ? { profilePhotos: 0 }
+    : await runSchoolSeedStep(options?.progress, async tick =>
+        seedDevProfilePictures(profilePicturesPort, {
+          apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
+          onProgress: tick,
+        }, seedDataset), {
+        total: (seedDataset.entities.staffMembers?.length ?? 0)
+          + (seedDataset.entities.students?.length ?? 0)
+          + (seedDataset.entities.guardians?.length ?? 0),
+      })
   if (options?.auth) {
-    await syncDevStaffAuthAndOwner(
+    await syncDevAuthAndGuardianInboxProbes(
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
         requireSeedApplication(application, 'authLinkPort'),
       ),
+      communicationsPort,
       options.auth,
       ownerSubjectId,
     )

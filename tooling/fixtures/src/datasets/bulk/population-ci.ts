@@ -1,10 +1,4 @@
-import type {
-  ClassGroupInput,
-  GuardianInput,
-  GuardianStudentLinkInput,
-  StudentClassEnrollmentInput,
-  StudentInput,
-} from '@edaya/core'
+import type { ClassGroupInput, GuardianInput, GuardianStudentLinkInput, StudentClassEnrollmentInput, StudentInput } from '@edaya/core'
 import { generateBulkPopulation } from './generator'
 
 const generated = generateBulkPopulation({ locale: 'ci', seed: 20260702 })

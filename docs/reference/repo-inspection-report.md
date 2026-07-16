@@ -9,7 +9,7 @@ Scope: over-engineering, boundary definition/enforcement, and developer experien
 
 ## Simplification initiative closure (2026-06-22)
 
-Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun run verify` is green and idempotent.
+Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete**. Phase **4** (persistence split by bounded context) and Phase **7** (ESLint boundary enforcement) are **deferred** with documented rationale. `bun repo verify` is green and idempotent.
 
 | Finding | Status | Resolution |
 |---------|--------|------------|
@@ -30,7 +30,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 
 | Metric | Baseline (audit) | Current |
 |--------|------------------|---------|
-| `bun run verify` | Failing / mutating | Passes twice idempotently; used in CI |
+| `bun repo verify` | Failing / mutating | Passes twice idempotently; used in CI |
 | Package tests | 688 passed | **826 passed**, 7 integration skips |
 | Webapp tests | Not typechecked | **141** runtime tests, typechecked via `tsconfig.test.json` |
 | Raw `.list({})` in webapp | 65 / 65 loaders | **0** (37 documented `schoolWideEntityList` call sites) |
@@ -48,7 +48,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 - **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
 - **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points. (`prototype.queries.ts` rename completed 2026-06-23.)
 - **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
-- **Operator:** Staging smoke (`bun run smoke:staging`), manual screen QA checklist (Phase 8.2).
+- **Operator:** Staging smoke (`bun repo smoke-test staging`), manual screen QA checklist (Phase 8.2).
 
 ---
 
@@ -66,7 +66,7 @@ The highest-return implementation path is:
 
 ## Verification notes
 
-- `bun run check:boundaries` passed during inspection.
+- `bun repo check boundaries` passed during inspection.
 - Full generated checks were not run because the worktree already had local and generated changes.
 - Existing dirty files were not modified by this inspection.
 
@@ -123,7 +123,7 @@ Keep special cases explicit through per-entity overrides rather than parallel ha
 
 ### Evidence
 
-- `package/domain-core/src/services/school-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
+- `package/domain-core/src/services/domain-service.ts` constructs workflow objects, then exposes many methods that directly delegate to workflow methods.
 - The facade does add value for reports/queries and for a stable public command surface, but much of it is mechanical.
 
 ### Impact
@@ -335,7 +335,7 @@ Split scripts:
 
 Update root README and API client README to match current browser SPA behavior:
 
-- Browser client calls API via `@edaya/api-client`.
+- Browser client calls API via `@maya-invest/edaya-api-client`.
 - Local Vite proxy forwards `/core`, `/auth`, `/doc`, and `/reference`.
 - `API_URL` is the Vite proxy target.
 - `PUBLIC_API_URL` is the browser-facing API origin when not same-origin.
@@ -404,7 +404,7 @@ Update root README and API client README to match current browser SPA behavior:
 - `tooling/repo/ci/check-boundaries.ts`
 - `apps/api/src/runtime/README.md`
 - `package/domain-core/src/services/base-school-service.ts`
-- `package/domain-core/src/services/school-service.ts`
+- `package/domain-core/src/services/domain-service.ts`
 - `package/domain-core/src/services/managed-entity-service.ts`
 - `package/domain-core/src/ports/school-repositories.ts`
 - `apps/api/src/lib/school-api/registry.ts`

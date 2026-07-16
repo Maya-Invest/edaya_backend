@@ -6,7 +6,7 @@ import type {
   PutObjectInput,
   PutObjectResult,
 } from '../ports/gateways/file-storage'
-import { readStorageBody } from '../capabilities/files/read-storage-body'
+import { readStorageBody } from '../shared/read-storage-body'
 
 interface StoredObject {
   body: Uint8Array

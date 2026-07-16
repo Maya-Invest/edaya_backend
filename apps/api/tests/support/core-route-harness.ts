@@ -4,9 +4,10 @@ import { createDependenciesInjection } from "@/http/dependencies";
 import { isBetterAuthPath } from "@/http/dependencies/utils";
 import type { DependencyModule } from "@/http/dependency-injection";
 import {
-  type AuthSessionProvider,
+
   createSessionActorDependency,
 } from "@/http/dependencies/session-actor";
+import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
 import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
@@ -21,31 +22,28 @@ import {
   runIntegrationLightSchoolSeed,
 } from "@edaya/seeding";
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import {
-  MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
-  MINIMAL_AUTH_FIXTURE_STAFF_ID,
-} from "@edaya/fixtures/meta/dev-auth-fixtures";
+import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import {
-  ActorAssuranceLevel,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  createServiceAccount,
-  createStaffActorMetadata,
-  Permission,
-  type ServiceAccountPermissionAssignmentInput,
-  StaffPermissionAssignment,
-} from "@edaya/core";
+import { StaffPermissionAssignment } from "@edaya/core";
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata, Permission } from "@edaya/authorization";
+import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 import {
   createLocalProfileTestEnv,
-  type EmbeddedLocalFilesServer,
+
   startEmbeddedLocalFilesServer,
+  syncProcessEnvLocalFilesUrl,
 } from "./embedded-local-files";
+import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
 
 const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
 setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
+
+// Route integration tests seed `demoDataset` (sch-edaya-central / st*), not the dev default.
+// eslint-disable-next-line node/no-process-env -- test harness pins dataset for route integration tests
+process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
 
 export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency } from "@/http/dependencies/session-actor";
@@ -130,15 +128,15 @@ export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSe
     api: {
       getSession: async (args) => {
         const session = await original(args);
-        if (!session?.session) {
+        if (!session?.user) {
           return session;
         }
 
         return {
           ...session,
-          session: {
-            ...session.session,
-            assuranceLevel: ActorAssuranceLevel.Verified,
+          user: {
+            ...session.user,
+            emailVerified: true,
           },
         };
       },
@@ -188,9 +186,17 @@ export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
   let embeddedLocalFiles: ReturnType<typeof startEmbeddedLocalFilesServer> | undefined;
+  let restoreLocalFilesUrl: (() => void) | undefined;
   const env = options.withEmbeddedLocalFiles
     ? (() => {
         embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.BETTER_AUTH_SECRET);
+        restoreLocalFilesUrl = syncProcessEnvLocalFilesUrl(embeddedLocalFiles.baseUrl);
+        const originalStop = embeddedLocalFiles.stop.bind(embeddedLocalFiles);
+        embeddedLocalFiles.stop = () => {
+          originalStop();
+          restoreLocalFilesUrl?.();
+          restoreLocalFilesUrl = undefined;
+        };
         return createLocalProfileTestEnv(embeddedLocalFiles);
       })()
     : createIsolatedPgliteTestEnv();
@@ -245,7 +251,8 @@ export async function provisionServiceAccountForTests(
     apiKey?: string;
   },
 ) {
-  const creatorStaffId = input.creatorStaffId ?? MINIMAL_AUTH_FIXTURE_STAFF_ID;
+  const context = resolveDevSeedContext();
+  const creatorStaffId = input.creatorStaffId ?? context.minimalStaffId;
   const staff = await application.repositories.staffMembers.findById(creatorStaffId);
   if (!staff?.subjectId) {
     throw new Error(`Staff member ${creatorStaffId} is not linked to an auth subject`);
@@ -272,7 +279,7 @@ export async function provisionServiceAccountForTests(
 
 export async function signInDirector(
   app: Hono<AppBindings>,
-  email: string = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
+  email: string = resolveDevSeedContext().minimalStaffEmail,
 ): Promise<string[]> {
   return signInThroughApp(app, { email });
 }

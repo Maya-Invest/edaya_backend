@@ -1,4 +1,4 @@
-import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetSchoolOverviewInput } from "@edaya/core";
+import type { AppShellCounts, ClassGroupTimetable, GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, ResolveTimetableSpaceInput } from "@edaya/service";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
@@ -6,7 +6,8 @@ import { queryRouteOperation } from "@/lib/school-api/openapi/client-extensions"
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { coreRouteErrorResponses, type SchoolApiRoutePair, validatedJson } from "./shared";
+import { coreRouteErrorResponses, validatedJson } from "./shared";
+import type { SchoolApiRoutePair } from "./shared";
 import { schoolApiPath } from "./paths";
 
 export function buildQueryRoutes(): SchoolApiRoutePair[] {
@@ -51,6 +52,17 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(overview, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getAppShellCounts") {
+          const input: GetAppShellCountsInput = {
+            schoolId: payload.schoolId as string,
+            ...(Array.isArray(payload.classGroupIds)
+              ? { classGroupIds: payload.classGroupIds as string[] }
+              : {}),
+          };
+          const counts: AppShellCounts = await service.getAppShellCounts(input);
+          return c.json(counts, HttpStatusCodes.OK);
+        }
+
         if (queryConfig.methodName === "getClassGroupTimetable") {
           const input: GetClassGroupTimetableInput = {
             classGroupId: payload.classGroupId as string,
@@ -59,6 +71,21 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           };
           const timetable = await service.getClassGroupTimetable(input);
           return c.json(serializeClassGroupTimetable(timetable), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "resolveTimetableSpace") {
+          const input: ResolveTimetableSpaceInput = {
+            classGroupId: payload.classGroupId as string,
+            academicYearId: payload.academicYearId as string,
+            startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+            endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
+          };
+          const cells = await service.resolveTimetableSpace(input);
+          return c.json(cells.map(cell => ({
+            ...cell,
+            startsAt: cell.startsAt.toISOString(),
+            endsAt: cell.endsAt.toISOString(),
+          })), HttpStatusCodes.OK);
         }
 
         const count = await service[queryConfig.methodName](payload.schoolId as string);

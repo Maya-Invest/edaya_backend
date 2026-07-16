@@ -1,10 +1,10 @@
-import type { EntityConfigFactory } from '../../application/entities/entity-config'
 import { z } from 'zod'
-import { directPermissionEntityConfig } from '../../application/entities/entity-config'
-import { Permission } from '../../capabilities/authorization'
-import { permissionDefinitions } from '../../capabilities/authorization/permissions/permission-definitions'
-import { validateScopeIds } from '../../capabilities/authorization/scope/scope-ids-validate'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../../domain/value-objects/date-time-range'
+
+import { permissionScope, validateScopeIds } from '../permissions'
+
+import { Permission } from '../permissions/permission'
+
 import { parseDomain, zodDate } from '../shared/utils'
 
 export type StaffPermissionAssignmentStatus = 'active' | 'inactive' | 'expired'
@@ -38,7 +38,7 @@ function refineStaffPermissionAssignmentScope(
   }
 
   try {
-    validateScopeIds(data.scopeIds, permissionDefinitions[data.permission].scope)
+    validateScopeIds(data.scopeIds, permissionScope(data.permission))
   }
   catch (error) {
     ctx.addIssue({
@@ -87,11 +87,3 @@ export class StaffPermissionAssignment {
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }
 }
-
-export const staffPermissionAssignmentConfig: EntityConfigFactory<StaffPermissionAssignment> = input =>
-  directPermissionEntityConfig(
-    input,
-    input.repositories.staffPermissionAssignments,
-    Permission.ACCESS_CONTROL_READ,
-    Permission.ACCESS_CONTROL_ASSIGN,
-  )

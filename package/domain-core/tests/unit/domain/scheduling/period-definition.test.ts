@@ -1,5 +1,5 @@
+import { DayOfWeek, PeriodDefinition } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { PeriodDefinition } from '../../../../src/domain/scheduling/period-definition'
 
 describe('PeriodDefinition entity', () => {
   const baseArgs = {
@@ -7,6 +7,7 @@ describe('PeriodDefinition entity', () => {
     schoolId: 'sch1',
     academicYearId: 'yr1',
     label: 'Period 1',
+    dayOfWeek: DayOfWeek.Monday,
     order: 1,
     startTime: '08:00',
     endTime: '08:45',
@@ -17,7 +18,9 @@ describe('PeriodDefinition entity', () => {
     expect(period.id).toBe('per1')
     expect(period.startTime).toBe('08:00')
     expect(period.endTime).toBe('08:45')
+    expect(period.dayOfWeek).toBe(DayOfWeek.Monday)
     expect(period.isBreak).toBe(false)
+    expect(period.isTeachingSlot).toBe(true)
     expect(period.durationMinutes).toBe(45)
   })
 
@@ -60,5 +63,17 @@ describe('PeriodDefinition entity', () => {
     })
     expect(period.isBreak).toBe(true)
     expect(period.durationMinutes).toBe(15)
+  })
+
+  test('supports disabled teaching slots independently from breaks', () => {
+    const period = new PeriodDefinition({
+      ...baseArgs,
+      dayOfWeek: DayOfWeek.Wednesday,
+      isTeachingSlot: false,
+    })
+
+    expect(period.dayOfWeek).toBe(DayOfWeek.Wednesday)
+    expect(period.isTeachingSlot).toBe(false)
+    expect(period.isBreak).toBe(false)
   })
 })

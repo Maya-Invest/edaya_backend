@@ -4,10 +4,14 @@ import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
+  DEV_AUTH_TEACHER_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
+
+/* eslint-disable-next-line dot-notation -- process.env index signature */
+process.env['SEED_DATASET'] = 'demo'
 
 function subjectIdForEmail(email: string): string {
   return `subject:${email}`
@@ -29,6 +33,7 @@ function createMemoryPort(): {
     ownerSubjectId?: string
     guardians: Map<string, string | undefined>
     staff: Map<string, string | undefined>
+    teachers: Map<string, string | undefined>
   }
 } {
   const firstStaff = DEV_AUTH_STAFF_ACCOUNTS[0]
@@ -40,6 +45,9 @@ function createMemoryPort(): {
     ),
     guardians: new Map<string, string | undefined>(
       DEV_AUTH_GUARDIAN_ACCOUNTS.map(account => [account.guardianId, undefined]),
+    ),
+    teachers: new Map<string, string | undefined>(
+      DEV_AUTH_TEACHER_ACCOUNTS.map(account => [account.teacherId, undefined]),
     ),
   }
   if (firstStaff) {
@@ -54,9 +62,12 @@ function createMemoryPort(): {
   const replacedGuardians: string[] = []
 
   const port: AuthLinkSeedPort = {
-    findSchoolById: async id => id === SEED_SCHOOL_ID
-      ? { id, ownerSubjectId: state.ownerSubjectId }
-      : undefined,
+    findSchoolById: async (id) => {
+      const schoolId = resolveDevSeedContext().schoolId
+      return id === schoolId
+        ? { id, ownerSubjectId: state.ownerSubjectId }
+        : undefined
+    },
     setSchoolOwnerSubjectId: async (_schoolId, subjectId) => {
       state.ownerSubjectId = subjectId
     },
@@ -80,6 +91,12 @@ function createMemoryPort(): {
       }
       return { id, subjectId: state.guardians.get(id) }
     },
+    findTeacherById: async (id) => {
+      if (!state.teachers.has(id)) {
+        return undefined
+      }
+      return { id, subjectId: state.teachers.get(id) }
+    },
     replaceGuardianSubjectId: async (guardianId, subjectId) => {
       replacedGuardians.push(guardianId)
       state.guardians.set(guardianId, subjectId)
@@ -90,6 +107,9 @@ function createMemoryPort(): {
       }
       if (input.guardianId) {
         state.guardians.set(input.guardianId, input.subjectId)
+      }
+      if (input.teacherId) {
+        state.teachers.set(input.teacherId, input.subjectId)
       }
     },
   }
@@ -105,6 +125,7 @@ describe('auth-link seed port workflow', () => {
     const first = await syncDevStaffAuthAndOwner(memory.port, auth)
 
     expect(first?.linkedStaff).toBe(DEV_AUTH_STAFF_ACCOUNTS.length)
+    expect(first?.linkedTeachers).toBe(DEV_AUTH_TEACHER_ACCOUNTS.length)
     expect(first?.linkedGuardians).toBe(DEV_AUTH_GUARDIAN_ACCOUNTS.length)
     expect(memory.registeredStaff).toHaveLength(1)
     expect(memory.replacedStaff).toEqual([DEV_AUTH_STAFF_ACCOUNTS[0]?.staffId])
@@ -115,6 +136,7 @@ describe('auth-link seed port workflow', () => {
 
     const second = await syncDevStaffAuthAndOwner(memory.port, auth)
     expect(second?.linkedStaff).toBe(0)
+    expect(second?.linkedTeachers).toBe(0)
     expect(second?.linkedGuardians).toBe(0)
   })
 })

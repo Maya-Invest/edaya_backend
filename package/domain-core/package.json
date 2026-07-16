@@ -7,12 +7,21 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./domain/*": {
+      "types": "./src/domain/*",
+      "import": "./src/domain/*"
+    },
+    "./ports/*": {
+      "types": "./src/ports/*",
+      "import": "./src/ports/*"
     }
   },
   "scripts": {
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix"
   },

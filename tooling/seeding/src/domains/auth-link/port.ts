@@ -1,3 +1,8 @@
+export interface AuthLinkTeacherRecord {
+  id: string
+  subjectId?: string
+}
+
 export interface AuthLinkSchoolRecord {
   id: string
   ownerSubjectId?: string
@@ -25,6 +30,7 @@ export interface LinkSeedActorSubjectInput {
   subjectId: string
   staffMemberId?: string
   guardianId?: string
+  teacherId?: string
 }
 
 export interface AuthLinkSeedPort {
@@ -34,6 +40,7 @@ export interface AuthLinkSeedPort {
   registerStaffMember: (input: RegisterSeedStaffInput) => Promise<void>
   replaceStaffSubjectId: (staffId: string, subjectId: string) => Promise<void>
   findGuardianById: (id: string) => Promise<AuthLinkGuardianRecord | undefined>
+  findTeacherById: (id: string) => Promise<AuthLinkTeacherRecord | undefined>
   replaceGuardianSubjectId: (guardianId: string, subjectId: string) => Promise<void>
   linkActorSubject: (input: LinkSeedActorSubjectInput) => Promise<void>
 }

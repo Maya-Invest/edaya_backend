@@ -1,19 +1,5 @@
-import {
-  AcademicPeriodType,
-  ACCOUNTANT_PERMISSIONS,
-  ActorAssuranceLevel,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  AttendanceStatus,
-  AuthorizationErrorCode,
-  authorize,
-  COORDINATOR_PERMISSIONS,
-  createStaffActorMetadata,
-  GradeLevel,
-  Permission,
-  StaffMember,
-  Subject,
-  TEACHER_PERMISSIONS,
-} from '@edaya/core'
+import { ACCOUNTANT_PERMISSIONS, ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, AuthorizationErrorCode, authorize, COORDINATOR_PERMISSIONS, createStaffActorMetadata, Permission } from '@edaya/authorization'
+import { AcademicPeriodType, AttendanceStatus, GradeLevel, StaffMember, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -33,6 +19,14 @@ import {
 } from '../utils/core-service-helpers'
 import { effectiveGrantsForRoles } from '../utils/effective-grants'
 import { createTestApp } from '../utils/test-adapter'
+
+const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
+  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.ATTENDANCE_RECORD,
+  Permission.DISCIPLINE_CREATE,
+  Permission.GRADE_INPUT,
+  Permission.CLASS_LOGBOOK_UPDATE,
+]
 
 async function setupBaselineFixture() {
   const { app, repositories, schoolRepositories, forActor } = await createTestApp()
@@ -87,7 +81,7 @@ async function setupBaselineFixture() {
     staffId: 'teacher-staff',
     schoolId: 'school',
     academicYearId: 'acad-year',
-    permissions: TEACHER_PERMISSIONS,
+    permissions: STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
     idPrefix: 'spa-teacher',
   })
   await seedStaffPermissionTemplate(schoolRepositories, {

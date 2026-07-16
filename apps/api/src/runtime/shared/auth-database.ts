@@ -1,7 +1,7 @@
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { isPgliteDatabase, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { DatabaseHandle } from "@/runtime/types";
-import { createPostgresSchoolDatabase, postgresDriverOptions } from "@/runtime/shared/school-database";
+import { createPostgresSchoolDatabase } from "@/runtime/shared/school-database";
 
 export interface AttachAuthDatabaseOptions {
   databaseUrl: string;
@@ -64,5 +64,3 @@ export async function createPgliteAuthDatabase(
     runMigrations: options.runMigrations,
   });
 }
-
-export { postgresDriverOptions };

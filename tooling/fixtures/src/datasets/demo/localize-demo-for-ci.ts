@@ -1,11 +1,4 @@
-import type {
-  ClassGroupInput,
-  GuardianInput,
-  GuardianStudentLinkInput,
-  SchoolInput,
-  StaffMemberInput,
-  StudentInput,
-} from '@edaya/core'
+import type { ClassGroupInput, GuardianInput, GuardianStudentLinkInput, SchoolInput, StaffMemberInput, StudentInput } from '@edaya/core'
 import type { FixtureDataset } from '../types'
 import { DEV_STAFF_CI_NAME_PARTS } from '../../meta/dev-staff-display-names'
 import { CI_FIRST_NAMES, CI_LAST_NAMES } from '../bulk/name-pools'
