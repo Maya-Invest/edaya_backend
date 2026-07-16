@@ -122,12 +122,14 @@ bun run verify   # includes check openapi
 ```sh
 STAGING_DATABASE_URL=postgres://… bun repo db migrate staging   # when schema changed
 bun repo db migrate staging                                      # school + auth schema when either changed
-bun repo deploy api staging
+bun repo deploy api staging                                      # or merge to `staging` with API path changes
 bun run deploy:webapp:staging
 bun run deploy:webadmin:staging
 bun repo seed --staging   # if seed data needed
 bun repo smoke-test staging
 ```
+
+CI runs migrate → verify → `deploy-api` → `smoke-test` automatically on push when API paths change (see [ci-setup.md](./ci-setup.md)).
 
 ### Production promotion (after staging green)
 
@@ -170,7 +172,7 @@ Reads repo root `.env` when present, or env vars:
 
 | Command | Description |
 |---------|-------------|
-| `bun repo deploy api staging` | Deploy API Worker (`--env staging`) |
+| `bun repo deploy api staging` | Deploy API Worker (`--env staging`); also runs from CI on merge |
 | `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy webapp |
 | `bun run deploy:webadmin:staging` | Build with staging `PUBLIC_API_URL` + deploy webadmin (`edaya_web`) |
 | `bun repo db migrate staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
