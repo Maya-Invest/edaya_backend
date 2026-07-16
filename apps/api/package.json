@@ -16,9 +16,7 @@
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
-    "build": "tsup",
-    "deploy:staging": "wrangler deploy --env staging",
-    "deploy:production": "wrangler deploy --env prod"
+    "build": "tsup"
   },
   "dependencies": {
     "@edaya/adaptor-auth": "workspace:*",
@@ -26,8 +24,8 @@
     "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/adaptor-r2": "workspace:*",
-    "@edaya/client-codegen": "workspace:*",
     "@edaya/authorization": "workspace:*",
+    "@edaya/client-codegen": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",
@@ -42,9 +40,9 @@
     "graphql": "^16.9.0",
     "hono": "^4.7.9",
     "hono-pino": "^0.3.0",
+    "pg": "^8.16.3",
     "pino": "^9.6.0",
     "pino-pretty": "^11.3.0",
-    "pg": "^8.16.3",
     "stoker": "^1.4.2",
     "zod": "^3.24.4"
   },
