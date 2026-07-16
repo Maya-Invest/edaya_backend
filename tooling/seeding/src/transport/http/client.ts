@@ -147,9 +147,9 @@ export class HttpSeedClient {
     const setCookies = typeof headers.getSetCookie === 'function'
       ? headers.getSetCookie()
       : (() => {
-        const single = response.headers.get('set-cookie')
-        return single ? [single] : []
-      })()
+          const single = response.headers.get('set-cookie')
+          return single ? [single] : []
+        })()
 
     for (const setCookie of setCookies) {
       const parsed = parseSetCookie(setCookie)
