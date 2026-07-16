@@ -1,8 +1,10 @@
+/* eslint-disable node/no-process-env -- test isolates SEED_DATASET for demo-ci fixtures */
 import {
   buildDevDemoLoginAccounts,
   resolveDevDemoStaffRole,
 } from "@edaya/fixtures/demo-login";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import process from "node:process";
 
 describe("dev demo login accounts", () => {
   const previousSeedDataset = process.env.SEED_DATASET;
