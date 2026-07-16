@@ -22,10 +22,6 @@ on:
         description: Build and publish edaya-api-dev image
         type: boolean
         default: true
-      deploy_api:
-        description: Deploy API worker to Cloudflare
-        type: boolean
-        default: true
 
 concurrency:
   group: deploy-${{ github.ref_name }}
@@ -44,7 +40,6 @@ jobs:
       run_migrate: ${{ steps.plan.outputs.run_migrate }}
       deploy_api: ${{ steps.plan.outputs.deploy_api }}
       run_publish_api_dev: ${{ steps.plan.outputs.run_publish_api_dev }}
-      deploy_api: ${{ steps.plan.outputs.deploy_api }}
       migrate_target: ${{ steps.plan.outputs.migrate_target }}
     steps:
       - name: Checkout
@@ -84,7 +79,6 @@ jobs:
             echo "run_migrate=${{ inputs.run_migrate }}" >> "$GITHUB_OUTPUT"
             echo "deploy_api=${{ inputs.deploy_api }}" >> "$GITHUB_OUTPUT"
             echo "run_publish_api_dev=${{ inputs.run_publish_api_dev }}" >> "$GITHUB_OUTPUT"
-            echo "deploy_api=${{ inputs.deploy_api }}" >> "$GITHUB_OUTPUT"
           else
             case "$REF_NAME" in
               main|master) CHANNEL=production ;;
@@ -93,13 +87,7 @@ jobs:
             echo "run_migrate=true" >> "$GITHUB_OUTPUT"
             echo "deploy_api=${{ steps.filter.outputs.api_deploy == 'true' }}" >> "$GITHUB_OUTPUT"
             echo "run_publish_api_dev=${{ steps.filter.outputs.api_dev_image == 'true' }}" >> "$GITHUB_OUTPUT"
-            echo "deploy_api=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
-
-  verify:
-    needs: gate
-    uses: ./.github/workflows/_verify.yml
 
           case "$CHANNEL" in
             production) MIGRATE_TARGET=production ;;
