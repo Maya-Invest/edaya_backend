@@ -2,7 +2,7 @@
 
 Isolated Cloudflare staging environment for validating deploys before production. See [staging-environment-plan.md](../sprints/staging-environment-plan.md) for goals and architecture.
 
-**Domains:** `staging.api.edayaplus.com` · `staging.app.edayaplus.com` · `staging.admin.edayaplus.com`
+**Domains:** `staging.api.edaya.app` · `staging.staff.edaya.app` · `staging.admin.edaya.app`
 
 ---
 
@@ -62,9 +62,9 @@ Attach routes in Cloudflare for:
 
 | Host | Worker |
 |------|--------|
-| `staging.api.edayaplus.com` | `edaya-api-staging` |
-| `staging.app.edayaplus.com` | `edaya-webapp-staging` |
-| `staging.admin.edayaplus.com` | `edaya-webadmin-staging` |
+| `staging.api.edaya.app` | `edaya-api-staging` |
+| `staging.staff.edaya.app` | `edaya-webapp-staging` |
+| `staging.admin.edaya.app` | `edaya-webadmin-staging` |
 
 Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
 
@@ -148,8 +148,8 @@ Reads repo root `.env` when present, or env vars:
 
 | Variable | Default |
 |----------|---------|
-| `SEED_STAGING_API_URL` | `https://staging.api.edayaplus.com` |
-| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `https://staging.api.edaya.app` |
+| `SEED_STAGING_APP_ORIGIN` | `https://staging.staff.edaya.app` |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 

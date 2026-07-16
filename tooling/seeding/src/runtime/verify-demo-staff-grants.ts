@@ -1,4 +1,4 @@
-import { DEV_DEMO_LOGIN_ACCOUNTS } from '@edaya/fixtures/demo-login'
+import { buildDevDemoLoginAccounts } from '@edaya/fixtures/demo-login'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { signInViaHttp } from '../bootstrap/auth/http-provisioner'
 import { HttpSeedClient } from '../transport/http/client'
@@ -10,7 +10,7 @@ export async function runHttpVerifyDemoStaffGrants(
   const context = resolveDevSeedContext()
   const failures: string[] = []
 
-  for (const account of DEV_DEMO_LOGIN_ACCOUNTS) {
+  for (const account of buildDevDemoLoginAccounts()) {
     const client = new HttpSeedClient({ baseUrl, appOrigin })
     await signInViaHttp(client, {
       email: account.email,

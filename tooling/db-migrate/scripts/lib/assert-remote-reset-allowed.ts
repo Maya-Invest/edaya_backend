@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
-import process from 'node:process'
 import type { MigrationTarget } from './resolve-migration-target'
+import process from 'node:process'
 
 const LOCAL_DATABASE_URLS = new Set(['pglite', 'memory'])
 

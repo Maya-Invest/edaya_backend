@@ -57,7 +57,7 @@ On push to `staging` / `main` (or manual **Run workflow**):
 gate (path filter)
   → migrate (school + auth schema)
   → publish-api-dev-image / publish-api-client (when API paths changed)
-  → deploy-api (Wrangler → staging.api or api.edayaplus.com)
+  → deploy-api (Wrangler → staging.api or api.edaya.app)
 ```
 
 | Push branch | Channel | Migrate target |
@@ -153,3 +153,28 @@ bun add @maya-invest/edaya-api-client@production
 ```
 
 **Sibling repos** — `file:../edaya_backend/package/api-client`.
+
+## Deploy API to Cloudflare (GitHub Actions)
+
+Deploy runs from GitHub Actions — not Cloudflare Workers Builds. See [`deploy_push.yml`](../../.github/workflows/deploy_push.yml) (push to `staging` / `main`).
+
+| Step | What happens |
+|------|----------------|
+| `verify` | `bun run verify` (same as PR CI) |
+| `migrate` | School + auth schema when enabled (before deploy) |
+| `deploy-api` | `wrangler deploy` for `@edaya/api` |
+
+**Smoke (manual):** API staging smoke (`bun repo smoke-test staging`) is not run in merge CI until staging seed is stable. Vendor smokes remain ad-hoc: `bun repo smoke-test novu`, `bun repo smoke-test r2`.
+
+**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`BETTER_AUTH_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
+
+Branch mapping:
+
+| Branch | Migrate target | Wrangler env |
+|--------|----------------|--------------|
+| `staging` | `staging` | `--env staging` |
+| `main` | `production` | `--env prod` |
+
+Manual deploy: **Actions → Push / Merge → Run workflow** (toggle migrate / publish / deploy independently).
+
+Local equivalent: `bun repo deploy api staging` or `bun repo deploy api production` after `bun run verify` and migrations when schema changed.

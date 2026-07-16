@@ -16,6 +16,7 @@ permissions:
   contents: write
   packages: write
 
+  
 jobs:
   verify:
     uses: ./.github/workflows/_verify.yml

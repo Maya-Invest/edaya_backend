@@ -14,7 +14,7 @@ describe('profile photo preflight', () => {
   test('isLocalDevApiUrl recognizes loopback hosts', () => {
     expect(isLocalDevApiUrl('http://localhost:9999')).toBe(true)
     expect(isLocalDevApiUrl('http://127.0.0.1:9999')).toBe(true)
-    expect(isLocalDevApiUrl('https://staging.api.edayaplus.com')).toBe(false)
+    expect(isLocalDevApiUrl('https://staging.api.edaya.app')).toBe(false)
   })
 
   test('resolveProfilePhotoSeedPlan skips when flag is set', async () => {
@@ -28,7 +28,7 @@ describe('profile photo preflight', () => {
 
   test('resolveProfilePhotoSeedPlan seeds on remote APIs without probing local-files', async () => {
     const plan = await resolveProfilePhotoSeedPlan({
-      apiBaseUrl: 'https://staging.api.edayaplus.com',
+      apiBaseUrl: 'https://staging.api.edaya.app',
       skipProfilePhotos: false,
     })
     expect(plan.seedProfilePhotos).toBe(true)

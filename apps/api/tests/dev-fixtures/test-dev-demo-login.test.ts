@@ -1,11 +1,27 @@
+/* eslint-disable node/no-process-env -- test isolates SEED_DATASET for demo-ci fixtures */
 import {
   buildDevDemoLoginAccounts,
-  DEV_DEMO_LOGIN_ACCOUNTS,
   resolveDevDemoStaffRole,
 } from "@edaya/fixtures/demo-login";
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import process from "node:process";
 
 describe("dev demo login accounts", () => {
+  const previousSeedDataset = process.env.SEED_DATASET;
+
+  beforeEach(() => {
+    process.env.SEED_DATASET = "demo-ci";
+  });
+
+  afterEach(() => {
+    if (previousSeedDataset === undefined) {
+      delete process.env.SEED_DATASET;
+    }
+    else {
+      process.env.SEED_DATASET = previousSeedDataset;
+    }
+  });
+
   it("resolves demo-ci staff roles from fixture access role ids", () => {
     expect(resolveDevDemoStaffRole("ci-st8")).toMatchObject({
       role: "owner",
@@ -28,7 +44,6 @@ describe("dev demo login accounts", () => {
   it("builds four staff login accounts without portal teachers", () => {
     const accounts = buildDevDemoLoginAccounts();
 
-    expect(accounts).toEqual(DEV_DEMO_LOGIN_ACCOUNTS);
     expect(accounts).toHaveLength(4);
     expect(accounts.map(account => account.staffId)).toEqual(["ci-st8", "ci-st5", "ci-st3", "ci-st7"]);
     expect(accounts.find(account => account.staffId === "ci-st8")).toMatchObject({

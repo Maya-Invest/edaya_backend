@@ -3,8 +3,8 @@ import process from 'node:process'
 
 export const DEFAULT_LOCAL_API_URL = 'http://localhost:9999'
 export const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-export const DEFAULT_STAGING_API_URL = 'https://staging.api.edayaplus.com'
-export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.app.edayaplus.com'
+export const DEFAULT_STAGING_API_URL = 'https://staging.api.edaya.app'
+export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.staff.edaya.app'
 
 export type SeedHttpTarget = 'local' | 'staging'
 
@@ -54,7 +54,7 @@ export function isStagingSeedApiUrl(apiUrl: string): boolean {
 
   try {
     const hostname = new URL(trimmed).hostname.toLowerCase()
-    return hostname === 'staging.api.edayaplus.com'
+    return hostname === 'staging.api.edaya.app'
       || hostname.startsWith('staging.api.')
       || hostname.startsWith('api-staging.')
   }
