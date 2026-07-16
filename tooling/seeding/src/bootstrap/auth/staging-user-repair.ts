@@ -1,13 +1,12 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import process from 'node:process'
+import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
 
 function escapeSqlString(value: string): string {
   return value.replaceAll('\'', '\'\'')
 }
 
-export function isStagingSeedApiUrl(baseUrl: string): boolean {
-  return baseUrl.includes('api-staging.')
-}
+export { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
 
 export function shouldRepairStaleStagingAuthUsers(baseUrl: string): boolean {
   if (!isStagingSeedApiUrl(baseUrl)) {

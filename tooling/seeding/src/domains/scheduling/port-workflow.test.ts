@@ -61,7 +61,7 @@ describe('scheduling seed port workflow', () => {
     )
   })
 
-  test('seeds demo-ci schedules without materializing lesson sessions when skipLessonSessionSeeding is set', async () => {
+  test('seeds demo-ci schedules and materializes lesson sessions', async () => {
     const slots = demoCiDataset.extensions?.schedulingSlots ?? []
     const schedules: ScheduleSeedRecord[] = []
     const materializedScheduleIds: string[] = []
@@ -85,13 +85,14 @@ describe('scheduling seed port workflow', () => {
       },
     }
 
-    expect(demoCiDataset.extensions?.skipLessonSessionSeeding).toBe(true)
     await seedDevScheduling(port, demoCiDataset)
 
     expect(slots).toHaveLength(6)
     expect(schedules).toHaveLength(6)
-    expect(materializedScheduleIds).toHaveLength(0)
+    expect(materializedScheduleIds).toHaveLength(slots.length)
     expect(staffAssignments).toHaveLength(0)
-    expect(progress).toHaveLength(0)
+    expect(progress).toHaveLength(
+      demoCiDataset.extensions?.schedulingSessionProgressAnchors?.length ?? 0,
+    )
   })
 })

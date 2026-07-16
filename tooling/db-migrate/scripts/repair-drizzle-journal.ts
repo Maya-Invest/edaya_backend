@@ -52,6 +52,18 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
   const sql = postgres(databaseUrl)
 
   try {
+    const existsRows = await sql<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'drizzle'
+          AND table_name = '__drizzle_migrations'
+      ) AS exists
+    `
+    if (!existsRows[0]?.exists) {
+      return
+    }
+
     const rows = await sql<JournalRow[]>`
       SELECT id, hash, created_at::text
       FROM drizzle.__drizzle_migrations

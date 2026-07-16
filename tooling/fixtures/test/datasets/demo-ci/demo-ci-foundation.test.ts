@@ -79,8 +79,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiSchool.timetableMinDayGapSameSubject).toBe(1)
   })
 
-  it('skips lesson session seeding while timetable periodicity is under review', () => {
-    expect(demoCiDataset.extensions?.skipLessonSessionSeeding).toBe(true)
+  it('materializes lesson sessions from recurring schedules', () => {
+    expect(demoCiDataset.extensions?.skipLessonSessionSeeding).not.toBe(true)
   })
 
   it('assigns a subject teacher to every class subject', () => {

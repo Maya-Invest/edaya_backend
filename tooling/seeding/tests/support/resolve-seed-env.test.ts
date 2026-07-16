@@ -4,6 +4,7 @@ import {
   DEFAULT_LOCAL_APP_ORIGIN,
   DEFAULT_STAGING_API_URL,
   DEFAULT_STAGING_APP_ORIGIN,
+  isStagingSeedApiUrl,
   resolveLocalAppOrigin,
   resolveLocalSeedApiUrl,
   resolveStagingAppOrigin,
@@ -43,5 +44,12 @@ describe('resolve-seed-env', () => {
     delete process.env.SEED_STAGING_APP_ORIGIN
     expect(resolveStagingSeedApiUrl()).toBe(DEFAULT_STAGING_API_URL)
     expect(resolveStagingAppOrigin()).toBe(DEFAULT_STAGING_APP_ORIGIN)
+  })
+
+  it('detects staging API hostnames', () => {
+    expect(isStagingSeedApiUrl('https://staging.api.edayaplus.com')).toBe(true)
+    expect(isStagingSeedApiUrl('https://api-staging.example.com')).toBe(true)
+    expect(isStagingSeedApiUrl('https://api.edayaplus.com')).toBe(false)
+    expect(isStagingSeedApiUrl('http://localhost:9999')).toBe(false)
   })
 })

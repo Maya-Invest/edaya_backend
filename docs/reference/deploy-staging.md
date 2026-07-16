@@ -2,7 +2,7 @@
 
 Isolated Cloudflare staging environment for validating deploys before production. See [staging-environment-plan.md](../sprints/staging-environment-plan.md) for goals and architecture.
 
-**Domains:** `staging.api.edayaplus.com` · `staging.app.edayaplus.com`
+**Domains:** `staging.api.edayaplus.com` · `staging.app.edayaplus.com` · `staging.admin.edayaplus.com`
 
 ---
 
@@ -64,6 +64,7 @@ Attach routes in Cloudflare for:
 |------|--------|
 | `staging.api.edayaplus.com` | `edaya-api-staging` |
 | `staging.app.edayaplus.com` | `edaya-webapp-staging` |
+| `staging.admin.edayaplus.com` | `edaya-webadmin-staging` |
 
 Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
 
@@ -87,9 +88,10 @@ Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value). St
 # 1. School + auth schema on Neon staging branch
 STAGING_DATABASE_URL=postgres://… bun repo db migrate staging
 
-# 2. Deploy API + webapp
+# 2. Deploy API + web apps (edaya_web repo)
 bun repo deploy api staging
 bun run deploy:webapp:staging
+bun run deploy:webadmin:staging
 
 # 4. Configure seeding env (copy example, set remote URLs)
 cp .env.example .env
@@ -120,11 +122,14 @@ bun run verify   # includes check openapi
 ```sh
 STAGING_DATABASE_URL=postgres://… bun repo db migrate staging   # when schema changed
 bun repo db migrate staging                                      # school + auth schema when either changed
-bun repo deploy api staging
+bun repo deploy api staging                                      # or merge to `staging` with API path changes
 bun run deploy:webapp:staging
+bun run deploy:webadmin:staging
 bun repo seed --staging   # if seed data needed
 bun repo smoke-test staging
 ```
+
+CI runs migrate → `deploy-api` automatically on push when API paths change (see [ci-setup.md](./ci-setup.md)).
 
 ### Production promotion (after staging green)
 
@@ -132,6 +137,7 @@ bun repo smoke-test staging
 bun run verify
 bun repo deploy api production
 bun run deploy:webapp:production
+bun run deploy:webadmin:production
 ```
 
 ---
@@ -166,8 +172,9 @@ Reads repo root `.env` when present, or env vars:
 
 | Command | Description |
 |---------|-------------|
-| `bun repo deploy api staging` | Deploy API Worker (`--env staging`) |
-| `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy |
+| `bun repo deploy api staging` | Deploy API Worker (`--env staging`); also runs from CI on merge |
+| `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy webapp |
+| `bun run deploy:webadmin:staging` | Build with staging `PUBLIC_API_URL` + deploy webadmin (`edaya_web`) |
 | `bun repo db migrate staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
 | `bun repo seed --staging` | Full HTTP seed against `SEED_STAGING_API_URL` |
 | `bun repo smoke-test staging` | Tier 1 HTTP smoke against staging |
@@ -189,5 +196,5 @@ Reads repo root `.env` when present, or env vars:
 | S6 401 | Staff not linked to auth subject — run `seed:init` / `seed:staging` |
 | S8 missing school | School seed not applied; run `seed:staging` |
 | Webapp calls wrong API | Rebuild webapp with `deploy:webapp:staging` (sets `PUBLIC_API_URL`) |
-| CORS errors in browser | `TRUSTED_ORIGINS` must include exact app staging origin |
+| CORS errors in browser | `TRUSTED_ORIGINS` must include exact app and webadmin staging origins |
 | Seed fails on profile photo upload (R2 401) | Run `bun repo smoke-test r2` — uses `apps/api/secrets.staging.json` + bucket `edaya-files-staging`; re-run `wrangler secret bulk secrets.staging.json --env staging` if check fails |

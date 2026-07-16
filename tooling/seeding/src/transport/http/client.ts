@@ -1,3 +1,5 @@
+import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
+
 export type HttpFetch = (
   input: string | URL | Request,
   init?: RequestInit,
@@ -115,13 +117,7 @@ export class HttpSeedClient {
   }
 
   private isStaging(): boolean {
-    try {
-      const host = new URL(this.baseUrl).hostname
-      return host.startsWith('staging.') || host.includes('api-staging.')
-    }
-    catch {
-      return false
-    }
+    return isStagingSeedApiUrl(this.baseUrl)
   }
 
   cookieHeader(): string | undefined {
@@ -151,9 +147,9 @@ export class HttpSeedClient {
     const setCookies = typeof headers.getSetCookie === 'function'
       ? headers.getSetCookie()
       : (() => {
-          const single = response.headers.get('set-cookie')
-          return single ? [single] : []
-        })()
+        const single = response.headers.get('set-cookie')
+        return single ? [single] : []
+      })()
 
     for (const setCookie of setCookies) {
       const parsed = parseSetCookie(setCookie)

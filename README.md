@@ -2,7 +2,7 @@
 
 Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
 
-Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/saas-admin`).
+Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/webadmin`).
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 

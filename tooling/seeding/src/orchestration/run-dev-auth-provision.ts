@@ -1,6 +1,7 @@
 import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner } from '../support/types'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { isStagingSeedApiUrl } from '../support/resolve-seed-env'
 import { countAuthProvisionAccounts } from '../support/seed-progress'
 
 const AUTH_REQUEST_PAUSE_MS = 250
@@ -21,7 +22,7 @@ function resolveAuthRequestPauseMs(options: RunDevAuthProvisionOptions): number 
   if (!options.baseUrl) {
     return 0
   }
-  return options.baseUrl.includes('api-staging.')
+  return isStagingSeedApiUrl(options.baseUrl)
     ? STAGING_AUTH_REQUEST_PAUSE_MS
     : AUTH_REQUEST_PAUSE_MS
 }

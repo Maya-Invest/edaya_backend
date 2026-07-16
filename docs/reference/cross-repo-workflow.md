@@ -5,7 +5,7 @@ Edaya spans multiple repositories:
 | Repo | Role |
 |------|------|
 | **edaya_backend** (this repo) | API, cron, domain packages, adaptors, `@maya-invest/edaya-api-client`, client codegen tooling |
-| **edaya_web** | SvelteKit webapp + saas-admin, browser OpenAPI types |
+| **edaya_web** | SvelteKit webapp + webadmin, browser OpenAPI types |
 | **edaya_mobile** | Flutter app (consumes OpenAPI client bindings extension) |
 
 ## Backend OpenAPI pipeline

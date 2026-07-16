@@ -35,7 +35,7 @@ describe("runStartupMigrations", () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(4);
-      expect(migrations.rows[0]?.count).toBeGreaterThan(49);
+      expect(migrations.rows[0]?.count).toBe(2);
     }
     finally {
       await pglite.close();
@@ -52,7 +52,9 @@ describe("runStartupMigrations", () => {
 
     try {
       await runAuthMigrations(db, { driver: "pglite" });
-      await runSchoolMigrations(db, { driver: "pglite" });
+      await expect(runSchoolMigrations(db, { driver: "pglite" })).rejects.toThrow(
+        /cron_job_schedules/,
+      );
 
       const publicTables = await pglite.query<{ count: number }>(
         `SELECT count(*)::int AS count

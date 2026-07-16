@@ -13,6 +13,7 @@ import {
 import { runDevAuthProvision } from '../../orchestration/run-dev-auth-provision'
 import { runDevSchoolSeed } from '../../orchestration/run-dev-school-seed'
 import { logDevSeedResults } from '../../orchestration/run-dev-seeds'
+import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
 import { runSeedProgressStep } from '../../support/seed-progress'
 import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-service-account'
 import { canUseSeedingServiceAccount, createEmptyHttpSeedResults } from '../helpers'
@@ -46,7 +47,7 @@ export async function tryRunAllFreshBootstrap(
     }
     catch (error) {
       throwHttpBootstrapFailure(error, {
-        staging: client.origin.includes('api-staging.'),
+        staging: isStagingSeedApiUrl(client.origin),
       })
     }
   })

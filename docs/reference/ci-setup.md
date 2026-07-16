@@ -44,11 +44,40 @@ With a custom Turbo cache prefix (e.g. when copying into `edaya_web`):
 | Workflow | Job | Notes |
 |----------|-----|-------|
 | [`_verify.yml`](../../.github/workflows/_verify.yml) | `verify` | Runs `bun run verify` |
-| [`_deploy-cloudflare.yml`](../../.github/workflows/_deploy-cloudflare.yml) | `deploy` | `wrangler deploy` for `@edaya/api` |
-| [`_smoke-test.yml`](../../.github/workflows/_smoke-test.yml) | `smoke` | Reusable only — not wired to merge (run `bun repo smoke-test staging` locally) |
+| [`_deploy-api.yml`](../../.github/workflows/_deploy-api.yml) | `deploy` | Wrangler deploy for `@edaya/api` |
 | [`_coverage.yml`](../../.github/workflows/_coverage.yml) | `coverage` | Informational; `continue-on-error: true` |
 
 Other jobs use inline `setup-bun` + `bun install` when they need extra steps (Docker login, GHCR, migrations) and do not benefit from Turbo cache alone.
+
+## Merge pipeline (`deploy_push.yml`)
+
+On push to `staging` / `main` (or manual **Run workflow**):
+
+```text
+gate (path filter)
+  → migrate (school + auth schema)
+  → publish-api-dev-image / publish-api-client (when API paths changed)
+  → deploy-api (Wrangler → staging.api or api.edayaplus.com)
+```
+
+| Push branch | Channel | Migrate target |
+|-------------|---------|----------------|
+| `staging` | staging | staging Neon |
+| `main` | production | production Neon |
+
+On push, `dorny/paths-filter` sets `deploy_api` from `apps/api/**`, `package/**`, and root lockfiles. Manual dispatch keeps explicit toggles for migrate, API deploy, and api-dev image publish. Verify and integration run on PRs only (`deploy_pr.yml`), not on merge deploy.
+
+### Secrets (`edaya_backend` → Settings → Secrets and variables → Actions)
+
+| Secret | Used by |
+|--------|---------|
+| `CLOUDFLARE_API_TOKEN` | `deploy-api` — Wrangler deploy (`apps/api/wrangler.jsonc`) |
+| `STAGING_DATABASE_URL` | `migrate` on `staging` channel |
+| `PRODUCTION_DATABASE_URL` | `migrate` on `production` channel |
+
+Wrangler **worker secrets** (`BETTER_AUTH_SECRET`, R2, Novu) are uploaded separately via `wrangler secret bulk` — not GitHub Actions secrets. See [deploy-staging.md](./deploy-staging.md).
+
+Configured in [`deploy_push.yml`](../../.github/workflows/deploy_push.yml).
 
 ## Verify entry point
 

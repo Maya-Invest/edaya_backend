@@ -28,7 +28,7 @@ describe('timetable preparation migration', () => {
         INSERT INTO schools VALUES ('school-1');
       `)
 
-      const migration = await Bun.file(new URL('../drizzle/0043_timetable_generation_preparation.sql', import.meta.url)).text()
+      const migration = await Bun.file(new URL('./test-fixtures/migrations/timetable-generation-preparation.sql', import.meta.url)).text()
       await db.exec(migration)
 
       const periods = await db.query<{ id: string, day_of_week: string, is_teaching_slot: boolean }>(
