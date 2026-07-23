@@ -2846,6 +2846,11 @@
             "type": "string",
             "minLength": 1
           },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "photoUrl": {
             "type": "string",
             "nullable": true,
@@ -2932,6 +2937,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "photoUrl": {
@@ -3033,6 +3043,11 @@
             "type": "string",
             "minLength": 1
           },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "photoUrl": {
             "type": "string",
             "nullable": true,
@@ -3078,6 +3093,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "photoUrl": {
@@ -3254,6 +3274,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "photoUrl": {
@@ -5434,6 +5459,11 @@
             "type": "string",
             "minLength": 1
           },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "photoUrl": {
             "type": "string",
             "nullable": true,
@@ -6000,6 +6030,11 @@
           },
           "lastName": {
             "type": "string",
+            "minLength": 1
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
             "minLength": 1
           },
           "photoUrl": {

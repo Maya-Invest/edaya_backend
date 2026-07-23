@@ -138,13 +138,16 @@ describe("onboarding apply-structure-template route", () => {
       classGroups.some(group => group.id === entry.classGroupId));
 
     expect(gradeLevels).toHaveLength(2);
+    expect(gradeLevels.map(level => level.id).sort()).toEqual(["gl-3", "gl-4"]);
+    expect(gradeLevels.map(level => level.name).sort()).toEqual(["3ème", "4ème"]);
     expect(classGroups).toHaveLength(3);
+    expect(classGroups.map(group => group.id).sort()).toEqual(["3a", "4a", "4b"]);
     expect(subjects).toHaveLength(4);
     expect(gradeLevelSubjects).toHaveLength(8);
     expect(classSubjects).toHaveLength(12);
     expect(classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true);
-    expect(classGroups.some(group => group.name === "4EME A")).toBe(true);
-    expect(classGroups.some(group => group.name === "4EME B")).toBe(true);
+    expect(classGroups.some(group => group.name === "4e A")).toBe(true);
+    expect(classGroups.some(group => group.name === "4e B")).toBe(true);
   });
 
   it("applies built-in primaire templates with longName curriculum entries", async () => {

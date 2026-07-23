@@ -26,6 +26,6 @@ Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive / PGlite) a
 
 `bun repo dev` also applies both schemas on startup when `RUN_MIGRATIONS_ON_STARTUP=true` (default for local PGlite).
 
-**Migration order:** school runs before auth on `full` migrate/reset. Both share `drizzle.__drizzle_migrations`; the auth journal `when` must stay **greater** than the school baseline `when` or auth migrations are skipped.
+**Migration order:** school runs before auth on `full` migrate/reset. Both share `drizzle.__drizzle_migrations`; every auth journal `when` must stay **greater** than the latest school migration `when` or auth migrations are skipped silently.
 
 Schema generation: `bun repo db generate` (school), `bun repo db generate --auth` (auth).

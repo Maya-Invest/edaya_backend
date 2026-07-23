@@ -10742,6 +10742,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -10767,6 +10768,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -10795,6 +10797,7 @@ export interface components {
         UpdateStaffMemberProfileCommand: {
             firstName?: string;
             lastName?: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             onboardingWizardCompletedAt?: unknown;
@@ -10806,6 +10809,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -10851,6 +10855,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             phone?: string | null;
@@ -11244,6 +11249,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -11400,6 +11406,7 @@ export interface components {
         UpdateGuardianContactMethodsCommand: {
             firstName?: string;
             lastName?: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;

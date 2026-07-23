@@ -4,8 +4,12 @@ import { BusinessRuleViolationError, GradeLevel, Subject, SubjectCategory, Subje
 import { randomUUID } from "node:crypto";
 import {
   classDisplayName,
+  nextOnboardingClassGroupId,
+  onboardingWizardClassDisplayName,
+  onboardingWizardGradeLevelLabels,
   parseGradeLevelTemplateId,
   resolveStructureTemplates,
+  structureGradeLevelSeedId,
 } from "@edaya/fixtures/onboarding";
 import type {
   StructureTemplateCurriculumEntry,
@@ -154,6 +158,21 @@ function parseStructureInput(
   return normalized;
 }
 
+async function allocateUniqueId(
+  preferredId: string,
+  schoolId: string,
+  findById: (id: string) => Promise<{ id: string; schoolId?: string } | undefined>,
+): Promise<string> {
+  const existing = await findById(preferredId);
+  if (!existing) {
+    return preferredId;
+  }
+  if (existing.schoolId === schoolId) {
+    return preferredId;
+  }
+  return `${preferredId}--${schoolId.slice(0, 8)}`;
+}
+
 export async function applyStructureTemplate(
   application: ApiSchoolApplication,
   actor: ActorMetadata,
@@ -203,6 +222,8 @@ export async function applyStructureTemplate(
 
     const subjectIds = new Map<string, string>();
     const matterIdsByKey = new Map<string, string>();
+    const usedClassGroupIds = new Set<string>();
+    const classSiblingCountByGradeSeed = new Map<string, number>();
 
     async function ensureSubject(
       template: StructureTemplateDefinition,
@@ -264,13 +285,22 @@ export async function applyStructureTemplate(
         continue;
       }
 
-      const gradeLevelId = randomUUID();
+      const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId);
+      const gradeLevelId = await allocateUniqueId(
+        preferredGradeLevelId,
+        schoolId,
+        id => application.repositories.gradeLevels.findById(id),
+      );
       gradeLevelCount += 1;
+
+      const wizardLabels = onboardingWizardGradeLevelLabels(level.gradeLevelId);
+      const gradeLevelName = wizardLabels?.name ?? gradeLevelDef.name;
+      const gradeLevelShortLabel = wizardLabels?.shortLabel ?? gradeLevelDef.shortLabel;
 
       await service.baseService.entities.gradeLevels.save(new GradeLevel({
         id: gradeLevelId,
         schoolId,
-        name: gradeLevelDef.name,
+        name: gradeLevelName,
         order: gradeLevelDef.order,
         cycle: level.template.cycle,
       }), { moduleChecked: true });
@@ -311,8 +341,8 @@ export async function applyStructureTemplate(
         template: level.template,
         levelCode: level.levelCode,
         gradeLevelId,
-        gradeLevelName: gradeLevelDef.name,
-        gradeLevelShortLabel: gradeLevelDef.shortLabel,
+        gradeLevelName,
+        gradeLevelShortLabel,
         subjects: collectLevelSubjects(
           level.template,
           level.levelCode,
@@ -322,7 +352,17 @@ export async function applyStructureTemplate(
       });
 
       for (let index = 0; index < level.classCount; index += 1) {
-        const classGroupId = randomUUID();
+        const preferredClassGroupId = nextOnboardingClassGroupId(
+          level.gradeLevelId,
+          usedClassGroupIds,
+          classSiblingCountByGradeSeed,
+        );
+        const classGroupId = await allocateUniqueId(
+          preferredClassGroupId,
+          schoolId,
+          id => application.repositories.classGroups.findById(id),
+        );
+        usedClassGroupIds.add(classGroupId);
         classGroupCount += 1;
 
         await service.setupWorkflow.createClassGroup({
@@ -330,7 +370,8 @@ export async function applyStructureTemplate(
           schoolId,
           academicYearId: academicYear.id,
           gradeLevelId,
-          name: classDisplayName(level.template, level.levelCode, index),
+          name: onboardingWizardClassDisplayName(level.gradeLevelId, index)
+            ?? classDisplayName(level.template, level.levelCode, index),
           capacity: level.capacity,
         });
       }
