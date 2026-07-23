@@ -106,6 +106,7 @@ export interface UpdateStaffMemberProfileInput {
   staffId: string
   firstName?: string
   lastName?: string
+  code?: string | null
   email?: string | null
   photoUrl?: string | null
 }
