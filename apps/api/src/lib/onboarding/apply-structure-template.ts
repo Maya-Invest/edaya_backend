@@ -67,7 +67,8 @@ function subjectColor(domain: string): SubjectColor {
 }
 
 function catalogSubjectKey(entry: StructureTemplateCurriculumEntry): string {
-  return entry.longName ?? `${entry.subjectCode}::${entry.levelCodes.join("/")}`;
+  // Same subject code → one school catalog subject. Per-level programme lives on matters.
+  return entry.longName ?? entry.subjectCode;
 }
 
 function catalogSubjectName(
@@ -81,12 +82,12 @@ function curriculumEntriesForLevel(
   template: StructureTemplateDefinition,
   levelCode: string,
 ): StructureTemplateCurriculumEntry[] {
-  const specific = template.curriculum.filter(entry => entry.levelCodes.includes(levelCode));
+  const specific = template.curriculum.filter(entry => entry.levelCode === levelCode);
   if (specific.length > 0) {
     return specific;
   }
   return template.subjects.map(subject => ({
-    levelCodes: [],
+    levelCode,
     subjectCode: subject.code,
     coefficient: subject.defaultCoefficient,
     matters: ["Programme de base"],

@@ -1,9 +1,7 @@
 export type CountryCode = 'CI' | 'FR'
 
-export type StructureTemplateId
-  = | 'ci-primaire'
-    | 'ci-college'
-    | 'ci-lycee'
+/** Builtin CI ids look like `ci-college`; any `ci-*` string is accepted at runtime. */
+export type StructureTemplateId = string
 
 export interface StructureTemplateGradeLevel {
   /** Globally unique id: `{templateId}:{levelCode}` */
@@ -14,6 +12,8 @@ export interface StructureTemplateGradeLevel {
   order: number
   examYear?: boolean
   examName?: string
+  /** Per-level bulletin layout — preferred over template.reportCardStructure.sections. */
+  reportCardStructure?: StructureTemplateReportCardStructure
 }
 
 export interface StructureTemplateSubject {
@@ -24,7 +24,8 @@ export interface StructureTemplateSubject {
 }
 
 export interface StructureTemplateCurriculumEntry {
-  levelCodes: string[]
+  /** Single grade level — no multi-level sharing. */
+  levelCode: string
   subjectCode: string
   longName?: string
   coefficient: number
@@ -46,11 +47,22 @@ export interface StructureTemplateReportCardDomainCategory {
   weight?: number
 }
 
+export type StructureTemplateReportCardSectionRole = 'subjects' | 'summary' | 'comments'
+
+export interface StructureTemplateReportCardSection {
+  role: StructureTemplateReportCardSectionRole
+  label: string
+  order: number
+  subjectCodes?: string[]
+}
+
 export interface StructureTemplateReportCardStructure {
   gradingScale: number
   periods: StructureTemplateReportCardPeriod[]
   passingGrade: number
-  domainCategories: StructureTemplateReportCardDomainCategory[]
+  /** Optional catalog metadata; bulletin layout prefers `sections` when present. */
+  domainCategories?: StructureTemplateReportCardDomainCategory[]
+  sections?: StructureTemplateReportCardSection[]
   includeSummary?: boolean
   includeComments?: boolean
   summaryPeriod?: StructureTemplateReportCardPeriod

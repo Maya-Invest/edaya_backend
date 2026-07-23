@@ -980,8 +980,42 @@
                     "label",
                     "order"
                   ]
-                },
-                "minItems": 1
+                }
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "subjects",
+                        "summary",
+                        "comments"
+                      ]
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "order": {
+                      "type": "integer"
+                    },
+                    "subjectCodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "label",
+                    "order"
+                  ]
+                }
               },
               "includeSummary": {
                 "type": "boolean"
@@ -993,8 +1027,7 @@
             "required": [
               "gradingScale",
               "passingGrade",
-              "periods",
-              "domainCategories"
+              "periods"
             ]
           },
           "gradeLevels": {
@@ -1027,6 +1060,118 @@
                 "examName": {
                   "type": "string",
                   "minLength": 1
+                },
+                "reportCardStructure": {
+                  "type": "object",
+                  "properties": {
+                    "gradingScale": {
+                      "type": "number"
+                    },
+                    "passingGrade": {
+                      "type": "number"
+                    },
+                    "periods": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "weight": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "name",
+                          "weight"
+                        ]
+                      },
+                      "minItems": 1
+                    },
+                    "domainCategories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "domain": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "order": {
+                            "type": "integer"
+                          },
+                          "coefficient": {
+                            "type": "number"
+                          },
+                          "weight": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "domain",
+                          "label",
+                          "order"
+                        ]
+                      }
+                    },
+                    "sections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "subjects",
+                              "summary",
+                              "comments"
+                            ]
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "order": {
+                            "type": "integer"
+                          },
+                          "subjectCodes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        },
+                        "required": [
+                          "role",
+                          "label",
+                          "order"
+                        ]
+                      }
+                    },
+                    "includeSummary": {
+                      "type": "boolean"
+                    },
+                    "includeComments": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "gradingScale",
+                    "passingGrade",
+                    "periods"
+                  ]
                 }
               },
               "required": [
@@ -1074,12 +1219,9 @@
             "items": {
               "type": "object",
               "properties": {
-                "levelCodes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "minLength": 1
-                  }
+                "levelCode": {
+                  "type": "string",
+                  "minLength": 1
                 },
                 "subjectCode": {
                   "type": "string",
@@ -1102,7 +1244,7 @@
                 }
               },
               "required": [
-                "levelCodes",
+                "levelCode",
                 "subjectCode",
                 "coefficient",
                 "matters"

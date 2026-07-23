@@ -5,12 +5,13 @@ import {
 import { IVORY_COAST_STRUCTURE_TEMPLATES } from "@edaya/fixtures/onboarding";
 
 describe("ensureAcademicPeriodsFromTemplates helpers", () => {
-  it("collects teaching periods and synthèse from Ivory Coast college template", () => {
+  it("collects teaching periods from Ivory Coast college template without synthèse", () => {
     const college = IVORY_COAST_STRUCTURE_TEMPLATES.find(template => template.id === "ci-college");
     expect(college).toBeTruthy();
+    expect(college?.reportCardStructure?.includeSummary).toBe(false);
 
     const periods = collectTemplateReportCardPeriods([college!]);
-    expect(periods.map(period => period.code)).toEqual(["T1", "T2", "T3", "SYNTHESE"]);
-    expect(periods.find(period => period.code === "SYNTHESE")?.name).toBe("Synthèse trimestrielle");
+    expect(periods.map(period => period.code)).toEqual(["T1", "T2", "T3"]);
+    expect(periods.some(period => period.code === "SYNTHESE")).toBe(false);
   });
 });

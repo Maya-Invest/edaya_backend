@@ -56,6 +56,13 @@ const structureTemplateReportCardDomainCategorySchema = z.object({
   weight: z.number().optional(),
 });
 
+const structureTemplateReportCardSectionSchema = z.object({
+  role: z.enum(["subjects", "summary", "comments"]),
+  label: z.string().trim().min(1),
+  order: z.number().int(),
+  subjectCodes: z.array(z.string().trim().min(1)).optional(),
+});
+
 const structureTemplateReportCardStructureSchema = z.object({
   gradingScale: z.number(),
   passingGrade: z.number(),
@@ -64,7 +71,8 @@ const structureTemplateReportCardStructureSchema = z.object({
     name: z.string().trim().min(1),
     weight: z.number(),
   })).min(1),
-  domainCategories: z.array(structureTemplateReportCardDomainCategorySchema).min(1),
+  domainCategories: z.array(structureTemplateReportCardDomainCategorySchema).optional(),
+  sections: z.array(structureTemplateReportCardSectionSchema).optional(),
   includeSummary: z.boolean().optional(),
   includeComments: z.boolean().optional(),
 });
@@ -84,6 +92,7 @@ const structureTemplateDefinitionSchema = z.object({
     order: z.number().int(),
     examYear: z.boolean().optional(),
     examName: z.string().trim().min(1).optional(),
+    reportCardStructure: structureTemplateReportCardStructureSchema.optional(),
   }).passthrough()).min(1),
   subjects: z.array(z.object({
     code: z.string().trim().min(1),
@@ -92,7 +101,7 @@ const structureTemplateDefinitionSchema = z.object({
     defaultCoefficient: z.number(),
   }).passthrough()).min(1),
   curriculum: z.array(z.object({
-    levelCodes: z.array(z.string().trim().min(1)),
+    levelCode: z.string().trim().min(1),
     subjectCode: z.string().trim().min(1),
     longName: z.string().trim().min(1).optional(),
     coefficient: z.number(),

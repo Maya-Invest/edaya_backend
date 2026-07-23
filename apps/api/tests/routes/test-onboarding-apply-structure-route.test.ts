@@ -20,7 +20,6 @@ describe("onboarding structure templates route", () => {
     };
     expect(defaultPayload.countryCode).toBe("CI");
     expect(defaultPayload.templates.map(template => template.id)).toEqual([
-      "ci-primaire",
       "ci-college",
       "ci-lycee",
     ]);
@@ -104,7 +103,7 @@ describe("onboarding apply-structure-template route", () => {
 
     expect(summary.gradeLevelCount).toBe(2);
     expect(summary.classGroupCount).toBe(3);
-    expect(summary.subjectCount).toBe(4);
+    expect(summary.subjectCount).toBe(14);
 
     const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     const schoolId = ownerStaff?.schoolId;
@@ -121,13 +120,16 @@ describe("onboarding apply-structure-template route", () => {
     expect(definitions.every(definition => definition.isDefault)).toBe(true);
     expect(sections.length).toBeGreaterThan(10);
     expect(sections.some(section => section.role === "matieres")).toBe(true);
-    expect(sections.some(section => section.role === "synthese")).toBe(true);
+    expect(sections.some(section => section.role === "synthese")).toBe(false);
+    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
     expect(sections.some(section => section.role === "appreciation")).toBe(true);
 
     const academicPeriods = (await application.repositories.academicPeriods.list()).filter(entry => entry.schoolId === schoolId);
-    expect(academicPeriods).toHaveLength(4);
+    expect(academicPeriods).toHaveLength(3);
     expect(academicPeriods.some(period => period.name === "Trimestre 1")).toBe(true);
-    expect(academicPeriods.some(period => period.name === "Synthèse trimestrielle")).toBe(true);
+    expect(academicPeriods.some(period => period.name === "Synthèse trimestrielle")).toBe(false);
 
     const gradeLevels = (await application.repositories.gradeLevels.list()).filter(entry => entry.schoolId === schoolId);
     const classGroups = (await application.repositories.classGroups.list()).filter(entry => entry.schoolId === schoolId);
@@ -139,15 +141,15 @@ describe("onboarding apply-structure-template route", () => {
 
     expect(gradeLevels).toHaveLength(2);
     expect(classGroups).toHaveLength(3);
-    expect(subjects).toHaveLength(4);
-    expect(gradeLevelSubjects).toHaveLength(8);
-    expect(classSubjects).toHaveLength(12);
+    expect(subjects).toHaveLength(14);
+    expect(gradeLevelSubjects).toHaveLength(28);
+    expect(classSubjects).toHaveLength(42);
     expect(classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true);
     expect(classGroups.some(group => group.name === "4EME A")).toBe(true);
     expect(classGroups.some(group => group.name === "4EME B")).toBe(true);
   });
 
-  it("applies built-in primaire templates with longName curriculum entries", async () => {
+  it("applies built-in college template with longName curriculum entries", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     const email = "structure-ci@school.edu";
     await signUpAuthUser(runtime, {
@@ -195,25 +197,33 @@ describe("onboarding apply-structure-template route", () => {
         "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
-        templates: ["ci-primaire"],
+        templates: ["ci-college"],
         levels: [
-          { gradeLevelId: "ci-primaire:CP1", classCount: 1, capacity: 30 },
+          { gradeLevelId: "ci-college:6EME", classCount: 1, capacity: 30 },
         ],
       }),
     }));
 
     expect(response.status).toBe(200);
     const summary = await response.json() as { subjectCount: number; reportCardDefinitionCount: number };
-    expect(summary.subjectCount).toBe(2);
+    expect(summary.subjectCount).toBeGreaterThan(0);
     expect(summary.reportCardDefinitionCount).toBe(1);
 
     const definitions = (await application.repositories.definitions.list()).filter(entry => entry.schoolId === school.id);
     const gradeScales = (await application.repositories.gradeScales.list()).filter(entry => entry.schoolId === school.id);
     const subjects = (await application.repositories.subjects.list()).filter(entry => entry.schoolId === school.id);
+    const sections = (await application.repositories.sections.list()).filter(entry =>
+      definitions.some(definition => definition.id === entry.reportCardDefinitionId),
+    );
     expect(gradeScales).toHaveLength(1);
-    expect(gradeScales[0]?.maxScore).toBe(10);
+    expect(gradeScales[0]?.maxScore).toBe(20);
     expect(definitions).toHaveLength(1);
-    expect(subjects.some(subject => subject.name === "Français — CP1/CP2")).toBe(true);
-    expect(subjects.some(subject => subject.name === "Mathématiques — CP1/CP2")).toBe(true);
+    expect(subjects.some(subject => subject.name.includes("Français"))).toBe(true);
+    expect(subjects.some(subject => subject.name.includes("Mathématiques"))).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
+    expect(sections.some(section => section.name === "Appréciations")).toBe(true);
+    expect(sections.some(section => section.name.includes("Synthèse"))).toBe(false);
   });
 });
