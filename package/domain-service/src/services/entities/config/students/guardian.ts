@@ -5,24 +5,43 @@ import { GuardianOperations } from '@edaya/authorization'
 import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core'
 import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniquePersonCode } from '../person-code-uniqueness'
 
 // Extracted from domain/students/guardian.ts (PR3)
 export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, policy, atomicExecution }) => {
   const readAccess = readByIds((actor, ids) => policy.checkGuardianAccess(actor, ids))
 
-  return config({
-    repository: repositories.guardians,
-    tenant: directSchoolTenant(),
-    read: read(operationModule(GuardianOperations.read), readAccess),
-    write: write(
-      operationModule(GuardianOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+  return {
+    ...config({
+      repository: repositories.guardians,
+      tenant: directSchoolTenant(),
+      read: read(operationModule(GuardianOperations.read), readAccess),
+      write: write(
+        operationModule(GuardianOperations.update),
+        authorizeExistingById(readAccess),
+        authorizeDeleteByReadAccess(readAccess),
+      ),
+      atomicExecution,
+    }),
     gates: {
+      preSave: validateGuardianSave,
       preDelete: validateGuardianDelete,
     },
-    atomicExecution,
+  }
+}
+
+async function validateGuardianSave(
+  guardian: Guardian,
+  _existing: Guardian | undefined,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  await assertUniquePersonCode({
+    code: guardian.code,
+    schoolId: guardian.schoolId,
+    entityId: guardian.id,
+    errorCode: 'GUARDIAN_CODE_ALREADY_EXISTS',
+    entityLabel: 'Guardian',
+    listBySchool: () => repositories.guardians.list({ schoolId: guardian.schoolId }),
   })
 }
 

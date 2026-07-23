@@ -25,6 +25,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('staff_members_school_id_idx').on(col(table, 'schoolId')),
         index('staff_members_subject_id_idx').on(col(table, 'subjectId')),
+        uniqueIndex('staff_members_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
       ]
     case 'service_api_keys':
       return [index('service_api_keys_staff_member_id_idx').on(col(table, 'staffMemberId'))]
@@ -171,7 +172,10 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('student_class_enrollments_student_class_group_idx').on(col(table, 'studentId'), col(table, 'classGroupId')),
       ]
     case 'guardians':
-      return [index('guardians_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('guardians_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('guardians_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+      ]
     case 'guardian_student_links':
       return [
         index('guardian_student_links_guardian_id_idx').on(col(table, 'guardianId')),
@@ -212,6 +216,11 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('teacher_unavailabilities_teacher_id_idx').on(col(table, 'teacherId')),
         index('teacher_unavailabilities_academic_year_id_idx').on(col(table, 'academicYearId')),
+      ]
+    case 'teachers':
+      return [
+        index('teachers_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('teachers_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
       ]
     default:
       return []

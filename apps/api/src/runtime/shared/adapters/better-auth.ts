@@ -100,15 +100,23 @@ export function buildBetterAuthConfig(
       user: {
         create: {
           before: async (user, ctx) => {
-            if (!isSeedAuthProvisionRequest(ctx?.headers)) {
-              return;
+            if (isSeedAuthProvisionRequest(ctx?.headers)) {
+              return {
+                data: {
+                  ...user,
+                  emailVerified: true,
+                },
+              };
             }
-            return {
-              data: {
-                ...user,
-                emailVerified: true,
-              },
-            };
+            if (!requireEmailVerification) {
+              return {
+                data: {
+                  ...user,
+                  emailVerified: true,
+                },
+              };
+            }
+            return;
           },
         },
       },
