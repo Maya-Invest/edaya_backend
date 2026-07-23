@@ -42,4 +42,15 @@ describe('buildWhereClause', () => {
   test('ignores unknown table fields', () => {
     expect(buildWhereClause(students, { unknownField: 'value' } as never)).toBeUndefined()
   })
+
+  test('report card definition sections filter by reportCardDefinitionId', () => {
+    const sections = pgTable('report_card_definition_sections', {
+      id: text('id').primaryKey(),
+      reportCardDefinitionId: text('definition_id'),
+      name: text('name'),
+    })
+
+    expect(buildWhereClause(sections, { reportCardDefinitionId: 'ci-rcd-6' })).toBeDefined()
+    expect(buildWhereClause(sections, { definitionId: 'ci-rcd-6' } as never)).toBeUndefined()
+  })
 })

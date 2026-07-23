@@ -102,10 +102,13 @@ export class ReportCardResult {
   copyWith({
     status,
     publishedAt,
+    generatedAt,
     aggregation,
   }: {
     status?: ReportCardResultStatus
-    publishedAt?: Date
+    /** Pass `null` to clear a previously published timestamp (e.g. regenerate → draft). */
+    publishedAt?: Date | null
+    generatedAt?: Date
     aggregation?: ReportCardResultData['aggregation']
   }): ReportCardResult {
     return new ReportCardResult({
@@ -124,8 +127,8 @@ export class ReportCardResult {
       teacherComment: this.teacherComment,
       principalComment: this.principalComment,
       status: status ?? this.status,
-      generatedAt: this.generatedAt,
-      publishedAt: publishedAt ?? this.publishedAt,
+      generatedAt: generatedAt ?? this.generatedAt,
+      publishedAt: publishedAt === null ? undefined : (publishedAt ?? this.publishedAt),
       aggregation: aggregation ?? this.aggregation,
     })
   }

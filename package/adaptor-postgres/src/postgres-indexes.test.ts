@@ -42,7 +42,7 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'assessment_results', columns: { studentId: 'student_id', assessmentId: 'assessment_id' }, minIndexes: 2 },
   { tableName: 'grade_scales', columns: { schoolId: 'school_id' }, minIndexes: 1 },
   { tableName: 'report_card_definitions', columns: { schoolId: 'school_id', academicYearId: 'academic_year_id' }, minIndexes: 2 },
-  { tableName: 'report_card_definition_sections', columns: { definitionId: 'definition_id', parentSectionId: 'parent_section_id' }, minIndexes: 2 },
+  { tableName: 'report_card_definition_sections', columns: { reportCardDefinitionId: 'definition_id', parentSectionId: 'parent_section_id' }, minIndexes: 2 },
   { tableName: 'report_card_results', columns: { studentId: 'student_id', reportCardDefinitionId: 'report_card_definition_id', classGroupId: 'class_group_id', periodId: 'period_id' }, minIndexes: 3 },
   { tableName: 'students', columns: { schoolId: 'school_id' }, minIndexes: 1 },
   { tableName: 'student_class_enrollments', columns: { studentId: 'student_id', classGroupId: 'class_group_id', academicYearId: 'academic_year_id', status: 'status' }, minIndexes: 6 },

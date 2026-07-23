@@ -52,6 +52,31 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.guardianLinks).toHaveLength(30)
   })
 
+  it('varies report-card averages across trimesters for the same class', () => {
+    const results = demoCiDataset.extensions?.reportCardResults ?? []
+    const forPeriod = (periodId: string) =>
+      results
+        .filter(result => result.classGroupId === 'ci-6a' && result.periodId === periodId)
+        .map(result => result.overallAverage)
+        .sort((left, right) => (right ?? 0) - (left ?? 0))
+
+    const t1 = forPeriod('ci-2025-t1')
+    const t2 = forPeriod('ci-2025-t2')
+    const t3 = forPeriod('ci-2025-t3')
+    expect(t1).toHaveLength(6)
+    expect(t2).toHaveLength(6)
+    expect(t3).toHaveLength(6)
+    expect(t1).not.toEqual(t2)
+    expect(t2).not.toEqual(t3)
+    expect(t1).not.toEqual(t3)
+    expect(
+      results.some(result =>
+        result.classGroupId === 'ci-6a'
+        && Object.keys(result.sectionMarks).length > 0,
+      ),
+    ).toBe(true)
+  })
+
   it('uses French subject and grade level labels', () => {
     const subject = demoCiSubjects[0] satisfies SubjectInput
     expect(subject.name).toBe('Français')

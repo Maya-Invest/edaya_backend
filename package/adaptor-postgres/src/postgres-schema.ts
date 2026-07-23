@@ -647,7 +647,8 @@ export const reportCardDefinitions = pgTable('report_card_definitions', {
 // 31. Report Card Definition Section Table
 export const reportCardDefinitionSections = pgTable('report_card_definition_sections', {
   id: text('id').primaryKey(),
-  definitionId: text('definition_id').notNull(),
+  // Domain filter key is reportCardDefinitionId; must match so list({ reportCardDefinitionId }) works.
+  reportCardDefinitionId: text('definition_id').notNull(),
   name: text('name').notNull(),
   role: text('role'),
   coefficient: real('coefficient'),
@@ -668,10 +669,10 @@ export const reportCardResults = pgTable('report_card_results', {
   sectionResults: jsonb('section_results').notNull(),
   attendanceSummary: jsonb('attendance_summary').notNull(),
   assessmentResultCount: integer('assessment_result_count').notNull(),
-  overallAverage: integer('overall_average'),
+  overallAverage: real('overall_average'),
   rank: integer('rank'),
   classSize: integer('class_size'),
-  passThreshold: integer('pass_threshold'),
+  passThreshold: real('pass_threshold'),
   teacherComment: text('teacher_comment'),
   principalComment: text('principal_comment'),
   status: text('status').notNull(),

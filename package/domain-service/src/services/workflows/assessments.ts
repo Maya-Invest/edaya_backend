@@ -50,6 +50,20 @@ export interface GenerateReportCardResultInput {
   reportCardDefinitionId?: string
   generatedAt?: Date
   aggregation?: ReportCardAggregation
+  /** Optional standing overrides (e.g. seed fixtures) when assessment aggregation cannot compute them. */
+  overallAverage?: number
+  rank?: number
+  classSize?: number
+  /**
+   * Optional subject marks by definition group-section id (seed fixtures).
+   * Used when assessment aggregation yields no section tree.
+   */
+  sectionMarks?: Record<string, readonly {
+    subjectId: string
+    average: number
+    coefficient?: number
+    appreciation?: string
+  }[]>
 }
 
 export interface WriteHomeroomReportCommentInput {
@@ -148,9 +162,14 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
-    const reportCard = await this.buildReportCardResult(input)
-    await this.baseService.entities.results.save(reportCard, { moduleChecked: true })
-    return reportCard
+    const reportCard = (await this.buildReportCardResult(input)).copyWith({
+      status: ReportCardResultStatus.Draft,
+      publishedAt: null,
+      generatedAt: input.generatedAt ?? new Date(),
+    })
+    const ranked = await this.applyClassReportCardStanding(reportCard)
+    await this.baseService.entities.results.save(ranked, { moduleChecked: true })
+    return ranked
   }
 
   async writeHomeroomReportComment(input: WriteHomeroomReportCommentInput): Promise<ReportCardResult> {
@@ -203,12 +222,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         status: ReportCardResultStatus.Published,
         publishedAt: input.publishedAt ?? new Date(),
       })
-      await this.baseService.entities.results.save(published, { moduleChecked: true })
+      const ranked = await this.applyClassReportCardStanding(published)
+      await this.baseService.entities.results.save(ranked, { moduleChecked: true })
       await runWorkflowNotifications(this.baseService, REPORT_CARD_PUBLISHED_EVENT_KEY, {
-        result: published,
+        result: ranked,
         student,
       })
-      return published
+      return ranked
     })
   }
 
@@ -243,6 +263,10 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     reportCardDefinitionId,
     generatedAt,
     aggregation,
+    overallAverage: standingAverage,
+    rank: standingRank,
+    classSize: standingClassSize,
+    sectionMarks,
   }: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const period = await this.requirePeriod(periodId)
     const enrollment = await this.requireEnrollmentForPeriod({
@@ -258,19 +282,40 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         })
     const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
     const resolvedAggregation = aggregation ?? existing?.aggregation
-    const { sectionResults, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
+    const { sectionResults: aggregatedSections, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
       studentId,
       periodId,
       classGroupId: classGroup.id,
       reportCardDefinitionId: definition.id,
       aggregation: resolvedAggregation,
     })
+    let sectionResults = aggregatedSections
+    if (sectionMarks && Object.keys(sectionMarks).length > 0) {
+      const markedSections = await this.buildSectionResultsFromMarks({
+        classGroupId: classGroup.id,
+        reportCardDefinitionId: definition.id,
+        sectionMarks,
+      })
+      if (markedSections.length > 0) {
+        sectionResults = markedSections
+      }
+    }
+    if (sectionResults.length === 0 && (existing?.sectionResults?.length ?? 0) > 0) {
+      sectionResults = [...(existing?.sectionResults ?? [])]
+    }
     const periodAssessmentResults = await this.listResultsForStudentAndPeriod(studentId, periodId)
     const resolvedAttendanceSummary = attendanceSummary ?? await this.buildAttendanceSummary({
       studentId,
       startDate: period.startDate,
       endDate: period.endDate,
     })
+    const resolvedAverage = overallAverage === undefined
+      ? (standingAverage ?? existing?.overallAverage)
+      : roundTo2(overallAverage)
+    const enrollments = await this.baseService.repositories.enrollments.list({ classGroupId: classGroup.id })
+    const resolvedClassSize = enrollments.length > 0
+      ? enrollments.length
+      : (standingClassSize ?? existing?.classSize)
     return new ReportCardResult({
       id: existing?.id ?? id,
       reportCardDefinitionId: definition.id,
@@ -280,9 +325,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       sectionResults,
       attendanceSummary: resolvedAttendanceSummary,
       assessmentResultCount: assessmentResultCount ?? periodAssessmentResults.length,
-      overallAverage: overallAverage === undefined ? undefined : Math.round(overallAverage),
-      rank: existing?.rank,
-      classSize: existing?.classSize,
+      overallAverage: resolvedAverage,
+      rank: standingRank ?? existing?.rank,
+      classSize: resolvedClassSize,
       passThreshold: existing?.passThreshold,
       teacherComment: existing?.teacherComment,
       principalComment: existing?.principalComment,
@@ -291,6 +336,116 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       publishedAt: existing?.publishedAt,
       aggregation: resolvedAggregation,
     })
+  }
+
+  /**
+   * Assign class size + overall/subject ranks on `current`, and refresh standing on draft peers.
+   * Published peers are left untouched (immutable). Does not save `current`.
+   */
+  private async applyClassReportCardStanding(current: ReportCardResult): Promise<ReportCardResult> {
+    const peers = await this.baseService.repositories.results.list({
+      classGroupId: current.classGroupId,
+      periodId: current.periodId,
+    })
+    const enrollments = await this.baseService.repositories.enrollments.list({
+      classGroupId: current.classGroupId,
+    })
+    const classSize = enrollments.length > 0
+      ? enrollments.length
+      : (current.classSize ?? peers.length)
+
+    const byId = new Map(peers.map(peer => [peer.id, peer]))
+    byId.set(current.id, current)
+    const allPeers = [...byId.values()]
+
+    const rankedPeers = allPeers
+      .filter(peer => peer.overallAverage !== undefined)
+      .sort((left, right) =>
+        (right.overallAverage ?? 0) - (left.overallAverage ?? 0)
+        || left.studentId.localeCompare(right.studentId),
+      )
+
+    const classSubjectIds = new Set<string>()
+    for (const peer of allPeers) {
+      for (const classSubjectId of collectClassSubjectIds(peer.sectionResults ?? [])) {
+        classSubjectIds.add(classSubjectId)
+      }
+    }
+
+    const subjectRankings = new Map<string, Array<{ id: string, studentId: string }>>()
+    for (const classSubjectId of classSubjectIds) {
+      const ranked = allPeers
+        .map(peer => ({
+          id: peer.id,
+          studentId: peer.studentId,
+          average: findSubjectSectionAverage(peer.sectionResults ?? [], classSubjectId),
+        }))
+        .filter((entry): entry is { id: string, studentId: string, average: number } => entry.average !== undefined)
+        .sort((left, right) =>
+          right.average - left.average
+          || left.studentId.localeCompare(right.studentId),
+        )
+      subjectRankings.set(classSubjectId, ranked.map(({ id, studentId }) => ({ id, studentId })))
+    }
+
+    const withStanding = (peer: ReportCardResult): ReportCardResult => {
+      const rank = peer.overallAverage === undefined
+        ? undefined
+        : rankedPeers.findIndex(entry => entry.id === peer.id) + 1
+      const subjectRankByClassSubjectId = new Map<string, number>()
+      for (const [classSubjectId, ranked] of subjectRankings) {
+        const index = ranked.findIndex(entry => entry.id === peer.id)
+        if (index >= 0) {
+          subjectRankByClassSubjectId.set(classSubjectId, index + 1)
+        }
+      }
+      const sectionResults = applySubjectRanksToSections(
+        peer.sectionResults ?? [],
+        subjectRankByClassSubjectId,
+      )
+      return new ReportCardResult({
+        id: peer.id,
+        reportCardDefinitionId: peer.reportCardDefinitionId,
+        studentId: peer.studentId,
+        classGroupId: peer.classGroupId,
+        periodId: peer.periodId,
+        sectionResults,
+        attendanceSummary: peer.attendanceSummary,
+        assessmentResultCount: peer.assessmentResultCount,
+        overallAverage: peer.overallAverage,
+        rank,
+        classSize: classSize > 0 ? classSize : undefined,
+        passThreshold: peer.passThreshold,
+        teacherComment: peer.teacherComment,
+        principalComment: peer.principalComment,
+        status: peer.status,
+        generatedAt: peer.generatedAt,
+        publishedAt: peer.publishedAt,
+        aggregation: peer.aggregation,
+      })
+    }
+
+    const updatedCurrent = withStanding(current)
+
+    for (const peer of byId.values()) {
+      if (peer.id === current.id) {
+        continue
+      }
+      if (peer.status === ReportCardResultStatus.Published) {
+        continue
+      }
+      const updated = withStanding(peer)
+      if (
+        updated.rank === peer.rank
+        && updated.classSize === peer.classSize
+        && subjectRanksEqual(peer.sectionResults ?? [], updated.sectionResults ?? [])
+      ) {
+        continue
+      }
+      await this.baseService.entities.results.save(updated, { moduleChecked: true })
+    }
+
+    return updatedCurrent
   }
 
   private async buildReportCardResults({
@@ -542,6 +697,56 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     return { sectionResults, overallAverage }
   }
 
+  private async buildSectionResultsFromMarks({
+    classGroupId,
+    reportCardDefinitionId,
+    sectionMarks,
+  }: {
+    classGroupId: string
+    reportCardDefinitionId: string
+    sectionMarks: NonNullable<GenerateReportCardResultInput['sectionMarks']>
+  }): Promise<ReportCardResultSection[]> {
+    const allSections = dedupeReportCardDefinitionSections(
+      await this.baseService.repositories.sections.list({ reportCardDefinitionId }),
+    ).sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
+    const classSubjects = (await this.baseService.repositories.classSubjects.list({ classGroupId }))
+      .filter(classSubject => classSubject.isOffered !== false)
+    const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
+
+    const sectionResults: ReportCardResultSection[] = []
+    for (const root of rootReportCardDefinitionSections(allSections)) {
+      const marks = sectionMarks[root.id]
+      if (!marks || marks.length === 0) {
+        continue
+      }
+      const childResults: ReportCardResultSection[] = []
+      for (const mark of marks) {
+        const classSubject = classSubjectBySubject.get(mark.subjectId)
+        const subjectSection = childReportCardDefinitionSections(allSections, root.id)
+          .find(section => section.kind === ReportCardDefinitionSectionKind.Subject && section.subjectId === mark.subjectId)
+        if (!classSubject || !subjectSection) {
+          continue
+        }
+        childResults.push(new ReportCardResultSection({
+          sectionId: subjectSection.id,
+          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          name: subjectSection.name,
+          average: mark.average,
+          weight: mark.coefficient ?? subjectSection.weight,
+          parentSectionId: root.id,
+          classSubjectId: classSubject.id,
+          comment: mark.appreciation,
+          subResults: [],
+        }))
+      }
+      const group = buildGroupResultFromChildren(root, childResults)
+      if (group) {
+        sectionResults.push(group)
+      }
+    }
+    return sectionResults
+  }
+
   private async requireEnrollmentForPeriod({
     studentId,
     academicYearId,
@@ -642,4 +847,72 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     }
     return entity
   }
+}
+
+function collectClassSubjectIds(sections: readonly ReportCardResultSection[]): string[] {
+  const ids: string[] = []
+  for (const section of sections) {
+    if (section.classSubjectId) {
+      ids.push(section.classSubjectId)
+    }
+    ids.push(...collectClassSubjectIds(section.subResults))
+  }
+  return ids
+}
+
+function findSubjectSectionAverage(
+  sections: readonly ReportCardResultSection[],
+  classSubjectId: string,
+): number | undefined {
+  for (const section of sections) {
+    if (section.classSubjectId === classSubjectId) {
+      return section.average
+    }
+    const nested = findSubjectSectionAverage(section.subResults, classSubjectId)
+    if (nested !== undefined) {
+      return nested
+    }
+  }
+  return undefined
+}
+
+function applySubjectRanksToSections(
+  sections: readonly ReportCardResultSection[],
+  rankByClassSubjectId: Map<string, number>,
+): ReportCardResultSection[] {
+  return sections.map(section => new ReportCardResultSection({
+    sectionId: section.sectionId,
+    sectionKind: section.sectionKind,
+    name: section.name,
+    average: section.average,
+    weight: section.weight,
+    parentSectionId: section.parentSectionId,
+    classSubjectId: section.classSubjectId,
+    comment: section.comment,
+    rank: section.classSubjectId
+      ? rankByClassSubjectId.get(section.classSubjectId)
+      : undefined,
+    subResults: applySubjectRanksToSections(section.subResults, rankByClassSubjectId),
+  }))
+}
+
+function subjectRanksEqual(
+  left: readonly ReportCardResultSection[],
+  right: readonly ReportCardResultSection[],
+): boolean {
+  if (left.length !== right.length) {
+    return false
+  }
+  for (let index = 0; index < left.length; index += 1) {
+    const leftSection = left[index]!
+    const rightSection = right[index]!
+    if (
+      leftSection.sectionId !== rightSection.sectionId
+      || leftSection.rank !== rightSection.rank
+      || !subjectRanksEqual(leftSection.subResults, rightSection.subResults)
+    ) {
+      return false
+    }
+  }
+  return true
 }

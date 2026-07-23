@@ -15,6 +15,13 @@
       "when": 1784771940972,
       "tag": "0001_colorful_norman_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784809930692,
+      "tag": "0002_clear_baron_zemo",
+      "breakpoints": true
     }
   ]
 }

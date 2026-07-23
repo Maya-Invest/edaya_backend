@@ -1,7 +1,11 @@
 import type { AttachmentOwnerKind } from '@edaya/core'
 import { sanitizeFileName } from './sanitize-file-name'
 
-export type StoragePurpose = 'uploads' | 'generated/report-card' | 'generated/incident-report'
+export type StoragePurpose
+  = | 'uploads'
+    | 'generated/report-card'
+    | 'generated/logbook'
+    | 'generated/incident-report'
 
 export interface BuildStorageKeyInput {
   schoolId: string

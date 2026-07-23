@@ -8088,6 +8088,50 @@
           "periodId": {
             "type": "string",
             "minLength": 1
+          },
+          "overallAverage": {
+            "type": "number",
+            "minimum": 0
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "classSize": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sectionMarks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "subjectId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "average": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "coefficient": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "appreciation": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subjectId",
+                  "average"
+                ]
+              }
+            }
           }
         },
         "required": [
@@ -8140,6 +8184,72 @@
           "id",
           "studentId",
           "periodId"
+        ]
+      },
+      "RenderClassLogbookResponse": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "application/pdf"
+            ]
+          },
+          "downloadUrl": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subjectCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sessionCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "fileName",
+          "contentType",
+          "downloadUrl",
+          "expiresAt",
+          "subjectCount",
+          "sessionCount"
+        ]
+      },
+      "RenderClassLogbookCommand": {
+        "type": "object",
+        "properties": {
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          }
+        },
+        "required": [
+          "classGroupId"
         ]
       },
       "Incident": {
@@ -25002,6 +25112,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReportCardResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/render-class-logbook": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "render-class-logbook",
+        "operationId": "commands.renderClassLogbook",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "renderClassLogbook",
+        "x-edaya-command-public-name": "render-class-logbook",
+        "x-edaya-request-schema": "RenderClassLogbookCommand",
+        "x-edaya-response-schema": "RenderClassLogbookResponse",
+        "requestBody": {
+          "description": "render-class-logbook payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderClassLogbookCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed render-class-logbook",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderClassLogbookResponse"
                 }
               }
             }

@@ -535,6 +535,9 @@ export function createReportCardContext({
       findById: mock(async id => savedReportCards.get(id)),
       findOne: mock(async ({ studentId, periodId }: any = {}) => [...savedReportCards.values()].find(reportCard =>
         reportCard.studentId === studentId && reportCard.periodId === periodId)),
+      list: mock(async (filter: Record<string, unknown> = {}) => [...savedReportCards.values()].filter((reportCard) => {
+        return Object.entries(filter).every(([key, value]) => (reportCard as Record<string, unknown>)[key] === value)
+      })),
       save: mock(async reportCard => savedReportCards.set(reportCard.id, reportCard)),
     },
     sections: {

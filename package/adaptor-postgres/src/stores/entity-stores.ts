@@ -14,6 +14,7 @@ interface StoredReportCardResultSection {
   parentSectionId?: string | null
   classSubjectId?: string | null
   comment?: string | null
+  rank?: number | null
   subResults?: StoredReportCardResultSection[]
   data?: StoredReportCardResultSection
 }
@@ -40,6 +41,7 @@ function serializeReportCardResultSection(section: ReportCardResultSection): Sto
     parentSectionId: section.parentSectionId ?? null,
     classSubjectId: section.classSubjectId ?? null,
     comment: section.comment ?? null,
+    rank: section.rank ?? null,
     subResults: section.subResults.map(serializeReportCardResultSection),
   }
 }
@@ -65,6 +67,7 @@ function deserializeReportCardResultSection(raw: StoredReportCardResultSection):
     parentSectionId: section.parentSectionId ?? undefined,
     classSubjectId: section.classSubjectId ?? undefined,
     comment: section.comment ?? undefined,
+    rank: section.rank ?? undefined,
     subResults: (section.subResults ?? []).map(deserializeReportCardResultSection),
   })
 }
@@ -977,7 +980,7 @@ export function createEntityStores(db: any): EntityStores {
       schema.reportCardDefinitionSections,
       (entity: ReportCardDefinitionSection) => ({
         id: entity.id,
-        definitionId: entity.reportCardDefinitionId,
+        reportCardDefinitionId: entity.reportCardDefinitionId,
         name: entity.name,
         role: entity.role ?? null,
         coefficient: entity.coefficient ?? null,
@@ -989,7 +992,7 @@ export function createEntityStores(db: any): EntityStores {
       }),
       row => new ReportCardDefinitionSectionCtor({
         id: row.id,
-        reportCardDefinitionId: row.definitionId,
+        reportCardDefinitionId: row.reportCardDefinitionId,
         name: row.name,
         kind: row.subjectId
           ? ReportCardDefinitionSectionKind.Subject

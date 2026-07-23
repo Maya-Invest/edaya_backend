@@ -1845,6 +1845,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/render-class-logbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** render-class-logbook */
+        post: operations["commands.renderClassLogbook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/record-incident": {
         parameters: {
             query?: never;
@@ -11936,6 +11953,17 @@ export interface components {
                 };
             } | null;
             periodId: string;
+            overallAverage?: number;
+            rank?: number;
+            classSize?: number;
+            sectionMarks?: {
+                [key: string]: {
+                    subjectId: string;
+                    average: number;
+                    coefficient?: number;
+                    appreciation?: string;
+                }[];
+            };
         };
         WriteHomeroomReportCommentCommand: {
             id: string;
@@ -11947,6 +11975,23 @@ export interface components {
             periodId: string;
             reportCardDefinitionId?: string;
             publishedAt?: string | null;
+        };
+        RenderClassLogbookResponse: {
+            fileName: string;
+            /** @enum {string} */
+            contentType: "application/pdf";
+            downloadUrl: string;
+            /** Format: date-time */
+            expiresAt: string;
+            subjectCount: number;
+            sessionCount: number;
+        };
+        RenderClassLogbookCommand: {
+            classGroupId: string;
+            academicPeriodId?: string;
+            classSubjectId?: string;
+            /** @enum {string} */
+            locale?: "fr" | "en";
         };
         Incident: {
             id: string;
@@ -20120,6 +20165,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportCardResult"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.renderClassLogbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description render-class-logbook payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RenderClassLogbookCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed render-class-logbook */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenderClassLogbookResponse"];
                 };
             };
             /** @description Invalid request payload */

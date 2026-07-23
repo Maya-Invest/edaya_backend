@@ -597,6 +597,18 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
   .extend({
     reportCardDefinitionId: optionalText(),
     periodId: field.id(),
+    overallAverage: z.number().finite().nonnegative().optional(),
+    rank: z.number().int().nonnegative().optional(),
+    classSize: z.number().int().nonnegative().optional(),
+    sectionMarks: z.record(
+      z.string().min(1),
+      z.array(z.object({
+        subjectId: field.id(),
+        average: z.number().finite().nonnegative(),
+        coefficient: z.number().finite().positive().optional(),
+        appreciation: z.string().trim().min(1).optional(),
+      })),
+    ).optional(),
   })
   .openapi("GenerateReportCardResultCommand");
 
@@ -612,6 +624,13 @@ export const publishReportCardResultCommandSchema = z.object({
   reportCardDefinitionId: optionalText(),
   publishedAt: field.optionalDate(),
 }).openapi("PublishReportCardResultCommand");
+
+export const renderClassLogbookCommandSchema = z.object({
+  classGroupId: field.id(),
+  academicPeriodId: field.id().optional(),
+  classSubjectId: field.id().optional(),
+  locale: z.enum(["fr", "en"]).optional(),
+}).openapi("RenderClassLogbookCommand");
 
 export const recordIncidentCommandSchema = objectFromSchema(incidentSchema)
   .omit({
