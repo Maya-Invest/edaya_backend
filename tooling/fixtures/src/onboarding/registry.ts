@@ -73,8 +73,6 @@ export function classDisplayName(
   index: number,
 ): string {
   const level = template.gradeLevels.find(entry => entry.code === levelCode)
-  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const
-  const letter = letters[index] ?? String(index + 1)
   const shortLabel = level?.shortLabel ?? levelCode
-  return `${shortLabel} ${letter}`
+  return `${shortLabel} ${index + 1}`
 }
