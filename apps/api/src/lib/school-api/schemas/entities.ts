@@ -209,8 +209,11 @@ export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
 export const attachmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
+  ownerKind: field.string(),
+  ownerId: field.id(),
   fileName: field.string(),
   mimeType: field.string(),
+  status: field.string(),
 });
 
 export const resourceQuerySchema = createQueryOptionsSchema({

@@ -1,5 +1,5 @@
 import type { AttendanceRecordInput } from '@edaya/core'
-import type { FixtureAttendanceSession, FixtureDataset } from '@edaya/fixtures'
+import type { FixtureAttendanceSession, FixtureDataset, FixtureDailyAttendanceDay } from '@edaya/fixtures'
 import type { AttendanceSeedPort } from './port'
 
 function attendanceSeedRecord(record: AttendanceRecordInput) {
@@ -42,20 +42,43 @@ async function seedAttendanceSession(
   return session.records.length
 }
 
+async function seedDailyAttendanceDay(
+  port: AttendanceSeedPort,
+  day: FixtureDailyAttendanceDay,
+): Promise<number> {
+  for (const record of day.records) {
+    await port.recordDailyAttendance({
+      id: record.id,
+      studentId: record.studentId,
+      classGroupId: day.classGroupId,
+      date: day.date,
+      status: record.status,
+    })
+  }
+  return day.records.length
+}
+
 export async function seedDevAttendance(
   port: AttendanceSeedPort,
   dataset: FixtureDataset,
 ): Promise<number> {
+  let recordCount = 0
+
+  const dailyDays = dataset.extensions?.dailyAttendanceDays
+  if (dailyDays) {
+    for (const day of dailyDays) {
+      recordCount += await seedDailyAttendanceDay(port, day)
+    }
+  }
+
   if (dataset.extensions?.skipLessonSessionSeeding) {
-    return 0
+    return recordCount
   }
 
   const attendanceSessions = dataset.extensions?.attendanceSessions
   if (!attendanceSessions) {
-    return 0
+    return recordCount
   }
-
-  let recordCount = 0
 
   for (const absenceSession of attendanceSessions.absenceSessions) {
     recordCount += await seedAttendanceSession(port, dataset.schoolId, absenceSession)

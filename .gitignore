@@ -52,5 +52,9 @@ build/
 !.vscode/launch.json
 apps/api/secrets.prod.json
 apps/api/secrets.staging.json
+**/secrets.json
+!**/secrets.example.json
+apps/docs/.wrangler/
 
-**/coverage/*
+tmp/
+

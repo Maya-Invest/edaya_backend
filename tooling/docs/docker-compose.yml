@@ -1,0 +1,8 @@
+# Local PDF engine (Gotenberg). Prefer Podman for development:
+#   podman compose up -d gotenberg
+#   # or: bun run gotenberg:up
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - '3000:3000'

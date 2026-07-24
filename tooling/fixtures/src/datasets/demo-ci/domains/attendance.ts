@@ -139,8 +139,47 @@ export const demoCiTodayAttendanceSession = {
   ],
 } as const satisfies FixtureAttendanceSession
 
+/** Daily roll-call days for `attendanceMode: daily` classes (class attendance page). */
+export const demoCiDailyAttendanceDays = [
+  {
+    classGroupId: 'ci-6a',
+    date: '2026-06-16',
+    records: [
+      { id: 'ci-daily-6a-0616-s1', studentId: 'ci-s1', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0616-s2', studentId: 'ci-s2', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0616-s3', studentId: 'ci-s3', status: AttendanceStatus.Absent, reason: 'Absence signalée par les parents' },
+      { id: 'ci-daily-6a-0616-s4', studentId: 'ci-s4', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0616-s5', studentId: 'ci-s5', status: AttendanceStatus.Late },
+      { id: 'ci-daily-6a-0616-s6', studentId: 'ci-s6', status: AttendanceStatus.Present },
+    ],
+  },
+  {
+    classGroupId: 'ci-6a',
+    date: '2026-06-13',
+    records: [
+      { id: 'ci-daily-6a-0613-s1', studentId: 'ci-s1', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0613-s2', studentId: 'ci-s2', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0613-s3', studentId: 'ci-s3', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0613-s4', studentId: 'ci-s4', status: AttendanceStatus.Absent, reason: 'Rendez-vous médical' },
+      { id: 'ci-daily-6a-0613-s5', studentId: 'ci-s5', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6a-0613-s6', studentId: 'ci-s6', status: AttendanceStatus.Present },
+    ],
+  },
+  {
+    classGroupId: 'ci-6b',
+    date: '2026-06-16',
+    records: [
+      { id: 'ci-daily-6b-0616-s7', studentId: 'ci-s7', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6b-0616-s8', studentId: 'ci-s8', status: AttendanceStatus.Late },
+      { id: 'ci-daily-6b-0616-s9', studentId: 'ci-s9', status: AttendanceStatus.Present },
+      { id: 'ci-daily-6b-0616-s10', studentId: 'ci-s10', status: AttendanceStatus.Present },
+    ],
+  },
+] as const satisfies readonly import('../../types').FixtureDailyAttendanceDay[]
+
 export const demoCiPendingJustificationRecordIds = [
   'ci-att-today-s3',
+  'ci-daily-6a-0616-s3',
   'ci-a3',
   'ci-a4',
 ] as const

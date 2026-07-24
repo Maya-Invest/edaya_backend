@@ -7,15 +7,16 @@ import dotenvExpand from 'dotenv-expand'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
+const docsRoot = resolve(repoRoot, 'apps/docs')
 
-function loadApiEnv(): void {
-  const envFile = resolve(apiRoot, '.env')
-  if (existsSync(envFile)) {
-    dotenvExpand.expand(dotenv.config({ path: envFile }))
+function loadEnvFile(path: string): void {
+  if (existsSync(path)) {
+    dotenvExpand.expand(dotenv.config({ path }))
   }
 }
 
-loadApiEnv()
+loadEnvFile(resolve(apiRoot, '.env'))
+loadEnvFile(resolve(docsRoot, '.env'))
 
 const children = [
   Bun.spawn(['bun', '--filter', '@edaya/api', 'dev'], {
@@ -26,6 +27,13 @@ const children = [
     env: process.env,
   }),
   Bun.spawn(['bun', '--filter', '@edaya/local-files-server', 'dev'], {
+    cwd: repoRoot,
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
+    env: process.env,
+  }),
+  Bun.spawn(['bun', '--filter', '@edaya/docs-api', 'start:local'], {
     cwd: repoRoot,
     stdin: 'inherit',
     stdout: 'inherit',

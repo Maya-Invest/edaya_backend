@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "packets": [
+    {
+      "key": "document-rendering.v1",
+      "path": "contracts/packets/document-rendering.v1.json"
+    }
+  ]
+}

@@ -132,21 +132,24 @@ function countLessonSessions(dataset: FixtureDataset): number {
 }
 
 function countAttendanceRecords(dataset: FixtureDataset): number {
+  const daily = dataset.extensions?.dailyAttendanceDays ?? []
+  const dailyCount = daily.reduce((total, day) => total + day.records.length, 0)
+
   if (dataset.extensions?.skipLessonSessionSeeding) {
-    return 0
+    return dailyCount
   }
   const attendanceRecords = dataset.entities.attendanceRecords
   if (attendanceRecords) {
-    return attendanceRecords.length
+    return attendanceRecords.length + dailyCount
   }
   const sessions = dataset.extensions?.attendanceSessions
-  if (!sessions) {
-    return 0
-  }
-  return sessions.absenceSessions.reduce(
-    (total, session) => total + session.records.length,
-    sessions.todaySession.records.length,
-  )
+  const sessionCount = sessions
+    ? sessions.absenceSessions.reduce(
+      (total, session) => total + session.records.length,
+      sessions.todaySession.records.length,
+    )
+    : 0
+  return sessionCount + dailyCount
 }
 
 function countAssessmentResults(dataset: FixtureDataset): number {

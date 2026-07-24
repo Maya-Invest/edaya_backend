@@ -18,6 +18,7 @@ export interface AppliedStructureLevelSubjects {
   subjects: Array<{
     subjectId: string;
     subjectCode: string;
+    subjectName: string;
     domain: string;
     coefficient: number;
   }>;
@@ -154,7 +155,7 @@ async function createSubjectChildren(
     await service.assessmentsWorkflow.createReportCardDefinitionSection({
       id: randomUUID(),
       reportCardDefinitionId: definitionId,
-      name: subject.subjectCode,
+      name: subject.subjectName,
       kind: ReportCardDefinitionSectionKind.Subject,
       order: subjectIndex + 1,
       weight: subject.coefficient > 0 ? subject.coefficient : 1,
@@ -260,7 +261,7 @@ async function applySectionsFromTemplate(
       await service.assessmentsWorkflow.createReportCardDefinitionSection({
         id: randomUUID(),
         reportCardDefinitionId: definitionId,
-        name: subject.subjectCode,
+        name: subject.subjectName,
         kind: ReportCardDefinitionSectionKind.Subject,
         order: sectionOrder,
         weight: subject.coefficient > 0 ? subject.coefficient : 1,
@@ -421,6 +422,7 @@ export function collectLevelSubjects(
     subjects.push({
       subjectId,
       subjectCode: subject.code,
+      subjectName: entry.longName?.trim() || subject.shortName,
       domain: subject.domain,
       coefficient: entry.coefficient,
     });

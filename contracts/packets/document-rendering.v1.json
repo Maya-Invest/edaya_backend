@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "key": "document-rendering.v1",
+  "status": "draft",
+  "purpose": "Render versioned school documents (PDF, XLSX) from caller-supplied payloads using service-token authentication and template allowlists.",
+  "owner": "document-rendering",
+  "consumers": ["edaya_backend", "apps/api"],
+  "allowedImplementers": ["@edaya/document-rendering", "@edaya/docs-api"],
+  "compatibility": {
+    "owner": "document-rendering",
+    "class": "externally-versioned",
+    "safeAdditions": "Add optional render options, new template keys, or delivery modes when existing clients keep valid behavior.",
+    "breakingChanges": "Coordinate HTTP contract, generated client, school API jobs, and template registry before removing or renaming fields.",
+    "deprecation": "Template keys remain available for an overlap period; HTTP majors version independently via path prefix.",
+    "approvedBy": "document-rendering",
+    "approvedOn": "2026-07-20"
+  },
+  "semanticSpec": "docs/architecture/document-rendering-service.md",
+  "contractSource": "package/document-contracts/src/index.ts",
+  "stableErrors": [
+    "document-rendering.closed",
+    "document-rendering.forbidden",
+    "document-rendering.invalid-payload",
+    "document-rendering.invalid-token",
+    "document-rendering.rate-limited",
+    "document-rendering.template-not-found",
+    "document-rendering.template-not-allowed",
+    "document-rendering.unavailable"
+  ],
+  "physicalFreedom": [
+    "PDF engine (Gotenberg, headless Chromium, or programmatic PDF), Excel engine, template storage layout, deployment topology, and async queue implementation remain adapter-owned.",
+    "Inline byte delivery and object-storage delivery may coexist; callers choose per request."
+  ],
+  "semantics": {
+    "tenantAuthorization": "schoolId is carried for namespacing and audit only; authority comes from the service token allowlist, not from database membership.",
+    "transaction": "Render is side-effect-free except for optional artifact upload; no school business transaction is opened.",
+    "concurrency": "Duplicate requests with the same idempotencyKey may return the same renderId and artifact hash.",
+    "idempotency": "idempotencyKey is required; implementations should deduplicate within a bounded TTL.",
+    "orderingTiming": "Synchronous render returns when bytes are ready; async jobs expose explicit status transitions.",
+    "observabilityCancellation": "Logs may record templateKey, format, schoolId, renderId, and byte size; payloads, tokens, and artifact bytes must not be logged.",
+    "prohibitedBehavior": "No school database access, no caller-provided HTML execution without sandboxing, no template access beyond token allowlist, no logging of secrets or document content."
+  },
+  "testAssets": {
+    "recordingFake": "package/document-rendering/src/testing/recording-renderer.ts",
+    "examples": ["package/document-rendering/src/testing/examples.ts"],
+    "adversarialFixtures": ["package/document-rendering/src/testing/fixtures.ts"],
+    "conformanceSuite": {
+      "id": "document-rendering.v1.conformance",
+      "path": "tests/docs/contract/document-rendering.test.ts"
+    },
+    "incorrectProbe": {
+      "path": "package/document-rendering/src/testing/incorrect-probe.ts",
+      "expectedViolation": "document-rendering.contract-leak"
+    }
+  },
+  "registeredImplementations": []
+}

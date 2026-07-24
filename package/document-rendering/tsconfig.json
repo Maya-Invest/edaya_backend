@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.docs.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "rootDir": "src",
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.json"]
+}

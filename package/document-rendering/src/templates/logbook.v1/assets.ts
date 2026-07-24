@@ -1,0 +1,15 @@
+/// <reference path="../asset-modules.d.ts" />
+/// <reference path="../../text-modules.d.ts" />
+import type { TemplateAssets, TemplateManifest } from '../load-assets.ts'
+import manifestJson from './manifest.json'
+import schemaJson from './schema.json'
+import styles from './styles.css'
+import templateSpec from './template.precompiled.js'
+
+/** Bundler-friendly assets (Bun + Workers) — no filesystem reads. */
+export const LOGBOOK_V1_ASSETS: TemplateAssets = {
+  manifest: manifestJson as TemplateManifest,
+  schema: schemaJson as object,
+  templateSpec,
+  styles,
+}

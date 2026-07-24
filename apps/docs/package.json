@@ -1,0 +1,34 @@
+{
+  "name": "@edaya/docs-api",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start:local": "bun src/local-host.ts",
+    "build": "tsc --noEmit",
+    "check": "tsc --noEmit",
+    "quality": "bun run lint && bun run check",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "bun test --pass-with-no-tests",
+    "secret:generate": "bun -e \"console.log(require('node:crypto').randomBytes(32).toString('base64url'))\"",
+    "dev:worker": "wrangler dev --remote",
+    "secrets:staging": "wrangler secret bulk ./secrets.json --env staging",
+    "secrets:production": "wrangler secret bulk ./secrets.json --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "dependencies": {
+    "@edaya/document-contracts": "workspace:*",
+    "@edaya/document-rendering": "workspace:*",
+    "@hono/zod-openapi": "0.19.6",
+    "hono": "4.11.4",
+    "zod": "3.24.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250726.0",
+    "@types/bun": "1.3.14",
+    "@types/node": "26.1.1",
+    "wrangler": "4.28.0"
+  }
+}

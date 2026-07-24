@@ -4,6 +4,7 @@ import {
   Attachment,
   AttachmentOwnerKind,
   AttachmentStatus,
+  TeacherAssignmentKind,
 } from "@edaya/core";
 import {
   buildReportCardV1Payload,
@@ -16,6 +17,26 @@ import {
   type DocsClient,
 } from "@maya-invest/edaya-docs-client";
 import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
+
+function collectClassSubjectIds(
+  sections: ReadonlyArray<{ classSubjectId?: string; subResults: ReadonlyArray<{ classSubjectId?: string; subResults: readonly unknown[] }> }>,
+): string[] {
+  const ids: string[] = [];
+  for (const section of sections) {
+    if (section.classSubjectId) {
+      ids.push(section.classSubjectId);
+    }
+    ids.push(...collectClassSubjectIds(section.subResults as typeof sections));
+  }
+  return [...new Set(ids)];
+}
+
+function formatClassAverage(value: number, locale: string): string {
+  return `${new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)} / 20`;
+}
 
 export interface DocsRenderConfig {
   docsUrl: string;
@@ -61,11 +82,35 @@ export async function renderReportCardDocument(
     ownerKind: AttachmentOwnerKind.ReportCard,
     ownerId: result.id,
   });
+  // Skip tiny stub PDFs (~879 bytes when docs runs without Gotenberg/Browser Run).
   const readyPdf = existing.find(entry =>
     entry.status === AttachmentStatus.Ready
-    && entry.mimeType === "application/pdf");
+    && entry.mimeType === "application/pdf"
+    && (entry.sizeBytes === undefined || entry.sizeBytes >= 2_048));
   if (readyPdf?.storageKey) {
     return { attachmentId: readyPdf.id, storageKey: readyPdf.storageKey };
+  }
+  const stubPdfs = existing.filter(entry =>
+    entry.status === AttachmentStatus.Ready
+    && entry.mimeType === "application/pdf"
+    && entry.sizeBytes !== undefined
+    && entry.sizeBytes < 2_048);
+  for (const stub of stubPdfs) {
+    await service.baseService.entities.attachments.save(new Attachment({
+      id: stub.id,
+      schoolId: stub.schoolId,
+      ownerKind: stub.ownerKind,
+      ownerId: stub.ownerId,
+      fileName: stub.fileName,
+      storageKey: stub.storageKey,
+      fileUrl: stub.fileUrl,
+      status: AttachmentStatus.Failed,
+      checksum: stub.checksum,
+      mimeType: stub.mimeType,
+      sizeBytes: stub.sizeBytes,
+      uploadedById: stub.uploadedById,
+      createdAt: stub.createdAt,
+    }), { moduleChecked: true });
   }
 
   const student = await service.baseService.repositories.students.findById(result.studentId);
@@ -88,6 +133,72 @@ export async function renderReportCardDocument(
     return null;
   }
 
+  const locale = input.locale ?? "fr-FR";
+  const classSubjectIds = collectClassSubjectIds(result.sectionResults);
+  const classSubjects = classSubjectIds.length > 0
+    ? await service.baseService.repositories.classSubjects.findByIds(classSubjectIds)
+    : [];
+  const subjectIds = [...new Set(classSubjects.map(entry => entry.subjectId))];
+  const subjects = subjectIds.length > 0
+    ? await service.baseService.repositories.subjects.findByIds(subjectIds)
+    : [];
+  const subjectNameById = new Map(subjects.map(entry => [entry.id, entry.name]));
+  const subjectNameByClassSubjectId = new Map(
+    classSubjects.map(entry => [
+      entry.id,
+      subjectNameById.get(entry.subjectId) ?? entry.id,
+    ]),
+  );
+
+  const teacherNameByClassSubjectId = new Map<string, string>();
+  for (const classSubjectId of classSubjectIds) {
+    const assignments = await service.baseService.repositories.teacherAssignments.list({
+      classSubjectId,
+      kind: TeacherAssignmentKind.Subject,
+    });
+    const teacherId = assignments[0]?.teacherId;
+    if (!teacherId) {
+      continue;
+    }
+    const teacher = await service.baseService.repositories.teachers.findById(teacherId);
+    if (teacher) {
+      teacherNameByClassSubjectId.set(classSubjectId, teacher.fullName);
+    }
+  }
+
+  let homeroomTeacherName: string | undefined;
+  const homeroomAssignments = await service.baseService.repositories.teacherAssignments.list({
+    classGroupId: result.classGroupId,
+    kind: TeacherAssignmentKind.Homeroom,
+  });
+  const homeroomTeacherId = homeroomAssignments[0]?.teacherId;
+  if (homeroomTeacherId) {
+    const homeroomTeacher = await service.baseService.repositories.teachers.findById(homeroomTeacherId);
+    homeroomTeacherName = homeroomTeacher?.fullName;
+  }
+  else if (classGroup?.homeroomStaffId) {
+    const homeroomStaff = await service.baseService.repositories.staffMembers.findById(classGroup.homeroomStaffId);
+    homeroomTeacherName = homeroomStaff?.fullName;
+  }
+
+  const peerResults = await service.baseService.repositories.results.list({
+    classGroupId: result.classGroupId,
+    periodId: result.periodId,
+  });
+  const peerAverages = peerResults
+    .map(entry => entry.overallAverage)
+    .filter((value): value is number => value !== undefined);
+  const classResults = peerAverages.length > 0
+    ? {
+        classAverage: formatClassAverage(
+          peerAverages.reduce((sum, value) => sum + value, 0) / peerAverages.length,
+          locale,
+        ),
+        lowestAverage: formatClassAverage(Math.min(...peerAverages), locale),
+        highestAverage: formatClassAverage(Math.max(...peerAverages), locale),
+      }
+    : undefined;
+
   const payload = buildReportCardV1Payload({
     result,
     student,
@@ -95,7 +206,11 @@ export async function renderReportCardDocument(
     periodLabel: period.name,
     classLabel: classGroup?.name,
     schoolYear: academicYear?.name,
-    locale: input.locale ?? "fr-FR",
+    locale,
+    subjectNameByClassSubjectId,
+    teacherNameByClassSubjectId,
+    classResults,
+    homeroomTeacherName,
   });
 
   const client = (input.createClient ?? defaultCreateClient)(input.config, school.id);
@@ -106,7 +221,10 @@ export async function renderReportCardDocument(
     schoolId: school.id,
     payload,
     delivery: "inline",
-    idempotencyKey: `${school.id}/report-card/${result.id}/v1`,
+    // Bump key when replacing stub PDFs so docs idempotency cache does not return the empty stub.
+    idempotencyKey: stubPdfs.length > 0
+      ? `${school.id}/report-card/${result.id}/v1-gotenberg`
+      : `${school.id}/report-card/${result.id}/v1`,
   });
 
   if (!rendered.bytesBase64) {

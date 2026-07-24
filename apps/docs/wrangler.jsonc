@@ -1,0 +1,84 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "edaya-docs",
+  "main": "src/entries/worker.ts",
+  "compatibility_date": "2026-03-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.hbs", "**/*.css", "**/*.html"],
+      "fallthrough": true
+    }
+  ],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  },
+  "vars": {
+    "LOG_LEVEL": "info",
+    "RUNTIME": "worker"
+  },
+  "env": {
+    "staging": {
+      "name": "edaya-docs-staging",
+      "browser": {
+        "binding": "BROWSER"
+      },
+      "rules": [
+        {
+          "type": "Text",
+          "globs": ["**/*.hbs", "**/*.css", "**/*.html"],
+          "fallthrough": true
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "DOCS_RATE_LIMITER",
+          "namespace_id": "9101",
+          "simple": {
+            "limit": 60,
+            "period": 60
+          }
+        }
+      ],
+      "vars": {
+        "LOG_LEVEL": "info",
+        "RUNTIME": "worker",
+        "R2_BUCKET_NAME": "edaya-files-staging"
+      }
+    },
+    "production": {
+      "name": "edaya-docs-production",
+      "browser": {
+        "binding": "BROWSER"
+      },
+      "rules": [
+        {
+          "type": "Text",
+          "globs": ["**/*.hbs", "**/*.css", "**/*.html"],
+          "fallthrough": true
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "DOCS_RATE_LIMITER",
+          "namespace_id": "9102",
+          "simple": {
+            "limit": 60,
+            "period": 60
+          }
+        }
+      ],
+      "vars": {
+        "LOG_LEVEL": "info",
+        "RUNTIME": "worker",
+        "R2_BUCKET_NAME": "edaya-files-production"
+      }
+    }
+  }
+}

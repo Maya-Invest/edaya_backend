@@ -526,7 +526,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         return new ReportCardResultSection({
           sectionId: section.id,
           sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: section.name,
+          name: await this.resolveSubjectSectionName(section),
           average,
           weight: section.weight,
           parentSectionId: section.parentSectionId,
@@ -663,7 +663,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         return new ReportCardResultSection({
           sectionId: section.id,
           sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: section.name,
+          name: await this.resolveSubjectSectionName(section),
           average,
           weight: section.weight,
           parentSectionId: section.parentSectionId,
@@ -730,7 +730,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         childResults.push(new ReportCardResultSection({
           sectionId: subjectSection.id,
           sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: subjectSection.name,
+          name: await this.resolveSubjectSectionName(subjectSection),
           average: mark.average,
           weight: mark.coefficient ?? subjectSection.weight,
           parentSectionId: root.id,
@@ -745,6 +745,14 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     return sectionResults
+  }
+
+  private async resolveSubjectSectionName(section: ReportCardDefinitionSection): Promise<string> {
+    if (!section.subjectId) {
+      return section.name
+    }
+    const subject = await this.baseService.repositories.subjects?.findById(section.subjectId)
+    return subject?.name ?? section.name
   }
 
   private async requireEnrollmentForPeriod({

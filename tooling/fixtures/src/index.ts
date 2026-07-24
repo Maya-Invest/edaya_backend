@@ -9,6 +9,7 @@ export { minimalDataset } from './datasets/minimal'
 export type {
   FixtureAnnouncementMaterializePlan,
   FixtureAttendanceSession,
+  FixtureDailyAttendanceDay,
   FixtureCalendarEvent,
   FixtureDataset,
   FixtureDatasetEntities,

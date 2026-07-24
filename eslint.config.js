@@ -4,9 +4,21 @@ export default antfu({
   ignores: [
     '**/tooling/integration-tests/src/generated/**',
     '**/tooling/seeding/src/generated/**',
+    '**/package/document-rendering/src/**/*.precompiled.js',
+    '**/package/document-rendering/src/**/*.hbs',
+    '**/package/docs-client/src/openapi.json',
+    '**/package/docs-client/src/schema.d.ts',
+    '**/tooling/docs/openapi/fixtures/**',
   ],
   rules: {
     'no-new': 'off',
+  },
+}, {
+  files: ['apps/docs/**/*.ts', 'package/document-*/**/*.ts', 'package/docs-client/**/*.ts', 'tooling/docs/**/*.ts', 'scripts/docs/**/*.ts', 'tests/docs/**/*.ts'],
+  rules: {
+    'no-console': 'off',
+    'antfu/no-top-level-await': 'off',
+    'node/prefer-global/process': 'off',
   },
 }, {
   files: ['package/domain-core/src/**/*.ts'],
