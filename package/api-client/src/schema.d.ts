@@ -10290,12 +10290,19 @@ export interface components {
                     name: string;
                     weight: number;
                 }[];
-                domainCategories: {
+                domainCategories?: {
                     domain: string;
                     label: string;
                     order: number;
                     coefficient?: number;
                     weight?: number;
+                }[];
+                sections?: {
+                    /** @enum {string} */
+                    role: "subjects" | "summary" | "comments";
+                    label: string;
+                    order: number;
+                    subjectCodes?: string[];
                 }[];
                 includeSummary?: boolean;
                 includeComments?: boolean;
@@ -10308,6 +10315,31 @@ export interface components {
                 order: number;
                 examYear?: boolean;
                 examName?: string;
+                reportCardStructure?: {
+                    gradingScale: number;
+                    passingGrade: number;
+                    periods: {
+                        code: string;
+                        name: string;
+                        weight: number;
+                    }[];
+                    domainCategories?: {
+                        domain: string;
+                        label: string;
+                        order: number;
+                        coefficient?: number;
+                        weight?: number;
+                    }[];
+                    sections?: {
+                        /** @enum {string} */
+                        role: "subjects" | "summary" | "comments";
+                        label: string;
+                        order: number;
+                        subjectCodes?: string[];
+                    }[];
+                    includeSummary?: boolean;
+                    includeComments?: boolean;
+                };
             }[];
             subjects: {
                 code: string;
@@ -10316,7 +10348,7 @@ export interface components {
                 defaultCoefficient: number;
             }[];
             curriculum: {
-                levelCodes: string[];
+                levelCode: string;
                 subjectCode: string;
                 longName?: string;
                 coefficient: number;

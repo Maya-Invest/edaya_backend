@@ -1,4 +1,9 @@
-export { IVORY_COAST_STRUCTURE_TEMPLATES } from './ivory-coast/parse-ivory-coast-templates'
+export {
+  IVORY_COAST_STRUCTURE_TEMPLATES,
+  loadIvoryCoastFixture,
+  parseIvoryCoastStructureTemplates,
+  toStructureTemplateId,
+} from './ivory-coast/parse-ivory-coast-templates'
 
 export {
   BUILTIN_STRUCTURE_TEMPLATES,
@@ -37,6 +42,8 @@ export type {
   StructureTemplateId,
   StructureTemplateReportCardDomainCategory,
   StructureTemplateReportCardPeriod,
+  StructureTemplateReportCardSection,
+  StructureTemplateReportCardSectionRole,
   StructureTemplateReportCardStructure,
   StructureTemplateSubject,
 } from './types'
