@@ -75,7 +75,7 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `
 
 ## File storage (local dev)
 
-`bun repo dev` starts the API and **`@edaya/local-files-server`** together. Uploads persist under repo-root `.data/files/` (gitignored).
+`bun run dev` / `bun repo dev` starts the API, **`@edaya/local-files-server`**, and **`@edaya/docs-api`** together. Uploads persist under repo-root `.data/files/` (gitignored). Document PDFs render via docs on `:3090` (`EDAYA_DOCS_URL` in `apps/api/.env`; JWT secret must match `apps/docs/.env`).
 
 | Variable | Default |
 |----------|---------|
@@ -83,6 +83,9 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `
 | `LOCAL_FILES_ROOT` | `.data/files` |
 | `LOCAL_FILES_PORT` | `9200` (service only) |
 | `LOCAL_FILES_SECRET` | `BETTER_AUTH_SECRET` |
+| `EDAYA_DOCS_URL` | `http://localhost:3090` |
+| `DOCS_JWT_SECRET` | shared with `apps/docs/.env` |
+| `DOCS_RENDER_ON_PUBLISH` | `true` to PDF after publish |
 
 Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentId}/content`. The browser PUTs to `LOCAL_FILES_URL` (CORS allows origins from `TRUSTED_ORIGINS`).
 
@@ -101,11 +104,12 @@ See [api-runtimes.md](./api-runtimes.md).
 
 ## Environment credentials matrix
 
-| Concern | Local dev (`bun repo dev`) | Staging | Production |
+| Concern | Local dev (`bun run dev`) | Staging | Production |
 |---------|----------------------|---------|------------|
-| **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
+| **Env file** | `apps/api/.env` + `apps/docs/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
 | **File storage** | `@edaya/local-files-server` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
+| **Document rendering** | `@edaya/docs-api` (:3090) + optional Gotenberg (:3000) | `edaya-docs-staging` Worker | `edaya-docs` Worker |
 | **Novu** | Dev key in `.env` | Dev key (`secrets.staging.json`) | Prod key (`secrets.prod.json`) |
 | **Auth secret** | `BETTER_AUTH_SECRET` in `.env` | Unique Wrangler secret | Unique Wrangler secret |
 

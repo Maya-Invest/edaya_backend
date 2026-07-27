@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "dev": "bun src/local-host.ts",
     "start:local": "bun src/local-host.ts",
     "build": "tsc --noEmit",
     "check": "tsc --noEmit",
