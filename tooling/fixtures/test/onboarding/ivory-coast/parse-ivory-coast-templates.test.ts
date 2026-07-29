@@ -156,7 +156,7 @@ describe('ivory coast structure templates', () => {
     expect(ci.countryCode).toBe('CI')
     expect(ci.templates).toHaveLength(2)
 
-    const ivoryCoast = listStructureTemplatesForCountry("Côte d'Ivoire")
+    const ivoryCoast = listStructureTemplatesForCountry('Côte d\'Ivoire')
     expect(ivoryCoast.countryCode).toBe('CI')
     expect(ivoryCoast.templates).toHaveLength(2)
 
