@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -eu
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+echo "→ Running bun run verify before push..."
+bun run verify
