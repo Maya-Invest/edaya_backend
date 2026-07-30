@@ -7,7 +7,7 @@ import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 const VALID_WRANGLER = `
   "triggers": {
     "crons": [
-      "* */1 * * *"
+      "*/5 * * * *"
     ]
   },
   "queues": {
@@ -82,16 +82,16 @@ describe('findRuntimeBoundaryViolations', () => {
     try {
       writeBaselineRepoFiles(root)
       writeFile(root, 'apps/api/wrangler.jsonc', `
-        "triggers": { "crons": ["0 2 * * *", "* */1 * * *"] }
+        "triggers": { "crons": ["0 2 * * *", "*/5 * * * *"] }
         "queues": { "producers": [{ "binding": "CRON_JOBS", "queue": "edaya-cron-jobs" }] }
       `)
 
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (* */1 * * *), not per-job triggers',
+        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers',
       }, {
         label: 'wrangler cron',
-        message: 'each wrangler triggers.crons must contain only "* */1 * * *" (found: 0 2 * * *, * */1 * * *)',
+        message: 'each wrangler triggers.crons must contain only "*/5 * * * *" (found: 0 2 * * *, */5 * * * *)',
       }])
     }
     finally {

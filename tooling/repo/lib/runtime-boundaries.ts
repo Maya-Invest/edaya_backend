@@ -194,10 +194,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     else {
       for (const [, block] of cronBlocks) {
         const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1])
-        if (expressions.length !== 1 || expressions[0] !== '* */1 * * *') {
+        if (expressions.length !== 1 || expressions[0] !== '*/5 * * * *') {
           violations.push({
             label: 'wrangler cron',
-            message: `each wrangler triggers.crons must contain only "* */1 * * *" (found: ${expressions.join(', ') || 'none'})`,
+            message: `each wrangler triggers.crons must contain only "*/5 * * * *" (found: ${expressions.join(', ') || 'none'})`,
           })
           break
         }

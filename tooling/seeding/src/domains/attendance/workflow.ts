@@ -1,5 +1,5 @@
 import type { AttendanceRecordInput } from '@edaya/core'
-import type { FixtureAttendanceSession, FixtureDataset, FixtureDailyAttendanceDay } from '@edaya/fixtures'
+import type { FixtureAttendanceSession, FixtureDailyAttendanceDay, FixtureDataset } from '@edaya/fixtures'
 import type { AttendanceSeedPort } from './port'
 
 function attendanceSeedRecord(record: AttendanceRecordInput) {

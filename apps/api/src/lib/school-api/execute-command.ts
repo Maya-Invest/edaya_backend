@@ -8,7 +8,7 @@ import { renderClassLogbookDocument } from "@/lib/documents/render-logbook-docum
 import { renderReportCardDocument } from "@/lib/documents/render-report-card-document";
 
 function resolveDocsRenderConfig(env: AppBindings["Bindings"], options?: {
-  requirePublishFlag?: boolean
+  requirePublishFlag?: boolean;
 }) {
   if (options?.requirePublishFlag && !env.DOCS_RENDER_ON_PUBLISH) {
     return null;
@@ -72,10 +72,10 @@ export async function executeSchoolCommand(
       );
     }
     const input = payload as {
-      classGroupId: string
-      academicPeriodId?: string
-      classSubjectId?: string
-      locale?: "fr" | "en"
+      classGroupId: string;
+      academicPeriodId?: string;
+      classSubjectId?: string;
+      locale?: "fr" | "en";
     };
     return renderClassLogbookDocument(service, {
       classGroupId: input.classGroupId,

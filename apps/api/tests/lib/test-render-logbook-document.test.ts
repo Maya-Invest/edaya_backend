@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import {
   AcademicPeriod,
   AcademicYear,
@@ -6,6 +7,7 @@ import {
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
+  ClassSubjectMatterStatus,
   ClassSubjectProgress,
   LessonSession,
   OccurrenceStatus,
@@ -13,14 +15,26 @@ import {
   Subject,
   SubjectMatter,
 } from "@edaya/core";
+import { ActorAssuranceLevel, createStaffActorMetadata, Permission } from "@edaya/authorization";
 import { describe, expect, mock, test } from "bun:test";
-import { createTestStaffActor } from "../support/staff-actor-fixture";
 import { renderClassLogbookDocument } from "@/lib/documents/render-logbook-document";
 
-mock.module("@edaya/authorization", () => ({
-  LogbookOperations: { read: { id: "logbook.read" } },
-  operationModule: () => async () => undefined,
-}));
+function createLogbookTestStaffActor() {
+  return createStaffActorMetadata({
+    schoolId: "school-1",
+    subjectId: "auth-staff",
+    requestId: "req-1",
+    authenticatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    assuranceLevel: ActorAssuranceLevel.Standard,
+    staffMemberId: "staff-1",
+    effectiveGrants: {
+      permissions: new Set([Permission.CLASS_LOGBOOK_READ]),
+      scopeGrants: [],
+      scopeIdsByPermission: {},
+      isElevated: false,
+    },
+  });
+}
 
 describe("renderClassLogbookDocument", () => {
   const school = new School({
@@ -71,7 +85,7 @@ describe("renderClassLogbookDocument", () => {
     id: "csm-1",
     classSubjectId: classSubject.id,
     subjectMatterId: matter.id,
-    status: "in_progress",
+    status: ClassSubjectMatterStatus.InProgress,
     completedPercentage: 25,
   });
   const session = new LessonSession({
@@ -104,13 +118,13 @@ describe("renderClassLogbookDocument", () => {
   });
 
   function serviceStub(overrides?: {
-    sessions?: LessonSession[]
-    progress?: ClassSubjectProgress[]
-    assessments?: Assessment[]
+    sessions?: LessonSession[];
+    progress?: ClassSubjectProgress[];
+    assessments?: Assessment[];
   }) {
     return {
       baseService: {
-        actor: createTestStaffActor(),
+        actor: createLogbookTestStaffActor(),
         repositories: {
           classGroups: { findById: async () => classGroup },
           schools: { findById: async () => school },
@@ -162,10 +176,10 @@ describe("renderClassLogbookDocument", () => {
     expect(outcome.subjectCount).toBe(1);
     expect(outcome.sessionCount).toBe(1);
     expect(render).toHaveBeenCalledTimes(1);
-    const renderArg = render.mock.calls[0]![0] as {
-      templateKey: string
-      payload: { subjects: unknown[] }
-    };
+    const [renderArg] = render.mock.calls[0] as unknown as [{
+      templateKey: string;
+      payload: { subjects: unknown[] };
+    }];
     expect(renderArg.templateKey).toBe("logbook.v1");
     expect(renderArg.payload.subjects).toHaveLength(1);
   });
