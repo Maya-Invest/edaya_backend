@@ -1,5 +1,5 @@
-import type { MigrationDriver } from './migrate'
 import path from 'node:path'
+import type { MigrationDriver } from './migrate'
 
 const EPHEMERAL_DATABASE_URLS = new Set(['memory', 'pglite', 'memory://'])
 

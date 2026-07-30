@@ -145,9 +145,9 @@ function countAttendanceRecords(dataset: FixtureDataset): number {
   const sessions = dataset.extensions?.attendanceSessions
   const sessionCount = sessions
     ? sessions.absenceSessions.reduce(
-        (total, session) => total + session.records.length,
-        sessions.todaySession.records.length,
-      )
+      (total, session) => total + session.records.length,
+      sessions.todaySession.records.length,
+    )
     : 0
   return sessionCount + dailyCount
 }

@@ -22,21 +22,21 @@ import type { DocsRenderConfig } from "@/lib/documents/render-report-card-docume
 import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
 
 export interface RenderClassLogbookDocumentInput {
-  classGroupId: string;
-  academicPeriodId?: string;
-  classSubjectId?: string;
-  locale?: string;
-  config: DocsRenderConfig;
-  createClient?: (config: DocsRenderConfig, schoolId: string) => DocsClient;
+  classGroupId: string
+  academicPeriodId?: string
+  classSubjectId?: string
+  locale?: string
+  config: DocsRenderConfig
+  createClient?: (config: DocsRenderConfig, schoolId: string) => DocsClient
 }
 
 export interface RenderClassLogbookDocumentResult {
-  fileName: string;
-  contentType: "application/pdf";
-  downloadUrl: string;
-  expiresAt: string;
-  subjectCount: number;
-  sessionCount: number;
+  fileName: string
+  contentType: "application/pdf"
+  downloadUrl: string
+  expiresAt: string
+  subjectCount: number
+  sessionCount: number
 }
 
 function defaultCreateClient(config: DocsRenderConfig, schoolId: string): DocsClient {
@@ -150,35 +150,35 @@ export async function renderClassLogbookDocument(
   ] = await Promise.all([
     sessionIds.length > 0
       ? service.baseService.repositories.classSubjectProgress.list({
-          lessonSessionId: { $in: sessionIds },
-        })
+        lessonSessionId: { $in: sessionIds },
+      })
       : Promise.resolve([]),
     classSubjectIds.size > 0
       ? service.baseService.repositories.classSubjectMatters.list({
-          classSubjectId: { $in: [...classSubjectIds] },
-        })
+        classSubjectId: { $in: [...classSubjectIds] },
+      })
       : Promise.resolve([]),
     subjectIds.length > 0
       ? service.baseService.repositories.subjects.list({ id: { $in: subjectIds } })
       : Promise.resolve([]),
     classSubjectIds.size > 0
       ? service.baseService.repositories.teacherAssignments.list({
-          classSubjectId: { $in: [...classSubjectIds] },
-          kind: TeacherAssignmentKind.Subject,
-          status: TeacherAssignmentStatus.Active,
-        })
+        classSubjectId: { $in: [...classSubjectIds] },
+        kind: TeacherAssignmentKind.Subject,
+        status: TeacherAssignmentStatus.Active,
+      })
       : Promise.resolve([]),
     classSubjectIds.size > 0
       ? service.baseService.repositories.staffAssignments.list({
-          classSubjectId: { $in: [...classSubjectIds] },
-        })
+        classSubjectId: { $in: [...classSubjectIds] },
+      })
       : Promise.resolve([]),
     sessionIds.length > 0
       ? service.baseService.repositories.assessments.list({
-          classGroupId: classGroup.id,
-          kind: AssessmentKind.Homework,
-          lessonSessionId: { $in: sessionIds },
-        })
+        classGroupId: classGroup.id,
+        kind: AssessmentKind.Homework,
+        lessonSessionId: { $in: sessionIds },
+      })
       : Promise.resolve([]),
   ]);
 

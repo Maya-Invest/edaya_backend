@@ -116,6 +116,7 @@ export function buildBetterAuthConfig(
                 },
               };
             }
+            return;
           },
         },
       },
