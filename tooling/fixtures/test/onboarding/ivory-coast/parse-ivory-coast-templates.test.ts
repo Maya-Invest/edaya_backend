@@ -147,11 +147,29 @@ describe('ivory coast structure templates', () => {
     expect(sciences?.weight).toBeGreaterThan(1)
   })
 
-  it('lists templates for CI and defaults unknown countries to CI', () => {
-    expect(resolveCountryCode(undefined)).toBe('CI')
+  it('lists templates for CI only; unknown and empty countries get no templates', () => {
+    expect(resolveCountryCode(undefined)).toBe('FR')
+    expect(resolveCountryCode('')).toBe('FR')
+    expect(resolveCountryCode('Sénégal')).toBe('FR')
+
     const ci = listStructureTemplatesForCountry('ci')
+    expect(ci.countryCode).toBe('CI')
     expect(ci.templates).toHaveLength(2)
+
+    const ivoryCoast = listStructureTemplatesForCountry('Côte d\'Ivoire')
+    expect(ivoryCoast.countryCode).toBe('CI')
+    expect(ivoryCoast.templates).toHaveLength(2)
+
     const fr = listStructureTemplatesForCountry('France')
+    expect(fr.countryCode).toBe('FR')
     expect(fr.templates).toHaveLength(0)
+
+    const senegal = listStructureTemplatesForCountry('Sénégal')
+    expect(senegal.countryCode).toBe('FR')
+    expect(senegal.templates).toHaveLength(0)
+
+    const omitted = listStructureTemplatesForCountry(undefined)
+    expect(omitted.countryCode).toBe('FR')
+    expect(omitted.templates).toHaveLength(0)
   })
 })

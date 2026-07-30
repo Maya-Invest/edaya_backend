@@ -7,7 +7,7 @@ import {
 } from "../support/core-route-harness";
 
 describe("onboarding structure templates route", () => {
-  it("lists CI templates by default and returns an empty list for unsupported countries", async () => {
+  it("lists CI templates for Ivory Coast and returns empty for unsupported countries", async () => {
     const { app } = await createCoreRouteTestApp();
 
     const defaultResponse = await app.request(createAppRequest("/core/onboarding/structure-templates", {
@@ -18,8 +18,20 @@ describe("onboarding structure templates route", () => {
       countryCode: string;
       templates: Array<{ id: string }>;
     };
-    expect(defaultPayload.countryCode).toBe("CI");
-    expect(defaultPayload.templates.map(template => template.id)).toEqual([
+    expect(defaultPayload.countryCode).toBe("FR");
+    expect(defaultPayload.templates).toHaveLength(0);
+
+    const ciResponse = await app.request(createAppRequest(
+      `/core/onboarding/structure-templates?country=${encodeURIComponent("Côte d'Ivoire")}`,
+      { method: "GET" },
+    ));
+    expect(ciResponse.status).toBe(200);
+    const ciPayload = await ciResponse.json() as {
+      countryCode: string;
+      templates: Array<{ id: string }>;
+    };
+    expect(ciPayload.countryCode).toBe("CI");
+    expect(ciPayload.templates.map(template => template.id)).toEqual([
       "ci-college",
       "ci-lycee",
     ]);
@@ -34,6 +46,18 @@ describe("onboarding structure templates route", () => {
     };
     expect(francePayload.countryCode).toBe("FR");
     expect(francePayload.templates).toHaveLength(0);
+
+    const senegalResponse = await app.request(createAppRequest(
+      `/core/onboarding/structure-templates?country=${encodeURIComponent("Sénégal")}`,
+      { method: "GET" },
+    ));
+    expect(senegalResponse.status).toBe(200);
+    const senegalPayload = await senegalResponse.json() as {
+      countryCode: string;
+      templates: unknown[];
+    };
+    expect(senegalPayload.countryCode).toBe("FR");
+    expect(senegalPayload.templates).toHaveLength(0);
   });
 });
 
