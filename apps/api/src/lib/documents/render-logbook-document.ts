@@ -11,13 +11,13 @@ import { LogbookOperations, operationModule } from "@edaya/authorization";
 import {
   buildLogbookV1Payload,
   sanitizeFileName,
-  type SchoolService,
 } from "@edaya/service";
+import type { SchoolService } from "@edaya/service";
 import {
   createDocsClient,
   createFetchTransport,
-  type DocsClient,
 } from "@maya-invest/edaya-docs-client";
+import type { DocsClient } from "@maya-invest/edaya-docs-client";
 import type { DocsRenderConfig } from "@/lib/documents/render-report-card-document";
 import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
 

@@ -9,13 +9,13 @@ import {
 import {
   buildReportCardV1Payload,
   buildStorageKey,
-  type SchoolService,
 } from "@edaya/service";
+import type { SchoolService } from "@edaya/service";
 import {
   createDocsClient,
   createFetchTransport,
-  type DocsClient,
 } from "@maya-invest/edaya-docs-client";
+import type { DocsClient } from "@maya-invest/edaya-docs-client";
 import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
 
 function collectClassSubjectIds(
