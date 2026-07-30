@@ -38,6 +38,7 @@
     "typescript": "^6.0.2"
   },
   "overrides": {
-    "@maya-invest/edaya-api-client": "workspace:*"
+    "@maya-invest/edaya-api-client": "workspace:*",
+    "@maya-invest/edaya-docs-client": "workspace:*"
   }
 }
