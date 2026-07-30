@@ -47,4 +47,4 @@ GOTENBERG_URL=http://localhost:3000 bun run test:docs:integration
 bun run docs:openapi:export && bun run docs:openapi:generate
 ```
 
-School API talks to docs over HTTP (`EDAYA_DOCS_URL` + `DOCS_JWT_SECRET`). Root `bun run dev` / `bun repo dev` starts API, local-files, and docs together.
+School API talks to docs over HTTP (`EDAYA_DOCS_URL` + `DOCS_JWT_SECRET`). `bun run dev` starts API, local-files, and docs together.

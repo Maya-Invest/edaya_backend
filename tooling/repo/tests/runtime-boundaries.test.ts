@@ -7,7 +7,7 @@ import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 const VALID_WRANGLER = `
   "triggers": {
     "crons": [
-      "* */1 * * *"
+      "*/5 * * * *"
     ]
   },
   "queues": {
@@ -32,7 +32,7 @@ describe('findRuntimeBoundaryViolations', () => {
     writeFile(root, 'apps/api/wrangler.jsonc', VALID_WRANGLER)
     writeFile(root, 'apps/api/src/runtime/shared/adapters/file-storage.ts', 'switch (env.RUNTIME) {}\n')
     writeFile(root, 'apps/api/src/runtime/local/school-database.ts', 'export async function createSchoolDatabase() {}\n')
-    writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/local-files-server", "@edaya/docs-api"]\n')
+    writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/local-files-server"]\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/notification-gateway.ts', 'env.RUNTIME === "in-memory"\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts', 'env.RUNTIME === "in-memory"\n')
   }
@@ -82,16 +82,16 @@ describe('findRuntimeBoundaryViolations', () => {
     try {
       writeBaselineRepoFiles(root)
       writeFile(root, 'apps/api/wrangler.jsonc', `
-        "triggers": { "crons": ["0 2 * * *", "* */1 * * *"] }
+        "triggers": { "crons": ["0 2 * * *", "*/5 * * * *"] }
         "queues": { "producers": [{ "binding": "CRON_JOBS", "queue": "edaya-cron-jobs" }] }
       `)
 
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (* */1 * * *), not per-job triggers',
+        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers',
       }, {
         label: 'wrangler cron',
-        message: 'each wrangler triggers.crons must contain only "* */1 * * *" (found: 0 2 * * *, * */1 * * *)',
+        message: 'each wrangler triggers.crons must contain only "*/5 * * * *" (found: 0 2 * * *, */5 * * * *)',
       }])
     }
     finally {

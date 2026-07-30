@@ -126,12 +126,6 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
         message: 'start-local-dev.ts must start @edaya/local-files-server with bun repo dev',
       })
     }
-    if (!startLocalDev.includes('@edaya/docs-api')) {
-      violations.push({
-        label: 'local dev orchestrator',
-        message: 'start-local-dev.ts must start @edaya/docs-api with bun repo dev',
-      })
-    }
     if (startLocalDev.includes('.dev.vars')) {
       violations.push({
         label: 'local dev orchestrator',
@@ -194,10 +188,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     else {
       for (const [, block] of cronBlocks) {
         const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1])
-        if (expressions.length !== 1 || expressions[0] !== '* */1 * * *') {
+        if (expressions.length !== 1 || expressions[0] !== '*/5 * * * *') {
           violations.push({
             label: 'wrangler cron',
-            message: `each wrangler triggers.crons must contain only "* */1 * * *" (found: ${expressions.join(', ') || 'none'})`,
+            message: `each wrangler triggers.crons must contain only "*/5 * * * *" (found: ${expressions.join(', ') || 'none'})`,
           })
           break
         }
