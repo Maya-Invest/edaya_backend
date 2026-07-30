@@ -635,11 +635,6 @@ export const clientBindings = {
         "requestSchemaName": "PublishReportCardResultCommand",
         "responseSchemaName": "ReportCardResult"
       },
-      "renderClassLogbook": {
-        "publicName": "render-class-logbook",
-        "requestSchemaName": "RenderClassLogbookCommand",
-        "responseSchemaName": "RenderClassLogbookResponse"
-      },
       "recordIncident": {
         "publicName": "record-incident",
         "requestSchemaName": "RecordIncidentCommand",

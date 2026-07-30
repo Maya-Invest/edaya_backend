@@ -29,13 +29,7 @@ describe('SchoolService assessment workflows', () => {
     expect(result.status).toBe(ReportCardResultStatus.Draft)
     expect(result.generatedAt).toBe(generatedAt)
     expect(result.overallAverage).toBe(16)
-    expect(result.classSize).toBe(1)
-    expect(result.rank).toBe(1)
     expect(result.assessmentResultCount).toBe(1)
-    const subjectSection = result.sectionResults
-      ?.flatMap(section => [section, ...section.subResults])
-      .find(section => section.classSubjectId === 'cs1')
-    expect(subjectSection?.rank).toBe(1)
     expect(result.attendanceSummary.presentCount).toBe(1)
     expect(result.attendanceSummary.absenceCount).toBe(1)
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
@@ -45,9 +39,8 @@ describe('SchoolService assessment workflows', () => {
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
   })
 
-  test('generateReportCardResult reuses existing draft id and refreshes generatedAt', async () => {
+  test('generateReportCardResult reuses existing draft id and generatedAt', async () => {
     const existingGeneratedAt = new Date('2026-03-25T00:00:00Z')
-    const regeneratedAt = new Date('2026-04-01T00:00:00Z')
     const { mockPolicy, mockRepos, service } = createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
@@ -65,12 +58,12 @@ describe('SchoolService assessment workflows', () => {
       studentId: 'stu1',
       periodId: 'per1',
       reportCardDefinitionId: 'def1',
-      generatedAt: regeneratedAt,
+      generatedAt: new Date('2026-04-01T00:00:00Z'),
     })
 
     expect(result.id).toBe('rc-existing')
     expect(result.status).toBe(ReportCardResultStatus.Draft)
-    expect(result.generatedAt).toBe(regeneratedAt)
+    expect(result.generatedAt).toBe(existingGeneratedAt)
     expect(mockPolicy.authorizeReportCardResultSave).toHaveBeenCalled()
     expect(mockRepos.results.save).toHaveBeenCalledWith(result)
   })
@@ -126,8 +119,6 @@ describe('SchoolService assessment workflows', () => {
     expect(result.id).toBe('rc1')
     expect(result.status).toBe(ReportCardResultStatus.Published)
     expect(result.overallAverage).toBe(16)
-    expect(result.classSize).toBe(1)
-    expect(result.rank).toBe(1)
     expect(result.assessmentResultCount).toBe(1)
     expect(result.attendanceSummary.presentCount).toBe(1)
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
@@ -286,34 +277,6 @@ describe('SchoolService assessment workflows', () => {
     })
 
     expect(result.reportCardDefinitionId).toBe('def-default')
-  })
-
-  test('generateReportCardResult prefers sectionMarks over assessment aggregation', async () => {
-    const { service } = createReportCardContext()
-
-    const result = await service.assessmentsWorkflow.generateReportCardResult({
-      id: 'rc-marks',
-      studentId: 'stu1',
-      periodId: 'per1',
-      reportCardDefinitionId: 'def1',
-      overallAverage: 14.5,
-      sectionMarks: {
-        'sec-root': [
-          {
-            subjectId: 'subject-math',
-            average: 14.5,
-            coefficient: 1,
-            appreciation: 'Bon travail.',
-          },
-        ],
-      },
-    })
-
-    expect(result.sectionResults).toHaveLength(1)
-    expect(result.sectionResults[0]?.sectionId).toBe('sec-root')
-    expect(result.sectionResults[0]?.subResults).toHaveLength(1)
-    expect(result.sectionResults[0]?.subResults[0]?.average).toBe(14.5)
-    expect(result.sectionResults[0]?.subResults[0]?.comment).toBe('Bon travail.')
   })
 
   test('publishReportCardResult rejects aggregated sources that are not ready', async () => {

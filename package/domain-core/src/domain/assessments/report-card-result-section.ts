@@ -13,7 +13,6 @@ export const reportCardResultSectionBaseSchema = z.object({
   parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   comment: z.string().trim().min(1, 'comment must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  rank: z.number().int().nonnegative('rank must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
 })
 
 function refineReportCardResultSection(data: any, ctx: z.RefinementCtx) {
@@ -59,5 +58,4 @@ export class ReportCardResultSection {
   get parentSectionId() { return this.data.parentSectionId }
   get classSubjectId() { return this.data.classSubjectId }
   get comment() { return this.data.comment }
-  get rank() { return this.data.rank }
 }

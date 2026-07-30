@@ -68,14 +68,14 @@ function unwrapDomainEntity(entity: unknown): unknown {
 }
 
 function serializeEntityResult(serviceName: CoreEntityKey, entity: unknown): unknown {
-  const unwrapped = unwrapDomainEntity(entity);
   if (serviceName === "accountInvitations") {
+    const unwrapped = unwrapDomainEntity(entity);
     if (unwrapped && typeof unwrapped === "object") {
       return toPublicAccountInvitationData(unwrapped as AccountInvitationData);
     }
   }
 
-  return unwrapped;
+  return entity;
 }
 
 function serializeEntityResults(serviceName: CoreEntityKey, entities: unknown[]): unknown[] {

@@ -56,7 +56,6 @@ describe('buildReportCardV1Payload', () => {
               average: 15,
               weight: 3,
               classSubjectId: 'cs-math',
-              rank: 2,
               comment: 'Très bien',
             }),
             new ReportCardResultSection({
@@ -66,7 +65,6 @@ describe('buildReportCardV1Payload', () => {
               average: 11,
               weight: 2,
               classSubjectId: 'cs-pc',
-              rank: 8,
             }),
           ],
         }),
@@ -108,12 +106,7 @@ describe('buildReportCardV1Payload', () => {
       average: '15,00',
       coefficient: '3',
       total: '45,00',
-      rank: '2è / 30',
       appreciation: 'Très bien',
-    })
-    expect(payload.subjects[1]).toMatchObject({
-      average: '11,00',
-      rank: '8è / 30',
     })
     expect(payload.subjects.at(-1)).toMatchObject({
       kind: 'totals',

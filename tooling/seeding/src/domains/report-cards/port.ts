@@ -53,15 +53,6 @@ export interface ReportCardResultSeedRecord {
   reportCardDefinitionId: string
   generatedAt?: string
   publishedAt?: string
-  overallAverage?: number
-  rank?: number
-  classSize?: number
-  sectionMarks?: Record<string, readonly {
-    subjectId: string
-    average: number
-    coefficient?: number
-    appreciation?: string
-  }[]>
 }
 
 export interface ReportCardTeacherCommentSeedRecord {

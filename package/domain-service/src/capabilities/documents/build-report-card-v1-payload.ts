@@ -65,7 +65,6 @@ function mapSubjectRow(
   section: ReportCardResultSection,
   kind: ReportCardV1SubjectRow['kind'],
   locale: string,
-  classSize?: number,
 ): ReportCardV1SubjectRow {
   const total = section.average * section.weight
   return {
@@ -74,9 +73,6 @@ function mapSubjectRow(
     average: formatNumber(section.average, locale),
     coefficient: String(section.weight),
     total: formatNumber(total, locale),
-    ...(section.rank !== undefined && classSize !== undefined
-      ? { rank: `${section.rank}è / ${classSize}` }
-      : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
   }
 }
@@ -84,24 +80,23 @@ function mapSubjectRow(
 function flattenSections(
   sections: readonly ReportCardResultSection[],
   locale: string,
-  classSize?: number,
 ): ReportCardV1SubjectRow[] {
   const rows: ReportCardV1SubjectRow[] = []
 
   for (const section of sections) {
     if (section.sectionKind === ReportCardDefinitionSectionKind.Subject) {
-      rows.push(mapSubjectRow(section, 'subject', locale, classSize))
+      rows.push(mapSubjectRow(section, 'subject', locale))
       continue
     }
 
     for (const child of section.subResults) {
       if (child.sectionKind === ReportCardDefinitionSectionKind.Subject) {
-        rows.push(mapSubjectRow(child, 'subject', locale, classSize))
+        rows.push(mapSubjectRow(child, 'subject', locale))
       }
     }
 
     if (isBilanName(section.name) || section.subResults.length > 0) {
-      rows.push(mapSubjectRow(section, 'bilan', locale, classSize))
+      rows.push(mapSubjectRow(section, 'bilan', locale))
     }
   }
 
@@ -114,11 +109,7 @@ function flattenSections(
  */
 export function buildReportCardV1Payload(input: ReportCardDocumentContext): ReportCardV1Payload {
   const locale = input.locale ?? 'fr-FR'
-  const subjects = flattenSections(
-    input.result.sectionResults,
-    locale,
-    input.result.classSize,
-  )
+  const subjects = flattenSections(input.result.sectionResults, locale)
 
   if (subjects.length === 0) {
     throw new Error(`Report card ${input.result.id} has no section results to render`)

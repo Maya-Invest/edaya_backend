@@ -54,7 +54,6 @@ export type SchoolCommandKey
     | 'generateReportCardResult'
     | 'writeHomeroomReportComment'
     | 'publishReportCardResult'
-    | 'renderClassLogbook'
     | 'registerStudent'
     | 'enrollStudent'
     | 'linkGuardianToStudent'
@@ -181,7 +180,6 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'generateReportCardResult',
   'writeHomeroomReportComment',
   'publishReportCardResult',
-  'renderClassLogbook',
   'registerStudent',
   'enrollStudent',
   'linkGuardianToStudent',

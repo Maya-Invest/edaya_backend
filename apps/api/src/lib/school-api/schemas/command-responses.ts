@@ -120,15 +120,6 @@ export const republishClassGroupTimetableResponseSchema = z.object({
   publication: publishClassGroupTimetableResponseSchema,
 }).openapi("RepublishClassGroupTimetableResponse");
 
-export const renderClassLogbookResponseSchema = z.object({
-  fileName: z.string().min(1),
-  contentType: z.literal("application/pdf"),
-  downloadUrl: z.string().min(1),
-  expiresAt: z.string().datetime(),
-  subjectCount: z.number().int().nonnegative(),
-  sessionCount: z.number().int().nonnegative(),
-}).openapi("RenderClassLogbookResponse");
-
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   registerSchool: schoolResponseSchema,
@@ -282,7 +273,6 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   generateReportCardResult: resultResponseSchema,
   writeHomeroomReportComment: resultResponseSchema,
   publishReportCardResult: resultResponseSchema,
-  renderClassLogbook: renderClassLogbookResponseSchema,
   recordIncident: incidentResponseSchema,
   addStudentInvolvement: studentIncidentInvolvementResponseSchema,
   applyDisciplinaryAction: studentDisciplinaryActionResponseSchema,

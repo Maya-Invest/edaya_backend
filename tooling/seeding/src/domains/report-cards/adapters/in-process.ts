@@ -25,15 +25,8 @@ export function createInProcessReportCardsSeedPort(
     generateReportCardResult: record =>
       withSeedPortError('reportCards.generateReportCardResult', async () => {
         await service.assessmentsWorkflow.generateReportCardResult({
-          id: record.id,
-          studentId: record.studentId,
-          periodId: record.periodId,
-          reportCardDefinitionId: record.reportCardDefinitionId,
+          ...record,
           generatedAt: record.generatedAt ? new Date(record.generatedAt) : undefined,
-          overallAverage: record.overallAverage,
-          rank: record.rank,
-          classSize: record.classSize,
-          sectionMarks: record.sectionMarks,
         })
       }),
     saveReportCardTeacherComment: record =>

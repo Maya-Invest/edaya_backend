@@ -220,10 +220,6 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     generateReportCardResult: payload => workflows.assessments.generateReportCardResult(payload as GenerateReportCardResultInput),
     writeHomeroomReportComment: payload => workflows.assessments.writeHomeroomReportComment(payload as WriteHomeroomReportCommentInput),
     publishReportCardResult: payload => workflows.assessments.publishReportCardResult(payload as PublishReportCardResultInput),
-    // documents — on-demand logbook is intercepted in apps/api executeSchoolCommand
-    renderClassLogbook: async () => {
-      throw new Error('renderClassLogbook must be handled by apps/api executeSchoolCommand')
-    },
     // student
     registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),
     enrollStudent: payload => workflows.student.enrollStudent(payload as EnrollStudentInput),

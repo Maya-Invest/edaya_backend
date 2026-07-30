@@ -3,7 +3,6 @@ import type {
   FixtureReportCardDefinition,
   FixtureReportCardGradeScale,
   FixtureReportCardResult,
-  FixtureReportCardSubjectMark,
 } from '../../types'
 import { ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
@@ -182,91 +181,42 @@ const homeroomComments: Partial<Record<string, string>> = {
   'ci-s23': 'Bon niveau en 3ème, à confirmer au brevet.',
 }
 
-function appreciationForPeriod(periodSuffix: 't1' | 't2' | 't3'): string {
-  if (periodSuffix === 't1') {
-    return 'Bon trimestre.'
-  }
-  if (periodSuffix === 't2') {
-    return 'En progression.'
-  }
-  return 'Fin d\'année satisfaisante.'
-}
+function buildTrimesterResults(periodId: string, periodSuffix: string, generatedAt: string, publishedAt: string): FixtureReportCardResult[] {
+  const results: FixtureReportCardResult[] = []
 
-function buildSectionMarks(
-  reportCardDefinitionId: string,
-  overallAverage: number,
-  periodSuffix: 't1' | 't2' | 't3',
-): Record<string, FixtureReportCardSubjectMark[]> {
-  const fixture = demoCiReportCardDefinitionFixtures.find(
-    entry => entry.definition.id === reportCardDefinitionId,
-  )
-  if (!fixture) {
-    return {}
-  }
-  const marks: Record<string, FixtureReportCardSubjectMark[]> = {}
-  for (const section of fixture.sections) {
-    if (section.subjectIds.length === 0) {
-      continue
+  for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
+    const classSize = studentIds.length
+    const reportCardDefinitionId = classReportCardDefinition[classGroupId]!
+
+    for (const [index, studentId] of studentIds.entries()) {
+      const classRank = index + 1
+      const narrativeStatus = classRank === classSize && classSize > 2 ? 'generated' : 'published'
+
+      results.push({
+        id: `ci-rcr-${studentId.replace('ci-s', 's')}-${periodSuffix}`,
+        studentId,
+        classGroupId,
+        periodId,
+        reportCardDefinitionId,
+        gradeScaleId: 'ci-gs-20',
+        narrativeStatus,
+        overallAverage: 12 + classRank,
+        classRank,
+        classSize,
+        homeroomComment: homeroomComments[studentId] ?? '',
+        generatedAt,
+        publishedAt: narrativeStatus === 'published' ? publishedAt : undefined,
+        sectionMarks: {},
+      })
     }
-    marks[section.id] = section.subjectIds.map((subjectId, subjectIndex) => ({
-      subjectId,
-      average: Math.max(
-        0,
-        Math.round((overallAverage - 0.8 + subjectIndex * 0.35) * 10) / 10,
-      ),
-      coefficient: section.coefficient ?? 1,
-      appreciation: appreciationForPeriod(periodSuffix),
-    }))
   }
-  return marks
-}
 
-function buildTrimesterResults(
-	periodId: string,
-	periodSuffix: 't1' | 't2' | 't3',
-	generatedAt: string,
-	publishedAt: string,
-): FixtureReportCardResult[] {
-	const results: FixtureReportCardResult[] = []
-	// Rotate + shift scores so each trimester has distinct averages/ranks in demos.
-	const rotation = periodSuffix === 't1' ? 0 : periodSuffix === 't2' ? 2 : 4
-	const trimesterBoost = periodSuffix === 't1' ? 0 : periodSuffix === 't2' ? 1.2 : -0.8
-
-	for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
-		const classSize = studentIds.length
-		const reportCardDefinitionId = classReportCardDefinition[classGroupId]!
-
-		for (const [index, studentId] of studentIds.entries()) {
-			const performanceSlot = (index + rotation) % classSize
-			const overallAverage = Math.round((12.5 + performanceSlot + trimesterBoost) * 10) / 10
-			const classRank = performanceSlot + 1
-			const narrativeStatus = classRank === classSize && classSize > 2 ? 'generated' : 'published'
-
-			results.push({
-				id: `ci-rcr-${studentId.replace('ci-s', 's')}-${periodSuffix}`,
-				studentId,
-				classGroupId,
-				periodId,
-				reportCardDefinitionId,
-				gradeScaleId: 'ci-gs-20',
-				narrativeStatus,
-				overallAverage,
-				classRank,
-				classSize,
-				homeroomComment: homeroomComments[studentId] ?? '',
-				generatedAt,
-				publishedAt: narrativeStatus === 'published' ? publishedAt : undefined,
-				sectionMarks: buildSectionMarks(reportCardDefinitionId, overallAverage, periodSuffix),
-			})
-		}
-	}
-
-	return results
+  return results
 }
 
 /** Trimestres 1–3 — bulletins pour les 30 élèves du collège. */
 export const demoCiReportCardResults = [
-	...buildTrimesterResults('ci-2025-t1', 't1', '2025-12-15', '2025-12-19'),
-	...buildTrimesterResults('ci-2025-t2', 't2', '2026-03-24', '2026-03-28'),
-	...buildTrimesterResults('ci-2025-t3', 't3', '2026-06-30', '2026-07-04'),
+  ...buildTrimesterResults('ci-2025-t1', 't1', '2025-12-15', '2025-12-19'),
+  ...buildTrimesterResults('ci-2025-t2', 't2', '2026-03-24', '2026-03-28'),
+  ...buildTrimesterResults('ci-2025-t3', 't3', '2026-06-30', '2026-07-04'),
 ] as const satisfies readonly FixtureReportCardResult[]

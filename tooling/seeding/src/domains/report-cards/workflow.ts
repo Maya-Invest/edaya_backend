@@ -92,10 +92,6 @@ export async function seedDevReportCards(
       periodId: result.periodId,
       reportCardDefinitionId: result.reportCardDefinitionId,
       generatedAt: seedDateTime(result.generatedAt),
-      overallAverage: result.overallAverage,
-      rank: result.classRank,
-      classSize: result.classSize,
-      sectionMarks: result.sectionMarks,
     }
     await port.generateReportCardResult(record)
 
