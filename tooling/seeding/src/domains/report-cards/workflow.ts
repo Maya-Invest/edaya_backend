@@ -40,9 +40,6 @@ export async function seedDevReportCards(
   }
 
   let sectionCount = 0
-  const subjectNameById = new Map(
-    (dataset.entities.subjects ?? []).map(subject => [subject.id, subject.name]),
-  )
 
   for (const fixture of definitionFixtures) {
     const definition = fixture.definition
@@ -72,14 +69,14 @@ export async function seedDevReportCards(
       })
       sectionCount += 1
 
-      for (const [subjectIndex, subjectId] of section.subjectIds.entries()) {
+      for (const subjectId of section.subjectIds) {
         await port.createReportCardSection({
           id: `${section.id}-${subjectId}`,
           reportCardDefinitionId: definition.id,
-          name: subjectNameById.get(subjectId) ?? subjectId,
+          name: subjectId,
           kind: ReportCardDefinitionSectionKind.Subject,
-          order: subjectIndex + 1,
-          weight: section.coefficient ?? 1,
+          order: 1,
+          weight: 1,
           parentSectionId: section.id,
           subjectId,
         })

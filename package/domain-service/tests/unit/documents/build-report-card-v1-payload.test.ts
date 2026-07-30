@@ -21,7 +21,6 @@ describe('buildReportCardV1Payload', () => {
     schoolId: school.id,
     firstName: 'Awa',
     lastName: 'Kouassi',
-    birthDate: '2014-02-14',
   })
 
   test('flattens subject and bilan rows and formats totals', () => {
@@ -82,14 +81,6 @@ describe('buildReportCardV1Payload', () => {
       classLabel: '1ère C',
       schoolYear: '2025-2026',
       locale: 'fr-FR',
-      teacherNameByClassSubjectId: new Map([['cs-math', 'Mme Diallo']]),
-      classResults: {
-        classAverage: '13,20 / 20',
-        lowestAverage: '10,00 / 20',
-        highestAverage: '16,00 / 20',
-      },
-      homeroomTeacherName: 'M. Koné',
-      principalName: 'Jean Aka',
     })
 
     expect(payload.studentName).toBe('Awa Kouassi')
@@ -105,23 +96,13 @@ describe('buildReportCardV1Payload', () => {
       absenceHoursJustified: '1',
       absenceHoursUnjustified: '3',
     })
-    expect(payload.birthDate).toBe('14/02/2014')
-    expect(payload.classResults).toEqual({
-      classAverage: '13,20 / 20',
-      lowestAverage: '10,00 / 20',
-      highestAverage: '16,00 / 20',
-    })
-    expect(payload.council).toEqual({
-      appreciation: 'Bon semestre',
-      homeroomTeacherName: 'M. Koné',
-      principalName: 'Jean Aka',
-    })
+    expect(payload.council).toEqual({ appreciation: 'Bon semestre' })
 
-    expect(payload.subjects.map(row => ({ name: row.name, kind: row.kind, teacherName: row.teacherName }))).toEqual([
-      { name: 'Mathématiques', kind: 'subject', teacherName: 'Mme Diallo' },
-      { name: 'Physique-Chimie', kind: 'subject', teacherName: undefined },
-      { name: 'Bilan scientifique', kind: 'bilan', teacherName: undefined },
-      { name: 'TOTAL', kind: 'totals', teacherName: undefined },
+    expect(payload.subjects.map(row => ({ name: row.name, kind: row.kind }))).toEqual([
+      { name: 'Mathématiques', kind: 'subject' },
+      { name: 'Physique-Chimie', kind: 'subject' },
+      { name: 'Bilan scientifique', kind: 'bilan' },
+      { name: 'TOTAL', kind: 'totals' },
     ])
     expect(payload.subjects[0]).toMatchObject({
       average: '15,00',
@@ -129,7 +110,6 @@ describe('buildReportCardV1Payload', () => {
       total: '45,00',
       rank: '2è / 30',
       appreciation: 'Très bien',
-      teacherName: 'Mme Diallo',
     })
     expect(payload.subjects[1]).toMatchObject({
       average: '11,00',
@@ -139,48 +119,6 @@ describe('buildReportCardV1Payload', () => {
       kind: 'totals',
       average: '14,50',
       rank: '3è / 30',
-    })
-  })
-
-  test('resolves subject catalog names when section labels are ids', () => {
-    const result = new ReportCardResult({
-      id: 'rc-ids',
-      reportCardDefinitionId: 'def-1',
-      studentId: student.id,
-      classGroupId: 'cg-1',
-      periodId: 'per-1',
-      assessmentResultCount: 1,
-      overallAverage: 15,
-      classSize: 6,
-      attendanceSummary: new AttendanceSummary({
-        presentCount: 40,
-        absenceCount: 0,
-        lateCount: 0,
-      }),
-      sectionResults: [
-        new ReportCardResultSection({
-          sectionId: 'sub-fr',
-          sectionKind: ReportCardDefinitionSectionKind.Subject,
-          name: 'ci-subj-fr',
-          average: 15.9,
-          weight: 2,
-          classSubjectId: 'cs-fr',
-        }),
-      ],
-    })
-
-    const payload = buildReportCardV1Payload({
-      result,
-      student,
-      school,
-      periodLabel: 'Trimestre 3',
-      subjectNameByClassSubjectId: new Map([['cs-fr', 'Français']]),
-      teacherNameByClassSubjectId: new Map([['cs-fr', 'Mme N\'Guessan']]),
-    })
-
-    expect(payload.subjects[0]).toMatchObject({
-      name: 'Français',
-      teacherName: 'Mme N\'Guessan',
     })
   })
 

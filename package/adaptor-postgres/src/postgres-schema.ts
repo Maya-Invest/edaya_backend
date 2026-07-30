@@ -653,7 +653,7 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
   role: text('role'),
   coefficient: real('coefficient'),
   order: integer('order_val').notNull(),
-  weight: real('weight').notNull(),
+  weight: integer('weight').notNull(),
   parentSectionId: text('parent_section_id'),
   subjectId: text('subject_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),

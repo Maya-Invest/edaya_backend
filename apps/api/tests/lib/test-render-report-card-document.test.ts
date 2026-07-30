@@ -67,10 +67,7 @@ describe("renderReportCardDocument", () => {
       baseService: {
         actor: createTestStaffActor(),
         repositories: {
-          results: {
-            findById: mock(async () => result),
-            list: mock(async () => [result]),
-          },
+          results: { findById: mock(async () => result) },
           attachments: { list: mock(async () => []) },
           students: { findById: mock(async () => student) },
           schools: { findById: mock(async () => school) },
@@ -79,15 +76,6 @@ describe("renderReportCardDocument", () => {
           },
           classGroups: { findById: mock(async () => ({ id: "cg-1", name: "1ère C" })) },
           academicYears: { findById: mock(async () => ({ id: "year-1", name: "2025-2026" })) },
-          classSubjects: {
-            findByIds: mock(async () => [{ id: "cs-math", subjectId: "subj-math" }]),
-          },
-          subjects: {
-            findByIds: mock(async () => [{ id: "subj-math", name: "Mathématiques" }]),
-          },
-          teacherAssignments: { list: mock(async () => []) },
-          teachers: { findById: mock(async () => null) },
-          staffMembers: { list: mock(async () => []), findById: mock(async () => null) },
         },
         entities: {
           attachments: { save: saveAttachment },

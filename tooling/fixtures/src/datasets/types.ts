@@ -15,17 +15,6 @@ export interface FixtureAttendanceSession {
   records: readonly AttendanceRecordInput[]
 }
 
-export interface FixtureDailyAttendanceDay {
-  classGroupId: string
-  date: string
-  records: readonly {
-    id: string
-    studentId: string
-    status: AttendanceRecordInput['status']
-    reason?: string
-  }[]
-}
-
 export interface FixtureSchedulingSlot {
   slotId: string
   schedule: ScheduleInput
@@ -116,8 +105,6 @@ export interface FixtureDatasetExtensions {
     todaySession: FixtureAttendanceSession
     pendingJustificationRecordIds: readonly string[]
   }
-  /** Daily roll-call days for classes with `attendanceMode: daily`. */
-  dailyAttendanceDays?: readonly FixtureDailyAttendanceDay[]
   schedulingSlots?: readonly FixtureSchedulingSlot[]
   schedulingSessionProgressAnchor?: FixtureSchedulingSessionProgressAnchor
   schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]

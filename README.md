@@ -11,8 +11,7 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 ```text
 edaya_backend/
 ├── apps/
-│   ├── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
-│   └── docs/                             @edaya/docs-api — document rendering HTTP service
+│   └── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
 ├── package/
 │   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
@@ -20,13 +19,9 @@ edaya_backend/
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
-│   ├── document-contracts/               @edaya/document-contracts
-│   ├── document-rendering/               @edaya/document-rendering
-│   ├── docs-client/                      @maya-invest/edaya-docs-client
-│   └── api-client/                       @maya-invest/edaya-api-client — typed API SDK
+│   └── generated-api-client/             @maya-invest/edaya-api-client — typed API SDK
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
-    ├── docs/                             docs OpenAPI + Gotenberg compose
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
     ├── db-migrate/                       @edaya/db-migrate — school + auth migration CLI

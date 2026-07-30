@@ -16,9 +16,6 @@ The webapp is a **static SPA** (`ssr = false`) that calls the API from the brows
 # API — persisted PGlite under repo-root `.data/` (school + auth schema)
 cp apps/api/.env.example apps/api/.env
 
-# Document rendering (apps/docs) — JWT secret must match apps/api DOCS_JWT_SECRET
-cp apps/docs/.env.example apps/docs/.env
-
 # Ops & seeding (remote URLs, Neon connection strings, smoke credentials)
 cp .env.example .env
 
@@ -30,9 +27,8 @@ cp apps/webapp/.env.example apps/webapp/.env
 ## Start API + webapp
 
 ```sh
-# Terminal 1 — API :9999 + local files :9200 + docs :3090 (from edaya_backend/)
-cd edaya_backend && bun run dev
-# Optional real PDFs: bun run gotenberg:up
+# Terminal 1 — API on http://localhost:9999 + local file storage on http://localhost:9200 (from edaya_backend/)
+cd edaya_backend && bun repo dev
 
 # Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
 cd edaya_web && bun --filter @edaya/webapp dev
@@ -44,8 +40,6 @@ cd edaya_web && bun --filter @edaya/webapp dev
 |---------|-----|
 | Webapp | http://localhost:5173 |
 | API | http://localhost:9999 |
-| Docs (document rendering) | http://localhost:3090 |
-| Gotenberg (optional PDF engine) | http://localhost:3000 |
 | OpenAPI reference | http://localhost:9999/reference |
 | GraphiQL (entity API) | http://localhost:9999/graphiql |
 

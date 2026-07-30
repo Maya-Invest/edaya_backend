@@ -48,9 +48,9 @@ export const EnvSchema = z.object({
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
-  /** Base URL for apps/docs document rendering (e.g. https://edaya-docs-staging… or http://localhost:3090). */
+  /** Base URL for edaya_docs (e.g. https://edaya-docs-staging… or http://localhost:8787). */
   EDAYA_DOCS_URL: z.string().url().optional(),
-  /** Shared HS256 secret with apps/docs for service JWT issuance. */
+  /** Shared HS256 secret with edaya_docs for service JWT issuance. */
   DOCS_JWT_SECRET: z.string().min(1).optional(),
   /** Optional static docs bearer for local/dev (matches docs DOCS_DEV_TOKEN). */
   DOCS_DEV_TOKEN: z.string().min(1).optional(),

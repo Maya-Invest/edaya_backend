@@ -79,13 +79,6 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
       searchPath,
     }),
   ),
-  ...['package/document-contracts', 'package/document-rendering', 'package/docs-client', 'apps/docs'].map(
-    (searchPath): BoundaryCheck => ({
-      label: 'docs packages import school domain',
-      pattern: /from ["']@edaya\/(core|service|authorization|adaptor-postgres|adaptor-auth|adaptor-novu|adaptor-r2|adaptor-local-fs)["']/,
-      searchPath,
-    }),
-  ),
 ]
 
 function* walkFiles(directory: string): Generator<string> {

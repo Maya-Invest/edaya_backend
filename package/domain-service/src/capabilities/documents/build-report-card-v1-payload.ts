@@ -14,17 +14,6 @@ export interface ReportCardDocumentContext {
   classLabel?: string
   schoolYear?: string
   locale?: string
-  /** Prefer subject catalog names over stored section labels (often IDs/codes). */
-  subjectNameByClassSubjectId?: ReadonlyMap<string, string>
-  /** Subject teachers keyed by class subject id. */
-  teacherNameByClassSubjectId?: ReadonlyMap<string, string>
-  classResults?: {
-    classAverage?: string
-    lowestAverage?: string
-    highestAverage?: string
-  }
-  homeroomTeacherName?: string
-  principalName?: string
 }
 
 export interface ReportCardV1SubjectRow {
@@ -46,11 +35,6 @@ export interface ReportCardV1Payload {
   schoolYear?: string
   classLabel?: string
   classSize?: string
-  matricule?: string
-  birthDate?: string
-  birthPlace?: string
-  nationality?: string
-  gender?: string
   semesterAverage?: string
   semesterRank?: string
   schoolCity?: string
@@ -58,11 +42,6 @@ export interface ReportCardV1Payload {
     absenceHoursTotal?: string
     absenceHoursJustified?: string
     absenceHoursUnjustified?: string
-  }
-  classResults?: {
-    classAverage?: string
-    lowestAverage?: string
-    highestAverage?: string
   }
   council?: {
     appreciation?: string
@@ -78,29 +57,8 @@ function formatNumber(value: number, locale: string): string {
   }).format(value)
 }
 
-function formatDate(value: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(value)
-}
-
 function isBilanName(name: string): boolean {
   return /bilan/i.test(name)
-}
-
-function resolveSectionName(
-  section: ReportCardResultSection,
-  subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
-): string {
-  if (section.classSubjectId && subjectNameByClassSubjectId) {
-    const resolved = subjectNameByClassSubjectId.get(section.classSubjectId)
-    if (resolved) {
-      return resolved
-    }
-  }
-  return section.name
 }
 
 function mapSubjectRow(
@@ -108,15 +66,10 @@ function mapSubjectRow(
   kind: ReportCardV1SubjectRow['kind'],
   locale: string,
   classSize?: number,
-  subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
-  teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): ReportCardV1SubjectRow {
   const total = section.average * section.weight
-  const teacherName = section.classSubjectId
-    ? teacherNameByClassSubjectId?.get(section.classSubjectId)
-    : undefined
   return {
-    name: resolveSectionName(section, subjectNameByClassSubjectId),
+    name: section.name,
     kind,
     average: formatNumber(section.average, locale),
     coefficient: String(section.weight),
@@ -125,7 +78,6 @@ function mapSubjectRow(
       ? { rank: `${section.rank}è / ${classSize}` }
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
-    ...(teacherName ? { teacherName } : {}),
   }
 }
 
@@ -133,46 +85,23 @@ function flattenSections(
   sections: readonly ReportCardResultSection[],
   locale: string,
   classSize?: number,
-  subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
-  teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): ReportCardV1SubjectRow[] {
   const rows: ReportCardV1SubjectRow[] = []
 
   for (const section of sections) {
     if (section.sectionKind === ReportCardDefinitionSectionKind.Subject) {
-      rows.push(mapSubjectRow(
-        section,
-        'subject',
-        locale,
-        classSize,
-        subjectNameByClassSubjectId,
-        teacherNameByClassSubjectId,
-      ))
+      rows.push(mapSubjectRow(section, 'subject', locale, classSize))
       continue
     }
 
     for (const child of section.subResults) {
       if (child.sectionKind === ReportCardDefinitionSectionKind.Subject) {
-        rows.push(mapSubjectRow(
-          child,
-          'subject',
-          locale,
-          classSize,
-          subjectNameByClassSubjectId,
-          teacherNameByClassSubjectId,
-        ))
+        rows.push(mapSubjectRow(child, 'subject', locale, classSize))
       }
     }
 
     if (isBilanName(section.name) || section.subResults.length > 0) {
-      rows.push(mapSubjectRow(
-        section,
-        'bilan',
-        locale,
-        classSize,
-        subjectNameByClassSubjectId,
-        teacherNameByClassSubjectId,
-      ))
+      rows.push(mapSubjectRow(section, 'bilan', locale, classSize))
     }
   }
 
@@ -189,8 +118,6 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     input.result.sectionResults,
     locale,
     input.result.classSize,
-    input.subjectNameByClassSubjectId,
-    input.teacherNameByClassSubjectId,
   )
 
   if (subjects.length === 0) {
@@ -209,7 +136,6 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
   }
 
   const attendance = input.result.attendanceSummary
-  const appreciation = input.result.teacherComment ?? input.result.principalComment
   const payload: ReportCardV1Payload = {
     studentName: input.student.fullName,
     periodLabel: input.periodLabel,
@@ -218,11 +144,6 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     ...(input.schoolYear ? { schoolYear: input.schoolYear } : {}),
     ...(input.classLabel ? { classLabel: input.classLabel } : {}),
     ...(input.result.classSize !== undefined ? { classSize: String(input.result.classSize) } : {}),
-    ...(input.student.matricule ? { matricule: input.student.matricule } : {}),
-    ...(input.student.birthDate ? { birthDate: formatDate(input.student.birthDate, locale) } : {}),
-    ...(input.student.placeOfBirth ? { birthPlace: input.student.placeOfBirth } : {}),
-    ...(input.student.nationality ? { nationality: input.student.nationality } : {}),
-    ...(input.student.gender ? { gender: input.student.gender } : {}),
     ...(input.result.overallAverage !== undefined
       ? {
           semesterAverage: `${formatNumber(input.result.overallAverage, locale)} / 20`,
@@ -239,13 +160,13 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
       absenceHoursJustified: String(attendance.excusedAbsenceCount),
       absenceHoursUnjustified: String(Math.max(0, attendance.absenceCount - attendance.excusedAbsenceCount)),
     },
-    ...(input.classResults ? { classResults: input.classResults } : {}),
-    ...(appreciation || input.homeroomTeacherName || input.principalName
+    ...(input.result.teacherComment || input.result.principalComment
       ? {
           council: {
-            ...(appreciation ? { appreciation } : {}),
-            ...(input.homeroomTeacherName ? { homeroomTeacherName: input.homeroomTeacherName } : {}),
-            ...(input.principalName ? { principalName: input.principalName } : {}),
+            ...(input.result.teacherComment ? { appreciation: input.result.teacherComment } : {}),
+            ...(input.result.principalComment && !input.result.teacherComment
+              ? { appreciation: input.result.principalComment }
+              : {}),
           },
         }
       : {}),

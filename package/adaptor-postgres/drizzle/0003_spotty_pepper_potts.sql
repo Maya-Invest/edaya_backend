@@ -1,1 +1,0 @@
-ALTER TABLE "report_card_definition_sections" ALTER COLUMN "weight" SET DATA TYPE real;

@@ -33,15 +33,6 @@ export function createInProcessAttendanceSeedPort(
     recordAttendance: record => withSeedPortError('attendance.recordAttendance', async () => {
       await service.schedulingWorkflow.recordAttendance(record)
     }),
-    recordDailyAttendance: record => withSeedPortError('attendance.recordDailyAttendance', async () => {
-      await service.schedulingWorkflow.recordDailyAttendance({
-        id: record.id,
-        studentId: record.studentId,
-        classGroupId: record.classGroupId,
-        date: new Date(`${record.date}T12:00:00.000Z`),
-        status: record.status,
-      })
-    }),
     markJustificationPending: (recordId, fallbackReason) =>
       withSeedPortError('attendance.markJustificationPending', async () => {
         const existing = await application.repositories.attendance.findById(recordId)

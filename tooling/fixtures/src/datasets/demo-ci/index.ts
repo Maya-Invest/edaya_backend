@@ -10,7 +10,6 @@ import { demoCiAttachments } from './domains/attachments'
 import {
   demoCiAttendanceAbsenceSessions,
   demoCiAttendanceRecords,
-  demoCiDailyAttendanceDays,
   demoCiPendingJustificationRecordIds,
   demoCiTodayAttendanceSession,
 } from './domains/attendance'
@@ -109,7 +108,6 @@ export const demoCiDataset = {
       todaySession: demoCiTodayAttendanceSession,
       pendingJustificationRecordIds: demoCiPendingJustificationRecordIds,
     },
-    dailyAttendanceDays: demoCiDailyAttendanceDays,
     schedulingSlots: demoCiSchedulingSlots,
     classResourceAssignments: demoCiClassResourceAssignments,
     schedulingSessionProgressAnchors: demoCiSchedulingSessionProgressAnchors,

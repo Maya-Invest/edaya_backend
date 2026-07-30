@@ -22,18 +22,7 @@
     "test:integration:api": "bun --filter @edaya/integration-tests test:integration:api",
     "test:integration:http": "bun --filter @edaya/integration-tests test:integration:http",
     "test:integration:seed": "bun --filter @edaya/integration-tests test:integration:seed",
-    "test:docs:contract": "bun test tests/docs/contract",
-    "test:docs:integration": "bun test tests/docs/integration",
-    "docs:dev": "bun --filter @edaya/docs-api run start:local",
-    "docs:contracts:check": "bun tooling/docs/contracts/check.ts",
-    "docs:openapi:check": "bun tooling/docs/openapi/check-drift.ts",
-    "docs:openapi:export": "bun tooling/docs/openapi/export.ts",
-    "docs:openapi:generate": "bun tooling/docs/openapi/generate.ts",
-    "gotenberg:up": "podman compose -f tooling/docs/docker-compose.yml up -d gotenberg",
-    "gotenberg:down": "podman compose -f tooling/docs/docker-compose.yml down",
-    "preview:report-card": "bun scripts/docs/preview-report-card.ts",
-    "preview:logbook": "bun scripts/docs/preview-logbook.ts",
-    "verify": "bun repo verify && turbo run quality && turbo run build && turbo run test -- --dots && bun run test:docs:contract && bun run docs:contracts:check && bun run docs:openapi:check",
+    "verify": "bun repo verify && turbo run quality && turbo run build && turbo run test -- --dots",
     "dev": "bun tooling/repo/dev/start-local-dev.ts",
     "dev:container": "bash tooling/api-dev-container/run.sh",
     "dev:container:down": "bash tooling/api-dev-container/run.sh down",
@@ -49,7 +38,6 @@
     "typescript": "^6.0.2"
   },
   "overrides": {
-    "@maya-invest/edaya-api-client": "workspace:*",
-    "@maya-invest/edaya-docs-client": "workspace:*"
+    "@maya-invest/edaya-api-client": "workspace:*"
   }
 }
