@@ -48,14 +48,6 @@ export const EnvSchema = z.object({
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
-  /** Base URL for edaya_docs (e.g. https://edaya-docs-staging… or http://localhost:8787). */
-  EDAYA_DOCS_URL: z.string().url().optional(),
-  /** Shared HS256 secret with edaya_docs for service JWT issuance. */
-  DOCS_JWT_SECRET: z.string().min(1).optional(),
-  /** Optional static docs bearer for local/dev (matches docs DOCS_DEV_TOKEN). */
-  DOCS_DEV_TOKEN: z.string().min(1).optional(),
-  /** When true, schedule background PDF render after publishReportCardResult (W1). */
-  DOCS_RENDER_ON_PUBLISH: envBooleanSchema.optional(),
   /** When true, require verified email before password sign-in. Defaults to true when NOVU_SECRET_KEY is set. */
   REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
   /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */

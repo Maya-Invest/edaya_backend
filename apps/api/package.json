@@ -28,7 +28,6 @@
     "@edaya/client-codegen": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*",
-    "@maya-invest/edaya-docs-client": "file:../../../edaya_docs/packages/docs-client",
     "@electric-sql/pglite": "^0.4.6",
     "@hono/graphql-server": "^0.7.0",
     "@hono/node-server": "^1.14.1",
