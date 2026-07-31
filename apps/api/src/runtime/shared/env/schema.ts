@@ -38,7 +38,7 @@ export const EnvSchema = z.object({
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
   /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu */
   NOVU_SECRET_KEY: z.string().min(1).optional(),
-  /** Optional Novu API base URL (e.g. https://eu.api.novu.co) */
+  /** Optional Novu API base URL (e.g. https://api.novu.co) */
   NOVU_API_URL: z.string().url().optional(),
   /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery */
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),
@@ -52,6 +52,14 @@ export const EnvSchema = z.object({
   REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
   /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */
   AUTH_EMAIL_LOG_OTP: envBooleanSchema.optional(),
+  /** Base URL for edaya_docs document rendering (e.g. https://edaya-docs-staging… or http://localhost:3090). */
+  EDAYA_DOCS_URL: z.string().url().optional(),
+  /** Shared HS256 secret with edaya_docs for service JWT issuance. */
+  DOCS_JWT_SECRET: z.string().min(1).optional(),
+  /** Optional static docs bearer for local/dev (matches docs DOCS_DEV_TOKEN). */
+  DOCS_DEV_TOKEN: z.string().min(1).optional(),
+  /** When true, schedule report-card PDF render after publishReportCardResult. */
+  DOCS_RENDER_ON_PUBLISH: envBooleanSchema.optional(),
   /** Cloudflare account id (dashboard). Optional when R2_ENDPOINT is set; may differ from the endpoint hostname. */
   R2_ACCOUNT_ID: z.string().min(1).optional(),
   /** Jurisdiction-specific R2 S3 API endpoint from the R2 dashboard — authoritative for all S3 API calls. */

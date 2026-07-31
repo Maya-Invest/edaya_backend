@@ -6,6 +6,7 @@ import { SchoolStructureOperations } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniquePersonCode } from '../person-code-uniqueness'
 
 // Extracted from domain/school/staff-member.ts (PR3)
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
@@ -52,6 +53,15 @@ export async function validateStaffMemberSave(
   ) {
     throw new BusinessRuleViolationError('SELF_DEACTIVATION_BLOCKED', 'Staff members cannot deactivate their own account')
   }
+
+  await assertUniquePersonCode({
+    code: staffMember.code,
+    schoolId: staffMember.schoolId,
+    entityId: staffMember.id,
+    errorCode: 'STAFF_MEMBER_CODE_ALREADY_EXISTS',
+    entityLabel: 'Staff member',
+    listBySchool: () => repositories.staffMembers.list({ schoolId: staffMember.schoolId }),
+  })
 }
 
 async function validateStaffMemberDelete(

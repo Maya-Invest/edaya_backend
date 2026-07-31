@@ -17,8 +17,8 @@ describe('loadSmokeStagingEnv', () => {
     delete process.env.SEED_STAGING_APP_ORIGIN
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
-    expect(env.apiUrl).toBe('https://staging.api.edaya.app')
-    expect(env.appOrigin).toBe('https://staging.staff.edaya.app')
+    expect(env.apiUrl).toBe('https://staging.api.edayaplus.com')
+    expect(env.appOrigin).toBe('https://staging.app.edayaplus.com')
   })
 
   it('uses SEED_STAGING_API_URL when set', () => {

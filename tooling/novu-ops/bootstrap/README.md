@@ -44,7 +44,7 @@ Reads `apps/api/.env` when variables are not already exported.
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `NOVU_SECRET_KEY` | yes | Novu API auth |
-| `NOVU_API_URL` | no | EU: `https://eu.api.novu.co` |
+| `NOVU_API_URL` | no | EU: `https://api.novu.co` |
 
 ## Workflows
 

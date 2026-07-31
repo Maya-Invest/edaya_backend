@@ -143,6 +143,7 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
+  code: field.string(),
   isActive: field.boolean(),
 });
 
@@ -151,6 +152,7 @@ export const teacherQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
+  code: field.string(),
   email: field.string(),
   isActive: field.boolean(),
 });
@@ -473,6 +475,7 @@ export const guardianQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
   firstName: field.string(),
   lastName: field.string(),
+  code: field.string(),
   email: field.string(),
 });
 

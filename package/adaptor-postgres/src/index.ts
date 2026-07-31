@@ -2,6 +2,7 @@ export {
   isEphemeralDatabase,
   isPgliteDatabase,
   resolveMigrationDriver,
+  resolvePersistedPgliteDataDir,
   resolvePgliteDataDir,
 } from './lib/database-url'
 export { createDefaultMappers, deserializeJsonb, rowToConstructorArgs } from './lib/mappers'

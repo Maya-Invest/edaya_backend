@@ -9,6 +9,7 @@
     "tooling/*"
   ],
   "scripts": {
+    "prepare": "git rev-parse --git-dir > /dev/null 2>&1 && git config core.hooksPath .githooks || true",
     "repo": "bun tooling/repo/cli/main.ts",
     "build": "turbo run build",
     "quality": "turbo run quality",
@@ -37,6 +38,7 @@
     "typescript": "^6.0.2"
   },
   "overrides": {
-    "@maya-invest/edaya-api-client": "workspace:*"
+    "@maya-invest/edaya-api-client": "workspace:*",
+    "@maya-invest/edaya-docs-client": "workspace:*"
   }
 }

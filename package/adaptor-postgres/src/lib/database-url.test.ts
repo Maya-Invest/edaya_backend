@@ -1,8 +1,10 @@
+import path from 'node:path'
 import { describe, expect, it } from 'bun:test'
 import {
   isEphemeralDatabase,
   isPgliteDatabase,
   resolveMigrationDriver,
+  resolvePersistedPgliteDataDir,
   resolvePgliteDataDir,
 } from './database-url'
 
@@ -51,6 +53,19 @@ describe('database-url', () => {
     it('throws when a persisted URL has no path', () => {
       expect(() => resolvePgliteDataDir('pglite:')).toThrow(/requires a data directory path/)
       expect(() => resolvePgliteDataDir('file://')).toThrow(/requires a data directory path/)
+    })
+  })
+
+  describe('resolvePersistedPgliteDataDir', () => {
+    it('anchors .data paths to repoRoot for local dev', () => {
+      const repoRoot = '/repo/edaya_backend'
+      expect(resolvePersistedPgliteDataDir('pglite:.data/school', { repoRoot }))
+        .toBe(path.resolve(repoRoot, '.data/school'))
+    })
+
+    it('leaves non-.data relative paths unchanged', () => {
+      expect(resolvePersistedPgliteDataDir('pglite:tmp/school', { repoRoot: '/repo' }))
+        .toBe('tmp/school')
     })
   })
 

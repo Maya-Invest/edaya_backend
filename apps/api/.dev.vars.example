@@ -31,13 +31,13 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:
 
 # --- Novu (staging: dev key; production: separate key in secrets.prod.json) ---
 # NOVU_SECRET_KEY=
-# NOVU_API_URL=https://eu.api.novu.co
+# NOVU_API_URL=https://api.novu.co
 # NOVU_WEBHOOK_SECRET=whsec_...
 
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
-# COOKIE_DOMAIN=edaya.app
-# WEBAPP_ORIGIN=https://staging.staff.edaya.app
+# COOKIE_DOMAIN=edayaplus.com
+# WEBAPP_ORIGIN=https://staging.app.edayaplus.com
 # ACCOUNT_INVITATIONS_ENABLED=true
 # REQUIRE_EMAIL_VERIFICATION=false
 

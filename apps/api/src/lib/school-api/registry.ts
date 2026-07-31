@@ -216,6 +216,7 @@ export const coreCommands = [
   command("generate-report-card-result", "generateReportCardResult", commandSchemas.generateReportCardResultCommandSchema),
   command("write-homeroom-report-comment", "writeHomeroomReportComment", commandSchemas.writeHomeroomReportCommentCommandSchema),
   command("publish-report-card-result", "publishReportCardResult", commandSchemas.publishReportCardResultCommandSchema),
+  command("render-class-logbook", "renderClassLogbook", commandSchemas.renderClassLogbookCommandSchema),
   command("record-incident", "recordIncident", commandSchemas.recordIncidentCommandSchema),
   command("add-student-involvement", "addStudentInvolvement", commandSchemas.addStudentInvolvementCommandSchema),
   command("configure-disciplinary-action", "configureDisciplinaryAction", commandSchemas.disciplinaryActionConfigCommandSchema),

@@ -9,6 +9,7 @@ import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { repairDrizzleMigrationJournal } from '../repair-drizzle-journal'
+import { isPgliteLockError, pgliteLockHelpMessage } from './pglite-lock-error'
 
 export async function applySchoolMigrations(databaseUrl: string): Promise<void> {
   const driver = resolveMigrationDriver(databaseUrl)
@@ -27,14 +28,8 @@ export async function applySchoolMigrations(databaseUrl: string): Promise<void> 
       await runMigrations(db, { driver: 'pglite' })
     }
     catch (error) {
-      const detail = error instanceof Error ? error.message : String(error)
-      if (/mutex|Aborted\(\)/i.test(detail)) {
-        throw new Error(
-          'Could not open local PGlite database — it is locked by a running API process. '
-          + 'Stop `bun dev` completely, then rerun `bun repo db migrate local`. '
-          + 'Alternatively: `bun repo seed clean --yes`, then `bun dev` (migrations apply on startup).',
-          { cause: error },
-        )
+      if (isPgliteLockError(error)) {
+        throw new Error(pgliteLockHelpMessage(), { cause: error })
       }
       throw error
     }

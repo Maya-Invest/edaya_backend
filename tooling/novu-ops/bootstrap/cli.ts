@@ -25,7 +25,7 @@ Commands:
 
 Environment (from process.env or apps/api/.env):
   NOVU_SECRET_KEY              required
-  NOVU_API_URL                 optional (e.g. https://eu.api.novu.co)
+  NOVU_API_URL                 optional (e.g. https://api.novu.co)
 `);
 }
 
@@ -97,7 +97,7 @@ main().catch((error) => {
     console.error("");
     console.error("Novu rejected NOVU_SECRET_KEY. Check:");
     console.error("  1. Novu dashboard → Settings → API Keys → Secret Key (not Application Identifier)");
-    console.error("  2. Same region as NOVU_API_URL (EU workspace → https://eu.api.novu.co)");
+    console.error("  2. Same region as NOVU_API_URL (EU workspace → https://api.novu.co)");
     console.error("  3. Key stored in apps/api/.env (local dev) or Wrangler secrets (deployed workers)");
     process.exit(1);
   }

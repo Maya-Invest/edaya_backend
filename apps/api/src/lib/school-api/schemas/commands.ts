@@ -613,6 +613,13 @@ export const publishReportCardResultCommandSchema = z.object({
   publishedAt: field.optionalDate(),
 }).openapi("PublishReportCardResultCommand");
 
+export const renderClassLogbookCommandSchema = z.object({
+  classGroupId: field.id(),
+  academicPeriodId: field.id().optional(),
+  classSubjectId: field.id().optional(),
+  locale: z.enum(["fr", "en"]).optional(),
+}).openapi("RenderClassLogbookCommand");
+
 export const recordIncidentCommandSchema = objectFromSchema(incidentSchema)
   .omit({
     reporterId: true,

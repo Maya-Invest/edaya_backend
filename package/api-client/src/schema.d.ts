@@ -1845,6 +1845,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/render-class-logbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** render-class-logbook */
+        post: operations["commands.renderClassLogbook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/record-incident": {
         parameters: {
             query?: never;
@@ -10290,12 +10307,19 @@ export interface components {
                     name: string;
                     weight: number;
                 }[];
-                domainCategories: {
+                domainCategories?: {
                     domain: string;
                     label: string;
                     order: number;
                     coefficient?: number;
                     weight?: number;
+                }[];
+                sections?: {
+                    /** @enum {string} */
+                    role: "subjects" | "summary" | "comments";
+                    label: string;
+                    order: number;
+                    subjectCodes?: string[];
                 }[];
                 includeSummary?: boolean;
                 includeComments?: boolean;
@@ -10308,6 +10332,31 @@ export interface components {
                 order: number;
                 examYear?: boolean;
                 examName?: string;
+                reportCardStructure?: {
+                    gradingScale: number;
+                    passingGrade: number;
+                    periods: {
+                        code: string;
+                        name: string;
+                        weight: number;
+                    }[];
+                    domainCategories?: {
+                        domain: string;
+                        label: string;
+                        order: number;
+                        coefficient?: number;
+                        weight?: number;
+                    }[];
+                    sections?: {
+                        /** @enum {string} */
+                        role: "subjects" | "summary" | "comments";
+                        label: string;
+                        order: number;
+                        subjectCodes?: string[];
+                    }[];
+                    includeSummary?: boolean;
+                    includeComments?: boolean;
+                };
             }[];
             subjects: {
                 code: string;
@@ -10316,7 +10365,7 @@ export interface components {
                 defaultCoefficient: number;
             }[];
             curriculum: {
-                levelCodes: string[];
+                levelCode: string;
                 subjectCode: string;
                 longName?: string;
                 coefficient: number;
@@ -10742,6 +10791,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -10767,6 +10817,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             notificationEmail?: string | null;
@@ -10795,6 +10846,7 @@ export interface components {
         UpdateStaffMemberProfileCommand: {
             firstName?: string;
             lastName?: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             onboardingWizardCompletedAt?: unknown;
@@ -10806,6 +10858,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -10851,6 +10904,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
             phone?: string | null;
@@ -11244,6 +11298,7 @@ export interface components {
             schoolId: string;
             firstName: string;
             lastName: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -11400,6 +11455,7 @@ export interface components {
         UpdateGuardianContactMethodsCommand: {
             firstName?: string;
             lastName?: string;
+            code?: string | null;
             photoUrl?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -11908,6 +11964,23 @@ export interface components {
             periodId: string;
             reportCardDefinitionId?: string;
             publishedAt?: string | null;
+        };
+        RenderClassLogbookResponse: {
+            fileName: string;
+            /** @enum {string} */
+            contentType: "application/pdf";
+            downloadUrl: string;
+            /** Format: date-time */
+            expiresAt: string;
+            subjectCount: number;
+            sessionCount: number;
+        };
+        RenderClassLogbookCommand: {
+            classGroupId: string;
+            academicPeriodId?: string;
+            classSubjectId?: string;
+            /** @enum {string} */
+            locale?: "fr" | "en";
         };
         Incident: {
             id: string;
@@ -20081,6 +20154,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportCardResult"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.renderClassLogbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description render-class-logbook payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RenderClassLogbookCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed render-class-logbook */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenderClassLogbookResponse"];
                 };
             };
             /** @description Invalid request payload */
