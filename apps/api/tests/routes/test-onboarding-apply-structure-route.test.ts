@@ -7,7 +7,7 @@ import {
 } from "../support/core-route-harness";
 
 describe("onboarding structure templates route", () => {
-  it("lists CI templates by default and returns an empty list for unsupported countries", async () => {
+  it("lists CI templates for Ivory Coast and returns empty for unsupported countries", async () => {
     const { app } = await createCoreRouteTestApp();
 
     const defaultResponse = await app.request(createAppRequest("/core/onboarding/structure-templates", {
@@ -18,9 +18,20 @@ describe("onboarding structure templates route", () => {
       countryCode: string;
       templates: Array<{ id: string }>;
     };
-    expect(defaultPayload.countryCode).toBe("CI");
-    expect(defaultPayload.templates.map(template => template.id)).toEqual([
-      "ci-primaire",
+    expect(defaultPayload.countryCode).toBe("FR");
+    expect(defaultPayload.templates).toHaveLength(0);
+
+    const ciResponse = await app.request(createAppRequest(
+      `/core/onboarding/structure-templates?country=${encodeURIComponent("Côte d'Ivoire")}`,
+      { method: "GET" },
+    ));
+    expect(ciResponse.status).toBe(200);
+    const ciPayload = await ciResponse.json() as {
+      countryCode: string;
+      templates: Array<{ id: string }>;
+    };
+    expect(ciPayload.countryCode).toBe("CI");
+    expect(ciPayload.templates.map(template => template.id)).toEqual([
       "ci-college",
       "ci-lycee",
     ]);
@@ -35,6 +46,18 @@ describe("onboarding structure templates route", () => {
     };
     expect(francePayload.countryCode).toBe("FR");
     expect(francePayload.templates).toHaveLength(0);
+
+    const senegalResponse = await app.request(createAppRequest(
+      `/core/onboarding/structure-templates?country=${encodeURIComponent("Sénégal")}`,
+      { method: "GET" },
+    ));
+    expect(senegalResponse.status).toBe(200);
+    const senegalPayload = await senegalResponse.json() as {
+      countryCode: string;
+      templates: unknown[];
+    };
+    expect(senegalPayload.countryCode).toBe("FR");
+    expect(senegalPayload.templates).toHaveLength(0);
   });
 });
 
@@ -104,7 +127,7 @@ describe("onboarding apply-structure-template route", () => {
 
     expect(summary.gradeLevelCount).toBe(2);
     expect(summary.classGroupCount).toBe(3);
-    expect(summary.subjectCount).toBe(4);
+    expect(summary.subjectCount).toBe(14);
 
     const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     const schoolId = ownerStaff?.schoolId;
@@ -121,13 +144,16 @@ describe("onboarding apply-structure-template route", () => {
     expect(definitions.every(definition => definition.isDefault)).toBe(true);
     expect(sections.length).toBeGreaterThan(10);
     expect(sections.some(section => section.role === "matieres")).toBe(true);
-    expect(sections.some(section => section.role === "synthese")).toBe(true);
+    expect(sections.some(section => section.role === "synthese")).toBe(false);
+    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
     expect(sections.some(section => section.role === "appreciation")).toBe(true);
 
     const academicPeriods = (await application.repositories.academicPeriods.list()).filter(entry => entry.schoolId === schoolId);
-    expect(academicPeriods).toHaveLength(4);
+    expect(academicPeriods).toHaveLength(3);
     expect(academicPeriods.some(period => period.name === "Trimestre 1")).toBe(true);
-    expect(academicPeriods.some(period => period.name === "Synthèse trimestrielle")).toBe(true);
+    expect(academicPeriods.some(period => period.name === "Synthèse trimestrielle")).toBe(false);
 
     const gradeLevels = (await application.repositories.gradeLevels.list()).filter(entry => entry.schoolId === schoolId);
     const classGroups = (await application.repositories.classGroups.list()).filter(entry => entry.schoolId === schoolId);
@@ -138,16 +164,18 @@ describe("onboarding apply-structure-template route", () => {
       classGroups.some(group => group.id === entry.classGroupId));
 
     expect(gradeLevels).toHaveLength(2);
+    expect(gradeLevels.map(level => level.id).sort()).toEqual(["gl-3", "gl-4"]);
+    expect(gradeLevels.map(level => level.name).sort()).toEqual(["3ème", "4ème"]);
     expect(classGroups).toHaveLength(3);
-    expect(subjects).toHaveLength(4);
-    expect(gradeLevelSubjects).toHaveLength(8);
-    expect(classSubjects).toHaveLength(12);
+    expect(subjects).toHaveLength(14);
+    expect(gradeLevelSubjects).toHaveLength(28);
+    expect(classSubjects).toHaveLength(42);
     expect(classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true);
-    expect(classGroups.some(group => group.name === "4EME A")).toBe(true);
-    expect(classGroups.some(group => group.name === "4EME B")).toBe(true);
+    expect(classGroups.some(group => group.name === "4e A")).toBe(true);
+    expect(classGroups.some(group => group.name === "4e B")).toBe(true);
   });
 
-  it("applies built-in primaire templates with longName curriculum entries", async () => {
+  it("applies built-in college template with longName curriculum entries", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     const email = "structure-ci@school.edu";
     await signUpAuthUser(runtime, {
@@ -195,25 +223,33 @@ describe("onboarding apply-structure-template route", () => {
         "cookie": cookies.join("; "),
       },
       body: JSON.stringify({
-        templates: ["ci-primaire"],
+        templates: ["ci-college"],
         levels: [
-          { gradeLevelId: "ci-primaire:CP1", classCount: 1, capacity: 30 },
+          { gradeLevelId: "ci-college:6EME", classCount: 1, capacity: 30 },
         ],
       }),
     }));
 
     expect(response.status).toBe(200);
     const summary = await response.json() as { subjectCount: number; reportCardDefinitionCount: number };
-    expect(summary.subjectCount).toBe(2);
+    expect(summary.subjectCount).toBeGreaterThan(0);
     expect(summary.reportCardDefinitionCount).toBe(1);
 
     const definitions = (await application.repositories.definitions.list()).filter(entry => entry.schoolId === school.id);
     const gradeScales = (await application.repositories.gradeScales.list()).filter(entry => entry.schoolId === school.id);
     const subjects = (await application.repositories.subjects.list()).filter(entry => entry.schoolId === school.id);
+    const sections = (await application.repositories.sections.list()).filter(entry =>
+      definitions.some(definition => definition.id === entry.reportCardDefinitionId),
+    );
     expect(gradeScales).toHaveLength(1);
-    expect(gradeScales[0]?.maxScore).toBe(10);
+    expect(gradeScales[0]?.maxScore).toBe(20);
     expect(definitions).toHaveLength(1);
-    expect(subjects.some(subject => subject.name === "Français — CP1/CP2")).toBe(true);
-    expect(subjects.some(subject => subject.name === "Mathématiques — CP1/CP2")).toBe(true);
+    expect(subjects.some(subject => subject.name.includes("Français"))).toBe(true);
+    expect(subjects.some(subject => subject.name.includes("Mathématiques"))).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Lettre")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan Science")).toBe(true);
+    expect(sections.some(section => section.name === "Bilan autres")).toBe(true);
+    expect(sections.some(section => section.name === "Appréciations")).toBe(true);
+    expect(sections.some(section => section.name.includes("Synthèse"))).toBe(false);
   });
 });

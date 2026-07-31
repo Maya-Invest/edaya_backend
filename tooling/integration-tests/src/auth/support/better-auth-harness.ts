@@ -69,7 +69,9 @@ export function collectSetCookieHeaders(response: Response): string[] {
   return single ? [single] : []
 }
 
-export async function createAuthIntegrationContext(): Promise<AuthIntegrationContext> {
+export async function createAuthIntegrationContext(
+  envOverrides: Partial<AuthTestEnv> = {},
+): Promise<AuthIntegrationContext> {
   const pglite = new PGlite()
   const db = drizzlePglite(pglite)
   const authDb = db
@@ -93,7 +95,8 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
     }),
   })
 
-  const auth = createAuth(authDb, PG_LITE_AUTH_ENV)
+  const env: AuthTestEnv = { ...PG_LITE_AUTH_ENV, ...envOverrides }
+  const auth = createAuth(authDb, env)
 
   return {
     pglite,
@@ -102,7 +105,7 @@ export async function createAuthIntegrationContext(): Promise<AuthIntegrationCon
     repositories,
     application,
     auth,
-    env: PG_LITE_AUTH_ENV,
+    env,
   }
 }
 
@@ -168,6 +171,15 @@ async function markAuthUserEmailVerified(
 
   await authDb.execute(
     sql`UPDATE auth."user" SET email_verified = true WHERE id = ${userId}`,
+  )
+}
+
+export async function markAuthUserEmailUnverified(
+  authDb: AuthDb,
+  userId: string,
+): Promise<void> {
+  await authDb.execute(
+    sql`UPDATE auth."user" SET email_verified = false WHERE id = ${userId}`,
   )
 }
 

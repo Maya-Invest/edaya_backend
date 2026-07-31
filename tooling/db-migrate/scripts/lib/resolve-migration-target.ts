@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { isPgliteDatabase } from '@edaya/adaptor-postgres'
+import { isPgliteDatabase, resolvePersistedPgliteDataDir } from '@edaya/adaptor-postgres'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
 
@@ -39,18 +39,13 @@ function resolveLocalDatabaseUrl(databaseUrl: string): string {
     return databaseUrl
   }
 
-  const prefix = databaseUrl.startsWith('file://') ? 'file://' : 'pglite:'
-  const dataDir = databaseUrl.slice(prefix.length).trim()
-
-  if (!dataDir || path.isAbsolute(dataDir)) {
+  const resolvedDir = resolvePersistedPgliteDataDir(databaseUrl, { repoRoot })
+  if (!resolvedDir) {
     return databaseUrl
   }
 
-  if (dataDir === '.data' || dataDir.startsWith('.data/')) {
-    return `${prefix}${path.resolve(repoRoot, dataDir)}`
-  }
-
-  return databaseUrl
+  const prefix = databaseUrl.startsWith('file://') ? 'file://' : 'pglite:'
+  return `${prefix}${resolvedDir}`
 }
 
 function fail(message: string, hints: string[] = []): never {

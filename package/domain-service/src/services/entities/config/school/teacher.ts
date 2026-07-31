@@ -5,6 +5,7 @@ import { AccessControlOperations, TeacherOperations } from '@edaya/authorization
 import { BusinessRuleViolationError } from '@edaya/core'
 import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniquePersonCode } from '../person-code-uniqueness'
 
 // Extracted from domain/school/teacher.ts (PR3)
 export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
@@ -23,9 +24,25 @@ export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
       atomicExecution: input.atomicExecution,
     }),
     gates: {
+      preSave: validateTeacherSave,
       preDelete: validateTeacherDelete,
     },
   }
+}
+
+async function validateTeacherSave(
+  teacher: Teacher,
+  _existing: Teacher | undefined,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  await assertUniquePersonCode({
+    code: teacher.code,
+    schoolId: teacher.schoolId,
+    entityId: teacher.id,
+    errorCode: 'TEACHER_CODE_ALREADY_EXISTS',
+    entityLabel: 'Teacher',
+    listBySchool: () => repositories.teachers.list({ schoolId: teacher.schoolId }),
+  })
 }
 
 async function validateTeacherDelete(

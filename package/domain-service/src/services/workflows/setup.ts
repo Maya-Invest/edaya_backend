@@ -106,6 +106,7 @@ export interface UpdateStaffMemberProfileInput {
   staffId: string
   firstName?: string
   lastName?: string
+  code?: string | null
   email?: string | null
   photoUrl?: string | null
 }
@@ -320,6 +321,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       schoolId: existing.schoolId,
       firstName: existing.firstName,
       lastName: existing.lastName,
+      code: existing.code,
       email: existing.email,
       subjectId: existing.subjectId,
       isActive,
@@ -345,6 +347,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       schoolId: existing.schoolId,
       firstName: changes.firstName ?? existing.firstName,
       lastName: changes.lastName ?? existing.lastName,
+      code: changes.code === undefined ? existing.code : (changes.code ?? undefined),
       email: changes.email === undefined ? existing.email : (changes.email ?? undefined),
       photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
       notificationEmail: existing.notificationEmail,

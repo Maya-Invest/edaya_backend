@@ -1,28 +1,34 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { executeSchoolCommand } from "@/lib/school-api/execute-command";
+import * as scheduleBackgroundTaskModule from "@/lib/school-api/schedule-background-task";
 import { createTestStaffActor } from "../support/staff-actor-fixture";
+
+afterEach(() => {
+  mock.restore();
+});
 
 function createCommandContext(options: {
   actor?: ReturnType<typeof createTestStaffActor> | null;
-  schedule?: (task: () => Promise<void>) => void;
+  env?: Record<string, unknown>;
 }) {
   const backgroundTasks: Array<() => Promise<void>> = [];
   const loggerErrors: unknown[] = [];
+  const backgroundService = {
+    communicationsWorkflow: {
+      dispatchPublishedAnnouncementNotifications: mock(async () => undefined),
+    },
+  };
 
   return {
     context: {
-      env: { RUNTIME: "local" },
+      env: { RUNTIME: "local", ...options.env },
       get(key: string) {
         if (key === "actor") {
           return options.actor ?? null;
         }
         if (key === "schoolApp") {
           return {
-            forActor: () => ({
-              communicationsWorkflow: {
-                dispatchPublishedAnnouncementNotifications: mock(async () => undefined),
-              },
-            }),
+            forActor: () => backgroundService,
           };
         }
         return undefined;
@@ -37,6 +43,7 @@ function createCommandContext(options: {
     } as never,
     backgroundTasks,
     loggerErrors,
+    backgroundService,
   };
 }
 
@@ -79,5 +86,63 @@ describe("executeSchoolCommand", () => {
       "activateAcademicYear",
       { academicYearId: "year-1" },
     )).resolves.toEqual({ id: "year-1" });
+  });
+
+  test("schedules docs render after publishReportCardResult when enabled", async () => {
+    const scheduleBackgroundTask = spyOn(
+      scheduleBackgroundTaskModule,
+      "scheduleBackgroundTask",
+    ).mockImplementation(() => undefined);
+    const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
+    const actor = createTestStaffActor();
+    const { context } = createCommandContext({
+      actor,
+      env: {
+        DOCS_RENDER_ON_PUBLISH: true,
+        EDAYA_DOCS_URL: "http://localhost:8787",
+        DOCS_JWT_SECRET: "secret",
+      },
+    });
+    const service = {
+      commands: { publishReportCardResult },
+    } as never;
+
+    await expect(executeSchoolCommand(
+      context,
+      service,
+      "publishReportCardResult",
+      { resultId: "rc-1" },
+    )).resolves.toEqual({ id: "rc-1" });
+
+    expect(scheduleBackgroundTask).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not schedule docs render when DOCS_RENDER_ON_PUBLISH is off", async () => {
+    const scheduleBackgroundTask = spyOn(
+      scheduleBackgroundTaskModule,
+      "scheduleBackgroundTask",
+    ).mockImplementation(() => undefined);
+    const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
+    const actor = createTestStaffActor();
+    const { context } = createCommandContext({
+      actor,
+      env: {
+        DOCS_RENDER_ON_PUBLISH: false,
+        EDAYA_DOCS_URL: "http://localhost:8787",
+        DOCS_JWT_SECRET: "secret",
+      },
+    });
+    const service = {
+      commands: { publishReportCardResult },
+    } as never;
+
+    await executeSchoolCommand(
+      context,
+      service,
+      "publishReportCardResult",
+      { resultId: "rc-1" },
+    );
+
+    expect(scheduleBackgroundTask).not.toHaveBeenCalled();
   });
 });

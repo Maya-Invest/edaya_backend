@@ -11,7 +11,7 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'academic_periods', columns: { schoolId: 'school_id', academicYearId: 'academic_year_id' }, minIndexes: 2 },
   { tableName: 'period_definitions', columns: { academicYearId: 'academic_year_id' }, minIndexes: 1 },
   { tableName: 'grade_levels', columns: { schoolId: 'school_id' }, minIndexes: 1 },
-  { tableName: 'staff_members', columns: { schoolId: 'school_id', subjectId: 'subject_id' }, minIndexes: 2 },
+  { tableName: 'staff_members', columns: { schoolId: 'school_id', subjectId: 'subject_id', code: 'code' }, minIndexes: 3 },
   { tableName: 'service_api_keys', columns: { staffMemberId: 'staff_member_id' }, minIndexes: 1 },
   { tableName: 'staff_assignments', columns: { staffId: 'staff_id', classGroupId: 'class_group_id' }, minIndexes: 2 },
   { tableName: 'staff_permission_assignments', columns: { staffId: 'staff_id', schoolId: 'school_id', academicYearId: 'academic_year_id' }, minIndexes: 3 },
@@ -46,7 +46,7 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'report_card_results', columns: { studentId: 'student_id', reportCardDefinitionId: 'report_card_definition_id', classGroupId: 'class_group_id', periodId: 'period_id' }, minIndexes: 3 },
   { tableName: 'students', columns: { schoolId: 'school_id' }, minIndexes: 1 },
   { tableName: 'student_class_enrollments', columns: { studentId: 'student_id', classGroupId: 'class_group_id', academicYearId: 'academic_year_id', status: 'status' }, minIndexes: 6 },
-  { tableName: 'guardians', columns: { schoolId: 'school_id' }, minIndexes: 1 },
+  { tableName: 'guardians', columns: { schoolId: 'school_id', code: 'code' }, minIndexes: 2 },
   { tableName: 'guardian_student_links', columns: { guardianId: 'guardian_id', studentId: 'student_id', schoolId: 'school_id' }, minIndexes: 3 },
   { tableName: 'student_notes', columns: { studentId: 'student_id', schoolId: 'school_id' }, minIndexes: 2 },
   { tableName: 'student_health_profiles', columns: { studentId: 'student_id' }, minIndexes: 1 },
@@ -57,15 +57,21 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
 ]
 
 describe('definePerformanceIndexes', () => {
+  function mockIndexBuilder(name?: string) {
+    return {
+      on: (...columns: unknown[]) => ({ name, columns }),
+    } as never
+  }
+
   afterEach(() => {
     spyOn(pgCore, 'index').mockRestore()
+    spyOn(pgCore, 'uniqueIndex').mockRestore()
   })
 
   for (const indexCase of INDEX_CASES) {
     test(`defines indexes for ${indexCase.tableName}`, () => {
-      spyOn(pgCore, 'index').mockImplementation((name?: string) => ({
-        on: (...columns: unknown[]) => ({ name, columns }),
-      } as never))
+      spyOn(pgCore, 'index').mockImplementation(mockIndexBuilder)
+      spyOn(pgCore, 'uniqueIndex').mockImplementation(mockIndexBuilder)
 
       const indexes = definePerformanceIndexes(indexCase.tableName, mockTable(indexCase.columns) as never)
       expect(indexes.length).toBeGreaterThanOrEqual(indexCase.minIndexes)
@@ -73,9 +79,8 @@ describe('definePerformanceIndexes', () => {
   }
 
   test('returns no indexes for tables outside the performance index map', () => {
-    spyOn(pgCore, 'index').mockImplementation((name?: string) => ({
-      on: (...columns: unknown[]) => ({ name, columns }),
-    } as never))
+    spyOn(pgCore, 'index').mockImplementation(mockIndexBuilder)
+    spyOn(pgCore, 'uniqueIndex').mockImplementation(mockIndexBuilder)
 
     expect(definePerformanceIndexes('schools', mockTable({ id: 'id' }) as never)).toEqual([])
   })

@@ -17,23 +17,21 @@ const FRANCE_ALIASES = new Set([
   'republique francaise',
 ])
 
-/** Resolves a free-text country label to a template country code (defaults to CI). */
+/**
+ * Resolves a free-text country label to a template country code.
+ * Only Ivory Coast aliases map to CI (populated fixtures). France and any
+ * unknown / empty label map to FR (empty template set — no CI fallback).
+ */
 export function resolveCountryCode(country: string | null | undefined): CountryCode {
   const normalized = country?.trim().toLowerCase() ?? ''
   if (!normalized) {
-    return 'CI'
-  }
-  if (IVORY_COAST_ALIASES.has(normalized)) {
-    return 'CI'
-  }
-  if (FRANCE_ALIASES.has(normalized)) {
     return 'FR'
   }
-  if (normalized.includes('ivoire')) {
+  if (IVORY_COAST_ALIASES.has(normalized) || normalized.includes('ivoire')) {
     return 'CI'
   }
-  if (normalized.includes('france')) {
+  if (FRANCE_ALIASES.has(normalized) || normalized.includes('france')) {
     return 'FR'
   }
-  return 'CI'
+  return 'FR'
 }

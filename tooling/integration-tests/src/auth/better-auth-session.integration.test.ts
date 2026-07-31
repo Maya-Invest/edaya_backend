@@ -1,3 +1,4 @@
+import type { AuthTestEnv } from './support/better-auth-harness'
 import { Guardian, StaffMember } from '@edaya/core'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
@@ -9,6 +10,7 @@ import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'
 import {
+
   closeAuthIntegrationContext,
   collectSetCookieHeaders,
   countAccountRowsForUser,
@@ -18,6 +20,7 @@ import {
   ensureAuthUser,
   findUserByEmail,
   linkStaffMemberToAuthUser,
+  markAuthUserEmailUnverified,
   mountEffectiveGrantsRoute,
   sendSignInOtp,
   signInEmail,
@@ -38,8 +41,8 @@ describe('Better Auth session integration', () => {
     }
   })
 
-  async function openContext() {
-    const context = await createAuthIntegrationContext()
+  async function openContext(envOverrides?: Partial<AuthTestEnv>) {
+    const context = await createAuthIntegrationContext(envOverrides)
     contexts.push(context)
     return context
   }
@@ -164,7 +167,8 @@ describe('Better Auth session integration', () => {
 
     const user = await findUserByEmail(authDb, 'unverified-staff@school.edu')
     expect(user).toBeTruthy()
-    expect(user?.emailVerified).toBe(false)
+    await markAuthUserEmailUnverified(authDb, user!.id)
+    expect((await findUserByEmail(authDb, 'unverified-staff@school.edu'))?.emailVerified).toBe(false)
     await linkStaffMemberToAuthUser(application, MINIMAL_AUTH_FIXTURE_STAFF_ID, user!.id)
 
     const signInResponse = await signInEmail(auth, env, {
