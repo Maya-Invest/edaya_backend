@@ -11,11 +11,17 @@ import type {
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  IVORY_COAST_FIXTURE_MASTER,
+  IVORY_COAST_LEVEL_FILES,
+} from './ivory-coast-fixture-bundle'
 
-const DATA_ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../data/onboarding/ivory-coast',
-)
+function defaultDataRoot(): string {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../../data/onboarding/ivory-coast',
+  )
+}
 
 interface RawPeriod {
   code: string
@@ -401,16 +407,35 @@ function toResolvedCycles(
   return resolved
 }
 
+/** Load bundled fixture records (Cloudflare Worker / bundled runtimes). */
+export function loadIvoryCoastFixtureFromRecords(
+  master: Record<string, unknown>,
+  levelFilesByRelativePath: Record<string, unknown>,
+): Record<string, ResolvedIvoryCoastCycle> {
+  if (!isRecord(master)) {
+    throw new Error('Invalid Ivory Coast fixture master')
+  }
+
+  return toResolvedCycles(master, 'bundle', '', (levelPath) => {
+    const relativePath = levelPath.replace(/\\/g, '/')
+    const file = levelFilesByRelativePath[relativePath]
+    if (file === undefined) {
+      throw new Error(`Ivory Coast fixture file not found in bundle: ${relativePath}`)
+    }
+    return file
+  })
+}
+
 /** Load master `fixture.json` and each referenced level file under `dataRoot`. */
 export async function loadIvoryCoastFixture(
-  dataRoot: string = DATA_ROOT,
+  dataRoot: string = defaultDataRoot(),
 ): Promise<Record<string, ResolvedIvoryCoastCycle>> {
   return loadIvoryCoastFixtureSync(dataRoot)
 }
 
-/** Synchronous loader for module bootstrap (no top-level await). */
+/** Synchronous loader for tests and local tooling (reads JSON from disk). */
 export function loadIvoryCoastFixtureSync(
-  dataRoot: string = DATA_ROOT,
+  dataRoot: string = defaultDataRoot(),
 ): Record<string, ResolvedIvoryCoastCycle> {
   const masterPath = path.join(dataRoot, 'fixture.json')
   const master = readJsonSync(masterPath)
@@ -456,4 +481,6 @@ export function parseIvoryCoastStructureTemplates(
 }
 
 export const IVORY_COAST_STRUCTURE_TEMPLATES: readonly StructureTemplateDefinition[]
-  = parseIvoryCoastStructureTemplates(loadIvoryCoastFixtureSync())
+  = parseIvoryCoastStructureTemplates(
+    loadIvoryCoastFixtureFromRecords(IVORY_COAST_FIXTURE_MASTER, IVORY_COAST_LEVEL_FILES),
+  )
