@@ -18,6 +18,7 @@ import {
   ensureAuthUser,
   findUserByEmail,
   linkStaffMemberToAuthUser,
+  markAuthUserEmailUnverified,
   mountEffectiveGrantsRoute,
   sendSignInOtp,
   signInEmail,
@@ -38,8 +39,8 @@ describe('Better Auth session integration', () => {
     }
   })
 
-  async function openContext() {
-    const context = await createAuthIntegrationContext()
+  async function openContext(envOverrides?: Partial<typeof PG_LITE_AUTH_ENV>) {
+    const context = await createAuthIntegrationContext(envOverrides)
     contexts.push(context)
     return context
   }
@@ -164,7 +165,8 @@ describe('Better Auth session integration', () => {
 
     const user = await findUserByEmail(authDb, 'unverified-staff@school.edu')
     expect(user).toBeTruthy()
-    expect(user?.emailVerified).toBe(false)
+    await markAuthUserEmailUnverified(authDb, user!.id)
+    expect((await findUserByEmail(authDb, 'unverified-staff@school.edu'))?.emailVerified).toBe(false)
     await linkStaffMemberToAuthUser(application, MINIMAL_AUTH_FIXTURE_STAFF_ID, user!.id)
 
     const signInResponse = await signInEmail(auth, env, {
