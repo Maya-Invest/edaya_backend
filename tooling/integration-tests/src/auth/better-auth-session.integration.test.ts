@@ -24,6 +24,7 @@ import {
   signInEmail,
   signInEmailOtp,
   signUpEmail,
+  type AuthTestEnv,
 } from './support/better-auth-harness'
 
 describe('Better Auth session integration', () => {
@@ -39,7 +40,7 @@ describe('Better Auth session integration', () => {
     }
   })
 
-  async function openContext(envOverrides?: Partial<typeof PG_LITE_AUTH_ENV>) {
+  async function openContext(envOverrides?: Partial<AuthTestEnv>) {
     const context = await createAuthIntegrationContext(envOverrides)
     contexts.push(context)
     return context
