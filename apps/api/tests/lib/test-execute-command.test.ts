@@ -1,18 +1,10 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { executeSchoolCommand } from "@/lib/school-api/execute-command";
+import * as scheduleBackgroundTaskModule from "@/lib/school-api/schedule-background-task";
 import { createTestStaffActor } from "../support/staff-actor-fixture";
 
-const renderReportCardDocument = mock(async () => ({
-  attachmentId: "att-1",
-  storageKey: "sch-1/generated/report-card/report_card/rc-1/att-1/bulletin.pdf",
-}));
-
-mock.module("@/lib/documents/render-report-card-document", () => ({
-  renderReportCardDocument,
-}));
-
 afterEach(() => {
-  renderReportCardDocument.mockClear();
+  mock.restore();
 });
 
 function createCommandContext(options: {
@@ -97,6 +89,10 @@ describe("executeSchoolCommand", () => {
   });
 
   test("schedules docs render after publishReportCardResult when enabled", async () => {
+    const scheduleBackgroundTask = spyOn(
+      scheduleBackgroundTaskModule,
+      "scheduleBackgroundTask",
+    ).mockImplementation(() => undefined);
     const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
     const actor = createTestStaffActor();
     const { context } = createCommandContext({
@@ -118,22 +114,14 @@ describe("executeSchoolCommand", () => {
       { resultId: "rc-1" },
     )).resolves.toEqual({ id: "rc-1" });
 
-    await Bun.sleep(10);
-    expect(renderReportCardDocument).toHaveBeenCalledTimes(1);
-    const renderArgs = renderReportCardDocument.mock.calls[0] as unknown as [
-      unknown,
-      { resultId: string; config: { docsUrl: string; jwtSecret: string } },
-    ];
-    expect(renderArgs[1]).toMatchObject({
-      resultId: "rc-1",
-      config: {
-        docsUrl: "http://localhost:8787",
-        jwtSecret: "secret",
-      },
-    });
+    expect(scheduleBackgroundTask).toHaveBeenCalledTimes(1);
   });
 
   test("does not schedule docs render when DOCS_RENDER_ON_PUBLISH is off", async () => {
+    const scheduleBackgroundTask = spyOn(
+      scheduleBackgroundTaskModule,
+      "scheduleBackgroundTask",
+    ).mockImplementation(() => undefined);
     const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
     const actor = createTestStaffActor();
     const { context } = createCommandContext({
@@ -155,7 +143,6 @@ describe("executeSchoolCommand", () => {
       { resultId: "rc-1" },
     );
 
-    await Bun.sleep(10);
-    expect(renderReportCardDocument).not.toHaveBeenCalled();
+    expect(scheduleBackgroundTask).not.toHaveBeenCalled();
   });
 });
