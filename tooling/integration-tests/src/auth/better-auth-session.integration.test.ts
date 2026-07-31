@@ -1,3 +1,4 @@
+import type { AuthTestEnv } from './support/better-auth-harness'
 import { Guardian, StaffMember } from '@edaya/core'
 import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import {
@@ -9,6 +10,7 @@ import { seedMinimalSchool } from '@edaya/seeding'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { getLastAuthOtpForTests, resetAuthOtpMailerForTests } from '@/runtime/shared/adapters/auth-otp-mailer'
 import {
+
   closeAuthIntegrationContext,
   collectSetCookieHeaders,
   countAccountRowsForUser,
@@ -24,7 +26,6 @@ import {
   signInEmail,
   signInEmailOtp,
   signUpEmail,
-  type AuthTestEnv,
 } from './support/better-auth-harness'
 
 describe('Better Auth session integration', () => {
