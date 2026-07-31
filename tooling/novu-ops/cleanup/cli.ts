@@ -92,7 +92,7 @@ Safety:
 
 Environment (from process.env or apps/api/.env):
   NOVU_SECRET_KEY           required
-  NOVU_API_URL              optional (e.g. https://eu.api.novu.co)
+  NOVU_API_URL              optional (e.g. https://api.novu.co)
 
 Examples:
   bun repo novu cleanup -- --transient-invites

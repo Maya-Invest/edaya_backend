@@ -38,7 +38,7 @@ export const EnvSchema = z.object({
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
   /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu */
   NOVU_SECRET_KEY: z.string().min(1).optional(),
-  /** Optional Novu API base URL (e.g. https://eu.api.novu.co) */
+  /** Optional Novu API base URL (e.g. https://api.novu.co) */
   NOVU_API_URL: z.string().url().optional(),
   /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery */
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),

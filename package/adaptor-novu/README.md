@@ -12,7 +12,7 @@ import { createNovuNotificationGateway, createNovuSdkClient } from "@edaya/adapt
 const gateway = createNovuNotificationGateway({
   client: createNovuSdkClient({
     secretKey: process.env.NOVU_SECRET_KEY!,
-    serverURL: process.env.NOVU_API_URL, // optional, e.g. https://eu.api.novu.co
+    serverURL: process.env.NOVU_API_URL, // optional, e.g. https://api.novu.co
   }),
   onError: (error, context) => logger.error({ err: error, ...context }, "novu notification failed"),
 });
