@@ -8,8 +8,13 @@ describe('structure seed ids', () => {
   it('maps college and lycee template ids to demo seed nomenclature', () => {
     expect(structureGradeLevelSeedId('ci-college:6EME')).toBe('gl-6')
     expect(structureGradeLevelSeedId('ci-college:3EME')).toBe('gl-3')
+    expect(structureGradeLevelSeedId('ci-lycee:2NDA')).toBe('gl-2nda')
     expect(structureGradeLevelSeedId('ci-lycee:2NDC')).toBe('gl-2')
+    expect(structureGradeLevelSeedId('ci-lycee:1ERA')).toBe('gl-1era')
+    expect(structureGradeLevelSeedId('ci-lycee:1ERD')).toBe('gl-1erd')
+    expect(structureGradeLevelSeedId('ci-lycee:TLEA')).toBe('gl-tlea')
     expect(structureGradeLevelSeedId('ci-lycee:TLEC')).toBe('gl-t')
+    expect(structureGradeLevelSeedId('ci-lycee:TLED')).toBe('gl-tled')
   })
 
   it('falls back to gl-{levelCode} for other templates', () => {

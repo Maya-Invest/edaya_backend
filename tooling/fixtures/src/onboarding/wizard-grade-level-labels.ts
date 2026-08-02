@@ -2,13 +2,13 @@ import type { ApiGradeLevelTemplateId } from './seed-ids'
 
 /**
  * Display names for grade levels persisted at onboarding apply-structure time.
- * Lycée series keep their full names (Seconde A, Seconde C, …) — never a bare "2nde".
+ * Use full names for Collège and Lycée (Sixième, Seconde A, …) — never bare codes like "6ème" / "2nde".
  */
 export const ONBOARDING_WIZARD_GRADE_LEVEL_LABELS = {
-  'ci-college:6EME': { name: '6ème', shortLabel: '6e' },
-  'ci-college:5EME': { name: '5ème', shortLabel: '5e' },
-  'ci-college:4EME': { name: '4ème', shortLabel: '4e' },
-  'ci-college:3EME': { name: '3ème', shortLabel: '3e' },
+  'ci-college:6EME': { name: 'Sixième', shortLabel: '6e' },
+  'ci-college:5EME': { name: 'Cinquième', shortLabel: '5e' },
+  'ci-college:4EME': { name: 'Quatrième', shortLabel: '4e' },
+  'ci-college:3EME': { name: 'Troisième', shortLabel: '3e' },
   'ci-lycee:2NDA': { name: 'Seconde A', shortLabel: '2nde A' },
   'ci-lycee:2NDC': { name: 'Seconde C', shortLabel: '2nde C' },
   'ci-lycee:1ERA': { name: 'Première A', shortLabel: '1ère A' },
@@ -21,7 +21,7 @@ export const ONBOARDING_WIZARD_GRADE_LEVEL_LABELS = {
 
 export type OnboardingWizardGradeLevelId = keyof typeof ONBOARDING_WIZARD_GRADE_LEVEL_LABELS
 
-/** Legacy seed-mapped ids remain covered by the wizard label table. */
+/** Seed-mapped ids remain covered by the wizard label table. */
 const _assertSeedMappedLabels: Record<
   ApiGradeLevelTemplateId,
   { name: string, shortLabel: string }
@@ -30,9 +30,14 @@ const _assertSeedMappedLabels: Record<
   'ci-college:5EME': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-college:5EME'],
   'ci-college:4EME': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-college:4EME'],
   'ci-college:3EME': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-college:3EME'],
+  'ci-lycee:2NDA': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:2NDA'],
   'ci-lycee:2NDC': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:2NDC'],
+  'ci-lycee:1ERA': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:1ERA'],
   'ci-lycee:1ERC': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:1ERC'],
+  'ci-lycee:1ERD': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:1ERD'],
+  'ci-lycee:TLEA': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:TLEA'],
   'ci-lycee:TLEC': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:TLEC'],
+  'ci-lycee:TLED': ONBOARDING_WIZARD_GRADE_LEVEL_LABELS['ci-lycee:TLED'],
 }
 void _assertSeedMappedLabels
 

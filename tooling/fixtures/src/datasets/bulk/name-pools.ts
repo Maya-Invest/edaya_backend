@@ -141,13 +141,18 @@ export const CI_PARENT_FIRST_NAMES = {
 } as const
 
 export const FRENCH_GRADE_LABELS = [
-  { id: 'gl-6', label: '6ème', birthYear: 2014 },
-  { id: 'gl-5', label: '5ème', birthYear: 2013 },
-  { id: 'gl-4', label: '4ème', birthYear: 2012 },
-  { id: 'gl-3', label: '3ème', birthYear: 2011 },
-  { id: 'gl-2', label: '2nde', birthYear: 2010 },
-  { id: 'gl-1', label: '1ère', birthYear: 2009 },
-  { id: 'gl-t', label: 'Terminale', birthYear: 2008 },
+  { id: 'gl-6', label: 'Sixième', birthYear: 2014 },
+  { id: 'gl-5', label: 'Cinquième', birthYear: 2013 },
+  { id: 'gl-4', label: 'Quatrième', birthYear: 2012 },
+  { id: 'gl-3', label: 'Troisième', birthYear: 2011 },
+  { id: 'gl-2nda', label: 'Seconde A', birthYear: 2010 },
+  { id: 'gl-2', label: 'Seconde C', birthYear: 2010 },
+  { id: 'gl-1era', label: 'Première A', birthYear: 2009 },
+  { id: 'gl-1', label: 'Première C', birthYear: 2009 },
+  { id: 'gl-1erd', label: 'Première D', birthYear: 2009 },
+  { id: 'gl-tlea', label: 'Terminale A', birthYear: 2008 },
+  { id: 'gl-t', label: 'Terminale C', birthYear: 2008 },
+  { id: 'gl-tled', label: 'Terminale D', birthYear: 2008 },
 ] as const
 
 export const ENGLISH_GRADE_LABELS = [
@@ -155,7 +160,12 @@ export const ENGLISH_GRADE_LABELS = [
   { id: 'gl-5', label: '5th', birthYear: 2013 },
   { id: 'gl-4', label: '4th', birthYear: 2012 },
   { id: 'gl-3', label: '3rd', birthYear: 2011 },
-  { id: 'gl-2', label: '2nd', birthYear: 2010 },
-  { id: 'gl-1', label: '1st', birthYear: 2009 },
-  { id: 'gl-t', label: 'Term', birthYear: 2008 },
+  { id: 'gl-2nda', label: 'Seconde A', birthYear: 2010 },
+  { id: 'gl-2', label: 'Seconde C', birthYear: 2010 },
+  { id: 'gl-1era', label: 'Première A', birthYear: 2009 },
+  { id: 'gl-1', label: 'Première C', birthYear: 2009 },
+  { id: 'gl-1erd', label: 'Première D', birthYear: 2009 },
+  { id: 'gl-tlea', label: 'Terminale A', birthYear: 2008 },
+  { id: 'gl-t', label: 'Terminale C', birthYear: 2008 },
+  { id: 'gl-tled', label: 'Terminale D', birthYear: 2008 },
 ] as const

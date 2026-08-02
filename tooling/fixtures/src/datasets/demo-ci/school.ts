@@ -49,10 +49,10 @@ export const demoCiAcademicPeriods = [
 
 /** Niveaux du cycle collège (programme ivoirien). */
 export const demoCiGradeLevels = [
-  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: '6ème', cycle: 'Collège', order: 1 },
-  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: '5ème', cycle: 'Collège', order: 2 },
-  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: '4ème', cycle: 'Collège', order: 3 },
-  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: '3ème', cycle: 'Collège', order: 4 },
+  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sixième', cycle: 'Collège', order: 1 },
+  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: 'Cinquième', cycle: 'Collège', order: 2 },
+  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: 'Quatrième', cycle: 'Collège', order: 3 },
+  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: 'Troisième', cycle: 'Collège', order: 4 },
 ] as const satisfies readonly GradeLevelInput[]
 
 const demoCiDailyPeriodDefinitions = [
