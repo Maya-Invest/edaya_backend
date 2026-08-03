@@ -737,6 +737,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "type": {
             "type": "string",
             "nullable": true,
@@ -883,6 +893,17 @@
             "minLength": 1
           },
           "ownerEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "consortiumId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assignAsSchoolOwner": {
+            "type": "boolean"
+          },
+          "ownerInviteEmail": {
             "type": "string",
             "format": "email"
           }
@@ -1401,6 +1422,14 @@
                 "capacity": {
                   "type": "integer",
                   "minimum": 1
+                },
+                "classNamingMode": {
+                  "type": "string",
+                  "enum": [
+                    "alphabetical",
+                    "numerical"
+                  ],
+                  "default": "numerical"
                 }
               },
               "required": [
@@ -1450,6 +1479,352 @@
           }
         }
       },
+      "ConsortiumSharedRules": {
+        "type": "object",
+        "properties": {
+          "structureTemplateIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          }
+        }
+      },
+      "Consortium": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "ownerSubjectId": {
+            "type": "string"
+          },
+          "sharedRules": {
+            "$ref": "#/components/schemas/ConsortiumSharedRules"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ownerSubjectId",
+          "sharedRules",
+          "createdAt"
+        ]
+      },
+      "CreateConsortiumRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sharedRules": {
+            "$ref": "#/components/schemas/ConsortiumSharedRules"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ConsortiumSchool": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "consortiumId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "timeZone"
+        ]
+      },
+      "ConsortiumDashboard": {
+        "type": "object",
+        "properties": {
+          "consortium": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              },
+              "sharedRules": {
+                "$ref": "#/components/schemas/ConsortiumSharedRules"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "sharedRules"
+            ]
+          },
+          "schoolCount": {
+            "type": "integer"
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "studentCount": {
+                "type": "integer"
+              },
+              "staffCount": {
+                "type": "integer"
+              },
+              "overdueFeeCount": {
+                "type": "integer"
+              },
+              "overdueFeeAmount": {
+                "type": "number"
+              },
+              "recentPaymentAmount": {
+                "type": "number"
+              },
+              "absencesToday": {
+                "type": "integer"
+              },
+              "openIncidentCount": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "studentCount",
+              "staffCount",
+              "overdueFeeCount",
+              "overdueFeeAmount",
+              "recentPaymentAmount",
+              "absencesToday",
+              "openIncidentCount"
+            ]
+          },
+          "schools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schoolId": {
+                  "type": "string"
+                },
+                "schoolName": {
+                  "type": "string"
+                },
+                "studentCount": {
+                  "type": "integer"
+                },
+                "staffCount": {
+                  "type": "integer"
+                },
+                "overdueFeeCount": {
+                  "type": "integer"
+                },
+                "overdueFeeAmount": {
+                  "type": "number"
+                },
+                "recentPaymentAmount": {
+                  "type": "number"
+                },
+                "absencesToday": {
+                  "type": "integer"
+                },
+                "openIncidentCount": {
+                  "type": "integer"
+                },
+                "ownerSubjectId": {
+                  "type": "string"
+                },
+                "ownerName": {
+                  "type": "string"
+                },
+                "ownerEmail": {
+                  "type": "string"
+                },
+                "ownerStatus": {
+                  "type": "string",
+                  "enum": [
+                    "assigned",
+                    "pending_invite",
+                    "unassigned"
+                  ]
+                },
+                "assignableStaff": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "subjectId": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "subjectId",
+                      "name"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "schoolId",
+                "schoolName",
+                "studentCount",
+                "staffCount",
+                "overdueFeeCount",
+                "overdueFeeAmount",
+                "recentPaymentAmount",
+                "absencesToday",
+                "openIncidentCount",
+                "ownerStatus",
+                "assignableStaff"
+              ]
+            }
+          }
+        },
+        "required": [
+          "consortium",
+          "schoolCount",
+          "totals",
+          "schools"
+        ]
+      },
+      "UpdateConsortiumSharedRulesRequest": {
+        "type": "object",
+        "properties": {
+          "sharedRules": {
+            "$ref": "#/components/schemas/ConsortiumSharedRules"
+          }
+        },
+        "required": [
+          "sharedRules"
+        ]
+      },
+      "ApplyConsortiumSharedRulesRequest": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "gradeLevelId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classCount": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "capacity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "classNamingMode": {
+                  "type": "string",
+                  "enum": [
+                    "alphabetical",
+                    "numerical"
+                  ]
+                }
+              },
+              "required": [
+                "gradeLevelId",
+                "classCount",
+                "capacity"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "schoolId",
+          "levels"
+        ]
+      },
+      "AssignConsortiumSchoolOwnerResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string"
+          },
+          "ownerSubjectId": {
+            "type": "string"
+          },
+          "pendingOwnerStaffId": {
+            "type": "string"
+          },
+          "ownerStatus": {
+            "type": "string",
+            "enum": [
+              "assigned",
+              "pending_invite"
+            ]
+          }
+        },
+        "required": [
+          "schoolId",
+          "ownerStatus"
+        ]
+      },
+      "AssignConsortiumSchoolOwnerRequest": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
       "OnboardingInviteStaffMembersResponse": {
         "type": "object",
         "properties": {
@@ -1491,6 +1866,220 @@
         },
         "required": [
           "invites"
+        ]
+      },
+      "OnboardingProvisionResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string"
+          },
+          "yearId": {
+            "type": "string"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "structure": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingApplyStructureTemplateResponse"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "staff": {
+            "$ref": "#/components/schemas/OnboardingInviteStaffMembersResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OnboardingAccountStatusResponse"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "phase": {
+                  "type": "string"
+                },
+                "ms": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "phase",
+                "ms"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "yearId",
+          "periodId",
+          "structure",
+          "staff",
+          "status",
+          "phases"
+        ]
+      },
+      "OnboardingProvisionRequest": {
+        "type": "object",
+        "properties": {
+          "school": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1
+              },
+              "country": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearLabel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearStart": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearEnd": {
+                "type": "string",
+                "minLength": 1
+              },
+              "periodType": {
+                "type": "string",
+                "enum": [
+                  "trimester",
+                  "semester"
+                ]
+              },
+              "periods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "start": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "end": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "start",
+                    "end"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "name",
+              "timeZone",
+              "city",
+              "country",
+              "academicYearLabel",
+              "academicYearStart",
+              "academicYearEnd",
+              "periodType",
+              "periods"
+            ]
+          },
+          "structure": {
+            "type": "object",
+            "properties": {
+              "templates": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "levels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classCount": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "capacity": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "classNamingMode": {
+                      "type": "string",
+                      "enum": [
+                        "alphabetical",
+                        "numerical"
+                      ],
+                      "default": "numerical"
+                    }
+                  },
+                  "required": [
+                    "gradeLevelId",
+                    "classCount",
+                    "capacity"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "templates",
+              "levels"
+            ]
+          },
+          "invites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            }
+          }
+        },
+        "required": [
+          "school",
+          "structure"
         ]
       },
       "ServiceAccountResponse": {
@@ -2017,6 +2606,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "type": {
             "type": "string",
             "nullable": true,
@@ -2109,6 +2708,16 @@
             "minLength": 1
           },
           "ownerSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -13911,6 +14520,961 @@
         }
       }
     },
+    "/core/consortium/create": {
+      "post": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Create a school group (consortium)",
+        "operationId": "consortium.create",
+        "x-edaya-kind": "consortium",
+        "x-edaya-client-key": "create",
+        "x-edaya-client-path": "consortium/create",
+        "x-edaya-request-schema": "CreateConsortiumRequest",
+        "x-edaya-response-schema": "Consortium",
+        "requestBody": {
+          "description": "Consortium creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConsortiumRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created consortium",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consortium"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/mine": {
+      "get": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Get the school group owned by the current user",
+        "operationId": "consortium.mine",
+        "x-edaya-kind": "consortium",
+        "x-edaya-client-key": "mine",
+        "x-edaya-client-path": "consortium/mine",
+        "x-edaya-response-schema": "Consortium",
+        "responses": {
+          "200": {
+            "description": "Owned consortium or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Consortium"
+                    },
+                    {
+                      "nullable": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/{consortiumId}/schools": {
+      "get": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "List schools in a school group",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "consortiumId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consortium schools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsortiumSchool"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/{consortiumId}/dashboard": {
+      "get": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Aggregated dashboard for a school group",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "consortiumId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consortium dashboard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsortiumDashboard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/{consortiumId}/shared-rules": {
+      "post": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Update shared rules pack for a school group",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "consortiumId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Shared rules payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsortiumSharedRulesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated consortium",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consortium"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/{consortiumId}/apply-shared-rules": {
+      "post": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Push shared structure rules to a member school",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "consortiumId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Apply shared rules payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyConsortiumSharedRulesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Apply result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "gradeLevelCount": {
+                      "type": "integer"
+                    },
+                    "classGroupCount": {
+                      "type": "integer"
+                    },
+                    "subjectCount": {
+                      "type": "integer"
+                    },
+                    "classSubjectCount": {
+                      "type": "integer"
+                    },
+                    "gradeScaleCount": {
+                      "type": "integer"
+                    },
+                    "reportCardDefinitionCount": {
+                      "type": "integer"
+                    },
+                    "reportCardSectionCount": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "gradeLevelCount",
+                    "classGroupCount",
+                    "subjectCount",
+                    "classSubjectCount",
+                    "gradeScaleCount",
+                    "reportCardDefinitionCount",
+                    "reportCardSectionCount"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/consortium/{consortiumId}/schools/{schoolId}/assign-owner": {
+      "post": {
+        "tags": [
+          "Core Consortium"
+        ],
+        "summary": "Assign or transfer a school owner within a school group",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "consortiumId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "schoolId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Assign owner payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignConsortiumSchoolOwnerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Owner assignment result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignConsortiumSchoolOwnerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/onboarding/invite-staff-members": {
       "post": {
         "tags": [
@@ -14019,6 +15583,157 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/provision": {
+      "post": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Provision a school from the full onboarding draft in one batch",
+        "operationId": "onboarding.provision",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "provision",
+        "x-edaya-client-path": "onboarding/provision",
+        "x-edaya-request-schema": "OnboardingProvisionRequest",
+        "x-edaya-response-schema": "OnboardingProvisionResponse",
+        "requestBody": {
+          "description": "Full onboarding draft payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingProvisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provisioned school summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingProvisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public school registration is disabled",
             "content": {
               "application/json": {
                 "schema": {

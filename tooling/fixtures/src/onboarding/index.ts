@@ -20,6 +20,7 @@ export {
   resolveCountryCode,
   resolveStructureTemplates,
 } from './registry'
+export type { ClassNamingMode } from './registry'
 export {
   API_GRADE_LEVEL_TEMPLATE_TO_SEED_ID,
   structureClassGroupSeedId,
@@ -42,8 +43,3 @@ export type {
   StructureTemplateSubject,
 } from './types'
 
-export {
-  ONBOARDING_WIZARD_GRADE_LEVEL_LABELS,
-  onboardingWizardClassDisplayName,
-  onboardingWizardGradeLevelLabels,
-} from './wizard-grade-level-labels'

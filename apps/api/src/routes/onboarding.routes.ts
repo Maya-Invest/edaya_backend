@@ -125,14 +125,19 @@ const onboardingListStructureTemplatesResponseSchema = z.object({
 
 const structureTemplateSnapshotSchema = structureTemplateDefinitionSchema;
 
+const classNamingModeSchema = z.enum(["alphabetical", "numerical"]).default("numerical");
+
+const onboardingStructureLevelSchema = z.object({
+  gradeLevelId: z.string().trim().min(1),
+  classCount: z.number().int().min(1),
+  capacity: z.number().int().min(1),
+  classNamingMode: classNamingModeSchema.optional(),
+});
+
 const onboardingApplyStructureTemplateRequestSchema = z.object({
   templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
   templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
-  levels: z.array(z.object({
-    gradeLevelId: z.string().trim().min(1),
-    classCount: z.number().int().min(1),
-    capacity: z.number().int().min(1),
-  })).min(1),
+  levels: z.array(onboardingStructureLevelSchema).min(1),
 }).openapi("OnboardingApplyStructureTemplateRequest");
 
 const onboardingApplyStructureTemplateResponseSchema = z.object({
@@ -186,11 +191,7 @@ const onboardingProvisionRequestSchema = z.object({
   }),
   structure: z.object({
     templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
-    levels: z.array(z.object({
-      gradeLevelId: z.string().trim().min(1),
-      classCount: z.number().int().min(1),
-      capacity: z.number().int().min(1),
-    })).min(1),
+    levels: z.array(onboardingStructureLevelSchema).min(1),
   }),
   invites: z.array(z.object({
     email: z.string().trim().email(),

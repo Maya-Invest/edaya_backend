@@ -57,6 +57,7 @@ const applySharedRulesRequestSchema = z.object({
     gradeLevelId: z.string().trim().min(1),
     classCount: z.number().int().min(1),
     capacity: z.number().int().min(1),
+    classNamingMode: z.enum(["alphabetical", "numerical"]).optional(),
   })).min(1),
 }).openapi("ApplyConsortiumSharedRulesRequest");
 

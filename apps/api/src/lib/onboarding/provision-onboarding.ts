@@ -40,6 +40,7 @@ export interface ProvisionOnboardingStructureInput {
     gradeLevelId: string;
     classCount: number;
     capacity: number;
+    classNamingMode?: 'alphabetical' | 'numerical';
   }>;
 }
 

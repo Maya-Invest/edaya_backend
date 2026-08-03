@@ -67,12 +67,25 @@ export function parseGradeLevelTemplateId(gradeLevelId: string): {
   return { templateId, levelCode }
 }
 
+export type ClassNamingMode = 'alphabetical' | 'numerical'
+
+const CLASS_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const
+
+/** Class display names from fixture `code` + alphabetical/numerical increment. */
 export function classDisplayName(
   template: StructureTemplateDefinition,
   levelCode: string,
   index: number,
+  mode: ClassNamingMode = 'numerical',
 ): string {
   const level = template.gradeLevels.find(entry => entry.code === levelCode)
-  const shortLabel = level?.shortLabel ?? levelCode
-  return `${shortLabel} ${index + 1}`
+  const stem = level?.code ?? levelCode
+  if (mode === 'alphabetical') {
+    const letter = CLASS_LETTERS[index]
+    if (letter) {
+      return `${stem} ${letter}`
+    }
+    return `${stem} ${index + 1}`
+  }
+  return `${stem} ${index + 1}`
 }
