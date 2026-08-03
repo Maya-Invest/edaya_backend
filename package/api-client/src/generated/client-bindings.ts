@@ -940,6 +940,12 @@ export const clientBindings = {
         "path": "onboarding/invite-staff-members",
         "requestSchemaName": "OnboardingInviteStaffMembersRequest",
         "responseSchemaName": "OnboardingInviteStaffMembersResponse"
+      },
+      "provision": {
+        "method": "POST",
+        "path": "onboarding/provision",
+        "requestSchemaName": "OnboardingProvisionRequest",
+        "responseSchemaName": "OnboardingProvisionResponse"
       }
     },
     "serviceAccounts": {

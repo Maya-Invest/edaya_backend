@@ -235,15 +235,14 @@ export async function inviteStaffMembers(
         academicYear.id,
         preset.permissions,
       );
-      for (const [index, row] of permissionRows.entries()) {
-        await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      await Promise.all(permissionRows.map(row =>
+        service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({
           id: randomUUID(),
           ...row,
           status: "active",
-        }), { moduleChecked: true });
-        permissionAssignmentsEnsured += 1;
-        void index;
-      }
+        }), { moduleChecked: true }),
+      ));
+      permissionAssignmentsEnsured += permissionRows.length;
 
       await service.accountInvitationWorkflow.sendAccountInvitation({
         kind: AccountInvitationKind.Staff,

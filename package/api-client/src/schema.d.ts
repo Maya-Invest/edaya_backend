@@ -189,6 +189,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/onboarding/provision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Provision a school from the full onboarding draft in one batch */
+        post: operations["onboarding.provision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/service-accounts": {
         parameters: {
             query?: never;
@@ -10404,6 +10421,49 @@ export interface components {
         OnboardingCompleteWizardRequest: {
             maxReachedStep?: 1 | 2 | 3 | 4;
         };
+        OnboardingProvisionRequest: {
+            school: {
+                name: string;
+                timeZone: string;
+                city: string;
+                country: string;
+                academicYearLabel: string;
+                academicYearStart: string;
+                academicYearEnd: string;
+                /** @enum {string} */
+                periodType: "trimester" | "semester";
+                periods: {
+                    label: string;
+                    start: string;
+                    end: string;
+                }[];
+            };
+            structure: {
+                templates: string[];
+                levels: {
+                    gradeLevelId: string;
+                    classCount: number;
+                    capacity: number;
+                }[];
+            };
+            invites?: {
+                /** Format: email */
+                email: string;
+                role: string;
+            }[];
+        };
+        OnboardingProvisionResponse: {
+            schoolId: string;
+            yearId: string;
+            periodId: string;
+            structure: components["schemas"]["OnboardingApplyStructureTemplateResponse"] | null;
+            staff: components["schemas"]["OnboardingInviteStaffMembersResponse"];
+            status: components["schemas"]["OnboardingAccountStatusResponse"];
+            phases: {
+                phase: string;
+                ms: number;
+            }[];
+        };
         OnboardingInviteStaffMembersResponse: {
             invitedCount: number;
             permissionAssignmentsEnsured: number;
@@ -13810,6 +13870,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "onboarding.provision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Full onboarding draft payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OnboardingProvisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Provisioned school summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingProvisionResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Public school registration is disabled */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
                 };
             };
             /** @description Internal server error occurred */
