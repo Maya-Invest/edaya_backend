@@ -6,9 +6,14 @@ export const GRADE_LEVEL_CLASS_ID_PREFIX: Record<string, string> = {
   'gl-5': '5',
   'gl-4': '4',
   'gl-3': '3',
+  'gl-2nda': '2nda',
   'gl-2': '2',
+  'gl-1era': '1era',
   'gl-1': '1st',
+  'gl-1erd': '1erd',
+  'gl-tlea': 'tlea',
   'gl-t': 'term',
+  'gl-tled': 'tled',
 }
 
 function classIdForIndex(prefix: string, index: number): string {

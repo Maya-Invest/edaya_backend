@@ -76,9 +76,9 @@ function localizeClassGroupName(name: string): string {
     .replace(/\b5th\b/g, '5ème')
     .replace(/\b4th\b/g, '4ème')
     .replace(/\b3rd\b/g, '3ème')
-    .replace(/\b2nd\b/g, '2nde')
-    .replace(/\b1st\b/g, '1ère')
-    .replace(/\bTerm\b/g, 'Terminale')
+    .replace(/\b2nd\b/g, 'Seconde C')
+    .replace(/\b1st\b/g, 'Première C')
+    .replace(/\bTerm\b/g, 'Terminale C')
     .replace(/\bBulk\b/g, 'Groupe')
 }
 

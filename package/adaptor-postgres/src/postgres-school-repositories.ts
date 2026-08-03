@@ -76,6 +76,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
 
   constructor(private readonly db: any) {
     const stores = createEntityStores(db)
+    // consortiums store remains registered in createEntityStores for schema init / legacy rows
     this.schoolsStore = stores.schoolsStore
     this.academicYears = stores.academicYears
     this.academicPeriods = stores.academicPeriods

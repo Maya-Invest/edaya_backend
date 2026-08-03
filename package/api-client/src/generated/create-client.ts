@@ -55,6 +55,7 @@ type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingApplyStructureTemplateResponse'>>
   completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingAccountStatusResponse'>>
   inviteStaffMembers: (payload: SchemaName<TSchemas, 'OnboardingInviteStaffMembersRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingInviteStaffMembersResponse'>>
+  provision: (payload: SchemaName<TSchemas, 'OnboardingProvisionRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingProvisionResponse'>>
 }
 
 type PublicClients<TSchemas extends Record<string, unknown>> = {
@@ -141,6 +142,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     applyStructureTemplate: (payload: SchemaName<TSchemas, 'OnboardingApplyStructureTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/apply-structure-template'), { body: payload }),
     completeWizard: (payload: SchemaName<TSchemas, 'OnboardingCompleteWizardRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/complete-wizard'), { body: payload }),
     inviteStaffMembers: (payload: SchemaName<TSchemas, 'OnboardingInviteStaffMembersRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/invite-staff-members'), { body: payload }),
+    provision: (payload: SchemaName<TSchemas, 'OnboardingProvisionRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/provision'), { body: payload }),
   } as OnboardingClients<TSchemas>,
     public: {
     previewInvitation: (params: { token: string }) => transport.request('GET', resolveClientRoutePath('public/invitations/{token}', params, 'root')),

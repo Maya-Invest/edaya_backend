@@ -381,6 +381,13 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
 
     // Flat structure (for backward compatibility in existing tests)
     schoolRepository: schoolRepositories.schools,
+    schools: schoolRepositories.schools,
+    students: schoolRepositories.students,
+    staffMembers: schoolRepositories.staffMembers,
+    studentFees: schoolRepositories.studentFees,
+    payments: schoolRepositories.payments,
+    attendance: schoolRepositories.attendance,
+    incidents: schoolRepositories.incidents,
     academicYearRepository: schoolRepositories.academicYears,
     academicPeriodRepository: schoolRepositories.academicPeriods,
     periodDefinitionRepository: schoolRepositories.periodDefinitions,

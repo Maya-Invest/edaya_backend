@@ -5,19 +5,17 @@ import { randomUUID } from "node:crypto";
 import {
   classDisplayName,
   nextOnboardingClassGroupId,
-  onboardingWizardClassDisplayName,
-  onboardingWizardGradeLevelLabels,
   parseGradeLevelTemplateId,
   resolveStructureTemplates,
   structureGradeLevelSeedId,
 } from "@edaya/fixtures/onboarding";
 import type {
+  ClassNamingMode,
   StructureTemplateCurriculumEntry,
   StructureTemplateDefinition,
   StructureTemplateId,
 } from "@edaya/fixtures/onboarding";
 import {
-
   applyReportCardsFromTemplate,
   collectLevelSubjects,
 } from "./apply-report-cards-from-template";
@@ -28,6 +26,7 @@ export interface ApplyStructureLevelInput {
   gradeLevelId: string;
   classCount: number;
   capacity: number;
+  classNamingMode?: ClassNamingMode;
 }
 
 export interface ApplyStructureTemplateInput {
@@ -294,9 +293,9 @@ export async function applyStructureTemplate(
       );
       gradeLevelCount += 1;
 
-      const wizardLabels = onboardingWizardGradeLevelLabels(level.gradeLevelId);
-      const gradeLevelName = wizardLabels?.name ?? gradeLevelDef.name;
-      const gradeLevelShortLabel = wizardLabels?.shortLabel ?? gradeLevelDef.shortLabel;
+      const gradeLevelName = gradeLevelDef.name;
+      const gradeLevelShortLabel = gradeLevelDef.code;
+      const classNamingMode = level.classNamingMode ?? "numerical";
 
       await service.baseService.entities.gradeLevels.save(new GradeLevel({
         id: gradeLevelId,
@@ -321,19 +320,22 @@ export async function applyStructureTemplate(
           isOptional: entry.isOptional,
         });
 
+        const matterIds = [];
         for (const [matterIndex, matterName] of entry.matters.entries()) {
-          const matterId = await ensureMatter(
+          matterIds.push(await ensureMatter(
             subjectId,
             matterName,
             matterIndex + 1,
-          );
-          await service.academicsWorkflow.assignMatterToGradeLevelSubject({
+          ));
+        }
+        await Promise.all(matterIds.map(matterId =>
+          service.academicsWorkflow.assignMatterToGradeLevelSubject({
             id: randomUUID(),
             gradeLevelSubjectId,
             subjectMatterId: matterId,
             classSubjectMatterIdsByClassGroupId: undefined,
-          });
-        }
+          }),
+        ));
 
         classSubjectCount += level.classCount;
       }
@@ -371,8 +373,12 @@ export async function applyStructureTemplate(
           schoolId,
           academicYearId: academicYear.id,
           gradeLevelId,
-          name: onboardingWizardClassDisplayName(level.gradeLevelId, index)
-            ?? classDisplayName(level.template, level.levelCode, index),
+          name: classDisplayName(
+            level.template,
+            level.levelCode,
+            index,
+            classNamingMode,
+          ),
           capacity: level.capacity,
         });
       }

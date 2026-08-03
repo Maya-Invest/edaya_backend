@@ -8,7 +8,6 @@ import lycee1erc from '../../../data/onboarding/ivory-coast/lycee/1erc.json' wit
 import lycee1erd from '../../../data/onboarding/ivory-coast/lycee/1erd.json' with { type: 'json' }
 import lycee2nda from '../../../data/onboarding/ivory-coast/lycee/2nda.json' with { type: 'json' }
 import lycee2ndc from '../../../data/onboarding/ivory-coast/lycee/2ndc.json' with { type: 'json' }
-import lycee2ndd from '../../../data/onboarding/ivory-coast/lycee/2ndd.json' with { type: 'json' }
 import lyceeTlea from '../../../data/onboarding/ivory-coast/lycee/tlea.json' with { type: 'json' }
 import lyceeTlec from '../../../data/onboarding/ivory-coast/lycee/tlec.json' with { type: 'json' }
 import lyceeTled from '../../../data/onboarding/ivory-coast/lycee/tled.json' with { type: 'json' }
@@ -26,7 +25,6 @@ export const IVORY_COAST_LEVEL_FILES: Record<string, unknown> = {
   'lycee/1erd.json': lycee1erd,
   'lycee/2nda.json': lycee2nda,
   'lycee/2ndc.json': lycee2ndc,
-  'lycee/2ndd.json': lycee2ndd,
   'lycee/tlea.json': lyceeTlea,
   'lycee/tlec.json': lyceeTlec,
   'lycee/tled.json': lyceeTled,

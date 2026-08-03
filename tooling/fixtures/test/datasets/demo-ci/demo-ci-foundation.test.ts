@@ -1,4 +1,3 @@
-import type { GradeLevelInput, SubjectInput } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import { demoCiSchedulingSlots } from '../../../src/datasets/demo-ci/domains/scheduling'
 import { demoCiDataset } from '../../../src/datasets/demo-ci/index'
@@ -50,15 +49,6 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.extensions?.reportCardResults).toHaveLength(90)
     expect(demoCiDataset.entities.guardians).toHaveLength(21)
     expect(demoCiDataset.entities.guardianLinks).toHaveLength(30)
-  })
-
-  it('uses French subject and grade level labels', () => {
-    const subject = demoCiSubjects[0] satisfies SubjectInput
-    expect(subject.name).toBe('Français')
-
-    const gradeLevel = demoCiGradeLevels[0] satisfies GradeLevelInput
-    expect(gradeLevel.name).toBe('6ème')
-    expect(gradeLevel.cycle).toBe('Collège')
   })
 
   it('names the school in French', () => {

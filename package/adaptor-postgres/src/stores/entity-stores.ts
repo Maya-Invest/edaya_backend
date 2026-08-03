@@ -4,6 +4,7 @@ import { AcademicPeriod as AcademicPeriodCtor, AcademicYear as AcademicYearCtor,
 import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
+import { ConsortiumRow } from './consortium-row'
 
 interface StoredReportCardResultSection {
   sectionId: string
@@ -70,6 +71,8 @@ function deserializeReportCardResultSection(raw: StoredReportCardResultSection):
 }
 
 export interface EntityStores {
+  /** Kept for schema init / legacy row mapping; not exposed on SchoolRepositories. */
+  consortiums: PostgresStore<ConsortiumRow>
   schoolsStore: PostgresStore<School>
   academicYears: PostgresStore<AcademicYear>
   academicPeriods: PostgresStore<AcademicPeriod>
@@ -126,6 +129,27 @@ export interface EntityStores {
 
 export function createEntityStores(db: any): EntityStores {
   return {
+    consortiums: customStore(
+      db,
+      schema.consortiums,
+      (entity: ConsortiumRow) => ({
+        id: entity.id,
+        name: entity.name,
+        country: entity.country ?? null,
+        ownerSubjectId: entity.ownerSubjectId,
+        sharedRules: entity.sharedRules,
+        createdAt: entity.createdAt,
+      }),
+      (row: any) => new ConsortiumRow({
+        id: row.id,
+        name: row.name,
+        country: row.country ?? undefined,
+        ownerSubjectId: row.ownerSubjectId,
+        sharedRules: deserializeJsonb(row.sharedRules) ?? { structureTemplateIds: [] },
+        createdAt: row.createdAt,
+      }),
+    ),
+
     schoolsStore: defaultStore(db, schema.schools, SchoolCtor),
 
     academicYears: customStore(

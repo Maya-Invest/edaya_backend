@@ -15,6 +15,7 @@ import {
   recordOnboardingAccountProgress,
   resolveOnboardingAccountStatus,
 } from "@/lib/onboarding/onboarding-account-state";
+import { provisionOnboarding } from "@/lib/onboarding/provision-onboarding";
 import {
   isStructureTemplateId,
   listStructureTemplatesForCountry,
@@ -120,14 +121,19 @@ const onboardingListStructureTemplatesResponseSchema = z.object({
 
 const structureTemplateSnapshotSchema = structureTemplateDefinitionSchema;
 
+const classNamingModeSchema = z.enum(["alphabetical", "numerical"]).default("numerical");
+
+const onboardingStructureLevelSchema = z.object({
+  gradeLevelId: z.string().trim().min(1),
+  classCount: z.number().int().min(1),
+  capacity: z.number().int().min(1),
+  classNamingMode: classNamingModeSchema.optional(),
+});
+
 const onboardingApplyStructureTemplateRequestSchema = z.object({
   templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
   templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
-  levels: z.array(z.object({
-    gradeLevelId: z.string().trim().min(1),
-    classCount: z.number().int().min(1),
-    capacity: z.number().int().min(1),
-  })).min(1),
+  levels: z.array(onboardingStructureLevelSchema).min(1),
 }).openapi("OnboardingApplyStructureTemplateRequest");
 
 const onboardingApplyStructureTemplateResponseSchema = z.object({
@@ -162,6 +168,45 @@ const onboardingAccountStatusSchema = z.object({
 const onboardingCompleteWizardRequestSchema = z.object({
   maxReachedStep: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 }).openapi("OnboardingCompleteWizardRequest");
+
+const onboardingProvisionRequestSchema = z.object({
+  school: z.object({
+    name: z.string().trim().min(1),
+    timeZone: z.string().trim().min(1),
+    city: z.string().trim().min(1),
+    country: z.string().trim().min(1),
+    academicYearLabel: z.string().trim().min(1),
+    academicYearStart: z.string().trim().min(1),
+    academicYearEnd: z.string().trim().min(1),
+    periodType: z.enum(["trimester", "semester"]),
+    periods: z.array(z.object({
+      label: z.string().trim().min(1),
+      start: z.string().trim().min(1),
+      end: z.string().trim().min(1),
+    })).min(1),
+  }),
+  structure: z.object({
+    templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
+    levels: z.array(onboardingStructureLevelSchema).min(1),
+  }),
+  invites: z.array(z.object({
+    email: z.string().trim().email(),
+    role: z.string().trim().min(1).refine(isOnboardingStaffInviteRoleKey, "Invalid staff invite role"),
+  })).optional(),
+}).openapi("OnboardingProvisionRequest");
+
+const onboardingProvisionResponseSchema = z.object({
+  schoolId: z.string(),
+  yearId: z.string(),
+  periodId: z.string(),
+  structure: onboardingApplyStructureTemplateResponseSchema.nullable(),
+  staff: onboardingStaffInviteResponseSchema,
+  status: onboardingAccountStatusSchema,
+  phases: z.array(z.object({
+    phase: z.string(),
+    ms: z.number(),
+  })),
+}).openapi("OnboardingProvisionResponse");
 
 export const onboardingRegisterSchoolRoute = createRoute({
   method: "post",
@@ -201,6 +246,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
     return unauthorizedResponse(c);
   }
 
+  const body = c.req.valid("json");
   if (c.get("actor")) {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
@@ -208,7 +254,6 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
     ));
   }
 
-  const body = c.req.valid("json");
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
 
   try {
@@ -419,6 +464,73 @@ export const onboardingCompleteWizardHandler: AppRouteHandler<typeof onboardingC
     return c.json(status, HttpStatusCodes.OK);
   }
   catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
+
+export const onboardingProvisionRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("onboarding", "provision"),
+  tags: ["Core Onboarding"],
+  summary: "Provision a school from the full onboarding draft in one batch",
+  ...clientRouteOperation({
+    namespace: "onboarding",
+    clientKey: "provision",
+    path: "onboarding/provision",
+    requestSchemaName: "OnboardingProvisionRequest",
+    responseSchemaName: "OnboardingProvisionResponse",
+  }),
+  request: {
+    body: jsonContent(onboardingProvisionRequestSchema, "Full onboarding draft payload"),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(onboardingProvisionResponseSchema, "Provisioned school summary"),
+    [HttpStatusCodes.SERVICE_UNAVAILABLE]: jsonContent(commandMessageSchema, "Public school registration is disabled"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvisionRoute> = async (c) => {
+  const session = await resolveAuthenticatedSession(
+    c.var.auth as AuthSessionProvider,
+    c.req.raw.headers,
+  );
+  if (!session) {
+    return unauthorizedResponse(c);
+  }
+
+  const body = c.req.valid("json");
+  const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
+  const allowPublicSchoolRegistration = shouldAllowPublicSchoolRegistration(c.env);
+
+  try {
+    const result = await provisionOnboarding(
+      c.get("schoolApp"),
+      session,
+      {
+        school: body.school,
+        structure: body.structure,
+        ...(body.invites ? { invites: body.invites } : {}),
+      },
+      {
+        requestId,
+        existingActor: c.get("actor") ?? undefined,
+        inviteBaseUrl: resolveInviteBaseUrl(c.env),
+        allowPublicSchoolRegistration,
+      },
+    );
+    return c.json(result, HttpStatusCodes.OK);
+  }
+  catch (err) {
+    if (
+      err instanceof BusinessRuleViolationError
+      && err.code === "PUBLIC_SCHOOL_REGISTRATION_DISABLED"
+    ) {
+      return c.json(
+        { message: "Public school registration is disabled" },
+        HttpStatusCodes.SERVICE_UNAVAILABLE,
+      );
+    }
     return routeErrorResponse(c, err);
   }
 };

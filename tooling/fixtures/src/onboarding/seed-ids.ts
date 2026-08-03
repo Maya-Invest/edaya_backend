@@ -9,9 +9,14 @@ export const API_GRADE_LEVEL_TEMPLATE_TO_SEED_ID = {
   'ci-college:5EME': 'gl-5',
   'ci-college:4EME': 'gl-4',
   'ci-college:3EME': 'gl-3',
+  'ci-lycee:2NDA': 'gl-2nda',
   'ci-lycee:2NDC': 'gl-2',
+  'ci-lycee:1ERA': 'gl-1era',
   'ci-lycee:1ERC': 'gl-1',
+  'ci-lycee:1ERD': 'gl-1erd',
+  'ci-lycee:TLEA': 'gl-tlea',
   'ci-lycee:TLEC': 'gl-t',
+  'ci-lycee:TLED': 'gl-tled',
 } as const satisfies Record<string, string>
 
 export type ApiGradeLevelTemplateId = keyof typeof API_GRADE_LEVEL_TEMPLATE_TO_SEED_ID

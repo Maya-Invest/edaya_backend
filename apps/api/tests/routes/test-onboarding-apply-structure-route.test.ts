@@ -165,14 +165,14 @@ describe("onboarding apply-structure-template route", () => {
 
     expect(gradeLevels).toHaveLength(2);
     expect(gradeLevels.map(level => level.id).sort()).toEqual(["gl-3", "gl-4"]);
-    expect(gradeLevels.map(level => level.name).sort()).toEqual(["3ème", "4ème"]);
+    expect(gradeLevels.map(level => level.name).sort()).toEqual(["Quatrième", "Troisième"]);
     expect(classGroups).toHaveLength(3);
     expect(subjects).toHaveLength(14);
     expect(gradeLevelSubjects).toHaveLength(28);
     expect(classSubjects).toHaveLength(42);
     expect(classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true);
-    expect(classGroups.some(group => group.name === "4e A")).toBe(true);
-    expect(classGroups.some(group => group.name === "4e B")).toBe(true);
+    expect(classGroups.some(group => group.name === "4EME 1")).toBe(true);
+    expect(classGroups.some(group => group.name === "4EME 2")).toBe(true);
   });
 
   it("applies built-in college template with longName curriculum entries", async () => {

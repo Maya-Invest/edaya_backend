@@ -737,6 +737,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "type": {
             "type": "string",
             "nullable": true,
@@ -1401,6 +1411,14 @@
                 "capacity": {
                   "type": "integer",
                   "minimum": 1
+                },
+                "classNamingMode": {
+                  "type": "string",
+                  "enum": [
+                    "alphabetical",
+                    "numerical"
+                  ],
+                  "default": "numerical"
                 }
               },
               "required": [
@@ -1491,6 +1509,220 @@
         },
         "required": [
           "invites"
+        ]
+      },
+      "OnboardingProvisionResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string"
+          },
+          "yearId": {
+            "type": "string"
+          },
+          "periodId": {
+            "type": "string"
+          },
+          "structure": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingApplyStructureTemplateResponse"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "staff": {
+            "$ref": "#/components/schemas/OnboardingInviteStaffMembersResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OnboardingAccountStatusResponse"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "phase": {
+                  "type": "string"
+                },
+                "ms": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "phase",
+                "ms"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "yearId",
+          "periodId",
+          "structure",
+          "staff",
+          "status",
+          "phases"
+        ]
+      },
+      "OnboardingProvisionRequest": {
+        "type": "object",
+        "properties": {
+          "school": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1
+              },
+              "country": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearLabel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearStart": {
+                "type": "string",
+                "minLength": 1
+              },
+              "academicYearEnd": {
+                "type": "string",
+                "minLength": 1
+              },
+              "periodType": {
+                "type": "string",
+                "enum": [
+                  "trimester",
+                  "semester"
+                ]
+              },
+              "periods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "start": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "end": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "start",
+                    "end"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "name",
+              "timeZone",
+              "city",
+              "country",
+              "academicYearLabel",
+              "academicYearStart",
+              "academicYearEnd",
+              "periodType",
+              "periods"
+            ]
+          },
+          "structure": {
+            "type": "object",
+            "properties": {
+              "templates": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "levels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classCount": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "capacity": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "classNamingMode": {
+                      "type": "string",
+                      "enum": [
+                        "alphabetical",
+                        "numerical"
+                      ],
+                      "default": "numerical"
+                    }
+                  },
+                  "required": [
+                    "gradeLevelId",
+                    "classCount",
+                    "capacity"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "templates",
+              "levels"
+            ]
+          },
+          "invites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            }
+          }
+        },
+        "required": [
+          "school",
+          "structure"
         ]
       },
       "ServiceAccountResponse": {
@@ -2017,6 +2249,16 @@
             "nullable": true,
             "minLength": 1
           },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "type": {
             "type": "string",
             "nullable": true,
@@ -2109,6 +2351,16 @@
             "minLength": 1
           },
           "ownerSubjectId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "consortiumId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "pendingOwnerStaffId": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -14019,6 +14271,157 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/onboarding/provision": {
+      "post": {
+        "tags": [
+          "Core Onboarding"
+        ],
+        "summary": "Provision a school from the full onboarding draft in one batch",
+        "operationId": "onboarding.provision",
+        "x-edaya-kind": "onboarding",
+        "x-edaya-client-key": "provision",
+        "x-edaya-client-path": "onboarding/provision",
+        "x-edaya-request-schema": "OnboardingProvisionRequest",
+        "x-edaya-response-schema": "OnboardingProvisionResponse",
+        "requestBody": {
+          "description": "Full onboarding draft payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingProvisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provisioned school summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingProvisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Public school registration is disabled",
             "content": {
               "application/json": {
                 "schema": {

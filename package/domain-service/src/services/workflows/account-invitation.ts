@@ -10,6 +10,7 @@ import {
   AccountInvitationKind,
   AccountInvitationStatus,
   BusinessRuleViolationError,
+  School as SchoolEntity,
 } from '@edaya/core'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import {
@@ -127,12 +128,16 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       )
     }
 
+    await this.assertPendingOwnerAssignable(invitation, input.subjectId)
+
     const result = await linkSubjectToActor(
       this.baseService,
       this.repositories,
       invitation.schoolId,
       this.buildLinkInput(invitation, input.subjectId),
     )
+
+    await this.assignPendingOwnerIfNeeded(invitation, input.subjectId)
 
     await this.baseService.invitationDelivery.revoke(invitation.id)
 
@@ -333,6 +338,44 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
   private async revokeInvitationDelivery(invitation: AccountInvitation): Promise<void> {
     await this.baseService.invitationDelivery.revoke(invitation.id)
+  }
+
+  private async assertPendingOwnerAssignable(
+    invitation: AccountInvitation,
+    subjectId: string,
+  ): Promise<void> {
+    if (invitation.kind !== AccountInvitationKind.Staff) {
+      return
+    }
+    const school = await this.repositories.schools.findById(invitation.schoolId)
+    if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
+      return
+    }
+    const ownedSchool = await this.repositories.schools.findOne({ ownerSubjectId: subjectId })
+    if (ownedSchool && ownedSchool.id !== school.id) {
+      throw new BusinessRuleViolationError(
+        'OWNER_SUBJECT_ALREADY_ASSIGNED',
+        'This account already owns another school',
+      )
+    }
+  }
+
+  private async assignPendingOwnerIfNeeded(
+    invitation: AccountInvitation,
+    subjectId: string,
+  ): Promise<void> {
+    if (invitation.kind !== AccountInvitationKind.Staff) {
+      return
+    }
+    const school = await this.repositories.schools.findById(invitation.schoolId)
+    if (!school || school.pendingOwnerStaffId !== invitation.targetId) {
+      return
+    }
+    await this.repositories.schools.save(new SchoolEntity({
+      ...school.data,
+      ownerSubjectId: subjectId,
+      pendingOwnerStaffId: null,
+    }))
   }
 
   private requireStaffActorId(): string {

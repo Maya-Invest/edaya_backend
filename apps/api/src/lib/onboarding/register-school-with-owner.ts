@@ -83,10 +83,12 @@ export async function registerSchoolWithOwner(
       }
     : resolveOwnerProfile(session);
 
+  const callerStaffId = input.ownerStaffId ?? randomUUID();
   const actor = createBootstrapStaffActorMetadata({
     schoolId,
     requestId: input.requestId,
-    staffMemberId: "public-school-registration",
+    staffMemberId: callerStaffId,
+    subjectId,
   });
   const service = application.forActor(actor);
 
@@ -101,7 +103,7 @@ export async function registerSchoolWithOwner(
   });
 
   await service.setupWorkflow.registerStaffMember({
-    id: input.ownerStaffId ?? randomUUID(),
+    id: callerStaffId,
     schoolId,
     firstName: owner.firstName,
     lastName: owner.lastName,

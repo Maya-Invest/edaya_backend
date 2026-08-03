@@ -31,6 +31,8 @@ import {
   onboardingInviteStaffMembersRoute,
   onboardingListStructureTemplatesHandler,
   onboardingListStructureTemplatesRoute,
+  onboardingProvisionHandler,
+  onboardingProvisionRoute,
   onboardingRegisterSchoolHandler,
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
@@ -99,6 +101,7 @@ router
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
   .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)
   .openapi(onboardingInviteStaffMembersRoute, onboardingInviteStaffMembersHandler)
+  .openapi(onboardingProvisionRoute, onboardingProvisionHandler)
   .openapi(createServiceAccountRoute, createServiceAccountHandler)
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)

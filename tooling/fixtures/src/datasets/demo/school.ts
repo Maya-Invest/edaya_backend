@@ -42,13 +42,18 @@ export const demoAcademicPeriods = [
 ] as const satisfies readonly AcademicPeriodInput[]
 
 export const demoGradeLevels = [
-  { id: 'gl-6', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '6ème', cycle: 'Middle School', order: 1 },
-  { id: 'gl-5', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '5ème', cycle: 'Middle School', order: 2 },
-  { id: 'gl-4', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '4ème', cycle: 'Middle School', order: 3 },
-  { id: 'gl-3', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '3ème', cycle: 'Middle School', order: 4 },
-  { id: 'gl-2', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '2nde', cycle: 'High School', order: 5 },
-  { id: 'gl-1', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: '1ère', cycle: 'High School', order: 6 },
-  { id: 'gl-t', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale', cycle: 'High School', order: 7 },
+  { id: 'gl-6', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Sixième', cycle: 'Collège', order: 1 },
+  { id: 'gl-5', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Cinquième', cycle: 'Collège', order: 2 },
+  { id: 'gl-4', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Quatrième', cycle: 'Collège', order: 3 },
+  { id: 'gl-3', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Troisième', cycle: 'Collège', order: 4 },
+  { id: 'gl-2nda', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde A', cycle: 'Lycée', order: 5 },
+  { id: 'gl-2', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde C', cycle: 'Lycée', order: 6 },
+  { id: 'gl-1era', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première A', cycle: 'Lycée', order: 7 },
+  { id: 'gl-1', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première C', cycle: 'Lycée', order: 8 },
+  { id: 'gl-1erd', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première D', cycle: 'Lycée', order: 9 },
+  { id: 'gl-tlea', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale A', cycle: 'Lycée', order: 10 },
+  { id: 'gl-t', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale C', cycle: 'Lycée', order: 11 },
+  { id: 'gl-tled', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale D', cycle: 'Lycée', order: 12 },
 ] as const satisfies readonly GradeLevelInput[]
 
 /** Daily template expanded into the Monday-Friday timetable grid. */

@@ -9,6 +9,7 @@ import {
   Guardian,
   RecordingInvitationDeliveryPort,
   RecordingNotificationGateway,
+  School,
   SchoolNotificationTemplates,
   StaffMember,
 } from '@edaya/core'
@@ -44,6 +45,9 @@ function createInvitationContext(options: {
   guardians?: Guardian[]
   teachers?: Teacher[]
   students?: Student[]
+  pendingOwnerStaffId?: string
+  ownerSubjectId?: string
+  extraSchools?: School[]
 } = {}) {
   const invitationDelivery = new RecordingInvitationDeliveryPort()
   const staffMember = new StaffMember({
@@ -61,10 +65,40 @@ function createInvitationContext(options: {
   const savedGuardians: Guardian[] = options.guardians ?? []
   const savedTeachers: Teacher[] = options.teachers ?? []
   const savedStudents: Student[] = options.students ?? []
+  const savedSchools: School[] = [
+    new School({
+      id: 'sch1',
+      name: 'Edaya School',
+      timeZone: 'Europe/Paris',
+      ...(options.pendingOwnerStaffId
+        ? { pendingOwnerStaffId: options.pendingOwnerStaffId }
+        : {}),
+      ...(options.ownerSubjectId ? { ownerSubjectId: options.ownerSubjectId } : {}),
+    }),
+  ]
+  if (options.extraSchools) {
+    savedSchools.push(...options.extraSchools)
+  }
 
   const mockRepos = {
     schools: {
-      findById: async (id: string) => id === 'sch1' ? { id: 'sch1' } : undefined,
+      findById: async (id: string) => savedSchools.find(entry => entry.id === id),
+      findOne: async (query: { ownerSubjectId?: string }) => {
+        if (query?.ownerSubjectId) {
+          return savedSchools.find(entry => entry.ownerSubjectId === query.ownerSubjectId)
+        }
+        return savedSchools[0]
+      },
+      save: async (entity: School) => {
+        const index = savedSchools.findIndex(entry => entry.id === entity.id)
+        if (index >= 0) {
+          savedSchools[index] = entity
+        }
+        else {
+          savedSchools.push(entity)
+        }
+      },
+      list: async () => [...savedSchools],
     },
     staffMembers: {
       findById: async (id: string) => savedStaff.find(entry => entry.id === id),
@@ -163,6 +197,7 @@ function createInvitationContext(options: {
     mockRepos,
     savedInvitations,
     savedStaff,
+    savedSchools,
     service,
     staffMember,
   }
@@ -456,6 +491,53 @@ describe('AccountInvitationServiceWorkflow', () => {
     await expect(service.accountInvitationWorkflow.revokeAccountInvitation({
       invitationId: invitation.id,
     })).rejects.toMatchObject({ code: 'INVITATION_ALREADY_ACCEPTED' })
+  })
+
+  test('acceptAccountInvitation assigns pending school owner and clears pending flag', async () => {
+    const { service, savedSchools } = createInvitationContext({
+      pendingOwnerStaffId: 'st9',
+    })
+
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    await service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'owner-subject-1',
+      contactEmail: 'p.martin@school.edu',
+    })
+
+    expect(savedSchools[0]?.ownerSubjectId).toBe('owner-subject-1')
+    expect(savedSchools[0]?.pendingOwnerStaffId).toBeUndefined()
+  })
+
+  test('acceptAccountInvitation rejects pending owner who already owns another school', async () => {
+    const { service } = createInvitationContext({
+      pendingOwnerStaffId: 'st9',
+      extraSchools: [
+        new School({
+          id: 'sch-other',
+          name: 'Other School',
+          timeZone: 'Europe/Paris',
+          ownerSubjectId: 'owner-subject-1',
+        }),
+      ],
+    })
+
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'owner-subject-1',
+      contactEmail: 'p.martin@school.edu',
+    })).rejects.toMatchObject({ code: 'OWNER_SUBJECT_ALREADY_ASSIGNED' })
   })
 })
 

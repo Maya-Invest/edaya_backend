@@ -54,6 +54,7 @@ export const CLEAR_TABLE_ORDER = [
   'attachments',
   'resources',
   'schools',
+  'consortiums',
 ] as const
 
 export async function clearAllTables(db: { execute: (query: unknown) => Promise<unknown> }): Promise<void> {
