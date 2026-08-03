@@ -948,19 +948,6 @@ export const clientBindings = {
         "responseSchemaName": "OnboardingProvisionResponse"
       }
     },
-    "consortium": {
-      "create": {
-        "method": "POST",
-        "path": "consortium/create",
-        "requestSchemaName": "CreateConsortiumRequest",
-        "responseSchemaName": "Consortium"
-      },
-      "mine": {
-        "method": "GET",
-        "path": "consortium/mine",
-        "responseSchemaName": "Consortium"
-      }
-    },
     "serviceAccounts": {
       "list": {
         "method": "GET",

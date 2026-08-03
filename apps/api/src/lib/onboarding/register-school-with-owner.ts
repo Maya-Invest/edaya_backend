@@ -4,8 +4,6 @@ import { createBootstrapStaffActorMetadata } from "@edaya/authorization";
 import type { School, SchoolType } from "@edaya/core";
 import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
-import { assertConsortiumOwner } from "@/lib/consortium/consortium-service";
-import { inviteSchoolOwner } from "@/lib/onboarding/invite-school-owner";
 
 export interface RegisterSchoolOwnerSession {
   user: {
@@ -27,12 +25,6 @@ export interface RegisterSchoolWithOwnerInput {
   ownerFirstName?: string;
   ownerLastName?: string;
   ownerEmail?: string;
-  consortiumId?: string;
-  /** When false, caller is linked as elevated staff via consortium but not school owner. */
-  assignAsSchoolOwner?: boolean;
-  /** Invite this email as designated school owner (forces assignAsSchoolOwner=false). */
-  ownerInviteEmail?: string;
-  inviteBaseUrl?: string;
 }
 
 export interface RegisterSchoolWithOwnerResult {
@@ -80,46 +72,9 @@ export async function registerSchoolWithOwner(
   input: RegisterSchoolWithOwnerInput,
 ): Promise<RegisterSchoolWithOwnerResult> {
   const subjectId = session.user.id;
-  const existingStaff = await application.repositories.staffMembers.findOne({ subjectId });
-
-  if (input.consortiumId) {
-    await assertConsortiumOwner(application.repositories, input.consortiumId, subjectId);
-  }
-
-  if (!existingStaff) {
-    await assertSubjectUnlinked(application.repositories, subjectId);
-  }
-  else if (!input.consortiumId) {
-    throw new BusinessRuleViolationError(
-      "SUBJECT_ALREADY_LINKED",
-      "This account is already linked to a school actor",
-    );
-  }
-  else {
-    const alreadyInSchool = await application.repositories.staffMembers.findOne({
-      subjectId,
-      schoolId: input.id,
-    });
-    if (alreadyInSchool) {
-      throw new BusinessRuleViolationError(
-        "SUBJECT_ALREADY_LINKED",
-        "This account is already linked to this school",
-      );
-    }
-  }
+  await assertSubjectUnlinked(application.repositories, subjectId);
 
   const schoolId = input.id ?? randomUUID();
-  const ownerInviteEmail = input.ownerInviteEmail?.trim().toLowerCase();
-  if (ownerInviteEmail && !input.consortiumId) {
-    throw new BusinessRuleViolationError(
-      "OWNER_INVITE_REQUIRES_CONSORTIUM",
-      "Owner invitation at registration is only available for schools in a school group",
-    );
-  }
-
-  const assignAsSchoolOwner = ownerInviteEmail
-    ? false
-    : (input.assignAsSchoolOwner ?? !existingStaff);
   const owner = input.ownerFirstName && input.ownerLastName
     ? {
         firstName: input.ownerFirstName,
@@ -141,58 +96,26 @@ export async function registerSchoolWithOwner(
     id: schoolId,
     name: input.name,
     timeZone: input.timeZone,
-    ...(assignAsSchoolOwner ? { ownerSubjectId: subjectId } : {}),
-    ...(input.consortiumId ? { consortiumId: input.consortiumId } : {}),
+    ownerSubjectId: subjectId,
     ...(input.type ? { type: input.type } : {}),
     ...(input.country ? { country: input.country } : {}),
     ...(input.city ? { city: input.city } : {}),
   });
 
-  const existingStaffInSchool = await application.repositories.staffMembers.findOne({
-    subjectId,
+  await service.setupWorkflow.registerStaffMember({
+    id: callerStaffId,
     schoolId,
+    firstName: owner.firstName,
+    lastName: owner.lastName,
+    subjectId,
+    ...(owner.email ? { email: owner.email } : {}),
   });
-  if (!existingStaffInSchool) {
-    await service.setupWorkflow.registerStaffMember({
-      id: callerStaffId,
-      schoolId,
-      firstName: owner.firstName,
-      lastName: owner.lastName,
-      subjectId,
-      ...(owner.email ? { email: owner.email } : {}),
-    });
-  }
-
-  if (ownerInviteEmail) {
-    if (!input.inviteBaseUrl) {
-      throw new BusinessRuleViolationError(
-        "INVITE_BASE_URL_MISSING",
-        "Invitation links are not configured for this environment",
-      );
-    }
-    const inviteActor = createBootstrapStaffActorMetadata({
-      schoolId,
-      requestId: input.requestId,
-      staffMemberId: existingStaffInSchool?.id ?? callerStaffId,
-      subjectId,
-    });
-    await inviteSchoolOwner(application, inviteActor, {
-      email: ownerInviteEmail,
-      inviteBaseUrl: input.inviteBaseUrl,
-    });
-  }
 
   const persistedSchool = await application.repositories.schools.findById(schoolId);
-  if (assignAsSchoolOwner && !persistedSchool?.ownerSubjectId) {
+  if (!persistedSchool?.ownerSubjectId) {
     throw new BusinessRuleViolationError(
       "ONBOARDING_OWNER_ASSIGNMENT_FAILED",
       "Failed to assign the caller as school owner",
-    );
-  }
-  if (ownerInviteEmail && !persistedSchool?.pendingOwnerStaffId) {
-    throw new BusinessRuleViolationError(
-      "ONBOARDING_OWNER_INVITE_FAILED",
-      "Failed to invite the designated school owner",
     );
   }
 

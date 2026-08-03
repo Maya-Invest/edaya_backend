@@ -36,7 +36,7 @@ describe('bulk CI population dataset', () => {
     expect(CI_LAST_NAMES).toContain(sampleStudent.lastName)
 
     const sampleClass = bulkCiClassGroups[0]!
-    expect(sampleClass.name).toMatch(/6ème — Groupe/)
+    expect(sampleClass.name).toMatch(/Sixième — Groupe/)
   })
 
   it('uses Ivorian phone prefixes and mail.ci domains for bulk guardians', () => {

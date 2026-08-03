@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, Consortium, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -15,7 +15,6 @@ import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permissio
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly authorization: DefaultAuthorizationRepository
-  public readonly consortiums: PostgresStore<Consortium>
   public readonly schoolsStore: PostgresStore<School>
   public readonly academicYears: PostgresStore<AcademicYear>
   public readonly academicPeriods: PostgresStore<AcademicPeriod>
@@ -77,7 +76,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
 
   constructor(private readonly db: any) {
     const stores = createEntityStores(db)
-    this.consortiums = stores.consortiums
+    // consortiums store remains registered in createEntityStores for schema init / legacy rows
     this.schoolsStore = stores.schoolsStore
     this.academicYears = stores.academicYears
     this.academicPeriods = stores.academicPeriods

@@ -62,6 +62,12 @@ const manualClientRoutes: Pick<
       requestSchemaName: "OnboardingInviteStaffMembersRequest",
       responseSchemaName: "OnboardingInviteStaffMembersResponse",
     },
+    provision: {
+      method: "POST",
+      path: "onboarding/provision",
+      requestSchemaName: "OnboardingProvisionRequest",
+      responseSchemaName: "OnboardingProvisionResponse",
+    },
   },
   files: {
     createUploadIntent: {

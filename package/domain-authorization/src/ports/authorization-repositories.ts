@@ -1,6 +1,5 @@
-import type { CoreEntityRepositories, Consortium, ServiceApiKeyRepository, BaseRepositoryInterface } from '@edaya/core'
+import type { CoreEntityRepositories, ServiceApiKeyRepository } from '@edaya/core'
 
 export type AuthorizationRepositories = CoreEntityRepositories & {
   readonly serviceApiKeys: ServiceApiKeyRepository
-  readonly consortiums?: BaseRepositoryInterface<Consortium>
 }

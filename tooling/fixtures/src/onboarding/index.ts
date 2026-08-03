@@ -42,4 +42,3 @@ export type {
   StructureTemplateReportCardStructure,
   StructureTemplateSubject,
 } from './types'
-

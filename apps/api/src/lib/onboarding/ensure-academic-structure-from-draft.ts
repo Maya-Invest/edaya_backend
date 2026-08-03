@@ -2,7 +2,6 @@ import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/authorization";
 import { AcademicPeriodType, BusinessRuleViolationError } from "@edaya/core";
 import { randomUUID } from "node:crypto";
-import { timeOnboardingPhase } from "./timing";
 
 export interface EnsureAcademicStructureFromDraftInput {
   schoolId: string;
@@ -100,14 +99,12 @@ export async function ensureAcademicStructureFromDraft(
   }
   else {
     yearId = randomUUID();
-    await timeOnboardingPhase("provision", "createAcademicYear", async () => {
-      await service.setupWorkflow.createAcademicYear({
-        id: yearId!,
-        schoolId: input.schoolId,
-        name: input.academicYearLabel.trim(),
-        startDate: parseDateOnly(input.academicYearStart),
-        endDate: parseDateOnly(input.academicYearEnd),
-      });
+    await service.setupWorkflow.createAcademicYear({
+      id: yearId,
+      schoolId: input.schoolId,
+      name: input.academicYearLabel.trim(),
+      startDate: parseDateOnly(input.academicYearStart),
+      endDate: parseDateOnly(input.academicYearEnd),
     });
     createdYear = true;
   }
@@ -127,34 +124,24 @@ export async function ensureAcademicStructureFromDraft(
   }
 
   const periodType = toPeriodType(input.periodType);
-  const createdPeriodIds = await timeOnboardingPhase(
-    "provision",
-    "createAcademicPeriods",
-    async () => {
-      const ids = input.periods.map(() => randomUUID());
-      await Promise.all(ids.map((periodId, index) => {
-        const period = input.periods[index]!;
-        return service.setupWorkflow.createAcademicPeriod({
-          id: periodId,
-          schoolId: input.schoolId,
-          academicYearId: yearId!,
-          name: period.label.trim(),
-          type: periodType,
-          startDate: parseDateOnly(period.start),
-          endDate: parseDateOnly(period.end),
-          isPublished: false,
-        });
-      }));
-      return ids;
-    },
-    { count: input.periods.length },
-  );
+  const createdPeriodIds = input.periods.map(() => randomUUID());
+  await Promise.all(createdPeriodIds.map((periodId, index) => {
+    const period = input.periods[index]!;
+    return service.setupWorkflow.createAcademicPeriod({
+      id: periodId,
+      schoolId: input.schoolId,
+      academicYearId: yearId,
+      name: period.label.trim(),
+      type: periodType,
+      startDate: parseDateOnly(period.start),
+      endDate: parseDateOnly(period.end),
+      isPublished: false,
+    });
+  }));
 
-  await timeOnboardingPhase("provision", "publishAcademicPeriods", async () => {
-    await Promise.all(createdPeriodIds.map(periodId =>
-      service.setupWorkflow.publishAcademicPeriod({ academicPeriodId: periodId }),
-    ));
-  }, { count: createdPeriodIds.length });
+  await Promise.all(createdPeriodIds.map(periodId =>
+    service.setupWorkflow.publishAcademicPeriod({ academicPeriodId: periodId }),
+  ));
 
   return {
     yearId,

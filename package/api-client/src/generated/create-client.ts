@@ -42,11 +42,6 @@ type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
   scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeRenderResponse'>>
 }
 
-type ConsortiumClients<TSchemas extends Record<string, unknown>> = {
-  create: (payload: SchemaName<TSchemas, 'CreateConsortiumRequest'>) => Promise<SchemaName<TSchemas, 'Consortium'>>
-  mine: () => Promise<SchemaName<TSchemas, 'Consortium'>>
-}
-
 type FilesClients<TSchemas extends Record<string, unknown>> = {
   createUploadIntent: (payload: SchemaName<TSchemas, 'CreateFileUploadIntentRequest'>) => Promise<SchemaName<TSchemas, 'CreateFileUploadIntentResponse'>>
   getDownloadUrl: (params: { attachmentId: string }) => Promise<SchemaName<TSchemas, 'FileDownloadUrlResponse'>>
@@ -85,7 +80,6 @@ export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   commands: CommandClients<TSchemas>
   queries: QueryClients<TSchemas>
   authorization: AuthorizationClients<TSchemas>
-  consortium: ConsortiumClients<TSchemas>
   files: FilesClients<TSchemas>
   onboarding: OnboardingClients<TSchemas>
   public: PublicClients<TSchemas>
@@ -136,10 +130,6 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     permissionCatalog: () => transport.request('GET', resolveClientRoutePath('authorization/permission-catalog')),
     scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope/render'), { body: payload }),
   } as AuthorizationClients<TSchemas>,
-    consortium: {
-    create: (payload: SchemaName<TSchemas, 'CreateConsortiumRequest'>) => transport.request('POST', resolveClientRoutePath('consortium/create'), { body: payload }),
-    mine: () => transport.request('GET', resolveClientRoutePath('consortium/mine')),
-  } as ConsortiumClients<TSchemas>,
     files: {
     createUploadIntent: (payload: SchemaName<TSchemas, 'CreateFileUploadIntentRequest'>) => transport.request('POST', resolveClientRoutePath('files/upload-intents'), { body: payload }),
     getDownloadUrl: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/download-url', params)),

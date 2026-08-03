@@ -16,7 +16,6 @@ import {
   resolveOnboardingAccountStatus,
 } from "@/lib/onboarding/onboarding-account-state";
 import { provisionOnboarding } from "@/lib/onboarding/provision-onboarding";
-import { timeOnboardingPhase } from "@/lib/onboarding/timing";
 import {
   isStructureTemplateId,
   listStructureTemplatesForCountry,
@@ -48,9 +47,6 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   ownerFirstName: z.string().trim().min(1).optional(),
   ownerLastName: z.string().trim().min(1).optional(),
   ownerEmail: z.string().trim().email().optional(),
-  consortiumId: z.string().trim().min(1).optional(),
-  assignAsSchoolOwner: z.boolean().optional(),
-  ownerInviteEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
 
 const structureTemplateReportCardDomainCategorySchema = z.object({
@@ -251,7 +247,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   }
 
   const body = c.req.valid("json");
-  if (c.get("actor") && !body.consortiumId) {
+  if (c.get("actor")) {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
@@ -272,10 +268,6 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerFirstName ? { ownerFirstName: body.ownerFirstName } : {}),
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
-      ...(body.consortiumId ? { consortiumId: body.consortiumId } : {}),
-      ...(body.assignAsSchoolOwner !== undefined ? { assignAsSchoolOwner: body.assignAsSchoolOwner } : {}),
-      ...(body.ownerInviteEmail ? { ownerInviteEmail: body.ownerInviteEmail } : {}),
-      inviteBaseUrl: resolveInviteBaseUrl(c.env),
       requestId,
     });
 
@@ -348,15 +340,13 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
   const body = c.req.valid("json");
 
   try {
-    const result = await timeOnboardingPhase("structure", "applyTemplateRoute", async () => {
-      return applyStructureTemplate(c.get("schoolApp"), actor, {
-        templates: body.templates,
-        ...(body.templateSnapshots
-          ? { templateSnapshots: body.templateSnapshots as StructureTemplateDefinition[] }
-          : {}),
-        levels: body.levels,
-      });
-    }, { levelCount: body.levels.length });
+    const result = await applyStructureTemplate(c.get("schoolApp"), actor, {
+      templates: body.templates,
+      ...(body.templateSnapshots
+        ? { templateSnapshots: body.templateSnapshots as StructureTemplateDefinition[] }
+        : {}),
+      levels: body.levels,
+    });
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
       maxReachedStep: 3,
     });
@@ -514,23 +504,21 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
   const allowPublicSchoolRegistration = shouldAllowPublicSchoolRegistration(c.env);
 
   try {
-    const result = await timeOnboardingPhase("provision", "route", async () => {
-      return provisionOnboarding(
-        c.get("schoolApp"),
-        session,
-        {
-          school: body.school,
-          structure: body.structure,
-          ...(body.invites ? { invites: body.invites } : {}),
-        },
-        {
-          requestId,
-          existingActor: c.get("actor") ?? undefined,
-          inviteBaseUrl: resolveInviteBaseUrl(c.env),
-          allowPublicSchoolRegistration,
-        },
-      );
-    });
+    const result = await provisionOnboarding(
+      c.get("schoolApp"),
+      session,
+      {
+        school: body.school,
+        structure: body.structure,
+        ...(body.invites ? { invites: body.invites } : {}),
+      },
+      {
+        requestId,
+        existingActor: c.get("actor") ?? undefined,
+        inviteBaseUrl: resolveInviteBaseUrl(c.env),
+        allowPublicSchoolRegistration,
+      },
+    );
     return c.json(result, HttpStatusCodes.OK);
   }
   catch (err) {

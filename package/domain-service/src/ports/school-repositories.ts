@@ -2,7 +2,6 @@ import type { AuthorizationRepository } from '@edaya/authorization'
 import type {
   AccountInvitationRepository,
   BaseRepositoryInterface,
-  Consortium,
   CoreEntityRepositories,
   School,
   SchoolNotificationTemplatesRepository,
@@ -17,7 +16,6 @@ export interface SchoolRepositories extends CoreEntityRepositories {
   readonly serviceApiKeys: ServiceApiKeyRepository
   readonly accountInvitations: AccountInvitationRepository
   readonly schoolNotificationTemplates: SchoolNotificationTemplatesRepository
-  readonly consortiums: BaseRepositoryInterface<Consortium>
   readonly schools: BaseRepositoryInterface<School> & {
     getOverdueFeeCount: (schoolId: string) => Promise<number>
     getPublishedReportCardCount: (schoolId: string) => Promise<number>

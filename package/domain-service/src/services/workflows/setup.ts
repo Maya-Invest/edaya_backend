@@ -139,7 +139,8 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
     await operationModule(PlatformOperations.registerSchool)(this.baseService.actor)
-    const school = new SchoolEntity(input)
+    const { consortiumId: _ignoredConsortiumId, ...schoolInput } = input
+    const school = new SchoolEntity(schoolInput)
     if (school.ownerSubjectId) {
       await this.validateOwnerSubject(school.id, school.ownerSubjectId)
     }

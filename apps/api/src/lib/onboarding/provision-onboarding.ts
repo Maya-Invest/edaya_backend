@@ -16,7 +16,6 @@ import type { InviteStaffMembersResult } from "./invite-staff-members";
 import { isOnboardingStaffInviteRoleKey } from "./staff-invite-roles";
 import type { OnboardingStaffInviteRoleKey } from "./staff-invite-roles";
 import { registerSchoolWithOwner } from "./register-school-with-owner";
-import { logOnboardingTiming } from "./timing";
 
 export interface ProvisionOnboardingSchoolInput {
   name: string;
@@ -40,7 +39,7 @@ export interface ProvisionOnboardingStructureInput {
     gradeLevelId: string;
     classCount: number;
     capacity: number;
-    classNamingMode?: 'alphabetical' | 'numerical';
+    classNamingMode?: "alphabetical" | "numerical";
   }>;
 }
 
@@ -151,23 +150,19 @@ export async function provisionOnboarding(
     allowPublicSchoolRegistration: boolean;
   },
 ): Promise<ProvisionOnboardingResult> {
-  const started = performance.now();
   const requestId = options.requestId ?? randomUUID();
   const phases: Array<{ phase: string; ms: number }> = [];
 
   const track = async <T>(
     phase: string,
     run: () => Promise<T>,
-    meta?: Record<string, string | number | boolean | null | undefined>,
   ): Promise<T> => {
     const phaseStarted = performance.now();
     try {
       return await run();
     }
     finally {
-      const ms = performance.now() - phaseStarted;
-      phases.push({ phase, ms });
-      logOnboardingTiming({ step: "provision", phase, ms, meta });
+      phases.push({ phase, ms: performance.now() - phaseStarted });
     }
   };
 
@@ -176,7 +171,6 @@ export async function provisionOnboarding(
 
   let schoolId: string;
   let actor: ActorMetadata;
-  let registeredSchool = false;
 
   if (options.existingActor?.kind === "staff" && options.existingActor.schoolId) {
     schoolId = options.existingActor.schoolId;
@@ -205,7 +199,6 @@ export async function provisionOnboarding(
         });
       });
       schoolId = registered.school.id;
-      registeredSchool = true;
       actor = await track("resolveOwnerActor", async () => {
         return resolveOwnerActorAfterRegister(application, session, schoolId, requestId);
       });
@@ -224,7 +217,6 @@ export async function provisionOnboarding(
         throw error;
       }
       schoolId = existingStaff.schoolId;
-      registeredSchool = false;
       actor = await track("resolveOwnerActor", async () => {
         return resolveOwnerActorAfterRegister(application, session, schoolId, requestId);
       });
@@ -249,9 +241,6 @@ export async function provisionOnboarding(
         templates,
         levels: input.structure.levels,
       });
-    }, {
-      levelCount: input.structure.levels.length,
-      templateCount: templates.length,
     });
   }
   catch (error) {
@@ -272,26 +261,11 @@ export async function provisionOnboarding(
       return inviteStaffMembers(application, actor, { invites }, {
         inviteBaseUrl: options.inviteBaseUrl,
       });
-    }, { inviteCount: invites.length });
+    });
   }
 
   const status = await track("completeWizard", async () => {
     return completeOnboardingWizard(application.repositories, actor);
-  });
-
-  logOnboardingTiming({
-    step: "provision",
-    phase: "total",
-    ms: performance.now() - started,
-    meta: {
-      schoolId,
-      registeredSchool,
-      yearId: academic.yearId,
-      createdYear: academic.createdYear,
-      createdPeriodCount: academic.createdPeriodCount,
-      structureApplied: structure !== null,
-      invitedCount: staff.invitedCount,
-    },
   });
 
   return {

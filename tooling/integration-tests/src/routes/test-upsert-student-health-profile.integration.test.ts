@@ -1,5 +1,5 @@
-import { ApiError } from '@maya-invest/edaya-api-client'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
+import { ApiError } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
 import { describeWithSeededSchool } from '../support/seeded-route-test-context'
