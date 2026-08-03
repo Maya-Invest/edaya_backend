@@ -1,12 +1,24 @@
 import { boolean, integer, jsonb, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from './postgres-indexes'
 
+// 0. Consortium (groupe scolaire) — parent of schools
+export const consortiums = pgTable('consortiums', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  country: text('country'),
+  ownerSubjectId: text('owner_subject_id').notNull(),
+  sharedRules: jsonb('shared_rules').notNull().default({ structureTemplateIds: [] }),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+})
+
 // 1. School Table
 export const schools = pgTable('schools', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   timeZone: text('time_zone').notNull(),
   ownerSubjectId: text('owner_subject_id'),
+  consortiumId: text('consortium_id'),
+  pendingOwnerStaffId: text('pending_owner_staff_id'),
   type: text('type'),
   country: text('country'),
   city: text('city'),

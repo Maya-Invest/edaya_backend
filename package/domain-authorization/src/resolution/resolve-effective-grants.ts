@@ -49,6 +49,17 @@ export async function tryResolveEffectiveGrantsFromPersistence(
     }
   }
 
+  if (school?.consortiumId && args.repositories.consortiums && staffMember.subjectId) {
+    const consortium = await args.repositories.consortiums.findById(school.consortiumId)
+    if (consortium?.ownerSubjectId === staffMember.subjectId) {
+      return {
+        permissions: new Set(ELEVATED_STAFF_PERMISSIONS),
+        scopeGrants: [],
+        isElevated: true,
+      }
+    }
+  }
+
   const academicYearId = args.academicYearId ?? await resolveDefaultStaffAcademicYearId(args)
   if (!academicYearId) {
     return undefined

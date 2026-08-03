@@ -46,6 +46,9 @@ const onboardingRegisterSchoolRequestSchema = z.object({
   ownerFirstName: z.string().trim().min(1).optional(),
   ownerLastName: z.string().trim().min(1).optional(),
   ownerEmail: z.string().trim().email().optional(),
+  consortiumId: z.string().trim().min(1).optional(),
+  assignAsSchoolOwner: z.boolean().optional(),
+  ownerInviteEmail: z.string().trim().email().optional(),
 }).openapi("OnboardingRegisterSchoolRequest");
 
 const structureTemplateReportCardDomainCategorySchema = z.object({
@@ -201,14 +204,14 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
     return unauthorizedResponse(c);
   }
 
-  if (c.get("actor")) {
+  const body = c.req.valid("json");
+  if (c.get("actor") && !body.consortiumId) {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
     ));
   }
 
-  const body = c.req.valid("json");
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
 
   try {
@@ -223,6 +226,10 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerFirstName ? { ownerFirstName: body.ownerFirstName } : {}),
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
+      ...(body.consortiumId ? { consortiumId: body.consortiumId } : {}),
+      ...(body.assignAsSchoolOwner !== undefined ? { assignAsSchoolOwner: body.assignAsSchoolOwner } : {}),
+      ...(body.ownerInviteEmail ? { ownerInviteEmail: body.ownerInviteEmail } : {}),
+      inviteBaseUrl: resolveInviteBaseUrl(c.env),
       requestId,
     });
 

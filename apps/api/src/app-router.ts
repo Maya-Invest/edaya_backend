@@ -35,6 +35,22 @@ import {
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
 import {
+  applyConsortiumSharedRulesHandler,
+  applyConsortiumSharedRulesRoute,
+  assignConsortiumSchoolOwnerHandler,
+  assignConsortiumSchoolOwnerRoute,
+  createConsortiumHandler,
+  createConsortiumRoute,
+  getConsortiumDashboardHandler,
+  getConsortiumDashboardRoute,
+  getMyConsortiumHandler,
+  getMyConsortiumRoute,
+  listConsortiumSchoolsHandler,
+  listConsortiumSchoolsRoute,
+  updateConsortiumSharedRulesHandler,
+  updateConsortiumSharedRulesRoute,
+} from "@/routes/consortium.routes";
+import {
   notificationDeliveryWebhookHandler,
   notificationDeliveryWebhookRoute,
 } from "@/routes/notification-delivery-webhook.routes";
@@ -98,6 +114,13 @@ router
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)
   .openapi(onboardingApplyStructureTemplateRoute, onboardingApplyStructureTemplateHandler)
   .openapi(onboardingCompleteWizardRoute, onboardingCompleteWizardHandler)
+  .openapi(createConsortiumRoute, createConsortiumHandler)
+  .openapi(getMyConsortiumRoute, getMyConsortiumHandler)
+  .openapi(listConsortiumSchoolsRoute, listConsortiumSchoolsHandler)
+  .openapi(getConsortiumDashboardRoute, getConsortiumDashboardHandler)
+  .openapi(updateConsortiumSharedRulesRoute, updateConsortiumSharedRulesHandler)
+  .openapi(applyConsortiumSharedRulesRoute, applyConsortiumSharedRulesHandler)
+  .openapi(assignConsortiumSchoolOwnerRoute, assignConsortiumSchoolOwnerHandler)
   .openapi(onboardingInviteStaffMembersRoute, onboardingInviteStaffMembersHandler)
   .openapi(createServiceAccountRoute, createServiceAccountHandler)
   .openapi(listServiceAccountsRoute, listServiceAccountsHandler)

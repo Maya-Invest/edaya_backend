@@ -160,6 +160,10 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       name: changes.name ?? existing.name,
       timeZone: changes.timeZone ?? existing.timeZone,
       ownerSubjectId,
+      consortiumId: existing.consortiumId,
+      pendingOwnerStaffId: changes.pendingOwnerStaffId === undefined
+        ? existing.pendingOwnerStaffId
+        : changes.pendingOwnerStaffId,
       type: changes.type === undefined ? existing.type : changes.type,
       country: changes.country === undefined ? existing.country : changes.country,
       city: changes.city === undefined ? existing.city : changes.city,
