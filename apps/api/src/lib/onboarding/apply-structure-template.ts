@@ -23,6 +23,7 @@ import {
 } from "./apply-report-cards-from-template";
 import type { AppliedStructureLevelSubjects } from "./apply-report-cards-from-template";
 import { ensureAcademicPeriodsFromTemplates } from "./ensure-academic-periods-from-template";
+import { timeOnboardingPhase } from "./timing";
 
 export interface ApplyStructureLevelInput {
   gradeLevelId: string;
@@ -213,12 +214,14 @@ export async function applyStructureTemplate(
 
   await service.baseService.atomicExecution.execute(async () => {
     const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()];
-    await ensureAcademicPeriodsFromTemplates(application, actor, {
-      schoolId,
-      academicYearId: academicYear.id,
-      academicYearStart: academicYear.startDate,
-      academicYearEnd: academicYear.endDate,
-      templates: uniqueTemplates,
+    await timeOnboardingPhase("structure", "ensurePeriods", async () => {
+      await ensureAcademicPeriodsFromTemplates(application, actor, {
+        schoolId,
+        academicYearId: academicYear.id,
+        academicYearStart: academicYear.startDate,
+        academicYearEnd: academicYear.endDate,
+        templates: uniqueTemplates,
+      });
     });
 
     const subjectIds = new Map<string, string>();
@@ -280,111 +283,121 @@ export async function applyStructureTemplate(
       return matterId;
     }
 
-    for (const level of levels) {
-      const gradeLevelDef = level.template.gradeLevels.find(entry => entry.code === level.levelCode);
-      if (!gradeLevelDef) {
-        continue;
-      }
-
-      const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId);
-      const gradeLevelId = await allocateUniqueId(
-        preferredGradeLevelId,
-        schoolId,
-        id => application.repositories.gradeLevels.findById(id),
-      );
-      gradeLevelCount += 1;
-
-      const wizardLabels = onboardingWizardGradeLevelLabels(level.gradeLevelId);
-      const gradeLevelName = wizardLabels?.name ?? gradeLevelDef.name;
-      const gradeLevelShortLabel = wizardLabels?.shortLabel ?? gradeLevelDef.shortLabel;
-
-      await service.baseService.entities.gradeLevels.save(new GradeLevel({
-        id: gradeLevelId,
-        schoolId,
-        name: gradeLevelName,
-        order: gradeLevelDef.order,
-        cycle: level.template.cycle,
-      }), { moduleChecked: true });
-
-      const entries = curriculumEntriesForLevel(level.template, level.levelCode);
-
-      for (const entry of entries) {
-        const subjectId = await ensureSubject(level.template, entry);
-        const gradeLevelSubjectId = randomUUID();
-
-        await service.academicsWorkflow.offerSubjectToGradeLevel({
-          id: gradeLevelSubjectId,
-          gradeLevelId,
-          academicYearId: academicYear.id,
-          subjectId,
-          coefficient: entry.coefficient,
-          isOptional: entry.isOptional,
-        });
-
-        for (const [matterIndex, matterName] of entry.matters.entries()) {
-          const matterId = await ensureMatter(
-            subjectId,
-            matterName,
-            matterIndex + 1,
-          );
-          await service.academicsWorkflow.assignMatterToGradeLevelSubject({
-            id: randomUUID(),
-            gradeLevelSubjectId,
-            subjectMatterId: matterId,
-            classSubjectMatterIdsByClassGroupId: undefined,
-          });
+    await timeOnboardingPhase("structure", "levelsSubjectsClasses", async () => {
+      for (const level of levels) {
+        const gradeLevelDef = level.template.gradeLevels.find(entry => entry.code === level.levelCode);
+        if (!gradeLevelDef) {
+          continue;
         }
 
-        classSubjectCount += level.classCount;
-      }
-
-      appliedLevels.push({
-        template: level.template,
-        levelCode: level.levelCode,
-        gradeLevelId,
-        gradeLevelName,
-        gradeLevelShortLabel,
-        subjects: collectLevelSubjects(
-          level.template,
-          level.levelCode,
-          entries,
-          entry => subjectIds.get(catalogSubjectKey(entry)),
-        ),
-      });
-
-      for (let index = 0; index < level.classCount; index += 1) {
-        const preferredClassGroupId = nextOnboardingClassGroupId(
-          level.gradeLevelId,
-          usedClassGroupIds,
-          classSiblingCountByGradeSeed,
-        );
-        const classGroupId = await allocateUniqueId(
-          preferredClassGroupId,
+        const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId);
+        const gradeLevelId = await allocateUniqueId(
+          preferredGradeLevelId,
           schoolId,
-          id => application.repositories.classGroups.findById(id),
+          id => application.repositories.gradeLevels.findById(id),
         );
-        usedClassGroupIds.add(classGroupId);
-        classGroupCount += 1;
+        gradeLevelCount += 1;
 
-        await service.setupWorkflow.createClassGroup({
-          id: classGroupId,
+        const wizardLabels = onboardingWizardGradeLevelLabels(level.gradeLevelId);
+        const gradeLevelName = wizardLabels?.name ?? gradeLevelDef.name;
+        const gradeLevelShortLabel = wizardLabels?.shortLabel ?? gradeLevelDef.shortLabel;
+
+        await service.baseService.entities.gradeLevels.save(new GradeLevel({
+          id: gradeLevelId,
           schoolId,
-          academicYearId: academicYear.id,
+          name: gradeLevelName,
+          order: gradeLevelDef.order,
+          cycle: level.template.cycle,
+        }), { moduleChecked: true });
+
+        const entries = curriculumEntriesForLevel(level.template, level.levelCode);
+
+        for (const entry of entries) {
+          const subjectId = await ensureSubject(level.template, entry);
+          const gradeLevelSubjectId = randomUUID();
+
+          await service.academicsWorkflow.offerSubjectToGradeLevel({
+            id: gradeLevelSubjectId,
+            gradeLevelId,
+            academicYearId: academicYear.id,
+            subjectId,
+            coefficient: entry.coefficient,
+            isOptional: entry.isOptional,
+          });
+
+          const matterIds = [];
+          for (const [matterIndex, matterName] of entry.matters.entries()) {
+            matterIds.push(await ensureMatter(
+              subjectId,
+              matterName,
+              matterIndex + 1,
+            ));
+          }
+          await Promise.all(matterIds.map(matterId =>
+            service.academicsWorkflow.assignMatterToGradeLevelSubject({
+              id: randomUUID(),
+              gradeLevelSubjectId,
+              subjectMatterId: matterId,
+              classSubjectMatterIdsByClassGroupId: undefined,
+            }),
+          ));
+
+          classSubjectCount += level.classCount;
+        }
+
+        appliedLevels.push({
+          template: level.template,
+          levelCode: level.levelCode,
           gradeLevelId,
-          name: onboardingWizardClassDisplayName(level.gradeLevelId, index)
-            ?? classDisplayName(level.template, level.levelCode, index),
-          capacity: level.capacity,
+          gradeLevelName,
+          gradeLevelShortLabel,
+          subjects: collectLevelSubjects(
+            level.template,
+            level.levelCode,
+            entries,
+            entry => subjectIds.get(catalogSubjectKey(entry)),
+          ),
         });
+
+        for (let index = 0; index < level.classCount; index += 1) {
+          const preferredClassGroupId = nextOnboardingClassGroupId(
+            level.gradeLevelId,
+            usedClassGroupIds,
+            classSiblingCountByGradeSeed,
+          );
+          const classGroupId = await allocateUniqueId(
+            preferredClassGroupId,
+            schoolId,
+            id => application.repositories.classGroups.findById(id),
+          );
+          usedClassGroupIds.add(classGroupId);
+          classGroupCount += 1;
+
+          await service.setupWorkflow.createClassGroup({
+            id: classGroupId,
+            schoolId,
+            academicYearId: academicYear.id,
+            gradeLevelId,
+            name: onboardingWizardClassDisplayName(level.gradeLevelId, index)
+              ?? classDisplayName(level.template, level.levelCode, index),
+            capacity: level.capacity,
+          });
+        }
       }
-    }
+    }, {
+      levelCount: levels.length,
+      classGroupCount,
+    });
 
     subjectCount = subjectIds.size;
 
-    const reportCardCounts = await applyReportCardsFromTemplate(application, actor, {
-      schoolId,
-      academicYearId: academicYear.id,
-      levels: appliedLevels,
-    });
+    const reportCardCounts = await timeOnboardingPhase("structure", "reportCards", async () => {
+      return applyReportCardsFromTemplate(application, actor, {
+        schoolId,
+        academicYearId: academicYear.id,
+        levels: appliedLevels,
+      });
+    }, { levelCount: appliedLevels.length });
     gradeScaleCount = reportCardCounts.gradeScaleCount;
     reportCardDefinitionCount = reportCardCounts.reportCardDefinitionCount;
     reportCardSectionCount = reportCardCounts.reportCardSectionCount;

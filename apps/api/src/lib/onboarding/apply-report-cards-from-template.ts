@@ -148,10 +148,8 @@ async function createSubjectChildren(
   parentSectionId: string,
   subjects: AppliedStructureLevelSubjects["subjects"],
 ): Promise<number> {
-  let created = 0;
-  for (const [subjectIndex, subject] of subjects.entries()) {
-    created += 1;
-    await service.assessmentsWorkflow.createReportCardDefinitionSection({
+  await Promise.all(subjects.map((subject, subjectIndex) =>
+    service.assessmentsWorkflow.createReportCardDefinitionSection({
       id: randomUUID(),
       reportCardDefinitionId: definitionId,
       name: subject.subjectCode,
@@ -160,9 +158,9 @@ async function createSubjectChildren(
       weight: subject.coefficient > 0 ? subject.coefficient : 1,
       parentSectionId,
       subjectId: subject.subjectId,
-    });
-  }
-  return created;
+    }),
+  ));
+  return subjects.length;
 }
 
 async function applySectionsFromTemplate(
