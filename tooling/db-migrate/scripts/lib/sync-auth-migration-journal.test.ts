@@ -1,20 +1,23 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'bun:test'
 import postgres from 'postgres'
 import { syncAuthMigrationJournalTimestamps } from './sync-auth-migration-journal'
 
+/* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 
 describe('syncAuthMigrationJournalTimestamps', () => {
   test('rewrites auth created_at when journal when was bumped after apply', async () => {
-    if (process.env.EDAYA_TEST_STAGING_MIGRATE !== '1') {
+    if (process.env['EDAYA_TEST_STAGING_MIGRATE'] !== '1') {
       return
     }
 
-    const databaseUrl = process.env.STAGING_DATABASE_URL
+    const databaseUrl = process.env['STAGING_DATABASE_URL']
     if (!databaseUrl) {
       throw new Error('STAGING_DATABASE_URL is required when EDAYA_TEST_STAGING_MIGRATE=1')
     }
