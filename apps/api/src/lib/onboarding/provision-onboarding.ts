@@ -236,12 +236,13 @@ export async function provisionOnboarding(
 
   let structure: ApplyStructureTemplateResult | null = null;
   try {
-    structure = await track("applyStructureTemplate", async () => {
-      return applyStructureTemplate(application, actor, {
-        templates,
-        levels: input.structure.levels,
-      });
+    structure = await applyStructureTemplate(application, actor, {
+      templates,
+      levels: input.structure.levels,
     });
+    for (const phase of structure.phases) {
+      phases.push(phase);
+    }
   }
   catch (error) {
     if (

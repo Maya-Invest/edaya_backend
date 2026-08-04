@@ -1,6 +1,12 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/authorization";
-import { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from "@edaya/core";
+import {
+  ReportCardDefinitionKind,
+  ReportCardDefinitionSection,
+  ReportCardDefinitionSectionKind,
+  ReportCardDefinitionSectionRole,
+  ReportCardDefinitionStatus,
+} from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import type {
   StructureTemplateCurriculumEntry,
@@ -142,14 +148,14 @@ function subjectByCode(
   return new Map(level.subjects.map(subject => [subject.subjectCode, subject]));
 }
 
-async function createSubjectChildren(
-  service: ReturnType<ApiSchoolApplication["forActor"]>,
+function pushSubjectChildren(
+  sections: ReportCardDefinitionSection[],
   definitionId: string,
   parentSectionId: string,
   subjects: AppliedStructureLevelSubjects["subjects"],
-): Promise<number> {
-  await Promise.all(subjects.map((subject, subjectIndex) =>
-    service.assessmentsWorkflow.createReportCardDefinitionSection({
+): number {
+  for (const [subjectIndex, subject] of subjects.entries()) {
+    sections.push(new ReportCardDefinitionSection({
       id: randomUUID(),
       reportCardDefinitionId: definitionId,
       name: subject.subjectCode,
@@ -158,27 +164,26 @@ async function createSubjectChildren(
       weight: subject.coefficient > 0 ? subject.coefficient : 1,
       parentSectionId,
       subjectId: subject.subjectId,
-    }),
-  ));
+    }));
+  }
   return subjects.length;
 }
 
-async function applySectionsFromTemplate(
-  service: ReturnType<ApiSchoolApplication["forActor"]>,
+function buildSectionsFromTemplate(
   level: AppliedStructureLevelSubjects,
   structure: StructureTemplateReportCardStructure,
   definitionId: string,
-  sections: StructureTemplateReportCardSection[],
-): Promise<number> {
+  templateSections: StructureTemplateReportCardSection[],
+): ReportCardDefinitionSection[] {
   const byCode = subjectByCode(level);
   const assigned = new Set<string>();
   let sectionOrder = 1;
-  let reportCardSectionCount = 0;
-  const autresSection = sections.find(
+  const sections: ReportCardDefinitionSection[] = [];
+  const autresSection = templateSections.find(
     section => section.role === "subjects" && section.label.toLowerCase().includes("autres"),
   );
 
-  for (const section of [...sections].sort((a, b) => a.order - b.order)) {
+  for (const section of [...templateSections].sort((a, b) => a.order - b.order)) {
     if (section.role === "subjects") {
       const orderedCodes = section.subjectCodes ?? [];
       const members = orderedCodes
@@ -189,7 +194,6 @@ async function applySectionsFromTemplate(
         assigned.add(member.subjectCode);
       }
 
-      // Catch-all leftovers into "Bilan autres"
       if (autresSection && section.label === autresSection.label) {
         for (const subject of level.subjects) {
           if (!assigned.has(subject.subjectCode)) {
@@ -204,8 +208,7 @@ async function applySectionsFromTemplate(
       }
 
       const groupSectionId = randomUUID();
-      reportCardSectionCount += 1;
-      await service.assessmentsWorkflow.createReportCardDefinitionSection({
+      sections.push(new ReportCardDefinitionSection({
         id: groupSectionId,
         reportCardDefinitionId: definitionId,
         name: section.label,
@@ -214,15 +217,14 @@ async function applySectionsFromTemplate(
         coefficient: 1,
         order: sectionOrder,
         weight: members.reduce((sum, subject) => sum + subject.coefficient, 0) || members.length,
-      });
+      }));
       sectionOrder += 1;
-      reportCardSectionCount += await createSubjectChildren(service, definitionId, groupSectionId, members);
+      pushSubjectChildren(sections, definitionId, groupSectionId, members);
       continue;
     }
 
     if (section.role === "summary") {
-      reportCardSectionCount += 1;
-      await service.assessmentsWorkflow.createReportCardDefinitionSection({
+      sections.push(new ReportCardDefinitionSection({
         id: randomUUID(),
         reportCardDefinitionId: definitionId,
         name: section.label,
@@ -230,14 +232,13 @@ async function applySectionsFromTemplate(
         role: ReportCardDefinitionSectionRole.Summary,
         order: sectionOrder,
         weight: 1,
-      });
+      }));
       sectionOrder += 1;
       continue;
     }
 
     if (section.role === "comments") {
-      reportCardSectionCount += 1;
-      await service.assessmentsWorkflow.createReportCardDefinitionSection({
+      sections.push(new ReportCardDefinitionSection({
         id: randomUUID(),
         reportCardDefinitionId: definitionId,
         name: section.label,
@@ -245,17 +246,15 @@ async function applySectionsFromTemplate(
         role: ReportCardDefinitionSectionRole.Comments,
         order: sectionOrder,
         weight: 1,
-      });
+      }));
       sectionOrder += 1;
     }
   }
 
-  // Any remaining subjects if no "autres" section exists
   if (!autresSection) {
     const leftovers = level.subjects.filter(subject => !assigned.has(subject.subjectCode));
     for (const subject of leftovers) {
-      reportCardSectionCount += 1;
-      await service.assessmentsWorkflow.createReportCardDefinitionSection({
+      sections.push(new ReportCardDefinitionSection({
         id: randomUUID(),
         reportCardDefinitionId: definitionId,
         name: subject.subjectCode,
@@ -263,23 +262,22 @@ async function applySectionsFromTemplate(
         order: sectionOrder,
         weight: subject.coefficient > 0 ? subject.coefficient : 1,
         subjectId: subject.subjectId,
-      });
+      }));
       sectionOrder += 1;
     }
   }
 
-  return reportCardSectionCount;
+  return sections;
 }
 
-async function applyDomainCategoriesFallback(
-  service: ReturnType<ApiSchoolApplication["forActor"]>,
+function buildDomainCategoriesFallbackSections(
   level: AppliedStructureLevelSubjects,
   structure: StructureTemplateReportCardStructure,
   definitionId: string,
-): Promise<number> {
+): ReportCardDefinitionSection[] {
   const groupedSubjects = subjectsByDomain(level, structure);
   let sectionOrder = 1;
-  let reportCardSectionCount = 0;
+  const sections: ReportCardDefinitionSection[] = [];
 
   for (const category of [...(structure.domainCategories ?? [])].sort((a, b) => a.order - b.order)) {
     const domainSubjects = groupedSubjects.get(category.domain) ?? [];
@@ -288,9 +286,7 @@ async function applyDomainCategoriesFallback(
     }
 
     const groupSectionId = randomUUID();
-    reportCardSectionCount += 1;
-
-    await service.assessmentsWorkflow.createReportCardDefinitionSection({
+    sections.push(new ReportCardDefinitionSection({
       id: groupSectionId,
       reportCardDefinitionId: definitionId,
       name: category.label,
@@ -299,15 +295,13 @@ async function applyDomainCategoriesFallback(
       coefficient: category.coefficient ?? 1,
       order: sectionOrder,
       weight: category.weight ?? domainSubjects.length,
-    });
+    }));
     sectionOrder += 1;
-
-    reportCardSectionCount += await createSubjectChildren(service, definitionId, groupSectionId, domainSubjects);
+    pushSubjectChildren(sections, definitionId, groupSectionId, domainSubjects);
   }
 
   if (structure.includeSummary !== false) {
-    reportCardSectionCount += 1;
-    await service.assessmentsWorkflow.createReportCardDefinitionSection({
+    sections.push(new ReportCardDefinitionSection({
       id: randomUUID(),
       reportCardDefinitionId: definitionId,
       name: structure.periods.length > 2 ? "Synthèse trimestrielle" : "Synthèse semestrielle",
@@ -315,13 +309,12 @@ async function applyDomainCategoriesFallback(
       role: ReportCardDefinitionSectionRole.Summary,
       order: sectionOrder,
       weight: 1,
-    });
+    }));
     sectionOrder += 1;
   }
 
   if (structure.includeComments !== false) {
-    reportCardSectionCount += 1;
-    await service.assessmentsWorkflow.createReportCardDefinitionSection({
+    sections.push(new ReportCardDefinitionSection({
       id: randomUUID(),
       reportCardDefinitionId: definitionId,
       name: "Appréciations",
@@ -329,10 +322,10 @@ async function applyDomainCategoriesFallback(
       role: ReportCardDefinitionSectionRole.Comments,
       order: sectionOrder,
       weight: 1,
-    });
+    }));
   }
 
-  return reportCardSectionCount;
+  return sections;
 }
 
 export async function applyReportCardsFromTemplate(
@@ -343,7 +336,7 @@ export async function applyReportCardsFromTemplate(
   const service = application.forActor(actor);
   const gradeScaleByTemplateId = new Map<string, string>();
   let reportCardDefinitionCount = 0;
-  let reportCardSectionCount = 0;
+  const allSections: ReportCardDefinitionSection[] = [];
 
   for (const level of input.levels) {
     const gradeLevel = level.template.gradeLevels.find(entry => entry.code === level.levelCode);
@@ -377,28 +370,30 @@ export async function applyReportCardsFromTemplate(
     });
 
     if (structure.sections?.length) {
-      reportCardSectionCount += await applySectionsFromTemplate(
-        service,
+      allSections.push(...buildSectionsFromTemplate(
         level,
         structure,
         definitionId,
         structure.sections,
-      );
+      ));
     }
     else {
-      reportCardSectionCount += await applyDomainCategoriesFallback(
-        service,
+      allSections.push(...buildDomainCategoriesFallbackSections(
         level,
         structure,
         definitionId,
-      );
+      ));
     }
+  }
+
+  if (allSections.length > 0) {
+    await application.repositories.sections.batchSave(allSections);
   }
 
   return {
     gradeScaleCount: gradeScaleByTemplateId.size,
     reportCardDefinitionCount,
-    reportCardSectionCount,
+    reportCardSectionCount: allSections.length,
   };
 }
 

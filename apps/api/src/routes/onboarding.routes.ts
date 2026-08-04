@@ -350,7 +350,8 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
       maxReachedStep: 3,
     });
-    return c.json(result, HttpStatusCodes.OK);
+    const { phases: _phases, ...summary } = result;
+    return c.json(summary, HttpStatusCodes.OK);
   }
   catch (err) {
     return routeErrorResponse(c, err);

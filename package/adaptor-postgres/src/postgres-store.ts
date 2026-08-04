@@ -115,16 +115,16 @@ implements BaseRepositoryInterface<T> {
       return []
     }
     const client = this.getClient()
-    for (const entity of entities) {
+    await Promise.all(entities.map((entity) => {
       const row = this.toRow(entity)
-      await client
+      return client
         .insert(this.table)
         .values(row)
         .onConflictDoUpdate({
           target: this.table.id,
           set: row,
         })
-    }
+    }))
     return entities.map(e => e.id)
   }
 
