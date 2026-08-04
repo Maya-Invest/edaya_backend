@@ -1,6 +1,20 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/authorization";
-import { BusinessRuleViolationError, GradeLevel, Subject, SubjectCategory, SubjectColor, SubjectMatter } from "@edaya/core";
+import { AcademicsOperations, operationModule } from "@edaya/authorization";
+import {
+  BusinessRuleViolationError,
+  ClassGroup,
+  ClassSubject,
+  ClassSubjectMatter,
+  ClassSubjectMatterStatus,
+  GradeLevel,
+  GradeLevelSubject,
+  GradeLevelSubjectMatter,
+  Subject,
+  SubjectCategory,
+  SubjectColor,
+  SubjectMatter,
+} from "@edaya/core";
 import { randomUUID } from "node:crypto";
 import {
   classDisplayName,
@@ -43,7 +57,29 @@ export interface ApplyStructureTemplateResult {
   gradeScaleCount: number;
   reportCardDefinitionCount: number;
   reportCardSectionCount: number;
+  phases: Array<{ phase: string; ms: number }>;
 }
+
+export interface StructureBootstrapGraph {
+  gradeLevels: GradeLevel[];
+  subjects: Subject[];
+  subjectMatters: SubjectMatter[];
+  gradeLevelSubjects: GradeLevelSubject[];
+  gradeLevelSubjectMatters: GradeLevelSubjectMatter[];
+  classGroups: ClassGroup[];
+  classSubjects: ClassSubject[];
+  classSubjectMatters: ClassSubjectMatter[];
+  appliedLevels: AppliedStructureLevelSubjects[];
+  gradeLevelCount: number;
+  classGroupCount: number;
+  subjectCount: number;
+  classSubjectCount: number;
+}
+
+type NormalizedStructureLevel = ApplyStructureLevelInput & {
+  template: StructureTemplateDefinition;
+  levelCode: string;
+};
 
 const DOMAIN_TO_CATEGORY: Record<string, SubjectCategory> = {
   "Sciences": SubjectCategory.Scientific,
@@ -81,7 +117,7 @@ function catalogSubjectName(
   return entry.longName ?? subject.shortName;
 }
 
-function curriculumEntriesForLevel(
+export function curriculumEntriesForLevel(
   template: StructureTemplateDefinition,
   levelCode: string,
 ): StructureTemplateCurriculumEntry[] {
@@ -100,7 +136,7 @@ function curriculumEntriesForLevel(
 function parseStructureInput(
   input: ApplyStructureTemplateInput,
   templates: StructureTemplateDefinition[],
-): Array<ApplyStructureLevelInput & { template: StructureTemplateDefinition; levelCode: string }> {
+): NormalizedStructureLevel[] {
   if (!input.templates.length) {
     throw new BusinessRuleViolationError(
       "STRUCTURE_TEMPLATE_REQUIRED",
@@ -113,7 +149,7 @@ function parseStructureInput(
     templates.flatMap(template => template.gradeLevels.map(level => level.id)),
   );
 
-  const normalized: Array<ApplyStructureLevelInput & { template: StructureTemplateDefinition; levelCode: string }> = [];
+  const normalized: NormalizedStructureLevel[] = [];
   for (const level of input.levels) {
     const parsed = parseGradeLevelTemplateId(level.gradeLevelId);
     if (!parsed || !allowedLevelIds.has(level.gradeLevelId)) {
@@ -173,6 +209,256 @@ async function allocateUniqueId(
   return `${preferredId}--${schoolId.slice(0, 8)}`;
 }
 
+export async function buildStructureBootstrapGraph(
+  application: ApiSchoolApplication,
+  schoolId: string,
+  academicYearId: string,
+  levels: NormalizedStructureLevel[],
+): Promise<StructureBootstrapGraph> {
+  const gradeLevels: GradeLevel[] = [];
+  const subjects: Subject[] = [];
+  const subjectMatters: SubjectMatter[] = [];
+  const gradeLevelSubjects: GradeLevelSubject[] = [];
+  const gradeLevelSubjectMatters: GradeLevelSubjectMatter[] = [];
+  const classGroups: ClassGroup[] = [];
+  const classSubjects: ClassSubject[] = [];
+  const classSubjectMatters: ClassSubjectMatter[] = [];
+  const appliedLevels: AppliedStructureLevelSubjects[] = [];
+
+  const subjectIds = new Map<string, string>();
+  const matterIdsByKey = new Map<string, string>();
+  const usedClassGroupIds = new Set<string>();
+  const classSiblingCountByGradeSeed = new Map<string, number>();
+
+  function ensureSubject(
+    template: StructureTemplateDefinition,
+    entry: StructureTemplateCurriculumEntry,
+  ): string {
+    const catalogKey = catalogSubjectKey(entry);
+    const existing = subjectIds.get(catalogKey);
+    if (existing) {
+      return existing;
+    }
+    const subject = template.subjects.find(item => item.code === entry.subjectCode);
+    if (!subject) {
+      throw new BusinessRuleViolationError(
+        "STRUCTURE_SUBJECT_UNKNOWN",
+        `Unknown subject code ${entry.subjectCode}`,
+      );
+    }
+    const subjectId = randomUUID();
+    subjectIds.set(catalogKey, subjectId);
+    subjects.push(new Subject({
+      id: subjectId,
+      schoolId,
+      name: catalogSubjectName(subject, entry),
+      shortName: subject.shortName,
+      code: subject.code,
+      defaultCoefficient: entry.coefficient ?? subject.defaultCoefficient,
+      category: subjectCategory(subject.domain),
+      color: subjectColor(subject.domain),
+    }));
+    return subjectId;
+  }
+
+  function ensureMatter(
+    subjectId: string,
+    matterName: string,
+    sequenceOrder: number,
+  ): string {
+    const key = `${subjectId}::${matterName}`;
+    const existing = matterIdsByKey.get(key);
+    if (existing) {
+      return existing;
+    }
+    const matterId = randomUUID();
+    matterIdsByKey.set(key, matterId);
+    subjectMatters.push(new SubjectMatter({
+      id: matterId,
+      subjectId,
+      name: matterName,
+      description: matterName,
+      sequenceOrder,
+      estimatedHours: 2,
+    }));
+    return matterId;
+  }
+
+  let classSubjectCount = 0;
+
+  for (const level of levels) {
+    const gradeLevelDef = level.template.gradeLevels.find(entry => entry.code === level.levelCode);
+    if (!gradeLevelDef) {
+      continue;
+    }
+
+    const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId);
+    const gradeLevelId = await allocateUniqueId(
+      preferredGradeLevelId,
+      schoolId,
+      id => application.repositories.gradeLevels.findById(id),
+    );
+
+    const classNamingMode = level.classNamingMode ?? "numerical";
+    gradeLevels.push(new GradeLevel({
+      id: gradeLevelId,
+      schoolId,
+      name: gradeLevelDef.name,
+      order: gradeLevelDef.order,
+      cycle: level.template.cycle,
+    }));
+
+    const entries = curriculumEntriesForLevel(level.template, level.levelCode);
+    const levelGlSubjects: Array<{
+      gradeLevelSubject: GradeLevelSubject;
+      matterIds: string[];
+    }> = [];
+
+    for (const entry of entries) {
+      const subjectId = ensureSubject(level.template, entry);
+      const gradeLevelSubjectId = randomUUID();
+      const gradeLevelSubject = new GradeLevelSubject({
+        id: gradeLevelSubjectId,
+        gradeLevelId,
+        academicYearId,
+        subjectId,
+        coefficient: entry.coefficient,
+        isOptional: entry.isOptional ?? false,
+      });
+      gradeLevelSubjects.push(gradeLevelSubject);
+
+      const matterIds: string[] = [];
+      for (const [matterIndex, matterName] of entry.matters.entries()) {
+        const matterId = ensureMatter(subjectId, matterName, matterIndex + 1);
+        matterIds.push(matterId);
+        gradeLevelSubjectMatters.push(new GradeLevelSubjectMatter({
+          id: randomUUID(),
+          gradeLevelSubjectId,
+          subjectMatterId: matterId,
+        }));
+      }
+      levelGlSubjects.push({ gradeLevelSubject, matterIds });
+      classSubjectCount += level.classCount;
+    }
+
+    appliedLevels.push({
+      template: level.template,
+      levelCode: level.levelCode,
+      gradeLevelId,
+      gradeLevelName: gradeLevelDef.name,
+      gradeLevelShortLabel: gradeLevelDef.code,
+      subjects: collectLevelSubjects(
+        level.template,
+        level.levelCode,
+        entries,
+        entry => subjectIds.get(catalogSubjectKey(entry)),
+      ),
+    });
+
+    for (let index = 0; index < level.classCount; index += 1) {
+      const preferredClassGroupId = nextOnboardingClassGroupId(
+        level.gradeLevelId,
+        usedClassGroupIds,
+        classSiblingCountByGradeSeed,
+      );
+      const classGroupId = await allocateUniqueId(
+        preferredClassGroupId,
+        schoolId,
+        id => application.repositories.classGroups.findById(id),
+      );
+      usedClassGroupIds.add(classGroupId);
+
+      classGroups.push(new ClassGroup({
+        id: classGroupId,
+        schoolId,
+        academicYearId,
+        gradeLevelId,
+        name: classDisplayName(
+          level.template,
+          level.levelCode,
+          index,
+          classNamingMode,
+        ),
+        capacity: level.capacity,
+      }));
+
+      for (const { gradeLevelSubject, matterIds } of levelGlSubjects) {
+        const classSubjectId = randomUUID();
+        classSubjects.push(new ClassSubject({
+          id: classSubjectId,
+          classGroupId,
+          subjectId: gradeLevelSubject.subjectId,
+          gradeLevelSubjectId: gradeLevelSubject.id,
+          coefficient: gradeLevelSubject.coefficient,
+          periodsPerWeek: gradeLevelSubject.periodsPerWeek,
+          minPeriodSpan: gradeLevelSubject.minPeriodSpan,
+          maxPeriodSpan: gradeLevelSubject.maxPeriodSpan,
+          completedPercentage: 0,
+          isOffered: !gradeLevelSubject.isOptional,
+        }));
+
+        for (const matterId of matterIds) {
+          classSubjectMatters.push(new ClassSubjectMatter({
+            id: randomUUID(),
+            classSubjectId,
+            subjectMatterId: matterId,
+            status: ClassSubjectMatterStatus.NotStarted,
+            completedPercentage: 0,
+          }));
+        }
+      }
+    }
+  }
+
+  return {
+    gradeLevels,
+    subjects,
+    subjectMatters,
+    gradeLevelSubjects,
+    gradeLevelSubjectMatters,
+    classGroups,
+    classSubjects,
+    classSubjectMatters,
+    appliedLevels,
+    gradeLevelCount: gradeLevels.length,
+    classGroupCount: classGroups.length,
+    subjectCount: subjects.length,
+    classSubjectCount,
+  };
+}
+
+export async function persistStructureBootstrapGraph(
+  application: ApiSchoolApplication,
+  actor: ActorMetadata,
+  graph: StructureBootstrapGraph,
+): Promise<void> {
+  await operationModule(AcademicsOperations.programUpdate)(actor);
+  await persistCurriculumEntities(application, graph);
+  await persistClassMirrorEntities(application, graph);
+}
+
+async function persistCurriculumEntities(
+  application: ApiSchoolApplication,
+  graph: StructureBootstrapGraph,
+): Promise<void> {
+  const repos = application.repositories;
+  await repos.gradeLevels.batchSave(graph.gradeLevels);
+  await repos.subjects.batchSave(graph.subjects);
+  await repos.subjectMatters.batchSave(graph.subjectMatters);
+  await repos.gradeLevelSubjects.batchSave(graph.gradeLevelSubjects);
+  await repos.gradeLevelSubjectMatters.batchSave(graph.gradeLevelSubjectMatters);
+}
+
+async function persistClassMirrorEntities(
+  application: ApiSchoolApplication,
+  graph: StructureBootstrapGraph,
+): Promise<void> {
+  const repos = application.repositories;
+  await repos.classGroups.batchSave(graph.classGroups);
+  await repos.classSubjects.batchSave(graph.classSubjects);
+  await repos.classSubjectMatters.batchSave(graph.classSubjectMatters);
+}
+
 export async function applyStructureTemplate(
   application: ApiSchoolApplication,
   actor: ActorMetadata,
@@ -182,6 +468,17 @@ export async function applyStructureTemplate(
   const levels = parseStructureInput(input, templates);
   const schoolId = actor.schoolId;
   const service = application.forActor(actor);
+  const phases: Array<{ phase: string; ms: number }> = [];
+
+  const track = async <T>(phase: string, run: () => Promise<T>): Promise<T> => {
+    const started = performance.now();
+    try {
+      return await run();
+    }
+    finally {
+      phases.push({ phase, ms: performance.now() - started });
+    }
+  };
 
   const existingLevels = await application.repositories.gradeLevels.list({ schoolId });
   if (existingLevels.length > 0) {
@@ -208,8 +505,6 @@ export async function applyStructureTemplate(
   let reportCardDefinitionCount = 0;
   let reportCardSectionCount = 0;
 
-  const appliedLevels: AppliedStructureLevelSubjects[] = [];
-
   await service.baseService.atomicExecution.execute(async () => {
     const uniqueTemplates = [...new Map(levels.map(level => [level.template.id, level.template])).values()];
     await ensureAcademicPeriodsFromTemplates(application, actor, {
@@ -220,176 +515,34 @@ export async function applyStructureTemplate(
       templates: uniqueTemplates,
     });
 
-    const subjectIds = new Map<string, string>();
-    const matterIdsByKey = new Map<string, string>();
-    const usedClassGroupIds = new Set<string>();
-    const classSiblingCountByGradeSeed = new Map<string, number>();
-
-    async function ensureSubject(
-      template: StructureTemplateDefinition,
-      entry: StructureTemplateCurriculumEntry,
-    ): Promise<string> {
-      const catalogKey = catalogSubjectKey(entry);
-      const existing = subjectIds.get(catalogKey);
-      if (existing) {
-        return existing;
-      }
-      const subject = template.subjects.find(item => item.code === entry.subjectCode);
-      if (!subject) {
-        throw new BusinessRuleViolationError(
-          "STRUCTURE_SUBJECT_UNKNOWN",
-          `Unknown subject code ${entry.subjectCode}`,
-        );
-      }
-      const subjectId = randomUUID();
-      subjectIds.set(catalogKey, subjectId);
-      await service.baseService.entities.subjects.save(new Subject({
-        id: subjectId,
-        schoolId,
-        name: catalogSubjectName(subject, entry),
-        shortName: subject.shortName,
-        code: subject.code,
-        defaultCoefficient: entry.coefficient ?? subject.defaultCoefficient,
-        category: subjectCategory(subject.domain),
-        color: subjectColor(subject.domain),
-      }), { moduleChecked: true });
-      return subjectId;
-    }
-
-    async function ensureMatter(
-      subjectId: string,
-      matterName: string,
-      sequenceOrder: number,
-    ): Promise<string> {
-      const key = `${subjectId}::${matterName}`;
-      const existing = matterIdsByKey.get(key);
-      if (existing) {
-        return existing;
-      }
-      const matterId = randomUUID();
-      matterIdsByKey.set(key, matterId);
-      await service.baseService.entities.subjectMatters.save(new SubjectMatter({
-        id: matterId,
-        subjectId,
-        name: matterName,
-        description: matterName,
-        sequenceOrder,
-        estimatedHours: 2,
-      }), { moduleChecked: true });
-      return matterId;
-    }
-
-    for (const level of levels) {
-      const gradeLevelDef = level.template.gradeLevels.find(entry => entry.code === level.levelCode);
-      if (!gradeLevelDef) {
-        continue;
-      }
-
-      const preferredGradeLevelId = structureGradeLevelSeedId(level.gradeLevelId);
-      const gradeLevelId = await allocateUniqueId(
-        preferredGradeLevelId,
-        schoolId,
-        id => application.repositories.gradeLevels.findById(id),
-      );
-      gradeLevelCount += 1;
-
-      const gradeLevelName = gradeLevelDef.name;
-      const gradeLevelShortLabel = gradeLevelDef.code;
-      const classNamingMode = level.classNamingMode ?? "numerical";
-
-      await service.baseService.entities.gradeLevels.save(new GradeLevel({
-        id: gradeLevelId,
-        schoolId,
-        name: gradeLevelName,
-        order: gradeLevelDef.order,
-        cycle: level.template.cycle,
-      }), { moduleChecked: true });
-
-      const entries = curriculumEntriesForLevel(level.template, level.levelCode);
-
-      for (const entry of entries) {
-        const subjectId = await ensureSubject(level.template, entry);
-        const gradeLevelSubjectId = randomUUID();
-
-        await service.academicsWorkflow.offerSubjectToGradeLevel({
-          id: gradeLevelSubjectId,
-          gradeLevelId,
-          academicYearId: academicYear.id,
-          subjectId,
-          coefficient: entry.coefficient,
-          isOptional: entry.isOptional,
-        });
-
-        const matterIds = [];
-        for (const [matterIndex, matterName] of entry.matters.entries()) {
-          matterIds.push(await ensureMatter(
-            subjectId,
-            matterName,
-            matterIndex + 1,
-          ));
-        }
-        await Promise.all(matterIds.map(matterId =>
-          service.academicsWorkflow.assignMatterToGradeLevelSubject({
-            id: randomUUID(),
-            gradeLevelSubjectId,
-            subjectMatterId: matterId,
-            classSubjectMatterIdsByClassGroupId: undefined,
-          }),
-        ));
-
-        classSubjectCount += level.classCount;
-      }
-
-      appliedLevels.push({
-        template: level.template,
-        levelCode: level.levelCode,
-        gradeLevelId,
-        gradeLevelName,
-        gradeLevelShortLabel,
-        subjects: collectLevelSubjects(
-          level.template,
-          level.levelCode,
-          entries,
-          entry => subjectIds.get(catalogSubjectKey(entry)),
-        ),
-      });
-
-      for (let index = 0; index < level.classCount; index += 1) {
-        const preferredClassGroupId = nextOnboardingClassGroupId(
-          level.gradeLevelId,
-          usedClassGroupIds,
-          classSiblingCountByGradeSeed,
-        );
-        const classGroupId = await allocateUniqueId(
-          preferredClassGroupId,
-          schoolId,
-          id => application.repositories.classGroups.findById(id),
-        );
-        usedClassGroupIds.add(classGroupId);
-        classGroupCount += 1;
-
-        await service.setupWorkflow.createClassGroup({
-          id: classGroupId,
-          schoolId,
-          academicYearId: academicYear.id,
-          gradeLevelId,
-          name: classDisplayName(
-            level.template,
-            level.levelCode,
-            index,
-            classNamingMode,
-          ),
-          capacity: level.capacity,
-        });
-      }
-    }
-
-    subjectCount = subjectIds.size;
-
-    const reportCardCounts = await applyReportCardsFromTemplate(application, actor, {
+    const graph = await buildStructureBootstrapGraph(
+      application,
       schoolId,
-      academicYearId: academicYear.id,
-      levels: appliedLevels,
+      academicYear.id,
+      levels,
+    );
+
+    await operationModule(AcademicsOperations.programUpdate)(actor);
+
+    await track("structure.curriculum", async () => {
+      await persistCurriculumEntities(application, graph);
+    });
+
+    await track("structure.classMirrors", async () => {
+      await persistClassMirrorEntities(application, graph);
+    });
+
+    gradeLevelCount = graph.gradeLevelCount;
+    classGroupCount = graph.classGroupCount;
+    subjectCount = graph.subjectCount;
+    classSubjectCount = graph.classSubjectCount;
+
+    const reportCardCounts = await track("structure.reportCards", async () => {
+      return applyReportCardsFromTemplate(application, actor, {
+        schoolId,
+        academicYearId: academicYear.id,
+        levels: graph.appliedLevels,
+      });
     });
     gradeScaleCount = reportCardCounts.gradeScaleCount;
     reportCardDefinitionCount = reportCardCounts.reportCardDefinitionCount;
@@ -404,5 +557,6 @@ export async function applyStructureTemplate(
     gradeScaleCount,
     reportCardDefinitionCount,
     reportCardSectionCount,
+    phases,
   };
 }
