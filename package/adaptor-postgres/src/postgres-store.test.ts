@@ -125,7 +125,7 @@ describe('PostgresStore', () => {
     expect(db.delete).not.toHaveBeenCalled()
   })
 
-  test('batchSave returns saved entity ids', async () => {
+  test('batchSave upserts all entities in a single multi-row insert', async () => {
     const db = createMockDb()
     const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
 
@@ -133,6 +133,19 @@ describe('PostgresStore', () => {
       { id: 'e1', name: 'Alpha' },
       { id: 'e2', name: 'Beta' },
     ])).resolves.toEqual(['e1', 'e2'])
+    expect(db.insert).toHaveBeenCalledTimes(1)
+  })
+
+  test('batchSave splits into sequential chunks when the batch exceeds the chunk size', async () => {
+    const db = createMockDb()
+    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    // testTable has 2 columns → chunk size is BATCH_SAVE_MAX_CHUNK_ROWS (500)
+    const entities = Array.from({ length: 501 }, (_, index) => ({
+      id: `e${index}`,
+      name: `Name ${index}`,
+    }))
+
+    await expect(store.batchSave(entities)).resolves.toEqual(entities.map(entity => entity.id))
     expect(db.insert).toHaveBeenCalledTimes(2)
   })
 

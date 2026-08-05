@@ -1,5 +1,10 @@
 import type { BaseRepositoryInterface, Filter, QueryOptions } from '@edaya/core'
-import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { asc, desc, eq, getTableColumns, inArray, sql } from 'drizzle-orm'
+import {
+  batchSaveChunkSize,
+  buildConflictUpdateSet,
+  chunkArray,
+} from './lib/bulk-upsert'
 import { buildWhereClause } from './lib/filter'
 import { transactionContext } from './lib/transaction'
 
@@ -115,16 +120,20 @@ implements BaseRepositoryInterface<T> {
       return []
     }
     const client = this.getClient()
-    await Promise.all(entities.map((entity) => {
-      const row = this.toRow(entity)
-      return client
+    const rows = entities.map(entity => this.toRow(entity))
+    const columnCount = Object.keys(getTableColumns(this.table)).length
+    const chunks = chunkArray(rows, batchSaveChunkSize(columnCount))
+    const conflictSet = buildConflictUpdateSet(this.table)
+
+    for (const chunk of chunks) {
+      await client
         .insert(this.table)
-        .values(row)
+        .values(chunk)
         .onConflictDoUpdate({
           target: this.table.id,
-          set: row,
+          set: conflictSet,
         })
-    }))
+    }
     return entities.map(e => e.id)
   }
 

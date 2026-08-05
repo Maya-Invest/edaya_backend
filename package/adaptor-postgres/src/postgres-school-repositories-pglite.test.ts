@@ -1,4 +1,4 @@
-import { ClassSubject, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
+import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -149,6 +149,47 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       dayOfWeek: DayOfWeek.Tuesday,
       startTime: '08:30',
       reason: 'Contract teaching hours',
+    })
+  })
+
+  test('batchSave inserts and upserts class subject matters across chunk boundaries', async () => {
+    const batchSize = 501
+    const initial = Array.from({ length: batchSize }, (_, index) => new ClassSubjectMatter({
+      id: `csm-${index}`,
+      classSubjectId: `class-subject-${index % 20}`,
+      subjectMatterId: `matter-${index}`,
+      status: ClassSubjectMatterStatus.NotStarted,
+      completedPercentage: 0,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    }))
+
+    await expect(repos.classSubjectMatters.batchSave(initial)).resolves.toHaveLength(batchSize)
+    await expect(repos.classSubjectMatters.count({})).resolves.toBe(batchSize)
+
+    const updated = initial.map((entity, index) => new ClassSubjectMatter({
+      id: entity.id,
+      classSubjectId: entity.classSubjectId,
+      subjectMatterId: entity.subjectMatterId,
+      status: ClassSubjectMatterStatus.InProgress,
+      completedPercentage: 25,
+      notes: `progress-${index}`,
+      updatedAt: new Date('2026-02-01T00:00:00.000Z'),
+    }))
+
+    await repos.classSubjectMatters.batchSave(updated)
+    await expect(repos.classSubjectMatters.count({})).resolves.toBe(batchSize)
+
+    const first = await repos.classSubjectMatters.findById('csm-0')
+    const last = await repos.classSubjectMatters.findById(`csm-${batchSize - 1}`)
+    expect(first).toMatchObject({
+      status: ClassSubjectMatterStatus.InProgress,
+      completedPercentage: 25,
+      notes: 'progress-0',
+    })
+    expect(last).toMatchObject({
+      status: ClassSubjectMatterStatus.InProgress,
+      completedPercentage: 25,
+      notes: `progress-${batchSize - 1}`,
     })
   })
 })
