@@ -84,16 +84,21 @@ export function buildBetterAuthConfig(
         if (isSeedAuthProvisionRequest(request?.headers)) {
           return;
         }
-        void authEmail.sendAuthVerificationEmail({
-          email: user.email,
-          url,
-          displayName: user.name,
-        }).catch((error: unknown) => {
+        // Await delivery so Cloudflare Workers do not tear down the isolate
+        // before the Novu request completes (void + catch was fire-and-forget).
+        try {
+          await authEmail.sendAuthVerificationEmail({
+            email: user.email,
+            url,
+            displayName: user.name,
+          });
+        }
+        catch (error: unknown) {
           appLogger.error(
             { err: error, email: user.email },
             "Failed to send auth verification email",
           );
-        });
+        }
       },
     },
     databaseHooks: {
