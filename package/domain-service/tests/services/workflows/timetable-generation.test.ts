@@ -737,6 +737,17 @@ function createWorkflowContext(
         && (!filter.endsAt?.$gt || session.endsAt > filter.endsAt.$gt)),
       save: async (session: LessonSession) => { sessions.set(session.id, session) },
       delete: async (id: string) => { sessions.delete(id) },
+      batchSave: async (entities: LessonSession[]) => {
+        for (const session of entities) {
+          sessions.set(session.id, session)
+        }
+        return entities.map(session => session.id)
+      },
+      batchDelete: async (ids: string[]) => {
+        for (const id of ids) {
+          sessions.delete(id)
+        }
+      },
     },
     activitySessions: { list: async () => [] },
     assessments: { list: async () => [] },
