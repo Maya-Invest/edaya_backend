@@ -110,6 +110,7 @@ describe('Entity config save gates', () => {
       id: 'grade-1',
       schoolId: 'school',
       name: 'Grade 1',
+      label: 'G1',
       order: 1,
     }))
     await repositories.gradeScaleRepository.save(new GradeScale({
@@ -807,6 +808,7 @@ describe('Entity config save gates', () => {
       id: 'grade-other',
       schoolId: 'other-school',
       name: 'Other Grade',
+      label: 'Other',
       order: 1,
     }))
 

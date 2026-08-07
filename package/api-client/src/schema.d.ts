@@ -10714,6 +10714,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            label: string;
             order: number;
             cycle?: string | null;
             createdAt?: unknown;
@@ -10722,6 +10723,7 @@ export interface components {
             id: string;
             schoolId: string;
             name: string;
+            label: string;
             order: number;
             cycle?: string | null;
             createdAt?: unknown;

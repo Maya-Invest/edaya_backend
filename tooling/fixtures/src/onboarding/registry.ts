@@ -71,7 +71,26 @@ export type ClassNamingMode = 'alphabetical' | 'numerical'
 
 const CLASS_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const
 
-/** Class display names from fixture `code` + alphabetical/numerical increment. */
+/**
+ * Class name from a grade level label used as stem: `6ème` + index 0
+ * gives `6ème 1` (numerical) or `6ème A` (alphabetical).
+ * Single source of truth shared by onboarding, seeds and QA fixtures.
+ */
+export function classNameFromLabel(
+  label: string,
+  index: number,
+  mode: ClassNamingMode = 'numerical',
+): string {
+  if (mode === 'alphabetical') {
+    const letter = CLASS_LETTERS[index]
+    if (letter) {
+      return `${label} ${letter}`
+    }
+  }
+  return `${label} ${index + 1}`
+}
+
+/** Class display names from the template short label + alphabetical/numerical increment. */
 export function classDisplayName(
   template: StructureTemplateDefinition,
   levelCode: string,
@@ -79,13 +98,8 @@ export function classDisplayName(
   mode: ClassNamingMode = 'numerical',
 ): string {
   const level = template.gradeLevels.find(entry => entry.code === levelCode)
-  const stem = level?.code ?? levelCode
-  if (mode === 'alphabetical') {
-    const letter = CLASS_LETTERS[index]
-    if (letter) {
-      return `${stem} ${letter}`
-    }
-    return `${stem} ${index + 1}`
+  if (!level) {
+    throw new Error(`Unknown grade level ${levelCode} for template ${template.id}`)
   }
-  return `${stem} ${index + 1}`
+  return classNameFromLabel(level.shortLabel, index, mode)
 }

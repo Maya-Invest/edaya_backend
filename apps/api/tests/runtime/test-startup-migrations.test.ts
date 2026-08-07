@@ -35,8 +35,8 @@ describe("runStartupMigrations", () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(4);
-      // 4 school migrations (0000–0003) + 1 auth migration
-      expect(migrations.rows[0]?.count).toBe(5);
+      // 5 school migrations (0000–0004) + 1 auth migration
+      expect(migrations.rows[0]?.count).toBe(6);
     }
     finally {
       await pglite.close();

@@ -35,7 +35,7 @@ describeIntegration('atomic workflow safeguards', () => {
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await createClassGroup(app, {
       id: 'class',
@@ -172,7 +172,7 @@ describeIntegration('atomic workflow safeguards', () => {
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await createClassGroup(app, {
       id: 'class',
@@ -221,7 +221,7 @@ describeIntegration('atomic workflow safeguards', () => {
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await createClassGroup(app, {
       id: 'class',
@@ -267,7 +267,7 @@ describeIntegration('atomic workflow safeguards', () => {
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await createClassGroup(app, {
       id: 'class',

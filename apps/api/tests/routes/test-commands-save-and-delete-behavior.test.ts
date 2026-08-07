@@ -69,6 +69,7 @@ describe("core entity and command routes", () => {
         id: "grade-level-6",
         schoolId: "school-1",
         name: "Grade 6",
+        label: "G6",
         order: 6,
       }),
     });
@@ -167,8 +168,8 @@ describe("core entity and command routes", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         entities: [
-          { id: "grade-level-6", schoolId: "school-1", name: "Grade 6", order: 6 },
-          { id: "grade-level-7", schoolId: "school-1", name: "Grade 7", order: 7 },
+          { id: "grade-level-6", schoolId: "school-1", name: "Grade 6", label: "G6", order: 6 },
+          { id: "grade-level-7", schoolId: "school-1", name: "Grade 7", label: "G7", order: 7 },
         ],
       }),
     });

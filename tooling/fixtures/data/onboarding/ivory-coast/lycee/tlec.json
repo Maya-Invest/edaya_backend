@@ -1,6 +1,7 @@
 {
   "code": "TLEC",
   "name": "Terminale C",
+  "short_label": "Tle C",
   "exam_year": true,
   "exam_name": "BAC C",
   "sections": [

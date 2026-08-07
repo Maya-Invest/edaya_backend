@@ -14,6 +14,7 @@ export {
 export {
   BUILTIN_STRUCTURE_TEMPLATES,
   classDisplayName,
+  classNameFromLabel,
   isStructureTemplateId,
   listStructureTemplatesForCountry,
   parseGradeLevelTemplateId,

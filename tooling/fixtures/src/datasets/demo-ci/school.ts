@@ -1,5 +1,6 @@
 import type { AcademicPeriodInput, AcademicYearInput, ClassGroupInput, ClassSubjectInput, GradeLevelInput, PeriodDefinitionInput, SchoolInput, SubjectInput, SubjectMatterInput } from '@edaya/core'
 import { AttendanceMode, DayOfWeek, SubjectCategory, SubjectColor } from '@edaya/core'
+import { classNameFromLabel } from '../../onboarding/registry'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../../shared/subject-matter-chapters'
 
@@ -47,12 +48,12 @@ export const demoCiAcademicPeriods = [
   },
 ] as const satisfies readonly AcademicPeriodInput[]
 
-/** Niveaux du cycle collège (programme ivoirien). */
+/** Niveaux du cycle collège (programme ivoirien). Les libellés sont ceux du template ci-college. */
 export const demoCiGradeLevels = [
-  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sixième', cycle: 'Collège', order: 1 },
-  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: 'Cinquième', cycle: 'Collège', order: 2 },
-  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: 'Quatrième', cycle: 'Collège', order: 3 },
-  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: 'Troisième', cycle: 'Collège', order: 4 },
+  { id: 'ci-gl-6', schoolId: DEMO_CI_SCHOOL_ID, name: 'Sixième', label: '6ème', cycle: 'Collège', order: 1 },
+  { id: 'ci-gl-5', schoolId: DEMO_CI_SCHOOL_ID, name: 'Cinquième', label: '5ème', cycle: 'Collège', order: 2 },
+  { id: 'ci-gl-4', schoolId: DEMO_CI_SCHOOL_ID, name: 'Quatrième', label: '4ème', cycle: 'Collège', order: 3 },
+  { id: 'ci-gl-3', schoolId: DEMO_CI_SCHOOL_ID, name: 'Troisième', label: '3ème', cycle: 'Collège', order: 4 },
 ] as const satisfies readonly GradeLevelInput[]
 
 const demoCiDailyPeriodDefinitions = [
@@ -79,12 +80,25 @@ export const demoCiPeriodDefinitions = demoCiWeekdays.flatMap(dayOfWeek =>
     isTeachingSlot: true,
   }))) satisfies readonly PeriodDefinitionInput[]
 
+const demoCiLabelByGradeLevelId = new Map<string, string>(
+  demoCiGradeLevels.map(level => [level.id, level.label]),
+)
+
+/** Aligne le seed sur l'onboarding : même racine (le libellé du niveau) et même mode par défaut. */
+function demoCiClassName(gradeLevelId: string, index: number): string {
+  const label = demoCiLabelByGradeLevelId.get(gradeLevelId)
+  if (!label) {
+    throw new Error(`Unknown demo-ci grade level: ${gradeLevelId}`)
+  }
+  return classNameFromLabel(label, index, 'numerical')
+}
+
 export const demoCiClassGroups = [
-  { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème A', capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
-  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: '6ème B', capacity: 35, attendanceMode: AttendanceMode.Daily },
-  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: '5ème A', capacity: 35, homeroomStaffId: 'ci-st3' },
-  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: '4ème A', capacity: 35 },
-  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: '3ème A', capacity: 35 },
+  { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 0), capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 1), capacity: 35, attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: demoCiClassName('ci-gl-5', 0), capacity: 35, homeroomStaffId: 'ci-st3' },
+  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: demoCiClassName('ci-gl-4', 0), capacity: 35 },
+  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35 },
 ] as const satisfies readonly ClassGroupInput[]
 
 /** Matières du collège ivoirien (cf. template ci-college). */

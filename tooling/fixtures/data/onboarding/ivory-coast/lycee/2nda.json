@@ -1,6 +1,7 @@
 {
   "code": "2NDA",
   "name": "Seconde A",
+  "short_label": "2nde A",
   "sections": [
     {
       "role": "subjects",

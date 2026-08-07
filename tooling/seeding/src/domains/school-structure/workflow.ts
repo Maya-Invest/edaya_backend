@@ -73,6 +73,7 @@ export async function seedDevSchoolStructure(
       id: gradeLevel.id,
       schoolId: dataset.schoolId,
       name: gradeLevel.name,
+      label: gradeLevel.label,
       order: gradeLevel.order,
       cycle: gradeLevel.cycle ?? undefined,
     })

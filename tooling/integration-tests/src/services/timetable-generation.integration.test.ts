@@ -47,6 +47,7 @@ describeIntegration('timetable generation lifecycle', () => {
       id: 'grade',
       schoolId: 'school',
       name: 'Grade 6',
+      label: 'G6',
       order: 1,
     }))
     await schoolRepositories.classGroups.save(new ClassGroup({
