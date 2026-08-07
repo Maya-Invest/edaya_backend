@@ -50,5 +50,9 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   strict: true,
+  migrations: {
+    schema: 'drizzle',
+    table: '__drizzle_migrations_school',
+  },
   ...school,
 })

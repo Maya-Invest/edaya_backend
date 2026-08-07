@@ -14,6 +14,10 @@ export default defineConfig({
   out: './drizzle/auth',
   dialect: 'postgresql',
   strict: true,
+  migrations: {
+    schema: 'drizzle',
+    table: '__drizzle_migrations_auth',
+  },
   dbCredentials: databaseUrl.startsWith('postgres') || databaseUrl.startsWith('pglite')
     ? { url: databaseUrl }
     : undefined,

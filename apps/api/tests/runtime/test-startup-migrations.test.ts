@@ -1,6 +1,13 @@
 import { PGlite } from "@electric-sql/pglite";
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
-import { runMigrations as runSchoolMigrations } from "@edaya/adaptor-postgres";
+import {
+  AUTH_MIGRATIONS_TABLE,
+  runMigrations as runAuthMigrations,
+} from "@edaya/adaptor-auth";
+import {
+  MIGRATIONS_SCHEMA,
+  runMigrations as runSchoolMigrations,
+  SCHOOL_MIGRATIONS_TABLE,
+} from "@edaya/adaptor-postgres";
 import { describe, expect, test } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { rmSync } from "node:fs";
@@ -29,14 +36,17 @@ describe("runStartupMigrations", () => {
          FROM information_schema.tables
          WHERE table_schema = 'auth'`,
       );
-      const migrations = await pglite.query<{ count: number }>(
-        "SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations",
+      const schoolJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}`,
+      );
+      const authJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${AUTH_MIGRATIONS_TABLE}`,
       );
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(4);
-      // 5 school migrations (0000–0004) + 1 auth migration
-      expect(migrations.rows[0]?.count).toBe(6);
+      expect(schoolJournal.rows[0]?.count).toBe(5);
+      expect(authJournal.rows[0]?.count).toBe(1);
     }
     finally {
       await pglite.close();
@@ -44,7 +54,7 @@ describe("runStartupMigrations", () => {
     }
   }, 30_000);
 
-  test("auth-before-school leaves school schema unapplied (regression guard)", async () => {
+  test("auth-before-school still applies school migrations with separate journals", async () => {
     const dataDir = path.join(tmpdir(), `edaya-auth-first-migrate-${Date.now()}`);
     rmSync(dataDir, { recursive: true, force: true });
 
@@ -53,21 +63,23 @@ describe("runStartupMigrations", () => {
 
     try {
       await runAuthMigrations(db, { driver: "pglite" });
-      await expect(runSchoolMigrations(db, { driver: "pglite" })).rejects.toThrow(
-        /cron_job_schedules/,
-      );
+      await runSchoolMigrations(db, { driver: "pglite" });
 
       const publicTables = await pglite.query<{ count: number }>(
         `SELECT count(*)::int AS count
          FROM information_schema.tables
          WHERE table_schema = 'public'`,
       );
-      const migrations = await pglite.query<{ count: number }>(
-        "SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations",
+      const schoolJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}`,
+      );
+      const authJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${AUTH_MIGRATIONS_TABLE}`,
       );
 
-      expect(publicTables.rows[0]?.count).toBe(0);
-      expect(migrations.rows[0]?.count).toBe(1);
+      expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
+      expect(schoolJournal.rows[0]?.count).toBe(5);
+      expect(authJournal.rows[0]?.count).toBe(1);
     }
     finally {
       await pglite.close();

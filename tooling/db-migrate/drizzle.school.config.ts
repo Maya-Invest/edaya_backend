@@ -8,6 +8,10 @@ export default defineConfig({
   out: '../../package/adaptor-postgres/drizzle',
   dialect: 'postgresql',
   strict: true,
+  migrations: {
+    schema: 'drizzle',
+    table: '__drizzle_migrations_school',
+  },
   dbCredentials: databaseUrl?.startsWith('postgres')
     ? { url: databaseUrl }
     : undefined,
