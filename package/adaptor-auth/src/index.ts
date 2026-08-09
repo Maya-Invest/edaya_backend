@@ -16,7 +16,7 @@ export {
   toBetterAuthSecondaryStorage,
 } from './better-auth/secondary-storage'
 export type { MigrationDriver } from './lib/migrate'
-export { AUTH_MIGRATIONS_TABLE, MIGRATIONS_SCHEMA } from './lib/migration-meta'
 export { getMigrationsFolder, runMigrations } from './lib/migrate'
+export { AUTH_MIGRATIONS_TABLE, MIGRATIONS_SCHEMA } from './lib/migration-meta'
 export type { AuthSecondaryStoragePort } from './ports/auth-secondary-storage'
 export * as authSchema from './schema'
