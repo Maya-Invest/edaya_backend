@@ -2634,6 +2634,10 @@
             "type": "string",
             "minLength": 1
           },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
           "order": {
             "type": "integer",
             "minimum": 0,
@@ -2650,6 +2654,7 @@
           "id",
           "schoolId",
           "name",
+          "label",
           "order"
         ]
       },
@@ -2668,6 +2673,10 @@
             "type": "string",
             "minLength": 1
           },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
           "order": {
             "type": "integer",
             "minimum": 0,
@@ -2684,6 +2693,7 @@
           "id",
           "schoolId",
           "name",
+          "label",
           "order"
         ]
       },

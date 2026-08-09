@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { MIGRATIONS_SCHEMA, SCHOOL_MIGRATIONS_TABLE } from '@edaya/adaptor-postgres'
 import postgres from 'postgres'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -56,19 +57,19 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
       SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
-        WHERE table_schema = 'drizzle'
-          AND table_name = '__drizzle_migrations'
+        WHERE table_schema = ${MIGRATIONS_SCHEMA}
+          AND table_name = ${SCHOOL_MIGRATIONS_TABLE}
       ) AS exists
     `
     if (!existsRows[0]?.exists) {
       return
     }
 
-    const rows = await sql<JournalRow[]>`
-      SELECT id, hash, created_at::text
-      FROM drizzle.__drizzle_migrations
-      ORDER BY created_at
-    `
+    const rows = await sql.unsafe<JournalRow[]>(
+      `SELECT id, hash, created_at::text
+       FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}
+       ORDER BY created_at`,
+    )
 
     const appliedHashes = new Set(rows.map(row => row.hash))
     const pending = migrations.filter(migration => !appliedHashes.has(migration.hash))
@@ -89,8 +90,8 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
     const orphans = rows.filter(row => !knownHashes.has(row.hash))
     if (orphans.length === 0) {
       console.warn(
-        'Pending migrations exist but the drizzle journal blocks drizzle-kit migrate. '
-        + 'Inspect drizzle.__drizzle_migrations manually.',
+        `Pending school migrations exist but the drizzle journal blocks drizzle-kit migrate. `
+        + `Inspect ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE} manually.`,
       )
       return
     }
@@ -100,10 +101,10 @@ export async function repairDrizzleMigrationJournal(databaseUrl: string): Promis
     )
 
     for (const orphan of orphans) {
-      await sql`
-        DELETE FROM drizzle.__drizzle_migrations
-        WHERE id = ${orphan.id}
-      `
+      await sql.unsafe(
+        `DELETE FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE} WHERE id = $1`,
+        [orphan.id],
+      )
       console.warn(`  removed id=${orphan.id} hash=${orphan.hash.slice(0, 12)}…`)
     }
   }

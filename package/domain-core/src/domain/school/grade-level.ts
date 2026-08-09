@@ -6,6 +6,8 @@ export const gradeLevelSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  /** Short human-readable stem used to build class names (e.g. `6ème` for `6ème 1`). */
+  label: z.string().trim().min(1, 'label must not be blank'),
   order: z.number().int('order must be a strictly positive integer').positive('order must be a strictly positive integer'),
   cycle: z.string().trim().min(1, 'cycle must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
@@ -32,6 +34,7 @@ export class GradeLevel {
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
+  get label() { return this.data.label }
   get order() { return this.data.order }
   get cycle() { return this.data.cycle }
   get createdAt() { return this.data.createdAt }

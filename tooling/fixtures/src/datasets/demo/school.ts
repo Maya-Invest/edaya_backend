@@ -41,19 +41,20 @@ export const demoAcademicPeriods = [
   },
 ] as const satisfies readonly AcademicPeriodInput[]
 
+/** English labels, so that the `6th — A` class names of this dataset keep their level label as prefix. */
 export const demoGradeLevels = [
-  { id: 'gl-6', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Sixième', cycle: 'Collège', order: 1 },
-  { id: 'gl-5', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Cinquième', cycle: 'Collège', order: 2 },
-  { id: 'gl-4', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Quatrième', cycle: 'Collège', order: 3 },
-  { id: 'gl-3', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Troisième', cycle: 'Collège', order: 4 },
-  { id: 'gl-2nda', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde A', cycle: 'Lycée', order: 5 },
-  { id: 'gl-2', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde C', cycle: 'Lycée', order: 6 },
-  { id: 'gl-1era', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première A', cycle: 'Lycée', order: 7 },
-  { id: 'gl-1', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première C', cycle: 'Lycée', order: 8 },
-  { id: 'gl-1erd', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première D', cycle: 'Lycée', order: 9 },
-  { id: 'gl-tlea', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale A', cycle: 'Lycée', order: 10 },
-  { id: 'gl-t', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale C', cycle: 'Lycée', order: 11 },
-  { id: 'gl-tled', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale D', cycle: 'Lycée', order: 12 },
+  { id: 'gl-6', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Sixième', label: '6th', cycle: 'Collège', order: 1 },
+  { id: 'gl-5', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Cinquième', label: '5th', cycle: 'Collège', order: 2 },
+  { id: 'gl-4', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Quatrième', label: '4th', cycle: 'Collège', order: 3 },
+  { id: 'gl-3', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Troisième', label: '3rd', cycle: 'Collège', order: 4 },
+  { id: 'gl-2nda', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde A', label: '2nd A', cycle: 'Lycée', order: 5 },
+  { id: 'gl-2', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Seconde C', label: '2nd C', cycle: 'Lycée', order: 6 },
+  { id: 'gl-1era', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première A', label: '1st A', cycle: 'Lycée', order: 7 },
+  { id: 'gl-1', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première C', label: '1st C', cycle: 'Lycée', order: 8 },
+  { id: 'gl-1erd', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Première D', label: '1st D', cycle: 'Lycée', order: 9 },
+  { id: 'gl-tlea', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale A', label: 'Final A', cycle: 'Lycée', order: 10 },
+  { id: 'gl-t', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale C', label: 'Final C', cycle: 'Lycée', order: 11 },
+  { id: 'gl-tled', schoolId: DEMO_CENTRAL_SCHOOL_ID, name: 'Terminale D', label: 'Final D', cycle: 'Lycée', order: 12 },
 ] as const satisfies readonly GradeLevelInput[]
 
 /** Daily template expanded into the Monday-Friday timetable grid. */

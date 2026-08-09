@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { MIGRATIONS_SCHEMA, SCHOOL_MIGRATIONS_TABLE } from '@edaya/adaptor-postgres'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 export const schoolMigrationsFolder = path.resolve(repoRoot, 'package/adaptor-postgres/drizzle')
@@ -36,10 +37,9 @@ export function readSchoolMigrationJournal(): SchoolMigrationJournalEntry[] {
 export async function readAppliedMigrationHashes(
   sql: postgres.Sql,
 ): Promise<Set<string>> {
-  const rows = await sql<{ hash: string }[]>`
-    SELECT hash
-    FROM drizzle.__drizzle_migrations
-  `
+  const rows = await sql.unsafe<{ hash: string }[]>(
+    `SELECT hash FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}`,
+  )
   return new Set(rows.map(row => row.hash))
 }
 
@@ -72,10 +72,10 @@ export async function applyPendingSchoolMigrationsUntil(
       await sql.unsafe(statement)
     }
 
-    await sql`
-      INSERT INTO drizzle.__drizzle_migrations (hash, created_at)
-      VALUES (${entry.hash}, ${entry.when})
-    `
+    await sql.unsafe(
+      `INSERT INTO ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE} (hash, created_at) VALUES ($1, $2)`,
+      [entry.hash, entry.when],
+    )
 
     appliedTags.push(entry.tag)
 

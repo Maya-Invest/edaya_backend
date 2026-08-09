@@ -1,6 +1,7 @@
 {
   "code": "TLED",
   "name": "Terminale D",
+  "short_label": "Tle D",
   "exam_year": true,
   "exam_name": "BAC D",
   "sections": [

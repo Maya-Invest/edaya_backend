@@ -79,6 +79,7 @@ export const gradeLevels = pgTable('grade_levels', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
+  label: text('label').notNull(),
   order: integer('order_val').notNull(),
   cycle: text('cycle'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),

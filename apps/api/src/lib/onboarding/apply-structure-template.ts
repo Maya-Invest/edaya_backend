@@ -304,6 +304,7 @@ export async function buildStructureBootstrapGraph(
       id: gradeLevelId,
       schoolId,
       name: gradeLevelDef.name,
+      label: gradeLevelDef.shortLabel,
       order: gradeLevelDef.order,
       cycle: level.template.cycle,
     }));
@@ -346,7 +347,7 @@ export async function buildStructureBootstrapGraph(
       levelCode: level.levelCode,
       gradeLevelId,
       gradeLevelName: gradeLevelDef.name,
-      gradeLevelShortLabel: gradeLevelDef.code,
+      gradeLevelShortLabel: gradeLevelDef.shortLabel,
       subjects: collectLevelSubjects(
         level.template,
         level.levelCode,

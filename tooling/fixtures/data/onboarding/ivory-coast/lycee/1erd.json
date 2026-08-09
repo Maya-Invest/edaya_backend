@@ -1,6 +1,7 @@
 {
   "code": "1ERD",
   "name": "Première D",
+  "short_label": "1ère D",
   "sections": [
     {
       "role": "subjects",

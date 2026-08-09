@@ -268,6 +268,7 @@ describe('SchoolService setup workflows', () => {
       id: 'grade-1',
       schoolId: 'sch1',
       name: 'Grade 7',
+      label: 'G7',
       order: 7,
     })
     const periodDefinition = await service.setupWorkflow.configurePeriodDefinition({

@@ -11,6 +11,7 @@ import {
   demoCiSubjectMatters,
   demoCiSubjects,
 } from '../../../src/datasets/demo-ci/school'
+import { classNameFromLabel } from '../../../src/onboarding/registry'
 
 describe('demo-ci dataset (Côte d\'Ivoire)', () => {
   it('assembles a French Ivorian collège school shell', () => {
@@ -53,6 +54,27 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
 
   it('names the school in French', () => {
     expect(demoCiSchool.name).toBe('École Edaya — Cocody')
+  })
+
+  it('names classes exactly like onboarding does from the level label', () => {
+    const labelByGradeLevelId = new Map(demoCiGradeLevels.map(level => [level.id, level.label]))
+    const indexByGradeLevelId = new Map<string, number>()
+
+    for (const classGroup of demoCiClassGroups) {
+      const label = labelByGradeLevelId.get(classGroup.gradeLevelId)
+      expect(label).toBeDefined()
+      const index = indexByGradeLevelId.get(classGroup.gradeLevelId) ?? 0
+      indexByGradeLevelId.set(classGroup.gradeLevelId, index + 1)
+      expect(classGroup.name).toBe(classNameFromLabel(label!, index, 'numerical'))
+    }
+
+    expect(demoCiClassGroups.map(classGroup => classGroup.name)).toEqual([
+      '6ème 1',
+      '6ème 2',
+      '5ème 1',
+      '4ème 1',
+      '3ème 1',
+    ])
   })
 
   it('configures demo-ci mathematics with double-period span bounds', () => {

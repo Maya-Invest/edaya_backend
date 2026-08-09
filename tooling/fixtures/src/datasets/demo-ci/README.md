@@ -33,12 +33,24 @@ demo-ci/
 | Ville / pays | Abidjan, Côte d'Ivoire |
 | Fuseau | `Africa/Abidjan` |
 | Niveaux | 6ème → 3ème (Collège) |
-| Classes | 6ème A, 6ème B, 5ème A, 4ème A, 3ème A |
+| Classes | 6ème 1, 6ème 2, 5ème 1, 4ème 1, 3ème 1 |
 | Élèves | 30 |
 | Parents | 21 |
 | Personnel | 5 |
 | Enseignants portail | 5 (`ci-t1` → `ci-t5`) |
 | Bulletins (T1) | 30 résultats (tous les élèves) |
+
+## Nommage des classes
+
+Les classes du seed sont construites **comme l'onboarding les construit** : racine = libellé court du niveau (`label`), suffixe numérique par défaut. Le seed déclare donc `name: 'Sixième'` et `label: '6ème'`, ce qui donne `6ème 1`, `6ème 2`. Un test de dérive vérifie que chaque nom de classe est bien `classNameFromLabel(label, index, 'numerical')`.
+
+Le libellé traverse trois couches sous trois orthographes :
+
+| Couche | Clé | Exemple |
+|--------|-----|---------|
+| JSON de template onboarding | `short_label` | `6ème` |
+| Template et catalogue (TypeScript) | `shortLabel` | `6ème` |
+| Domaine, base et UI | `label` | `6ème` |
 
 ## Domaines couverts
 
@@ -69,7 +81,7 @@ Le seed dev utilise **`demoCiDataset`** par défaut (`sch-edaya-ci-cocody`, 30 �
 | `j.aka@ecole-ci.edaya.dev` | Directeur (ci-st5) |
 | `f.assi@ecole-ci.edaya.dev` | Professeur principal / coord. (ci-st3) |
 | `a.toure@ecole-ci.edaya.dev` | Enseignante portail (ci-t1) — maths et physique-chimie |
-| `k.diomande@ecole-ci.edaya.dev` | Enseignant portail (ci-t2) — EPS, PP 6ème B |
+| `k.diomande@ecole-ci.edaya.dev` | Enseignant portail (ci-t2) — EPS, PP 6ème 2 |
 | `m.kone@mail.ci` | Parent (ci-g1) — enfants ci-s1, ci-s10 |
 
 Mot de passe : `DevPassword1!`

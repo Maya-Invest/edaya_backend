@@ -8,7 +8,6 @@ import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { isPgliteLockError, pgliteLockHelpMessage } from './pglite-lock-error'
-import { syncAuthMigrationJournalTimestamps } from './sync-auth-migration-journal'
 
 export async function applyAuthMigrations(databaseUrl: string): Promise<void> {
   const driver = resolveMigrationDriver(databaseUrl)
@@ -32,8 +31,6 @@ export async function applyAuthMigrations(databaseUrl: string): Promise<void> {
     }
     return
   }
-
-  await syncAuthMigrationJournalTimestamps(databaseUrl)
 
   const sql = postgres(databaseUrl, { max: 1 })
   const db = drizzlePostgres(sql)
