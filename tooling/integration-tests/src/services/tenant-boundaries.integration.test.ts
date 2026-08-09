@@ -76,7 +76,7 @@ describeIntegration('tenant boundary safeguards', () => {
       endDate: new Date('2027-06-30T23:59:59Z'),
     })
     await app.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level-a', schoolId: 'school-a', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await schoolBApp.setupWorkflow.createAcademicYear({
       id: 'year-b',
@@ -95,7 +95,7 @@ describeIntegration('tenant boundary safeguards', () => {
       endDate: new Date('2026-12-31T23:59:59Z'),
     })
     await schoolBApp.baseService.entities.gradeLevels.save(
-      new GradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', order: 6 }),
+      new GradeLevel({ id: 'level-b', schoolId: 'school-b', name: 'Grade 6', label: 'G6', order: 6 }),
     )
     await expect(updateSchool(app, {
       schoolId: 'school-b',

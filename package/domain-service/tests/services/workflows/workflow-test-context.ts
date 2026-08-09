@@ -207,6 +207,7 @@ export function createFullSetupContext({
     id: 'grade-1',
     schoolId: 'sch1',
     name: 'Grade 7',
+    label: 'G7',
     order: 7,
   }))
 

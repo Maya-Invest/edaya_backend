@@ -119,6 +119,7 @@ describe('grade level subject inheritance', () => {
       id: 'gl-6',
       schoolId: 'sch1',
       name: '6ème',
+      label: '6ème',
       order: 1,
     }))
     await repositories.subjects.save(new Subject({
@@ -273,6 +274,7 @@ describe('grade level subject inheritance', () => {
       id: 'gl-6',
       schoolId: 'sch1',
       name: '6e',
+      label: '6e',
       order: 6,
     }))
     await repositories.subjects.save(new Subject({
@@ -377,6 +379,7 @@ describe('grade level subject inheritance', () => {
       id: 'gl-6',
       schoolId: 'sch1',
       name: '6e',
+      label: '6e',
       order: 6,
     }))
     await repositories.subjects.save(new Subject({
@@ -515,6 +518,7 @@ describe('grade level subject inheritance', () => {
       id: 'gl-6',
       schoolId: 'sch1',
       name: '6ème',
+      label: '6ème',
       order: 1,
     }))
     await repositories.subjects.save(new Subject({

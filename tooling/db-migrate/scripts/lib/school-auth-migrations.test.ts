@@ -1,35 +1,22 @@
-import { readFileSync, rmSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { runMigrations as runAuthMigrations } from '@edaya/adaptor-auth'
-import { runMigrations as runSchoolMigrations } from '@edaya/adaptor-postgres'
+import {
+  AUTH_MIGRATIONS_TABLE,
+  runMigrations as runAuthMigrations,
+} from '@edaya/adaptor-auth'
+import {
+  MIGRATIONS_SCHEMA,
+  runMigrations as runSchoolMigrations,
+  SCHOOL_MIGRATIONS_TABLE,
+} from '@edaya/adaptor-postgres'
 import { PGlite } from '@electric-sql/pglite'
 import { describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { readSchoolMigrationJournal } from './school-migration-journal'
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
-
-function readAuthMigrationJournalWhenValues(): number[] {
-  const journalPath = path.join(
-    repoRoot,
-    'package/adaptor-auth/drizzle/auth/meta/_journal.json',
-  )
-  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
-    entries: Array<{ when: number }>
-  }
-  return journal.entries.map(entry => entry.when)
-}
-
 describe('local school + auth migrations', () => {
-  test('auth journal when values exceed latest school migration when', () => {
-    const maxSchoolWhen = Math.max(...readSchoolMigrationJournal().map(entry => entry.when))
-    const minAuthWhen = Math.min(...readAuthMigrationJournalWhenValues())
-    expect(minAuthWhen).toBeGreaterThan(maxSchoolWhen)
-  })
-
-  test('applies auth schema after school schema on the same PGlite database', async () => {
+  test('keeps separate drizzle journals for school and auth', async () => {
     const dataDir = path.join(tmpdir(), `edaya-school-auth-migrate-${Date.now()}`)
     rmSync(dataDir, { recursive: true, force: true })
 
@@ -40,8 +27,11 @@ describe('local school + auth migrations', () => {
       await runSchoolMigrations(db, { driver: 'pglite' })
       await runAuthMigrations(db, { driver: 'pglite' })
 
-      const migrations = await pglite.query<{ count: number }>(
-        'SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations',
+      const schoolJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}`,
+      )
+      const authJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${AUTH_MIGRATIONS_TABLE}`,
       )
       const authTables = await pglite.query<{ table_name: string }>(
         `SELECT table_name
@@ -50,13 +40,47 @@ describe('local school + auth migrations', () => {
          ORDER BY table_name`,
       )
 
-      expect(migrations.rows[0]?.count).toBeGreaterThanOrEqual(3)
+      expect(schoolJournal.rows[0]?.count).toBe(readSchoolMigrationJournal().length)
+      expect(authJournal.rows[0]?.count).toBe(1)
       expect(authTables.rows.map(row => row.table_name)).toEqual([
         'account',
         'session',
         'user',
         'verification',
       ])
+    }
+    finally {
+      await pglite.close()
+      rmSync(dataDir, { recursive: true, force: true })
+    }
+  }, 30_000)
+
+  test('applies school migrations after auth when journals are separate', async () => {
+    const dataDir = path.join(tmpdir(), `edaya-auth-first-migrate-${Date.now()}`)
+    rmSync(dataDir, { recursive: true, force: true })
+
+    const pglite = new PGlite(dataDir)
+    const db = drizzle(pglite)
+
+    try {
+      await runAuthMigrations(db, { driver: 'pglite' })
+      await runSchoolMigrations(db, { driver: 'pglite' })
+
+      const publicTables = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count
+         FROM information_schema.tables
+         WHERE table_schema = 'public'`,
+      )
+      const schoolJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${SCHOOL_MIGRATIONS_TABLE}`,
+      )
+      const authJournal = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${AUTH_MIGRATIONS_TABLE}`,
+      )
+
+      expect(publicTables.rows[0]?.count).toBeGreaterThan(50)
+      expect(schoolJournal.rows[0]?.count).toBe(readSchoolMigrationJournal().length)
+      expect(authJournal.rows[0]?.count).toBe(1)
     }
     finally {
       await pglite.close()

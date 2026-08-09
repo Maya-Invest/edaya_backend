@@ -1,6 +1,7 @@
 {
   "code": "1ERA",
   "name": "Première A",
+  "short_label": "1ère A",
   "sections": [
     {
       "role": "subjects",

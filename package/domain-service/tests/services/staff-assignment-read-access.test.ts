@@ -56,6 +56,7 @@ async function seedStaffAssignmentFixture() {
     id: 'grade-1',
     schoolId: 'school-1',
     name: '6',
+    label: '6',
     order: 1,
   }))
   await repositories.classGroupRepository.save(new ClassGroup({

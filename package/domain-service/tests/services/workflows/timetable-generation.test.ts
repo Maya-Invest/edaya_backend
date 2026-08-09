@@ -655,7 +655,7 @@ function createWorkflowContext(
     endDate: academicYearRange?.endDate ?? weekEnd,
     isActive: true,
   })
-  const grade = new GradeLevel({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', order: 1 })
+  const grade = new GradeLevel({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', label: 'G1', order: 1 })
   const groups = [
     new ClassGroup({
       id: 'class-1',

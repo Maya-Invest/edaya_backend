@@ -66,6 +66,8 @@ interface RawIvoryCoastLevelRef {
 interface RawIvoryCoastLevelFile {
   code: string
   name: string
+  /** Stem used to build class names (`6ème` → `6ème 1`), persisted as `gradeLevels.label`. */
+  short_label: string
   exam_year?: boolean
   exam_name?: string
   sections?: RawIvoryCoastReportCardSection[]
@@ -75,6 +77,7 @@ interface RawIvoryCoastLevelFile {
 interface ResolvedIvoryCoastLevel {
   code: string
   name: string
+  short_label: string
   order: number
   exam_year?: boolean
   exam_name?: string
@@ -175,6 +178,8 @@ function isRawLevelFile(value: unknown): value is RawIvoryCoastLevelFile {
   const candidate = value as Partial<RawIvoryCoastLevelFile>
   return typeof candidate.code === 'string'
     && typeof candidate.name === 'string'
+    && typeof candidate.short_label === 'string'
+    && candidate.short_label.trim().length > 0
     && Array.isArray(candidate.subjects)
     && candidate.subjects.every(isRawLevelSubject)
     && (
@@ -341,6 +346,7 @@ function resolveLevel(
   return {
     code: levelFile.code,
     name: levelFile.name,
+    short_label: levelFile.short_label,
     order: ref.order,
     exam_year: levelFile.exam_year,
     exam_name: levelFile.exam_name,
@@ -468,7 +474,7 @@ export function parseIvoryCoastStructureTemplates(
         id: `${templateId}:${level.code}`,
         code: level.code,
         name: level.name,
-        shortLabel: level.code,
+        shortLabel: level.short_label,
         order: level.order,
         reportCardStructure: parseLevelReportCard(cycle, level),
         ...(level.exam_year ? { examYear: true } : {}),

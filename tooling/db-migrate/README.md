@@ -26,8 +26,13 @@ Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive / PGlite) a
 
 `bun repo dev` also applies both schemas on startup when `RUN_MIGRATIONS_ON_STARTUP=true` (default for local PGlite).
 
-**Migration order:** school runs before auth on `full` migrate/reset. Both share `drizzle.__drizzle_migrations`; every auth journal `when` must stay **greater** than the latest school migration `when` or auth migrations are skipped silently.
+**Migration order:** school runs before auth on `full` migrate/reset. Each side records applied files in its own journal table under the `drizzle` schema:
 
-When auth `when` is bumped for that ordering, remote migrate syncs the existing auth hash row’s `created_at` before applying auth — otherwise drizzle-orm would re-run `CREATE TABLE auth.user` and fail with `relation "user" already exists`.
+| Side | Journal table |
+|------|----------------|
+| School | `drizzle.__drizzle_migrations_school` |
+| Auth | `drizzle.__drizzle_migrations_auth` |
+
+Journal `when` timestamps no longer need to be ordered across school and auth. Legacy databases that still use `drizzle.__drizzle_migrations` should be re-seeded locally (`bun repo seed clean --yes` then migrate) or repaired manually on remote hosts.
 
 Schema generation: `bun repo db generate` (school), `bun repo db generate --auth` (auth).

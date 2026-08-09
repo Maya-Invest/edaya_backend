@@ -191,8 +191,8 @@ Reads repo root `.env` when present, or env vars:
 | `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale auth row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
 | `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun repo deploy api staging` |
 | `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `db:migrate:staging` |
-| `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations` with a future `created_at` blocks pending files — re-run `db:migrate:staging` (auto-repairs orphans) or delete unknown-hash rows manually |
-| `relation "user" already exists` during auth migrate | Auth journal `when` was bumped after auth was already applied; migrate now syncs `created_at` automatically — re-run `bun repo db migrate staging` |
+| `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations_school` with a future `created_at` blocks pending school files — re-run `db:migrate:staging` (auto-repairs orphans) or delete unknown-hash rows manually |
+| `relation "user" already exists` during auth migrate | Stale legacy `drizzle.__drizzle_migrations` row or auth applied outside Drizzle — inspect `drizzle.__drizzle_migrations_auth` and auth tables; re-run `bun repo db migrate staging --auth` after cleanup |
 | `waitForApi` timeout | API not deployed yet, or DNS still propagating — verify `curl https://api-staging…/` returns 200 |
 | S6 401 | Staff not linked to auth subject — run `seed:init` / `seed:staging` |
 | S8 missing school | School seed not applied; run `seed:staging` |

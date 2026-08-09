@@ -1,6 +1,7 @@
 {
   "code": "6EME",
   "name": "Sixième",
+  "short_label": "6ème",
   "sections": [
     {
       "role": "subjects",

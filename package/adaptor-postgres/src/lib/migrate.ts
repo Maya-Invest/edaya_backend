@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { migrate as migrateNodePostgres } from 'drizzle-orm/node-postgres/migrator'
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator'
 import { migrate as migratePostgresJs } from 'drizzle-orm/postgres-js/migrator'
+import { MIGRATIONS_SCHEMA, SCHOOL_MIGRATIONS_TABLE } from './migration-meta'
 import { seedCronJobSchedules } from './seed-cron-job-schedules'
 
 export type MigrationDriver = 'pglite' | 'postgres-js' | 'node-postgres'
@@ -30,6 +31,10 @@ export async function runMigrations(
     : options.driver === 'node-postgres'
       ? migrateNodePostgres
       : migratePostgresJs
-  await migrate(db as never, { migrationsFolder })
+  await migrate(db as never, {
+    migrationsFolder,
+    migrationsSchema: MIGRATIONS_SCHEMA,
+    migrationsTable: SCHOOL_MIGRATIONS_TABLE,
+  })
   await seedCronJobSchedules(db as { execute: (query: unknown) => Promise<unknown> })
 }

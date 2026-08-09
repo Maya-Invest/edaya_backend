@@ -41,7 +41,7 @@ async function setupBaselineFixture() {
     endDate: new Date('2027-06-30T00:00:00Z'),
   })
   await app.baseService.entities.gradeLevels.save(
-    new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', order: 7 }),
+    new GradeLevel({ id: 'grade-7', schoolId: 'school', name: 'Grade 7', label: 'G7', order: 7 }),
   )
   await createClassGroup(app, {
     id: 'class-7a',

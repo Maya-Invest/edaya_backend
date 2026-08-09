@@ -7,7 +7,7 @@ export const demoCiResources = [
   {
     id: 'ci-r-salle-6a',
     schoolId: DEMO_CI_SCHOOL_ID,
-    name: 'Salle 6ème A',
+    name: 'Salle 6ème 1',
     kind: ResourceKind.Location,
     capacity: 35,
     description: 'Bâtiment principal · RDC',
@@ -15,7 +15,7 @@ export const demoCiResources = [
   {
     id: 'ci-r-salle-5a',
     schoolId: DEMO_CI_SCHOOL_ID,
-    name: 'Salle 5ème A',
+    name: 'Salle 5ème 1',
     kind: ResourceKind.Location,
     capacity: 35,
     description: 'Bâtiment principal · 1er étage',
@@ -43,7 +43,7 @@ export const demoCiClassResourceAssignments = [
   },
 ] as const satisfies readonly ResourceAssignmentInput[]
 
-/** Recurring lesson slots for Mme Touré (ci-t1) — math in 6ème A and 5ème A. */
+/** Recurring lesson slots for Mme Touré (ci-t1) — math in 6ème 1 and 5ème 1. */
 export const demoCiSchedulingSlots = [
   {
     slotId: 'ci-p-6a-math-mon',
