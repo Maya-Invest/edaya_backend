@@ -4,6 +4,7 @@ import { SchoolStructureOperations, WorkspaceOperations } from '@edaya/authoriza
 import { BusinessRuleViolationError } from '@edaya/core'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
+import { validateAcademicYearSave } from './validate-academic-year-save'
 
 // Extracted from domain/school/academic-year.ts (PR3)
 export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, atomicExecution }) =>
@@ -13,6 +14,7 @@ export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ reposito
     read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
     write: write(operationModule(SchoolStructureOperations.configure), noopSaveAccess, noopDeleteAccess),
     gates: {
+      preSave: validateAcademicYearSave,
       preDelete: async (year, repos) => {
         const classGroups = await repos.classGroups.list({ academicYearId: year.id })
         if (classGroups.length > 0) {

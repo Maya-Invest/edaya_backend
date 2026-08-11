@@ -490,7 +490,7 @@ export async function applyStructureTemplate(
   }
 
   const academicYears = await application.repositories.academicYears.list({ schoolId });
-  const academicYear = academicYears.find(year => year.isActive) ?? academicYears[0];
+  const academicYear = academicYears.find(year => year.status === 'published') ?? academicYears[0];
   if (!academicYear) {
     throw new BusinessRuleViolationError(
       "NO_ACADEMIC_YEAR",

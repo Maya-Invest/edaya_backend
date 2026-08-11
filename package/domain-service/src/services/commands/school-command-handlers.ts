@@ -90,7 +90,7 @@ import type {
   SchedulingServiceWorkflow,
 } from '../workflows/scheduling'
 import type {
-  ActivateAcademicYearInput,
+  ArchiveAcademicYearInput,
   AssignResourceInput,
   AssignStaffInput,
   ConfigureActivityInput,
@@ -102,6 +102,7 @@ import type {
   CreateClassGroupInput,
   EnrollStudentInActivityInput,
   PublishAcademicPeriodInput,
+  PublishAcademicYearInput,
   RegisterAttachmentInput,
   RegisterSchoolInput,
   RegisterStaffMemberInput,
@@ -165,7 +166,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     registerSchool: payload => workflows.setup.registerSchool(payload as RegisterSchoolInput),
     updateSchoolConfiguration: payload => workflows.setup.updateSchoolConfiguration(payload as UpdateSchoolConfigurationInput),
     createAcademicYear: payload => workflows.setup.createAcademicYear(payload as CreateAcademicYearInput),
-    activateAcademicYear: payload => workflows.setup.activateAcademicYear(payload as ActivateAcademicYearInput),
+    publishAcademicYear: payload => workflows.setup.publishAcademicYear(payload as PublishAcademicYearInput),
+    archiveAcademicYear: payload => workflows.setup.archiveAcademicYear(payload as ArchiveAcademicYearInput),
     createAcademicPeriod: payload => workflows.setup.createAcademicPeriod(payload as CreateAcademicPeriodInput),
     publishAcademicPeriod: payload => workflows.setup.publishAcademicPeriod(payload as PublishAcademicPeriodInput),
     configureGradeLevel: payload => workflows.setup.configureGradeLevel(payload as ConfigureGradeLevelInput),

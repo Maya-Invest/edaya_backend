@@ -1,4 +1,4 @@
-import { AcademicYear } from '@edaya/core'
+import { AcademicYear, assertAcademicYearStatusTransition, BusinessRuleViolationError } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 
 describe('AcademicYear entity containment and chronology', () => {
@@ -21,7 +21,7 @@ describe('AcademicYear entity containment and chronology', () => {
     expect(year.name).toBe('2026-2027')
     expect(year.startDate.getTime()).toBe(startDate.getTime())
     expect(year.endDate.getTime()).toBe(endDate.getTime())
-    expect(year.isActive).toBe(true)
+    expect(year.status).toBe('draft')
     expect(year.createdAt).toBeInstanceOf(Date)
   })
 
@@ -29,12 +29,19 @@ describe('AcademicYear entity containment and chronology', () => {
     const createdDate = new Date()
     const year = new AcademicYear({
       ...baseArgs,
-      isActive: false,
+      status: 'published',
       createdAt: createdDate,
     })
 
-    expect(year.isActive).toBe(false)
+    expect(year.status).toBe('published')
     expect(year.createdAt.getTime()).toBe(createdDate.getTime())
+  })
+
+  it('enforces allowed status transitions', () => {
+    expect(() => assertAcademicYearStatusTransition('draft', 'published')).not.toThrow()
+    expect(() => assertAcademicYearStatusTransition('published', 'archived')).not.toThrow()
+    expect(() => assertAcademicYearStatusTransition('archived', 'draft')).toThrow(BusinessRuleViolationError)
+    expect(() => assertAcademicYearStatusTransition('published', 'draft')).toThrow(BusinessRuleViolationError)
   })
 
   it('throws error when endDate is before startDate', () => {
@@ -48,14 +55,9 @@ describe('AcademicYear entity containment and chronology', () => {
   it('verifies contains() correctly evaluates dates inside and outside the year boundary', () => {
     const year = new AcademicYear(baseArgs)
 
-    // Boundaries inclusive
     expect(year.contains(startDate)).toBe(true)
     expect(year.contains(endDate)).toBe(true)
-
-    // Mid-year
     expect(year.contains(new Date('2026-12-25T12:00:00Z'))).toBe(true)
-
-    // Outside year
     expect(year.contains(new Date('2026-08-31T23:59:59Z'))).toBe(false)
     expect(year.contains(new Date('2027-07-01T00:00:00Z'))).toBe(false)
   })

@@ -16,7 +16,7 @@ describe('resolveTeacherScope', () => {
         }),
       },
       academicYears: {
-        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', isActive: true }),
+        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', status: 'published' }),
       },
       teacherAssignments: {
         list: async () => [],
@@ -42,7 +42,7 @@ describe('resolveTeacherScope', () => {
         }),
       },
       academicYears: {
-        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', isActive: true }),
+        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', status: 'published' }),
       },
       teacherAssignments: {
         list: async () => [
@@ -116,7 +116,7 @@ describe('resolveTeacherScope', () => {
         }),
       },
       academicYears: {
-        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', isActive: true }),
+        findOne: async () => ({ id: 'year-1', schoolId: 'school-1', status: 'published' }),
       },
       teacherAssignments: {
         list: async () => allAssignments,

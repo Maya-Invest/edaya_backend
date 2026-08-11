@@ -82,6 +82,7 @@ export interface SchoolStructureSeedPort {
   registerSchool: (record: SchoolStructureSchoolRecord) => Promise<void>
   saveGradeLevel: (record: GradeLevelSeedRecord) => Promise<void>
   createAcademicYear: (record: AcademicYearSeedRecord) => Promise<void>
+  publishAcademicYear: (academicYearId: string) => Promise<void>
   createAcademicPeriod: (record: AcademicPeriodSeedRecord) => Promise<void>
   publishAcademicPeriod: (academicPeriodId: string) => Promise<void>
   savePeriodDefinition: (record: PeriodDefinitionSeedRecord) => Promise<void>

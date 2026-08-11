@@ -1,0 +1,25 @@
+import type { AcademicYear } from '@edaya/core'
+import type { SchoolRepositories } from '@edaya/service'
+import { assertAcademicYearStatusTransition, BusinessRuleViolationError } from '@edaya/core'
+import type { ActorMetadata } from '@edaya/authorization'
+
+export async function validateAcademicYearSave(
+  entity: AcademicYear,
+  existing: AcademicYear | undefined,
+  _repos: SchoolRepositories,
+  _actor: ActorMetadata,
+): Promise<void> {
+  if (!existing) {
+    if (entity.status !== 'draft') {
+      throw new BusinessRuleViolationError(
+        'ACADEMIC_YEAR_INVALID_STATUS',
+        'New academic years must be created with draft status',
+      )
+    }
+    return
+  }
+
+  if (existing.status !== entity.status) {
+    assertAcademicYearStatusTransition(existing.status, entity.status)
+  }
+}

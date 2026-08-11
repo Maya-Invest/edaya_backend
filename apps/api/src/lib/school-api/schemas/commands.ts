@@ -77,14 +77,16 @@ export const updateSchoolConfigurationCommandSchema = objectFromSchema(schoolSch
   .openapi("UpdateSchoolConfigurationCommand");
 
 export const createAcademicYearCommandSchema = objectFromSchema(academicYearSchema)
-  .extend({
-    isActive: field.optionalBoolean(),
-  })
+  .omit({ status: true, createdAt: true })
   .openapi("CreateAcademicYearCommand");
 
-export const activateAcademicYearCommandSchema = z.object({
+export const publishAcademicYearCommandSchema = z.object({
   academicYearId: field.id(),
-}).openapi("ActivateAcademicYearCommand");
+}).openapi("PublishAcademicYearCommand");
+
+export const archiveAcademicYearCommandSchema = z.object({
+  academicYearId: field.id(),
+}).openapi("ArchiveAcademicYearCommand");
 
 export const publishAcademicPeriodCommandSchema = z.object({
   academicPeriodId: field.id(),

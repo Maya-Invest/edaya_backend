@@ -43,6 +43,9 @@ export function createHttpSchoolStructureSeedPort(
     createAcademicYear: record => withSeedPortError('schoolStructure.createAcademicYear', async () => {
       await postCoreCommand(requestOptions, 'createAcademicYear', record)
     }),
+    publishAcademicYear: academicYearId => withSeedPortError('schoolStructure.publishAcademicYear', async () => {
+      await postCoreCommand(requestOptions, 'publishAcademicYear', { academicYearId })
+    }),
     createAcademicPeriod: record => withSeedPortError('schoolStructure.createAcademicPeriod', async () => {
       await postCoreCommand(requestOptions, 'createAcademicPeriod', record)
     }),
