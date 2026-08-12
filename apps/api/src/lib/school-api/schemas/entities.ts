@@ -120,6 +120,7 @@ export const academicYearQuerySchema = createQueryOptionsSchema({
 
 export const academicPeriodQuerySchema = createQueryOptionsSchema({
   id: field.id(),
+  schoolId: field.id(),
   academicYearId: field.id(),
   name: field.string(),
 });
