@@ -2,8 +2,9 @@ import {
   ActorAssuranceLevel,
   AuthorizationError,
   createStaffActorMetadata,
+  Permission,
 } from '@edaya/authorization'
-import { ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, LessonSession, Resource, ResourceAssignment, ResourceKind, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Resource, ResourceAssignment, ResourceKind, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import {
   describe,
   expect,
@@ -156,5 +157,53 @@ describe('Entity config tenant and access gates', () => {
     await app.baseService.entities.subjectMatters.save(subjectMatter)
 
     await expect(repositories.subjectMatterRepository.findById('matter-1')).resolves.toEqual(subjectMatter)
+  })
+
+  test('allows creating class groups with school structure configure permission on a new id', async () => {
+    const configureActor = createStaffActorMetadata({
+      subjectId: 'configure-user',
+      staffMemberId: 'staff-configure',
+      schoolId: 'school',
+      effectiveGrants: {
+        permissions: new Set([Permission.SCHOOL_STRUCTURE_CONFIGURE]),
+        scopeGrants: [{
+          permission: Permission.SCHOOL_STRUCTURE_CONFIGURE,
+          scopeType: 'school',
+          scopeEntityIds: ['school'],
+        }],
+        isElevated: false,
+      },
+      requestId: 'request',
+      authenticatedAt: new Date('2026-05-01T00:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Standard,
+    })
+    const { app, repositories } = createTestApp(configureActor)
+
+    await repositories.academicYearRepository.save(new AcademicYear({
+      id: 'year-1',
+      schoolId: 'school',
+      name: '2026-2027',
+      startDate: new Date('2026-09-01T00:00:00Z'),
+      endDate: new Date('2027-06-30T23:59:59Z'),
+      status: 'published',
+    }))
+    await repositories.gradeLevelRepository.save(new GradeLevel({
+      id: 'grade-1',
+      schoolId: 'school',
+      name: 'Grade 6',
+      label: '6ème',
+      order: 1,
+    }))
+
+    const classGroup = new ClassGroup({
+      id: 'class-new',
+      schoolId: 'school',
+      academicYearId: 'year-1',
+      gradeLevelId: 'grade-1',
+      name: '6A',
+    })
+
+    await app.baseService.entities.classGroups.save(classGroup)
+    await expect(repositories.classGroupRepository.findById('class-new')).resolves.toEqual(classGroup)
   })
 })
