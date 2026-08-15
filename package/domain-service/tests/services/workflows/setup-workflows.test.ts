@@ -70,6 +70,16 @@ describe('SchoolService setup workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
+  test('publishAcademicYear rejects when year is not draft', async () => {
+    const { service } = createSetupContext()
+
+    await expect(service.setupWorkflow.publishAcademicYear({
+      academicYearId: 'ay-current',
+    })).rejects.toMatchObject({
+      code: 'ACADEMIC_YEAR_NOT_DRAFT',
+    })
+  })
+
   test('archiveAcademicYear archives a published year', async () => {
     const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
@@ -82,6 +92,16 @@ describe('SchoolService setup workflows', () => {
     expect(academicYears.get('ay-current')?.status).toBe('archived')
     expect(mockAtomic.execute).toHaveBeenCalled()
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+  })
+
+  test('archiveAcademicYear rejects when year is not published', async () => {
+    const { service } = createSetupContext()
+
+    await expect(service.setupWorkflow.archiveAcademicYear({
+      academicYearId: 'ay-next',
+    })).rejects.toMatchObject({
+      code: 'ACADEMIC_YEAR_NOT_PUBLISHED',
+    })
   })
 
   test('publishAcademicYear rejects unknown academic years', async () => {
