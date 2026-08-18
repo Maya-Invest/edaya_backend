@@ -4,7 +4,7 @@ on:
   workflow_call:
     outputs:
       channel:
-        description: Published GitHub Packages dist-tag (staging or production)
+        description: Published GitHub Packages dist-tag (staging, production, or sanitized branch name)
         value: ${{ jobs.publish.outputs.channel }}
 
 permissions:
@@ -30,10 +30,12 @@ jobs:
               CHANNEL=production
               ;;
             *)
-              CHANNEL=staging
+              CHANNEL="$(echo "$REF" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9._-]+/-/g; s/-+/-/g; s/^-+//; s/-+$//')"
+              if [ -z "$CHANNEL" ]; then CHANNEL=staging; fi
               ;;
           esac
           echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+          echo "Publishing @maya-invest/edaya-api-client with tag ${CHANNEL}"
 
       - name: Setup Bun and Turbo cache
         uses: ./.github/actions/ci-bun-turbo
