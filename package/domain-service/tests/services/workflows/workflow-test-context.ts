@@ -106,7 +106,7 @@ export function createSetupContext() {
       name: '2025-2026',
       startDate: new Date('2025-09-01T00:00:00Z'),
       endDate: new Date('2026-06-30T00:00:00Z'),
-      isActive: true,
+      status: 'published',
       createdAt: new Date('2025-01-01T00:00:00Z'),
     })],
     ['ay-next', new AcademicYear({
@@ -115,7 +115,7 @@ export function createSetupContext() {
       name: '2026-2027',
       startDate: new Date('2026-09-01T00:00:00Z'),
       endDate: new Date('2027-06-30T00:00:00Z'),
-      isActive: false,
+      status: 'draft',
       createdAt: new Date('2026-01-01T00:00:00Z'),
     })],
   ])
@@ -124,7 +124,7 @@ export function createSetupContext() {
       findById: mock(async id => academicYears.get(id)),
       list: mock(async (filter: any = {}) => [...academicYears.values()].filter(year =>
         (!filter.schoolId || year.schoolId === filter.schoolId)
-        && (filter.isActive === undefined || year.isActive === filter.isActive))),
+        && (filter.status === undefined || year.status === filter.status))),
       save: mock(async year => academicYears.set(year.id, year)),
     },
     schools: {

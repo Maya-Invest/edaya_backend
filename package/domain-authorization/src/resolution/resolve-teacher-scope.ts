@@ -41,7 +41,7 @@ export async function resolveTeacherScope(args: {
 
   const now = args.now ?? new Date()
   const academicYearId = args.academicYearId
-    ?? (await args.repositories.academicYears.findOne({ schoolId: args.schoolId, isActive: true }))?.id
+    ?? (await args.repositories.academicYears.findOne({ schoolId: args.schoolId, status: 'published' }))?.id
 
   const assignments = await args.repositories.teacherAssignments.list({
     teacherId: args.teacherId,

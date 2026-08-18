@@ -50,7 +50,7 @@ async function seedStaffAssignmentFixture() {
     name: '2025-2026',
     startDate: new Date('2025-09-01T00:00:00Z'),
     endDate: new Date('2026-07-01T00:00:00Z'),
-    isActive: true,
+    status: 'published',
   }))
   await repositories.gradeLevelRepository.save(new GradeLevel({
     id: 'grade-1',

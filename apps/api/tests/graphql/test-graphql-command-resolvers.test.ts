@@ -3,7 +3,7 @@ import { createCommandMutationResolver } from "@/lib/graphql/routes/command-reso
 import { coreCommands } from "@/lib/school-api/registry";
 import { createTestStaffActor } from "../support/staff-actor-fixture";
 
-const activateAcademicYear = coreCommands.find(command => command.methodName === "activateAcademicYear")!;
+const publishAcademicYear = coreCommands.find(command => command.methodName === "publishAcademicYear")!;
 const linkActorSubject = coreCommands.find(command => command.methodName === "linkActorSubject")!;
 
 function resolverContext(service: Record<string, unknown>) {
@@ -24,15 +24,15 @@ function resolverContext(service: Record<string, unknown>) {
 
 describe("createCommandMutationResolver", () => {
   test("returns a completion message when the command result is empty", async () => {
-    const activateAcademicYearCommand = mock(async () => undefined);
-    const resolver = createCommandMutationResolver(activateAcademicYear);
+    const publishAcademicYearCommand = mock(async () => undefined);
+    const resolver = createCommandMutationResolver(publishAcademicYear);
 
     await expect(resolver({}, {
       input: { academicYearId: "year-1" },
     }, resolverContext({
-      commands: { activateAcademicYear: activateAcademicYearCommand },
+      commands: { publishAcademicYear: publishAcademicYearCommand },
     }))).resolves.toEqual({
-      message: "activate-academic-year completed",
+      message: "publish-academic-year completed",
     });
   });
 

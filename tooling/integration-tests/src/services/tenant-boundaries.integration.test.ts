@@ -101,7 +101,7 @@ describeIntegration('tenant boundary safeguards', () => {
       schoolId: 'school-b',
       name: 'Foreign school update',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await expect(app.setupWorkflow.activateAcademicYear({ academicYearId: 'year-b' }))
+    await expect(app.setupWorkflow.publishAcademicYear({ academicYearId: 'year-b' }))
       .rejects
       .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await expect(publishAcademicPeriod(app, 'term-b'))

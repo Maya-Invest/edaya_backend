@@ -4,7 +4,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember } from '@edaya/core'
+import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember } from '@edaya/core'
 import {
   describe,
   expect,
@@ -19,7 +19,7 @@ import {
 } from './workflow-test-context'
 
 describe('SchoolService setup workflows', () => {
-  test('createAcademicYear creates an active year and deactivates existing active years through managed service', async () => {
+  test('createAcademicYear creates a draft year without changing existing years', async () => {
     const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
 
     const result = await service.setupWorkflow.createAcademicYear({
@@ -32,40 +32,82 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(result.id).toBe('ay-new')
-    expect(result.isActive).toBe(true)
-    expect(academicYears.get('ay-current')?.isActive).toBe(false)
-    expect(academicYears.get('ay-new')?.isActive).toBe(true)
+    expect(result.status).toBe('draft')
+    expect(academicYears.get('ay-current')?.status).toBe('published')
+    expect(academicYears.get('ay-new')?.status).toBe('draft')
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'ay-current',
-      isActive: false,
-    }))
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
   })
 
-  test('activateAcademicYear activates an existing year and deactivates other active years through managed service', async () => {
+  test('publishAcademicYear publishes a draft year when no other year is published', async () => {
     const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
+    academicYears.set('ay-current', new AcademicYear({
+      id: 'ay-current',
+      schoolId: 'sch1',
+      name: '2025-2026',
+      startDate: new Date('2025-09-01T00:00:00Z'),
+      endDate: new Date('2026-06-30T00:00:00Z'),
+      status: 'archived',
+      createdAt: new Date('2025-01-01T00:00:00Z'),
+    }))
 
-    const result = await service.setupWorkflow.activateAcademicYear({
+    const result = await service.setupWorkflow.publishAcademicYear({
       academicYearId: 'ay-next',
     })
 
     expect(result.id).toBe('ay-next')
-    expect(result.isActive).toBe(true)
-    expect(academicYears.get('ay-current')?.isActive).toBe(false)
-    expect(academicYears.get('ay-next')?.isActive).toBe(true)
+    expect(result.status).toBe('published')
+    expect(academicYears.get('ay-next')?.status).toBe('published')
     expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'ay-current',
-      isActive: false,
-    }))
     expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
   })
 
-  test('activateAcademicYear rejects unknown academic years', async () => {
+  test('publishAcademicYear rejects when another year is already published', async () => {
     const { service } = createSetupContext()
 
-    await expect(service.setupWorkflow.activateAcademicYear({
+    await expect(service.setupWorkflow.publishAcademicYear({
+      academicYearId: 'ay-next',
+    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('publishAcademicYear rejects when year is not draft', async () => {
+    const { service } = createSetupContext()
+
+    await expect(service.setupWorkflow.publishAcademicYear({
+      academicYearId: 'ay-current',
+    })).rejects.toMatchObject({
+      code: 'ACADEMIC_YEAR_NOT_DRAFT',
+    })
+  })
+
+  test('archiveAcademicYear archives a published year', async () => {
+    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
+
+    const result = await service.setupWorkflow.archiveAcademicYear({
+      academicYearId: 'ay-current',
+    })
+
+    expect(result.id).toBe('ay-current')
+    expect(result.status).toBe('archived')
+    expect(academicYears.get('ay-current')?.status).toBe('archived')
+    expect(mockAtomic.execute).toHaveBeenCalled()
+    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+  })
+
+  test('archiveAcademicYear rejects when year is not published', async () => {
+    const { service } = createSetupContext()
+
+    await expect(service.setupWorkflow.archiveAcademicYear({
+      academicYearId: 'ay-next',
+    })).rejects.toMatchObject({
+      code: 'ACADEMIC_YEAR_NOT_PUBLISHED',
+    })
+  })
+
+  test('publishAcademicYear rejects unknown academic years', async () => {
+    const { service } = createSetupContext()
+
+    await expect(service.setupWorkflow.publishAcademicYear({
       academicYearId: 'missing-year',
     })).rejects.toBeInstanceOf(AuthorizationError)
   })

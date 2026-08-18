@@ -196,7 +196,7 @@ export async function inviteStaffMembers(
   const service = application.forActor(elevatedActor);
 
   const academicYears = await application.repositories.academicYears.list({ schoolId });
-  const academicYear = academicYears.find(year => year.isActive) ?? academicYears[0];
+  const academicYear = academicYears.find(year => year.status === "published") ?? academicYears[0];
 
   let permissionAssignmentsEnsured = 0;
   let invitedCount = 0;

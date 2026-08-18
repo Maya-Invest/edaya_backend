@@ -103,7 +103,7 @@ function findMatchesInFile(
   repoRoot: string,
 ): string[] {
   const lines = readFileSync(filePath, 'utf8').split('\n')
-  const relativePath = relative(repoRoot, filePath)
+  const relativePath = relative(repoRoot, filePath).replaceAll('\\', '/')
 
   return lines.flatMap((line, index) => (
     pattern.test(line) ? [`${relativePath}:${index + 1}:${line}`] : []

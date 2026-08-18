@@ -295,9 +295,14 @@ export const clientBindings = {
         "requestSchemaName": "CreateAcademicYearCommand",
         "responseSchemaName": "AcademicYear"
       },
-      "activateAcademicYear": {
-        "publicName": "activate-academic-year",
-        "requestSchemaName": "ActivateAcademicYearCommand",
+      "publishAcademicYear": {
+        "publicName": "publish-academic-year",
+        "requestSchemaName": "PublishAcademicYearCommand",
+        "responseSchemaName": "AcademicYear"
+      },
+      "archiveAcademicYear": {
+        "publicName": "archive-academic-year",
+        "requestSchemaName": "ArchiveAcademicYearCommand",
         "responseSchemaName": "AcademicYear"
       },
       "createAcademicPeriod": {

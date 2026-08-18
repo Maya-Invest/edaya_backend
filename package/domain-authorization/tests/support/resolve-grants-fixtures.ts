@@ -22,7 +22,7 @@ export interface GrantTestRepositories {
     list: (filter?: unknown) => Promise<unknown[]>
   }
   academicYears: {
-    list: (filter?: unknown) => Promise<Array<{ id: string, schoolId: string, name: string, isActive: boolean }>>
+    list: (filter?: unknown) => Promise<Array<{ id: string, schoolId: string, name: string, status: string }>>
   }
   staffPermissionAssignments: {
     list: (filter?: PermissionListFilter) => Promise<StaffPermissionAssignment[]>
@@ -34,7 +34,7 @@ export function createGrantRepos(
   assignments: unknown[] = [],
   ownerSubjectId?: string,
   staffSubjectId?: string,
-  academicYears: Array<{ id: string, schoolId: string, name: string, isActive: boolean }> = [],
+  academicYears: Array<{ id: string, schoolId: string, name: string, status: string }> = [],
 ): GrantTestRepositories {
   const permissionStore = new Map<string, StaffPermissionAssignment>()
 

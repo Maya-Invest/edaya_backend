@@ -49,6 +49,19 @@ export function authorizeExistingById<T extends { id: string }>(
   }
 }
 
+/** Create is gated by the write module; updates still require read access on the entity. */
+export function authorizeSaveSkipReadOnCreate<T extends { id: string }>(
+  readAccess: EntityReadAuthorization<T>['checkAccess'],
+): EntityWriteAuthorization<T>['authorizeSave'] {
+  return async (actor, entity, existing, repositories) => {
+    if (!existing) {
+      return
+    }
+    await readAccess(actor, [entity], repositories)
+    await readAccess(actor, [existing], repositories)
+  }
+}
+
 export function authorizeDeleteByReadAccess<T>(
   readAccess: EntityReadAuthorization<T>['checkAccess'],
 ): EntityWriteAuthorization<T>['authorizeDelete'] {

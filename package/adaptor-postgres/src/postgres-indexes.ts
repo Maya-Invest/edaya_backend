@@ -10,7 +10,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'academic_years':
       return [
         index('academic_years_school_id_idx').on(col(table, 'schoolId')),
-        index('academic_years_school_active_idx').on(col(table, 'schoolId'), col(table, 'isActive')),
+        index('academic_years_school_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
       ]
     case 'academic_periods':
       return [

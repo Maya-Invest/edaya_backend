@@ -42,7 +42,7 @@ export const academicYears = pgTable('academic_years', {
   name: text('name').notNull(),
   startDate: timestamp('start_date', { mode: 'date' }).notNull(),
   endDate: timestamp('end_date', { mode: 'date' }).notNull(),
-  isActive: boolean('is_active').notNull(),
+  status: text('status').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('academic_years', table))
 

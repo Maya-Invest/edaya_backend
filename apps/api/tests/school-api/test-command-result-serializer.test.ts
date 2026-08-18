@@ -89,12 +89,12 @@ describe("serializeCommandResult", () => {
 
 describe("dispatchCoreCommand", () => {
   it("delegates to the school service command registry", async () => {
-    const activateAcademicYear = mock(async () => ({ id: "year-1" }));
+    const publishAcademicYear = mock(async () => ({ id: "year-1" }));
     const service = {
-      commands: { activateAcademicYear },
+      commands: { publishAcademicYear },
     } as never;
 
-    await expect(dispatchCoreCommand(service, "activateAcademicYear", {
+    await expect(dispatchCoreCommand(service, "publishAcademicYear", {
       academicYearId: "year-1",
     })).resolves.toEqual({ id: "year-1" });
   });

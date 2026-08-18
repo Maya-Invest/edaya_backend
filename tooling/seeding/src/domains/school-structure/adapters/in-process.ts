@@ -33,6 +33,9 @@ export function createInProcessSchoolStructureSeedPort(
         endDate: new Date(record.endDate),
       })
     }),
+    publishAcademicYear: academicYearId => withSeedPortError('schoolStructure.publishAcademicYear', async () => {
+      await service.setupWorkflow.publishAcademicYear({ academicYearId })
+    }),
     createAcademicPeriod: record => withSeedPortError('schoolStructure.createAcademicPeriod', async () => {
       await service.setupWorkflow.createAcademicPeriod({
         ...record,
