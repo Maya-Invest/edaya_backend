@@ -24,20 +24,24 @@ function schoolNotificationTemplatesColumn(field: string) {
   return column
 }
 
-export function normalizeSchoolNotificationTemplatesQuery<T>(
-  options?: QueryOptions<T> | Filter<T>,
-): QueryOptions<T> | Filter<T> | undefined {
+type SchoolNotificationTemplatesQuery
+  = QueryOptions<SchoolNotificationTemplates>
+    | Filter<SchoolNotificationTemplates>
+
+export function normalizeSchoolNotificationTemplatesQuery(
+  options?: SchoolNotificationTemplatesQuery,
+): QueryOptions<SchoolNotificationTemplates> | undefined {
   if (!options || typeof options !== 'object') {
     return options
   }
 
   const schoolId = (options as { schoolId?: unknown }).schoolId
   if (typeof schoolId !== 'string') {
-    return options
+    return options as QueryOptions<SchoolNotificationTemplates>
   }
 
-  const { schoolId: _schoolId, ...rest } = options as QueryOptions<T> & { schoolId: string }
-  return { ...rest, id: schoolId } as QueryOptions<T>
+  const { schoolId: _schoolId, ...rest } = options as QueryOptions<SchoolNotificationTemplates> & { schoolId: string }
+  return { ...rest, id: schoolId }
 }
 
 export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates> {

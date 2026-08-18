@@ -215,7 +215,7 @@ describe('entity config edge gates', () => {
       name: '2026',
       startDate: new Date('2026-01-01'),
       endDate: new Date('2026-12-31'),
-      isActive: true,
+      status: 'published',
     })
     const student = new Student({
       id: 'student-delete',

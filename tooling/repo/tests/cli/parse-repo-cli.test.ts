@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
 import { parseRepoCliArgs } from '../../cli/parse-repo-cli'
 import { resolveRepoCommandScript } from '../../cli/registry'
@@ -66,8 +67,8 @@ describe('parseRepoCliArgs', () => {
 
 describe('resolveRepoCommandScript', () => {
   it('resolves script paths under the monorepo', () => {
-    expect(resolveRepoCommandScript('dev')).toEndWith('tooling/repo/dev/start-local-dev.ts')
-    expect(resolveRepoCommandScript('seed')).toEndWith('tooling/seeding/scripts/seed.ts')
-    expect(resolveRepoCommandScript('doctor')).toEndWith('tooling/repo/ci/doctor.ts')
+    expect(resolveRepoCommandScript('dev')).toEndWith(join('tooling', 'repo', 'dev', 'start-local-dev.ts'))
+    expect(resolveRepoCommandScript('seed')).toEndWith(join('tooling', 'seeding', 'scripts', 'seed.ts'))
+    expect(resolveRepoCommandScript('doctor')).toEndWith(join('tooling', 'repo', 'ci', 'doctor.ts'))
   })
 })

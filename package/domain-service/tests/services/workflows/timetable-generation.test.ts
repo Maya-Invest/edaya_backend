@@ -109,7 +109,7 @@ describe('timetable resolver and solver', () => {
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
-          isActive: true,
+          status: 'published',
         }),
       },
       periodDefinitions: {
@@ -159,7 +159,7 @@ describe('timetable resolver and solver', () => {
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
-          isActive: true,
+          status: 'published',
         }),
       },
       periodDefinitions: {
@@ -207,7 +207,7 @@ describe('timetable resolver and solver', () => {
           name: '2026',
           startDate: weekStart,
           endDate: weekEnd,
-          isActive: true,
+          status: 'published',
         }),
       },
       periodDefinitions: {
@@ -653,7 +653,7 @@ function createWorkflowContext(
     name: '2026',
     startDate: academicYearRange?.startDate ?? weekStart,
     endDate: academicYearRange?.endDate ?? weekEnd,
-    isActive: true,
+    status: 'published',
   })
   const grade = new GradeLevel({ id: 'grade-1', schoolId: school.id, name: 'Grade 1', label: 'G1', order: 1 })
   const groups = [

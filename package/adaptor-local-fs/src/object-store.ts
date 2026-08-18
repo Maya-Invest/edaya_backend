@@ -1,5 +1,5 @@
 import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 
 export interface LocalFileObjectStoreConfig {
   rootDir: string;
@@ -21,7 +21,7 @@ export function resolveObjectPath(rootDir: string, key: string): string {
 
   const root = resolve(rootDir);
   const objectPath = resolve(root, normalizedKey);
-  if (objectPath !== root && !objectPath.startsWith(`${root}/`)) {
+  if (objectPath !== root && !objectPath.startsWith(`${root}${sep}`)) {
     throw new Error("Invalid storage key");
   }
 

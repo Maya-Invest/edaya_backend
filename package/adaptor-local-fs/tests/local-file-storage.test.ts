@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { createLocalFileStorage } from "../src/local-file-storage";
-import { createLocalFileObjectStore } from "../src/object-store";
+import { createLocalFileObjectStore, resolveObjectPath } from "../src/object-store";
 import { createLocalFileStorageApp } from "../src/server-app";
 import { createLocalFileToken, verifyLocalFileToken } from "../src/tokens";
 
@@ -21,6 +21,13 @@ describe("local file tokens", () => {
 });
 
 describe("createLocalFileObjectStore", () => {
+  it("resolves nested keys under the storage root", () => {
+    const rootDir = mkdtempSync(join(tmpdir(), "edaya-local-fs-"));
+    const objectPath = resolveObjectPath(rootDir, "school-1/uploads/staff/staff-1/att-1/photo.jpg");
+    expect(objectPath.startsWith(`${resolve(rootDir)}${sep}`)).toBe(true);
+    rmSync(rootDir, { recursive: true, force: true });
+  });
+
   it("rejects path traversal keys", async () => {
     const rootDir = mkdtempSync(join(tmpdir(), "edaya-local-fs-"));
     const store = createLocalFileObjectStore({ rootDir });

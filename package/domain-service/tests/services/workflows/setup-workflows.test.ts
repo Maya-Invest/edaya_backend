@@ -4,7 +4,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember, AcademicYear } from '@edaya/core'
+import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember } from '@edaya/core'
 import {
   describe,
   expect,
