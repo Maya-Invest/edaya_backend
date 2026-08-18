@@ -162,7 +162,7 @@ describe('resolveEffectiveGrants', () => {
 
   test('falls back to the active academic year when omitted', async () => {
     const repositories = createGrantRepos([], undefined, undefined, [
-      { id: 'year-1', schoolId: 'school-1', name: '2025-2026', isActive: true },
+      { id: 'year-1', schoolId: 'school-1', name: '2025-2026', status: 'published' },
     ])
     await saveStaffPermission(repositories, { id: 'spa-read', permission: Permission.PAYMENT_READ })
 

@@ -36,6 +36,13 @@
       "when": 1785758400000,
       "tag": "0004_grade_level_label",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785844800000,
+      "tag": "0005_academic_year_status",
+      "breakpoints": true
     }
   ]
 }

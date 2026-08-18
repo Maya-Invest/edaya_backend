@@ -4,16 +4,24 @@ import {
   runMigrations as runAuthMigrations,
 } from "@edaya/adaptor-auth";
 import {
+  getMigrationsFolder,
   MIGRATIONS_SCHEMA,
   runMigrations as runSchoolMigrations,
   SCHOOL_MIGRATIONS_TABLE,
 } from "@edaya/adaptor-postgres";
 import { describe, expect, test } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
+
+function schoolMigrationCount(): number {
+  const journal = JSON.parse(
+    readFileSync(path.join(getMigrationsFolder(), "meta/_journal.json"), "utf8"),
+  ) as { entries: unknown[] };
+  return journal.entries.length;
+}
 
 describe("runStartupMigrations", () => {
   test("applies school schema before auth on a shared PGlite database", async () => {
@@ -45,7 +53,7 @@ describe("runStartupMigrations", () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(4);
-      expect(schoolJournal.rows[0]?.count).toBe(5);
+      expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
       expect(authJournal.rows[0]?.count).toBe(1);
     }
     finally {
@@ -78,7 +86,7 @@ describe("runStartupMigrations", () => {
       );
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
-      expect(schoolJournal.rows[0]?.count).toBe(5);
+      expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
       expect(authJournal.rows[0]?.count).toBe(1);
     }
     finally {

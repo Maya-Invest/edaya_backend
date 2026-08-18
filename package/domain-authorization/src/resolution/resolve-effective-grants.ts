@@ -1,6 +1,6 @@
 import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { EffectiveGrants } from '../model/effective-grants'
-import { findActiveAcademicYear } from '@edaya/core'
+import { findPublishedAcademicYear } from '@edaya/core'
 import { ELEVATED_STAFF_PERMISSIONS } from '../grants/system-role-permissions'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { resolveStaffGrantsFromPermissionAssignments } from './resolve-staff-permission-assignments-grants'
@@ -71,6 +71,6 @@ async function resolveDefaultStaffAcademicYearId(
     return undefined
   }
 
-  const year = await findActiveAcademicYear(academicYears, args.schoolId)
+  const year = await findPublishedAcademicYear(academicYears, args.schoolId)
   return year?.id
 }

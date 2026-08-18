@@ -161,7 +161,7 @@ export function createEntityStores(db: any): EntityStores {
         name: entity.name,
         startDate: entity.startDate,
         endDate: entity.endDate,
-        isActive: entity.isActive,
+        status: entity.status,
         createdAt: entity.createdAt,
       }),
       row => new AcademicYearCtor({
@@ -170,7 +170,7 @@ export function createEntityStores(db: any): EntityStores {
         name: row.name,
         startDate: row.startDate,
         endDate: row.endDate,
-        isActive: row.isActive,
+        status: row.status,
         createdAt: row.createdAt,
       }),
     ),

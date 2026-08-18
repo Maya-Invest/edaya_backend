@@ -7,7 +7,7 @@ function mockTable(columns: Record<string, string>) {
 }
 
 const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, minIndexes: number }> = [
-  { tableName: 'academic_years', columns: { schoolId: 'school_id', isActive: 'is_active' }, minIndexes: 2 },
+  { tableName: 'academic_years', columns: { schoolId: 'school_id', status: 'status' }, minIndexes: 2 },
   { tableName: 'academic_periods', columns: { schoolId: 'school_id', academicYearId: 'academic_year_id' }, minIndexes: 2 },
   { tableName: 'period_definitions', columns: { academicYearId: 'academic_year_id' }, minIndexes: 1 },
   { tableName: 'grade_levels', columns: { schoolId: 'school_id' }, minIndexes: 1 },

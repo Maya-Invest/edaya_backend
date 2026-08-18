@@ -602,7 +602,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         ]),
       },
       academicYears: {
-        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", isActive: true }),
+        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", status: "published" }),
       },
     };
 
@@ -671,7 +671,7 @@ describe("session Middleware ActorMetadata Construction", () => {
         ]),
       },
       academicYears: {
-        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", isActive: true }),
+        findOne: mock().mockResolvedValue({ id: "year-1", schoolId: "school-1", status: "published" }),
       },
     };
 

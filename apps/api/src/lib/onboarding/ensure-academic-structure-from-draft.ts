@@ -106,6 +106,7 @@ export async function ensureAcademicStructureFromDraft(
       startDate: parseDateOnly(input.academicYearStart),
       endDate: parseDateOnly(input.academicYearEnd),
     });
+    await service.setupWorkflow.publishAcademicYear({ academicYearId: yearId });
     createdYear = true;
   }
 

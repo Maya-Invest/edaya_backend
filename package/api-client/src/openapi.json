@@ -2463,9 +2463,14 @@
           },
           "startDate": {},
           "endDate": {},
-          "isActive": {
-            "type": "boolean",
-            "default": true
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft"
           },
           "createdAt": {}
         },
@@ -2493,11 +2498,7 @@
             "minLength": 1
           },
           "startDate": {},
-          "endDate": {},
-          "isActive": {
-            "type": "boolean"
-          },
-          "createdAt": {}
+          "endDate": {}
         },
         "required": [
           "id",
@@ -2507,7 +2508,19 @@
           "endDate"
         ]
       },
-      "ActivateAcademicYearCommand": {
+      "PublishAcademicYearCommand": {
+        "type": "object",
+        "properties": {
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "academicYearId"
+        ]
+      },
+      "ArchiveAcademicYearCommand": {
         "type": "object",
         "properties": {
           "academicYearId": {
@@ -16742,31 +16755,161 @@
         }
       }
     },
-    "/core/commands/activate-academic-year": {
+    "/core/commands/publish-academic-year": {
       "post": {
         "tags": [
           "Core Commands"
         ],
-        "summary": "activate-academic-year",
-        "operationId": "commands.activateAcademicYear",
+        "summary": "publish-academic-year",
+        "operationId": "commands.publishAcademicYear",
         "x-edaya-kind": "command",
-        "x-edaya-command-key": "activateAcademicYear",
-        "x-edaya-command-public-name": "activate-academic-year",
-        "x-edaya-request-schema": "ActivateAcademicYearCommand",
+        "x-edaya-command-key": "publishAcademicYear",
+        "x-edaya-command-public-name": "publish-academic-year",
+        "x-edaya-request-schema": "PublishAcademicYearCommand",
         "x-edaya-response-schema": "AcademicYear",
         "requestBody": {
-          "description": "activate-academic-year payload",
+          "description": "publish-academic-year payload",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ActivateAcademicYearCommand"
+                "$ref": "#/components/schemas/PublishAcademicYearCommand"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Executed activate-academic-year",
+            "description": "Executed publish-academic-year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicYear"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/archive-academic-year": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "archive-academic-year",
+        "operationId": "commands.archiveAcademicYear",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "archiveAcademicYear",
+        "x-edaya-command-public-name": "archive-academic-year",
+        "x-edaya-request-schema": "ArchiveAcademicYearCommand",
+        "x-edaya-response-schema": "AcademicYear",
+        "requestBody": {
+          "description": "archive-academic-year payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveAcademicYearCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed archive-academic-year",
             "content": {
               "application/json": {
                 "schema": {

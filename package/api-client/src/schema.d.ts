@@ -706,7 +706,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/commands/activate-academic-year": {
+    "/core/commands/publish-academic-year": {
         parameters: {
             query?: never;
             header?: never;
@@ -715,8 +715,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** activate-academic-year */
-        post: operations["commands.activateAcademicYear"];
+        /** publish-academic-year */
+        post: operations["commands.publishAcademicYear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/archive-academic-year": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** archive-academic-year */
+        post: operations["commands.archiveAcademicYear"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10665,8 +10682,11 @@ export interface components {
             name: string;
             startDate: unknown;
             endDate: unknown;
-            /** @default true */
-            isActive: boolean;
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "published" | "archived";
             createdAt?: unknown;
         };
         CreateAcademicYearCommand: {
@@ -10675,10 +10695,11 @@ export interface components {
             name: string;
             startDate: unknown;
             endDate: unknown;
-            isActive?: boolean;
-            createdAt?: unknown;
         };
-        ActivateAcademicYearCommand: {
+        PublishAcademicYearCommand: {
+            academicYearId: string;
+        };
+        ArchiveAcademicYearCommand: {
             academicYearId: string;
         };
         AcademicPeriod: {
@@ -15074,21 +15095,99 @@ export interface operations {
             };
         };
     };
-    "commands.activateAcademicYear": {
+    "commands.publishAcademicYear": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description activate-academic-year payload */
+        /** @description publish-academic-year payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ActivateAcademicYearCommand"];
+                "application/json": components["schemas"]["PublishAcademicYearCommand"];
             };
         };
         responses: {
-            /** @description Executed activate-academic-year */
+            /** @description Executed publish-academic-year */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicYear"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.archiveAcademicYear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description archive-academic-year payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ArchiveAcademicYearCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed archive-academic-year */
             200: {
                 headers: {
                     [name: string]: unknown;

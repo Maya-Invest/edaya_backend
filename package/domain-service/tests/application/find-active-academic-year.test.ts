@@ -10,40 +10,40 @@ function academicYearsRepo(
 }
 
 describe('findActiveAcademicYear', () => {
-  test('returns the active academic year when one is marked active', async () => {
-    const active = new AcademicYear({
+  test('returns the published academic year when one is marked published', async () => {
+    const published = new AcademicYear({
       id: 'year-active',
       schoolId: 'school-1',
       name: '2025-2026',
       startDate: new Date('2025-09-01'),
       endDate: new Date('2026-07-15'),
-      isActive: true,
+      status: 'published',
     })
-    const inactive = new AcademicYear({
+    const archived = new AcademicYear({
       id: 'year-old',
       schoolId: 'school-1',
       name: '2024-2025',
       startDate: new Date('2024-09-01'),
       endDate: new Date('2025-07-15'),
-      isActive: false,
+      status: 'archived',
     })
 
     const result = await findActiveAcademicYear(
-      academicYearsRepo(async () => [inactive, active]),
+      academicYearsRepo(async () => [archived, published]),
       'school-1',
     )
 
     expect(result?.id).toBe('year-active')
   })
 
-  test('falls back to the first listed year when none are active', async () => {
+  test('falls back to the first listed year when none are published', async () => {
     const first = new AcademicYear({
       id: 'year-first',
       schoolId: 'school-1',
       name: '2024-2025',
       startDate: new Date('2024-09-01'),
       endDate: new Date('2025-07-15'),
-      isActive: false,
+      status: 'archived',
     })
 
     const result = await findActiveAcademicYear(

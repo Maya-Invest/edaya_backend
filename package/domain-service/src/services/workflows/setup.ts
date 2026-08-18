@@ -71,7 +71,11 @@ export interface CreateAcademicYearInput {
   createdAt?: Date
 }
 
-export interface ActivateAcademicYearInput {
+export interface PublishAcademicYearInput {
+  academicYearId: string
+}
+
+export interface ArchiveAcademicYearInput {
   academicYearId: string
 }
 
@@ -203,16 +207,15 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         name,
         startDate,
         endDate,
-        isActive: true,
+        status: 'draft',
         createdAt,
       })
-      await this.deactivateOtherAcademicYears(schoolId, academicYear.id)
       await this.baseService.entities.academicYears.save(academicYear, { moduleChecked: true })
       return academicYear
     })
   }
 
-  async activateAcademicYear({ academicYearId }: ActivateAcademicYearInput): Promise<AcademicYear> {
+  async publishAcademicYear({ academicYearId }: PublishAcademicYearInput): Promise<AcademicYear> {
     const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
     if (!academicYear) {
       denyResourceAccess()
@@ -220,19 +223,66 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     this.checkActorSchool(academicYear.schoolId)
     await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
 
+    if (academicYear.status !== 'draft') {
+      throw new BusinessRuleViolationError(
+        'ACADEMIC_YEAR_NOT_DRAFT',
+        `Academic year ${academicYearId} must be draft to publish`,
+      )
+    }
+
     return this.baseService.atomicExecution.execute(async () => {
-      await this.deactivateOtherAcademicYears(academicYear.schoolId, academicYear.id)
-      const activated = new AcademicYearEntity({
+      const publishedYears = await this.baseService.repositories.academicYears.list({
+        schoolId: academicYear.schoolId,
+        status: 'published',
+      })
+      if (publishedYears.length > 0) {
+        throw new BusinessRuleViolationError(
+          'ACADEMIC_YEAR_ALREADY_PUBLISHED',
+          'Another academic year is already published. Archive it before publishing a new one.',
+        )
+      }
+
+      const published = new AcademicYearEntity({
         id: academicYear.id,
         schoolId: academicYear.schoolId,
         name: academicYear.name,
         startDate: academicYear.startDate,
         endDate: academicYear.endDate,
-        isActive: true,
+        status: 'published',
         createdAt: academicYear.createdAt,
       })
-      await this.baseService.entities.academicYears.save(activated, { moduleChecked: true })
-      return activated
+      await this.baseService.entities.academicYears.save(published, { moduleChecked: true })
+      return published
+    })
+  }
+
+  async archiveAcademicYear({ academicYearId }: ArchiveAcademicYearInput): Promise<AcademicYear> {
+    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
+    if (!academicYear) {
+      denyResourceAccess()
+    }
+    this.checkActorSchool(academicYear.schoolId)
+    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
+
+    if (academicYear.status !== 'published') {
+      throw new BusinessRuleViolationError(
+        'ACADEMIC_YEAR_NOT_PUBLISHED',
+        `Academic year ${academicYearId} must be published to archive`,
+      )
+    }
+
+    return this.baseService.atomicExecution.execute(async () => {
+      const archived = new AcademicYearEntity({
+        id: academicYear.id,
+        schoolId: academicYear.schoolId,
+        name: academicYear.name,
+        startDate: academicYear.startDate,
+        endDate: academicYear.endDate,
+        status: 'archived',
+        createdAt: academicYear.createdAt,
+      })
+      await this.baseService.entities.academicYears.save(archived, { moduleChecked: true })
+      return archived
     })
   }
 
@@ -471,24 +521,6 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.fileStorage.deleteObject(existing.storageKey)
     }
     await this.baseService.entities.attachments.delete(existing.id)
-  }
-
-  private async deactivateOtherAcademicYears(schoolId: string, activeAcademicYearId: string): Promise<void> {
-    const activeAcademicYears = await this.baseService.repositories.academicYears.list({ schoolId, isActive: true })
-    for (const academicYear of activeAcademicYears) {
-      if (academicYear.id === activeAcademicYearId) {
-        continue
-      }
-      await this.baseService.entities.academicYears.save(new AcademicYearEntity({
-        id: academicYear.id,
-        schoolId: academicYear.schoolId,
-        name: academicYear.name,
-        startDate: academicYear.startDate,
-        endDate: academicYear.endDate,
-        isActive: false,
-        createdAt: academicYear.createdAt,
-      }), { moduleChecked: true })
-    }
   }
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {

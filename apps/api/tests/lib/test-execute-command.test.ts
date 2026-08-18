@@ -74,16 +74,16 @@ describe("executeSchoolCommand", () => {
   });
 
   test("dispatches non-announcement commands through the school command registry", async () => {
-    const activateAcademicYear = mock(async () => ({ id: "year-1" }));
+    const publishAcademicYear = mock(async () => ({ id: "year-1" }));
     const { context } = createCommandContext({});
     const service = {
-      commands: { activateAcademicYear },
+      commands: { publishAcademicYear },
     } as never;
 
     await expect(executeSchoolCommand(
       context,
       service,
-      "activateAcademicYear",
+      "publishAcademicYear",
       { academicYearId: "year-1" },
     )).resolves.toEqual({ id: "year-1" });
   });

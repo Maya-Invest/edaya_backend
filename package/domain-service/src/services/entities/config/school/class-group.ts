@@ -3,7 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess, SchoolStructureOperations } from '@edaya/authorization'
 import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
+import { authorizeDeleteByReadAccess, authorizeSaveSkipReadOnCreate, config, operationModule, read, readByIds, write } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/class-group.ts (PR3)
@@ -16,7 +16,7 @@ export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories
     read: read(operationModule(SchoolStructureOperations.classGroupRead), readAccess),
     write: write(
       operationModule(SchoolStructureOperations.configure),
-      authorizeExistingById(readAccess),
+      authorizeSaveSkipReadOnCreate(readAccess),
       authorizeDeleteByReadAccess(readAccess),
     ),
     gates: {

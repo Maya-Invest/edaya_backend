@@ -2,7 +2,8 @@ export type SchoolCommandKey
   = | 'registerSchool'
     | 'updateSchoolConfiguration'
     | 'createAcademicYear'
-    | 'activateAcademicYear'
+    | 'publishAcademicYear'
+    | 'archiveAcademicYear'
     | 'createAcademicPeriod'
     | 'publishAcademicPeriod'
     | 'configureGradeLevel'
@@ -129,7 +130,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'registerSchool',
   'updateSchoolConfiguration',
   'createAcademicYear',
-  'activateAcademicYear',
+  'publishAcademicYear',
+  'archiveAcademicYear',
   'createAcademicPeriod',
   'publishAcademicPeriod',
   'configureGradeLevel',

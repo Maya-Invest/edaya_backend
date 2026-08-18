@@ -55,6 +55,7 @@ function createMemoryPort(options: MemoryPortOptions = {}): {
       createAcademicYear: async (record) => {
         academicYears.push(record)
       },
+      publishAcademicYear: async () => {},
       createAcademicPeriod: async (record) => {
         academicPeriods.push(record)
       },

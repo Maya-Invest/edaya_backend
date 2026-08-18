@@ -87,6 +87,8 @@ export async function seedDevSchoolStructure(
     endDate: seedDateTime(isoDateString(academicYear.endDate)),
   })
 
+  await port.publishAcademicYear(academicYear.id)
+
   for (const period of academicPeriods) {
     await port.createAcademicPeriod({
       id: period.id,
