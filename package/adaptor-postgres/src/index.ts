@@ -6,7 +6,8 @@ export {
   resolvePgliteDataDir,
 } from './lib/database-url'
 export { createDefaultMappers, deserializeJsonb, rowToConstructorArgs } from './lib/mappers'
-export { getMigrationsFolder, type MigrationDriver, runMigrations } from './lib/migrate'
+export type { MigrationDriver } from './lib/migrate'
+export { getMigrationsFolder, runMigrations } from './lib/migrate'
 export {
   LEGACY_MIGRATIONS_TABLE,
   MIGRATIONS_SCHEMA,
