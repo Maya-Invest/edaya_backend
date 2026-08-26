@@ -58,6 +58,7 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
         createdBySubjectId: staff.createdBySubjectId,
         serviceElevated: staff.serviceElevated,
         isActive: staff.isActive,
+        profileRole: staff.profileRole,
         createdAt: staff.createdAt,
       }))
     }),

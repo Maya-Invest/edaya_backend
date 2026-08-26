@@ -52,6 +52,7 @@ async function ensureDevAuthStaffMembers(
       firstName,
       lastName,
       email: account.email,
+      profileRole: seedMember.profileRole ?? undefined,
     })
   }
 }

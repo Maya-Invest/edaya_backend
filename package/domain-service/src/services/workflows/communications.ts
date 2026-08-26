@@ -427,6 +427,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         createdBySubjectId: existing.createdBySubjectId,
         serviceElevated: existing.serviceElevated,
         isActive: existing.isActive,
+        profileRole: existing.profileRole,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })

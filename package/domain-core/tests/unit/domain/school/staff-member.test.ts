@@ -69,4 +69,17 @@ describe('StaffMember entity', () => {
       serviceElevated: true,
     })).toThrow('serviceElevated')
   })
+
+  test('accepts a webapp profileRole and rejects unknown values', () => {
+    const staff = new StaffMember({
+      ...baseArgs,
+      profileRole: 'secretary',
+    })
+    expect(staff.profileRole).toBe('secretary')
+
+    expect(() => new StaffMember({
+      ...baseArgs,
+      profileRole: 'professeur' as never,
+    })).toThrow()
+  })
 })

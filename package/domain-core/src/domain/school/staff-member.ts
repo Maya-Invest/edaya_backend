@@ -1,10 +1,12 @@
 import type { StaffAccountKind } from './staff-account-kind'
+import type { StaffProfileRole } from './staff-profile-role'
 
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
 
 import { STAFF_ACCOUNT_KINDS } from './staff-account-kind'
+import { STAFF_PROFILE_ROLES } from './staff-profile-role'
 
 function refineStaffMember(data: {
   accountKind?: StaffAccountKind
@@ -67,6 +69,7 @@ export const staffMemberBaseSchema = z.object({
   isActive: z.boolean().default(true),
   onboardingWizardCompletedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   onboardingMaxReachedStep: z.number().int().min(1).max(4).nullable().optional().transform(v => v === null ? undefined : v),
+  profileRole: z.enum(STAFF_PROFILE_ROLES).nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -105,6 +108,7 @@ export class StaffMember {
   get isActive() { return this.data.isActive }
   get onboardingWizardCompletedAt() { return this.data.onboardingWizardCompletedAt }
   get onboardingMaxReachedStep() { return this.data.onboardingMaxReachedStep }
+  get profileRole(): StaffProfileRole | undefined { return this.data.profileRole }
   get createdAt() { return this.data.createdAt }
 
   get fullName(): string {

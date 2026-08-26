@@ -126,6 +126,7 @@ export async function recordOnboardingAccountProgress(
     createdBySubjectId: staffMember.createdBySubjectId,
     serviceElevated: staffMember.serviceElevated,
     isActive: staffMember.isActive,
+    profileRole: staffMember.profileRole,
     createdAt: staffMember.createdAt,
     onboardingMaxReachedStep: nextMaxReachedStep,
     onboardingWizardCompletedAt: progress.wizardCompleted
