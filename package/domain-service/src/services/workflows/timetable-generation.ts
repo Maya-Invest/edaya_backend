@@ -447,11 +447,10 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     placements: readonly TimetablePlacement[],
     context: { classGroup: ClassGroup },
   ): Promise<LessonSessionEntity[]> {
-    const sessions: LessonSessionEntity[] = []
-    for (const placement of placements) {
+    const sessions = placements.map((placement) => {
       const firstCell = placement.cells[0]!
       const lastCell = placement.cells[placement.cells.length - 1]!
-      const session = new LessonSession({
+      return new LessonSession({
         id: randomUUID(),
         schoolId: context.classGroup.schoolId,
         classGroupId: context.classGroup.id,
@@ -464,8 +463,9 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
         endsAt: lastCell.endsAt,
         displayLabel: placement.displayLabel,
       })
-      await this.baseService.repositories.lessonSessions.save(session)
-      sessions.push(session)
+    })
+    if (sessions.length > 0) {
+      await this.baseService.repositories.lessonSessions.batchSave(sessions)
     }
     return sessions
   }
@@ -734,16 +734,18 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
         throw error
       }
     }
-    const publishedSessionIds: string[] = []
-    for (const { draft, teacherIds } of publishable) {
-      const published = draft.copyWith({
-        timetableGenerated: TimetableGenerated.Published,
-        timetableTeacherIds: teacherIds,
-      })
-      await this.baseService.repositories.lessonSessions.save(published)
-      publishedSessionIds.push(published.id)
+    const published = publishable.map(({ draft, teacherIds }) => draft.copyWith({
+      timetableGenerated: TimetableGenerated.Published,
+      timetableTeacherIds: teacherIds,
+    }))
+    if (published.length > 0) {
+      await this.baseService.repositories.lessonSessions.batchSave(published)
     }
-    return { classGroupId: classGroup.id, publishedSessionIds, skippedSessionIds }
+    return {
+      classGroupId: classGroup.id,
+      publishedSessionIds: published.map(session => session.id),
+      skippedSessionIds,
+    }
   }
 
   private async buildExistingWorkload(
@@ -798,11 +800,11 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
 
   private async discardRegeneratableSessionsInRange(classGroupId: string, startDate: Date, endDate: Date): Promise<void> {
     const sessions = await this.generatedSessionsInRange(classGroupId, startDate, endDate)
-    for (const session of sessions) {
-      if (this.shouldPreserveGeneratedSession(session)) {
-        continue
-      }
-      await this.baseService.repositories.lessonSessions.delete(session.id)
+    const idsToDelete = sessions
+      .filter(session => !this.shouldPreserveGeneratedSession(session))
+      .map(session => session.id)
+    if (idsToDelete.length > 0) {
+      await this.baseService.repositories.lessonSessions.batchDelete(idsToDelete)
     }
   }
 
