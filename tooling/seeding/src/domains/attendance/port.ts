@@ -18,8 +18,15 @@ export interface AttendanceSeedRecord {
   status: AttendanceStatus
 }
 
+export interface AttendanceClassDailySeedInput {
+  classGroupId: string
+  date: Date
+  attendanceByStudent: Record<string, AttendanceStatus>
+}
+
 export interface AttendanceSeedPort {
   ensureLessonSession: (input: AttendanceLessonSessionSeedInput) => Promise<{ lessonSessionId: string }>
   recordAttendance: (record: AttendanceSeedRecord) => Promise<void>
+  recordClassDailyAttendance: (input: AttendanceClassDailySeedInput) => Promise<void>
   markJustificationPending: (recordId: string, fallbackReason: string) => Promise<void>
 }
