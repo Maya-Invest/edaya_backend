@@ -1,6 +1,37 @@
 import type { AttendanceRecordInput } from '@edaya/core'
-import type { FixtureAttendanceSession } from '../../types'
+import type { FixtureAttendanceSession, FixtureDailyAttendanceDay } from '../../types'
 import { AttendanceStatus } from '@edaya/core'
+
+const CI_6A_STUDENT_IDS = ['ci-s1', 'ci-s2', 'ci-s3', 'ci-s4', 'ci-s5', 'ci-s6'] as const
+const CI_6B_STUDENT_IDS = ['ci-s7', 'ci-s8', 'ci-s9', 'ci-s10', 'ci-s14', 'ci-s15'] as const
+
+function allPresent(studentIds: readonly string[]): Record<string, AttendanceStatus> {
+  return Object.fromEntries(studentIds.map(id => [id, AttendanceStatus.Present]))
+}
+
+function dailyDaysForClass(
+  classGroupId: string,
+  studentIds: readonly string[],
+): readonly FixtureDailyAttendanceDay[] {
+  const first = studentIds[0]
+  const second = studentIds[1]
+  return [
+    { classGroupId, date: '2026-06-16', attendanceByStudent: allPresent(studentIds) },
+    {
+      classGroupId,
+      date: '2026-06-17',
+      attendanceByStudent: first && second
+        ? { [first]: AttendanceStatus.Present, [second]: AttendanceStatus.Absent }
+        : {},
+    },
+    { classGroupId, date: '2026-06-18', attendanceByStudent: {} },
+  ]
+}
+
+export const demoCiDailyAttendanceDays = [
+  ...dailyDaysForClass('ci-6a', CI_6A_STUDENT_IDS),
+  ...dailyDaysForClass('ci-6b', CI_6B_STUDENT_IDS),
+] as const satisfies readonly FixtureDailyAttendanceDay[]
 
 export const demoCiAttendanceAbsenceSessions = [
   {

@@ -129,6 +129,7 @@ export async function seedDevSchoolStructure(
       lastName: director.lastName,
       email: director.email ?? undefined,
       subjectId: seedSubjectId(director.id),
+      profileRole: director.profileRole ?? undefined,
       sendAccountInvitation: false,
     })
   }
@@ -141,6 +142,7 @@ export async function seedDevSchoolStructure(
       lastName: member.lastName,
       email: member.email ?? undefined,
       subjectId: seedSubjectId(member.id),
+      profileRole: member.profileRole ?? undefined,
       sendAccountInvitation: false,
     })
   }

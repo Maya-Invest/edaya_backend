@@ -15,6 +15,13 @@ export interface FixtureAttendanceSession {
   records: readonly AttendanceRecordInput[]
 }
 
+/** Daily roll-call occurrence for classes with attendanceMode=daily. Empty map = unmarked day. */
+export interface FixtureDailyAttendanceDay {
+  classGroupId: string
+  date: string
+  attendanceByStudent: Readonly<Record<string, AttendanceRecordInput['status']>>
+}
+
 export interface FixtureSchedulingSlot {
   slotId: string
   schedule: ScheduleInput
@@ -105,6 +112,7 @@ export interface FixtureDatasetExtensions {
     todaySession: FixtureAttendanceSession
     pendingJustificationRecordIds: readonly string[]
   }
+  dailyAttendanceDays?: readonly FixtureDailyAttendanceDay[]
   schedulingSlots?: readonly FixtureSchedulingSlot[]
   schedulingSessionProgressAnchor?: FixtureSchedulingSessionProgressAnchor
   schedulingSessionProgressAnchors?: readonly FixtureSchedulingSessionProgressAnchor[]

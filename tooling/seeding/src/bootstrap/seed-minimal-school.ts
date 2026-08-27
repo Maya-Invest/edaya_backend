@@ -35,6 +35,7 @@ export async function seedMinimalSchool(application: SeedApplication): Promise<v
     firstName: staffMember.firstName,
     lastName: staffMember.lastName,
     email: staffFixture?.email ?? staffMember.email,
+    profileRole: staffMember.profileRole ?? undefined,
     sendAccountInvitation: false,
   })
 

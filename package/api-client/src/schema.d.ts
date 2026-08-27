@@ -10909,6 +10909,8 @@ export interface components {
             isActive: boolean;
             onboardingWizardCompletedAt?: unknown;
             onboardingMaxReachedStep?: number | null;
+            /** @enum {string|null} */
+            profileRole?: "directeur" | "deputy_director" | "studies_director" | "educateur" | "cpe" | "secretary" | "accountant" | "it_admin" | null;
             createdAt?: unknown;
         };
         RegisterStaffMemberCommand: {
@@ -10935,6 +10937,8 @@ export interface components {
             isActive: boolean;
             onboardingWizardCompletedAt?: unknown;
             onboardingMaxReachedStep?: number | null;
+            /** @enum {string|null} */
+            profileRole?: "directeur" | "deputy_director" | "studies_director" | "educateur" | "cpe" | "secretary" | "accountant" | "it_admin" | null;
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
         };
@@ -10950,6 +10954,8 @@ export interface components {
             email?: string | null;
             onboardingWizardCompletedAt?: unknown;
             onboardingMaxReachedStep?: number | null;
+            /** @enum {string|null} */
+            profileRole?: "directeur" | "deputy_director" | "studies_director" | "educateur" | "cpe" | "secretary" | "accountant" | "it_admin" | null;
             staffId: string;
         };
         Guardian: {

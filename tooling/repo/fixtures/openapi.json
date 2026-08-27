@@ -3328,6 +3328,20 @@
             "minimum": 1,
             "maximum": 4
           },
+          "profileRole": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "directeur",
+              "deputy_director",
+              "studies_director",
+              "educateur",
+              "cpe",
+              "secretary",
+              "accountant",
+              "it_admin"
+            ]
+          },
           "createdAt": {}
         },
         "required": [
@@ -3421,6 +3435,20 @@
             "minimum": 1,
             "maximum": 4
           },
+          "profileRole": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "directeur",
+              "deputy_director",
+              "studies_director",
+              "educateur",
+              "cpe",
+              "secretary",
+              "accountant",
+              "it_admin"
+            ]
+          },
           "createdAt": {},
           "sendAccountInvitation": {
             "type": "boolean"
@@ -3483,6 +3511,20 @@
             "nullable": true,
             "minimum": 1,
             "maximum": 4
+          },
+          "profileRole": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "directeur",
+              "deputy_director",
+              "studies_director",
+              "educateur",
+              "cpe",
+              "secretary",
+              "accountant",
+              "it_admin"
+            ]
           },
           "staffId": {
             "type": "string",

@@ -2,7 +2,7 @@ import { resolveDevSeedContext } from './resolve-dev-seed-context'
 
 export { DEV_AUTH_PASSWORD } from './dev-auth-fixtures'
 
-export type DevDemoLoginRole = 'owner' | 'directeur' | 'prof_principal' | 'professeur' | 'educateur'
+export type DevDemoLoginRole = 'owner' | 'directeur' | 'deputy_director' | 'educateur'
 
 export interface DevDemoLoginAccount {
   staffId: string
@@ -14,16 +14,15 @@ export interface DevDemoLoginAccount {
 
 const ACCESS_ROLE_TO_DEMO_ROLE: Record<string, DevDemoLoginRole> = {
   'role-director': 'directeur',
-  'role-coordinator': 'prof_principal',
+  'role-coordinator': 'deputy_director',
   'role-educator': 'educateur',
 }
 
 const DEMO_ROLE_DISPLAY_ORDER: Record<DevDemoLoginRole, number> = {
   owner: -1,
   directeur: 0,
-  professeur: 1,
-  prof_principal: 2,
-  educateur: 3,
+  deputy_director: 1,
+  educateur: 2,
 }
 
 export function initialsForName(name: string): string {
@@ -47,7 +46,7 @@ export function resolveDevDemoStaffRole(
   const accessRoleId = context.staffAccessRoleIds[staffId]
   const role = accessRoleId && ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
     ? ACCESS_ROLE_TO_DEMO_ROLE[accessRoleId]
-    : 'professeur'
+    : 'directeur'
 
   return { role, accessRoleId }
 }

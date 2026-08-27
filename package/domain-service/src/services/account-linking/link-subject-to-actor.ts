@@ -127,6 +127,7 @@ export async function unlinkSubjectFromActor(
       notificationPhone: existing.notificationPhone,
       subjectId: undefined,
       isActive: existing.isActive,
+      profileRole: existing.profileRole,
       createdAt: existing.createdAt,
     })
     await baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
@@ -252,6 +253,7 @@ async function replaceActorSubject(
       notificationPhone: existing.notificationPhone,
       subjectId: input.subjectId,
       isActive: existing.isActive,
+      profileRole: existing.profileRole,
       createdAt: existing.createdAt,
     })
     await baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
