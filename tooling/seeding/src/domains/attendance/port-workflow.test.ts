@@ -46,10 +46,11 @@ describe('attendance seed port workflow', () => {
 
     expect(count).toBe(expectedAttendance ?? 0)
     expect(lessonSessions).toHaveLength(attendanceSessions.absenceSessions.length + 1)
-    expect(records).toHaveLength(attendanceSessions.absenceSessions.reduce(
-      (total, session) => total + session.records.length,
+    const expectedRecordCount = attendanceSessions.absenceSessions.reduce(
+      (total: number, session) => total + session.records.length,
       attendanceSessions.todaySession.records.length,
-    ))
+    )
+    expect(records).toHaveLength(expectedRecordCount)
     expect(pending.map(record => record.id)).toEqual([...new Set(attendanceSessions.pendingJustificationRecordIds)])
     expect(pending.every(record => record.fallbackReason.length > 0)).toBe(true)
   })
