@@ -36,8 +36,8 @@ describe("Novu bootstrap catalog", () => {
 
   test("loads email templates from html files", async () => {
     const templates = await loadBootstrapEmailTemplates();
-    expect(templates.standardNotification).toContain("{{payload.emailBody}}");
-    expect(templates.accountInvitation).toContain("{{payload.emailBody}}");
+    expect(templates.standardNotification).toContain("{{ payload.emailBody | raw }}");
+    expect(templates.accountInvitation).toContain("{{ payload.emailBody | raw }}");
     expect(templates.accountInvitationSubject).toContain("{{payload.emailSubject}}");
   });
 

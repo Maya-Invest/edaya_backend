@@ -1,8 +1,15 @@
 import type { NotificationEnqueueInput, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
+import type { NovuTriggerSubscriber } from "./trigger-recipient";
+
+export type NovuTriggerTo =
+  | string
+  | string[]
+  | NovuTriggerSubscriber
+  | NovuTriggerSubscriber[];
 
 export interface NovuTriggerRequest {
   workflowId: string;
-  to: string | string[];
+  to: NovuTriggerTo;
   payload: Record<string, unknown>;
   transactionId: string;
   /** Novu v2 tenant scope — maps schoolId to `context.tenant` on trigger. */

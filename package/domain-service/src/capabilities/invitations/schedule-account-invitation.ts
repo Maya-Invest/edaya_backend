@@ -16,11 +16,11 @@ export interface ScheduleAccountInvitationInput {
   inviteEmail?: string
 }
 
-export function scheduleAccountInvitationIfEligible(
+export async function scheduleAccountInvitationIfEligible(
   baseService: BaseSchoolService,
   input: ScheduleAccountInvitationInput,
   entity: StaffMember | Guardian | Student,
-): void {
+): Promise<void> {
   if (input.sendAccountInvitation === false) {
     return
   }
@@ -34,22 +34,20 @@ export function scheduleAccountInvitationIfEligible(
     return
   }
 
-  void (async () => {
-    try {
-      await operationModule(AccessControlOperations.assign)(baseService.actor)
-      const workflow = new AccountInvitationServiceWorkflow(baseService)
-      await workflow.sendAccountInvitation({
-        kind: input.kind,
-        targetId: input.targetId,
-        contactChannel: AccountInvitationContactChannel.Email,
-        contactValue: input.kind === AccountInvitationKind.Student
-          ? resolveStudentInvitationEmail(input.inviteEmail)
-          : undefined,
-        inviteBaseUrl: baseService.inviteBaseUrl!,
-      })
-    }
-    catch {
-      // Invitation delivery must not break entity registration.
-    }
-  })()
+  try {
+    await operationModule(AccessControlOperations.assign)(baseService.actor)
+    const workflow = new AccountInvitationServiceWorkflow(baseService)
+    await workflow.sendAccountInvitation({
+      kind: input.kind,
+      targetId: input.targetId,
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: input.kind === AccountInvitationKind.Student
+        ? resolveStudentInvitationEmail(input.inviteEmail)
+        : undefined,
+      inviteBaseUrl: baseService.inviteBaseUrl,
+    })
+  }
+  catch {
+    // Invitation delivery must not break entity registration.
+  }
 }

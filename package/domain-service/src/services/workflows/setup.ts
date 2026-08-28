@@ -332,7 +332,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       new StaffMemberEntity(entityInput),
     )
     scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
-    scheduleAccountInvitationIfEligible(
+    await scheduleAccountInvitationIfEligible(
       this.baseService,
       {
         kind: AccountInvitationKind.Staff,

@@ -3,6 +3,7 @@ import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY, AUTH_PLATFORM_CO
 import type { NovuSubscriberClient } from "./novu-subscriber-client";
 import { createNovuSdkClient } from "./novu-sdk-client";
 import { createNovuSubscriberClient } from "./novu-subscriber-client";
+import { buildNovuTriggerSubscriber } from "./trigger-recipient";
 import type { NovuTriggerClient } from "./types";
 
 export type AuthOtpEmailType
@@ -140,7 +141,10 @@ export function createNovuAuthEmailDeliveryPort(
 
       await options.triggerClient.trigger({
         workflowId: AUTH_OTP_EVENT_KEY,
-        to: subscriberId,
+        to: buildNovuTriggerSubscriber({
+          subscriberId,
+          email: normalizedEmail,
+        }),
         transactionId,
         context: {
           tenant: AUTH_PLATFORM_CONTEXT_ID,
@@ -150,6 +154,7 @@ export function createNovuAuthEmailDeliveryPort(
           body,
           emailSubject: subject,
           emailBody: body,
+          otp: input.otp,
           kind: "event",
           eventKey: AUTH_OTP_EVENT_KEY,
           schoolId: AUTH_PLATFORM_CONTEXT_ID,
@@ -171,7 +176,11 @@ export function createNovuAuthEmailDeliveryPort(
 
       await options.triggerClient.trigger({
         workflowId: AUTH_EMAIL_VERIFICATION_EVENT_KEY,
-        to: subscriberId,
+        to: buildNovuTriggerSubscriber({
+          subscriberId,
+          email: normalizedEmail,
+          displayName: input.displayName,
+        }),
         transactionId,
         context: {
           tenant: AUTH_PLATFORM_CONTEXT_ID,
@@ -181,6 +190,8 @@ export function createNovuAuthEmailDeliveryPort(
           body,
           emailSubject: subject,
           emailBody: body,
+          url: input.url,
+          verifyUrl: input.url,
           kind: "event",
           eventKey: AUTH_EMAIL_VERIFICATION_EVENT_KEY,
           schoolId: AUTH_PLATFORM_CONTEXT_ID,

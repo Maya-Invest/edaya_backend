@@ -159,7 +159,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
 
     const student = new Student(entityInput)
     await this.baseService.entities.students.save(student)
-    scheduleAccountInvitationIfEligible(
+    await scheduleAccountInvitationIfEligible(
       this.baseService,
       {
         kind: AccountInvitationKind.Student,
@@ -176,7 +176,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     const { sendAccountInvitation, ...entityInput } = input
     const guardian = new Guardian(entityInput)
     await this.baseService.entities.guardians.save(guardian)
-    scheduleAccountInvitationIfEligible(
+    await scheduleAccountInvitationIfEligible(
       this.baseService,
       {
         kind: AccountInvitationKind.Guardian,

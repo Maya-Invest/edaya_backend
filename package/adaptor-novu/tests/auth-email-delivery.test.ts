@@ -37,9 +37,13 @@ describe("createNovuAuthEmailDeliveryPort", () => {
     );
     expect(trigger).toHaveBeenCalledWith(expect.objectContaining({
       workflowId: AUTH_OTP_EVENT_KEY,
-      to: "auth:owner@school.edu",
+      to: expect.objectContaining({
+        subscriberId: "auth:owner@school.edu",
+        email: "owner@school.edu",
+      }),
       payload: expect.objectContaining({
         emailSubject: "Your EDAYA sign-in code",
+        otp: "123456",
       }),
     }));
   });
@@ -70,9 +74,16 @@ describe("createNovuAuthEmailDeliveryPort", () => {
 
     expect(trigger).toHaveBeenCalledWith(expect.objectContaining({
       workflowId: AUTH_EMAIL_VERIFICATION_EVENT_KEY,
-      to: "auth:owner@school.edu",
+      to: expect.objectContaining({
+        subscriberId: "auth:owner@school.edu",
+        email: "owner@school.edu",
+        firstName: "Ada",
+        lastName: "Owner",
+      }),
       payload: expect.objectContaining({
         emailSubject: "Verify your EDAYA email address",
+        url: "https://api.edaya.test/auth/verify?token=abc",
+        verifyUrl: "https://api.edaya.test/auth/verify?token=abc",
       }),
     }));
   });
