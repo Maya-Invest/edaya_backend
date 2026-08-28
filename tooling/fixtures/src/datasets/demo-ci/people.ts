@@ -68,11 +68,11 @@ export const demoCiEnrollments = [
 ] as const satisfies readonly StudentClassEnrollmentInput[]
 
 export const demoCiStaffMembers = [
-  { id: 'ci-st8', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Aminata', lastName: 'Koné', email: 'a.kone@ecole-ci.edaya.dev' },
-  { id: 'ci-st5', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Jean-Baptiste', lastName: 'Aka', email: 'j.aka@ecole-ci.edaya.dev' },
-  { id: 'ci-st3', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Assi', email: 'f.assi@ecole-ci.edaya.dev' },
+  { id: 'ci-st8', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Aminata', lastName: 'Koné', email: 'a.kone@ecole-ci.edaya.dev', profileRole: 'directeur' },
+  { id: 'ci-st5', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Jean-Baptiste', lastName: 'Aka', email: 'j.aka@ecole-ci.edaya.dev', profileRole: 'directeur' },
+  { id: 'ci-st3', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Assi', email: 'f.assi@ecole-ci.edaya.dev', profileRole: 'deputy_director' },
   { id: 'ci-st4', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'M.', lastName: 'Gbé', email: 'p.gbe@ecole-ci.edaya.dev' },
-  { id: 'ci-st7', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Zongo', email: 'm.zongo@ecole-ci.edaya.dev' },
+  { id: 'ci-st7', schoolId: DEMO_CI_SCHOOL_ID, firstName: 'Mme', lastName: 'Zongo', email: 'm.zongo@ecole-ci.edaya.dev', profileRole: 'educateur' },
 ] as const satisfies readonly StaffMemberInput[]
 
 export const demoCiSchoolOwnerStaffId = 'ci-st8' as const
