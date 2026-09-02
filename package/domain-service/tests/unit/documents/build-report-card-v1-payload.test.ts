@@ -122,6 +122,52 @@ describe('buildReportCardV1Payload', () => {
     })
   })
 
+  test('localizes catalog labels and ranks for English locale', () => {
+    const result = new ReportCardResult({
+      id: 'rc-en',
+      reportCardDefinitionId: 'def-1',
+      studentId: student.id,
+      classGroupId: 'cg-1',
+      periodId: 'per-1',
+      assessmentResultCount: 1,
+      overallAverage: 14.5,
+      rank: 3,
+      classSize: 30,
+      attendanceSummary: new AttendanceSummary({
+        presentCount: 40,
+        absenceCount: 4,
+        lateCount: 0,
+        excusedAbsenceCount: 1,
+      }),
+      sectionResults: [
+        new ReportCardResultSection({
+          sectionId: 'sub-esp',
+          sectionKind: ReportCardDefinitionSectionKind.Subject,
+          name: 'Espagnol',
+          average: 15,
+          weight: 2,
+          classSubjectId: 'cs-esp',
+          rank: 2,
+        }),
+      ],
+    })
+
+    const payload = buildReportCardV1Payload({
+      result,
+      student,
+      school,
+      periodLabel: 'Trimestre 1',
+      classLabel: '2nde A 1',
+      locale: 'en-US',
+    })
+
+    expect(payload.periodLabel).toBe('Term 1')
+    expect(payload.classLabel).toBe('10th A 1')
+    expect(payload.semesterRank).toBe('3 / 30 students')
+    expect(payload.subjects[0]?.name).toBe('Spanish')
+    expect(payload.subjects[0]?.rank).toBe('2 / 30')
+  })
+
   test('throws when there are no renderable section rows', () => {
     const result = new ReportCardResult({
       id: 'rc-empty',
