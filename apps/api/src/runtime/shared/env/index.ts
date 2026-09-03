@@ -1,7 +1,10 @@
 export { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 export {
+  applyEmailVerificationCallbackUrl,
   resolveAccountInvitationsEnabled,
+  resolveEmailVerificationCallbackUrl,
   resolveInviteBaseUrl,
+  resolveWebappOrigin,
   shouldAllowPublicSchoolRegistration,
 } from "@/runtime/shared/env/derived";
 export {
