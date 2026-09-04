@@ -205,4 +205,23 @@ describe('Entity config delete gates', () => {
     await expect(app.baseService.entities.announcementTargets.delete('target-draft')).resolves.toBeUndefined()
     await expect(app.baseService.entities.announcementTargets.delete('target-published')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
+
+  test('announcement target preDelete rejects archived announcement targets', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.announcementRepository.save(new Announcement({
+      id: 'announcement-archived',
+      schoolId: 'school',
+      title: 'Archived notice',
+      content: 'Hello',
+      createdBy: 'system',
+      status: AnnouncementStatus.Archived,
+    }))
+    await repositories.announcementTargetRepository.save(new AnnouncementTarget({
+      id: 'target-archived',
+      announcementId: 'announcement-archived',
+      targetKind: AnnouncementTargetKind.School,
+    }))
+
+    await expect(app.baseService.entities.announcementTargets.delete('target-archived')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
 })

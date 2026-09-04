@@ -78,6 +78,26 @@ describe("applyEmailVerificationCallbackUrl", () => {
     NODE_ENV: "development",
   };
 
+  it("rewrites a relative /login callback", () => {
+    const rewritten = applyEmailVerificationCallbackUrl(
+      "http://localhost:9999/auth/verify-email?token=abc&callbackURL=%2Flogin",
+      localEnv,
+    );
+    expect(callbackOf(rewritten)).toBe("http://localhost:5173/login?verified=1");
+  });
+
+  it("rewrites when callbackURL is missing", () => {
+    const rewritten = applyEmailVerificationCallbackUrl(
+      "https://staging.api.edayaplus.com/auth/verify-email?token=abc",
+      stagingEnv,
+    );
+    expect(callbackOf(rewritten)).toBe("https://staging.app.edayaplus.com/login?verified=1");
+  });
+
+  it("returns the original string when the verification URL is not parseable", () => {
+    expect(applyEmailVerificationCallbackUrl("not-a-url", stagingEnv)).toBe("not-a-url");
+  });
+
   it("rewrites a relative callback to the local login page", () => {
     const rewritten = applyEmailVerificationCallbackUrl(
       "http://localhost:9999/auth/verify-email?token=abc&callbackURL=%2F",
