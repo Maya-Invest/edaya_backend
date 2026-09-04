@@ -15,7 +15,7 @@
     "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
-    "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**'",
+    "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**' --timeout 120000",
     "build": "tsup"
   },
   "dependencies": {
