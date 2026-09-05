@@ -14,6 +14,13 @@ export default antfu(
   },
   {
     rules: {
+      "no-restricted-imports": ["error", {
+        paths: [{
+          name: "@edaya/authorization",
+          importNames: ["Permission"],
+          message: "Import Permission from @edaya/core — it is defined there and only re-exported from authorization.",
+        }],
+      }],
       "no-console": ["error", { allow: ["error"] }],
       "antfu/no-top-level-await": ["off"],
       "node/prefer-global/process": ["off"],

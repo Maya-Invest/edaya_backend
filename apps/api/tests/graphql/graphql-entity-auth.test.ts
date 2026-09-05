@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { mountGraphQLRoute } from "@/lib/graphql/mount";
 import type { AppBindings } from "@/http/types";
 import { ActorAssuranceLevel } from "@edaya/authorization";
-import type { Permission } from "@edaya/authorization";
+import type { Permission } from "@edaya/core";
 
 const mockActor = {
   kind: "staff" as const,

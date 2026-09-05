@@ -1,11 +1,11 @@
 import type { NotificationEnqueueInput, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
 import type { NovuTriggerSubscriber } from "./trigger-recipient";
 
-export type NovuTriggerTo =
-  | string
-  | string[]
-  | NovuTriggerSubscriber
-  | NovuTriggerSubscriber[];
+export type NovuTriggerTo
+  = | string
+    | string[]
+    | NovuTriggerSubscriber
+    | NovuTriggerSubscriber[];
 
 export interface NovuTriggerRequest {
   workflowId: string;

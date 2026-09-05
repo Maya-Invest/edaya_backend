@@ -1,6 +1,6 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { ReportCardResult } from '@edaya/core'
 import type { StaffActorMetadata, TeacherActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import type {
   GuardianReportCardResultAccess,
   StaffReportCardResultAccess,

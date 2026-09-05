@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
-import type { Permission } from "@edaya/authorization";
+import type { Permission } from "@edaya/core";
 
 export const emptyEffectiveGrants = {
   permissions: new Set<Permission>(),

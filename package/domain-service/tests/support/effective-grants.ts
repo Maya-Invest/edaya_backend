@@ -1,10 +1,6 @@
 import type { EffectiveGrants, GuardianScope, StudentScope } from '@edaya/authorization'
-import {
-  ACCOUNTANT_PERMISSIONS,
-  ASSIGNMENT_SCOPED_PERMISSIONS,
-  COORDINATOR_PERMISSIONS,
-  Permission,
-} from '@edaya/authorization'
+import { ACCOUNTANT_PERMISSIONS, ASSIGNMENT_SCOPED_PERMISSIONS, COORDINATOR_PERMISSIONS } from '@edaya/authorization'
+import { Permission } from '@edaya/core'
 
 /** Staff teaching-write permissions used in auth test fixtures. */
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [

@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/app-router";
-import type { Permission } from "@edaya/authorization";
+import type { Permission } from "@edaya/core";
 import { GradeLevel } from "@edaya/core";
 import { ActorAssuranceLevel } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";

@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { GuardianScope, StudentScope, TeacherActorScope } from '../model/actor-scope'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { InteractiveActorKind } from './interactive-actor-kind'
 import { resolveGuardianScope, resolveStudentScope } from './resolve-portal-scopes'
 import { resolveTeacherScope } from './resolve-teacher-scope'

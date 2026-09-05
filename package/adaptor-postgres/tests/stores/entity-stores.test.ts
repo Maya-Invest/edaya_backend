@@ -1,0 +1,41 @@
+import { CORE_ENTITY_KEYS } from '@edaya/service'
+import { describe, expect, test } from 'bun:test'
+import { createEntityStores } from '../../src/stores/entity-stores'
+
+const SPECIALIZED_ENTITY_STORE_KEYS = [
+  'accountInvitations',
+  'schoolNotificationTemplates',
+  'staffPermissionAssignments',
+] as const
+
+/** Parent-of-tenant stores that are not CoreEntityMap keys. */
+const PARENT_ENTITY_STORE_KEYS = [
+  'consortiums',
+] as const
+
+function keyDifference(actual: readonly string[], expected: readonly string[]) {
+  const actualKeys = new Set(actual)
+  const expectedKeys = new Set(expected)
+  return {
+    missing: expected.filter(key => !actualKeys.has(key)),
+    extra: actual.filter(key => !expectedKeys.has(key)),
+  }
+}
+
+describe('Postgres entity stores', () => {
+  test('cover every core entity with a generic or documented specialized store', () => {
+    const genericStoreKeys = Object.keys(createEntityStores({}))
+      .map(key => key === 'schoolsStore' ? 'schools' : key)
+      .filter(key => !(PARENT_ENTITY_STORE_KEYS as readonly string[]).includes(key))
+    const adapterStoreKeys = [
+      ...genericStoreKeys,
+      ...SPECIALIZED_ENTITY_STORE_KEYS,
+    ]
+
+    expect(keyDifference(adapterStoreKeys, CORE_ENTITY_KEYS)).toEqual({
+      missing: [],
+      extra: [],
+    })
+    expect(new Set(adapterStoreKeys).size).toBe(adapterStoreKeys.length)
+  })
+})

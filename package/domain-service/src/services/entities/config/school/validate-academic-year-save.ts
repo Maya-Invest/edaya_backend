@@ -1,6 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { AcademicYear } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import { assertAcademicYearStatusTransition, BusinessRuleViolationError } from '@edaya/core'
 
 export async function validateAcademicYearSave(

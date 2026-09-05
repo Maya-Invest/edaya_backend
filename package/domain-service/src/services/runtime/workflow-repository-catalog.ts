@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 
 export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears'],
@@ -9,6 +9,9 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'classSubjectProgress',
     'classSubjectMatters',
     'classSubjects',
+    'gradeLevelSubjects',
+    'gradeLevelSubjectMatters',
+    'gradeLevels',
   ],
   assessments: [
     'academicPeriods',
@@ -21,6 +24,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'attendance',
     'assessmentResults',
     'assessments',
+    'classGroups',
   ],
   student: [
     'enrollments',
@@ -37,6 +41,13 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'lessonSessions',
     'students',
     'enrollments',
+    'activitySessions',
+    'classGroups',
+    'academicYears',
+    'schools',
+    'classSubjects',
+    'subjects',
+    'activities',
   ],
   communications: [
     'announcementTargets',
@@ -49,6 +60,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'students',
     'guardianLinks',
     'enrollments',
+    'teachers',
   ],
   behavior: [
     'studentIncidentInvolvements',
@@ -83,3 +95,17 @@ export type AccessControlWorkflowRepositories = WorkflowRepositoryDeps<'accessCo
 export type InvitationWorkflowRepositories = WorkflowRepositoryDeps<'invitations'>
 
 export type SetupWorkflowRepositories = WorkflowRepositoryDeps<'setup'>
+
+export type AcademicsWorkflowRepositories = WorkflowRepositoryDeps<'academics'>
+
+export type AssessmentsWorkflowRepositories = WorkflowRepositoryDeps<'assessments'>
+
+export type StudentWorkflowRepositories = WorkflowRepositoryDeps<'student'>
+
+export type SchedulingWorkflowRepositories = WorkflowRepositoryDeps<'scheduling'>
+
+export type CommunicationsWorkflowRepositories = WorkflowRepositoryDeps<'communications'>
+
+export type BehaviorWorkflowRepositories = WorkflowRepositoryDeps<'behavior'>
+
+export type FinanceWorkflowRepositories = WorkflowRepositoryDeps<'finance'>

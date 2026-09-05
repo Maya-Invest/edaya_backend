@@ -1,7 +1,7 @@
 # Timetable Solver Evolution — Phases A, B & C
 
 > **Status:** Phase A implemented — 2026-07-11; Phase C core implemented — 2026-07-11; Phase B designed  
-> **Prerequisite:** [timetable-generation-implementation-plan.md](./timetable-generation-implementation-plan.md) (v1 shipped)  
+> **Prerequisite:** [timetable-generation-implementation-plan.md](./archive/timetable-generation-implementation-plan.md) (v1 shipped)  
 > **Scope:** Solver spacing, session-duration rules, and weekly-template generation mode.
 
 ---

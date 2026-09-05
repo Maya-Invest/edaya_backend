@@ -36,7 +36,7 @@ CI runs `bun run test:coverage` as an **informational** job on pull requests. No
 Ignored from coverage reports (see `bunfig.toml`):
 
 - Barrel `index.ts` re-exports
-- `package/generated-api-client/**`
+- `package/api-client/**`
 - `tooling/integration-tests/**` (scene harness, not unit tests)
 - `@edaya/core`: `src/ports/**` (interface-only ports)
 
@@ -56,5 +56,5 @@ Add new exclusions only with justification in the sprint plan or PR description.
 ## Related
 
 - [unit-test-coverage-plan.md](../sprints/unit-test-coverage-plan.md) — full epic plan
-- [authorization-operations-plan.md](../sprints/authorization-operations-plan.md) — auth test patterns
+- [authorization-operations-plan.md](../sprints/archive/authorization-operations-plan.md) — auth test patterns
 - [AGENTS.md](../../AGENTS.md) — `bun run verify` before PRs

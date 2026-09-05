@@ -1,5 +1,7 @@
 # Repo Inspection Report
 
+> **Historical (2026-06).** Package paths in this report (`package/generated-api-client`, `apps/webapp`, `package/integration-*`) predate the current layout. Canonical map: [integrations-restructure.md](./integrations-restructure.md).
+
 Date: 2026-06-16  
 Scope: over-engineering, boundary definition/enforcement, and developer experience for the `edaya_backend` monorepo.
 

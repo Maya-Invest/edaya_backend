@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 
 export interface SchoolNotificationContext {
   schoolName: string

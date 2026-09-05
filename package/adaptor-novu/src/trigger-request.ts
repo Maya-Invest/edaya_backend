@@ -1,6 +1,6 @@
 import type { NotificationEnqueueInput } from "@edaya/core";
 import { buildNovuSubscriberIds } from "./subscriber-id";
-import type { NovuTriggerRequest, NovuWorkflowIdResolver } from "./types";
+import type { NovuTriggerRequest, NovuTriggerTo, NovuWorkflowIdResolver } from "./types";
 
 const NOVU_MAX_RECIPIENTS_PER_TRIGGER = 100;
 
@@ -53,7 +53,7 @@ export function chunkNovuTriggerRequests(
     const slice = recipients.slice(index, index + NOVU_MAX_RECIPIENTS_PER_TRIGGER);
     chunks.push({
       ...request,
-      to: slice.length === 1 ? slice[0]! : slice,
+      to: (slice.length === 1 ? slice[0]! : slice) as NovuTriggerTo,
       transactionId: `${request.transactionId}:${index / NOVU_MAX_RECIPIENTS_PER_TRIGGER}`,
     });
   }

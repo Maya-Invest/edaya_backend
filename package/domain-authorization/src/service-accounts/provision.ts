@@ -1,9 +1,9 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { StaffMember } from '@edaya/core'
 import type {
   Permission,
 } from '../'
 import type { StaffActorMetadata } from '../model/actor'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { randomUUID } from 'node:crypto'
 import {
   BusinessRuleViolationError,

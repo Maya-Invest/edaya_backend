@@ -12,20 +12,25 @@ edaya_backend/
     api/                            Hono HTTP, OpenAPI, scheduled cron, runtime, Worker host wiring
   package/
     domain-core/                    Domain entities + ports
-    authorization/                  Auth engine, permissions, policy
-    school-service/                 Workflows, entity CRUD, notifications, cron
+    domain-authorization/           Auth engine, permissions, policy
+    domain-service/                 Workflows, entity CRUD, notifications, cron
     adaptor-postgres/               School Drizzle schema, SQL, repos, runMigrations()
     adaptor-auth/                   Better Auth schema, SQL, runtime runMigrations()
     adaptor-novu/                   Novu notification gateway adapter
     adaptor-r2/                     R2 file storage adapter
-    generated-api-client/           Typed client generated from OpenAPI
+    adaptor-local-fs/               Local-dev file storage adapter
+    api-client/                     Typed school API client generated from OpenAPI
+    docs-client/                    Typed docs API client
   tooling/
     repo/                           @edaya/repo — CI, OpenAPI codegen, dev tools
+    client-codegen/                 @edaya/client-codegen — OpenAPI client generator
     fixtures/                       Shared seed IDs and fixture records
     seeding/                        HTTP seed orchestration (@edaya/seeding)
     db-migrate/                     School + auth migration CLI (Neon / Hyperdrive)
     novu-ops/                       Novu workflow bootstrap + subscriber cleanup CLI
+    local-files-server/             Local-dev file storage HTTP service
     integration-tests/              Integration tests + smoke (staging, Novu)
+    api-dev-container/              Scripts only (no package.json) — Apple Container API image
 ```
 
 ## Boundary rules
@@ -33,7 +38,7 @@ edaya_backend/
 | Layer | Owns | Does not own |
 |-------|------|--------------|
 | `@edaya/core` (`package/domain-core`) | Entity types, Zod schemas, ports, registry, shared utils | Workflows, entity `*Config` factories, notifications, cron dispatch |
-| `@edaya/authorization` (`package/authorization`) | Permissions, grants, policy, `AuthorizationRepositories` | School workflows, entity configs, notification templates |
+| `@edaya/authorization` (`package/domain-authorization`) | Permissions, grants, policy, `AuthorizationRepositories` | School workflows, entity configs, notification templates |
 | `@edaya/service` (`package/domain-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, Better Auth runtime |
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `package/adaptor-auth` | Auth Drizzle schema, auth SQL, auth `runMigrations()` | Better Auth runtime config (lives in `apps/api`) |
@@ -43,11 +48,11 @@ edaya_backend/
 | `tooling/seeding` | HTTP seed scripts against running API (`bun repo seed`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Better Auth config, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts, Novu ops CLI, seed data |
 
-**Domain dependency direction:** `school-service` → `authorization` → `core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
+**Domain dependency direction:** `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
 
-**Dependency direction:** `package/domain-core`, `package/authorization`, `package/domain-service`, `package/adaptor-postgres`, `package/generated-api-client`, and adaptor packages never depend on `@edaya/adaptor-auth` from domain/adaptor persistence layers. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
+**Dependency direction:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, `package/adaptor-postgres`, `package/api-client`, and adaptor packages never depend on `@edaya/adaptor-auth` from domain/adaptor persistence layers. `apps/api` depends on `@edaya/adaptor-auth`. `tooling/db-migrate` orchestrates migrations and may reference adaptor paths for SQL only. `tooling/seeding` calls the API over HTTP.
 
-**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/authorization/src`.
+**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`) and layout-identity checks (`tooling/repo/lib/layout-identity.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/domain-authorization/src`.
 
 ## Package map
 
@@ -55,15 +60,17 @@ edaya_backend/
 |---------|------|------|
 | `@edaya/api` | `apps/api` | Hono API + scheduled cron (Node + Worker) |
 | `@edaya/core` | `package/domain-core` | Domain entities + ports |
-| `@edaya/authorization` | `package/authorization` | Authorization engine |
+| `@edaya/authorization` | `package/domain-authorization` | Authorization engine |
 | `@edaya/service` | `package/domain-service` | School orchestration (workflows, capabilities) |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |
-| `@maya-invest/edaya-api-client` | `package/generated-api-client` | Typed API SDK |
+| `@maya-invest/edaya-api-client` | `package/api-client` | Typed school API SDK |
+| `@maya-invest/edaya-docs-client` | `package/docs-client` | Typed docs API SDK |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local dev `FileStoragePort` adapter (filesystem + signed HTTP URLs) |
-| `@edaya/local-files-server` | `tooling/local-files` | Local dev file storage HTTP service |
+| `@edaya/local-files-server` | `tooling/local-files-server` | Local dev file storage HTTP service |
+| `@edaya/client-codegen` | `tooling/client-codegen` | OpenAPI client generator |
 | `@edaya/repo` | `tooling/repo` | Repo CI, OpenAPI codegen, local dev tools |
 | `@edaya/fixtures` | `tooling/fixtures` | Fixture data |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed CLI |
@@ -83,7 +90,9 @@ edaya_backend/
 | `@edaya/neon-migrations` + `@edaya/betterauth-d1-migrations` | `@edaya/integration-migrations` → split into `@edaya/adaptor-auth` + `@edaya/db-migrate` |
 | `package/adaptor-novu/bootstrap` + `cleanup/` | `@edaya/novu-ops` (`tooling/novu-ops`) |
 | `packages/` + `integrations/` | Unified under `package/` |
-| `apps/webapp` | Moved to **edaya_web** repo |
+| `package/authorization/` | `package/domain-authorization/` |
+| `package/generated-api-client/` | `package/api-client/` |
+| `tooling/local-files/` | `tooling/local-files-server/` |
 
 ## Root scripts
 

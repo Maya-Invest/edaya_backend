@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { StaffAssignment } from '@edaya/core'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { StaffPermissionAssignment } from '@edaya/core'
 import {
   resolveStaffAssignmentTarget,

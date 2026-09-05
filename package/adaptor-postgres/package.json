@@ -14,9 +14,9 @@
     "quality": "bun run lint && bun run check",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "test": "bun test src"
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "test": "bun test tests"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

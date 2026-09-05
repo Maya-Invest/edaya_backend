@@ -1,4 +1,3 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { ReportCardResult } from '@edaya/core'
 import type {
   GuardianActorMetadata,
@@ -6,6 +5,7 @@ import type {
   StudentActorMetadata,
   TeacherActorMetadata,
 } from '../../model/actor'
+import type { AuthorizationRepositories } from '../../ports/authorization-repositories'
 
 export type StudentAccessStrategy<A> = (
   actor: A,

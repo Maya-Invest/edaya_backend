@@ -1,6 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../../services/entities/managed-entity-service'
 import type { CoreEntityKey } from '../../services/runtime/core-entity-map'
 import type { NotificationTemplateService } from './templates/notification-template-service'

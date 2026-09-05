@@ -1,9 +1,11 @@
 import type { OperationRef } from '@edaya/authorization'
 import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, FinanceOperations, resolveAuditActorId } from '@edaya/authorization'
 import { Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '@edaya/core'
 import { operationModule } from '../entities/entity-config'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AssignFeeToStudentInput {
@@ -51,8 +53,11 @@ export interface CancelStudentFeeInput {
 }
 
 export class FinanceServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: FinanceWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('finance', base.repositories)
   }
 
   async createFee(input: CreateFeeInput): Promise<Fee> {
@@ -315,7 +320,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireFee(feeId: string): Promise<Fee> {
-    const fee = await this.baseService.repositories.fees.findById(feeId)
+    const fee = await this.repositories.fees.findById(feeId)
     if (!fee || fee.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -323,11 +328,11 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireStudentFee(studentFeeId: string): Promise<StudentFee> {
-    const studentFee = await this.baseService.repositories.studentFees.findById(studentFeeId)
+    const studentFee = await this.repositories.studentFees.findById(studentFeeId)
     if (!studentFee) {
       denyResourceAccess()
     }
-    const student = await this.baseService.repositories.students.findById(studentFee.studentId)
+    const student = await this.repositories.students.findById(studentFee.studentId)
     if (!student || student.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -335,15 +340,15 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requirePayment(paymentId: string): Promise<Payment> {
-    const payment = await this.baseService.repositories.payments.findById(paymentId)
+    const payment = await this.repositories.payments.findById(paymentId)
     if (!payment) {
       denyResourceAccess()
     }
-    const studentFee = await this.baseService.repositories.studentFees.findById(payment.studentFeeId)
+    const studentFee = await this.repositories.studentFees.findById(payment.studentFeeId)
     if (!studentFee) {
       denyResourceAccess()
     }
-    const student = await this.baseService.repositories.students.findById(studentFee.studentId)
+    const student = await this.repositories.students.findById(studentFee.studentId)
     if (!student || student.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }

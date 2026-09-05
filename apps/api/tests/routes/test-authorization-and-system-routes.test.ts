@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { parseEnv } from "@/runtime";
-import { RecordingNotificationGateway } from "@edaya/core";
-import { ActorAssuranceLevel, Permission } from "@edaya/authorization";
+import { Permission, RecordingNotificationGateway } from "@edaya/core";
+import { ActorAssuranceLevel } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";

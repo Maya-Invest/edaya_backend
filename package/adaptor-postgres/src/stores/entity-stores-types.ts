@@ -1,0 +1,60 @@
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { PostgresStore } from '../postgres-store'
+import type { ConsortiumRow } from './consortium-row'
+
+export interface EntityStores {
+  /** Kept for schema init / legacy row mapping; not exposed on SchoolRepositories. */
+  consortiums: PostgresStore<ConsortiumRow>
+  schoolsStore: PostgresStore<School>
+  academicYears: PostgresStore<AcademicYear>
+  academicPeriods: PostgresStore<AcademicPeriod>
+  periodDefinitions: PostgresStore<PeriodDefinition>
+  gradeLevels: PostgresStore<GradeLevel>
+  staffMembers: PostgresStore<StaffMember>
+  staffAssignments: PostgresStore<StaffAssignment>
+  teachers: PostgresStore<Teacher>
+  teacherAssignments: PostgresStore<TeacherAssignment>
+  teacherUnavailabilities: PostgresStore<TeacherUnavailability>
+  attachments: PostgresStore<Attachment>
+  resources: PostgresStore<Resource>
+  resourceAssignments: PostgresStore<ResourceAssignment>
+  fees: PostgresStore<Fee>
+  studentFees: PostgresStore<StudentFee>
+  payments: PostgresStore<Payment>
+  schedules: PostgresStore<Schedule>
+  lessonSessions: PostgresStore<LessonSession>
+  activitySessions: PostgresStore<ActivitySession>
+  attendances: PostgresStore<Attendance>
+  calendarEvents: PostgresStore<CalendarEvent>
+  attendance: PostgresStore<AttendanceRecord>
+  announcements: PostgresStore<Announcement>
+  announcementTargets: PostgresStore<AnnouncementTarget>
+  messageDeliveries: PostgresStore<MessageDelivery>
+  subjects: PostgresStore<Subject>
+  subjectMatters: PostgresStore<SubjectMatter>
+  gradeLevelSubjects: PostgresStore<GradeLevelSubject>
+  gradeLevelSubjectMatters: PostgresStore<GradeLevelSubjectMatter>
+  classGroups: PostgresStore<ClassGroup>
+  classSubjects: PostgresStore<ClassSubject>
+  classSubjectMatters: PostgresStore<ClassSubjectMatter>
+  classSubjectProgress: PostgresStore<ClassSubjectProgress>
+  activities: PostgresStore<Activity>
+  activityEnrollments: PostgresStore<ActivityEnrollment>
+  classActivityEnrollments: PostgresStore<ClassActivityEnrollment>
+  assessments: PostgresStore<Assessment>
+  assessmentResults: PostgresStore<AssessmentResult>
+  gradeScales: PostgresStore<GradeScale>
+  definitions: PostgresStore<ReportCardDefinition>
+  sections: PostgresStore<ReportCardDefinitionSection>
+  results: PostgresStore<ReportCardResult>
+  students: PostgresStore<Student>
+  enrollments: PostgresStore<StudentClassEnrollment>
+  guardians: PostgresStore<Guardian>
+  guardianLinks: PostgresStore<GuardianStudentLink>
+  studentNotes: PostgresStore<StudentNote>
+  studentHealthProfiles: PostgresStore<StudentHealthProfile>
+  studentDisciplinaryActions: PostgresStore<StudentDisciplinaryAction>
+  disciplinaryActions: PostgresStore<DisciplinaryAction>
+  studentIncidentInvolvements: PostgresStore<StudentIncidentInvolvement>
+  incidents: PostgresStore<Incident>
+}

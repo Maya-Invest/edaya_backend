@@ -6,7 +6,7 @@
 > **Scope:** Raise backend **unit** test line coverage as close to 100% as is practical, without duplicating integration-test responsibilities  
 > **Depends on:** Stable `bun test --coverage` across workspaces; authorization operation matrices (G0–G7) complete  
 > **Out of scope:** Replacing `@edaya/integration-tests`, Playwright/mobile E2E, OpenAPI/codegen correctness, load testing  
-> **Related:** [authorization-operations-plan.md](./authorization-operations-plan.md), [AGENTS.md](../../AGENTS.md), `bunfig.toml` coverage config
+> **Related:** [authorization-operations-plan.md](./archive/authorization-operations-plan.md), [AGENTS.md](../../AGENTS.md), `bunfig.toml` coverage config
 
 ---
 

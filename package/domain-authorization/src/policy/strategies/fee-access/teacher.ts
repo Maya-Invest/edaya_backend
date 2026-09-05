@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { TeacherActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import { portalFeeCatalogAccess } from './portal-catalog'
 
 export async function teacherFeeCatalogAccess(

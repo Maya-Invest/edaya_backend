@@ -1,6 +1,6 @@
 # Edaya Core
 
-Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain core, adaptors, integrations, generated API client), and **`tooling/`** harnesses.
+Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
 Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/webadmin`).
 
@@ -13,27 +13,33 @@ edaya_backend/
 ├── apps/
 │   └── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
 ├── package/
-│   ├── domain-core/                      @edaya/core — domain, services, ports
+│   ├── domain-core/                      @edaya/core — entities, ports, registry
+│   ├── domain-authorization/             @edaya/authorization — grants, policy, operations
+│   ├── domain-service/                   @edaya/service — workflows, entity configs, notifications, cron
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
-│   └── generated-api-client/             @maya-invest/edaya-api-client — typed API SDK
+│   ├── api-client/                       @maya-invest/edaya-api-client — typed school API SDK
+│   └── docs-client/                      @maya-invest/edaya-docs-client — typed docs API SDK
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
+    ├── client-codegen/                   @edaya/client-codegen — OpenAPI client generator
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
     ├── db-migrate/                       @edaya/db-migrate — school + auth migration CLI
     ├── novu-ops/                         @edaya/novu-ops — Novu bootstrap + subscriber cleanup
-    └── integration-tests/                @edaya/integration-tests (+ smoke/)
+    ├── local-files-server/               @edaya/local-files-server — local upload HTTP service
+    ├── integration-tests/                @edaya/integration-tests (+ smoke/)
+    └── api-dev-container/                scripts only (no package.json) — Apple Container API image
 ```
 
-**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Domain packages must not import `@edaya/adaptor-auth`. `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: business rules live in `@edaya/core`; portable Postgres persistence lives in `@edaya/adaptor-postgres`; Better Auth persistence lives in `@edaya/adaptor-auth`; migration CLI lives in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@maya-invest/edaya-api-client` in **edaya_web**.
+The codebase follows a **ports-and-adapters** layout: entity types and ports live in `@edaya/core`; authorization in `@edaya/authorization`; school orchestration (`SchoolService`) in `@edaya/service`; portable Postgres persistence in `@edaya/adaptor-postgres`; Better Auth persistence in `@edaya/adaptor-auth`; migration CLI in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@maya-invest/edaya-api-client` in **edaya_web**.
 
 ```mermaid
 flowchart TB
@@ -49,6 +55,8 @@ flowchart TB
 
   subgraph package["package/"]
     Core["@edaya/core"]
+    Authz["@edaya/authorization"]
+    Service["@edaya/service"]
     PG["@edaya/adaptor-postgres"]
     Auth["@edaya/adaptor-auth"]
     DbMigrate["@edaya/db-migrate"]
@@ -57,9 +65,13 @@ flowchart TB
   Webapp --> Client
   Client -->|Browser HTTP / Vite proxy| API
   API --> WorkerHost
+  API --> Service
+  API --> Authz
   API --> Core
   API --> PG
   API --> Auth
+  Service --> Authz
+  Authz --> Core
   PG -.->|implements ports| Core
   DbMigrate --> PG
   DbMigrate --> Auth
@@ -73,7 +85,7 @@ flowchart TB
 1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@maya-invest/edaya-api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
 3. **Runtime** — Opens the school Postgres DB and auth store (same Neon/PGlite, `auth` schema), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
-4. **Core** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
+4. **Service** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
 ### API runtimes
 
@@ -89,9 +101,14 @@ flowchart TB
 
 - `apps/api/src/routes/` — OpenAPI route modules (thin HTTP surface)
 - `apps/api/src/lib/school-api/` — registry, schemas, dispatch, entity handlers
+- `apps/api/src/routes/onboarding.routes.ts` — thin HTTP for school registration; orchestration lives in `@edaya/service` (`capabilities/onboarding`)
+- `apps/api/src/lib/graphql/` — **supported second contract** (`POST /graphql`) derived from the same registry as REST. The typed client (`@maya-invest/edaya-api-client`) is REST-only; web/mobile production callers use REST. Vite proxies `/graphql` and `/graphiql` for local exploration.
+- `apps/api/src/cron/` — scheduled cron + queue consumer
 - `apps/api/src/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
 - `apps/api/src/http/` — Hono app, dependency injection middleware
-- `package/domain-core/src/` — domains, entities, authorization, services, ports
+- `package/domain-core/src/` — entities, ports, registry
+- `package/domain-authorization/src/` — grants, policy, operations
+- `package/domain-service/src/` — `SchoolService`, workflows, entity configs
 
 More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-boundaries.md), [docs/reference/api-runtimes.md](./docs/reference/api-runtimes.md), [docs/reference/cross-repo-workflow.md](./docs/reference/cross-repo-workflow.md).
 
@@ -107,22 +124,31 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/core` | `package/domain-core` | Domain model, business services, authorization, repository ports |
+| `@edaya/core` | `package/domain-core` | Domain entities, Zod schemas, repository/gateway ports |
+| `@edaya/authorization` | `package/domain-authorization` | Grants, policy, operations, `AuthorizationRepositories` |
+| `@edaya/service` | `package/domain-service` | `SchoolService`, workflows, entity configs, notifications, cron |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
 | `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
+| `@edaya/adaptor-r2` | `package/adaptor-r2` | Worker `FileStoragePort` adapter |
+| `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local-dev `FileStoragePort` adapter |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth Drizzle schema, SQL migrations, runtime `runMigrations()` |
-| `@maya-invest/edaya-api-client` | `package/generated-api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+| `@maya-invest/edaya-api-client` | `package/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
+| `@maya-invest/edaya-docs-client` | `package/docs-client` | Type-safe client for the docs API |
 
 ### Tooling
 
 | Package | Path | Role |
 |---------|------|------|
 | `@edaya/repo` | `tooling/repo` | Repo CLI (`bun repo`), CI checks, OpenAPI tooling |
+| `@edaya/client-codegen` | `tooling/client-codegen` | OpenAPI → typed client generator |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (via `bun repo seed`) |
 | `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
 | `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
+| `@edaya/local-files-server` | `tooling/local-files-server` | Local-dev file storage HTTP service |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
+
+`tooling/api-dev-container/` is a Docker/Apple Container helper (no workspace `package.json`). Invoke via `bun repo dev-container` / root `dev:container*` scripts.
 
 ## Prerequisites
 
@@ -137,7 +163,7 @@ cp apps/api/.env.example apps/api/.env
 cp .env.example .env   # optional — seeding, migrations, smoke-test staging
 ```
 
-Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` there).
+Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` in that repo).
 
 ## Local development
 
@@ -209,14 +235,16 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 
 | Layer | Package / path | What to test here |
 |-------|----------------|-------------------|
-| Domain | `package/domain-core/tests/` | Entities, authorization, service workflows |
+| Domain | `package/domain-core/tests/` | Entities, schemas, ports |
+| Authorization | `package/domain-authorization/tests/` | Grants, policy, operations |
+| Service | `package/domain-service/tests/` | Workflows, entity configs, notifications, cron |
 | API unit | `apps/api/tests/` | HTTP helpers, runtime, route builders, thin route tests |
 | API harness | `apps/api/tests/support/core-route-harness.ts` | Shared PGlite app + auth helpers (also used by integration-tests) |
 | Cross-package | `tooling/integration-tests/src/` | Seeds, auth flows, PGlite persistence, full route scenarios |
 
 **Conventions**
 
-- Put pure domain tests in `@edaya/core`.
+- Put entity/schema tests in `@edaya/core`; authorization tests in `@edaya/authorization`; workflow tests in `@edaya/service`.
 - Put API transport/runtime tests in `apps/api/tests/`, mirroring `src/` layout (`http/`, `runtime/`, `routes/`, `lib/`).
 - Put scenarios that span seeding, auth, and Postgres in `@edaya/integration-tests`.
 - Integration-tests import the canonical route harness from `@api-tests/support/core-route-harness` (resolved to `apps/api/tests/support/`).
@@ -234,4 +262,4 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
 
-Webapp env vars live in **edaya_web** (`apps/webapp/.env`).
+Webapp env vars live in the **edaya_web** repo (`apps/webapp/.env` there).

@@ -1,15 +1,15 @@
 # Authorization model
 
-Edaya Core uses a **four-layer** authorization pipeline for managed entities. Every interactive request carries an `ActorMetadata` value:
+`@edaya/authorization` (`package/domain-authorization`) owns the four-layer authorization pipeline for managed entities. Every interactive request carries an `ActorMetadata` value:
 
 - **Staff** — preloaded `effectiveGrants` (permission + scope paths).
 - **Teacher** — preloaded `teacherScope` (teaching + homeroom assignments).
 - **Guardian** — preloaded `guardianScope` (linked students and enrollments).
 - **Student** — preloaded `studentScope` (self + class enrollments).
 
-Grant and scope resolution happens **once per session** in the API middleware. The core engine never hits the database during the synchronous operation gate.
+Grant and scope resolution happens **once per session** in the API middleware. The engine never hits the database during the synchronous operation gate.
 
-All public symbols are re-exported from `@edaya/core` via `authorization/index.ts`.
+`Permission` and staff grant scope validation are defined in `@edaya/core` and re-exported here for convenience. Import `Permission` from `@edaya/core` in new code. Public authorization API is `@edaya/authorization`.
 
 ---
 
@@ -374,7 +374,7 @@ Use `createRepositoryAuthorizationPolicy({ repositories })` in workflow tests �
 
 ## Related documentation
 
-- [authorization-operations-plan.md](../../../../docs/sprints/authorization-operations-plan.md) — operations migration sprint (G0–G6).
+- [authorization-operations-plan.md](../../../../docs/sprints/archive/authorization-operations-plan.md) — operations migration sprint (G0–G6).
 - [relationship-native-auth-plan.md](../../../../docs/sprints/relationship-native-auth-plan.md) — portal scope resolution (Fold F).
-- [authorization-model-simplification-plan.md](../../../../docs/sprints/authorization-model-simplification-plan.md) — path grammar and grant model.
-- [domains/README.md](../../../domains/README.md) — how entity configs attach authorization to managed entities.
+- [authorization-model-simplification-plan.md](../../../../docs/sprints/archive/authorization-model-simplification-plan.md) — path grammar and grant model.
+- [domain/README.md](../../../domain-core/src/domain/README.md) — entity file layout; configs live in `@edaya/service`.
