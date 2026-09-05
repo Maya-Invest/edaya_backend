@@ -44,7 +44,7 @@ export const EnvSchema = z.object({
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
-  /** Webapp origin used to build invitation accept links, e.g. http://localhost:5173 */
+  /** Webapp origin used to build invitation accept links and email-verify login redirects, e.g. http://localhost:5173 */
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
