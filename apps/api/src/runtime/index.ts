@@ -10,6 +10,7 @@ export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
  * Wrangler alias → worker).
  */
 export {
+  applyEmailVerificationCallbackUrl,
   type Environment,
   inferRuntimeKind,
   loadDotenvFiles,
@@ -17,16 +18,15 @@ export {
   parseEnv,
   parseRuntimeEnv,
   prepareRuntimeBindings,
-  applyEmailVerificationCallbackUrl,
   resolveAccountInvitationsEnabled,
   resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
   resolveEmailVerificationCallbackUrl,
   resolveInviteBaseUrl,
-  resolveWebappOrigin,
   resolveRepoLocalDatabaseUrl,
   resolveRepoLocalDataPath,
   resolveRepoRoot,
+  resolveWebappOrigin,
   shouldAllowPublicSchoolRegistration,
   usesAuthHyperdriveBinding,
   usesHyperdriveBinding,
