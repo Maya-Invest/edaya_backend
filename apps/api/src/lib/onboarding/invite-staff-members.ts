@@ -227,6 +227,7 @@ export async function inviteStaffMembers(
         email: invite.email,
         isActive: true,
         accountKind: "human",
+        profileRole: invite.role,
       }), { moduleChecked: true });
 
       const permissionRows = permissionRowsFromTemplatePermissions(

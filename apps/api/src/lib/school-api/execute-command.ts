@@ -26,6 +26,11 @@ function resolveDocsRenderConfig(env: AppBindings["Bindings"], options?: {
   };
 }
 
+function localeFromRequest(c: Context<AppBindings>): string {
+  const header = c.req.header("accept-language") ?? "";
+  return header.toLowerCase().startsWith("en") ? "en-US" : "fr-FR";
+}
+
 export async function executeSchoolCommand(
   c: Context<AppBindings>,
   service: SchoolService,
@@ -57,6 +62,7 @@ export async function executeSchoolCommand(
         await renderReportCardDocument(backgroundService, {
           resultId: result.id,
           config: docsConfig,
+          locale: localeFromRequest(c),
         });
       });
     }

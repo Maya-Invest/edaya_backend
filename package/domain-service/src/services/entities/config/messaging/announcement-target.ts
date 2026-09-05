@@ -2,7 +2,7 @@ import type { AnnouncementTarget } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { CommunicationsOperations, denyResourceAccess } from '@edaya/authorization'
-import { AnnouncementTargetKind } from '@edaya/core'
+import { AnnouncementStatus, AnnouncementTargetKind, BusinessRuleViolationError } from '@edaya/core'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
 
 import { announcementLinkedTenant } from '../../entity-config/tenant'
@@ -15,6 +15,7 @@ export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> =
     write: write(operationModule(CommunicationsOperations.create), noopSaveAccess, noopDeleteAccess),
     gates: {
       preSave: validateAnnouncementTargetSave,
+      preDelete: validateAnnouncementTargetDelete,
     },
     atomicExecution,
   })
@@ -52,6 +53,22 @@ export async function validateAnnouncementTargetSave(
     case AnnouncementTargetKind.AllGuardians:
     case AnnouncementTargetKind.AllStudents:
       break
+  }
+}
+
+export async function validateAnnouncementTargetDelete(
+  target: AnnouncementTarget,
+  repositories: SchoolRepositories,
+): Promise<void> {
+  const announcement = await repositories.announcements.findById(target.announcementId)
+  if (!announcement) {
+    denyResourceAccess()
+  }
+  if (announcement.status !== AnnouncementStatus.Draft) {
+    throw new BusinessRuleViolationError(
+      'ANNOUNCEMENT_TARGET_NOT_DRAFT',
+      `Cannot delete target ${target.id}: announcement ${target.announcementId} is not a draft`,
+    )
   }
 }
 

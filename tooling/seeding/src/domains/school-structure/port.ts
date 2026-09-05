@@ -1,4 +1,4 @@
-import type { AcademicPeriodType, AttendanceMode, DayOfWeek, SchoolType } from '@edaya/core'
+import type { AcademicPeriodType, AttendanceMode, DayOfWeek, SchoolType, StaffProfileRole } from '@edaya/core'
 
 export interface SchoolStructureSeedState {
   schoolIds: readonly string[]
@@ -63,6 +63,7 @@ export interface SchoolStructureStaffRecord {
   lastName: string
   email?: string
   subjectId?: string
+  profileRole?: StaffProfileRole
   sendAccountInvitation?: boolean
 }
 

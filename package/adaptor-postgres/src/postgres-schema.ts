@@ -104,6 +104,7 @@ export const staffMembers = pgTable('staff_members', {
   isActive: boolean('is_active').notNull(),
   onboardingWizardCompletedAt: timestamp('onboarding_wizard_completed_at', { mode: 'date' }),
   onboardingMaxReachedStep: integer('onboarding_max_reached_step'),
+  profileRole: text('profile_role'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('staff_members', table))
 

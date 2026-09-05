@@ -75,8 +75,8 @@ describe("onboarding invite-staff-members route", () => {
     expect(roles.length).toBeGreaterThan(0);
 
     const invitedStaff = await application.repositories.staffMembers.list({ schoolId: schoolId! });
-    expect(invitedStaff.some(member => member.email === "prof@school.edu")).toBe(true);
-    expect(invitedStaff.some(member => member.email === "cpe@school.edu")).toBe(true);
+    expect(invitedStaff.find(member => member.email === "prof@school.edu")?.profileRole).toBe("secretary");
+    expect(invitedStaff.find(member => member.email === "cpe@school.edu")?.profileRole).toBe("cpe");
   });
 
   it("rejects inviting the school owner email", async () => {

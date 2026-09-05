@@ -436,6 +436,7 @@ export const demoStaffMembers = [
     firstName: 'Camille',
     lastName: 'Moreau',
     email: 'c.moreau@school.edu',
+    profileRole: 'directeur',
   },
   {
     id: 'st3',
@@ -443,6 +444,7 @@ export const demoStaffMembers = [
     firstName: 'Mme',
     lastName: 'Léon',
     email: 'm.leon@school.edu',
+    profileRole: 'deputy_director',
   },
   {
     id: 'st1',
@@ -478,6 +480,7 @@ export const demoStaffMembers = [
     firstName: 'Tom',
     lastName: 'Évrard',
     email: 't.evrard@school.edu',
+    profileRole: 'educateur',
   },
   {
     id: 'st8',
@@ -485,6 +488,7 @@ export const demoStaffMembers = [
     firstName: 'Koussi',
     lastName: 'Yann',
     email: 'k.yann@school.edu',
+    profileRole: 'directeur',
   },
 ] as const satisfies readonly StaffMemberInput[]
 

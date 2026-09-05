@@ -10,6 +10,7 @@ export type {
   FixtureAnnouncementMaterializePlan,
   FixtureAttendanceSession,
   FixtureCalendarEvent,
+  FixtureDailyAttendanceDay,
   FixtureDataset,
   FixtureDatasetEntities,
   FixtureDatasetExtensions,

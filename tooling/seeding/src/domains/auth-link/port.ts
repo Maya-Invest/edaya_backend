@@ -1,3 +1,5 @@
+import type { StaffProfileRole } from '@edaya/core'
+
 export interface AuthLinkTeacherRecord {
   id: string
   subjectId?: string
@@ -24,6 +26,7 @@ export interface RegisterSeedStaffInput {
   firstName: string
   lastName: string
   email: string
+  profileRole?: StaffProfileRole
 }
 
 export interface LinkSeedActorSubjectInput {

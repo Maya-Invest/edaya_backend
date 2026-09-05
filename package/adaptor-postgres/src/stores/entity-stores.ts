@@ -225,6 +225,7 @@ export function createEntityStores(db: any): EntityStores {
         isActive: entity.isActive,
         onboardingWizardCompletedAt: entity.onboardingWizardCompletedAt ?? null,
         onboardingMaxReachedStep: entity.onboardingMaxReachedStep ?? null,
+        profileRole: entity.profileRole ?? null,
         createdAt: entity.createdAt,
       }),
       row => new StaffMemberCtor({
@@ -245,6 +246,7 @@ export function createEntityStores(db: any): EntityStores {
         isActive: row.isActive,
         onboardingWizardCompletedAt: row.onboardingWizardCompletedAt,
         onboardingMaxReachedStep: row.onboardingMaxReachedStep,
+        profileRole: row.profileRole,
         createdAt: row.createdAt,
       }),
     ),

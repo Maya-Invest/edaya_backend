@@ -297,10 +297,19 @@ describe('SchoolService setup workflows', () => {
       staffId: 'staff-profile',
       firstName: 'Janet',
       email: 'janet@school.test',
+      profileRole: 'secretary',
     })
 
     expect(updated.firstName).toBe('Janet')
     expect(updated.email).toBe('janet@school.test')
+    expect(updated.profileRole).toBe('secretary')
+
+    const deactivated = await service.setupWorkflow.updateStaffMemberStatus({
+      staffId: 'staff-profile',
+      isActive: false,
+    })
+    expect(deactivated.isActive).toBe(false)
+    expect(deactivated.profileRole).toBe('secretary')
   })
 
   test('configureGradeLevel, period definition, resource, and activity persist configuration entities', async () => {

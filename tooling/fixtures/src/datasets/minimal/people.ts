@@ -8,6 +8,7 @@ export const minimalStaffMember = {
   firstName: 'Koussi',
   lastName: 'Yann',
   email: 'k.yann@school.edu',
+  profileRole: 'directeur',
 } satisfies StaffMemberInput
 
 /** Primary guardian fixture for Better Auth integration tests (`g1`). */

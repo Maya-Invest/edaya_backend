@@ -135,18 +135,20 @@ function countAttendanceRecords(dataset: FixtureDataset): number {
   if (dataset.extensions?.skipLessonSessionSeeding) {
     return 0
   }
+  const dailyRecords = (dataset.extensions?.dailyAttendanceDays ?? [])
+    .reduce((total, day) => total + Object.keys(day.attendanceByStudent).length, 0)
   const attendanceRecords = dataset.entities.attendanceRecords
   if (attendanceRecords) {
-    return attendanceRecords.length
+    return attendanceRecords.length + dailyRecords
   }
   const sessions = dataset.extensions?.attendanceSessions
   if (!sessions) {
-    return 0
+    return dailyRecords
   }
   return sessions.absenceSessions.reduce(
     (total, session) => total + session.records.length,
     sessions.todaySession.records.length,
-  )
+  ) + dailyRecords
 }
 
 function countAssessmentResults(dataset: FixtureDataset): number {

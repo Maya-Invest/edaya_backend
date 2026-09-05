@@ -9,6 +9,8 @@ import {
 import {
   buildReportCardV1Payload,
   buildStorageKey,
+  catalogLangFromLocale,
+  catalogSubjectName,
 } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
 import {
@@ -134,6 +136,7 @@ export async function renderReportCardDocument(
   }
 
   const locale = input.locale ?? "fr-FR";
+  const catalogLang = catalogLangFromLocale(locale);
   const classSubjectIds = collectClassSubjectIds(result.sectionResults);
   const classSubjects = classSubjectIds.length > 0
     ? await service.baseService.repositories.classSubjects.findByIds(classSubjectIds)
@@ -142,7 +145,12 @@ export async function renderReportCardDocument(
   const subjects = subjectIds.length > 0
     ? await service.baseService.repositories.subjects.findByIds(subjectIds)
     : [];
-  const subjectNameById = new Map(subjects.map(entry => [entry.id, entry.name]));
+  const subjectNameById = new Map(
+    subjects.map(entry => [
+      entry.id,
+      catalogSubjectName(entry.name, catalogLang, entry.code),
+    ]),
+  );
   const subjectNameByClassSubjectId = new Map(
     classSubjects.map(entry => [
       entry.id,
@@ -217,7 +225,7 @@ export async function renderReportCardDocument(
   const rendered = await client.render({
     templateKey: "report-card.v1",
     format: "pdf",
-    locale: "fr",
+    locale: locale.toLowerCase().startsWith("en") ? "en" : "fr",
     schoolId: school.id,
     payload,
     delivery: "inline",
@@ -233,7 +241,9 @@ export async function renderReportCardDocument(
 
   const bytes = Buffer.from(rendered.bytesBase64, "base64");
   const attachmentId = randomUUID();
-  const fileName = `bulletin-${result.id}.pdf`;
+  const fileName = locale.toLowerCase().startsWith("en")
+    ? `report-card-${result.id}.pdf`
+    : `bulletin-${result.id}.pdf`;
   const storageKey = buildStorageKey({
     schoolId: school.id,
     purpose: "generated/report-card",

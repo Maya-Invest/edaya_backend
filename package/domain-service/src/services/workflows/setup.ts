@@ -21,6 +21,7 @@ import type {
   StaffAssignmentInput,
   StaffMember,
   StaffMemberInput,
+  StaffProfileRole,
 } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import {
@@ -113,6 +114,7 @@ export interface UpdateStaffMemberProfileInput {
   code?: string | null
   email?: string | null
   photoUrl?: string | null
+  profileRole?: StaffProfileRole | null
 }
 
 export type AssignStaffInput = StaffAssignmentInput
@@ -378,8 +380,18 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       lastName: existing.lastName,
       code: existing.code,
       email: existing.email,
+      photoUrl: existing.photoUrl,
+      notificationEmail: existing.notificationEmail,
+      notificationPhone: existing.notificationPhone,
       subjectId: existing.subjectId,
+      accountKind: existing.accountKind,
+      serviceId: existing.serviceId,
+      createdBySubjectId: existing.createdBySubjectId,
+      serviceElevated: existing.serviceElevated,
       isActive,
+      profileRole: existing.profileRole,
+      onboardingWizardCompletedAt: existing.onboardingWizardCompletedAt,
+      onboardingMaxReachedStep: existing.onboardingMaxReachedStep,
       createdAt: existing.createdAt,
     }))
     if (!isActive && existing.subjectId) {
@@ -413,6 +425,9 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       createdBySubjectId: existing.createdBySubjectId,
       serviceElevated: existing.serviceElevated,
       isActive: existing.isActive,
+      profileRole: changes.profileRole === undefined ? existing.profileRole : (changes.profileRole ?? undefined),
+      onboardingWizardCompletedAt: existing.onboardingWizardCompletedAt,
+      onboardingMaxReachedStep: existing.onboardingMaxReachedStep,
       createdAt: existing.createdAt,
     }))
     if (existing.subjectId) {

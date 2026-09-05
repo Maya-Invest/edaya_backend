@@ -14,6 +14,7 @@ import { createAppLogger, createBetterAuthLogger } from "@/runtime/shared/adapte
 import { createAuthEmailSenders } from "@/runtime/shared/adapters/auth-otp-mailer";
 import { shouldRequireEmailVerification } from "@/runtime/shared/adapters/auth-email-delivery";
 import { isSeedAuthProvisionRequest } from "@/runtime/shared/adapters/seed-auth-provision";
+import { applyEmailVerificationCallbackUrl } from "@/runtime/shared/env/derived";
 
 export type BetterAuthEnv = Pick<
   Environment,
@@ -21,7 +22,7 @@ export type BetterAuthEnv = Pick<
 > & Pick<
   Partial<Environment>,
   "TRUSTED_ORIGINS" | "COOKIE_DOMAIN" | "NOVU_SECRET_KEY" | "NOVU_API_URL"
-  | "REQUIRE_EMAIL_VERIFICATION" | "AUTH_EMAIL_LOG_OTP"
+  | "REQUIRE_EMAIL_VERIFICATION" | "AUTH_EMAIL_LOG_OTP" | "WEBAPP_ORIGIN"
 >;
 
 export interface BuildBetterAuthConfigOptions {
@@ -80,6 +81,7 @@ export function buildBetterAuthConfig(
     emailVerification: {
       sendOnSignUp: requireEmailVerification,
       sendOnSignIn: requireEmailVerification,
+      autoSignInAfterVerification: false,
       sendVerificationEmail: async ({ user, url }, request) => {
         if (isSeedAuthProvisionRequest(request?.headers)) {
           return;
@@ -89,7 +91,7 @@ export function buildBetterAuthConfig(
         try {
           await authEmail.sendAuthVerificationEmail({
             email: user.email,
-            url,
+            url: applyEmailVerificationCallbackUrl(url, fullEnv),
             displayName: user.name,
           });
         }
