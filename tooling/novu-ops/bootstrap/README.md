@@ -18,8 +18,8 @@ bootstrap/
     load-templates.ts    # reads templates/ at apply time
     templates.ts         # step builders (in-app stays inline)
   templates/
-    emails/*.html        # Novu handlebars bodies ({{payload.*}}, {{context.*}})
-    subjects/*.txt       # email subjects
+    emails/edaya-shell.html  # shared HTML wrapper; slot is {{payload.emailBody}}
+    subjects/*.txt           # unused subject snippets (runtime subjects come from payload)
 ```
 
 ## Commands
@@ -56,7 +56,9 @@ Trigger ids match core `eventKey` values (see `bootstrap/catalog/workflows.ts`):
 
 Standard notifications use **in-app + email** steps with `{{payload.title}}` / `{{payload.body}}`.
 
-Email bodies live in `templates/emails/*.html`; subjects in `templates/subjects/*.txt`. Use Novu handlebars syntax — the bootstrap reads files at apply time and pushes the HTML string to Novu.
+Email bodies use a shared HTML shell in `templates/emails/edaya-shell.html` with `{{payload.emailBody}}`. Subjects stay `{{payload.emailSubject}}`. Each email step is `editorType: "html"` with `layoutId: null` so Novu does not wrap messages in the default placeholder layout.
+
+After changing email templates or step ids, re-run `bun repo novu bootstrap apply` against **each** Novu environment (local, staging, prod) that sends mail. Code-only changes do not update Cloud workflows.
 
 ## Adding a workflow
 
@@ -71,7 +73,7 @@ Not yet managed by this bootstrap:
 
 - **Email delivery** — configure a Novu email integration (e.g. Custom SMTP) in the Novu dashboard.
 - **Outbound webhook** → `https://<api>/webhooks/notification-delivery` with `NOVU_WEBHOOK_SECRET` (Svix signing secret from Novu dashboard).
-- **Production sync** — apply bootstrap against each Novu environment (dev/staging/prod API keys).
+- **Production sync** — apply bootstrap against each Novu environment (dev/staging/prod API keys). Template or email `stepId` changes have no effect until apply runs in that environment.
 
 ## Related
 

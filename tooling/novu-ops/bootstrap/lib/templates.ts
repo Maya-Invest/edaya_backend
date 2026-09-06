@@ -6,6 +6,30 @@ export const EDAYA_PAYLOAD_BODY = "{{payload.body}}";
 export const EDAYA_PAYLOAD_EMAIL_SUBJECT = "{{payload.emailSubject}}";
 export const EDAYA_PAYLOAD_EMAIL_BODY = "{{payload.emailBody}}";
 
+export const EDAYA_EMAIL_STEP_ID = "edaya-email-html";
+export const EDAYA_AUTH_EMAIL_STEP_ID = "edaya-auth-email-html";
+export const EDAYA_INVITE_EMAIL_STEP_ID = "edaya-invite-email-html";
+
+export interface EdayaHtmlEmailControlValues {
+  subject: string;
+  body: string;
+  editorType: "html";
+  layoutId: null;
+  disableOutputSanitization: true;
+}
+
+export function edayaHtmlEmailControlValues(
+  templates: BootstrapEmailTemplates,
+): EdayaHtmlEmailControlValues {
+  return {
+    subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
+    body: templates.edayaShell,
+    editorType: "html",
+    layoutId: null,
+    disableOutputSanitization: true,
+  };
+}
+
 export function edayaInAppStep(name = "In-app"): {
   stepId: string;
   name: string;
@@ -47,70 +71,46 @@ export function edayaPushStep(name = "Push"): {
 }
 
 export function edayaEmailStep(
-  _templates: BootstrapEmailTemplates,
+  templates: BootstrapEmailTemplates,
   name = "Email",
 ): {
   stepId: string;
   name: string;
   type: "email";
-  controlValues: {
-    subject: string;
-    body: string;
-    editorType: "html";
-  };
+  controlValues: EdayaHtmlEmailControlValues;
 } {
   return {
-    stepId: "edaya-email",
+    stepId: EDAYA_EMAIL_STEP_ID,
     name,
     type: "email",
-    controlValues: {
-      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
-      body: EDAYA_PAYLOAD_EMAIL_BODY,
-      editorType: "html",
-    },
+    controlValues: edayaHtmlEmailControlValues(templates),
   };
 }
 
-export function edayaInvitationEmailStep(_templates: BootstrapEmailTemplates): {
+export function edayaInvitationEmailStep(templates: BootstrapEmailTemplates): {
   stepId: string;
   name: string;
   type: "email";
-  controlValues: {
-    subject: string;
-    body: string;
-    editorType: "html";
-  };
+  controlValues: EdayaHtmlEmailControlValues;
 } {
   return {
-    stepId: "edaya-invite-email",
+    stepId: EDAYA_INVITE_EMAIL_STEP_ID,
     name: "Invitation email",
     type: "email",
-    controlValues: {
-      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
-      body: EDAYA_PAYLOAD_EMAIL_BODY,
-      editorType: "html",
-    },
+    controlValues: edayaHtmlEmailControlValues(templates),
   };
 }
 
-export function edayaAuthEmailStep(_templates: BootstrapEmailTemplates): {
+export function edayaAuthEmailStep(templates: BootstrapEmailTemplates): {
   stepId: string;
   name: string;
   type: "email";
-  controlValues: {
-    subject: string;
-    body: string;
-    editorType: "html";
-  };
+  controlValues: EdayaHtmlEmailControlValues;
 } {
   return {
-    stepId: "edaya-auth-email",
+    stepId: EDAYA_AUTH_EMAIL_STEP_ID,
     name: "Auth email",
     type: "email",
-    controlValues: {
-      subject: EDAYA_PAYLOAD_EMAIL_SUBJECT,
-      body: EDAYA_PAYLOAD_EMAIL_BODY,
-      editorType: "html",
-    },
+    controlValues: edayaHtmlEmailControlValues(templates),
   };
 }

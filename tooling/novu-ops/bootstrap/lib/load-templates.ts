@@ -1,9 +1,7 @@
 import { resolve } from "node:path";
 
 export interface BootstrapEmailTemplates {
-  standardNotification: string;
-  accountInvitation: string;
-  accountInvitationSubject: string;
+  edayaShell: string;
 }
 
 const TEMPLATES_ROOT = resolve(import.meta.dirname, "../templates");
@@ -15,15 +13,9 @@ async function readTemplate(relativePath: string): Promise<string> {
 }
 
 export async function loadBootstrapEmailTemplates(): Promise<BootstrapEmailTemplates> {
-  const [standardNotification, accountInvitation, accountInvitationSubject] = await Promise.all([
-    readTemplate("emails/standard-notification.html"),
-    readTemplate("emails/account-invitation.html"),
-    readTemplate("subjects/account-invitation.txt"),
-  ]);
+  const edayaShell = await readTemplate("emails/edaya-shell.html");
 
   return {
-    standardNotification,
-    accountInvitation,
-    accountInvitationSubject,
+    edayaShell,
   };
 }

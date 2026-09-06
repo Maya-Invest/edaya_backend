@@ -60,20 +60,17 @@ async function listAllWorkflowSummaries(novu: Novu) {
   return workflows;
 }
 
-function mergeStepsForUpdate(
+export function mergeStepsForUpdate(
   desired: BootstrapWorkflowStep[],
   existing: WorkflowResponseDto["steps"],
 ): UpdateWorkflowDto["steps"] {
   return desired.map((step) => {
-    const match = existing.find(
-      candidate => candidate.stepId === step.stepId
-        || (candidate.name === step.name && candidate.type === step.type),
-    );
+    const match = existing.find(candidate => candidate.stepId === step.stepId);
 
     return {
       ...step,
       ...(match?.id ? { id: match.id } : {}),
-      ...(step.stepId ?? match?.stepId ? { stepId: step.stepId ?? match?.stepId } : {}),
+      ...(step.stepId ? { stepId: step.stepId } : {}),
     };
   });
 }
