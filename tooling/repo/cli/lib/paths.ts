@@ -27,4 +27,5 @@ export const paths = {
   dbFlatten: path.join(repoRoot, 'tooling/db-migrate/scripts/flatten-school-migrations.ts'),
   devContainer: path.join(repoRoot, 'tooling/api-dev-container/run.sh'),
   apiRoot: path.join(repoRoot, 'apps/api'),
+  smokeNotify: path.join(repoRoot, 'tooling/integration-tests/smoke/notify-e2e.ts'),
 } as const

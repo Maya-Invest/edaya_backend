@@ -15,7 +15,8 @@ edaya_backend/
 ├── package/
 │   ├── domain-core/                      @edaya/core — domain, services, ports
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
-│   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway
+│   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway (legacy fallback)
+│   ├── adaptor-notify/                   @edaya/adaptor-notify — in-process email/push adapters
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
@@ -24,12 +25,12 @@ edaya_backend/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
-    ├── db-migrate/                       @edaya/db-migrate — school + auth migration CLI
+    ├── db-migrate/                       @edaya/db-migrate — school + auth + notify-schema CLI
     ├── novu-ops/                         @edaya/novu-ops — Novu bootstrap + subscriber cleanup
     └── integration-tests/                @edaya/integration-tests (+ smoke/)
 ```
 
-**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, `@edaya/adaptor-notify`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 

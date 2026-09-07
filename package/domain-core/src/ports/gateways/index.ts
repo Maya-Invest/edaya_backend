@@ -1,4 +1,5 @@
 export * from './auth-contact-resolver'
+export * from './auth-email-delivery'
 export * from './file-storage'
 export * from './invitation-delivery'
 export * from './logger'

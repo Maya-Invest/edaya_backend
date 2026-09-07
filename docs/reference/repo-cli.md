@@ -35,7 +35,7 @@ bun repo
 │   ├── openapi
 │   ├── boundaries
 │   └── test-naming
-├── smoke-test <staging|novu|r2>
+├── smoke-test <staging|novu|notify|r2>
 ├── openapi <export|generate>
 ├── novu <bootstrap|cleanup> [plan|apply|validate]
 ├── deploy api <staging|production>
@@ -93,7 +93,7 @@ bun repo db browser school    # stop bun repo dev first
 bun repo db browser auth
 ```
 
-`db reset` drops `drizzle`, `auth`, and `public` schemas, then re-applies school + auth migrations from scratch. After staging reset, run `bun repo seed --staging`.
+`db reset` drops `drizzle`, `auth`, `notify`, and `public` schemas, then re-applies school + notify + auth migrations from scratch. After staging reset, run `bun repo seed --staging`.
 
 Migrate / reset implementation: `tooling/db-migrate/scripts/`.
 
@@ -150,10 +150,11 @@ Live environment / provider checks (not Turbo tests).
 | Target | Description |
 |--------|-------------|
 | `staging` | Tier-1 HTTP vs deployed staging API |
-| `novu` | Novu outbound + webhook e2e |
+| `novu` | Novu outbound + webhook e2e (legacy fallback) |
+| `notify` | In-process notify announcement + delivery-event e2e against the school API |
 | `r2` | R2 credentials smoke |
 
-Ad-hoc: `bun repo smoke-test staging`, `bun repo smoke-test novu`, `bun repo smoke-test r2`.
+Ad-hoc: `bun repo smoke-test staging`, `bun repo smoke-test notify`, `bun repo smoke-test novu`, `bun repo smoke-test r2`.
 
 ### `bun repo deploy`
 

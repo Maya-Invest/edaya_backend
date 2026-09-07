@@ -77,6 +77,38 @@ describe('findRuntimeBoundaryViolations', () => {
     }
   })
 
+  test('reports legacy notify app when apps/notify exists', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      mkdirSync(join(root, 'apps/notify'), { recursive: true })
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'legacy notify app',
+        message: 'apps/notify must be removed; notification send runs in-process on the school API',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('reports a separate notify process in start-local-dev', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/notify"]\n')
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not start a separate @edaya/notify process',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   test('reports per-job wrangler cron triggers', () => {
     const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
     try {

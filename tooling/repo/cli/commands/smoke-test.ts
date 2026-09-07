@@ -10,6 +10,8 @@ export async function runSmokeTestCommand(
       return runBunScript(paths.smokeStaging)
     case 'novu':
       return runBunScript(paths.smokeNovu)
+    case 'notify':
+      return runBunScript(paths.smokeNotify)
     case 'r2':
       return runBunScript(paths.testR2)
   }

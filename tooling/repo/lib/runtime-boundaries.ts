@@ -120,10 +120,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
 
   const startLocalDev = readRepoFile(repoRoot, 'tooling/repo/dev/start-local-dev.ts')
   if (startLocalDev) {
-    if (!startLocalDev.includes('@edaya/local-files-server')) {
+    if (startLocalDev.includes('@edaya/notify')) {
       violations.push({
         label: 'local dev orchestrator',
-        message: 'start-local-dev.ts must start @edaya/local-files-server with bun repo dev',
+        message: 'start-local-dev.ts must not start a separate @edaya/notify process',
       })
     }
     if (startLocalDev.includes('.dev.vars')) {
@@ -160,6 +160,13 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     violations.push({
       label: 'legacy cron app',
       message: 'apps/cron must be removed; scheduled cron runs on @edaya/api worker',
+    })
+  }
+
+  if (existsSync(resolve(repoRoot, 'apps/notify'))) {
+    violations.push({
+      label: 'legacy notify app',
+      message: 'apps/notify must be removed; notification send runs in-process on the school API',
     })
   }
 

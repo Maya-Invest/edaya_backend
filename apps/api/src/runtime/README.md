@@ -31,6 +31,7 @@ runtime/
       file-storage.ts
       notification-gateway.ts
       invitation-delivery.ts
+      notify-delivery-sink.ts
       notification-delivery-webhook.ts
       auth-otp-mailer.ts
       auth-contact-resolver.ts

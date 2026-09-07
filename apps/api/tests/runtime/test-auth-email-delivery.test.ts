@@ -6,7 +6,7 @@ import {
 } from "@/runtime/shared/adapters/auth-email-delivery";
 
 describe("resolveAuthEmailDelivery", () => {
-  it("does not use Novu on the in-memory runtime", () => {
+  it("does not use Novu or notify on the in-memory runtime", () => {
     const env = createPgliteTestEnv({
       NOVU_SECRET_KEY: "novu-test-key",
     });
@@ -23,6 +23,16 @@ describe("resolveAuthEmailDelivery", () => {
     }));
 
     expect(resolved.mode).toBe("novu");
+    expect(resolved.port).not.toBeNull();
+  });
+
+  it("uses in-process notify on the local runtime when Novu is not set", () => {
+    const resolved = resolveAuthEmailDelivery(createPgliteTestEnv({
+      RUNTIME: "local",
+      DATABASE_URL: "pglite:.data/school",
+    }));
+
+    expect(resolved.mode).toBe("notify");
     expect(resolved.port).not.toBeNull();
   });
 });

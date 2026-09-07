@@ -34,6 +34,11 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:
 # NOVU_API_URL=https://api.novu.co
 # NOVU_WEBHOOK_SECRET=whsec_...
 
+# --- In-process notify (Worker Email binding + optional FCM) ---
+# EMAIL_TRANSPORT=cloudflare
+# EMAIL_FROM=EDAYA <noreply@edayaplus.com>
+# FCM_SERVICE_ACCOUNT_JSON=
+
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
 # COOKIE_DOMAIN=edayaplus.com

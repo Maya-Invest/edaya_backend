@@ -51,8 +51,15 @@ describe("runStartupMigrations", () => {
         `SELECT count(*)::int AS count FROM ${MIGRATIONS_SCHEMA}.${AUTH_MIGRATIONS_TABLE}`,
       );
 
+      const notifyTables = await pglite.query<{ count: number }>(
+        `SELECT count(*)::int AS count
+         FROM information_schema.tables
+         WHERE table_schema = 'notify'`,
+      );
+
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(4);
+      expect(notifyTables.rows[0]?.count).toBe(4);
       expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
       expect(authJournal.rows[0]?.count).toBe(1);
     }

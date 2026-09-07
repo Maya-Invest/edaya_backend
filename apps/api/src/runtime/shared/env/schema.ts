@@ -1,6 +1,7 @@
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 import { resolveAuthSecondaryStorage } from "@/runtime/shared/adapters/auth-secondary-storage";
 import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
+import type { CloudflareEmailBinding } from "@edaya/adaptor-notify";
 import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import { z } from "zod";
@@ -36,19 +37,25 @@ export const EnvSchema = z.object({
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   COOKIE_DOMAIN: z.string().optional(),
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().positive().optional(),
-  /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu */
+  /** Novu Cloud secret key — when set, notifications dispatch via @edaya/adaptor-novu instead of in-process notify */
   NOVU_SECRET_KEY: z.string().min(1).optional(),
   /** Optional Novu API base URL (e.g. https://api.novu.co) */
   NOVU_API_URL: z.string().url().optional(),
-  /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery */
+  /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery while Novu is the fallback */
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),
+  /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */
+  EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp"]).optional(),
+  /** From header for in-process notify, e.g. `EDAYA <noreply@edayaplus.com>` */
+  EMAIL_FROM: z.string().min(1).optional(),
+  /** Firebase Cloud Messaging HTTP v1 service-account JSON (Worker secret) */
+  FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: z.coerce.boolean().optional(),
   /** Webapp origin used to build invitation accept links and email-verify login redirects, e.g. http://localhost:5173 */
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
-  /** When true, require verified email before password sign-in. Defaults to true when NOVU_SECRET_KEY is set. */
+  /** When true, require verified email before password sign-in. Defaults to true when in-process notify or Novu mail is configured. */
   REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
   /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */
   AUTH_EMAIL_LOG_OTP: envBooleanSchema.optional(),
@@ -82,6 +89,7 @@ export const EnvSchema = z.object({
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
+  EMAIL?: CloudflareEmailBinding;
   authSecondaryStorage?: AuthSecondaryStoragePort;
 };
 
@@ -104,6 +112,14 @@ export function readCronJobsQueueBinding(source: RuntimeBindings): CronJobsQueue
   return undefined;
 }
 
+export function readEmailBinding(source: RuntimeBindings): CloudflareEmailBinding | undefined {
+  const binding = source.EMAIL;
+  if (binding && typeof binding === "object" && "send" in binding && typeof binding.send === "function") {
+    return binding as CloudflareEmailBinding;
+  }
+  return undefined;
+}
+
 export function parseRuntimeEnv(
   source: RuntimeBindings,
   runtime: RuntimeKind = inferRuntimeKind(source),
@@ -112,10 +128,12 @@ export function parseRuntimeEnv(
   const env = parseEnv(bindings);
   const cronJobs = readCronJobsQueueBinding(source);
   const authSecondaryStorage = resolveAuthSecondaryStorage(runtime, source);
+  const email = readEmailBinding(source);
 
   return {
     ...env,
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
+    ...(email ? { EMAIL: email } : {}),
     ...(authSecondaryStorage ? { authSecondaryStorage } : {}),
   };
 }

@@ -18,7 +18,7 @@ export function parseDeployCliArgs(args: readonly string[]): ParsedDeployCli {
 
   const [app, target] = args
   if (app !== 'api') {
-    throw new Error(`Only "api" deploy is supported in v1. Got: ${app ?? '(missing)'}`)
+    throw new Error(`Only "api" deploy is supported. Got: ${app ?? '(missing)'}`)
   }
   if (!target || !API_TARGETS.has(target as DeployApiTarget)) {
     throw new Error(

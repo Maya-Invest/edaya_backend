@@ -29,6 +29,19 @@ export async function wipeStagingSchoolDatabase(databaseUrl: string): Promise<Wi
 
   try {
     const tableNames = await listPublicTables(sqlClient)
+    await sqlClient.unsafe(`
+      DO $notify$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'notify') THEN
+          EXECUTE (
+            SELECT 'TRUNCATE TABLE ' || string_agg(format('%I.%I', schemaname, tablename), ', ') || ' RESTART IDENTITY CASCADE'
+            FROM pg_tables
+            WHERE schemaname = 'notify'
+          );
+        END IF;
+      END
+      $notify$;
+    `)
     if (tableNames.length === 0) {
       return { tableCount: 0 }
     }

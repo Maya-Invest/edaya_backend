@@ -16,16 +16,17 @@ edaya_backend/
     school-service/                 Workflows, entity CRUD, notifications, cron
     adaptor-postgres/               School Drizzle schema, SQL, repos, runMigrations()
     adaptor-auth/                   Better Auth schema, SQL, runtime runMigrations()
-    adaptor-novu/                   Novu notification gateway adapter
+    adaptor-novu/                   Novu notification gateway adapter (legacy fallback)
+    adaptor-notify/                 In-process email/push adapters for school notification ports
     adaptor-r2/                     R2 file storage adapter
     generated-api-client/           Typed client generated from OpenAPI
   tooling/
     repo/                           @edaya/repo — CI, OpenAPI codegen, dev tools
     fixtures/                       Shared seed IDs and fixture records
     seeding/                        HTTP seed orchestration (@edaya/seeding)
-    db-migrate/                     School + auth migration CLI (Neon / Hyperdrive)
+    db-migrate/                     School + auth + notify-schema migration CLI (Neon / Hyperdrive)
     novu-ops/                       Novu workflow bootstrap + subscriber cleanup CLI
-    integration-tests/              Integration tests + smoke (staging, Novu)
+    integration-tests/              Integration tests + smoke (staging, Novu, in-process notify)
 ```
 
 ## Boundary rules
@@ -60,7 +61,8 @@ edaya_backend/
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School persistence |
 | `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth persistence |
 | `@maya-invest/edaya-api-client` | `package/generated-api-client` | Typed API SDK |
-| `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter |
+| `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud adapter (legacy fallback) |
+| `@edaya/adaptor-notify` | `package/adaptor-notify` | In-process email/push notification adapters |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | R2 `FileStoragePort` adapter (S3-compatible API) |
 | `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local dev `FileStoragePort` adapter (filesystem + signed HTTP URLs) |
 | `@edaya/local-files-server` | `tooling/local-files` | Local dev file storage HTTP service |
