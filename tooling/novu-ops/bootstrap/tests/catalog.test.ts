@@ -3,6 +3,12 @@ import { NOVU_NOTIFICATION_WORKFLOW_IDS } from "@edaya/adaptor-novu";
 import { buildBootstrapWorkflows } from "../catalog/workflows";
 import { loadBootstrapEmailTemplates } from "../lib/load-templates";
 import { normalizeWorkflowFingerprint } from "../lib/fingerprint";
+import {
+  EDAYA_AUTH_EMAIL_STEP_ID,
+  EDAYA_EMAIL_STEP_ID,
+  EDAYA_INVITE_EMAIL_STEP_ID,
+  EDAYA_PAYLOAD_EMAIL_BODY,
+} from "../lib/templates";
 
 describe("Novu bootstrap catalog", () => {
   test("includes every operational workflow id used for subscriber preferences", async () => {
@@ -34,11 +40,27 @@ describe("Novu bootstrap catalog", () => {
     expect(workflowIds).toContain("auth.email_verification");
   });
 
-  test("loads email templates from html files", async () => {
+  test("loads the shared HTML email shell", async () => {
     const templates = await loadBootstrapEmailTemplates();
-    expect(templates.standardNotification).toContain("{{ payload.emailBody | raw }}");
-    expect(templates.accountInvitation).toContain("{{ payload.emailBody | raw }}");
-    expect(templates.accountInvitationSubject).toContain("{{payload.emailSubject}}");
+    expect(templates.edayaShell).toContain("<html");
+    expect(templates.edayaShell).toContain("<table");
+    expect(templates.edayaShell).toContain(EDAYA_PAYLOAD_EMAIL_BODY);
+    expect(templates.edayaShell).not.toContain("1234 Example Street");
+  });
+
+  test("uses bumped html email step ids", async () => {
+    const templates = await loadBootstrapEmailTemplates();
+    const workflows = buildBootstrapWorkflows(templates);
+    const emailStepIds = workflows.flatMap(workflow =>
+      workflow.steps.filter(step => step.type === "email").map(step => step.stepId),
+    );
+
+    expect(emailStepIds).toContain(EDAYA_EMAIL_STEP_ID);
+    expect(emailStepIds).toContain(EDAYA_AUTH_EMAIL_STEP_ID);
+    expect(emailStepIds).toContain(EDAYA_INVITE_EMAIL_STEP_ID);
+    expect(emailStepIds).not.toContain("edaya-email");
+    expect(emailStepIds).not.toContain("edaya-auth-email");
+    expect(emailStepIds).not.toContain("edaya-invite-email");
   });
 
   test("fingerprints are stable for unchanged definitions", async () => {
