@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { EffectiveGrants } from '../model/effective-grants'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { AuthorizationRepository } from './authorization-repository'
 import { resolveActorGrants } from './resolve-actor-grants'
 import { resolveEffectiveGrants } from './resolve-effective-grants'

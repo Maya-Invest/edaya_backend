@@ -1,12 +1,6 @@
 import type { ActorMetadata, AuthorizationRepositories, EffectiveGrants } from '@edaya/authorization'
-import {
-  ActorAssuranceLevel,
-  AuthorizationError,
-  createRepositoryAuthorizationPolicy,
-  createStaffActorMetadata,
-  Permission,
-} from '@edaya/authorization'
-import { noOpNotificationGateway } from '@edaya/core'
+import { ActorAssuranceLevel, AuthorizationError, createRepositoryAuthorizationPolicy, createStaffActorMetadata } from '@edaya/authorization'
+import { noOpNotificationGateway, Permission } from '@edaya/core'
 import { staffPermissionAssignmentConfig } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 

@@ -12,6 +12,7 @@ import type {
   StudentClassEnrollment,
 } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, ReportCardOperations } from '@edaya/authorization'
 import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
 import {
@@ -20,6 +21,7 @@ import {
   runWorkflowNotifications,
 } from '../../capabilities/notifications'
 import { operationModule } from '../entities/entity-config'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import {
   buildGroupResultFromChildren,
@@ -75,8 +77,11 @@ export interface ListClassSubjectAssessmentResultsForPeriodInput {
 }
 
 export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: AssessmentsWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('assessments', base.repositories)
   }
 
   async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
@@ -217,9 +222,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     reportCardDefinitionId: string | undefined,
     schoolId: string,
   ): Promise<void> {
-    const period = await this.baseService.repositories.academicPeriods.findById(periodId)
+    const period = await this.repositories.academicPeriods.findById(periodId)
     const definition = reportCardDefinitionId
-      ? await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
+      ? await this.repositories.definitions.findById(reportCardDefinitionId)
       : undefined
     if (!period || period.schoolId !== schoolId || (reportCardDefinitionId && !definition)) {
       denyResourceAccess()
@@ -230,7 +235,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
-    const reportCard = await this.baseService.repositories.results.findOne({ studentId, periodId })
+    const reportCard = await this.repositories.results.findOne({ studentId, periodId })
     if (reportCard?.status === ReportCardResultStatus.Published) {
       throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
     }
@@ -256,7 +261,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           gradeLevelId: classGroup.gradeLevelId,
           academicYearId: period.academicYearId,
         })
-    const existing = await this.baseService.repositories.results.findOne({ studentId, periodId })
+    const existing = await this.repositories.results.findOne({ studentId, periodId })
     const resolvedAggregation = aggregation ?? existing?.aggregation
     const { sectionResults, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
       studentId,
@@ -314,9 +319,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }> {
     const period = await this.requirePeriod(periodId)
     const allSections = dedupeReportCardDefinitionSections(
-      await this.baseService.repositories.sections.list({ reportCardDefinitionId }),
+      await this.repositories.sections.list({ reportCardDefinitionId }),
     ).sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
-    const classSubjects = (await this.baseService.repositories.classSubjects.list({ classGroupId }))
+    const classSubjects = (await this.repositories.classSubjects.list({ classGroupId }))
       .filter(classSubject => classSubject.isOffered !== false)
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
 
@@ -549,9 +554,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     studentId: string
     academicYearId: string
   }): Promise<StudentClassEnrollment> {
-    const enrollments = await this.baseService.repositories.enrollments.list({ studentId })
+    const enrollments = await this.repositories.enrollments.list({ studentId })
     for (const enrollment of enrollments) {
-      const classGroup = await this.baseService.repositories.classGroups.findById(enrollment.classGroupId)
+      const classGroup = await this.repositories.classGroups.findById(enrollment.classGroupId)
       if (classGroup?.academicYearId === academicYearId) {
         return enrollment
       }
@@ -560,7 +565,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireReportCardDefinition(reportCardDefinitionId: string) {
-    const definition = await this.baseService.repositories.definitions.findById(reportCardDefinitionId)
+    const definition = await this.repositories.definitions.findById(reportCardDefinitionId)
     if (!definition) {
       throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
     }
@@ -574,7 +579,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     gradeLevelId: string
     academicYearId: string
   }) {
-    const definition = await this.baseService.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
+    const definition = await this.repositories.definitions.findOne({ gradeLevelId, academicYearId, isDefault: true })
     if (!definition) {
       throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
     }
@@ -590,7 +595,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     startDate: Date
     endDate: Date
   }): Promise<AttendanceSummary> {
-    const records = await this.baseService.repositories.attendance.list({
+    const records = await this.repositories.attendance.list({
       studentId,
       date: { $gte: normalizeDate(startDate), $lte: normalizeDate(endDate) },
     })
@@ -621,10 +626,10 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     studentId: string,
     periodId: string,
   ): Promise<Array<{ result: AssessmentResult, assessment: Assessment }>> {
-    const results = await this.baseService.repositories.assessmentResults.list({ studentId })
+    const results = await this.repositories.assessmentResults.list({ studentId })
     const resolved: Array<{ result: AssessmentResult, assessment: Assessment }> = []
     for (const result of results) {
-      const assessment = await this.baseService.repositories.assessments.findById(result.assessmentId)
+      const assessment = await this.repositories.assessments.findById(result.assessmentId)
       if (assessment?.periodId === periodId) {
         resolved.push({ result, assessment })
       }

@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { NotificationChannelTemplate, SchoolNotificationTemplateDocument } from './document-schema'
 import type { NotificationChannel, NotificationTemplateKey } from './keys'
 import { BusinessRuleViolationError } from '@edaya/core'

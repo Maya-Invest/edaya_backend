@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { GuardianScope, StudentScope } from '../model/actor-scope'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { uniqueActiveClassGroupIds } from '../grants/enrollment-scope'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 

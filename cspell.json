@@ -21,7 +21,6 @@
     "tsconfig",
     "tsup",
     "turbo",
-    "vitest",
     "antfu"
   ]
 }

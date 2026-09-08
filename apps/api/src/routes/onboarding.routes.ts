@@ -6,21 +6,22 @@ import {
   unauthorizedResponse,
 } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
-import { registerSchoolWithOwner } from "@/lib/onboarding/register-school-with-owner";
-import { applyStructureTemplate } from "@/lib/onboarding/apply-structure-template";
-import type { StructureTemplateDefinition } from "@edaya/fixtures/onboarding";
-import { inviteStaffMembers } from "@/lib/onboarding/invite-staff-members";
 import {
+  applyStructureTemplate,
   completeOnboardingWizard,
-  recordOnboardingAccountProgress,
-  resolveOnboardingAccountStatus,
-} from "@/lib/onboarding/onboarding-account-state";
-import { provisionOnboarding } from "@/lib/onboarding/provision-onboarding";
-import {
+  inviteStaffMembers,
+  isOnboardingStaffInviteRoleKey,
   isStructureTemplateId,
+  provisionOnboarding,
+  recordOnboardingAccountProgress,
+  registerSchoolWithOwner,
+  resolveOnboardingAccountStatus,
+} from "@edaya/service";
+import type { StructureTemplateDefinition } from "@edaya/service";
+import {
   listStructureTemplatesForCountry,
+  resolveStructureTemplates,
 } from "@edaya/fixtures/onboarding";
-import { isOnboardingStaffInviteRoleKey } from "@/lib/onboarding/staff-invite-roles";
 import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
@@ -342,9 +343,10 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
   try {
     const result = await applyStructureTemplate(c.get("schoolApp"), actor, {
       templates: body.templates,
-      ...(body.templateSnapshots
-        ? { templateSnapshots: body.templateSnapshots as StructureTemplateDefinition[] }
-        : {}),
+      templateSnapshots: resolveStructureTemplates(
+        body.templates,
+        (body.templateSnapshots as StructureTemplateDefinition[] | undefined) ?? [],
+      ),
       levels: body.levels,
     });
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
@@ -510,7 +512,10 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
       session,
       {
         school: body.school,
-        structure: body.structure,
+        structure: {
+          ...body.structure,
+          templateSnapshots: resolveStructureTemplates(body.structure.templates),
+        },
         ...(body.invites ? { invites: body.invites } : {}),
       },
       {

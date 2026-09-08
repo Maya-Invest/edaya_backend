@@ -1,6 +1,6 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { AttendanceRecord } from '@edaya/core'
 import type { ActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import type { AttachmentAccessInput } from '../../types'
 import { AttachmentOwnerKind } from '@edaya/core'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../model/errors'

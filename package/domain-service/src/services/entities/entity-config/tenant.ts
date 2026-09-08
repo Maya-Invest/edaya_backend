@@ -1,5 +1,5 @@
 import type { Filter, QueryOptions } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { EntityTenantResolver } from '../../entities/managed-entity-service'
 import type { EntityWithSchoolId } from './config'
 

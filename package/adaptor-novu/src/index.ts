@@ -42,6 +42,11 @@ export type { CreateNovuSubscriberClientOptions, NovuSubscriberClient } from "./
 export { isNovuSubscriberNotFoundError } from "./novu-subscriber-client";
 export { buildNovuSubscriberId, buildNovuSubscriberIds } from "./subscriber-id";
 export {
+  buildNovuTriggerSubscriber,
+  splitDisplayName,
+} from "./trigger-recipient";
+export type { NovuTriggerSubscriber } from "./trigger-recipient";
+export {
   chunkNovuTriggerRequests,
   defaultNovuWorkflowIdResolver,
   mapNotificationToNovuTriggerRequest,
@@ -50,6 +55,7 @@ export type {
   NovuNotificationGatewayOptions,
   NovuTriggerClient,
   NovuTriggerRequest,
+  NovuTriggerTo,
   NovuWorkflowIdResolver,
 } from "./types";
 export type {

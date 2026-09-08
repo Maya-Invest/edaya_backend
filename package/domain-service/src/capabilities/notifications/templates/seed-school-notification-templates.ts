@@ -1,4 +1,4 @@
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import { SchoolNotificationTemplates } from '@edaya/core'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
 import { NOTIFICATION_TEMPLATE_KEYS } from './keys'

@@ -1,5 +1,6 @@
 import type { AttendanceAnchor, AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { SchedulingWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { AttendanceOperations, denyResourceAccess, resolveAuditActorId, SchedulingOperations } from '@edaya/authorization'
 import {
   ActivitySession,
@@ -27,6 +28,7 @@ import {
 } from '../../capabilities/notifications'
 import { findAttendanceRecordByAnchor } from '../entities/config/scheduling/attendance-record'
 import { operationModule } from '../entities/entity-config'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { assertNoSessionConflict } from './schedule-conflicts'
 
@@ -118,8 +120,11 @@ export interface RescheduleOccurrenceInput {
 }
 
 export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: SchedulingWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('scheduling', base.repositories)
   }
 
   async saveSchedule({ schedule: input, materialize = true }: SaveScheduleInput): Promise<Schedule> {
@@ -176,7 +181,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
           if (!cancelledExisting) {
             const { startsAt, endsAt } = this.buildOccurrenceTimes(schedule, currentDate)
             const lessonSessionId = this.buildOccurrenceSessionId(schedule.id, currentDate)
-            const existing = await this.baseService.repositories.lessonSessions.findById(lessonSessionId)
+            const existing = await this.repositories.lessonSessions.findById(lessonSessionId)
 
             if (existing?.status === OccurrenceStatus.Cancelled) {
               currentDate = this.nextCalendarDate(currentDate)
@@ -247,7 +252,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
           if (!cancelledExisting) {
             const { startsAt, endsAt } = this.buildOccurrenceTimes(schedule, currentDate)
             const activitySessionId = this.buildOccurrenceSessionId(schedule.id, currentDate)
-            const existing = await this.baseService.repositories.activitySessions.findById(activitySessionId)
+            const existing = await this.repositories.activitySessions.findById(activitySessionId)
 
             if (existing?.status === OccurrenceStatus.Cancelled) {
               currentDate = this.nextCalendarDate(currentDate)
@@ -571,7 +576,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceId,
     reason,
   }: RequestAttendanceJustificationInput): Promise<AttendanceRecord> {
-    const existing = await this.baseService.repositories.attendance.findById(attendanceId)
+    const existing = await this.repositories.attendance.findById(attendanceId)
     if (!existing || existing.studentId !== studentId) {
       denyResourceAccess()
     }
@@ -629,7 +634,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   private async resolveAttendanceAnchorClassGroupId(anchor: AttendanceAnchor): Promise<string> {
     if (anchor.attendanceId) {
-      const attendance = await this.baseService.repositories.attendances.findById(anchor.attendanceId)
+      const attendance = await this.repositories.attendances.findById(anchor.attendanceId)
       if (!attendance) {
         denyResourceAccess()
       }
@@ -667,7 +672,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<Attendance> {
     const normalizedDate = normalizeDate(date)
     const attendanceId = this.buildAttendanceId(classGroup.id, normalizedDate)
-    const existing = await this.baseService.repositories.attendances.findById(attendanceId)
+    const existing = await this.repositories.attendances.findById(attendanceId)
     if (existing) {
       if (existing.classGroupId !== classGroup.id) {
         denyResourceAccess()
@@ -694,11 +699,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireSchedule(scheduleId: string): Promise<Schedule> {
-    const schedule = await this.baseService.repositories.schedules.findById(scheduleId)
+    const schedule = await this.repositories.schedules.findById(scheduleId)
     if (!schedule) {
       denyResourceAccess()
     }
-    const classGroup = await this.baseService.repositories.classGroups.findById(schedule.classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(schedule.classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -706,7 +711,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireAcademicYear(academicYearId: string, schoolId: string) {
-    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
+    const academicYear = await this.repositories.academicYears.findById(academicYearId)
     if (!academicYear || academicYear.schoolId !== schoolId) {
       denyResourceAccess()
     }
@@ -714,7 +719,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireSchool(schoolId: string) {
-    const school = await this.baseService.repositories.schools.findById(schoolId)
+    const school = await this.repositories.schools.findById(schoolId)
     if (!school) {
       denyResourceAccess()
     }
@@ -725,11 +730,11 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     if (!schedule.classSubjectId) {
       return schedule.title
     }
-    const classSubject = await this.baseService.repositories.classSubjects.findById(schedule.classSubjectId)
+    const classSubject = await this.repositories.classSubjects.findById(schedule.classSubjectId)
     if (!classSubject) {
       return schedule.title
     }
-    const subject = await this.baseService.repositories.subjects.findById(classSubject.subjectId)
+    const subject = await this.repositories.subjects.findById(classSubject.subjectId)
     return subject?.name ?? schedule.title
   }
 
@@ -737,12 +742,12 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     if (!schedule.activityId) {
       return schedule.title
     }
-    const activity = await this.baseService.repositories.activities.findById(schedule.activityId)
+    const activity = await this.repositories.activities.findById(schedule.activityId)
     return activity?.name ?? schedule.title
   }
 
   private async buildNonSchoolDates(classGroup: ClassGroup): Promise<Set<string>> {
-    const calendarEvents = await this.baseService.repositories.calendarEvents.list({ academicYearId: classGroup.academicYearId })
+    const calendarEvents = await this.repositories.calendarEvents.list({ academicYearId: classGroup.academicYearId })
     const nonSchoolDates = new Set<string>()
 
     for (const event of calendarEvents) {
@@ -807,13 +812,13 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
 
   private async findCancelledLessonSession(scheduleId: string, date: Date): Promise<LessonSession | undefined> {
     const lessonSessionId = this.buildLessonSessionId(scheduleId, date)
-    const existing = await this.baseService.repositories.lessonSessions.findById(lessonSessionId)
+    const existing = await this.repositories.lessonSessions.findById(lessonSessionId)
     return existing?.status === OccurrenceStatus.Cancelled ? existing : undefined
   }
 
   private async findCancelledActivitySession(scheduleId: string, date: Date): Promise<ActivitySession | undefined> {
     const activitySessionId = this.buildOccurrenceSessionId(scheduleId, date)
-    const existing = await this.baseService.repositories.activitySessions.findById(activitySessionId)
+    const existing = await this.repositories.activitySessions.findById(activitySessionId)
     return existing?.status === OccurrenceStatus.Cancelled ? existing : undefined
   }
 
@@ -840,7 +845,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireActivitySession(activitySessionId: string): Promise<ActivitySession> {
-    const activitySession = await this.baseService.repositories.activitySessions.findById(activitySessionId)
+    const activitySession = await this.repositories.activitySessions.findById(activitySessionId)
     if (!activitySession) {
       denyResourceAccess()
     }
@@ -851,7 +856,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireLessonSession(lessonSessionId: string): Promise<LessonSession> {
-    const lessonSession = await this.baseService.repositories.lessonSessions.findById(lessonSessionId)
+    const lessonSession = await this.repositories.lessonSessions.findById(lessonSessionId)
     if (!lessonSession) {
       denyResourceAccess()
     }
@@ -862,7 +867,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireStudentInSchool(studentId: string, schoolId: string): Promise<void> {
-    const student = await this.baseService.repositories.students.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student || student.schoolId !== schoolId) {
       denyResourceAccess()
     }
@@ -875,7 +880,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId: string
     classGroupId: string
   }): Promise<void> {
-    const enrollments = await this.baseService.repositories.enrollments.list({
+    const enrollments = await this.repositories.enrollments.list({
       studentId,
       classGroupId,
       status: StudentClassEnrollmentStatus.Active,

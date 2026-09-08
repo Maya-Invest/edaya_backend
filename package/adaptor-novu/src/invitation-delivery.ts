@@ -4,6 +4,7 @@ import { ACCOUNT_INVITATION_EVENT_KEY, buildTransientInvitationSubscriberId } fr
 import type { NovuSubscriberClient } from "./novu-subscriber-client";
 import { createNovuSdkClient } from "./novu-sdk-client";
 import { createNovuSubscriberClient } from "./novu-subscriber-client";
+import { buildNovuTriggerSubscriber } from "./trigger-recipient";
 import type { NovuTriggerClient } from "./types";
 
 function mapActorKindToRecipientKind(
@@ -52,9 +53,15 @@ export function createNovuInvitationDeliveryPort(
         { skipWorkflowPreferences: true },
       );
 
+      const email = input.contactChannel === "email" ? input.contactValue : undefined;
       await options.triggerClient.trigger({
         workflowId: ACCOUNT_INVITATION_EVENT_KEY,
-        to: subscriberId,
+        to: buildNovuTriggerSubscriber({
+          subscriberId,
+          email,
+          phone: input.contactChannel === "phone" ? input.contactValue : undefined,
+          displayName: input.displayName,
+        }),
         transactionId: input.invitationId,
         context: {
           tenant: input.schoolId,
@@ -64,6 +71,10 @@ export function createNovuInvitationDeliveryPort(
           body: input.emailBody,
           emailSubject: input.emailSubject,
           emailBody: input.emailBody,
+          inviteUrl: input.inviteUrl,
+          inviteeName: input.displayName,
+          actorKind: input.actorKind,
+          expiresAt: input.expiresAt.toISOString(),
           kind: "event",
           eventKey: ACCOUNT_INVITATION_EVENT_KEY,
           schoolId: input.schoolId,

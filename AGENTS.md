@@ -7,8 +7,9 @@ Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI wor
 ## Architecture
 
 - **Ports and adapters** — domain types and ports in `@edaya/core`; authorization engine in `@edaya/authorization`; school orchestration (workflows, entity configs, notifications, cron) in `@edaya/service`; Postgres in `@edaya/adaptor-postgres`; auth persistence in `@edaya/adaptor-auth`; in-process notification adapters in `@edaya/adaptor-notify` (Novu remains `@edaya/adaptor-novu` as env fallback); in-process document rendering in `@edaya/adaptor-docs`; migration CLI in `@edaya/db-migrate`; HTTP/runtime wiring in `apps/api`.
-- **Domain dependency direction** — `school-service` → `authorization` → `core`. Production `src/` in core must not import `@edaya/authorization` or `@edaya/service`; authorization `src/` must not import `@edaya/service`. `Permission` and staff grant scope validation live in `@edaya/core`.
-- **Boundary rule** — `package/domain-core`, `package/authorization`, `package/domain-service`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
+- **Domain dependency direction** — `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Production `src/` in core must not import `@edaya/authorization` or `@edaya/service`; authorization `src/` must not import `@edaya/service`. `Permission` and staff grant scope validation live in `@edaya/core`.
+- **Boundary rule** — `package/domain-core`, `package/domain-authorization`, `package/domain-service`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
+- **Package READMEs** — describe **this** package’s folders only. The monorepo map lives in [README.md](README.md) and [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md).
 
 ## Portal authorization
 

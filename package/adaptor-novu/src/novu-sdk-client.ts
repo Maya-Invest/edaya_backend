@@ -8,7 +8,7 @@ export interface CreateNovuSdkClientOptions {
 
 function toNovuTriggerBody(request: NovuTriggerRequest): {
   workflowId: string;
-  to: string | string[];
+  to: NovuTriggerRequest["to"];
   transactionId: string;
   context?: { tenant: string };
   payload: Record<string, unknown>;

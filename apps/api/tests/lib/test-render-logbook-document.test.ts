@@ -11,11 +11,12 @@ import {
   ClassSubjectProgress,
   LessonSession,
   OccurrenceStatus,
+  Permission,
   School,
   Subject,
   SubjectMatter,
 } from "@edaya/core";
-import { ActorAssuranceLevel, createStaffActorMetadata, Permission } from "@edaya/authorization";
+import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import { describe, expect, mock, test } from "bun:test";
 import { renderClassLogbookDocument } from "@/lib/documents/render-logbook-document";
 

@@ -1,5 +1,5 @@
 import type { School } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../ports/school-repositories'
 import { BusinessRuleViolationError } from '@edaya/core'
 
 /**

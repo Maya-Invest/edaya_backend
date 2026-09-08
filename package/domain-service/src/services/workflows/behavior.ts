@@ -6,23 +6,15 @@ import type {
   IncidentInvolvementRole,
 } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
-import { denyResourceAccess, DisciplineOperations, Permission, resolveAuditActorId } from '@edaya/authorization'
-import {
-  BusinessRuleViolationError,
-  DisciplinaryAction as DisciplinaryActionEntity,
-  DisciplinaryActionKind,
-  Incident as IncidentEntity,
-  IncidentStatus,
-  StudentClassEnrollmentStatus,
-  StudentDisciplinaryAction,
-  StudentDisciplinaryActionStatus,
-  StudentIncidentInvolvement,
-} from '@edaya/core'
+import type { BehaviorWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess, DisciplineOperations, resolveAuditActorId } from '@edaya/authorization'
+import { BusinessRuleViolationError, DisciplinaryAction as DisciplinaryActionEntity, DisciplinaryActionKind, Incident as IncidentEntity, IncidentStatus, Permission, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement } from '@edaya/core'
 import {
   INCIDENT_RECORDED_EVENT_KEY,
   runWorkflowNotifications,
 } from '../../capabilities/notifications'
 import { operationModule } from '../entities/entity-config'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AddStudentInvolvementInput {
@@ -94,8 +86,11 @@ export interface ResolveIncidentWithOutcomesResult {
 export type ConfigureDisciplinaryActionInput = DisciplinaryActionInput & { schoolId?: string }
 
 export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: BehaviorWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('behavior', base.repositories)
   }
 
   async configureDisciplinaryAction(input: DisciplinaryActionInput & { schoolId?: string }): Promise<DisciplinaryAction> {
@@ -312,7 +307,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     incident: Incident,
   ): Promise<StudentIncidentInvolvement> {
     await this.requireStudentInIncidentScope(studentId, incident)
-    const existing = (await this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
+    const existing = (await this.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
     if (existing) {
       throw new BusinessRuleViolationError('STUDENT_ALREADY_LINKED_TO_INCIDENT', `Student ${studentId} is already linked to incident ${incidentId}`)
     }
@@ -326,7 +321,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     incident: Incident,
   ): Promise<{ involvement: StudentIncidentInvolvement, created: boolean }> {
     await this.requireStudentInIncidentScope(studentId, incident)
-    const existing = (await this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
+    const existing = (await this.repositories.studentIncidentInvolvements.list({ incidentId, studentId }))[0]
     if (existing) {
       const roleChanged = existing.role !== role
       const notesChanged = notes !== undefined && existing.notes !== notes
@@ -355,8 +350,8 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   ): Promise<StudentDisciplinaryAction> {
     await this.requireStudentInIncidentScope(studentId, incident)
     const [catalogAction, involvement] = await Promise.all([
-      this.baseService.repositories.disciplinaryActions.findById(disciplinaryActionId),
-      this.baseService.repositories.studentIncidentInvolvements.list({ incidentId, studentId }),
+      this.repositories.disciplinaryActions.findById(disciplinaryActionId),
+      this.repositories.studentIncidentInvolvements.list({ incidentId, studentId }),
     ])
     if (!catalogAction || catalogAction.schoolId !== incident.schoolId || involvement.length === 0) {
       denyResourceAccess()
@@ -400,7 +395,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireIncident(incidentId: string): Promise<Incident> {
-    const incident = await this.baseService.repositories.incidents.findById(incidentId)
+    const incident = await this.repositories.incidents.findById(incidentId)
     if (!incident || incident.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -408,12 +403,12 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireStudentInIncidentScope(studentId: string, incident: Incident): Promise<void> {
-    const student = await this.baseService.repositories.students.findById(studentId)
+    const student = await this.repositories.students.findById(studentId)
     if (!student || student.schoolId !== incident.schoolId) {
       denyResourceAccess()
     }
     if (incident.classGroupId) {
-      const enrollments = await this.baseService.repositories.enrollments.list({
+      const enrollments = await this.repositories.enrollments.list({
         studentId,
         classGroupId: incident.classGroupId,
         status: StudentClassEnrollmentStatus.Active,

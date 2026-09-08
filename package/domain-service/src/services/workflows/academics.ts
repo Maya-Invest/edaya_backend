@@ -1,5 +1,6 @@
 import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { AcademicsOperations, denyResourceAccess, LogbookOperations, resolveAuditActorId } from '@edaya/authorization'
 import {
@@ -12,6 +13,7 @@ import {
   SubjectMatter as SubjectMatterEntity,
 } from '@edaya/core'
 import { operationModule } from '../entities/entity-config'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import {
   removeMirroredClassSubjects,
@@ -79,8 +81,11 @@ export type ConfigureSubjectInput = SubjectInput & { schoolId?: string }
 export type ConfigureSubjectMatterInput = SubjectMatterInput
 
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: AcademicsWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('academics', base.repositories)
   }
 
   async configureSubject(input: SubjectInput & { schoolId?: string }): Promise<Subject> {
@@ -122,11 +127,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     await this.baseService.atomicExecution.execute(async () => {
       const gradeLevelSubject = await this.requireGradeLevelSubject(gradeLevelSubjectId)
       await removeMirroredClassSubjects(this.baseService, gradeLevelSubject.id)
-      const matters = await this.baseService.repositories.gradeLevelSubjectMatters.list({ gradeLevelSubjectId })
+      const matters = await this.repositories.gradeLevelSubjectMatters.list({ gradeLevelSubjectId })
       for (const matter of matters) {
-        await this.baseService.repositories.gradeLevelSubjectMatters.delete(matter.id)
+        await this.repositories.gradeLevelSubjectMatters.delete(matter.id)
       }
-      await this.baseService.repositories.gradeLevelSubjects.delete(gradeLevelSubject.id)
+      await this.repositories.gradeLevelSubjects.delete(gradeLevelSubject.id)
     })
   }
 
@@ -144,10 +149,10 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         createdAt: existing.createdAt,
       })
 
-      const classSubjects = await this.baseService.repositories.classSubjects.list({ gradeLevelSubjectId })
+      const classSubjects = await this.repositories.classSubjects.list({ gradeLevelSubjectId })
       const isOptionalChanged = updated.isOptional !== existing.isOptional
       for (const classSubject of classSubjects) {
-        await this.baseService.repositories.classSubjects.save(new ClassSubject({
+        await this.repositories.classSubjects.save(new ClassSubject({
           id: classSubject.id,
           classGroupId: classSubject.classGroupId,
           subjectId: classSubject.subjectId,
@@ -172,7 +177,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     isOffered = true,
   }: AddCustomClassSubjectInput): Promise<ClassSubject> {
     await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
-    const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -255,7 +260,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
 
     return this.baseService.atomicExecution.execute(async () => {
       const gradeLevelSubjectMatter = await saveGradeLevelSubjectMatterEntity(this.baseService, matterInput)
-      const classSubjects = await this.baseService.repositories.classSubjects.list({
+      const classSubjects = await this.repositories.classSubjects.list({
         gradeLevelSubjectId: gradeLevelSubjectMatter.gradeLevelSubjectId,
       })
       for (const classSubject of classSubjects) {
@@ -271,7 +276,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async syncGradeLevelSubjectsToClassGroup(classGroupId: string, optionsByGradeLevelSubjectId: Record<string, SyncClassSubjectOptions> = {}) {
-    const classGroup = await this.baseService.repositories.classGroups.findById(classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -281,7 +286,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   /** @internal */
   async offerSubjectToClass(input: OfferSubjectToClassInput): Promise<ClassSubject> {
     const classSubject = new ClassSubject(input)
-    await this.baseService.repositories.classSubjects.save(classSubject)
+    await this.repositories.classSubjects.save(classSubject)
     return classSubject
   }
 
@@ -292,7 +297,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       status: input.status ?? ClassSubjectMatterStatus.NotStarted,
       completedPercentage: input.completedPercentage ?? 0,
     })
-    await this.baseService.repositories.classSubjectMatters.save(matter)
+    await this.repositories.classSubjectMatters.save(matter)
     return matter
   }
 
@@ -307,7 +312,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
-      const lessonSession = await this.baseService.repositories.lessonSessions.findById(lessonSessionId)
+      const lessonSession = await this.repositories.lessonSessions.findById(lessonSessionId)
       if (!lessonSession) {
         denyResourceAccess()
       }
@@ -321,7 +326,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       await operationModule(LogbookOperations.create)(this.baseService.actor)
       await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [lessonSessionId])
 
-      const existing = await this.baseService.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })
+      const existing = await this.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })
       if (existing) {
         throw new BusinessRuleViolationError('DUPLICATE_PROGRESS_RECORD', `Progress has already been recorded for matter ${classSubjectMatterId} and lesson session ${lessonSessionId}`)
       }
@@ -359,11 +364,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireGradeLevelSubject(gradeLevelSubjectId: string): Promise<GradeLevelSubject> {
-    const gradeLevelSubject = await this.baseService.repositories.gradeLevelSubjects.findById(gradeLevelSubjectId)
+    const gradeLevelSubject = await this.repositories.gradeLevelSubjects.findById(gradeLevelSubjectId)
     if (!gradeLevelSubject) {
       denyResourceAccess()
     }
-    const gradeLevel = await this.baseService.repositories.gradeLevels.findById(gradeLevelSubject.gradeLevelId)
+    const gradeLevel = await this.repositories.gradeLevels.findById(gradeLevelSubject.gradeLevelId)
     if (!gradeLevel || gradeLevel.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -371,15 +376,15 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireClassSubjectMatter(classSubjectMatterId: string): Promise<ClassSubjectMatter> {
-    const matter = await this.baseService.repositories.classSubjectMatters.findById(classSubjectMatterId)
+    const matter = await this.repositories.classSubjectMatters.findById(classSubjectMatterId)
     if (!matter) {
       denyResourceAccess()
     }
-    const classSubject = await this.baseService.repositories.classSubjects.findById(matter.classSubjectId)
+    const classSubject = await this.repositories.classSubjects.findById(matter.classSubjectId)
     if (!classSubject) {
       denyResourceAccess()
     }
-    const classGroup = await this.baseService.repositories.classGroups.findById(classSubject.classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classSubject.classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -387,11 +392,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async requireClassSubject(classSubjectId: string): Promise<ClassSubject> {
-    const classSubject = await this.baseService.repositories.classSubjects.findById(classSubjectId)
+    const classSubject = await this.repositories.classSubjects.findById(classSubjectId)
     if (!classSubject) {
       denyResourceAccess()
     }
-    const classGroup = await this.baseService.repositories.classGroups.findById(classSubject.classGroupId)
+    const classGroup = await this.repositories.classGroups.findById(classSubject.classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
     }
@@ -402,7 +407,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     classSubject: ClassSubject,
     updatedMatter: ClassSubjectMatter,
   ): Promise<void> {
-    const matters = await this.baseService.repositories.classSubjectMatters.list({ classSubjectId: classSubject.id })
+    const matters = await this.repositories.classSubjectMatters.list({ classSubjectId: classSubject.id })
     const normalizedMatters = matters.map(matter => matter.id === updatedMatter.id ? updatedMatter : matter)
     if (!normalizedMatters.some(matter => matter.id === updatedMatter.id)) {
       normalizedMatters.push(updatedMatter)

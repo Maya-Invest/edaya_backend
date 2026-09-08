@@ -22,7 +22,7 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 |---------|-------------|---------|----------|
 | School DB | PGlite ephemeral (`pglite`) | PGlite persisted (`pglite:.data/school`) | Postgres (Hyperdrive binding or `DATABASE_URL`) |
 | Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB as school) | Postgres `auth` schema via Hyperdrive |
-| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files` | R2 (`@edaya/adaptor-r2`) |
+| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files-server` | R2 (`@edaya/adaptor-r2`) |
 | Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
 | Invitation delivery | no-op | notify* or Novu* or no-op | notify* or Novu* or no-op |
 | Document rendering | not configured | stub or Gotenberg (`GOTENBERG_URL`) | Browser Run (`BROWSER`) or Gotenberg |
@@ -78,7 +78,7 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-postgres` | School persistence (PGlite + Postgres drivers) |
 | `@edaya/adaptor-auth` | Better Auth persistence (Postgres `auth` schema) |
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
-| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files`) |
+| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files-server`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
 | `@edaya/adaptor-novu` | Notifications (Novu env fallback) |
 | `@edaya/adaptor-notify` | In-process email/push adapters on the school API |

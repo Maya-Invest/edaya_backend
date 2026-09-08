@@ -13,8 +13,8 @@ import {
   HttpSeedClient,
   logHttpDevSeedResults,
   runHttpDevSeeds,
+  waitForApi,
 } from '../src/http/index.ts'
-import { waitForApi } from '../src/http/wait-for-api.ts'
 import { loadSeedEnvFiles } from '../src/support/load-seed-env.ts'
 import {
   resolveSeedApiUrl,

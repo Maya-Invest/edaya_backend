@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "quality": "bun run lint",
+    "check": "tsc --noEmit -p tsconfig.check.json",
+    "quality": "bun run lint && bun run check",
     "test": "bun test tests --dots",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

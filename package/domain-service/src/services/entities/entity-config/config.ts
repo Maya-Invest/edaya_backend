@@ -1,6 +1,6 @@
 import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { AtomicExecutionPort, NotificationGatewayPort } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { ManagedEntityServiceConfig } from '../../entities/managed-entity-service'
 
 export interface EntityConfigFactoryInput {

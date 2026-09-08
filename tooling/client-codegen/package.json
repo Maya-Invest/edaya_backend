@@ -17,9 +17,11 @@
     "edaya-codegen": "./bin/edaya-codegen.ts"
   },
   "scripts": {
-    "test": "bun test test --dots",
+    "test": "bun test tests --dots",
     "check": "tsc --noEmit",
-    "quality": "bun run check && bun run test"
+    "lint": "eslint src tests bin",
+    "lint:fix": "eslint src tests bin --fix",
+    "quality": "bun run lint && bun run check"
   },
   "dependencies": {
     "openapi-typescript": "^7.13.0"

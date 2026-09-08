@@ -9,9 +9,9 @@ import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { createInProcessPopulationSeedPort } from '../domains/population/in-process'
+import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { seedIntegrationLightPopulation } from '../domains/population/workflow'
-import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/in-process'
+import { createInProcessSchoolStructureSeedPort } from '../domains/school-structure/adapters/in-process'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from '../domains/school-structure/workflow'
 
 export type IntegrationLightSchoolSeedResult

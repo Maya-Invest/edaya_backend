@@ -4,7 +4,8 @@ import type { BootstrapEmailTemplates } from "./load-templates";
 export const EDAYA_PAYLOAD_TITLE = "{{payload.title}}";
 export const EDAYA_PAYLOAD_BODY = "{{payload.body}}";
 export const EDAYA_PAYLOAD_EMAIL_SUBJECT = "{{payload.emailSubject}}";
-export const EDAYA_PAYLOAD_EMAIL_BODY = "{{payload.emailBody}}";
+/** Liquid `| raw` so pre-rendered HTML (invite links, verify URLs) is not entity-escaped. */
+export const EDAYA_PAYLOAD_EMAIL_BODY = "{{ payload.emailBody | raw }}";
 
 export const EDAYA_EMAIL_STEP_ID = "edaya-email-html";
 export const EDAYA_AUTH_EMAIL_STEP_ID = "edaya-auth-email-html";

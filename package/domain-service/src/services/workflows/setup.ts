@@ -24,6 +24,7 @@ import type {
   StaffProfileRole,
 } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
+import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import {
   AttachmentOperations,
   denyResourceAccess,
@@ -60,6 +61,7 @@ import {
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 import { operationModule } from '../entities/entity-config'
 import { requireSchool } from '../require-school'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
 
@@ -139,8 +141,11 @@ export interface RemoveAttachmentInput {
 }
 
 export class SetupServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories: SetupWorkflowRepositories
+
   constructor(base: BaseSchoolService) {
     super(base)
+    this.repositories = pickWorkflowRepositories('setup', base.repositories)
   }
 
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
@@ -200,7 +205,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }: CreateAcademicYearInput): Promise<AcademicYear> {
     this.checkActorSchool(schoolId)
     await operationModule(SchoolStructureOperations.configure)(this.baseService.actor)
-    await requireSchool(this.baseService.repositories.schools, schoolId)
+    await requireSchool(this.repositories.schools, schoolId)
 
     return this.baseService.atomicExecution.execute(async () => {
       const academicYear = new AcademicYearEntity({
@@ -218,7 +223,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async publishAcademicYear({ academicYearId }: PublishAcademicYearInput): Promise<AcademicYear> {
-    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
+    const academicYear = await this.repositories.academicYears.findById(academicYearId)
     if (!academicYear) {
       denyResourceAccess()
     }
@@ -233,7 +238,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     }
 
     return this.baseService.atomicExecution.execute(async () => {
-      const publishedYears = await this.baseService.repositories.academicYears.list({
+      const publishedYears = await this.repositories.academicYears.list({
         schoolId: academicYear.schoolId,
         status: 'published',
       })
@@ -259,7 +264,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async archiveAcademicYear({ academicYearId }: ArchiveAcademicYearInput): Promise<AcademicYear> {
-    const academicYear = await this.baseService.repositories.academicYears.findById(academicYearId)
+    const academicYear = await this.repositories.academicYears.findById(academicYearId)
     if (!academicYear) {
       denyResourceAccess()
     }
@@ -334,7 +339,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       new StaffMemberEntity(entityInput),
     )
     scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
-    scheduleAccountInvitationIfEligible(
+    await scheduleAccountInvitationIfEligible(
       this.baseService,
       {
         kind: AccountInvitationKind.Staff,
@@ -365,7 +370,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async validateOwnerSubject(schoolId: string, ownerSubjectId: string): Promise<void> {
-    const ownedSchool = await this.baseService.repositories.schools.findOne({ ownerSubjectId })
+    const ownedSchool = await this.repositories.schools.findOne({ ownerSubjectId })
     if (ownedSchool && ownedSchool.id !== schoolId) {
       denyResourceAccess()
     }

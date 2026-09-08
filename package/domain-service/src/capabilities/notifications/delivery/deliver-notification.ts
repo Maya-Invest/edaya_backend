@@ -1,5 +1,5 @@
 import type { AnnouncementPriority, NotificationEnqueueInput, NotificationGatewayPort, NotificationKind, NotificationRecipient } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import { MessageDelivery } from '@edaya/core'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 

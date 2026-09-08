@@ -45,8 +45,18 @@ describe("createNovuInvitationDeliveryPort", () => {
       { skipWorkflowPreferences: true },
     );
     expect(trigger).toHaveBeenCalledWith(expect.objectContaining({
-      to: "invite:inv-1",
+      to: expect.objectContaining({
+        subscriberId: "invite:inv-1",
+        email: "user@school.edu",
+        firstName: "Paul",
+        lastName: "Martin",
+      }),
       transactionId: "inv-1",
+      payload: expect.objectContaining({
+        inviteUrl: "https://app.edaya.test/invite/token",
+        inviteeName: "Paul Martin",
+        emailBody: "<p>Join your school on Edaya.</p>",
+      }),
     }));
 
     await port.revoke("inv-1");

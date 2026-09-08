@@ -1,4 +1,4 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { AuthorizationPolicy, RepositoryAuthorizationPolicyArgs } from './types'
 import {
   authorizeReportCardResultSave,

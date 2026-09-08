@@ -24,8 +24,8 @@ import {
 import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { StaffPermissionAssignment } from "@edaya/core";
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata, Permission } from "@edaya/authorization";
+import { Permission, StaffPermissionAssignment } from "@edaya/core";
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
 import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";

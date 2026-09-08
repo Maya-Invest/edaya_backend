@@ -1,10 +1,5 @@
-import {
-  ActorAssuranceLevel,
-  AuthorizationError,
-  createStaffActorMetadata,
-  Permission,
-} from '@edaya/authorization'
-import { AcademicYear, ClassGroup, GradeLevel, StaffAssignment, StaffMember } from '@edaya/core'
+import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
+import { AcademicYear, ClassGroup, GradeLevel, Permission, StaffAssignment, StaffMember } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../support/create-test-app'
 import { effectiveGrantsForRoles } from '../support/effective-grants'

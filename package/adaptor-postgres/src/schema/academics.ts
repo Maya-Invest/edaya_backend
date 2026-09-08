@@ -1,0 +1,194 @@
+import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { definePerformanceIndexes } from '../postgres-indexes'
+
+export const academicYears = pgTable('academic_years', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+  endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('academic_years', table))
+
+// 3. Academic Period Table
+
+export const academicPeriods = pgTable('academic_periods', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  name: text('name').notNull(),
+  type: text('type'),
+  startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+  endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  isPublished: boolean('is_published').notNull().default(false),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('academic_periods', table))
+
+// 4. Period Definition Table
+
+export const periodDefinitions = pgTable('period_definitions', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  label: text('label').notNull(),
+  dayOfWeek: text('day_of_week').notNull(),
+  order: integer('order_val').notNull(),
+  startTime: text('start_time').notNull(),
+  endTime: text('end_time').notNull(),
+  isBreak: boolean('is_break').notNull().default(false),
+  isTeachingSlot: boolean('is_teaching_slot').notNull().default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('period_definitions', table))
+
+// 5. Grade Level Table
+
+export const gradeLevels = pgTable('grade_levels', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  label: text('label').notNull(),
+  order: integer('order_val').notNull(),
+  cycle: text('cycle'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('grade_levels', table))
+
+// 6. Staff Member Table
+
+export const subjects = pgTable('subjects', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  code: text('code'),
+  defaultCoefficient: integer('default_coefficient'),
+  category: text('category').notNull().default('Scientifique'),
+  color: text('color').notNull().default('mint'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('subjects', table))
+
+// 22. Subject Matter Table
+
+export const subjectMatters = pgTable('subject_matters', {
+  id: text('id').primaryKey(),
+  subjectId: text('subject_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  sequenceOrder: integer('sequence_order').notNull(),
+  estimatedHours: integer('estimated_hours'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('subject_matters', table))
+
+// 23. Class Group Table
+
+export const classGroups = pgTable('class_groups', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  gradeLevelId: text('grade_level_id').notNull(),
+  name: text('name').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  capacity: integer('capacity'),
+  attendanceMode: text('attendance_mode').notNull().default('session'),
+  homeroomStaffId: text('homeroom_staff_id'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('class_groups', table))
+
+export const gradeLevelSubjects = pgTable('grade_level_subjects', {
+  id: text('id').primaryKey(),
+  gradeLevelId: text('grade_level_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  subjectId: text('subject_id').notNull(),
+  coefficient: integer('coefficient'),
+  periodsPerWeek: integer('periods_per_week'),
+  minPeriodSpan: integer('min_period_span'),
+  maxPeriodSpan: integer('max_period_span'),
+  isOptional: boolean('is_optional').notNull().default(false),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('grade_level_subjects', table))
+
+export const gradeLevelSubjectMatters = pgTable('grade_level_subject_matters', {
+  id: text('id').primaryKey(),
+  gradeLevelSubjectId: text('grade_level_subject_id').notNull(),
+  subjectMatterId: text('subject_matter_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('grade_level_subject_matters', table))
+
+// 24. Class Subject Table
+
+export const classSubjects = pgTable('class_subjects', {
+  id: text('id').primaryKey(),
+  classGroupId: text('class_group_id').notNull(),
+  subjectId: text('subject_id').notNull(),
+  gradeLevelSubjectId: text('grade_level_subject_id'),
+  coefficient: integer('coefficient'),
+  periodsPerWeek: integer('periods_per_week'),
+  minPeriodSpan: integer('min_period_span'),
+  maxPeriodSpan: integer('max_period_span'),
+  isOffered: boolean('is_offered').notNull().default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  completedPercentage: integer('completed_percentage').notNull(),
+}, table => definePerformanceIndexes('class_subjects', table))
+
+// 28. Activity Table (school program / club)
+
+export const classSubjectMatters = pgTable('class_subject_matters', {
+  id: text('id').primaryKey(),
+  classSubjectId: text('class_subject_id').notNull(),
+  subjectMatterId: text('subject_matter_id').notNull(),
+  status: text('status').notNull(),
+  completedPercentage: integer('completed_percentage').notNull(),
+  updatedByStaffId: text('updated_by_staff_id'),
+  startedAt: timestamp('started_at', { mode: 'date' }),
+  completedAt: timestamp('completed_at', { mode: 'date' }),
+  notes: text('notes'),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('class_subject_matters', table))
+
+// 26. Class Subject Progress Table
+
+export const classSubjectProgress = pgTable('class_subject_progress', {
+  id: text('id').primaryKey(),
+  classSubjectMatterId: text('class_subject_matter_id').notNull(),
+  lessonSessionId: text('lesson_session_id').notNull(),
+  completedPercentage: integer('completed_percentage').notNull(),
+  recordedByStaffId: text('recorded_by_staff_id'),
+  notes: text('notes'),
+  recordedAt: timestamp('recorded_at', { mode: 'date' }).notNull(),
+})
+
+// 27. Assessment Table
+
+export const activities = pgTable('activities', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  coach: text('coach').notNull(),
+  schedule: text('schedule').notNull(),
+  participants: integer('participants').notNull(),
+  capacity: integer('capacity').notNull(),
+  description: text('description').notNull(),
+  startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+  endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('activities', table))
+
+// 29. Activity Enrollment Table
+
+export const activityEnrollments = pgTable('activity_enrollments', {
+  id: text('id').primaryKey(),
+  activityId: text('activity_id').notNull(),
+  studentId: text('student_id').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('activity_enrollments', table))
+
+// 29b. Class Activity Enrollment Table
+
+export const classActivityEnrollments = pgTable('class_activity_enrollments', {
+  id: text('id').primaryKey(),
+  activityId: text('activity_id').notNull(),
+  classGroupId: text('class_group_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('class_activity_enrollments', table))
+
+// 30. Class Subject Matter Table

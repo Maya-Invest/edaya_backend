@@ -1,18 +1,7 @@
 import type { EffectiveGrants } from '@edaya/authorization'
 import type { Student, Teacher } from '@edaya/core'
-import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy, createStaffActorMetadata, Permission } from '@edaya/authorization'
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  Guardian,
-  RecordingInvitationDeliveryPort,
-  RecordingNotificationGateway,
-  School,
-  SchoolNotificationTemplates,
-  StaffMember,
-} from '@edaya/core'
+import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy, createStaffActorMetadata } from '@edaya/authorization'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, Permission, RecordingInvitationDeliveryPort, RecordingNotificationGateway, School, SchoolNotificationTemplates, StaffMember } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { hashInvitationToken } from '../../../src/capabilities/invitations/invitation-token'

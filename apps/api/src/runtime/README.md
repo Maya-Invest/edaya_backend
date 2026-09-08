@@ -53,8 +53,9 @@ runtime/
 
   worker/
     build-runtime.ts, school-database.ts, auth-database.ts
-    auth-service.ts
     resolve-api-runtime.ts
+    resolve-cron-job-dispatcher.ts
+    adapters/cloudflare-queue-cron-job-dispatcher.ts
 ```
 
 ## Runtime access
