@@ -17,6 +17,7 @@ edaya_backend/
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
 │   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway (legacy fallback)
 │   ├── adaptor-notify/                   @edaya/adaptor-notify — in-process email/push adapters
+│   ├── adaptor-docs/                     @edaya/adaptor-docs — in-process PDF rendering
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
@@ -30,7 +31,7 @@ edaya_backend/
     └── integration-tests/                @edaya/integration-tests (+ smoke/)
 ```
 
-**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, `@edaya/adaptor-notify`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, `@edaya/adaptor-notify`, `@edaya/adaptor-docs`, and `package/adaptor-novu` stay vendor-agnostic; `package/adaptor-auth` owns Better Auth persistence; `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 

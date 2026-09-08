@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://edaya.local/templates/logbook.v1/schema.json",
+  "title": "logbook.v1 payload",
+  "type": "object",
+  "required": ["schoolName", "classLabel", "subjects"],
+  "additionalProperties": false,
+  "properties": {
+    "documentTitle": { "type": "string" },
+    "schoolName": { "type": "string", "minLength": 1 },
+    "schoolYear": { "type": "string" },
+    "schoolCity": { "type": "string" },
+    "classLabel": { "type": "string", "minLength": 1 },
+    "periodLabel": { "type": "string" },
+    "dateFrom": { "type": "string" },
+    "dateTo": { "type": "string" },
+    "primaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "logoUrl": { "type": "string", "minLength": 1 },
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "entries"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "teacherName": { "type": "string" },
+          "entries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["date"],
+              "additionalProperties": false,
+              "properties": {
+                "date": { "type": "string", "minLength": 1 },
+                "timeLabel": { "type": "string" },
+                "title": { "type": "string" },
+                "content": { "type": "string" },
+                "homework": { "type": "string" },
+                "status": {
+                  "type": "string",
+                  "enum": ["pending", "completed", "cancelled"]
+                },
+                "chapters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": { "type": "string", "minLength": 1 },
+                      "completedPercentage": { "type": "number" },
+                      "notes": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sessionCount": { "type": "number" },
+        "subjectCount": { "type": "number" }
+      }
+    }
+  }
+}

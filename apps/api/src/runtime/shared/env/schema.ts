@@ -1,6 +1,7 @@
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 import { resolveAuthSecondaryStorage } from "@/runtime/shared/adapters/auth-secondary-storage";
 import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
+import type { BrowserRunBinding } from "@edaya/adaptor-docs";
 import type { CloudflareEmailBinding } from "@edaya/adaptor-notify";
 import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
@@ -59,12 +60,8 @@ export const EnvSchema = z.object({
   REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
   /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */
   AUTH_EMAIL_LOG_OTP: envBooleanSchema.optional(),
-  /** Base URL for edaya_docs document rendering (e.g. https://edaya-docs-staging… or http://localhost:3090). */
-  EDAYA_DOCS_URL: z.string().url().optional(),
-  /** Shared HS256 secret with edaya_docs for service JWT issuance. */
-  DOCS_JWT_SECRET: z.string().min(1).optional(),
-  /** Optional static docs bearer for local/dev (matches docs DOCS_DEV_TOKEN). */
-  DOCS_DEV_TOKEN: z.string().min(1).optional(),
+  /** Optional Gotenberg base URL for local / wrangler-dev HTML→PDF (e.g. http://localhost:3000). */
+  GOTENBERG_URL: z.string().url().optional(),
   /** When true, schedule report-card PDF render after publishReportCardResult. */
   DOCS_RENDER_ON_PUBLISH: envBooleanSchema.optional(),
   /** Cloudflare account id (dashboard). Optional when R2_ENDPOINT is set; may differ from the endpoint hostname. */
@@ -90,6 +87,7 @@ export const EnvSchema = z.object({
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
   EMAIL?: CloudflareEmailBinding;
+  BROWSER?: BrowserRunBinding;
   authSecondaryStorage?: AuthSecondaryStoragePort;
 };
 
@@ -120,6 +118,15 @@ export function readEmailBinding(source: RuntimeBindings): CloudflareEmailBindin
   return undefined;
 }
 
+export function readBrowserBinding(source: RuntimeBindings): BrowserRunBinding | undefined {
+  const binding = source.BROWSER;
+  if (binding && typeof binding === "object" && "quickAction" in binding
+    && typeof (binding as { quickAction?: unknown }).quickAction === "function") {
+    return binding as BrowserRunBinding;
+  }
+  return undefined;
+}
+
 export function parseRuntimeEnv(
   source: RuntimeBindings,
   runtime: RuntimeKind = inferRuntimeKind(source),
@@ -129,11 +136,13 @@ export function parseRuntimeEnv(
   const cronJobs = readCronJobsQueueBinding(source);
   const authSecondaryStorage = resolveAuthSecondaryStorage(runtime, source);
   const email = readEmailBinding(source);
+  const browser = readBrowserBinding(source);
 
   return {
     ...env,
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
     ...(email ? { EMAIL: email } : {}),
+    ...(browser ? { BROWSER: browser } : {}),
     ...(authSecondaryStorage ? { authSecondaryStorage } : {}),
   };
 }

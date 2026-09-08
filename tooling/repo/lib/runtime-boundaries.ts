@@ -126,6 +126,12 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
         message: 'start-local-dev.ts must not start a separate @edaya/notify process',
       })
     }
+    if (/gotenberg/i.test(startLocalDev) || startLocalDev.includes('@edaya/docs')) {
+      violations.push({
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not start Gotenberg or a docs process',
+      })
+    }
     if (startLocalDev.includes('.dev.vars')) {
       violations.push({
         label: 'local dev orchestrator',
@@ -145,6 +151,14 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     violations.push({
       label: 'in-memory notification boundary',
       message: 'resolveNotificationGateway must no-op on RUNTIME=in-memory',
+    })
+  }
+
+  const documentRenderer = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/adapters/document-renderer.ts')
+  if (documentRenderer && !documentRenderer.includes('env.RUNTIME === "in-memory"')) {
+    violations.push({
+      label: 'in-memory document renderer boundary',
+      message: 'resolveDocumentRenderer must no-op on RUNTIME=in-memory',
     })
   }
 
@@ -209,6 +223,21 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
       violations.push({
         label: 'wrangler cron queue',
         message: 'apps/api/wrangler.jsonc must declare CRON_JOBS queue producer binding',
+      })
+    }
+
+    if (!wrangler.includes('"binding": "BROWSER"')) {
+      violations.push({
+        label: 'wrangler browser binding',
+        message: 'apps/api/wrangler.jsonc must declare BROWSER binding for Browser Run',
+      })
+    }
+
+    const compatibilityDate = wrangler.match(/"compatibility_date"\s*:\s*"([^"]+)"/)?.[1]
+    if (!compatibilityDate || compatibilityDate < '2026-03-24') {
+      violations.push({
+        label: 'wrangler compatibility date',
+        message: 'apps/api/wrangler.jsonc compatibility_date must be 2026-03-24 or later for BROWSER.quickAction',
       })
     }
 

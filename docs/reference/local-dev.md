@@ -101,6 +101,7 @@ See [api-runtimes.md](./api-runtimes.md).
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
 | **File storage** | `@edaya/local-files-server` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
 | **Notify** | In-process `@edaya/adaptor-notify` (`EMAIL_TRANSPORT=log`) | Unset `NOVU_SECRET_KEY`; Cloudflare Email + optional FCM on the API Worker | Same as staging |
+| **Documents** | In-process `@edaya/adaptor-docs` (stub, or Gotenberg if `GOTENBERG_URL`) | API Worker `BROWSER` binding (Browser Run); optional `GOTENBERG_URL` for `wrangler dev` | Same as staging |
 | **Novu** | Unused unless `NOVU_SECRET_KEY` is set | Unused after notify smoke | Unused after notify smoke |
 | **Auth secret** | `BETTER_AUTH_SECRET` in `.env` | Unique Wrangler secret | Unique Wrangler secret |
 

@@ -59,7 +59,7 @@ describe("renderReportCardDocument", () => {
     const render = mock(async () => ({
       renderId: "render-1",
       sha256: "abc123",
-      bytesBase64: Buffer.from("%PDF-1.4").toString("base64"),
+      bytes: new Uint8Array(Buffer.from("%PDF-1.4")),
       contentType: "application/pdf",
     }));
 
@@ -98,11 +98,7 @@ describe("renderReportCardDocument", () => {
 
     const outcome = await renderReportCardDocument(service as never, {
       resultId: result.id,
-      config: {
-        docsUrl: "http://localhost:8787",
-        jwtSecret: "secret",
-      },
-      createClient: () => ({ render } as never),
+      renderer: { render },
     });
 
     expect(outcome?.storageKey).toContain(`${school.id}/generated/report-card/${AttachmentOwnerKind.ReportCard}/${result.id}/`);
@@ -148,8 +144,7 @@ describe("renderReportCardDocument", () => {
 
     const outcome = await renderReportCardDocument(service as never, {
       resultId: result.id,
-      config: { docsUrl: "http://localhost:8787", jwtSecret: "secret" },
-      createClient: () => ({ render } as never),
+      renderer: { render },
     });
 
     expect(outcome).toEqual({
@@ -200,8 +195,7 @@ describe("renderReportCardDocument", () => {
 
     await expect(renderReportCardDocument(service as never, {
       resultId: emptyResult.id,
-      config: { docsUrl: "http://localhost:8787", jwtSecret: "secret" },
-      createClient: () => ({ render } as never),
+      renderer: { render },
     })).resolves.toBeNull();
     expect(render).not.toHaveBeenCalled();
   });

@@ -30,6 +30,7 @@ runtime/
     adapters/
       file-storage.ts
       notification-gateway.ts
+      document-renderer.ts
       invitation-delivery.ts
       notify-delivery-sink.ts
       notification-delivery-webhook.ts

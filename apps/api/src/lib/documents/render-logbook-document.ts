@@ -1,8 +1,8 @@
-import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 import {
   AssessmentKind,
   BusinessRuleViolationError,
+  type DocumentRendererPort,
   OccurrenceStatus,
   TeacherAssignmentKind,
   TeacherAssignmentStatus,
@@ -18,21 +18,13 @@ import {
   sanitizeFileName,
 } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
-import {
-  createDocsClient,
-  createFetchTransport,
-} from "@maya-invest/edaya-docs-client";
-import type { DocsClient } from "@maya-invest/edaya-docs-client";
-import type { DocsRenderConfig } from "@/lib/documents/render-report-card-document";
-import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
 
 export interface RenderClassLogbookDocumentInput {
   classGroupId: string;
   academicPeriodId?: string;
   classSubjectId?: string;
   locale?: string;
-  config: DocsRenderConfig;
-  createClient?: (config: DocsRenderConfig, schoolId: string) => DocsClient;
+  renderer: DocumentRendererPort;
 }
 
 export interface RenderClassLogbookDocumentResult {
@@ -42,21 +34,6 @@ export interface RenderClassLogbookDocumentResult {
   expiresAt: string;
   subjectCount: number;
   sessionCount: number;
-}
-
-function defaultCreateClient(config: DocsRenderConfig, schoolId: string): DocsClient {
-  const authorization = config.jwtSecret
-    ? `Bearer ${issueDocsServiceToken({
-      schoolId,
-      secret: config.jwtSecret,
-      allowedTemplates: ["logbook.v1"],
-    })}`
-    : `Bearer ${config.devToken}`;
-
-  return createDocsClient(createFetchTransport({
-    baseUrl: config.docsUrl,
-    getAuthorization: () => authorization,
-  }));
 }
 
 function formatPersonName(firstName: string, lastName: string): string {
@@ -73,7 +50,7 @@ function formatIsoDate(value: Date, timeZone: string): string {
 }
 
 /**
- * Assembles class logbook content, renders `logbook.v1` via edaya_docs (inline),
+ * Assembles class logbook content, renders `logbook.v1` in-process,
  * stores the PDF in school object storage, and returns a short-lived download URL.
  * Does not register a durable Attachment — staff on-demand archive only.
  */
@@ -306,24 +283,12 @@ export async function renderClassLogbookDocument(
     throw error;
   }
 
-  const client = (input.createClient ?? defaultCreateClient)(input.config, school.id);
-  const periodKey = period?.id ?? "all";
-  const subjectKey = input.classSubjectId ?? "all";
-  const rendered = await client.render({
+  const rendered = await input.renderer.render({
     templateKey: "logbook.v1",
-    format: "pdf",
     locale: locale.startsWith("en") ? "en" : "fr",
-    schoolId: school.id,
     payload,
-    delivery: "inline",
-    idempotencyKey: `${school.id}/logbook/${classGroup.id}/${periodKey}/${subjectKey}/${randomUUID()}`,
   });
-
-  if (!rendered.bytesBase64) {
-    throw new Error(`Docs render returned no inline bytes for class logbook ${classGroup.id}`);
-  }
-
-  const bytes = Buffer.from(rendered.bytesBase64, "base64");
+  const bytes = rendered.bytes;
   const fileName = sanitizeFileName(
     `${locale.toLowerCase().startsWith("en") ? "class-logbook" : "cahier-de-texte"}-${classGroup.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
   );

@@ -1,0 +1,10 @@
+{
+  "key": "report-card.v1",
+  "formats": ["pdf"],
+  "locales": ["fr", "en"],
+  "version": "1.2.0",
+  "title": {
+    "fr": "Bulletin trimestriel de notes",
+    "en": "Trimester report card"
+  }
+}

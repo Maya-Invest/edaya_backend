@@ -39,6 +39,12 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:
 # EMAIL_FROM=EDAYA <noreply@edayaplus.com>
 # FCM_SERVICE_ACCOUNT_JSON=
 
+# --- Document rendering (in-process `@edaya/adaptor-docs`) ---
+# GOTENBERG_URL=http://localhost:3000   # Miniflare does not implement BROWSER.quickAction
+#   wrangler.jsonc already binds BROWSER; deployed Workers use it without remote
+#   wrangler dev real PDFs: GOTENBERG_URL or `"remote": true` on the browser binding
+# DOCS_RENDER_ON_PUBLISH=true
+
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
 # COOKIE_DOMAIN=edayaplus.com

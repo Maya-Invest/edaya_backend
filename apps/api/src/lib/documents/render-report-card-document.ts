@@ -1,9 +1,9 @@
-import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 import {
   Attachment,
   AttachmentOwnerKind,
   AttachmentStatus,
+  type DocumentRendererPort,
   TeacherAssignmentKind,
 } from "@edaya/core";
 import {
@@ -13,12 +13,6 @@ import {
   catalogSubjectName,
 } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
-import {
-  createDocsClient,
-  createFetchTransport,
-} from "@maya-invest/edaya-docs-client";
-import type { DocsClient } from "@maya-invest/edaya-docs-client";
-import { issueDocsServiceToken } from "@/lib/documents/issue-docs-service-token";
 
 function collectClassSubjectIds(
   sections: ReadonlyArray<{ classSubjectId?: string; subResults: ReadonlyArray<{ classSubjectId?: string; subResults: readonly unknown[] }> }>,
@@ -40,35 +34,14 @@ function formatClassAverage(value: number, locale: string): string {
   }).format(value)} / 20`;
 }
 
-export interface DocsRenderConfig {
-  docsUrl: string;
-  jwtSecret: string;
-  /** When set, used as Bearer instead of issuing a JWT (local DOCS_DEV_TOKEN). */
-  devToken?: string;
-}
-
 export interface RenderReportCardDocumentInput {
   resultId: string;
-  config: DocsRenderConfig;
+  renderer: DocumentRendererPort;
   locale?: string;
-  createClient?: (config: DocsRenderConfig, schoolId: string) => DocsClient;
-}
-
-function defaultCreateClient(config: DocsRenderConfig, schoolId: string): DocsClient {
-  // Prefer JWT so claims.schoolId matches the render request. DOCS_DEV_TOKEN is for
-  // curl smoke tests only — docs maps it to fixed schoolId `sch_demo`.
-  const authorization = config.jwtSecret
-    ? `Bearer ${issueDocsServiceToken({ schoolId, secret: config.jwtSecret })}`
-    : `Bearer ${config.devToken}`;
-
-  return createDocsClient(createFetchTransport({
-    baseUrl: config.docsUrl,
-    getAuthorization: () => authorization,
-  }));
 }
 
 /**
- * Loads a published report card, renders `report-card.v1` via edaya_docs (inline),
+ * Loads a published report card, renders `report-card.v1` in-process,
  * stores the PDF in school object storage, and registers an attachment.
  */
 export async function renderReportCardDocument(
@@ -221,25 +194,12 @@ export async function renderReportCardDocument(
     homeroomTeacherName,
   });
 
-  const client = (input.createClient ?? defaultCreateClient)(input.config, school.id);
-  const rendered = await client.render({
+  const rendered = await input.renderer.render({
     templateKey: "report-card.v1",
-    format: "pdf",
     locale: locale.toLowerCase().startsWith("en") ? "en" : "fr",
-    schoolId: school.id,
     payload,
-    delivery: "inline",
-    // Bump key when replacing stub PDFs so docs idempotency cache does not return the empty stub.
-    idempotencyKey: stubPdfs.length > 0
-      ? `${school.id}/report-card/${result.id}/v1-gotenberg`
-      : `${school.id}/report-card/${result.id}/v1`,
   });
-
-  if (!rendered.bytesBase64) {
-    throw new Error(`Docs render returned no inline bytes for report card ${result.id}`);
-  }
-
-  const bytes = Buffer.from(rendered.bytesBase64, "base64");
+  const bytes = rendered.bytes;
   const attachmentId = randomUUID();
   const fileName = locale.toLowerCase().startsWith("en")
     ? `report-card-${result.id}.pdf`

@@ -25,8 +25,11 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 | File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files` | R2 (`@edaya/adaptor-r2`) |
 | Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
 | Invitation delivery | no-op | notify* or Novu* or no-op | notify* or Novu* or no-op |
+| Document rendering | not configured | stub or Gotenberg (`GOTENBERG_URL`) | Browser Run (`BROWSER`) or Gotenberg |
 
 \* **Notify / Novu** — `NOVU_SECRET_KEY` selects Novu (legacy fallback). Otherwise `RUNTIME=local` or `worker` uses in-process `@edaya/adaptor-notify`. When neither applies, notifications fall back to structured logging (or no-op in silent test mode). `in-memory` never calls notify or Novu.
+
+\* **Documents** — in-process `@edaya/adaptor-docs`. `in-memory` never calls Gotenberg or Browser Run. Worker prefers the `BROWSER` binding; without it (and without `GOTENBERG_URL`) rendering is not configured. Stub PDFs are local-only.
 
 ## Bootstrap rule
 
@@ -66,7 +69,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu/notify gates, no separate `@edaya/notify` process, single heartbeat cron + `CRON_JOBS` queue in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
+`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu/notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
 
 ## Related packages
 
@@ -79,3 +82,4 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
 | `@edaya/adaptor-novu` | Notifications (Novu env fallback) |
 | `@edaya/adaptor-notify` | In-process email/push adapters on the school API |
+| `@edaya/adaptor-docs` | In-process PDF rendering (templates + inner PdfRenderer) |
