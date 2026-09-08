@@ -5,6 +5,15 @@ import type {
   Student,
 } from '@edaya/core'
 import { ReportCardDefinitionSectionKind } from '@edaya/core'
+import {
+  catalogBulletinSection,
+  catalogClassName,
+  catalogDocumentLabel,
+  catalogLangFromLocale,
+  catalogPeriodLabel,
+  catalogSubjectName,
+  catalogText,
+} from './catalog-label'
 
 export interface ReportCardDocumentContext {
   result: ReportCardResult
@@ -86,21 +95,36 @@ function formatDate(value: Date, locale: string): string {
   }).format(value)
 }
 
+function formatRank(rank: number, classSize: number, locale: string): string {
+  if (locale.toLowerCase().startsWith('en')) {
+    return `${rank} / ${classSize}`
+  }
+  return `${rank}è / ${classSize}`
+}
+
+function formatSemesterRank(rank: number, classSize: number, locale: string): string {
+  if (locale.toLowerCase().startsWith('en')) {
+    return `${rank} / ${classSize} students`
+  }
+  return `${rank}è / ${classSize} élèves`
+}
+
 function isBilanName(name: string): boolean {
   return /bilan/i.test(name)
 }
 
 function resolveSectionName(
   section: ReportCardResultSection,
+  lang: ReturnType<typeof catalogLangFromLocale>,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): string {
   if (section.classSubjectId && subjectNameByClassSubjectId) {
     const resolved = subjectNameByClassSubjectId.get(section.classSubjectId)
     if (resolved) {
-      return resolved
+      return catalogSubjectName(resolved, lang)
     }
   }
-  return section.name
+  return catalogBulletinSection(catalogText(section.name, lang), lang)
 }
 
 function mapSubjectRow(
@@ -116,13 +140,13 @@ function mapSubjectRow(
     ? teacherNameByClassSubjectId?.get(section.classSubjectId)
     : undefined
   return {
-    name: resolveSectionName(section, subjectNameByClassSubjectId),
+    name: resolveSectionName(section, catalogLangFromLocale(locale), subjectNameByClassSubjectId),
     kind,
     average: formatNumber(section.average, locale),
     coefficient: String(section.weight),
     total: formatNumber(total, locale),
     ...(section.rank !== undefined && classSize !== undefined
-      ? { rank: `${section.rank}è / ${classSize}` }
+      ? { rank: formatRank(section.rank, classSize, locale) }
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
     ...(teacherName ? { teacherName } : {}),
@@ -185,6 +209,7 @@ function flattenSections(
  */
 export function buildReportCardV1Payload(input: ReportCardDocumentContext): ReportCardV1Payload {
   const locale = input.locale ?? 'fr-FR'
+  const lang = catalogLangFromLocale(locale)
   const subjects = flattenSections(
     input.result.sectionResults,
     locale,
@@ -199,11 +224,11 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
 
   if (input.result.overallAverage !== undefined) {
     subjects.push({
-      name: 'TOTAL',
+      name: catalogDocumentLabel('TOTAL', lang),
       kind: 'totals',
       average: formatNumber(input.result.overallAverage, locale),
       ...(input.result.rank !== undefined && input.result.classSize !== undefined
-        ? { rank: `${input.result.rank}è / ${input.result.classSize}` }
+        ? { rank: formatRank(input.result.rank, input.result.classSize, locale) }
         : {}),
     })
   }
@@ -212,11 +237,11 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
   const appreciation = input.result.teacherComment ?? input.result.principalComment
   const payload: ReportCardV1Payload = {
     studentName: input.student.fullName,
-    periodLabel: input.periodLabel,
+    periodLabel: catalogPeriodLabel(input.periodLabel, lang),
     schoolName: input.school.name,
     subjects,
     ...(input.schoolYear ? { schoolYear: input.schoolYear } : {}),
-    ...(input.classLabel ? { classLabel: input.classLabel } : {}),
+    ...(input.classLabel ? { classLabel: catalogClassName(input.classLabel, lang) } : {}),
     ...(input.result.classSize !== undefined ? { classSize: String(input.result.classSize) } : {}),
     ...(input.student.matricule ? { matricule: input.student.matricule } : {}),
     ...(input.student.birthDate ? { birthDate: formatDate(input.student.birthDate, locale) } : {}),
@@ -230,7 +255,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
       : {}),
     ...(input.result.rank !== undefined && input.result.classSize !== undefined
       ? {
-          semesterRank: `${input.result.rank}è / ${input.result.classSize} élèves`,
+          semesterRank: formatSemesterRank(input.result.rank, input.result.classSize, locale),
         }
       : {}),
     ...(input.school.city ? { schoolCity: input.school.city } : {}),

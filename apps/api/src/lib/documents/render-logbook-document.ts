@@ -10,6 +10,11 @@ import {
 import { LogbookOperations, operationModule } from "@edaya/authorization";
 import {
   buildLogbookV1Payload,
+  catalogClassName,
+  catalogLangFromLocale,
+  catalogMatter,
+  catalogPeriodLabel,
+  catalogSubjectName,
   sanitizeFileName,
 } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
@@ -110,6 +115,7 @@ export async function renderClassLogbookDocument(
 
   const timeZone = school.timeZone || "Africa/Abidjan";
   const locale = input.locale ?? "fr-FR";
+  const catalogLang = catalogLangFromLocale(locale);
 
   const [classSubjects, lessonSessions] = await Promise.all([
     service.baseService.repositories.classSubjects.list({ classGroupId: classGroup.id }),
@@ -198,7 +204,12 @@ export async function renderClassLogbookDocument(
       : Promise.resolve([]),
   ]);
 
-  const subjectNameById = new Map(subjects.map(entry => [entry.id, entry.name]));
+  const subjectNameById = new Map(
+    subjects.map(entry => [
+      entry.id,
+      catalogSubjectName(entry.name, catalogLang, entry.code),
+    ]),
+  );
   const teacherById = new Map(teachers.map(entry => [entry.id, entry]));
   const staffById = new Map(staffMembers.map(entry => [entry.id, entry]));
   const teacherNameByClassSubjectId = new Map<string, string>();
@@ -233,7 +244,7 @@ export async function renderClassLogbookDocument(
   const chapterNameByMatterLinkId = new Map(
     classSubjectMatters.map((link) => {
       const matter = subjectMatters.find(entry => entry.id === link.subjectMatterId);
-      return [link.id, matter?.name ?? ""] as const;
+      return [link.id, catalogMatter(matter?.name ?? "", catalogLang)] as const;
     }).filter((entry): entry is readonly [string, string] => Boolean(entry[1])),
   );
 
@@ -241,10 +252,10 @@ export async function renderClassLogbookDocument(
   try {
     payload = buildLogbookV1Payload({
       schoolName: school.name,
-      classLabel: classGroup.name,
+      classLabel: catalogClassName(classGroup.name, catalogLang),
       schoolCity: school.city,
       schoolYear: academicYear?.name,
-      periodLabel: period?.name,
+      periodLabel: period ? catalogPeriodLabel(period.name, catalogLang) : undefined,
       dateFrom: period ? formatIsoDate(period.startDate, timeZone) : undefined,
       dateTo: period ? formatIsoDate(period.endDate, timeZone) : undefined,
       locale,
@@ -314,7 +325,7 @@ export async function renderClassLogbookDocument(
 
   const bytes = Buffer.from(rendered.bytesBase64, "base64");
   const fileName = sanitizeFileName(
-    `cahier-de-texte-${classGroup.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
+    `${locale.toLowerCase().startsWith("en") ? "class-logbook" : "cahier-de-texte"}-${classGroup.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
   );
   const storageKey = [
     school.id,

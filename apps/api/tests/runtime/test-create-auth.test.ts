@@ -5,6 +5,10 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { createBetterAuth } from "@/runtime";
 import type { Environment } from "@/runtime";
+import {
+  getLastAuthVerificationUrlForTests,
+  resetAuthOtpMailerForTests,
+} from "@/runtime/shared/adapters/auth-otp-mailer";
 
 const testEnv = {
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
@@ -35,7 +39,38 @@ describe("createBetterAuth", () => {
   });
 
   afterEach(async () => {
+    resetAuthOtpMailerForTests();
     await pglite.close();
+  });
+
+  it("rewrites signup verification emails to the webapp login page", async () => {
+    resetAuthOtpMailerForTests();
+    const verificationAuth = createBetterAuth(db, {
+      ...testEnv,
+      NODE_ENV: "test",
+      REQUIRE_EMAIL_VERIFICATION: true,
+      WEBAPP_ORIGIN: "http://localhost:5173",
+      TRUSTED_ORIGINS: "http://localhost:5173",
+    } as Environment);
+
+    const signUpResponse = await verificationAuth.handler(new Request("http://localhost:9999/auth/sign-up/email", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "owner@school.edu",
+        password: DEV_AUTH_PASSWORD,
+        name: "School Owner",
+      }),
+    }));
+
+    expect(signUpResponse.status).toBe(200);
+
+    const verifyUrl = getLastAuthVerificationUrlForTests("owner@school.edu");
+    expect(verifyUrl).toBeDefined();
+    expect(new URL(verifyUrl as string).searchParams.get("callbackURL"))
+      .toBe("http://localhost:5173/login?verified=1");
   });
 
   it("signs up a user and returns a session", async () => {

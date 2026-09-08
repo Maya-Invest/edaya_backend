@@ -1,4 +1,4 @@
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardDefinition, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ReportCardDefinition, ReportCardResult, ReportCardResultStatus, Student, StudentClassEnrollment } from '@edaya/core'
 import {
   describe,
   expect,
@@ -170,5 +170,58 @@ describe('Entity config delete gates', () => {
     }))
 
     await expect(app.baseService.entities.academicPeriods.delete(period.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('announcement target preDelete allows draft targets and rejects published ones', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.announcementRepository.save(new Announcement({
+      id: 'announcement-draft',
+      schoolId: 'school',
+      title: 'Draft notice',
+      content: 'Hello',
+      createdBy: 'system',
+      status: AnnouncementStatus.Draft,
+    }))
+    await repositories.announcementRepository.save(new Announcement({
+      id: 'announcement-published',
+      schoolId: 'school',
+      title: 'Published notice',
+      content: 'Hello',
+      createdBy: 'system',
+      status: AnnouncementStatus.Published,
+      publishedAt: new Date('2026-05-01T00:00:00Z'),
+    }))
+    await repositories.announcementTargetRepository.save(new AnnouncementTarget({
+      id: 'target-draft',
+      announcementId: 'announcement-draft',
+      targetKind: AnnouncementTargetKind.AllStudents,
+    }))
+    await repositories.announcementTargetRepository.save(new AnnouncementTarget({
+      id: 'target-published',
+      announcementId: 'announcement-published',
+      targetKind: AnnouncementTargetKind.School,
+    }))
+
+    await expect(app.baseService.entities.announcementTargets.delete('target-draft')).resolves.toBeUndefined()
+    await expect(app.baseService.entities.announcementTargets.delete('target-published')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  })
+
+  test('announcement target preDelete rejects archived announcement targets', async () => {
+    const { app, repositories } = createTestApp(actor)
+    await repositories.announcementRepository.save(new Announcement({
+      id: 'announcement-archived',
+      schoolId: 'school',
+      title: 'Archived notice',
+      content: 'Hello',
+      createdBy: 'system',
+      status: AnnouncementStatus.Archived,
+    }))
+    await repositories.announcementTargetRepository.save(new AnnouncementTarget({
+      id: 'target-archived',
+      announcementId: 'announcement-archived',
+      targetKind: AnnouncementTargetKind.School,
+    }))
+
+    await expect(app.baseService.entities.announcementTargets.delete('target-archived')).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 })
