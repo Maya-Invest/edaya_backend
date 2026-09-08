@@ -27,7 +27,7 @@ cp apps/webapp/.env.example apps/webapp/.env
 ## Start API + webapp
 
 ```sh
-# Terminal 1 — API on http://localhost:9999 + local file storage on http://localhost:9200 (from edaya_backend/)
+# Terminal 1 — API on http://localhost:9999, files on :9200 (from edaya_backend/)
 cd edaya_backend && bun repo dev
 
 # Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
@@ -46,7 +46,7 @@ cd edaya_web && bun --filter @edaya/webapp dev
 ## How the webapp reaches the API
 
 - **Browser client** — `$lib/api/school-client.ts` wraps `@maya-invest/edaya-api-client` with `createBrowserTransport()`. Requests use `credentials: 'include'` for Better Auth session cookies and send `X-Academic-Year-Id` from shell context.
-- **API base URL** — `PUBLIC_API_URL` in `apps/webapp/.env`. Leave **empty** in local dev so requests are same-origin (`/core/...`, `/auth/...`). Set to the API origin in production builds (e.g. `https://api.edayaplus.com`).
+- **API base URL** — `PUBLIC_API_URL` in **edaya_web** `apps/webapp/.env`. Leave **empty** in local dev so requests are same-origin (`/core/...`, `/auth/...`). Set to the API origin in production builds (e.g. `https://api.edayaplus.com`).
 - **Vite proxy (dev)** — `vite.config.ts` forwards `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` to `API_URL` (default `http://localhost:9999`).
 - **Bootstrap** — `bootstrapSession()` loads Better Auth session + `/core/authorization/effective-grants` on app start. List/read data flows through `$lib/api/*-data.ts` and `$lib/queries/*`.
 
@@ -100,7 +100,9 @@ See [api-runtimes.md](./api-runtimes.md).
 | **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
 | **File storage** | `@edaya/local-files-server` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
-| **Novu** | Dev key in `.env` | Dev key (`secrets.staging.json`) | Prod key (`secrets.prod.json`) |
+| **Notify** | In-process `@edaya/adaptor-notify` (`EMAIL_TRANSPORT=log`) | Unset `NOVU_SECRET_KEY`; Cloudflare Email + optional FCM on the API Worker | Same as staging |
+| **Documents** | In-process `@edaya/adaptor-docs` (stub, or Gotenberg if `GOTENBERG_URL`) | API Worker `BROWSER` binding (Browser Run); optional `GOTENBERG_URL` for `wrangler dev` | Same as staging |
+| **Novu** | Unused unless `NOVU_SECRET_KEY` is set | Unused after notify smoke | Unused after notify smoke |
 | **Auth secret** | `BETTER_AUTH_SECRET` in `.env` | Unique Wrangler secret | Unique Wrangler secret |
 
 **Wrangler secret templates** (from `apps/api/`):
@@ -187,22 +189,16 @@ In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/f
 
 ## Auth emails (OTP + signup verification)
 
-Better Auth can send **real emails** when Novu is configured:
+Better Auth sends **real emails** when the notification router or Novu is configured.
 
-1. Set `NOVU_SECRET_KEY` (and optional `NOVU_API_URL`) in `apps/api/.env`
-2. Configure an email integration in the Novu dashboard (e.g. Custom SMTP)
-3. Apply Novu workflows (includes `auth.otp` and `auth.email_verification`):
+Preferred (in-process notify on `bun repo dev`):
 
-```sh
-bun repo novu bootstrap apply
-```
+1. Leave `NOVU_SECRET_KEY` unset in `apps/api/.env` (see `.env.example`).
+2. Local email uses `EMAIL_TRANSPORT=log` (OTP / verify URLs also log in the API console unless `AUTH_EMAIL_LOG_OTP=false`).
 
-| Mode | `NOVU_SECRET_KEY` | OTP sign-in | Signup verification |
-|------|-------------------|-------------|---------------------|
-| Dev fallback | unset | OTP logged in API console | not required |
-| Real email | set | Novu email | required before password sign-in |
+Legacy Novu fallback: set `NOVU_SECRET_KEY`.
 
-When Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true** (override with `REQUIRE_EMAIL_VERIFICATION=false`). OTP and verification links are still logged in the API console in development unless `AUTH_EMAIL_LOG_OTP=false`.
+When notify or Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true**. OTP and verification links are still logged in the API console in development unless `AUTH_EMAIL_LOG_OTP=false`.
 
 **Quick test:** use login **OTP email** on `/login` with your real address, or sign up (Phase 1 UI) once available — you should receive the message in your inbox.
 

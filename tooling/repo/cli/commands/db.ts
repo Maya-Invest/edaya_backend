@@ -12,7 +12,7 @@ export async function runDbCommand(parsed: Exclude<ParsedDbCli, { kind: 'help' }
       return runBunScript(paths.dbMigrate, [parsed.target, sliceArg])
     }
     case 'reset': {
-      const args = [parsed.target]
+      const args: string[] = [parsed.target]
       if (parsed.yes) {
         args.push('--yes')
       }

@@ -5,12 +5,12 @@
   // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
   "main": "src/entries/worker.ts",
-  "compatibility_date": "2024-09-23",
+  "compatibility_date": "2026-03-24",
   "compatibility_flags": ["nodejs_compat"],
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.txt", "**/*.html"],
+      "globs": ["**/*.txt", "**/*.html", "**/*.css"],
       "fallthrough": true
     }
   ],
@@ -24,9 +24,13 @@
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
   // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), AUTH_KV, CRON_JOBS
   // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
+  //                    FCM_SERVICE_ACCOUNT_JSON (in-process notify),
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+  // Bindings         — HYPERDRIVE, HYPERDRIVE_AUTH, AUTH_KV, CRON_JOBS, EMAIL, BROWSER
+  //                    (Browser Run Quick Actions; enable in the Cloudflare dashboard after deploy)
   // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
   //                    CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH
+  //                    GOTENBERG_URL (optional; Miniflare does not implement quickAction)
   // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, GRAPHQL_*
   "observability": {
     "logs": {
@@ -57,6 +61,14 @@
           "id": "5a94d81b83d54a3cb5210f8f4e027d02"
         }
       ],
+      "send_email": [
+        {
+          "name": "EMAIL"
+        }
+      ],
+      "browser": {
+        "binding": "BROWSER"
+      },
       "vars": {
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
@@ -67,6 +79,8 @@
         "COOKIE_DOMAIN": "edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "300000",
         "NOVU_API_URL": "https://api.novu.co",
+        "EMAIL_TRANSPORT": "cloudflare",
+        "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
         "REQUIRE_EMAIL_VERIFICATION": "true",
@@ -113,6 +127,8 @@
         "COOKIE_DOMAIN": "edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "300000",
         "NOVU_API_URL": "https://api.novu.co",
+        "EMAIL_TRANSPORT": "cloudflare",
+        "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
         "REQUIRE_EMAIL_VERIFICATION": "true",
@@ -135,6 +151,14 @@
           "id": "5381bed94af74b478886d49ef52f1a52"
         }
       ],
+      "send_email": [
+        {
+          "name": "EMAIL"
+        }
+      ],
+      "browser": {
+        "binding": "BROWSER"
+      },
       "routes": [
         {
           "pattern": "api.edayaplus.com",

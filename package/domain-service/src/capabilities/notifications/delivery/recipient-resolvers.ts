@@ -1,5 +1,5 @@
 import type { CalendarEvent, Guardian, GuardianStudentLink, NotificationRecipient } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import {
   ActivityEnrollmentStatus,
   CalendarEventScopeKind,

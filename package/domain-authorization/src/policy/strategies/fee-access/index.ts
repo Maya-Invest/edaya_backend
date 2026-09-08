@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { ActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../model/errors'
 import { guardianFeeCatalogAccess } from './guardian'
 import { staffFeeAccess } from './staff'

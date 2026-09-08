@@ -22,11 +22,14 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 |---------|-------------|---------|----------|
 | School DB | PGlite ephemeral (`pglite`) | PGlite persisted (`pglite:.data/school`) | Postgres (Hyperdrive binding or `DATABASE_URL`) |
 | Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB as school) | Postgres `auth` schema via Hyperdrive |
-| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files` | R2 (`@edaya/adaptor-r2`) |
-| Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
-| Invitation delivery | no-op | Novu* or no-op | Novu* or no-op |
+| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files-server` | R2 (`@edaya/adaptor-r2`) |
+| Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
+| Invitation delivery | no-op | notify* or Novu* or no-op | notify* or Novu* or no-op |
+| Document rendering | not configured | stub or Gotenberg (`GOTENBERG_URL`) | Browser Run (`BROWSER`) or Gotenberg |
 
-\* **Novu exception** — the only vendor adaptor intentionally allowed on `local`. When `NOVU_SECRET_KEY` is unset, notifications fall back to structured logging (or no-op in silent test mode). `in-memory` never uses Novu, even if the key is present in the environment.
+\* **Notify / Novu** — `NOVU_SECRET_KEY` selects Novu (legacy fallback). Otherwise `RUNTIME=local` or `worker` uses in-process `@edaya/adaptor-notify`. When neither applies, notifications fall back to structured logging (or no-op in silent test mode). `in-memory` never calls notify or Novu.
+
+\* **Documents** — in-process `@edaya/adaptor-docs`. `in-memory` never calls Gotenberg or Browser Run. Worker prefers the `BROWSER` binding; without it (and without `GOTENBERG_URL`) rendering is not configured. Stub PDFs are local-only.
 
 ## Bootstrap rule
 
@@ -48,7 +51,7 @@ Positive requirements only (fail when the profile cannot boot):
 
 `bun repo dev` starts:
 
-1. `@edaya/api` — `RUNTIME=local`, PGlite + SQLite + local-fs client
+1. `@edaya/api` — `RUNTIME=local`, PGlite + local-fs client
 2. `@edaya/local-files-server` — HTTP file service on port 9200
 
 Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun --filter @edaya/api dev:worker`** with `apps/api/.dev.vars` — not `bun repo dev`.
@@ -66,7 +69,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu gates, single heartbeat cron + `CRON_JOBS` queue in `wrangler.jsonc`, no legacy `apps/cron` package).
+`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu/notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
 
 ## Related packages
 
@@ -75,6 +78,8 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-postgres` | School persistence (PGlite + Postgres drivers) |
 | `@edaya/adaptor-auth` | Better Auth persistence (Postgres `auth` schema) |
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
-| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files`) |
+| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files-server`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
-| `@edaya/adaptor-novu` | Notifications (non-`in-memory` profiles) |
+| `@edaya/adaptor-novu` | Notifications (Novu env fallback) |
+| `@edaya/adaptor-notify` | In-process email/push adapters on the school API |
+| `@edaya/adaptor-docs` | In-process PDF rendering (templates + inner PdfRenderer) |

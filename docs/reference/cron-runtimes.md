@@ -120,4 +120,4 @@ WHERE job_key = 'processDueNotifications';
 
 Handlers remain in code; the table only controls **when** jobs run.
 
-See also: [cron-heartbeat-dispatcher-plan.md](../sprints/cron-heartbeat-dispatcher-plan.md), [api-runtimes.md](./api-runtimes.md).
+See also: [cron-heartbeat-dispatcher-plan.md](../sprints/archive/cron-heartbeat-dispatcher-plan.md), [api-runtimes.md](./api-runtimes.md).

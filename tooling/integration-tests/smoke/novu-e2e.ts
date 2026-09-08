@@ -12,16 +12,18 @@ import { randomUUID } from 'node:crypto'
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
 import { buildSignedNovuWebhookRequest, createNovuInvitationDeliveryPortFromSecretKey } from '@edaya/adaptor-novu'
+import {
+  executeCoreCommand,
+  HttpSeedClient,
+  signInViaHttp,
+  waitForApi,
+} from '@edaya/seeding/http'
 import { loadDotenvFiles } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
 import {
   DEV_AUTH_PASSWORD,
   DEV_AUTH_STAFF_ACCOUNTS,
   SEED_SCHOOL_ID,
 } from '../../fixtures/src/index'
-import { signInViaHttp } from '../../seeding/src/http/auth'
-import { HttpSeedClient } from '../../seeding/src/http/client'
-import { executeCoreCommand } from '../../seeding/src/http/core-command'
-import { waitForApi } from '../../seeding/src/http/wait-for-api'
 
 loadDotenvFiles()
 

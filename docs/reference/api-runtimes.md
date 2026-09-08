@@ -41,9 +41,10 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 | Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB) | Postgres `auth` schema via Hyperdrive |
 | Migrations on startup | yes | yes (PGlite default) | no |
 | File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun repo dev` | R2 (required) |
-| Notifications | no-op | Novu* or log/no-op | Novu* or no-op |
+| Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
+| Document rendering | not configured | stub or Gotenberg | Browser Run or Gotenberg |
 
-\*Novu is the documented vendor exception on `local` and `worker`. See [runtime-boundaries.md](./runtime-boundaries.md).
+\*Notify is in-process `@edaya/adaptor-notify` unless `NOVU_SECRET_KEY` is set. Document rendering is in-process `@edaya/adaptor-docs`. See [runtime-boundaries.md](./runtime-boundaries.md).
 
 Bootstrap resolvers do not upgrade adaptors when unrelated vendor env vars are present.
 
@@ -54,7 +55,7 @@ cp apps/api/.env.example apps/api/.env
 bun repo dev
 ```
 
-Set `RUNTIME=local` (default). `bun repo dev` starts the API and `@edaya/local-files-server` together. School data and auth SQLite live under repo-root `.data/` (gitignored).
+Set `RUNTIME=local` (default). `bun repo dev` starts the API and `@edaya/local-files-server` together. School data and auth live under repo-root `.data/` (gitignored). In-process notify uses the school PGlite `notify` schema and log email by default.
 
 Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 

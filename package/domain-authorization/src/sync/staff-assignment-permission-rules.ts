@@ -1,6 +1,6 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { StaffAssignment } from '@edaya/core'
 import type { ScopeType } from '../permissions/scope-type'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { Permission } from '../permissions/permission'
 import { permissionDefinitions } from '../permissions/permission-definitions'

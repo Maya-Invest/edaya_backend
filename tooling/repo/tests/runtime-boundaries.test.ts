@@ -5,6 +5,10 @@ import { describe, expect, test } from 'bun:test'
 import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 
 const VALID_WRANGLER = `
+  "compatibility_date": "2026-03-24",
+  "browser": {
+    "binding": "BROWSER"
+  },
   "triggers": {
     "crons": [
       "*/5 * * * *"
@@ -34,6 +38,7 @@ describe('findRuntimeBoundaryViolations', () => {
     writeFile(root, 'apps/api/src/runtime/local/school-database.ts', 'export async function createSchoolDatabase() {}\n')
     writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/local-files-server"]\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/notification-gateway.ts', 'env.RUNTIME === "in-memory"\n')
+    writeFile(root, 'apps/api/src/runtime/shared/adapters/document-renderer.ts', 'env.RUNTIME === "in-memory"\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts', 'env.RUNTIME === "in-memory"\n')
   }
 
@@ -77,11 +82,61 @@ describe('findRuntimeBoundaryViolations', () => {
     }
   })
 
+  test('reports legacy notify app when apps/notify exists', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      mkdirSync(join(root, 'apps/notify'), { recursive: true })
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'legacy notify app',
+        message: 'apps/notify must be removed; notification send runs in-process on the school API',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('reports a separate notify process in start-local-dev', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/notify"]\n')
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not start a separate @edaya/notify process',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('reports a docs or Gotenberg process in start-local-dev', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "gotenberg"]\n')
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not start Gotenberg or a docs process',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   test('reports per-job wrangler cron triggers', () => {
     const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
     try {
       writeBaselineRepoFiles(root)
       writeFile(root, 'apps/api/wrangler.jsonc', `
+        "compatibility_date": "2026-03-24",
+        "browser": { "binding": "BROWSER" },
         "triggers": { "crons": ["0 2 * * *", "*/5 * * * *"] }
         "queues": { "producers": [{ "binding": "CRON_JOBS", "queue": "edaya-cron-jobs" }] }
       `)

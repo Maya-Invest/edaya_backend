@@ -1,4 +1,4 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 
 /** Tenant-wide permissions use an empty resource path. */

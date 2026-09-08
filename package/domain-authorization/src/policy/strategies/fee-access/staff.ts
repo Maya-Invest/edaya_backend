@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { StaffActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import { actorHasSchoolWideGrant } from '../../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../../model/errors'
 import { FEE_ACCESS_PERMISSIONS } from '../../resolvers/permission-sets'

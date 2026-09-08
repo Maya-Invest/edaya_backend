@@ -80,7 +80,7 @@ async function createAuthBackend(dataDir: string): Promise<DbBrowserBackend> {
   return {
     label: `${dataDir} (auth schema)`,
     async listTables() {
-      const result = await db.query(`
+      const result = await db.query<{ table_name: string }>(`
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'auth'
@@ -90,7 +90,7 @@ async function createAuthBackend(dataDir: string): Promise<DbBrowserBackend> {
     },
     async getRows(table, offset, limit) {
       const quoted = `auth."${table.replaceAll('"', '""')}"`
-      const countResult = await db.query(`SELECT count(*)::int AS c FROM ${quoted}`)
+      const countResult = await db.query<{ c: number }>(`SELECT count(*)::int AS c FROM ${quoted}`)
       const total = Number(countResult.rows[0]?.c ?? 0)
       const rowsResult = await db.query(`SELECT * FROM ${quoted} LIMIT $1 OFFSET $2`, [limit, offset])
       return { total, rows: rowsResult.rows as Record<string, unknown>[] }
@@ -108,7 +108,7 @@ async function createSchoolBackend(dataDir: string): Promise<DbBrowserBackend> {
   return {
     label: dataDir,
     async listTables() {
-      const result = await db.query(`
+      const result = await db.query<{ tablename: string }>(`
         SELECT tablename
         FROM pg_tables
         WHERE schemaname = 'public'
@@ -118,7 +118,7 @@ async function createSchoolBackend(dataDir: string): Promise<DbBrowserBackend> {
     },
     async getRows(table, offset, limit) {
       const quoted = `"${table.replaceAll('"', '""')}"`
-      const countResult = await db.query(`SELECT count(*)::int AS c FROM ${quoted}`)
+      const countResult = await db.query<{ c: number }>(`SELECT count(*)::int AS c FROM ${quoted}`)
       const total = Number(countResult.rows[0]?.c ?? 0)
       const rowsResult = await db.query(`SELECT * FROM ${quoted} LIMIT $1 OFFSET $2`, [limit, offset])
       return { total, rows: rowsResult.rows as Record<string, unknown>[] }

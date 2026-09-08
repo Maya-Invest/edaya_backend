@@ -1,5 +1,5 @@
 import type { CalendarEvent } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import { CalendarEventScopeKind } from '@edaya/core'
 
 export async function resolveClassGroupName(

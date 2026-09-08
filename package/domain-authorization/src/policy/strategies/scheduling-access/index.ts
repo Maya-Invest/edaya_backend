@@ -1,6 +1,6 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { AttendanceRecord } from '@edaya/core'
 import type { ActorMetadata, TeacherActorMetadata } from '../../../model/actor'
+import type { AuthorizationRepositories } from '../../../ports/authorization-repositories'
 import {
   assertHomeroomCapability,
 } from '../../../capabilities/assert-homeroom-capability'

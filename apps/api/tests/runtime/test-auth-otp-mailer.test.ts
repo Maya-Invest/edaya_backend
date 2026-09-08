@@ -74,6 +74,36 @@ describe("createAuthEmailSenders", () => {
     expect(getLastAuthOtpForTests("teacher@school.edu")).toBeUndefined();
   });
 
+  it("delivers OTP through notify when configured", async () => {
+    resetAuthOtpMailerForTests();
+    const sendOtp = mock(async () => {});
+    const { sendAuthVerificationOtp } = createAuthEmailSenders(
+      {
+        NODE_ENV: "development",
+        LOG_LEVEL: "silent",
+        RUNTIME: "local",
+      } as never,
+      createAppLogger({ NODE_ENV: "development", LOG_LEVEL: "silent" } as never),
+      {
+        delivery: {
+          mode: "notify",
+          port: {
+            sendOtp,
+            sendVerificationEmail: mock(async () => {}),
+          },
+        },
+      },
+    );
+
+    await sendAuthVerificationOtp({ email: "teacher@school.edu", otp: "654321", type: "sign-in" });
+
+    expect(sendOtp).toHaveBeenCalledWith({
+      email: "teacher@school.edu",
+      otp: "654321",
+      type: "sign-in",
+    });
+  });
+
   it("logs OTP in development without Novu", async () => {
     resetAuthOtpMailerForTests();
     resetAppLoggersForTests();
@@ -94,6 +124,12 @@ describe("createAuthEmailSenders", () => {
 describe("shouldRequireEmailVerification", () => {
   it("defaults to true when Novu is configured", () => {
     expect(shouldRequireEmailVerification({ NOVU_SECRET_KEY: "key" } as never)).toBe(true);
+  });
+
+  it("defaults to true when notify is configured", () => {
+    expect(shouldRequireEmailVerification({
+      RUNTIME: "local",
+    } as never)).toBe(true);
   });
 
   it("defaults to false without Novu", () => {

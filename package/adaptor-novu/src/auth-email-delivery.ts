@@ -1,3 +1,4 @@
+import type { AuthEmailDeliveryPort, AuthOtpEmailInput, AuthOtpEmailType, AuthVerificationEmailInput } from "@edaya/core";
 import { MessageDeliveryRecipientKind } from "@edaya/core";
 import { AUTH_EMAIL_VERIFICATION_EVENT_KEY, AUTH_OTP_EVENT_KEY, AUTH_PLATFORM_CONTEXT_ID } from "@edaya/service";
 import type { NovuSubscriberClient } from "./novu-subscriber-client";
@@ -6,28 +7,7 @@ import { createNovuSubscriberClient } from "./novu-subscriber-client";
 import { buildNovuTriggerSubscriber } from "./trigger-recipient";
 import type { NovuTriggerClient } from "./types";
 
-export type AuthOtpEmailType
-  = | "sign-in"
-    | "email-verification"
-    | "forget-password"
-    | "change-email";
-
-export interface AuthOtpEmailInput {
-  email: string;
-  otp: string;
-  type: AuthOtpEmailType;
-}
-
-export interface AuthVerificationEmailInput {
-  email: string;
-  url: string;
-  displayName?: string;
-}
-
-export interface AuthEmailDeliveryPort {
-  sendOtp: (input: AuthOtpEmailInput) => Promise<void>;
-  sendVerificationEmail: (input: AuthVerificationEmailInput) => Promise<void>;
-}
+export type { AuthEmailDeliveryPort, AuthOtpEmailInput, AuthOtpEmailType, AuthVerificationEmailInput };
 
 export interface CreateNovuAuthEmailDeliveryPortOptions {
   subscriberClient: NovuSubscriberClient;

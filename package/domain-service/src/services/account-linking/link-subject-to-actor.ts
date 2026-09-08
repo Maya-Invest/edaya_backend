@@ -1,5 +1,5 @@
 import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { BaseSchoolService } from '../base-school-service'
 import { BusinessRuleViolationError, Guardian as GuardianEntity, MessageDeliveryRecipientKind, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
 import {

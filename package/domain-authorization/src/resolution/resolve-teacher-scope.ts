@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { TeacherActorScope } from '../model/actor-scope'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import { EMPTY_TEACHER_SCOPE } from '../model/actor-scope'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'

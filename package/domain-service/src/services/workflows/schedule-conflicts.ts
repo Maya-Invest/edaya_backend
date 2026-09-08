@@ -1,5 +1,5 @@
 import type { Assessment, LessonSession, TeacherAssignment } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AssessmentKind, BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import { teacherUnavailabilityOverlaps } from './teacher-unavailability'
 

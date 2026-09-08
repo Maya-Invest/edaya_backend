@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 
 const IGNORED_DIRS = new Set(['node_modules', 'dist', '.svelte-kit'])
@@ -61,9 +61,14 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     searchPath: 'package/domain-authorization/src',
   },
   {
-    label: 'school-service imports apps',
-    pattern: /from ["']@\//,
-    searchPath: 'package/domain-service/src',
+    label: 'adaptor-notify imports school-service',
+    pattern: /from ["']@edaya\/service/,
+    searchPath: 'package/adaptor-notify/src',
+  },
+  {
+    label: 'adaptor-docs imports school-service',
+    pattern: /from ["']@edaya\/service/,
+    searchPath: 'package/adaptor-docs/src',
   },
   ...['package/domain-core', 'package/domain-authorization', 'package/domain-service'].map(
     (searchPath): BoundaryCheck => ({
@@ -72,7 +77,7 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
       searchPath,
     }),
   ),
-  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
+  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-notify', 'package/adaptor-docs', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports adaptor-auth',
       pattern: /from ["']@edaya\/adaptor-auth/,
@@ -116,6 +121,9 @@ export function findBoundaryViolations(
 ): BoundaryViolation[] {
   return checks.flatMap((check) => {
     const searchDirectory = resolve(repoRoot, check.searchPath)
+    if (!existsSync(searchDirectory)) {
+      return []
+    }
     const matches = [...walkFiles(searchDirectory)].flatMap(filePath => (
       findMatchesInFile(filePath, check.pattern, repoRoot)
     ))

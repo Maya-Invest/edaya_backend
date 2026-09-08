@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { ActorMetadata } from '../../model/actor'
+import type { AuthorizationRepositories } from '../../ports/authorization-repositories'
 import type { AttachmentAccessInput } from '../types'
 import { actorHasAnyPermission } from '../../grants/actor-grant-checks'
 import { AuthorizationError, AuthorizationErrorCode } from '../../model/errors'

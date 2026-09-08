@@ -22,10 +22,11 @@ export async function buildInMemoryApiRuntime(env: Environment): Promise<ApiRunt
     env,
     authHandle,
     resolveSchoolHandle: async () => schoolHandle,
-    initSchoolApplication: db => buildSchoolApplication(db, {
+    initSchoolApplication: (db, extras) => buildSchoolApplication(db, {
       databaseUrl: env.DATABASE_URL,
       env,
       authDb: authHandle.db,
+      notifyRuntime: extras.notifyRuntime,
       runMigrations: false,
     }),
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { parseEnv } from "@/runtime";
-import { AttachmentOwnerKind } from "@edaya/core";
-import { ActorAssuranceLevel, createStaffActorMetadata, Permission } from "@edaya/authorization";
+import { AttachmentOwnerKind, Permission } from "@edaya/core";
+import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { Hono } from "hono";

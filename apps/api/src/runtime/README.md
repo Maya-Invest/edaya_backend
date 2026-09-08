@@ -30,7 +30,9 @@ runtime/
     adapters/
       file-storage.ts
       notification-gateway.ts
+      document-renderer.ts
       invitation-delivery.ts
+      notify-delivery-sink.ts
       notification-delivery-webhook.ts
       auth-otp-mailer.ts
       auth-contact-resolver.ts
@@ -51,8 +53,9 @@ runtime/
 
   worker/
     build-runtime.ts, school-database.ts, auth-database.ts
-    auth-service.ts
     resolve-api-runtime.ts
+    resolve-cron-job-dispatcher.ts
+    adapters/cloudflare-queue-cron-job-dispatcher.ts
 ```
 
 ## Runtime access

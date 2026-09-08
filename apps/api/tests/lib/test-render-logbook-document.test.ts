@@ -11,11 +11,12 @@ import {
   ClassSubjectProgress,
   LessonSession,
   OccurrenceStatus,
+  Permission,
   School,
   Subject,
   SubjectMatter,
 } from "@edaya/core";
-import { ActorAssuranceLevel, createStaffActorMetadata, Permission } from "@edaya/authorization";
+import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import { describe, expect, mock, test } from "bun:test";
 import { renderClassLogbookDocument } from "@/lib/documents/render-logbook-document";
 
@@ -158,17 +159,14 @@ describe("renderClassLogbookDocument", () => {
     const render = mock(async () => ({
       renderId: "render-1",
       sha256: "abc",
-      bytesBase64: Buffer.from("%PDF-logbook").toString("base64"),
+      bytes: new Uint8Array(Buffer.from("%PDF-logbook")),
+      contentType: "application/pdf",
     }));
 
     const outcome = await renderClassLogbookDocument(service, {
       classGroupId: classGroup.id,
       academicPeriodId: period.id,
-      config: {
-        docsUrl: "http://docs.local",
-        jwtSecret: "secret",
-      },
-      createClient: () => ({ render } as never),
+      renderer: { render },
     });
 
     expect(outcome.downloadUrl).toBe("https://cdn.example/logbook.pdf");
@@ -194,8 +192,9 @@ describe("renderClassLogbookDocument", () => {
     }), {
       classGroupId: classGroup.id,
       academicPeriodId: period.id,
-      config: { docsUrl: "http://docs.local", jwtSecret: "secret" },
-      createClient: () => ({ render: mock(async () => ({})) } as never),
+      renderer: { render: mock(async () => {
+        throw new Error("should not render");
+      }) },
     })).rejects.toMatchObject({ code: "LOGBOOK_EMPTY" });
   });
 });

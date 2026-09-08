@@ -1,7 +1,18 @@
 import { createNovuNotificationGatewayFromSecretKey } from "@edaya/adaptor-novu";
+import { createNotifyNotificationGateway, type NotifyRuntime } from "@edaya/adaptor-notify";
 import type { LoggerPort, NotificationEnqueueInput, NotificationGatewayPort, NotificationRecipient, NotificationRecipientProfile, RegisterPushDeviceInput, UnregisterPushDeviceInput } from "@edaya/core";
 import { noOpNotificationGateway } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
+
+export function isNotifyConfigured(env: Environment | undefined): boolean {
+  if (!env || env.RUNTIME === "in-memory") {
+    return false;
+  }
+  if (env.NOVU_SECRET_KEY?.trim()) {
+    return false;
+  }
+  return env.RUNTIME === "local" || env.RUNTIME === "worker";
+}
 
 export function createLoggingNotificationGateway(logger: LoggerPort): NotificationGatewayPort {
   const notificationLogger = logger.child({ module: "notifications" });
@@ -31,9 +42,19 @@ export function createLoggingNotificationGateway(logger: LoggerPort): Notificati
 export function resolveNotificationGateway(
   env: Environment | undefined,
   logger?: LoggerPort,
+  options: { runtime?: NotifyRuntime } = {},
 ): NotificationGatewayPort {
   if (!env || env.LOG_LEVEL === "silent" || env.RUNTIME === "in-memory") {
     return noOpNotificationGateway;
+  }
+
+  if (isNotifyConfigured(env) && options.runtime) {
+    return createNotifyNotificationGateway({
+      runtime: options.runtime,
+      onError: (error, context) => {
+        logger?.error({ err: error, ...context }, "notify notification failed");
+      },
+    });
   }
 
   if (env.NOVU_SECRET_KEY) {

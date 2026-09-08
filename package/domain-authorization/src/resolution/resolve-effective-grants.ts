@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '@edaya/authorization'
 import type { EffectiveGrants } from '../model/effective-grants'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { findPublishedAcademicYear } from '@edaya/core'
 import { ELEVATED_STAFF_PERMISSIONS } from '../grants/system-role-permissions'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'

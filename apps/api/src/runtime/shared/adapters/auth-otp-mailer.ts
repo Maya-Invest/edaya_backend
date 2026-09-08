@@ -1,10 +1,8 @@
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { LoggerPort } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";
-import {
-  resolveAuthEmailDelivery,
-
-} from "@/runtime/shared/adapters/auth-email-delivery";
 import type { ResolvedAuthEmailDelivery } from "@/runtime/shared/adapters/auth-email-delivery";
+import { resolveAuthEmailDelivery } from "@/runtime/shared/adapters/auth-email-delivery";
 
 export type AuthOtpType = "sign-in" | "email-verification" | "forget-password" | "change-email";
 
@@ -45,6 +43,7 @@ function shouldLogAuthEmailInDev(env: Environment): boolean {
 
 export interface CreateAuthEmailSendersOptions {
   delivery?: ResolvedAuthEmailDelivery;
+  getNotifyRuntime?: () => Promise<NotifyRuntime>;
 }
 
 export function createAuthEmailSenders(
@@ -52,7 +51,9 @@ export function createAuthEmailSenders(
   logger: LoggerPort,
   options: CreateAuthEmailSendersOptions = {},
 ) {
-  const delivery = options.delivery ?? resolveAuthEmailDelivery(env);
+  const delivery = options.delivery ?? resolveAuthEmailDelivery(env, {
+    getNotifyRuntime: options.getNotifyRuntime,
+  });
 
   async function sendAuthVerificationOtp(input: AuthOtpDeliveryInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();
@@ -62,7 +63,7 @@ export function createAuthEmailSenders(
       return;
     }
 
-    if (delivery.mode === "novu" && delivery.port) {
+    if ((delivery.mode === "novu" || delivery.mode === "notify") && delivery.port) {
       await delivery.port.sendOtp({
         email: normalizedEmail,
         otp: input.otp,
@@ -70,10 +71,10 @@ export function createAuthEmailSenders(
       });
     }
 
-    if (delivery.mode === "novu" && shouldLogAuthEmailInDev(env)) {
+    if ((delivery.mode === "novu" || delivery.mode === "notify") && shouldLogAuthEmailInDev(env)) {
       logger.info(
         { email: normalizedEmail, otp: input.otp, type: input.type, delivery: delivery.mode },
-        "Auth OTP sent via Novu (dev log copy)",
+        "Auth OTP sent (dev log copy)",
       );
     }
     else if (delivery.mode === "log") {
@@ -86,7 +87,7 @@ export function createAuthEmailSenders(
       else {
         logger.info(
           { email: normalizedEmail, otp: input.otp, type: input.type, delivery: delivery.mode },
-          "Auth OTP (configure NOVU_SECRET_KEY for real email delivery)",
+          "Auth OTP (in-process notify or NOVU_SECRET_KEY for real email delivery)",
         );
       }
     }
@@ -100,7 +101,7 @@ export function createAuthEmailSenders(
       return;
     }
 
-    if (delivery.mode === "novu" && delivery.port) {
+    if ((delivery.mode === "novu" || delivery.mode === "notify") && delivery.port) {
       await delivery.port.sendVerificationEmail({
         email: normalizedEmail,
         url: input.url,
@@ -108,10 +109,10 @@ export function createAuthEmailSenders(
       });
     }
 
-    if (delivery.mode === "novu" && shouldLogAuthEmailInDev(env)) {
+    if ((delivery.mode === "novu" || delivery.mode === "notify") && shouldLogAuthEmailInDev(env)) {
       logger.info(
         { email: normalizedEmail, url: input.url, delivery: delivery.mode },
-        "Auth verification email sent via Novu (dev log copy)",
+        "Auth verification email sent (dev log copy)",
       );
     }
     else if (delivery.mode === "log") {
@@ -124,7 +125,7 @@ export function createAuthEmailSenders(
       else {
         logger.info(
           { email: normalizedEmail, url: input.url, delivery: delivery.mode },
-          "Auth verification email (configure NOVU_SECRET_KEY for real email delivery)",
+          "Auth verification email (in-process notify or NOVU_SECRET_KEY for real email delivery)",
         );
       }
     }

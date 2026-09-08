@@ -1,4 +1,5 @@
 import * as authSchema from "@edaya/adaptor-auth/schema";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
 import {
   buildBetterAuthRateLimitOptions,
@@ -27,6 +28,7 @@ export type BetterAuthEnv = Pick<
 
 export interface BuildBetterAuthConfigOptions {
   secondaryStorage?: AuthSecondaryStoragePort;
+  getNotifyRuntime?: () => Promise<NotifyRuntime>;
 }
 
 function resolveBetterAuthTrustedOrigins(env: BetterAuthEnv): string[] {
@@ -49,7 +51,9 @@ export function buildBetterAuthConfig(
 ): Parameters<typeof betterAuth>[0] {
   const fullEnv = env as Environment;
   const appLogger = createAppLogger(fullEnv);
-  const authEmail = createAuthEmailSenders(fullEnv, appLogger);
+  const authEmail = createAuthEmailSenders(fullEnv, appLogger, {
+    getNotifyRuntime: options.getNotifyRuntime,
+  });
   const requireEmailVerification = shouldRequireEmailVerification(fullEnv);
   const rateLimit = buildBetterAuthRateLimitOptions(options);
 

@@ -67,6 +67,7 @@ function toConfiguredR2Env(source: {
   R2_ENDPOINT?: string
   TRUSTED_ORIGINS?: string
 }): R2DevEnv {
+  const trustedOrigins = source.TRUSTED_ORIGINS
   if (!isR2FileStorageConfigured(source)) {
     throw new Error('R2 env is incomplete.')
   }
@@ -77,7 +78,7 @@ function toConfiguredR2Env(source: {
     R2_BUCKET_NAME: source.R2_BUCKET_NAME,
     ...(source.R2_ACCOUNT_ID ? { R2_ACCOUNT_ID: source.R2_ACCOUNT_ID } : {}),
     ...(source.R2_ENDPOINT ? { R2_ENDPOINT: source.R2_ENDPOINT } : {}),
-    ...(source.TRUSTED_ORIGINS ? { TRUSTED_ORIGINS: source.TRUSTED_ORIGINS } : {}),
+    ...(trustedOrigins ? { TRUSTED_ORIGINS: trustedOrigins } : {}),
   }
 }
 
@@ -104,7 +105,14 @@ export function loadR2DevEnv(): R2DevEnv {
   loadWranglerDevVars()
 
   try {
-    return toConfiguredR2Env(process.env)
+    return toConfiguredR2Env({
+      R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+      R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+      R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+      R2_ENDPOINT: process.env.R2_ENDPOINT,
+      TRUSTED_ORIGINS: process.env.TRUSTED_ORIGINS,
+    })
   }
   catch {
     throw new Error(`R2 is not configured. ${R2_DEV_VARS_HELP}`)

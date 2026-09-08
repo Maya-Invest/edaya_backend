@@ -120,10 +120,16 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
 
   const startLocalDev = readRepoFile(repoRoot, 'tooling/repo/dev/start-local-dev.ts')
   if (startLocalDev) {
-    if (!startLocalDev.includes('@edaya/local-files-server')) {
+    if (startLocalDev.includes('@edaya/notify')) {
       violations.push({
         label: 'local dev orchestrator',
-        message: 'start-local-dev.ts must start @edaya/local-files-server with bun repo dev',
+        message: 'start-local-dev.ts must not start a separate @edaya/notify process',
+      })
+    }
+    if (/gotenberg/i.test(startLocalDev) || startLocalDev.includes('@edaya/docs')) {
+      violations.push({
+        label: 'local dev orchestrator',
+        message: 'start-local-dev.ts must not start Gotenberg or a docs process',
       })
     }
     if (startLocalDev.includes('.dev.vars')) {
@@ -148,6 +154,14 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     })
   }
 
+  const documentRenderer = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/adapters/document-renderer.ts')
+  if (documentRenderer && !documentRenderer.includes('env.RUNTIME === "in-memory"')) {
+    violations.push({
+      label: 'in-memory document renderer boundary',
+      message: 'resolveDocumentRenderer must no-op on RUNTIME=in-memory',
+    })
+  }
+
   const authEmailDelivery = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts')
   if (authEmailDelivery && !authEmailDelivery.includes('env.RUNTIME === "in-memory"')) {
     violations.push({
@@ -160,6 +174,13 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     violations.push({
       label: 'legacy cron app',
       message: 'apps/cron must be removed; scheduled cron runs on @edaya/api worker',
+    })
+  }
+
+  if (existsSync(resolve(repoRoot, 'apps/notify'))) {
+    violations.push({
+      label: 'legacy notify app',
+      message: 'apps/notify must be removed; notification send runs in-process on the school API',
     })
   }
 
@@ -202,6 +223,21 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
       violations.push({
         label: 'wrangler cron queue',
         message: 'apps/api/wrangler.jsonc must declare CRON_JOBS queue producer binding',
+      })
+    }
+
+    if (!wrangler.includes('"binding": "BROWSER"')) {
+      violations.push({
+        label: 'wrangler browser binding',
+        message: 'apps/api/wrangler.jsonc must declare BROWSER binding for Browser Run',
+      })
+    }
+
+    const compatibilityDate = wrangler.match(/"compatibility_date"\s*:\s*"([^"]+)"/)?.[1]
+    if (!compatibilityDate || compatibilityDate < '2026-03-24') {
+      violations.push({
+        label: 'wrangler compatibility date',
+        message: 'apps/api/wrangler.jsonc compatibility_date must be 2026-03-24 or later for BROWSER.quickAction',
       })
     }
 

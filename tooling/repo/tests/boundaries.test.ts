@@ -95,17 +95,17 @@ describe('findBoundaryViolations', () => {
 
   test('reports authorization imports of school-service', () => {
     const root = createRepoRoot()
-    writeSource(root, 'package/authorization/src/policy.ts', `import { staffPermissionAssignmentConfig } from '@edaya/service'\n`)
+    writeSource(root, 'package/domain-authorization/src/policy.ts', `import { staffPermissionAssignmentConfig } from '@edaya/service'\n`)
 
     expect(findBoundaryViolations([
       {
         label: 'authorization imports school-service',
         pattern: /from ["']@edaya\/service/,
-        searchPath: 'package/authorization/src',
+        searchPath: 'package/domain-authorization/src',
       },
     ], root)).toEqual([{
       label: 'authorization imports school-service',
-      matches: ['package/authorization/src/policy.ts:1:import { staffPermissionAssignmentConfig } from \'@edaya/service\''],
+      matches: ['package/domain-authorization/src/policy.ts:1:import { staffPermissionAssignmentConfig } from \'@edaya/service\''],
     }])
   })
 

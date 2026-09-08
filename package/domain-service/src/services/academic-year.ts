@@ -1,5 +1,5 @@
 import type { AcademicYear } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../ports/school-repositories'
 
 /**
  * Resolves the published academic year for a school.

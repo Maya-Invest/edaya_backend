@@ -99,8 +99,6 @@ describe("executeSchoolCommand", () => {
       actor,
       env: {
         DOCS_RENDER_ON_PUBLISH: true,
-        EDAYA_DOCS_URL: "http://localhost:8787",
-        DOCS_JWT_SECRET: "secret",
       },
     });
     const service = {
@@ -128,8 +126,6 @@ describe("executeSchoolCommand", () => {
       actor,
       env: {
         DOCS_RENDER_ON_PUBLISH: false,
-        EDAYA_DOCS_URL: "http://localhost:8787",
-        DOCS_JWT_SECRET: "secret",
       },
     });
     const service = {
@@ -144,5 +140,47 @@ describe("executeSchoolCommand", () => {
     );
 
     expect(scheduleBackgroundTask).not.toHaveBeenCalled();
+  });
+
+  test("does not schedule docs render on worker without BROWSER", async () => {
+    const scheduleBackgroundTask = spyOn(
+      scheduleBackgroundTaskModule,
+      "scheduleBackgroundTask",
+    ).mockImplementation(() => undefined);
+    const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
+    const actor = createTestStaffActor();
+    const { context } = createCommandContext({
+      actor,
+      env: {
+        RUNTIME: "worker",
+        DOCS_RENDER_ON_PUBLISH: true,
+      },
+    });
+    const service = {
+      commands: { publishReportCardResult },
+    } as never;
+
+    await executeSchoolCommand(
+      context,
+      service,
+      "publishReportCardResult",
+      { resultId: "rc-1" },
+    );
+
+    expect(scheduleBackgroundTask).not.toHaveBeenCalled();
+  });
+
+  test("renderClassLogbook throws when document rendering is not configured", async () => {
+    const { context } = createCommandContext({
+      env: { RUNTIME: "worker" },
+    });
+    const service = { commands: {} } as never;
+
+    await expect(executeSchoolCommand(
+      context,
+      service,
+      "renderClassLogbook",
+      { classGroupId: "cg-1" },
+    )).rejects.toMatchObject({ code: "DOCS_NOT_CONFIGURED" });
   });
 });

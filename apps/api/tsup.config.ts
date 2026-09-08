@@ -11,4 +11,7 @@ export default defineConfig({
   tsconfig: 'tsconfig.json',
   noExternal: [/^@edaya\//],
   external: ['bun:sqlite'],
+  loader: {
+    '.css': 'text',
+  },
 })

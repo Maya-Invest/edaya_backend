@@ -1,10 +1,5 @@
-import {
-  ActorAssuranceLevel,
-  AuthorizationError,
-  createStaffActorMetadata,
-  Permission,
-} from '@edaya/authorization'
-import { AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Resource, ResourceAssignment, ResourceKind, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
+import { AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import {
   describe,
   expect,

@@ -1,22 +1,30 @@
 import {
-
   createNovuAuthEmailDeliveryPortFromSecretKey,
 } from "@edaya/adaptor-novu";
-import type { AuthEmailDeliveryPort } from "@edaya/adaptor-novu";
+import {
+  createNotifyAuthEmailDeliveryPortFromLoader,
+  type NotifyRuntime,
+} from "@edaya/adaptor-notify";
+import type { AuthEmailDeliveryPort } from "@edaya/core";
+import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";
 import type { Environment } from "@/runtime/shared/env/schema";
 
-export type AuthEmailDeliveryMode = "novu" | "log";
+export type AuthEmailDeliveryMode = "notify" | "novu" | "log";
 
 export interface ResolvedAuthEmailDelivery {
   mode: AuthEmailDeliveryMode;
   port: AuthEmailDeliveryPort | null;
 }
 
+export interface ResolveAuthEmailDeliveryOptions {
+  getNotifyRuntime?: () => Promise<NotifyRuntime>;
+}
+
 export function isAuthEmailDeliveryConfigured(env: Environment | undefined): boolean {
   if (!env || env.RUNTIME === "in-memory") {
     return false;
   }
-  return Boolean(env.NOVU_SECRET_KEY?.trim());
+  return isNotifyConfigured(env) || Boolean(env.NOVU_SECRET_KEY?.trim());
 }
 
 export function shouldRequireEmailVerification(env: Environment | undefined): boolean {
@@ -31,8 +39,26 @@ export function shouldRequireEmailVerification(env: Environment | undefined): bo
 
 export function resolveAuthEmailDelivery(
   env: Environment | undefined,
+  options: ResolveAuthEmailDeliveryOptions = {},
 ): ResolvedAuthEmailDelivery {
-  if (!env || env.RUNTIME === "in-memory" || !env.NOVU_SECRET_KEY) {
+  if (!env || env.RUNTIME === "in-memory") {
+    return { mode: "log", port: null };
+  }
+
+  if (isNotifyConfigured(env)) {
+    return {
+      mode: "notify",
+      port: createNotifyAuthEmailDeliveryPortFromLoader(async () => {
+        const runtime = await options.getNotifyRuntime?.();
+        if (!runtime) {
+          throw new Error("in-process notify runtime is required for auth email delivery");
+        }
+        return runtime;
+      }),
+    };
+  }
+
+  if (!env.NOVU_SECRET_KEY) {
     return { mode: "log", port: null };
   }
 

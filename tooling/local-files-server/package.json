@@ -7,7 +7,7 @@
     "dev": "bun --watch src/main.ts",
     "start": "bun src/main.ts",
     "check": "tsc --noEmit",
-    "quality": "bun run check",
+    "quality": "bun run lint && bun run check",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix"
   },

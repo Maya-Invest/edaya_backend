@@ -1,3 +1,4 @@
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
@@ -18,6 +19,7 @@ export interface BuildSchoolApplicationOptions {
   notificationGateway?: NotificationGatewayPort;
   fileStorage?: FileStoragePort;
   invitationDelivery?: InvitationDeliveryPort;
+  notifyRuntime?: NotifyRuntime;
   authDb?: unknown;
   runMigrations?: boolean;
 }
@@ -42,11 +44,11 @@ export async function buildSchoolApplication(
     ? createAppLogger(options.env)
     : undefined;
   const notificationGateway = options.notificationGateway
-    ?? resolveNotificationGateway(options.env, logger);
+    ?? resolveNotificationGateway(options.env, logger, { runtime: options.notifyRuntime });
   const fileStorage = options.fileStorage
     ?? resolveFileStorage(options.env, logger);
   const invitationDelivery = options.invitationDelivery
-    ?? resolveInvitationDelivery(options.env);
+    ?? resolveInvitationDelivery(options.env, { runtime: options.notifyRuntime });
 
   return new ApiSchoolApplication({
     atomicExecution,

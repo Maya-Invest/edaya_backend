@@ -1,6 +1,6 @@
 import type { InteractiveActorMetadata } from '@edaya/authorization'
 import type { NotificationRecipient, NotificationRecipientProfile } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
 import type { BaseSchoolService } from '../../../services/base-school-service'
 import {
   buildGuardianRecipientProfile,

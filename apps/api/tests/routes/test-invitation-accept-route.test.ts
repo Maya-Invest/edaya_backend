@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { parseEnv } from "@/runtime";
-import type { Permission } from "@edaya/authorization";
+import type { Permission } from "@edaya/core";
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import { hashInvitationToken } from "@edaya/service";

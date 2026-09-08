@@ -1,4 +1,5 @@
-import type { EffectiveGrants, InteractiveActorMetadata, Permission, ScopeGrant } from "@edaya/authorization";
+import type { Permission } from "@edaya/core";
+import type { EffectiveGrants, InteractiveActorMetadata, ScopeGrant } from "@edaya/authorization";
 import { ALL_GUARDIAN_CAPABILITIES, ALL_HOMEROOM_CAPABILITIES, ALL_STUDENT_CAPABILITIES, ALL_TEACHING_CAPABILITIES, effectiveGrantsForActor, isInteractiveActor } from "@edaya/authorization";
 
 export interface SerializedEffectiveGrants {

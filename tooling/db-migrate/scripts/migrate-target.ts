@@ -4,6 +4,7 @@
 import type { MigrationScope, MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
 import { applyAuthMigrations } from './lib/apply-auth-migrations'
+import { applyNotifySchema } from './lib/apply-notify-schema'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import {
 
@@ -48,6 +49,7 @@ if (target === 'production' && scope !== 'auth') {
 
 if (scope === 'school' || scope === 'full') {
   await applySchoolMigrations(resolved.databaseUrl)
+  await applyNotifySchema(resolved.databaseUrl)
 }
 
 if (scope === 'auth' || scope === 'full') {
