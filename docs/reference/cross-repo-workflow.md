@@ -7,6 +7,11 @@ Edaya spans multiple repositories:
 | **edaya_backend** (this repo) | API, cron, domain packages, adaptors, `@maya-invest/edaya-api-client`, client codegen tooling |
 | **edaya_web** | SvelteKit webapp + webadmin, browser OpenAPI types |
 | **edaya_mobile** | Flutter app (consumes OpenAPI client bindings extension) |
+| **edaya_identity** | Better Auth Worker, identity database, JWT issuer/JWKS, directory API, `@maya-invest/edaya-identity-client` |
+
+Backend local development links the identity client with
+`"@maya-invest/edaya-identity-client": "file:../edaya_identity/package/identity-client"`.
+CI must check out the sibling identity repository before `bun install`, or replace the file link with the published package.
 
 ## Backend OpenAPI pipeline
 
@@ -39,7 +44,8 @@ bun add @maya-invest/edaya-api-client@production
 
 ```json
 "overrides": {
-  "@maya-invest/edaya-api-client": "workspace:*"
+  "@maya-invest/edaya-api-client": "workspace:*",
+  "@maya-invest/edaya-identity-client": "file:../edaya_identity/package/identity-client"
 }
 ```
 
@@ -66,7 +72,7 @@ Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](..
 
 ## CI independence
 
-Each repo runs `bun run verify` from its own checkout. **edaya_web** CI checks out **edaya_backend** for the `@maya-invest/edaya-api-client` file link. **edaya_backend** CI exports and checks generated artifacts from the in-repo API.
+Each repo runs `bun run verify` against its own code. **edaya_web** CI checks out **edaya_backend** for the API-client file link. **edaya_backend** CI checks out **edaya_identity** as a sibling for the identity-client file link, then exports and checks generated artifacts from the in-repo school API.
 
 ## Hand-written client runtime
 

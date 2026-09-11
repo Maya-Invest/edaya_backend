@@ -13,7 +13,6 @@ import {
   withAcademicYearHeaders,
   wrapAuthWithVerifiedAssurance,
 } from "../support/core-route-harness";
-import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
 } from "@edaya/fixtures/meta/dev-auth-fixtures";
@@ -110,7 +109,7 @@ describe("service account routes", () => {
   it("lists service accounts for verified human staff", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
-        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+        wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
@@ -136,7 +135,7 @@ describe("service account routes", () => {
   it("creates a service account through the HTTP API and returns the API key once", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
-        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+        wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
@@ -224,7 +223,7 @@ describe("service account routes", () => {
   it("returns 403 when the creator delegates permissions they do not hold", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
-        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+        wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
@@ -289,7 +288,7 @@ describe("service account routes", () => {
   it("returns 403 when a human calls a service-only command", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
-        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+        wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
@@ -311,7 +310,7 @@ describe("service account routes", () => {
   it("updates a service account through the HTTP API", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
-        wrapAuthWithVerifiedAssurance(c.var.auth as AuthSessionProvider)),
+        wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 

@@ -1,16 +1,12 @@
 export { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 export {
-  applyEmailVerificationCallbackUrl,
   resolveAccountInvitationsEnabled,
-  resolveEmailVerificationCallbackUrl,
   resolveInviteBaseUrl,
   resolveWebappOrigin,
   shouldAllowPublicSchoolRegistration,
 } from "@/runtime/shared/env/derived";
 export {
-  resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
-  usesAuthHyperdriveBinding,
   usesHyperdriveBinding,
 } from "@/runtime/shared/env/hyperdrive";
 export { loadDotenvFiles, loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";

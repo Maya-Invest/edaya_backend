@@ -6,7 +6,7 @@ import type { DependencyModule } from "@/http/dependency-injection";
 import type { MiddlewareHandler } from "hono";
 import { closeRequestApiRuntime } from "@/runtime/resolve-api-runtime";
 import type { AppBindings } from "@/http/types";
-import { authDependency } from "./auth";
+import { identityClientDependency } from "./auth";
 import { sessionActorDependency } from "./session-actor";
 import { schoolAppDependency } from "./school-app";
 
@@ -22,6 +22,6 @@ export function createDependenciesInjection(
 
 export const dependenciesInjection = createDependenciesInjection([
   schoolAppDependency,
-  authDependency,
+  identityClientDependency,
   sessionActorDependency,
 ]);

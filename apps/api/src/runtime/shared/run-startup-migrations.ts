@@ -1,11 +1,9 @@
-import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { applyNotifySchemaOnDrizzle } from "@edaya/adaptor-notify";
 import { resolveMigrationDriver, runMigrations as runSchoolMigrations } from "@edaya/adaptor-postgres";
 
-/** School then auth on the same database; each side keeps its own Drizzle journal table. */
+/** Apply school-owned schema only. Identity owns its database and migrations. */
 export async function runStartupMigrations(db: unknown, databaseUrl: string): Promise<void> {
   const driver = resolveMigrationDriver(databaseUrl);
   await runSchoolMigrations(db, { driver });
-  await runAuthMigrations(db, { driver });
   await applyNotifySchemaOnDrizzle(db);
 }

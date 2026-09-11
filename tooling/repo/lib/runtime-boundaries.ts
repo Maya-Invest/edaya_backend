@@ -17,34 +17,34 @@ function readRepoFile(repoRoot: string, relativePath: string): string | null {
 function findWranglerEnvRouteMismatches(wrangler: string): RuntimeBoundaryViolation[] {
   const violations: RuntimeBoundaryViolation[] = []
 
-  for (const envName of ['staging', 'production'] as const) {
+  for (const envName of ['staging', 'prod'] as const) {
     const envBlock = wrangler.match(new RegExp(`"${envName}"\\s*:\\s*\\{([\\s\\S]*?)\\n\\s*\\}(?=,|\\s*\\})`))?.[1]
     if (!envBlock) {
       continue
     }
 
-    const authUrl = envBlock.match(/"BETTER_AUTH_URL"\s*:\s*"([^"]+)"/)?.[1]
+    const apiOrigin = envBlock.match(/"SCHOOL_API_ORIGIN"\s*:\s*"([^"]+)"/)?.[1]
     const routePattern = envBlock.match(/"pattern"\s*:\s*"([^"]+)"/)?.[1]
-    if (!authUrl || !routePattern) {
+    if (!apiOrigin || !routePattern) {
       continue
     }
 
-    let authHost: string
+    let apiHost: string
     try {
-      authHost = new URL(authUrl).hostname
+      apiHost = new URL(apiOrigin).hostname
     }
     catch {
       violations.push({
         label: `wrangler ${envName} route`,
-        message: `env.${envName} BETTER_AUTH_URL is not a valid URL: ${authUrl}`,
+        message: `env.${envName} SCHOOL_API_ORIGIN is not a valid URL: ${apiOrigin}`,
       })
       continue
     }
 
-    if (authHost !== routePattern) {
+    if (apiHost !== routePattern) {
       violations.push({
         label: `wrangler ${envName} route`,
-        message: `env.${envName} routes[0].pattern (${routePattern}) must match BETTER_AUTH_URL host (${authHost})`,
+        message: `env.${envName} routes[0].pattern (${routePattern}) must match SCHOOL_API_ORIGIN host (${apiHost})`,
       })
     }
   }
@@ -162,12 +162,17 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     })
   }
 
-  const authEmailDelivery = readRepoFile(repoRoot, 'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts')
-  if (authEmailDelivery && !authEmailDelivery.includes('env.RUNTIME === "in-memory"')) {
-    violations.push({
-      label: 'in-memory auth email boundary',
-      message: 'resolveAuthEmailDelivery must not use Novu on RUNTIME=in-memory',
-    })
+  for (const relativePath of [
+    'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts',
+    'apps/api/src/runtime/shared/adapters/better-auth.ts',
+    'apps/api/src/runtime/shared/adapters/first-party-auth.ts',
+  ]) {
+    if (existsSync(resolve(repoRoot, relativePath))) {
+      violations.push({
+        label: 'school identity extract',
+        message: `${relativePath} must live in edaya_identity, not the school API`,
+      })
+    }
   }
 
   if (existsSync(resolve(repoRoot, 'apps/cron'))) {
@@ -238,6 +243,13 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
       violations.push({
         label: 'wrangler compatibility date',
         message: 'apps/api/wrangler.jsonc compatibility_date must be 2026-03-24 or later for BROWSER.quickAction',
+      })
+    }
+
+    if (/\bBETTER_AUTH_|\bHYPERDRIVE_AUTH\b|\bAUTH_KV\b|\bALLOW_LEGACY_COOKIE_BUSINESS_AUTH\b|\bCOOKIE_DOMAIN\b/.test(wrangler)) {
+      violations.push({
+        label: 'wrangler identity extract',
+        message: 'apps/api/wrangler.jsonc must not bind Better Auth, AUTH Hyperdrive, AUTH_KV, COOKIE_DOMAIN, or ALLOW_LEGACY_COOKIE_BUSINESS_AUTH',
       })
     }
 

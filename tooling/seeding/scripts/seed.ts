@@ -38,8 +38,6 @@ if (invocation.kind === 'clean') {
   await runSeedCleanup({
     target: invocation.target,
     yes: invocation.yes,
-    school: invocation.school,
-    auth: invocation.auth,
   })
   process.exit(0)
 }
@@ -48,8 +46,6 @@ if (invocation.clean) {
   await runSeedCleanup({
     target: invocation.target,
     yes: true,
-    school: true,
-    auth: true,
   })
 }
 

@@ -1,7 +1,4 @@
-import { registerAuthContracts } from "@/http/auth-contracts";
-import { toBetterAuthHandlerRequest } from "@/http/auth-request";
 import { createRouter } from "@/http/create-app";
-import type { AppBindings } from "@/http/types";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
   getPermissionCatalogHandler,
@@ -48,10 +45,6 @@ import {
   invitationPreviewRoute,
 } from "@/routes/invitation.routes";
 import {
-  markSeedEmailVerifiedHandler,
-  markSeedEmailVerifiedRoute,
-} from "@/routes/seed-auth.routes";
-import {
   createFileUploadIntentHandler,
   createFileUploadIntentRoute,
   getFileContentHandler,
@@ -64,7 +57,6 @@ import {
   putMemoryFileRoute,
 } from "@/routes/file-storage.routes";
 import { createRoute } from "@hono/zod-openapi";
-import type { Context } from "hono";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
@@ -115,18 +107,12 @@ router
   .openapi(getFileDownloadUrlRoute, getFileDownloadUrlHandler)
   .openapi(putMemoryFileRoute, putMemoryFileHandler)
   .openapi(getMemoryFileRoute, getMemoryFileHandler)
-  .openapi(getFileContentRoute, getFileContentHandler)
-  .openapi(markSeedEmailVerifiedRoute, markSeedEmailVerifiedHandler);
+  .openapi(getFileContentRoute, getFileContentHandler);
 
 // Mount routes from route factories
 [...buildCoreRoutes()]
   .forEach(({ route, handler }) => {
     router.openapi(route, handler);
   });
-
-// Mount auth routes
-registerAuthContracts(router);
-router
-  .on(["GET", "POST"], "/auth/*", (c: Context<AppBindings>) => c.var.auth.handler(toBetterAuthHandlerRequest(c)));
 
 export default router;

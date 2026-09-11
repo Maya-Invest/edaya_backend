@@ -44,6 +44,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run_verify == 'true'
     uses: ./.github/workflows/_verify.yml
+    secrets: inherit
 
   integration:
     needs: [gate, verify]
@@ -51,3 +52,4 @@ jobs:
       needs.gate.outputs.run_integration == 'true' &&
       (needs.verify.result == 'success' || needs.verify.result == 'skipped')
     uses: ./.github/workflows/_integration.yml
+    secrets: inherit

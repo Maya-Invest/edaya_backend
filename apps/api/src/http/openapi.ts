@@ -21,7 +21,6 @@ export default function configureOpenAPI(app: AppOpenAPI) {
       layout: "classic",
       sources: [
         { url: "/doc", title: "Core API" },
-        { url: "/auth/open-api/generate-schema", title: "Auth" },
       ],
       defaultHttpClient: {
         targetKey: "js",

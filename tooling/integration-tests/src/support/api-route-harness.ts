@@ -13,4 +13,5 @@ export {
   seedDevSchoolAndAuthLinks,
   signInWithBearerThroughApp,
   signUpAuthUser,
+  testIdentityProvisioner,
 } from '@api-tests/support/core-route-harness'

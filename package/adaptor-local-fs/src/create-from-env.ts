@@ -10,9 +10,9 @@ export interface CreateLocalFileStorageFromEnvOptions {
 }
 
 export function resolveLocalFileStorageSecret(
-  env: Pick<LocalFileStorageEnvironment, "LOCAL_FILES_SECRET" | "BETTER_AUTH_SECRET">,
+  env: Pick<LocalFileStorageEnvironment, "LOCAL_FILES_SECRET">,
 ): string {
-  return env.LOCAL_FILES_SECRET ?? env.BETTER_AUTH_SECRET ?? "super-secret-placeholder-key-for-local-testing";
+  return env.LOCAL_FILES_SECRET ?? "super-secret-placeholder-key-for-local-testing";
 }
 
 export function resolveLocalFileStorageConfig(

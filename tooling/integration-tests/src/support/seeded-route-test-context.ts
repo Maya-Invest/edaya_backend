@@ -7,7 +7,6 @@ import type { ApiRuntime } from '@/runtime'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import {
-  createHandlerAuthProvisioner,
   createInProcessAuthLinkSeedPort,
   runDevAccessSeed,
   runDevAuthLinkWithPort,
@@ -15,11 +14,11 @@ import {
   runIntegrationLightSchoolSeed,
 } from '@edaya/seeding'
 import { afterAll, beforeAll, describe } from 'bun:test'
-import { apiPgliteEnv } from './api-pglite-env'
 import {
   createCoreRouteTestApp,
   resetCoreRouteTestHarness,
   signInWithBearerThroughApp,
+  testIdentityProvisioner,
 } from './api-route-harness'
 
 export type IntegrationFixtureKind = 'light' | 'full'
@@ -157,7 +156,7 @@ export async function provisionSeededRouteTestContext(
     throw new Error(`Expected seeded school fixture, received: ${seedResult.status}`)
   }
 
-  const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
+  const auth = testIdentityProvisioner
   await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth)
   await runDevAccessSeed(application, {
     auth,

@@ -8,7 +8,7 @@ import { expand } from 'dotenv-expand'
 
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 export type MigrationTarget = 'local' | 'staging' | 'production'
-export type MigrationScope = 'full' | 'school' | 'auth'
+export type MigrationScope = 'school'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const repoRoot = path.resolve(packageRoot, '../..')

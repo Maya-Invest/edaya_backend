@@ -129,7 +129,7 @@ async function checkSignIn(
   if (!response.ok) {
     return {
       id: 'S5',
-      label: 'Auth sign-in',
+      label: 'Identity sign-in',
       status: 'failed',
       detail: `${response.status} ${truncateBody(await response.text())}`,
     }
@@ -138,13 +138,13 @@ async function checkSignIn(
   if (!client.cookieHeader()) {
     return {
       id: 'S5',
-      label: 'Auth sign-in',
+      label: 'Identity sign-in',
       status: 'failed',
       detail: 'Sign-in succeeded but no session cookie was set',
     }
   }
 
-  return { id: 'S5', label: 'Auth sign-in', status: 'passed' }
+  return { id: 'S5', label: 'Identity sign-in', status: 'passed' }
 }
 
 async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | undefined> {
@@ -260,7 +260,11 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   const env = loadSmokeStagingEnv()
   const staffEmail = env.staffEmail || MINIMAL_AUTH_FIXTURE_STAFF_EMAIL
   const staffPassword = env.staffPassword || DEV_AUTH_PASSWORD
-  const client = new HttpSeedClient({ baseUrl: env.apiUrl, appOrigin: env.appOrigin })
+  const client = new HttpSeedClient({
+    baseUrl: env.apiUrl,
+    authUrl: env.authUrl,
+    appOrigin: env.appOrigin,
+  })
   const checks: SmokeCheckResult[] = []
 
   checks.push(await checkHealth(client))

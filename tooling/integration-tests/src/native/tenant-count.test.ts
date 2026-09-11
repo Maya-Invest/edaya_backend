@@ -1,7 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '@edaya/service'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { runMigrations } from '@edaya/adaptor-auth'
 import { PostgresSchoolRepositories, PostgresStore } from '@edaya/adaptor-postgres'
 import { ManagedEntityService } from '@edaya/service'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
@@ -31,7 +30,6 @@ const service = new ManagedEntityService({
 
 beforeAll(async () => {
   await new PostgresSchoolRepositories(db).init({ driver: 'node-postgres' })
-  await runMigrations(db, { driver: 'node-postgres' })
   await db.execute(sql`CREATE TABLE rc_tenant_rows (id text PRIMARY KEY, school_id text NOT NULL)`)
   await repository.batchSave([
     { id: '0-foreign', schoolId: 'school-b' },

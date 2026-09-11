@@ -1,4 +1,4 @@
-import type { AuthenticatedSession, AuthSessionProvider } from "@/http/dependencies/session-actor";
+import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import {
   conflictResponse,
@@ -240,8 +240,8 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   }
 
   const session = await resolveAuthenticatedSession(
-    c.var.auth as AuthSessionProvider,
     c.req.raw.headers,
+    c.var.identityClient,
   );
   if (!session) {
     return unauthorizedResponse(c);
@@ -495,8 +495,8 @@ export const onboardingProvisionRoute = createRoute({
 
 export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvisionRoute> = async (c) => {
   const session = await resolveAuthenticatedSession(
-    c.var.auth as AuthSessionProvider,
     c.req.raw.headers,
+    c.var.identityClient,
   );
   if (!session) {
     return unauthorizedResponse(c);

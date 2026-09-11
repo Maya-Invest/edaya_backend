@@ -1,6 +1,5 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
-import { normalizeAuthSession, resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
+import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
@@ -27,6 +26,7 @@ const invitationPreviewResponseSchema = z.object({
   inviteeName: z.string(),
   contactChannel: z.string(),
   contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
   authAccountExists: z.boolean().optional(),
 }).openapi("InvitationPreviewResponse");
 
@@ -163,6 +163,9 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
   if (invitation.contactChannel === AccountInvitationContactChannel.Email && invitation.contactValue) {
     authAccountExists = await c.get("schoolApp").hasAuthAccountForEmail(invitation.contactValue);
   }
+  else if (invitation.contactChannel === AccountInvitationContactChannel.Phone && invitation.contactValue) {
+    authAccountExists = await c.get("schoolApp").hasAuthAccountForPhone(invitation.contactValue);
+  }
 
   return c.json({
     status: invitation.status,
@@ -177,17 +180,19 @@ export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewR
           contactEmail: invitation.contactValue,
           ...(authAccountExists !== undefined ? { authAccountExists } : {}),
         }
-      : {}),
+      : {
+          contactPhone: invitation.contactValue,
+          ...(authAccountExists !== undefined ? { authAccountExists } : {}),
+        }),
   }, HttpStatusCodes.OK);
 };
 
 export const acceptInvitationHandler: AppRouteHandler<typeof acceptInvitationRoute> = async (c) => {
   const session = await resolveAuthenticatedSession(
-    c.var.auth as AuthSessionProvider,
     c.req.raw.headers,
+    c.var.identityClient,
   );
-  const normalized = normalizeAuthSession(session);
-  if (!normalized?.user.email) {
+  if (!session) {
     return unauthorizedResponse(c);
   }
 
@@ -211,8 +216,10 @@ export const acceptInvitationHandler: AppRouteHandler<typeof acceptInvitationRou
   try {
     const result = await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
-      subjectId: normalized.user.id,
-      contactEmail: normalized.user.email,
+      subjectId: session.user.id,
+      contactValue: invitation.contactChannel === AccountInvitationContactChannel.Email
+        ? session.user.email
+        : session.user.phone,
     });
     return c.json(
       serializeCommandResult(result) as z.infer<typeof acceptInvitationResponseSchema>,

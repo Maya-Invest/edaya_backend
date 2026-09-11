@@ -57,7 +57,7 @@ export interface RevokeAccountInvitationInput {
 export interface AcceptAccountInvitationInput {
   token: string
   subjectId: string
-  contactEmail: string
+  contactValue?: string
 }
 
 export type AcceptAccountInvitationResult = LinkSubjectToActorResult
@@ -116,7 +116,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
   async acceptAccountInvitation(input: AcceptAccountInvitationInput): Promise<AcceptAccountInvitationResult> {
     const invitation = await this.requireValidInvitationToken(input.token)
-    this.assertContactEmailMatches(invitation, input.contactEmail)
+    this.assertContactMatches(invitation, input.contactValue)
 
     if (invitation.status === AccountInvitationStatus.Accepted) {
       if (invitation.acceptedSubjectId === input.subjectId) {
@@ -280,16 +280,18 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     return invitation
   }
 
-  private assertContactEmailMatches(invitation: AccountInvitation, contactEmail: string): void {
-    if (invitation.contactChannel !== AccountInvitationContactChannel.Email) {
-      return
-    }
-    const expected = normalizeInvitationEmail(invitation.contactValue)
-    const actual = normalizeInvitationEmail(contactEmail)
+  private assertContactMatches(invitation: AccountInvitation, contactValue: string | undefined): void {
+    const email = invitation.contactChannel === AccountInvitationContactChannel.Email
+    const expected = email
+      ? normalizeInvitationEmail(invitation.contactValue)
+      : normalizeInvitationPhone(invitation.contactValue)
+    const actual = email
+      ? normalizeInvitationEmail(contactValue)
+      : normalizeInvitationPhone(contactValue)
     if (!expected || !actual || expected !== actual) {
       throw new BusinessRuleViolationError(
-        'INVITATION_EMAIL_MISMATCH',
-        'Signed-in email does not match the invitation contact',
+        email ? 'INVITATION_EMAIL_MISMATCH' : 'INVITATION_PHONE_MISMATCH',
+        `Signed-in ${email ? 'email' : 'phone'} does not match the invitation contact`,
       )
     }
   }
@@ -472,4 +474,9 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
 function displayNameFor(entity: StaffMember | Guardian | Student | Teacher): string {
   return resolveInviteeDisplayName(entity)
+}
+
+function normalizeInvitationPhone(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized?.startsWith('+') ? normalized : undefined
 }

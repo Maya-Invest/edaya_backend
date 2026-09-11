@@ -2,18 +2,18 @@
 
 Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_web](../../edaya_web/README.MD)** repo.
 
-The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. In dev, Vite proxies `/core`, `/auth`, `/doc`, and `/reference` to the API so cookies and CORS work without extra setup.
+The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. Identity login targets the sibling identity service; school requests carry its access JWT as a Bearer token.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (repo `packageManager`: `bun@1.3.14`)
-- From the **edaya_backend** repo root: `bun install`
+- **edaya_identity** checked out as a sibling directory, then `bun install` in both repositories
 - **edaya_web** checked out as a sibling directory for the webapp UI
 
 ## First-time setup
 
 ```sh
-# API — persisted PGlite under repo-root `.data/` (school + auth schema)
+# API — persisted school PGlite under repo-root `.data/`
 cp apps/api/.env.example apps/api/.env
 
 # Ops & seeding (remote URLs, Neon connection strings, smoke credentials)
@@ -24,13 +24,16 @@ cd ../edaya_web
 cp apps/webapp/.env.example apps/webapp/.env
 ```
 
-## Start API + webapp
+## Start identity + API + webapp
 
 ```sh
-# Terminal 1 — API on http://localhost:9999, files on :9200 (from edaya_backend/)
+# Terminal 1 — Identity on http://localhost:9900 (from edaya_identity/)
+cd edaya_identity && bun repo dev
+
+# Terminal 2 — School API on http://localhost:9999, files on :9200 (from edaya_backend/)
 cd edaya_backend && bun repo dev
 
-# Terminal 2 — Webapp on http://localhost:5173 (from edaya_web/)
+# Terminal 3 — Webapp on http://localhost:5173 (from edaya_web/)
 cd edaya_web && bun --filter @edaya/webapp dev
 ```
 
@@ -39,16 +42,16 @@ cd edaya_web && bun --filter @edaya/webapp dev
 | Service | URL |
 |---------|-----|
 | Webapp | http://localhost:5173 |
-| API | http://localhost:9999 |
+| School API | http://localhost:9999 |
+| Central Identity | http://localhost:9900 |
 | OpenAPI reference | http://localhost:9999/reference |
 | GraphiQL (entity API) | http://localhost:9999/graphiql |
 
 ## How the webapp reaches the API
 
-- **Browser client** — `$lib/api/school-client.ts` wraps `@maya-invest/edaya-api-client` with `createBrowserTransport()`. Requests use `credentials: 'include'` for Better Auth session cookies and send `X-Academic-Year-Id` from shell context.
-- **API base URL** — `PUBLIC_API_URL` in **edaya_web** `apps/webapp/.env`. Leave **empty** in local dev so requests are same-origin (`/core/...`, `/auth/...`). Set to the API origin in production builds (e.g. `https://api.edayaplus.com`).
-- **Vite proxy (dev)** — `vite.config.ts` forwards `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` to `API_URL` (default `http://localhost:9999`).
-- **Bootstrap** — `bootstrapSession()` loads Better Auth session + `/core/authorization/effective-grants` on app start. List/read data flows through `$lib/api/*-data.ts` and `$lib/queries/*`.
+- **Browser client** — Identity login runs against `PUBLIC_AUTH_URL` (`http://localhost:9900`); school requests use the returned Bearer JWT and never use identity cookies.
+- **API base URL** — `PUBLIC_API_URL` targets the school API (`http://localhost:9999` locally).
+- **Bootstrap** — The webapp obtains an identity access token, then loads `/core/authorization/effective-grants`.
 
 See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for the completed mock → API migration (edaya_web).
 
@@ -56,16 +59,16 @@ See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for 
 
 The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtime-boundaries.md](./runtime-boundaries.md) for the adapter contract.
 
-| Profile | Command | School DB | Auth DB |
-|---------|---------|-----------|---------|
-| **local** | `bun repo dev` | PGlite `.data/school` | PGlite `auth` schema (same DB) |
-| **worker** | `bun --filter @edaya/api dev:worker` | Postgres via Hyperdrive | Postgres `auth` schema via Hyperdrive |
+| Profile | Command | School DB |
+|---------|---------|-----------|
+| **local** | `bun repo dev` | PGlite `.data/school` |
+| **worker** | `bun --filter @edaya/api dev:worker` | Postgres via school Hyperdrive |
 
-Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
+Central Identity is a separate process/Worker with its own database. Tests use `RUNTIME=in-memory` programmatically (ephemeral school PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
-`RUNTIME=local` with `DATABASE_URL=pglite:.data/school` (default). Better Auth tables live in the `auth` schema on the same PGlite database under repo-root `.data/`.
+`RUNTIME=local` uses `DATABASE_URL=pglite:.data/school`. Identity runs separately on port 9900 with its own database.
 
 ## File storage (local dev)
 
@@ -76,7 +79,7 @@ Tests use `RUNTIME=in-memory` programmatically (ephemeral PGlite). Workers use `
 | `LOCAL_FILES_URL` | `http://localhost:9200` |
 | `LOCAL_FILES_ROOT` | `.data/files` |
 | `LOCAL_FILES_PORT` | `9200` (service only) |
-| `LOCAL_FILES_SECRET` | `BETTER_AUTH_SECRET` |
+| `LOCAL_FILES_SECRET` | Explicit local file-service shared secret |
 
 Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentId}/content`. The browser PUTs to `LOCAL_FILES_URL` (CORS allows origins from `TRUSTED_ORIGINS`).
 
@@ -103,7 +106,7 @@ See [api-runtimes.md](./api-runtimes.md).
 | **Notify** | In-process `@edaya/adaptor-notify` (`EMAIL_TRANSPORT=log`) | Unset `NOVU_SECRET_KEY`; Cloudflare Email + optional FCM on the API Worker | Same as staging |
 | **Documents** | In-process `@edaya/adaptor-docs` (stub, or Gotenberg if `GOTENBERG_URL`) | API Worker `BROWSER` binding (Browser Run); optional `GOTENBERG_URL` for `wrangler dev` | Same as staging |
 | **Novu** | Unused unless `NOVU_SECRET_KEY` is set | Unused after notify smoke | Unused after notify smoke |
-| **Auth secret** | `BETTER_AUTH_SECRET` in `.env` | Unique Wrangler secret | Unique Wrangler secret |
+| **Identity directory** | `IDENTITY_DIRECTORY_SECRET` in `.env` | Wrangler secret | Wrangler secret |
 
 **Wrangler secret templates** (from `apps/api/`):
 
@@ -126,20 +129,17 @@ Plain HTTP browser — no extra setup.
 # School data (students, announcements, etc.) — stop `bun repo dev` first
 bun repo db browser school
 
-# Better Auth users/sessions — can run while the API is up
-bun repo db browser auth
 ```
 
-Opens automatically at `http://127.0.0.1:8191` (auth) or `http://127.0.0.1:8192` (school).
+Opens automatically at `http://127.0.0.1:8192`.
 
 | Symptom | Fix |
 |---------|-----|
 | School browser fails to open PGlite | Stop `bun repo dev` first — the API holds the lock on `.data/school` |
-| Only auth tables visible | You ran `db:browser:auth` — use `db:browser:school` for school entities |
 
 ## Dev database seed
 
-Seeding targets the **same local deployment** as `bun repo dev`: school data and auth both live in PGlite (`.data/school`, `auth` schema). After starting the API, run `bun repo seed` in a second terminal to load demo data.
+Seeding targets both local deployments: identity at `http://localhost:9900` and the school API at `http://localhost:9999`. Each service owns its database. After starting both, run `bun repo seed` in another terminal to load demo data.
 
 ### Fresh clone or after wiping `.data/`
 
@@ -160,7 +160,7 @@ bun repo seed    # terminal 2
 
 `bun repo seed` runs the full HTTP seed. On a fresh database the flow is:
 
-1. Provision Better Auth users (`/auth/sign-up`)
+1. Provision central identity users through the identity Worker
 2. Sign in and call `POST /core/onboarding/register-school` when no school exists yet
 3. Seed access roles, provision the seeding service account with the school profile API key
 4. Load demo school data through `/core/*` routes
@@ -185,24 +185,12 @@ See `tooling/fixtures/src/meta/entity-manifest.ts` for entity coverage status.
 
 ### Demo login
 
-In local dev, the webapp `/login` page loads demo picker accounts from `@edaya/fixtures/demo-login`. Sign-in uses Better Auth with password `DevPassword1!`.
+In local dev, the webapp `/login` page signs into the identity service with the demo credentials.
 
-## Auth emails (OTP + signup verification)
+## Identity emails
 
-Better Auth sends **real emails** when the notification router or Novu is configured.
-
-Preferred (in-process notify on `bun repo dev`):
-
-1. Leave `NOVU_SECRET_KEY` unset in `apps/api/.env` (see `.env.example`).
-2. Local email uses `EMAIL_TRANSPORT=log` (OTP / verify URLs also log in the API console unless `AUTH_EMAIL_LOG_OTP=false`).
-
-Legacy Novu fallback: set `NOVU_SECRET_KEY`.
-
-When notify or Novu is set, `REQUIRE_EMAIL_VERIFICATION` defaults to **true**. OTP and verification links are still logged in the API console in development unless `AUTH_EMAIL_LOG_OTP=false`.
-
-**Quick test:** use login **OTP email** on `/login` with your real address, or sign up (Phase 1 UI) once available — you should receive the message in your inbox.
-
-To flush pending notification deliveries locally: `CRON_JOB_KEYS=processDueNotifications bun --filter @edaya/api cron:local` (requires seeded `.data/`). See [cron-runtimes.md](./cron-runtimes.md).
+OTP and signup-verification delivery is owned by `edaya_identity`, not the school Worker.
+Configure and inspect authentication email delivery in the identity repository. The school notification cron handles school-domain notifications only. See [cron-runtimes.md](./cron-runtimes.md).
 
 ## Testing
 
@@ -234,11 +222,10 @@ Before opening a pull request, run `bun run verify`. For integration coverage (H
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
 | `bun repo seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun repo dev`, `rm -rf .data`, restart, `bun repo seed` |
-| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Auth DB empty (seed not run after wipe) | Run `bun repo seed` while API is up |
-| Sign-in succeeds but app shows “Session API indisponible” | Auth user exists but staff actor is not linked | `rm -rf .data` + full reseed, or `bun repo seed --scope auth:link` |
+| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Identity database empty or identity service unavailable | Start `edaya_identity` on port 9900, then run the full seed |
+| Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun repo dev` |
 | Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; leave `PUBLIC_API_URL` empty in dev |
-| `SQLiteError: disk I/O error` on auth | API still running during a wipe | Stop API before `rm -rf .data`, then restart |
 | DB browser fails on school tables | API still running (`bun repo dev`) holds the `.data/school` lock | Stop `bun repo dev`, then run `bun repo db browser school` |
 
 Quick health checks:
@@ -246,10 +233,8 @@ Quick health checks:
 ```sh
 curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
-# Auth users (PGlite auth schema — use db-browser or psql against .data/school)
-# bun repo db browser auth
 bun repo seed --scope doctor                                                    # health check (sign-in + grants + data)
 ```
 
 - **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.
-- **401 after login** — Verify `BETTER_AUTH_URL` matches the API origin and `TRUSTED_ORIGINS` includes `http://localhost:5173`.
+- **401 after login** — Verify the JWT issuer/audience match `IDENTITY_ISSUER` and `SCHOOL_API_ORIGIN`.

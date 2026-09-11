@@ -21,8 +21,6 @@ export type SeedCliInvocation
       kind: 'clean'
       target: SeedHttpTarget
       yes: boolean
-      school: boolean
-      auth: boolean
     }
     | {
       kind: 'seed'
@@ -47,28 +45,17 @@ function readFlagValue(argv: readonly string[], flag: string): string | undefine
   return argv[index + 1]
 }
 
-function parseDbSliceFlags(flagArgs: readonly string[]): { school: boolean, auth: boolean } {
-  const hasSchool = flagArgs.includes('--school')
-  const hasAuth = flagArgs.includes('--auth')
-  if (hasSchool && hasAuth) {
-    throw new Error('Use either --school or --auth, not both.')
-  }
-
-  return {
-    school: !hasAuth,
-    auth: !hasSchool,
-  }
-}
-
 function parseCleanInvocation(flagArgs: readonly string[]): SeedCliInvocation {
-  const { school, auth } = parseDbSliceFlags(flagArgs)
+  if (flagArgs.includes('--auth')) {
+    throw new Error(
+      'Better Auth lives in edaya_identity. From that repo run `bun repo db wipe local --yes` or `bun repo db wipe staging --yes`.',
+    )
+  }
 
   return {
     kind: 'clean',
     target: flagArgs.includes('--staging') ? 'staging' : 'local',
     yes: flagArgs.includes('--yes') || flagArgs.includes('-y'),
-    school,
-    auth,
   }
 }
 
@@ -103,8 +90,8 @@ export function seedCliUsage(): string {
     'Commands:',
     '  bun repo seed                 Full local demo seed',
     '  bun repo seed --staging       Full staging seed',
-    '  bun repo seed clean           Wipe local .data (stop bun repo dev first)',
-    '  bun repo seed clean --staging Wipe staging DB (requires STAGING_DATABASE_URL)',
+    '  bun repo seed clean           Wipe local school .data (stop bun repo dev first)',
+    '  bun repo seed clean --staging Wipe staging school DB (requires STAGING_DATABASE_URL)',
     '  bun repo seed --scope doctor [--repair]',
     '  bun repo seed --scope <name>  Granular scope',
     '',
@@ -118,8 +105,6 @@ export function seedCliUsage(): string {
     '  --skip-attachments       Skip fixture attachment registration',
     '  --no-progress            Disable interactive progress bars',
     '  --yes, -y                With clean: skip confirmation prompt',
-    '  --school                 With clean --staging: truncate school DB only',
-    '  --auth                   With clean --staging: wipe auth only',
     '  -h, --help               Show this help',
     '',
     'Examples:',

@@ -32,4 +32,12 @@ export class SchoolApplication {
     }
     return resolver.hasAccountForEmail(email)
   }
+
+  async hasAuthAccountForPhone(phone: string): Promise<boolean> {
+    const resolver = this.args.authContactResolver
+    if (!resolver?.hasAccountForPhone) {
+      return false
+    }
+    return resolver.hasAccountForPhone(phone)
+  }
 }

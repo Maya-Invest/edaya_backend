@@ -1,10 +1,8 @@
-import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
 import type { BrowserRunBinding } from "@edaya/adaptor-docs";
 import type { CloudflareEmailBinding } from "@edaya/adaptor-notify";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
 import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-queue-cron-job-dispatcher";
 import { z } from "zod";
-import { resolveAuthSecondaryStorage } from "@/runtime/shared/adapters/auth-secondary-storage";
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 
 const envBooleanSchema = z.preprocess((value) => {
@@ -30,16 +28,13 @@ export const EnvSchema = z.object({
   PORT: z.coerce.number().default(9999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DATABASE_URL: z.string(),
-  /** Worker auth DB (cache-disabled Hyperdrive). Falls back to DATABASE_URL when unset. */
-  AUTH_DATABASE_URL: z.string().optional(),
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
-  BETTER_AUTH_SECRET: z.string().default("super-secret-placeholder-key-for-local-testing"),
-  BETTER_AUTH_URL: z.string().url().default("http://localhost:9999"),
+  SCHOOL_API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
+  IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
+  IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
-  COOKIE_DOMAIN: z.string().optional(),
-  /** Temporary coordinated-cutover rollback only; business APIs default to Bearer. */
-  ALLOW_LEGACY_COOKIE_BUSINESS_AUTH: envBooleanSchema.optional(),
   /** Cross-request authorization caching is disabled until shared revisions exist. */
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().min(0).max(0).optional(),
   NOTIFICATION_PROVIDER: z.enum(["in-process", "novu"]).default("in-process"),
@@ -57,14 +52,10 @@ export const EnvSchema = z.object({
   FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: envBooleanSchema.optional(),
-  /** Webapp origin used to build invitation accept links and email-verify login redirects, e.g. http://localhost:5173 */
+  /** Webapp origin used to build invitation accept links, e.g. http://localhost:5173 */
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
-  /** When true, require verified email before password sign-in. Defaults to true when in-process notify or Novu mail is configured. */
-  REQUIRE_EMAIL_VERIFICATION: envBooleanSchema.optional(),
-  /** When false, skip logging auth OTP / verification URLs in development even when Novu sends. */
-  AUTH_EMAIL_LOG_OTP: envBooleanSchema.optional(),
   /** Optional Gotenberg base URL for local / wrangler-dev HTML→PDF (e.g. http://localhost:3000). */
   GOTENBERG_URL: z.string().url().optional(),
   /** When true, schedule report-card PDF render after publishReportCardResult. */
@@ -83,26 +74,29 @@ export const EnvSchema = z.object({
   LOCAL_FILES_URL: z.string().url().optional(),
   /** Local dev file storage root directory (default .data/files) */
   LOCAL_FILES_ROOT: z.string().min(1).optional(),
-  /** Shared secret for local file storage tokens and internal API (defaults to BETTER_AUTH_SECRET) */
+  /** Shared secret for local file storage tokens and internal API */
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
   /** Local one-shot cron (`bun cron:local`): comma-separated job keys; default runs heartbeat tick */
   CRON_JOB_KEYS: z.string().optional(),
 }).superRefine((env, ctx) => {
-  if (env.NODE_ENV === "production"
-    && (env.BETTER_AUTH_SECRET.length < 32 || /placeholder|super-secret|change.?me/i.test(env.BETTER_AUTH_SECRET))) {
+  if (env.NODE_ENV === "production" && env.IDENTITY_DIRECTORY_SECRET === "local-directory-secret") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["BETTER_AUTH_SECRET"],
-      message: "Production requires an explicit random secret of at least 32 characters",
+      path: ["IDENTITY_DIRECTORY_SECRET"],
+      message: "Production requires an explicit identity directory secret",
     });
   }
 });
+
+export interface IdentityServiceBinding {
+  fetch: typeof fetch;
+}
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
   EMAIL?: CloudflareEmailBinding;
   BROWSER?: BrowserRunBinding;
-  authSecondaryStorage?: AuthSecondaryStoragePort;
+  IDENTITY?: IdentityServiceBinding;
 };
 
 export function parseEnv(data: Record<string, unknown>) {
@@ -148,7 +142,6 @@ export function parseRuntimeEnv(
   const bindings = prepareRuntimeBindings(source, runtime);
   const env = parseEnv(bindings);
   const cronJobs = readCronJobsQueueBinding(source);
-  const authSecondaryStorage = resolveAuthSecondaryStorage(runtime, source);
   const email = readEmailBinding(source);
   const browser = readBrowserBinding(source);
 
@@ -157,6 +150,6 @@ export function parseRuntimeEnv(
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
     ...(email ? { EMAIL: email } : {}),
     ...(browser ? { BROWSER: browser } : {}),
-    ...(authSecondaryStorage ? { authSecondaryStorage } : {}),
+    ...(source.IDENTITY ? { IDENTITY: source.IDENTITY as IdentityServiceBinding } : {}),
   };
 }

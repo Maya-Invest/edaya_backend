@@ -2,7 +2,6 @@ import postgres from 'postgres'
 
 const RESET_SQL = `
 DROP SCHEMA IF EXISTS drizzle CASCADE;
-DROP SCHEMA IF EXISTS auth CASCADE;
 DROP SCHEMA IF EXISTS notify CASCADE;
 DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;

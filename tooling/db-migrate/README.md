@@ -1,38 +1,27 @@
 # @edaya/db-migrate
 
-Database migration CLI for EDAYA: school Postgres (Neon / Hyperdrive / PGlite) and Better Auth Postgres (`auth` schema).
+Database migration CLI for the EDAYA school schema (Neon / Hyperdrive / PGlite). Identity migrations run from `edaya_identity`.
 
 | Area | Schema source | SQL migrations |
 |------|---------------|----------------|
 | **School** | `@edaya/adaptor-postgres` | `package/adaptor-postgres/drizzle/` |
-| **Auth** | `@edaya/adaptor-auth` | `package/adaptor-auth/drizzle/auth/` |
 
 ## Commands (monorepo root)
 
 | Command | Scope | Environment |
 |---------|-------|-------------|
-| `bun repo db migrate local` | school + auth | `apps/api/.env` (`pglite:.data/school`) |
-| `bun repo db migrate staging` | school + auth | repo root `.env` (`STAGING_DATABASE_URL`) |
-| `bun repo db migrate production` | school + auth | repo root `.env` (`PRODUCTION_DATABASE_URL`) |
-| `bun repo db reset staging --yes` | drop + re-apply school + auth | staging |
-| `bun repo db reset production --yes` | drop + re-apply school + auth | production |
+| `bun repo db migrate local` | school | `apps/api/.env` (`pglite:.data/school`) |
+| `bun repo db migrate staging` | school | repo root `.env` (`STAGING_DATABASE_URL`) |
+| `bun repo db migrate production` | school | repo root `.env` (`PRODUCTION_DATABASE_URL`) |
+| `bun repo db reset staging --yes` | drop + re-apply school | staging |
+| `bun repo db reset production --yes` | drop + re-apply school | production |
 | `bun repo db flatten` | squash school migrations to one baseline SQL file | repo |
-| `bun repo db migrate local --school` | school only | local |
-| `bun repo db migrate staging --school` | school only | staging |
-| `bun repo db migrate production --school` | school only | production |
-| `bun repo db migrate local --auth` | auth only | local |
-| `bun repo db migrate staging --auth` | auth only | staging |
-| `bun repo db migrate production --auth` | auth only | production |
 
-`bun repo dev` also applies both schemas on startup when `RUN_MIGRATIONS_ON_STARTUP=true` (default for local PGlite).
+`bun repo dev` applies the school and notification schemas on startup when `RUN_MIGRATIONS_ON_STARTUP=true`.
 
-**Migration order:** school runs before auth on `full` migrate/reset. Each side records applied files in its own journal table under the `drizzle` schema:
+School migrations use `drizzle.__drizzle_migrations_school`. Identity migration journals live in the identity database and are not read here.
 
 | Side | Journal table |
 |------|----------------|
 | School | `drizzle.__drizzle_migrations_school` |
-| Auth | `drizzle.__drizzle_migrations_auth` |
-
-Journal `when` timestamps no longer need to be ordered across school and auth. Legacy databases that still use `drizzle.__drizzle_migrations` should be re-seeded locally (`bun repo seed clean --yes` then migrate) or repaired manually on remote hosts.
-
-Schema generation: `bun repo db generate` (school), `bun repo db generate --auth` (auth).
+Schema generation: `bun repo db generate`.

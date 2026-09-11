@@ -31,8 +31,8 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     searchPath: 'apps/api/src',
   },
   {
-    label: 'core imports adaptor-auth',
-    pattern: /from ["']@edaya\/adaptor-auth/,
+    label: 'core imports identity client',
+    pattern: /from ["']@maya-invest\/edaya-identity-client/,
     searchPath: 'package/domain-core/src',
   },
   {
@@ -72,18 +72,28 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
   },
   ...['package/domain-core', 'package/domain-authorization', 'package/domain-service'].map(
     (searchPath): BoundaryCheck => ({
-      label: 'domain package imports adaptor-auth',
-      pattern: /from ["']@edaya\/adaptor-auth/,
+      label: 'domain package imports identity client',
+      pattern: /from ["']@maya-invest\/edaya-identity-client/,
       searchPath,
     }),
   ),
   ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-notify', 'package/adaptor-docs', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
-      label: 'package imports adaptor-auth',
-      pattern: /from ["']@edaya\/adaptor-auth/,
+      label: 'package imports identity client',
+      pattern: /from ["']@maya-invest\/edaya-identity-client/,
       searchPath,
     }),
   ),
+  {
+    label: 'school imports adaptor-auth',
+    pattern: /from ["']@edaya\/adaptor-auth/,
+    searchPath: 'apps/api/src',
+  },
+  {
+    label: 'school packages import adaptor-auth',
+    pattern: /from ["']@edaya\/adaptor-auth/,
+    searchPath: 'package',
+  },
 ]
 
 function* walkFiles(directory: string): Generator<string> {

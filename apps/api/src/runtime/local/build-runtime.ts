@@ -1,13 +1,16 @@
 import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
 import { buildSchoolApplication } from "@/runtime/shared/school-application";
 import { runMigrationsOnStartup } from "@/runtime/local/profile";
-import { createAuthDatabase } from "@/runtime/local/auth-database";
 import { createSchoolDatabase } from "@/runtime/local/school-database";
 import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 
-export async function buildLocalApiRuntime(env: Environment): Promise<ApiRuntime> {
+export async function buildLocalApiRuntime(
+  env: Environment,
+  extras?: { identityClient?: IdentityClient },
+): Promise<ApiRuntime> {
   if (env.RUNTIME !== "local") {
     throw new Error("buildLocalApiRuntime() requires RUNTIME=local.");
   }
@@ -17,16 +20,14 @@ export async function buildLocalApiRuntime(env: Environment): Promise<ApiRuntime
   if (runMigrations) {
     await runStartupMigrations(schoolHandle.db, env.DATABASE_URL);
   }
-  const authHandle = await createAuthDatabase(schoolHandle, env, { runMigrations: false });
-
   return createApiRuntime({
     env,
-    authHandle,
+    identityClient: extras?.identityClient,
     resolveSchoolHandle: async () => schoolHandle,
     initSchoolApplication: (db, extras) => buildSchoolApplication(db, {
       databaseUrl: env.DATABASE_URL,
       env,
-      authDb: authHandle.db,
+      identityDirectory: extras.identityClient.directory,
       notifyRuntime: extras.notifyRuntime,
       runMigrations: false,
     }),

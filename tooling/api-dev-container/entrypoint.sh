@@ -9,6 +9,9 @@ cleanup() {
 }
 trap cleanup SIGTERM SIGINT EXIT
 
+echo "> Starting identity on :9900"
+(cd /edaya_identity && bun --filter @edaya/identity start) &
+
 echo "> Starting local file server on :9200"
 bun --filter @edaya/local-files-server start &
 

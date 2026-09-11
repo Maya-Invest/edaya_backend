@@ -5,13 +5,6 @@
     "title": "Edaya Core API"
   },
   "components": {
-    "securitySchemes": {
-      "FirstPartyAccess": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "Short-lived Edaya access token from /auth/edaya/access-token. External OAuth tokens and renewal credentials are not accepted."
-      }
-    },
     "schemas": {
       "EffectiveGrantsResponse": {
         "type": "object",
@@ -2049,6 +2042,9 @@
           "contactEmail": {
             "type": "string",
             "format": "email"
+          },
+          "contactPhone": {
+            "type": "string"
           },
           "authAccountExists": {
             "type": "boolean"
@@ -4342,15 +4338,15 @@
             "type": "string",
             "minLength": 1
           },
-          "contactEmail": {
+          "contactValue": {
             "type": "string",
-            "format": "email"
+            "minLength": 1
           }
         },
         "required": [
           "token",
           "subjectId",
-          "contactEmail"
+          "contactValue"
         ]
       },
       "StaffAssignment": {
@@ -13198,57 +13194,6 @@
         "required": [
           "entities"
         ]
-      },
-      "ConnectedApp": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string"
-          },
-          "clientName": {
-            "type": "string"
-          },
-          "purpose": {
-            "type": "string"
-          },
-          "schoolId": {
-            "type": "string"
-          },
-          "studentIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "clientId",
-          "clientName",
-          "purpose",
-          "schoolId",
-          "studentIds",
-          "scopes",
-          "createdAt",
-          "expiresAt"
-        ]
       }
     },
     "parameters": {}
@@ -16199,141 +16144,6 @@
           },
           "500": {
             "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/dev/seed/mark-email-verified": {
-      "post": {
-        "tags": [
-          "Dev Seed"
-        ],
-        "summary": "Mark a Better Auth user email-verified (seed / local only)",
-        "requestBody": {
-          "description": "User to mark verified",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "subjectId": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "User marked email-verified",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "ok"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing seed provision header or body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Not available in production Workers",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Failed to update user",
             "content": {
               "application/json": {
                 "schema": {
@@ -95566,197 +95376,6 @@
                   "example": {
                     "message": "Hello World"
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/edaya/connected-apps": {
-      "get": {
-        "operationId": "listConnectedApps",
-        "tags": [
-          "Connected Apps"
-        ],
-        "summary": "List the signed-in parent's active delegations",
-        "security": [
-          {
-            "FirstPartyAccess": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[\\w-]{1,100}$"
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Up to 50 grants in stable ID order. Use nextCursor for the next page.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ConnectedApp"
-                      }
-                    },
-                    "nextCursor": {
-                      "type": "string",
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid cursor",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid first-party access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/edaya/connected-apps/{grantId}/revoke": {
-      "post": {
-        "operationId": "revokeConnectedApp",
-        "tags": [
-          "Connected Apps"
-        ],
-        "summary": "Immediately revoke an owned delegation",
-        "security": [
-          {
-            "FirstPartyAccess": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "grantId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Revoked, including an already-revoked owned grant",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid first-party access token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Unknown grant or grant owned by another user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Authentication request quota exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ]
                 }
               }
             }

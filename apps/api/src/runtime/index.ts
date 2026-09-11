@@ -1,5 +1,3 @@
-export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
-
 /**
  * Public runtime API — prefer importing from `@/runtime`.
  *
@@ -10,7 +8,6 @@ export { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
  * Wrangler alias → worker).
  */
 export {
-  applyEmailVerificationCallbackUrl,
   type Environment,
   inferRuntimeKind,
   loadDotenvFiles,
@@ -19,22 +16,18 @@ export {
   parseRuntimeEnv,
   prepareRuntimeBindings,
   resolveAccountInvitationsEnabled,
-  resolveAuthDatabaseUrl,
   resolveDatabaseUrl,
-  resolveEmailVerificationCallbackUrl,
   resolveInviteBaseUrl,
   resolveRepoLocalDatabaseUrl,
   resolveRepoLocalDataPath,
   resolveRepoRoot,
   resolveWebappOrigin,
   shouldAllowPublicSchoolRegistration,
-  usesAuthHyperdriveBinding,
   usesHyperdriveBinding,
 } from "@/runtime/shared/env";
 
 export type {
   ApiRuntime,
-  AuthService,
   DatabaseHandle,
   RuntimeBindings,
   RuntimeKind,

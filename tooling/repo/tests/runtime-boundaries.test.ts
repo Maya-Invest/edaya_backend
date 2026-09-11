@@ -39,7 +39,6 @@ describe('findRuntimeBoundaryViolations', () => {
     writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/local-files-server"]\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/notification-gateway.ts', 'env.RUNTIME === "in-memory"\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/document-renderer.ts', 'env.RUNTIME === "in-memory"\n')
-    writeFile(root, 'apps/api/src/runtime/shared/adapters/auth-email-delivery.ts', 'env.RUNTIME === "in-memory"\n')
   }
 
   test('reports no violations for the current repo', () => {
@@ -123,6 +122,22 @@ describe('findRuntimeBoundaryViolations', () => {
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'local dev orchestrator',
         message: 'start-local-dev.ts must not start Gotenberg or a docs process',
+      }])
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('reports leftover Better Auth adapters on the school API', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
+    try {
+      writeBaselineRepoFiles(root)
+      writeFile(root, 'apps/api/src/runtime/shared/adapters/better-auth.ts', 'export {}\n')
+
+      expect(findRuntimeBoundaryViolations(root)).toEqual([{
+        label: 'school identity extract',
+        message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in edaya_identity, not the school API',
       }])
     }
     finally {

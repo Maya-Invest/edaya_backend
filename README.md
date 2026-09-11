@@ -22,25 +22,24 @@ edaya_backend/
 │   ├── adaptor-docs/                     @edaya/adaptor-docs — in-process PDF rendering
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
-│   ├── adaptor-auth/                     @edaya/adaptor-auth — Better Auth schema + runtime migrations
 │   └── api-client/                       @maya-invest/edaya-api-client — typed school API SDK
 └── tooling/
     ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
     ├── client-codegen/                   @edaya/client-codegen — OpenAPI client generator
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
-    ├── db-migrate/                       @edaya/db-migrate — school + auth + notify-schema CLI
+    ├── db-migrate/                       @edaya/db-migrate — school-schema CLI
     ├── novu-ops/                         @edaya/novu-ops — Novu bootstrap + subscriber cleanup
     ├── local-files-server/               @edaya/local-files-server — local upload HTTP service
     ├── integration-tests/                @edaya/integration-tests (+ smoke/)
     └── api-dev-container/                scripts only (no package.json) — Apple Container API image
 ```
 
-**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Domain packages must not import `@edaya/adaptor-auth`. `tooling/db-migrate` owns migration CLI scripts; `tooling/novu-ops` owns Novu bootstrap/cleanup CLI; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Identity and Better Auth live in sibling `edaya_identity`. `tooling/db-migrate` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: entity types and ports live in `@edaya/core`; authorization in `@edaya/authorization`; school orchestration (`SchoolService`) in `@edaya/service`; portable Postgres persistence in `@edaya/adaptor-postgres`; Better Auth persistence in `@edaya/adaptor-auth`; migration CLI in `@edaya/db-migrate`; the API wires runtime and HTTP. Web clients consume the API through `@maya-invest/edaya-api-client` in **edaya_web**.
+The codebase follows a **ports-and-adapters** layout: entity types and ports live in `@edaya/core`; authorization in `@edaya/authorization`; school orchestration (`SchoolService`) in `@edaya/service`; portable Postgres persistence in `@edaya/adaptor-postgres`; migration CLI in `@edaya/db-migrate`; the API verifies central identity JWTs and uses the identity directory client. Web clients consume the API through `@maya-invest/edaya-api-client`.
 
 ```mermaid
 flowchart TB
@@ -59,7 +58,6 @@ flowchart TB
     Authz["@edaya/authorization"]
     Service["@edaya/service"]
     PG["@edaya/adaptor-postgres"]
-    Auth["@edaya/adaptor-auth"]
     DbMigrate["@edaya/db-migrate"]
   end
 
@@ -70,22 +68,18 @@ flowchart TB
   API --> Authz
   API --> Core
   API --> PG
-  API --> Auth
   Service --> Authz
   Authz --> Core
   PG -.->|implements ports| Core
   DbMigrate --> PG
-  DbMigrate --> Auth
-  DbMigrate -.->|migrate:full| DbMigrate
   PG --> SchoolDB[(Postgres / PGlite)]
-  Auth --> AuthDB[(Postgres auth schema)]
 ```
 
 ### Request flow
 
-1. **Web clients** — Static browser SPAs in **edaya_web** call the API through `@maya-invest/edaya-api-client`. In local development, Vite proxies same-origin `/core`, `/auth`, `/doc`, `/reference`, `/graphql`, and `/graphiql` requests to `API_URL`. Production builds use `PUBLIC_API_URL` when the API is not same-origin.
+1. **Web clients** — Browser SPAs call identity for `/auth/*`, then call the school API with the issued Bearer JWT through `@maya-invest/edaya-api-client`.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
-3. **Runtime** — Opens the school Postgres DB and auth store (same Neon/PGlite, `auth` schema), runs migrations, wires Better Auth, and builds `SchoolApplication` with Postgres repositories.
+3. **Runtime** — Opens only the school Postgres DB, runs school migrations, wires the central identity JWT/directory client, and builds `SchoolApplication`.
 4. **Service** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
 ### API runtimes
@@ -134,7 +128,6 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 | `@edaya/adaptor-docs` | `package/adaptor-docs` | In-process PDF rendering |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | Worker `FileStoragePort` adapter |
 | `@edaya/adaptor-local-fs` | `package/adaptor-local-fs` | Local-dev `FileStoragePort` adapter |
-| `@edaya/adaptor-auth` | `package/adaptor-auth` | Better Auth Drizzle schema, SQL migrations, runtime `runMigrations()` |
 | `@maya-invest/edaya-api-client` | `package/api-client` | Type-safe client for entities, commands, queries (generated bindings) |
 
 ### Tooling
@@ -258,9 +251,11 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | `pglite:.data/school` (local), `pglite` (in-memory tests); Postgres via Hyperdrive on `worker` |
-| `BETTER_AUTH_SECRET` | Auth signing secret |
-| `BETTER_AUTH_URL` | Public API URL for auth callbacks |
-| `TRUSTED_ORIGINS` | CORS / auth origins (e.g. webapp URL) |
+| `SCHOOL_API_ORIGIN` | JWT audience and public school API origin |
+| `IDENTITY_ISSUER` | Central identity JWT issuer; JWKS is resolved at `/.well-known/jwks.json` |
+| `IDENTITY_DIRECTORY_URL` | Central identity internal directory base URL |
+| `IDENTITY_DIRECTORY_SECRET` | Shared directory credential (secret) |
+| `TRUSTED_ORIGINS` | School API CORS origins |
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
 

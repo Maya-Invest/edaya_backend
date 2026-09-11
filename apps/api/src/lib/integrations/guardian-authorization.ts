@@ -1,11 +1,29 @@
-import type { DelegationGrant } from "@edaya/adaptor-auth";
 import type { GuardianActorMetadata } from "@edaya/authorization";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { DelegationAuthorization, DelegationSelection } from "@/runtime/shared/adapters/external-oauth";
 import { randomUUID } from "node:crypto";
 import { AuthorizationError, AuthorizationErrorCode, createGuardianActorMetadata } from "@edaya/authorization";
 import { StudentClassEnrollmentStatus } from "@edaya/core";
 import { externalOAuthScopes } from "./scopes";
+
+interface DelegationGrant {
+  subjectId: string;
+  schoolId: string;
+  guardianId: string;
+  studentIds: string[];
+  createdAt: Date;
+  scopes?: string[];
+}
+
+interface DelegationSelection {
+  schoolId: string;
+  studentIds: string[];
+  scopes: string[];
+}
+
+interface DelegationAuthorization {
+  authorizeSelection: (subjectId: string, selection: DelegationSelection) => Promise<{ guardianId: string }>;
+  isGrantCurrent: (grant: DelegationGrant) => Promise<boolean>;
+}
 
 function denied(): never {
   throw new AuthorizationError(AuthorizationErrorCode.Forbidden);

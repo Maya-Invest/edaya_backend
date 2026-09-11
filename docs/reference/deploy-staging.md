@@ -2,7 +2,7 @@
 
 Isolated Cloudflare staging environment for validating deploys before production. See [staging-environment-plan.md](../sprints/staging-environment-plan.md) for goals and architecture.
 
-**Domains:** `staging.api.edayaplus.com` · `staging.app.edayaplus.com` · `staging.admin.edayaplus.com`
+**Domains:** `staging.api.school.edayaplus.com` · `staging.app.school.edayaplus.com` · `staging.admin.edayaplus.com` · `staging.identity.edayaplus.com`
 
 ---
 
@@ -18,7 +18,7 @@ Create a dedicated branch (e.g. `staging`) in Neon. Store the connection string 
 
 Neon **staging** branch: `br-flat-union-ahedlz5i` on project `calm-brook-83532792` (edaya).
 
-Create **two** Hyperdrive configs from the Neon staging connection string (not production):
+Create one school Hyperdrive config from the Neon staging connection string (not production):
 
 ```sh
 cd apps/api
@@ -26,35 +26,19 @@ cd apps/api
 bunx wrangler hyperdrive create edaya-staging \
   --connection-string="$STAGING_DATABASE_URL"
 
-# Better Auth (cache disabled — required for sign-up → sign-in consistency)
-bunx wrangler hyperdrive create edaya-staging-auth-fresh \
-  --connection-string="$STAGING_DATABASE_URL" \
-  --caching-disabled
 ```
 
 Copy the returned config ids into `apps/api/wrangler.jsonc`:
 
 - `env.staging.hyperdrive` → binding `HYPERDRIVE` (cached)
-- `env.staging.hyperdrive` → binding `HYPERDRIVE_AUTH` (cache-disabled)
 
 **Do not commit** `STAGING_DATABASE_URL` — store it in repo root `.env` (gitignored) or your secret manager.
 
-Auth must use a cache-disabled Hyperdrive path. Hyperdrive does not invalidate cached reads after writes; Better Auth sign-up followed by sign-in fails with stale “user already exists” / “invalid password” when auth goes through a cached config.
-
 School `HYPERDRIVE` may keep query cache enabled. Staging seed retries a few read-after-write 403s (domain maps missing rows to forbidden) when Hyperdrive serves stale school reads during population.
 
-### 2b. Auth KV (staging)
+### 2b. Central identity
 
-Create a KV namespace for Better Auth secondary storage (session hot reads):
-
-```sh
-cd apps/api
-bunx wrangler kv namespace create edaya-auth-staging
-```
-
-Copy the returned id into `apps/api/wrangler.jsonc` → `env.staging.kv_namespaces` binding `AUTH_KV`.
-
-Worker runtime resolves the `AUTH_KV` binding through `AuthSecondaryStoragePort` (`@edaya/adaptor-auth`). Postgres remains the source of truth via `HYPERDRIVE_AUTH` (cache-disabled); KV accelerates `getSession` without re-enabling Hyperdrive query cache.
+Deploy `edaya_identity` first (own Neon, Hyperdrive `HYPERDRIVE_AUTH`, Email, JWKS, directory secret). Bind school `IDENTITY` to Worker `edaya-identity-staging`. JWT verification uses the issuer JWKS. See [central-identity.md](./central-identity.md) and sibling `edaya_identity/docs/deploy.md`.
 
 ### 3. Custom domains
 
@@ -62,8 +46,9 @@ Attach routes in Cloudflare for:
 
 | Host | Worker |
 |------|--------|
-| `staging.api.edayaplus.com` | `edaya-api-staging` |
-| `staging.app.edayaplus.com` | `edaya-webapp-staging` |
+| `staging.api.school.edayaplus.com` | `edaya-api-staging` |
+| `staging.identity.edayaplus.com` | `edaya-identity-staging` |
+| `staging.app.school.edayaplus.com` | `edaya-webapp-staging` |
 | `staging.admin.edayaplus.com` | `edaya-webadmin-staging` |
 
 Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
@@ -75,17 +60,17 @@ cd apps/api
 cp secrets.json.example secrets.staging.json   # fill values
 bunx wrangler secret bulk secrets.staging.json --env staging
 # Or individually:
-bunx wrangler secret put BETTER_AUTH_SECRET --env staging
+bunx wrangler secret put IDENTITY_DIRECTORY_SECRET --env staging
 ```
 
-Use a **unique** `BETTER_AUTH_SECRET` for staging (not the production value). Staging uses the **dev** Novu API key (same as local `.env`).
+Use the directory secret shared with the staging identity Worker. Staging uses the **dev** Novu API key (same as local `.env`).
 
 ---
 
 ## First-time bootstrap
 
 ```sh
-# 1. School + auth schema on Neon staging branch
+# 1. School schema on Neon staging branch (identity migrates separately)
 STAGING_DATABASE_URL=postgres://… bun repo db migrate staging
 
 # 2. Deploy API + web apps (edaya_web repo)
@@ -105,7 +90,7 @@ bun repo seed --staging
 bun repo smoke-test staging
 ```
 
-**Auth assurance (prod-identical):** interactive `assuranceLevel` is derived from Better Auth `user.emailVerified` (`standard` = unverified, `verified` = verified; `strong` reserved for future 2FA). Staging sets `REQUIRE_EMAIL_VERIFICATION=true` like production. Demo seed marks provisioned accounts `email_verified = true` so password login still works for fixture staff.
+**Auth assurance:** interactive `assuranceLevel` is derived from the verified identity JWT `email_verified` claim.
 
 ---
 
@@ -121,7 +106,6 @@ bun run verify   # includes check openapi
 
 ```sh
 STAGING_DATABASE_URL=postgres://… bun repo db migrate staging   # when schema changed
-bun repo db migrate staging                                      # school + auth schema when either changed
 bun repo deploy api staging                                      # or merge to `staging` with API path changes
 bun run deploy:webapp:staging
 bun run deploy:webadmin:staging
@@ -148,8 +132,9 @@ Reads repo root `.env` when present, or env vars:
 
 | Variable | Default |
 |----------|---------|
-| `SEED_STAGING_API_URL` | `https://staging.api.edayaplus.com` |
-| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `https://staging.api.school.edayaplus.com` |
+| `SEED_STAGING_AUTH_URL` | `https://staging.identity.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.school.edayaplus.com` |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 
@@ -159,12 +144,12 @@ Reads repo root `.env` when present, or env vars:
 | S2 | `GET /doc` or `/reference` |
 | S3 | CORS allows trusted app origin |
 | S4 | CORS rejects unknown origin |
-| S5 | Better Auth sign-in + session cookie |
+| S5 | Identity sign-in + school JWT verification |
 | S6 | `GET /core/authorization/effective-grants` |
 | S7 | Service account Bearer → entity list (school profile key) |
 | S8 | Seeded school visible via Hyperdrive |
 
-**Tier 2 (manual):** browser login on `app-staging…`, demo data in UI, Safari cross-subdomain cookies.
+**Tier 2 (manual):** browser login on the staging app, demo data in UI, and Bearer-token school requests.
 
 ---
 
@@ -175,7 +160,7 @@ Reads repo root `.env` when present, or env vars:
 | `bun repo deploy api staging` | Deploy API Worker (`--env staging`); also runs from CI on merge |
 | `bun run deploy:webapp:staging` | Build with staging `PUBLIC_API_URL` + deploy webapp |
 | `bun run deploy:webadmin:staging` | Build with staging `PUBLIC_API_URL` + deploy webadmin (`edaya_web`) |
-| `bun repo db migrate staging` | School + auth migrations → staging Neon (`STAGING_DATABASE_URL`) |
+| `bun repo db migrate staging` | School migrations → staging Neon (`STAGING_DATABASE_URL`) |
 | `bun repo seed --staging` | Full HTTP seed against `SEED_STAGING_API_URL` |
 | `bun repo smoke-test staging` | Tier 1 HTTP smoke against staging |
 
@@ -186,13 +171,12 @@ Reads repo root `.env` when present, or env vars:
 | Symptom | Likely cause |
 |---------|--------------|
 | Deploy fails on Hyperdrive | Placeholder ID still in `wrangler.jsonc` |
-| S5 sign-in fails on seed | Auth users missing — re-run `seed:init` (provisions auth before session bootstrap) |
+| S5 sign-in fails on seed | Identity users missing or identity Worker unavailable — verify `SEED_STAGING_AUTH_URL`, then re-run `seed:init` |
 | `MISSING_OR_NULL_ORIGIN` on seed | Ensure `SEED_STAGING_APP_ORIGIN` is set in repo root `.env` (seed CLI sends it as `Origin`) |
-| `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Stale auth row from interrupted bootstrap — `seed:init` auto-deletes and recreates on staging (`SEED_AUTH_REPAIR_STALE=false` to disable) |
-| `sign-in 503` / Worker exceeded resource limits | Redeploy API staging after auth lazy-load fix: `bun repo deploy api staging` |
-| `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `db:migrate:staging` |
-| `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations_school` with a future `created_at` blocks pending school files — re-run `db:migrate:staging` (auto-repairs orphans) or delete unknown-hash rows manually |
-| `relation "user" already exists` during auth migrate | Stale legacy `drizzle.__drizzle_migrations` row or auth applied outside Drizzle — inspect `drizzle.__drizzle_migrations_auth` and auth tables; re-run `bun repo db migrate staging --auth` after cleanup |
+| `sign-in 401 INVALID_EMAIL_OR_PASSWORD` + user exists | Inspect the identity Worker/database and rerun identity seed provisioning |
+| `account_kind` does not exist | School migration `0014_service_accounts` not applied — run `bun repo db migrate staging` |
+| `db:migrate:staging` succeeds but schema still old | Orphan row in `drizzle.__drizzle_migrations_school` with a future `created_at` blocks pending school files — re-run `bun repo db migrate staging` (auto-repairs orphans) or delete unknown-hash rows manually |
+| `relation "user" already exists` during identity migrate | Stale identity journal — from `edaya_identity` inspect `drizzle.__drizzle_migrations_auth`, then `bun repo db migrate` |
 | `waitForApi` timeout | API not deployed yet, or DNS still propagating — verify `curl https://api-staging…/` returns 200 |
 | S6 401 | Staff not linked to auth subject — run `seed:init` / `seed:staging` |
 | S8 missing school | School seed not applied; run `seed:staging` |

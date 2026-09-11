@@ -2,8 +2,9 @@ import type { PinoLogger } from "hono-pino";
 
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { Environment } from "@/runtime/shared/env/schema";
-import type { ApiRuntime, AuthService } from "@/runtime/types";
+import type { ApiRuntime } from "@/runtime/types";
 import type { ActorMetadata } from "@edaya/authorization";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 
 export interface AppBindings {
   Bindings: Environment;
@@ -11,7 +12,7 @@ export interface AppBindings {
     logger: PinoLogger;
     apiRuntime?: ApiRuntime;
     schoolApp: ApiSchoolApplication;
-    auth: AuthService;
+    identityClient: IdentityClient;
     actor: ActorMetadata | null;
   };
 }

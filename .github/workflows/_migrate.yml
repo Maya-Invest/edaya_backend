@@ -12,6 +12,8 @@ on:
         required: false
       PRODUCTION_DATABASE_URL:
         required: false
+      IDENTITY_CHECKOUT_TOKEN:
+        required: false
 
 jobs:
   migrate:
@@ -20,6 +22,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Checkout identity client
+        uses: ./.github/actions/checkout-identity-client
+        with:
+          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -49,7 +56,7 @@ jobs:
             exit 1
           fi
 
-      - name: Migrate school + auth schema
+      - name: Migrate school schema
         env:
           STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}

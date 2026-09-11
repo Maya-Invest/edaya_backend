@@ -8,6 +8,7 @@ import { loadRepoEnvFile } from '../../../seeding/src/support/load-repo-env'
 import {
   resolveStagingAppOrigin,
   resolveStagingSeedApiUrl,
+  resolveStagingSeedAuthUrl,
 } from '../../../seeding/src/support/resolve-seed-env'
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -15,6 +16,7 @@ const repoRoot = path.resolve(packageRoot, '../..')
 
 export interface SmokeStagingEnv {
   apiUrl: string
+  authUrl: string
   appOrigin: string
   staffEmail: string
   staffPassword: string
@@ -33,6 +35,7 @@ export function loadSmokeStagingEnv(options?: { loadEnvFile?: boolean }): SmokeS
 
   return {
     apiUrl,
+    authUrl: resolveStagingSeedAuthUrl(),
     appOrigin,
     staffEmail: process.env['SMOKE_STAFF_EMAIL']?.trim() ?? '',
     staffPassword: process.env['SMOKE_STAFF_PASSWORD']?.trim() ?? '',

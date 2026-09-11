@@ -15,21 +15,21 @@
     }
   ],
   "alias": {
-    "@/runtime/resolve-api-runtime": "./src/runtime/worker/resolve-api-runtime.ts"
+    "@/runtime/resolve-api-runtime": "./src/runtime/worker/resolve-api-runtime.ts",
+    "@maya-invest/edaya-identity-client": "../../../edaya_identity/package/identity-client/src/index.ts"
   },
   "dev": {
     "port": 9999
   },
   //
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
-  // [env.*] bindings — HYPERDRIVE (school, cached), HYPERDRIVE_AUTH (auth, cache-disabled), AUTH_KV, CRON_JOBS
-  // Secrets          — BETTER_AUTH_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
+  // [env.*] bindings — HYPERDRIVE (school), IDENTITY (optional service binding), CRON_JOBS
+  // Secrets          — IDENTITY_DIRECTORY_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
   //                    FCM_SERVICE_ACCOUNT_JSON (in-process notify),
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-  // Bindings         — HYPERDRIVE, HYPERDRIVE_AUTH, AUTH_KV, CRON_JOBS, EMAIL, BROWSER
+  // Bindings         — HYPERDRIVE, IDENTITY, CRON_JOBS, EMAIL, BROWSER
   //                    (Browser Run Quick Actions; enable in the Cloudflare dashboard after deploy)
   // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
-  //                    CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH
   //                    GOTENBERG_URL (optional; Miniflare does not implement quickAction)
   // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, GRAPHQL_*
   "observability": {
@@ -42,23 +42,16 @@
     // Staging (`wrangler deploy --env staging`):
     "staging": {
       "name": "edaya-api-staging",
-      // School Hyperdrive. Add HYPERDRIVE_AUTH (cache-disabled) for Better Auth once created
-      // (see docs/reference/deploy-staging.md). Until then, disable caching on this config
-      // or auth sign-up → sign-in will fail after the pg driver switch.
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
           "id": "c6b9a94e449647d78f7c49591ba301e6"
-        },
-        {
-          "binding": "HYPERDRIVE_AUTH",
-          "id": "e08656297f69446c8eea3d1ded0268d5"
         }
       ],
-      "kv_namespaces": [
+      "services": [
         {
-          "binding": "AUTH_KV",
-          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
+          "binding": "IDENTITY",
+          "service": "edaya-identity-staging"
         }
       ],
       "send_email": [
@@ -73,23 +66,22 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://staging.api.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
-        "COOKIE_DOMAIN": "edayaplus.com",
+        "SCHOOL_API_ORIGIN": "https://staging.api.school.edayaplus.com",
+        "IDENTITY_ISSUER": "https://staging.identity.edayaplus.com",
+        "IDENTITY_DIRECTORY_URL": "https://staging.identity.edayaplus.com",
+        "TRUSTED_ORIGINS": "https://staging.app.school.edayaplus.com,https://staging.admin.edayaplus.com",
+        "WEBAPP_ORIGIN": "https://staging.app.school.edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "0",
         "NOVU_API_URL": "https://api.novu.co",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "AUTH_EMAIL_LOG_OTP": "false",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
       "routes": [
         {
-          "pattern": "staging.api.edayaplus.com",
+          "pattern": "staging.api.school.edayaplus.com",
           "custom_domain": true
         }
       ],
@@ -121,34 +113,29 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "BETTER_AUTH_URL": "https://api.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://app.edayaplus.com",
-        "COOKIE_DOMAIN": "edayaplus.com",
+        "SCHOOL_API_ORIGIN": "https://api.school.edayaplus.com",
+        "IDENTITY_ISSUER": "https://identity.edayaplus.com",
+        "IDENTITY_DIRECTORY_URL": "https://identity.edayaplus.com",
+        "TRUSTED_ORIGINS": "https://app.school.edayaplus.com,https://admin.edayaplus.com",
+        "WEBAPP_ORIGIN": "https://app.school.edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "0",
         "NOVU_API_URL": "https://api.novu.co",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "AUTH_EMAIL_LOG_OTP": "false",
         "R2_BUCKET_NAME": "edaya-files-production"
       },
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
           "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
-        },
-        {
-          "binding": "HYPERDRIVE_AUTH",
-          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
         }
       ],
-      "kv_namespaces": [
+      "services": [
         {
-          "binding": "AUTH_KV",
-          "id": "5381bed94af74b478886d49ef52f1a52"
+          "binding": "IDENTITY",
+          "service": "edaya-identity"
         }
       ],
       "send_email": [
@@ -161,7 +148,7 @@
       },
       "routes": [
         {
-          "pattern": "api.edayaplus.com",
+          "pattern": "api.school.edayaplus.com",
           "custom_domain": true
         }
       ],

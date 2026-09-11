@@ -2,7 +2,7 @@
 
 Portable Postgres persistence for EDAYA: Drizzle schema, SQL migrations, and repository implementations.
 
-Migration apply scripts for Neon / Hyperdrive and Better Auth D1 live in `@edaya/db-migrate`.
+Migration apply scripts for Neon / Hyperdrive live in `@edaya/db-migrate`. Identity migrations live in `edaya_identity`.
 
 ## Scripts
 
@@ -21,7 +21,6 @@ bun repo db generate
 
 # Browse local dev tables (loads apps/api/.env; stop the API first for PGlite)
 bun repo db browser school
-bun repo db browser auth
 ```
 
 Apply migrations with `@edaya/db-migrate` (`bun repo db migrate staging`, `bun repo db migrate production`).
@@ -60,6 +59,4 @@ await repos.init({ driver: resolveMigrationDriver(databaseUrl) })
 
 When adding an indirectly owned table, add its ownership path and exercise its scoped reads/writes. Unclassified tables without a school ownership predicate cannot be bound. Custom store overrides must preserve the shared scope; notification templates and invitations retain their custom mapping/update behavior through this boundary.
 
-## Naming note
-
-`@edaya/adaptor-auth` has a `session` table for auth sessions. The school `sessions` table in this package is for **class scheduling** — unrelated to Better Auth.
+The school `sessions` table in this package is for **class scheduling**. Authentication persistence is owned by the sibling Central Identity service and database.

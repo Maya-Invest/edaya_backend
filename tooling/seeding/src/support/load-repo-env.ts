@@ -23,7 +23,7 @@ export function loadRepoEnvFile(repoRoot: string = resolveRepoRoot()): void {
   loadEnvFile(legacySeedingEnv)
 }
 
-/** Load seed CLI env: root `.env`, then `apps/api/.env` for BETTER_AUTH_URL fallbacks. */
+/** Load seed CLI env: root `.env`, then `apps/api/.env` for school and identity URLs. */
 export function loadSeedEnvFiles(repoRoot: string = resolveRepoRoot()): void {
   loadRepoEnvFile(repoRoot)
   loadEnvFile(path.join(repoRoot, 'apps/api/.env'))

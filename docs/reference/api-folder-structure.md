@@ -12,7 +12,7 @@ src/
 │   ├── worker.ts              # Cloudflare Worker export
 │   └── cron-local.ts          # Local cron tick
 ├── app.ts                     # Hono app: createApp + OpenAPI + GraphQL + mount app-router
-├── app-router.ts              # Composes REST route modules + Better Auth proxy
+├── app-router.ts              # Composes REST route modules (no /auth mount)
 │
 ├── routes/                    # Hand-written OpenAPI route modules
 │   ├── authorization.routes.ts
@@ -35,7 +35,7 @@ src/
 ├── runtime/                   # Runtime profiles + shared wiring
 │   ├── shared/
 │   │   ├── env/               # schema, bindings, hyperdrive, local-loader
-│   │   └── adapters/          # file storage, notifications, invitations, Better Auth
+│   │   └── adapters/          # file storage, notifications, invitations, identity client
 │   ├── in-memory/             # test profile
 │   ├── local/                 # dev profile + registry + resolve-api-runtime
 │   └── worker/                # Cloudflare profile + resolve-api-runtime (Wrangler alias)
@@ -55,14 +55,14 @@ src/
 
 ## Conventions
 
-- **`routes/`** — Hand-crafted OpenAPI routes only (auth proxy is mounted in `app-router.ts`, not a route file). No business logic beyond request/response wiring.
+- **`routes/`** — Hand-crafted OpenAPI routes only. No business logic beyond request/response wiring. Login lives on Central Identity, not this API.
 - **`lib/school-api/routes/`** — Route factories that generate the bulk of `/core/*` endpoints from `registry.ts` (commands, queries, entities). Shared helpers live in `entity-handlers.ts` and `shared.ts`.
 - **`lib/graphql/`** — Supported second contract. Schema and resolvers are derived from the same registry as REST. Mounted in `app.ts` via `mountGraphQLRoute`. The typed client is REST-only; production web/mobile use REST. GraphiQL (`/graphiql`) is off in production unless `GRAPHQL_GRAPHIQL=true`. Vite proxies `/graphql` for local exploration.
 - **`routes/onboarding.routes.ts`** — Thin HTTP for school registration. Orchestration lives in `@edaya/service` (`capabilities/onboarding`). Template catalogs stay in `@edaya/fixtures/onboarding`.
-- **`runtime/`** — Env parsing, database handles, Better Auth setup, Hyperdrive resolution, and the Node process runtime registry.
+- **`runtime/`** — Env parsing, database handles, identity-client wiring, Hyperdrive resolution, and the Node process runtime registry.
 - **`http/dependencies/`** — Request-scoped dependency injection: env → school runtime → auth → session actor. Worker runtimes are resolved per request and closed in `onRequestComplete`.
 - **`cron/`** — Worker `scheduled()` heartbeat and queue consumer.
-- **`app-router.ts`** — REST composition point: index, effective grants, onboarding, system routes, generated core routes, then `/auth/*` proxy.
+- **`app-router.ts`** — REST composition point: index, effective grants, onboarding, system routes, generated core routes. Identity `/auth/*` is not mounted here.
 
 ## Core route generation
 

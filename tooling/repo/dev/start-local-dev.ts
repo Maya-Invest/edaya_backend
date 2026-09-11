@@ -17,6 +17,8 @@ function loadApiEnv(): void {
 
 loadApiEnv()
 
+console.log('School API on :9999. Start sibling edaya_identity separately (`bun repo dev` in that checkout, port 9900).')
+
 const children = [
   Bun.spawn(['bun', '--filter', '@edaya/api', 'dev'], {
     cwd: repoRoot,

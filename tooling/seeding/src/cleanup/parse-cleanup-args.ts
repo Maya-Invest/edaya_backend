@@ -3,9 +3,10 @@ export type CleanupTarget = 'local' | 'staging'
 export interface CleanupOptions {
   target: CleanupTarget
   yes: boolean
-  school: boolean
-  auth: boolean
 }
+
+export const IDENTITY_AUTH_WIPE_HINT
+  = 'Better Auth lives in edaya_identity. From that repo run `bun repo db wipe local --yes` or `bun repo db wipe staging --yes`.'
 
 export function parseCleanupArgs(argv: string[]): CleanupOptions {
   const args = argv.slice(2)
@@ -16,31 +17,27 @@ export function parseCleanupArgs(argv: string[]): CleanupOptions {
     throw new Error('Use either --local or --staging, not both.')
   }
 
-  const hasSchool = args.includes('--school')
-  const hasAuth = args.includes('--auth')
-  if (hasSchool && hasAuth) {
-    throw new Error('Use either --school or --auth, not both.')
+  if (args.includes('--auth')) {
+    throw new Error(IDENTITY_AUTH_WIPE_HINT)
   }
 
   return {
     target: hasStaging ? 'staging' : 'local',
     yes: args.includes('--yes') || args.includes('-y'),
-    school: !hasAuth,
-    auth: !hasSchool,
   }
 }
 
 export function cleanupUsage(): string {
   return [
-    'Usage: bun repo seed clean [--local|--staging] [--yes] [--school|--auth]',
+    'Usage: bun repo seed clean [--local|--staging] [--yes]',
     '',
     'Targets:',
-    '  --local     Wipe repo-root .data/ (PGlite school DB + auth). Default.',
-    '  --staging   Wipe Neon staging school DB + auth (requires STAGING_DATABASE_URL).',
+    '  --local     Wipe repo-root .data/ (school PGlite). Default.',
+    '  --staging   Wipe Neon staging school DB (requires STAGING_DATABASE_URL).',
     '',
     'Options:',
     '  --yes, -y   Skip confirmation prompt.',
-    '  --school    Truncate Neon public tables only (staging).',
-    '  --auth      Delete Better Auth users/sessions only (staging).',
+    '',
+    IDENTITY_AUTH_WIPE_HINT,
   ].join('\n')
 }

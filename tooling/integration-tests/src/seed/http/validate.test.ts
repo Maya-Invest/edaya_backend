@@ -9,6 +9,7 @@ describe('dev seed validation harness — HTTP validate scope', () => {
     const { app, runtime, localFiles } = await createCoreRouteTestApp({
       withEmbeddedLocalFiles: true,
       autoCleanup: false,
+      identity: 'live',
     })
     const client = createHttpClientForApp(app)
 

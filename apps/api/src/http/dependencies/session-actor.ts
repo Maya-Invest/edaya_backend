@@ -7,12 +7,13 @@ import { resolveCachedActorScope } from "@/lib/authorization/scope-cache/resolve
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
-import { isBetterAuthPath } from "./utils";
+import type { IdentityClaims, IdentityClient } from "@maya-invest/edaya-identity-client";
 
 export interface AuthSession {
   user: {
     id: string;
     email?: string | null;
+    phone?: string | null;
     name?: string | null;
     emailVerified?: boolean | null;
   };
@@ -26,6 +27,7 @@ export interface AuthenticatedSession {
   user: {
     id: string;
     email?: string;
+    phone?: string;
     name?: string;
     emailVerified: boolean;
   };
@@ -35,14 +37,6 @@ export interface AuthenticatedSession {
     assuranceLevel: ActorAssuranceLevel;
   };
 }
-
-export interface AuthSessionProvider {
-  api: {
-    getSession: (args: { headers: Headers }) => Promise<AuthSession | null | undefined>;
-  };
-}
-
-export type ResolveAuthSessionProvider = () => Promise<AuthSessionProvider> | AuthSessionProvider;
 
 interface ActorIdentityContext {
   subjectId: string;
@@ -118,6 +112,9 @@ export function normalizeAuthSession(input: AuthSession | null | undefined): Aut
       ...(typeof input.user.email === "string" && input.user.email.trim() !== ""
         ? { email: input.user.email.trim() }
         : {}),
+      ...(typeof input.user.phone === "string" && input.user.phone.trim() !== ""
+        ? { phone: input.user.phone.trim() }
+        : {}),
       ...(typeof input.user.name === "string" && input.user.name.trim() !== ""
         ? { name: input.user.name.trim() }
         : {}),
@@ -131,11 +128,43 @@ export function normalizeAuthSession(input: AuthSession | null | undefined): Aut
 }
 
 export async function resolveAuthenticatedSession(
-  auth: AuthSessionProvider,
   headers: Headers,
+  identityClient: IdentityClient,
 ): Promise<AuthenticatedSession | null> {
-  const session = await auth.api.getSession({ headers });
-  return normalizeAuthSession(session as AuthSession | null | undefined);
+  const authorization = headers.get("authorization");
+  const apiKey = parseBearerApiKey(authorization ?? undefined);
+  const token = resolveBearerToken(authorization);
+  if (!token || apiKey) {
+    return null;
+  }
+  try {
+    const claims = await identityClient.verifyAccessToken(token);
+    return sessionFromIdentityClaims(claims);
+  }
+  catch {
+    return null;
+  }
+}
+
+function resolveBearerToken(authorization: string | null): string | undefined {
+  const match = authorization?.match(/^Bearer\s+(\S+)$/i);
+  return match?.[1];
+}
+
+function sessionFromIdentityClaims(claims: IdentityClaims): AuthenticatedSession {
+  return {
+    user: {
+      id: claims.sub,
+      emailVerified: claims.email_verified === true,
+      ...(claims.email ? { email: claims.email } : {}),
+      ...(claims.phone ? { phone: claims.phone } : {}),
+    },
+    session: {
+      ...(claims.sid ? { id: claims.sid } : {}),
+      createdAt: new Date(),
+      assuranceLevel: resolveAssuranceFromEmailVerified(claims.email_verified),
+    },
+  };
 }
 
 function resolveRequestId(headerValue: string | undefined): string {
@@ -354,20 +383,15 @@ function resolveAcademicYearId(headerValue: string | undefined): string | undefi
 }
 
 export function createSessionActorDependency(
-  resolveAuth?: (c: Context<AppBindings>) => Promise<AuthSessionProvider> | AuthSessionProvider,
+  resolveIdentityClient?: (c: Context<AppBindings>) => Promise<IdentityClient> | IdentityClient,
 ): DependencyModule<AppBindings> {
   return {
     name: "sessionActor",
     async resolve(c) {
-      if (isBetterAuthPath(c)) {
-        c.set("actor", null);
-        return;
-      }
-
-      const auth = resolveAuth ? await resolveAuth(c) : c.var.auth;
-      const session = normalizeAuthSession(await auth.api.getSession({
-        headers: c.req.raw.headers,
-      }) as AuthSession | null | undefined);
+      const identityClient = resolveIdentityClient
+        ? await resolveIdentityClient(c)
+        : c.var.identityClient;
+      const session = await resolveAuthenticatedSession(c.req.raw.headers, identityClient);
 
       const requestId = resolveRequestId(c.req.header("x-request-id"));
       const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));

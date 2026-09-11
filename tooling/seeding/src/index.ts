@@ -1,4 +1,3 @@
-export { type AuthHandler, createHandlerAuthProvisioner } from './bootstrap/handler-auth-provisioner'
 export { seedMinimalSchool } from './bootstrap/seed-minimal-school'
 export { createInProcessAccessSeedPort } from './domains/access/adapters/in-process'
 export type { AccessSeedPort } from './domains/access/port'

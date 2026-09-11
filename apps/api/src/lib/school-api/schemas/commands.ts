@@ -186,7 +186,7 @@ export const revokeAccountInvitationCommandSchema = z.object({
 export const acceptAccountInvitationCommandSchema = z.object({
   token: z.string().min(1),
   subjectId: field.id(),
-  contactEmail: z.string().email(),
+  contactValue: z.string().min(1),
 }).openapi("AcceptAccountInvitationCommand");
 
 export const assignStaffToClassCommandSchema = objectFromSchema(staffAssignmentSchema)

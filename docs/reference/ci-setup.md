@@ -5,6 +5,10 @@
 
 `edaya_backend` CI uses a composite action for Bun install, dependency caching, and Turbo remote cache. Other Edaya repos (e.g. `edaya_web`) can copy the same action when aligning setup.
 
+The backend links `@maya-invest/edaya-identity-client` from `file:../edaya_identity/package/identity-client`. CI checkouts must therefore place `edaya_backend` and `edaya_identity` as siblings before `bun install` (with cross-repository read credentials when the identity repo is private). A published identity-client package can replace this checkout only after the root file override is removed in a coordinated change.
+
+**.github/actions/checkout-identity-client** places `Maya-Invest/edaya_identity` at `../edaya_identity` before `bun install`.
+
 ## Composite action: `ci-bun-turbo`
 
 Path: [`.github/actions/ci-bun-turbo`](../../.github/actions/ci-bun-turbo/action.yml)
@@ -55,10 +59,12 @@ On push to `staging` / `main` (or manual **Run workflow**):
 
 ```text
 gate (path filter)
-  → migrate (school + auth schema)
+  → migrate (school schema)
   → publish-api-dev-image / publish-api-client (when API paths changed)
-  → deploy-api (Wrangler → staging.api or api.edayaplus.com)
+  → deploy-api (Wrangler → staging.api.school or api.school.edayaplus.com)
 ```
+
+Central Identity has its own repository pipeline, Worker, and database migration. Deploy identity before the school Worker when changing the JWT or directory contract.
 
 | Push branch | Channel | Migrate target |
 |-------------|---------|----------------|
@@ -74,8 +80,9 @@ On push, `dorny/paths-filter` sets `deploy_api` from `apps/api/**`, `package/**`
 | `CLOUDFLARE_API_TOKEN` | `deploy-api` — Wrangler deploy (`apps/api/wrangler.jsonc`) |
 | `STAGING_DATABASE_URL` | `migrate` on `staging` channel |
 | `PRODUCTION_DATABASE_URL` | `migrate` on `production` channel |
+| `IDENTITY_CHECKOUT_TOKEN` | PAT (or GitHub App token) with read access to private `Maya-Invest/edaya_identity`. Required until `@maya-invest/edaya-identity-client` is published and the root `file:` override is removed. |
 
-Wrangler **worker secrets** (`BETTER_AUTH_SECRET`, R2, Novu) are uploaded separately via `wrangler secret bulk` — not GitHub Actions secrets. See [deploy-staging.md](./deploy-staging.md).
+Wrangler **worker secrets** (`IDENTITY_DIRECTORY_SECRET`, R2, Novu) are uploaded separately via `wrangler secret bulk` — not GitHub Actions secrets. See [deploy-staging.md](./deploy-staging.md).
 
 Configured in [`deploy_push.yml`](../../.github/workflows/deploy_push.yml).
 
@@ -161,12 +168,12 @@ Deploy runs from GitHub Actions — not Cloudflare Workers Builds. See [`deploy_
 | Step | What happens |
 |------|----------------|
 | `verify` | `bun run verify` (same as PR CI) |
-| `migrate` | School + auth schema when enabled (before deploy) |
+| `migrate` | School schema when enabled (before deploy) |
 | `deploy-api` | `wrangler deploy` for `@edaya/api` |
 
 **Smoke (manual):** API staging smoke (`bun repo smoke-test staging`) is not run in merge CI until staging seed is stable. Vendor smokes remain ad-hoc: `bun repo smoke-test novu`, `bun repo smoke-test r2`.
 
-**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`BETTER_AUTH_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
+**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`IDENTITY_DIRECTORY_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
 
 Branch mapping:
 

@@ -28,9 +28,11 @@ action="${1:-up}"
 
 case "$action" in
   build)
+    bash "$SCRIPT_DIR/prepare-identity-client.sh"
     container build --tag "$IMAGE_NAME" --file tooling/api-dev-container/Dockerfile .
     ;;
   up)
+    bash "$SCRIPT_DIR/prepare-identity-client.sh"
     container build --tag "$IMAGE_NAME" --file tooling/api-dev-container/Dockerfile .
     container stop "$CONTAINER_NAME" 2>/dev/null || true
     container rm "$CONTAINER_NAME" 2>/dev/null || true
@@ -38,6 +40,7 @@ case "$action" in
       --name "$CONTAINER_NAME" \
       --detach \
       --rm \
+      --publish 127.0.0.1:9900:9900 \
       --publish 127.0.0.1:9999:9999 \
       --publish 127.0.0.1:9200:9200 \
       --memory 4g \
@@ -45,11 +48,12 @@ case "$action" in
     bash "$SCRIPT_DIR/wait-for-url.sh" http://127.0.0.1:9999/reference 120
     echo
     echo "Edaya API dev container is up."
+    echo "  Identity:   http://localhost:9900"
     echo "  API:        http://localhost:9999"
     echo "  OpenAPI:    http://localhost:9999/reference"
     echo "  Files:      http://localhost:9200"
     echo
-    echo "Mobile:  EDAYA_API_URL=http://localhost:9999 melos run test:integration"
+    echo "Mobile:  EDAYA_AUTH_URL=http://localhost:9900 EDAYA_API_URL=http://localhost:9999 melos run test:integration"
     echo "Web:     WEBAPP_URL=http://localhost:5173 (run webapp locally; API is containerized)"
     echo "Logs:    $0 logs"
     echo "Stop:    $0 down"

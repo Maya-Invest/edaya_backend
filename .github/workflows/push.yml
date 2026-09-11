@@ -20,6 +20,7 @@ permissions:
 jobs:
   verify:
     uses: ./.github/workflows/_verify.yml
+    secrets: inherit
 
   publish-api-client:
     needs: verify

@@ -2,6 +2,9 @@ name: Publish API client
 
 on:
   workflow_call:
+    secrets:
+      IDENTITY_CHECKOUT_TOKEN:
+        required: false
     outputs:
       channel:
         description: Published GitHub Packages dist-tag (staging, production, or sanitized branch name)
@@ -20,6 +23,11 @@ jobs:
     steps:
       - name: Checkout backend
         uses: actions/checkout@v5
+
+      - name: Checkout identity client
+        uses: ./.github/actions/checkout-identity-client
+        with:
+          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Resolve channel
         id: meta

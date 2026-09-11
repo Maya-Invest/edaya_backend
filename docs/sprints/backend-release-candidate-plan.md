@@ -1,5 +1,7 @@
 # Edaya release candidate — coding-agent implementation handoff
 
+> **Superseded for identity (2026-09-11):** Better Auth, opaque `edaya_at_` tokens, and in-process `/auth` now live in sibling `edaya_identity`. School authenticates users with identity JWTs. Ignore in-process auth instructions below.
+
 Date: 8 September 2026. Updated: 10 September 2026. Status: implementation in progress; not code-complete or RC-qualified.
 
 ## Implementation progress — 10 September 2026
@@ -297,11 +299,11 @@ Use synthetic users and sandbox providers. Do not send real notifications or rea
 Cutover sequence:
 
 1. Take and verify a restorable backup, including required file references; run migration/integrity preflight. Rehearse on staging first.
-2. Apply additive migrations and deploy the hardened backend with Bearer support. Temporarily permit existing cookie business access only through `ALLOW_LEGACY_COOKIE_BUSINESS_AUTH`, default false and explicitly enabled during this transition. Invalid supplied Bearer still never falls back. Keep all security and finance fixes active.
+2. Apply additive migrations, deploy Central Identity, and then deploy the school backend with Bearer support. Invalid supplied Bearer credentials never fall back. Keep all security and finance fixes active.
 3. Deploy the matching web build and distribute the matching guardian/teacher mobile builds. Confirm real supported mobile builds are available before enforcing cutover; app-store availability is an external release dependency. Clear old mobile credential storage and guide reauthentication.
-4. Disable legacy cookie business auth. Verify cookie-only denial, first-party access, each partner scope, revoke, payment replay and private files. Register real partner clients only with their verified deployment inputs.
+4. Verify cookie-only denial, first-party access, each partner scope, revoke, payment replay and private files. Register real partner clients only with their verified deployment inputs.
 5. Observe a minimum 24-hour staging soak with exercised scheduled jobs and no unresolved launch-blocking failures before RC qualification. In production, follow the reviewed release/monitoring procedure. Prepare an urgent hotfix path for security issues independently of this soak.
-6. Roll back application behavior only to a compatible hardened build; additive schemas remain. The temporary cookie flag is an emergency client-compatibility tool, not a rollback of seed, tenant, finance or revocation fixes. Disable partner access separately if its integration fails. Do not run destructive down migrations or restore a backup blindly over new financial writes. Remove the temporary cookie path after the accepted rollback window closes.
+6. Roll back application behavior only to a compatible hardened build; additive schemas remain. Disable partner access separately if its integration fails. Do not run destructive down migrations or restore a backup blindly over new financial writes.
 
 Migration rollback and database disaster recovery are different operations. A restore drill must check attachment references, finance totals, authentication state and queued/delivered work. Prevent restored outbox records from blindly replaying previously delivered external effects; reconcile delivery state before resuming workers. Rotate/revoke recovered credentials when restoring an old auth snapshot could resurrect access.
 

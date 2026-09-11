@@ -19,11 +19,6 @@ describe("OpenAPI document", () => {
     };
     expect(doc.openapi).toBe("3.0.0");
     expect(doc.components.schemas.ReportCardResultSection.type).toBe("object");
-    expect(Object.keys(doc.paths).filter(path => path.startsWith("/auth")).sort()).toEqual([
-      "/auth/edaya/connected-apps",
-      "/auth/edaya/connected-apps/{grantId}/revoke",
-    ]);
-    expect(doc.paths["/auth/edaya/connected-apps"]?.get?.security).toEqual([{ FirstPartyAccess: [] }]);
-    expect(doc.paths["/auth/edaya/connected-apps/{grantId}/revoke"]?.post?.security).toEqual([{ FirstPartyAccess: [] }]);
+    expect(Object.keys(doc.paths).filter(path => path.startsWith("/auth"))).toEqual([]);
   });
 });

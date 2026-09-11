@@ -1,17 +1,17 @@
 export type DbMigrateTarget = 'local' | 'staging' | 'production'
-export type DbMigrateSlice = 'full' | 'school' | 'auth'
-export type DbBrowserTarget = 'school' | 'auth'
+export type DbMigrateSlice = 'school'
+export type DbBrowserTarget = 'school'
 
 export type ParsedDbCli
   = | { kind: 'help' }
     | { kind: 'migrate', target: DbMigrateTarget, slice: DbMigrateSlice }
     | { kind: 'reset', target: Extract<DbMigrateTarget, 'staging' | 'production'>, yes: boolean }
     | { kind: 'flatten' }
-    | { kind: 'generate', auth: boolean }
+    | { kind: 'generate' }
     | { kind: 'browser', target: DbBrowserTarget }
 
 const MIGRATE_TARGETS = new Set<DbMigrateTarget>(['local', 'staging', 'production'])
-const BROWSER_TARGETS = new Set<DbBrowserTarget>(['school', 'auth'])
+const BROWSER_TARGETS = new Set<DbBrowserTarget>(['school'])
 
 function parseResetArgs(args: readonly string[]): ParsedDbCli {
   const [target, ...flags] = args
@@ -32,31 +32,28 @@ function parseMigrateArgs(args: readonly string[]): ParsedDbCli {
   const [target, ...flags] = args
   if (!target || !MIGRATE_TARGETS.has(target as DbMigrateTarget)) {
     throw new Error(
-      `Usage: bun repo db migrate <local|staging|production> [--school|--auth]. Got: ${target ?? '(missing)'}`,
+      `Usage: bun repo db migrate <local|staging|production>. Got: ${target ?? '(missing)'}`,
     )
   }
 
-  const hasSchool = flags.includes('--school')
-  const hasAuth = flags.includes('--auth')
-  if (hasSchool && hasAuth) {
-    throw new Error('Use either --school or --auth, not both.')
+  if (flags.length > 0) {
+    throw new Error('School migrations do not accept auth slices.')
   }
 
-  const slice: DbMigrateSlice = hasSchool ? 'school' : hasAuth ? 'auth' : 'full'
-  return { kind: 'migrate', target: target as DbMigrateTarget, slice }
+  return { kind: 'migrate', target: target as DbMigrateTarget, slice: 'school' }
 }
 
 function parseGenerateArgs(args: readonly string[]): ParsedDbCli {
-  if (args.length > 0 && !args.every(flag => flag === '--auth')) {
-    throw new Error('Usage: bun repo db generate [--auth]')
+  if (args.length > 0) {
+    throw new Error('Usage: bun repo db generate')
   }
-  return { kind: 'generate', auth: args.includes('--auth') }
+  return { kind: 'generate' }
 }
 
 function parseBrowserArgs(args: readonly string[]): ParsedDbCli {
   const [target] = args
   if (!target || !BROWSER_TARGETS.has(target as DbBrowserTarget)) {
-    throw new Error(`Usage: bun repo db browser <school|auth>. Got: ${target ?? '(missing)'}`)
+    throw new Error(`Usage: bun repo db browser school. Got: ${target ?? '(missing)'}`)
   }
   return { kind: 'browser', target: target as DbBrowserTarget }
 }
@@ -93,26 +90,21 @@ export function dbCliUsage(): string {
     'Usage: bun repo db <subcommand>',
     '',
     'Subcommands:',
-    '  migrate <local|staging|production> [--school|--auth]',
+    '  migrate <local|staging|production>',
     '  reset <staging|production> [--yes]',
     '  flatten',
-    '  generate [--auth]',
-    '  browser <school|auth>',
+    '  generate',
+    '  browser school',
     '',
     'Examples:',
     '  bun repo db migrate local',
-    '  bun repo db migrate staging --auth',
     '  bun repo db reset staging --yes',
     '  bun repo db flatten',
     '  bun repo db generate',
-    '  bun repo db generate --auth',
     '  bun repo db browser school',
   ].join('\n')
 }
 
 export function dbMigrateScriptName(target: DbMigrateTarget, slice: DbMigrateSlice): string {
-  if (slice === 'full') {
-    return `migrate:${target}`
-  }
   return `migrate:${target}:${slice}`
 }

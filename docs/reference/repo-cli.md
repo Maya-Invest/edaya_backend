@@ -26,11 +26,11 @@ bun repo
 ├── dev
 ├── dev-container [up|build|down|logs]
 ├── seed [--staging] [--scope <name>] [--clean] [--repair]
-│   └── clean [--staging] [--school|--auth]
+│   └── clean [--staging]
 ├── db
-│   ├── migrate <local|staging|production> [--school|--auth]
-│   ├── generate [--auth]
-│   └── browser <school|auth>
+│   ├── migrate <local|staging|production>
+│   ├── generate
+│   └── browser school
 ├── check
 │   ├── openapi
 │   ├── boundaries
@@ -69,9 +69,8 @@ Forwards argv to `tooling/seeding/scripts/seed.ts` — single parser in `@edaya/
 ```sh
 bun repo seed                          # local full demo seed
 bun repo seed --staging                 # staging API
-bun repo seed clean                    # wipe local .data
-bun repo seed clean --staging          # wipe staging DB
-bun repo seed clean --staging --school # school tables only
+bun repo seed clean                    # wipe local school .data
+bun repo seed clean --staging          # wipe staging school DB
 bun repo seed --scope doctor --repair  # diagnose + repair drift
 bun repo seed --scope auth:link        # granular scope
 ```
@@ -82,18 +81,15 @@ Env: repo root `.env` — see `.env.example`. API runtime stays in `apps/api/.en
 
 ```sh
 bun repo db migrate local
-bun repo db migrate staging --auth
-bun repo db migrate staging --school
-bun repo db reset staging --yes      # drop schemas + re-apply migrations
+bun repo db migrate staging
+bun repo db reset staging --yes      # drop schemas + re-apply school migrations
 bun repo db reset production --yes   # destructive — production only
 bun repo db flatten                  # squash school migrations to one baseline
 bun repo db generate
-bun repo db generate --auth
 bun repo db browser school    # stop bun repo dev first
-bun repo db browser auth
 ```
 
-`db reset` drops `drizzle`, `auth`, `notify`, and `public` schemas, then re-applies school + notify + auth migrations from scratch. After staging reset, run `bun repo seed --staging`.
+`db reset` drops `drizzle`, `notify`, and `public` schemas, then re-applies school + notify migrations. After staging reset, run `bun repo seed --staging`. Identity users are wiped from `edaya_identity` (`bun repo db wipe staging`).
 
 Migrate / reset implementation: `tooling/db-migrate/scripts/`.
 

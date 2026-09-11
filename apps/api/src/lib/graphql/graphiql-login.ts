@@ -18,25 +18,6 @@ function collectSetCookieHeaders(response: Response): string[] {
   return single ? [single] : [];
 }
 
-function returnAuthResponse(c: Context<AppBindings>, response: Response) {
-  const headers = new Headers();
-  response.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      return;
-    }
-    headers.set(key, value);
-  });
-
-  for (const cookie of collectSetCookieHeaders(response)) {
-    c.header("Set-Cookie", cookie, { append: true });
-  }
-
-  return c.newResponse(response.body, {
-    status: response.status as 200,
-    headers,
-  });
-}
-
 export async function handleGraphiQLLogin(c: Context<AppBindings>) {
   if (!isGraphiQLEnabled(c.env?.NODE_ENV)) {
     return c.json({ message: "GraphiQL login is disabled" }, 404);
@@ -50,23 +31,39 @@ export async function handleGraphiQLLogin(c: Context<AppBindings>) {
     return c.json({ message: "Invalid email or password payload" }, 400);
   }
 
-  const auth = c.get("auth");
-  const baseUrl = c.env?.BETTER_AUTH_URL ?? "http://localhost:9999";
-  const url = new URL("/auth/sign-in/email", baseUrl);
-  const response = await auth.handler(new Request(url, {
+  const baseUrl = c.env?.IDENTITY_ISSUER ?? "http://localhost:9900";
+  const identityOrigin = new URL(baseUrl).origin;
+  const response = await fetch(new URL("/auth/sign-in/email", baseUrl), {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      "origin": identityOrigin,
     },
     body: JSON.stringify(payload),
-  }));
+  });
 
   if (!response.ok) {
     const message = await response.text();
     return c.json({ message: message || "Sign-in failed" }, 401);
   }
 
-  return returnAuthResponse(c, response);
+  const cookie = collectSetCookieHeaders(response).map(value => value.split(";")[0]).join("; ");
+  const exchange = await fetch(new URL("/auth/edaya/access-token", baseUrl), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "origin": identityOrigin,
+      ...(cookie ? { cookie } : {}),
+    },
+    body: "{}",
+  });
+  if (!exchange.ok) {
+    return c.json({ message: "Identity token exchange failed" }, 401);
+  }
+  return c.newResponse(exchange.body, {
+    status: 200,
+    headers: { "content-type": exchange.headers.get("content-type") ?? "application/json" },
+  });
 }
 
 export async function handleGraphiQLLogout(c: Context<AppBindings>) {
@@ -74,13 +71,5 @@ export async function handleGraphiQLLogout(c: Context<AppBindings>) {
     return c.json({ message: "GraphiQL login is disabled" }, 404);
   }
 
-  const auth = c.get("auth");
-  const baseUrl = c.env?.BETTER_AUTH_URL ?? "http://localhost:9999";
-  const url = new URL("/auth/sign-out", baseUrl);
-  const response = await auth.handler(new Request(url, {
-    method: "POST",
-    headers: c.req.raw.headers,
-  }));
-
-  return returnAuthResponse(c, response);
+  return c.body(null, 204);
 }

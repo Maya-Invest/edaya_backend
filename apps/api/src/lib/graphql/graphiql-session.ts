@@ -1,8 +1,7 @@
 import type { Context } from "hono";
 import { isInteractiveActor, resolveAuditActorId } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
-import { normalizeAuthSession } from "@/http/dependencies/session-actor";
-import type { AuthSession } from "@/http/dependencies/session-actor";
+import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import { isGraphiQLEnabled } from "@/lib/graphql/graphiql";
 
 export async function handleGraphiQLSession(c: Context<AppBindings>) {
@@ -10,10 +9,10 @@ export async function handleGraphiQLSession(c: Context<AppBindings>) {
     return c.json({ message: "GraphiQL session is disabled" }, 404);
   }
 
-  const auth = c.get("auth");
-  const session = normalizeAuthSession(await auth.api.getSession({
-    headers: c.req.raw.headers,
-  }) as AuthSession | null | undefined);
+  const session = await resolveAuthenticatedSession(
+    c.req.raw.headers,
+    c.get("identityClient"),
+  );
   const actor = c.get("actor");
 
   return c.json({

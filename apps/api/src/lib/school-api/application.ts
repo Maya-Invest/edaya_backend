@@ -27,4 +27,8 @@ export class ApiSchoolApplication {
   hasAuthAccountForEmail(email: string): Promise<boolean> {
     return this.application.hasAuthAccountForEmail(email);
   }
+
+  hasAuthAccountForPhone(phone: string): Promise<boolean> {
+    return this.application.hasAuthAccountForPhone(phone);
+  }
 }

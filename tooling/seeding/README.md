@@ -10,8 +10,8 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 | `bun repo seed --staging` | Full staging seed |
 | `bun repo seed --scope doctor` | Diagnose seed health (sign-in, grants, data checks) |
 | `bun repo seed --scope doctor --repair` | Diagnose and run minimal HTTP repair chain |
-| `bun repo seed clean` | Wipe local `.data/` (stop `bun repo dev` first) |
-| `bun repo seed clean --staging` | Wipe Neon staging + Better Auth D1 (destructive) |
+| `bun repo seed clean` | Wipe local school `.data/` (stop `bun repo dev` first) |
+| `bun repo seed clean --staging` | Wipe Neon staging school DB (destructive) |
 
 Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo seed --help`.
 
@@ -29,21 +29,24 @@ Staging smoke: `bun repo smoke-test staging` (full tier-1 checks in `@edaya/inte
 
 ## Environment (repo root `.env`)
 
-Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env` is also loaded for `BETTER_AUTH_URL`.
+Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env` is also loaded for local school and identity URLs.
 
 | Variable | Used by | Default |
 |----------|---------|---------|
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-06-16` in `@edaya/fixtures` |
-| `SEED_API_URL` | `bun repo seed`, `bun repo seed --scope doctor`, … | `BETTER_AUTH_URL` → `http://localhost:9999` |
-| `SEED_APP_ORIGIN` | Local Better Auth `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.edayaplus.com` |
-| `SEED_STAGING_APP_ORIGIN` | Staging Better Auth `Origin` header | `https://staging.app.edayaplus.com` |
+| `SEED_API_URL` | School API for `bun repo seed` | `http://localhost:9999` |
+| `SEED_AUTH_URL` | Central identity API for auth provisioning | `http://localhost:9900` |
+| `SEED_APP_ORIGIN` | Local identity `Origin` header | `http://localhost:5173` |
+| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.school.edayaplus.com` |
+| `SEED_STAGING_AUTH_URL` | Staging Central Identity API | `https://staging.identity.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | Staging identity `Origin` header | `https://staging.app.school.edayaplus.com` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 
 ```sh
-bun repo seed clean --yes && bun repo seed              # local fresh start
-bun repo seed clean --staging --yes && bun repo seed --staging   # staging fresh start
+bun repo seed clean --yes && bun repo seed              # local school fresh start
+bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
+# Identity users: from edaya_identity, `bun repo db wipe local --yes` (or staging)
 # or
 bun repo seed --clean
 bun repo seed --staging --clean

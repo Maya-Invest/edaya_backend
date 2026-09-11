@@ -311,7 +311,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     const result = await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })
 
     expect(result.kind).toBe('staff')
@@ -335,7 +335,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'other@school.edu',
+      contactValue: 'other@school.edu',
     })).rejects.toMatchObject({ code: 'INVITATION_EMAIL_MISMATCH' })
   })
 
@@ -405,6 +405,29 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(invitationDelivery.deliveries).toHaveLength(1)
   })
 
+  test('acceptAccountInvitation rejects a missing phone claim', async () => {
+    const guardian = new Guardian({
+      id: 'gua-phone',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      phone: '+2250102030405',
+    })
+    const { service } = createInvitationContext({ guardians: [guardian] })
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Guardian,
+      targetId: guardian.id,
+      contactChannel: AccountInvitationContactChannel.Phone,
+      contactValue: '+2250102030405',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'guardian-subject',
+    })).rejects.toMatchObject({ code: 'INVITATION_PHONE_MISMATCH' })
+  })
+
   test('getInvitationPreviewByToken returns a pending invitation', async () => {
     const { service } = createInvitationContext()
     const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
@@ -428,12 +451,12 @@ describe('AccountInvitationServiceWorkflow', () => {
     const first = await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })
     const second = await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })
 
     expect(second.entity.subjectId).toBe(first.entity.subjectId)
@@ -459,7 +482,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })).rejects.toMatchObject({ code: 'INVITATION_EXPIRED' })
   })
 
@@ -474,7 +497,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'auth-user-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })
 
     await expect(service.accountInvitationWorkflow.revokeAccountInvitation({
@@ -496,7 +519,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     await service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'owner-subject-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })
 
     expect(savedSchools[0]?.ownerSubjectId).toBe('owner-subject-1')
@@ -525,7 +548,7 @@ describe('AccountInvitationServiceWorkflow', () => {
     await expect(service.accountInvitationWorkflow.acceptAccountInvitation({
       token,
       subjectId: 'owner-subject-1',
-      contactEmail: 'p.martin@school.edu',
+      contactValue: 'p.martin@school.edu',
     })).rejects.toMatchObject({ code: 'OWNER_SUBJECT_ALREADY_ASSIGNED' })
   })
 })

@@ -32,7 +32,6 @@ const config = resolveLocalFileStorageConfig({
   LOCAL_FILES_URL: process.env["LOCAL_FILES_URL"] ?? `http://localhost:${port}`,
   LOCAL_FILES_ROOT: resolveRootDir(process.env["LOCAL_FILES_ROOT"]),
   LOCAL_FILES_SECRET: process.env["LOCAL_FILES_SECRET"],
-  BETTER_AUTH_SECRET: process.env["BETTER_AUTH_SECRET"],
   TRUSTED_ORIGINS: process.env["TRUSTED_ORIGINS"],
 });
 const app = createLocalFileStorageApp(config);

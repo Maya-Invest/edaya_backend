@@ -3,7 +3,6 @@
 import type { MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
-import { applyAuthMigrations } from './lib/apply-auth-migrations'
 import { applyNotifySchema } from './lib/apply-notify-schema'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import { assertRemoteResetAllowed } from './lib/assert-remote-reset-allowed'
@@ -50,7 +49,7 @@ const resolved = resolveMigrationTarget(target)
 assertRemoteResetAllowed(target, resolved.databaseUrl)
 
 const confirmed = await confirm(
-  `This will DROP drizzle, auth, notify, and public schemas on ${resolved.label} and re-apply all migrations. Continue?`,
+  `This will DROP drizzle, notify, and public school schemas on ${resolved.label} and re-apply all migrations. Continue?`,
   autoYes,
 )
 if (!confirmed) {
@@ -64,9 +63,6 @@ await resetRemoteDatabase(resolved.databaseUrl)
 console.log('\n> Applying school schema migrations')
 await applySchoolMigrations(resolved.databaseUrl)
 await applyNotifySchema(resolved.databaseUrl)
-
-console.log('\n> Applying Better Auth migrations')
-await applyAuthMigrations(resolved.databaseUrl)
 
 console.log(`\n${resolved.label} database reset complete.`)
 if (target === 'staging') {

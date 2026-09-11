@@ -7,7 +7,9 @@ export type HttpFetch = (
 
 export interface HttpSeedClientOptions {
   baseUrl: string
-  /** Trusted webapp origin for Better Auth (Origin header). */
+  /** Central identity base URL for login, token exchange, and dev seed endpoints. */
+  authUrl?: string
+  /** Trusted webapp origin for identity requests (Origin header). */
   appOrigin?: string
   fetch?: HttpFetch
 }
@@ -97,6 +99,7 @@ function formatHttpFailure(path: string, status: number, detail: string): string
 
 export class HttpSeedClient {
   private readonly baseUrl: string
+  private readonly authUrl: string
   private readonly appOrigin?: string
   private readonly fetchImpl: HttpFetch
   private readonly cookies = new Map<string, string>()
@@ -106,6 +109,7 @@ export class HttpSeedClient {
 
   constructor(options: HttpSeedClientOptions) {
     this.baseUrl = normalizeBaseUrl(options.baseUrl)
+    this.authUrl = normalizeBaseUrl(options.authUrl ?? options.baseUrl)
     this.appOrigin = options.appOrigin?.replace(/\/+$/, '')
     this.fetchImpl = options.fetch ?? globalThis.fetch
   }
@@ -209,10 +213,13 @@ export class HttpSeedClient {
       if (!response.ok)
         throw new Error(`Seed access-token exchange failed: HTTP ${response.status}`)
       const token = await response.json() as { accessToken: string, expiresAt: string }
-      if (!/^edaya_at_[\w-]{43}$/.test(token.accessToken) || !Number.isFinite(Date.parse(token.expiresAt)))
+      if (typeof token.accessToken !== 'string' || token.accessToken.length === 0
+        || !Number.isFinite(Date.parse(token.expiresAt))) {
         throw new Error('Invalid seed access-token response')
-      if (renewal !== this.cookieHeader())
+      }
+      if (renewal !== this.cookieHeader()) {
         return undefined
+      }
       this.accessToken = { value: token.accessToken, expiresAt: Date.parse(token.expiresAt) }
       return token.accessToken
     })().finally(() => { this.exchange = undefined })
@@ -220,23 +227,30 @@ export class HttpSeedClient {
   }
 
   async request(path: string, init: RequestInit = {}): Promise<Response> {
-    const url = path.startsWith('http') ? path : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    const identityPath = normalizedPath.startsWith('/auth/')
+      || normalizedPath === '/dev/seed/mark-email-verified'
+    const url = path.startsWith('http')
+      ? path
+      : `${identityPath ? this.authUrl : this.baseUrl}${normalizedPath}`
     const headers = new Headers(init.headers)
     const cookieHeader = this.cookieHeader()
     const hasBearerAuth = headers.get('authorization')?.toLowerCase().startsWith('bearer ') ?? false
     // Presigned object-storage URLs (R2/S3) must not receive API session headers.
-    if (this.isApiRequest(url)) {
-      const authRequest = new URL(url).pathname.startsWith('/auth/')
-      if (authRequest && cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
+    if (identityPath) {
+      if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
         headers.set('cookie', cookieHeader)
       }
-      if (!authRequest) {
-        headers.delete('cookie')
-        if (!headers.has('authorization')) {
-          const accessToken = await this.getAccessToken()
-          if (accessToken)
-            headers.set('authorization', `Bearer ${accessToken}`)
-        }
+      if (!headers.has('origin')) {
+        headers.set('origin', this.appOrigin ?? new URL(this.authUrl).origin)
+      }
+    }
+    else if (this.isApiRequest(url)) {
+      headers.delete('cookie')
+      if (!headers.has('authorization')) {
+        const accessToken = await this.getAccessToken()
+        if (accessToken)
+          headers.set('authorization', `Bearer ${accessToken}`)
       }
       if (!headers.has('origin')) {
         headers.set('origin', this.appOrigin ?? new URL(this.baseUrl).origin)
@@ -266,7 +280,7 @@ export class HttpSeedClient {
       })
 
       if (!RETRYABLE_STATUS_CODES.has(response.status) || attempt === maxRetries) {
-        if (this.isApiRequest(url))
+        if (identityPath)
           this.absorbCookies(response)
         return response
       }
@@ -275,7 +289,7 @@ export class HttpSeedClient {
       await sleep(retryBaseDelayMs * (attempt + 1))
     }
 
-    if (this.isApiRequest(url))
+    if (identityPath)
       this.absorbCookies(lastResponse!)
     return lastResponse!
   }

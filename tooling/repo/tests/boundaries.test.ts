@@ -61,19 +61,19 @@ describe('findBoundaryViolations', () => {
     }])
   })
 
-  test('reports core imports of adaptor-auth', () => {
+  test('reports core imports of the identity client', () => {
     const root = createRepoRoot()
-    writeSource(root, 'package/domain-core/src/index.ts', `import { migrate } from '@edaya/adaptor-auth'\n`)
+    writeSource(root, 'package/domain-core/src/index.ts', `import { verifyIdentityToken } from '@maya-invest/edaya-identity-client'\n`)
 
     expect(findBoundaryViolations([
       {
-        label: 'core imports adaptor-auth',
-        pattern: /from ["']@edaya\/adaptor-auth/,
+        label: 'core imports identity client',
+        pattern: /from ["']@maya-invest\/edaya-identity-client/,
         searchPath: 'package/domain-core/src',
       },
     ], root)).toEqual([{
-      label: 'core imports adaptor-auth',
-      matches: ['package/domain-core/src/index.ts:1:import { migrate } from \'@edaya/adaptor-auth\''],
+      label: 'core imports identity client',
+      matches: ['package/domain-core/src/index.ts:1:import { verifyIdentityToken } from \'@maya-invest/edaya-identity-client\''],
     }])
   })
 

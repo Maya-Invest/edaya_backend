@@ -42,23 +42,13 @@ describe('parseSeedCliArgs', () => {
       kind: 'clean',
       target: 'local',
       yes: false,
-      school: true,
-      auth: true,
     })
     expect(parseSeedCliArgs(['bun', 'seed.ts', 'clean', '--staging', '--yes'])).toEqual({
       kind: 'clean',
       target: 'staging',
       yes: true,
-      school: true,
-      auth: true,
     })
-    expect(parseSeedCliArgs(['bun', 'seed.ts', 'clean', '--staging', '--school'])).toEqual({
-      kind: 'clean',
-      target: 'staging',
-      yes: false,
-      school: true,
-      auth: false,
-    })
+    expect(() => parseSeedCliArgs(['bun', 'seed.ts', 'clean', '--auth'])).toThrow(/edaya_identity/)
   })
 
   it('returns help when requested', () => {

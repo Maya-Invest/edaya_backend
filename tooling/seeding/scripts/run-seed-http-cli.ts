@@ -19,6 +19,7 @@ import { loadSeedEnvFiles } from '../src/support/load-seed-env.ts'
 import {
   resolveSeedApiUrl,
   resolveSeedAppOrigin,
+  resolveSeedAuthUrl,
 
 } from '../src/support/resolve-seed-env.ts'
 
@@ -27,6 +28,7 @@ export function resolveSeedHttpConfig(target: SeedHttpTarget) {
   const schoolId = resolveActiveSeedSchoolId()
   return {
     baseUrl: resolveSeedApiUrl(target),
+    authUrl: resolveSeedAuthUrl(target),
     appOrigin: resolveSeedAppOrigin(target),
     schoolId,
     serviceAccountApiKey: resolveSeedingApiKeyForSchool(schoolId),
@@ -36,10 +38,10 @@ export function resolveSeedHttpConfig(target: SeedHttpTarget) {
 export async function runSeedHttpCli(
   invocation: Extract<SeedCliInvocation, { kind: 'seed' }>,
 ): Promise<number> {
-  const { baseUrl, appOrigin, serviceAccountApiKey } = resolveSeedHttpConfig(invocation.target)
+  const { baseUrl, authUrl, appOrigin, serviceAccountApiKey } = resolveSeedHttpConfig(invocation.target)
   const scope: HttpDevSeedScope = invocation.scope
 
-  const client = new HttpSeedClient({ baseUrl, appOrigin })
+  const client = new HttpSeedClient({ baseUrl, authUrl, appOrigin })
 
   if (scope !== 'auth') {
     console.log(`Waiting for API at ${baseUrl}...`)

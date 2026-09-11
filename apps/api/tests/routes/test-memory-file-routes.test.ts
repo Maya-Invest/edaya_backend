@@ -11,8 +11,6 @@ const localEnv = parseEnv({
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgres://admin:admin@localhost:5432/test_db",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
 });
 
 const workerEnv = parseEnv({

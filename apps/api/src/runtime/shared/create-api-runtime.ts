@@ -7,20 +7,22 @@ import {
 } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createBetterAuth } from "@/runtime/shared/adapters/better-auth";
+import { createSchoolIdentityClient } from "@/runtime/shared/adapters/identity-client";
 import { applyInProcessNotifyDeliveryEvent } from "@/runtime/shared/adapters/notify-delivery-sink";
 import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime, DatabaseHandle } from "@/runtime/types";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 
 export interface InitSchoolApplicationExtras {
+  identityClient: IdentityClient;
   notifyRuntime?: NotifyRuntime;
 }
 
 export interface CreateApiRuntimeOptions {
   env: Environment;
-  authHandle: DatabaseHandle;
+  identityClient?: IdentityClient;
   resolveSchoolHandle: () => Promise<DatabaseHandle>;
   initSchoolApplication: (
     db: PostgresTransactionalDb,
@@ -64,18 +66,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     return notifyRuntime;
   }
 
-  const auth = createBetterAuth(options.authHandle.db, options.env, {
-    ...(options.env.authSecondaryStorage
-      ? { secondaryStorage: options.env.authSecondaryStorage }
-      : {}),
-    getNotifyRuntime: async () => {
-      const runtime = await getNotifyRuntime();
-      if (!runtime) {
-        throw new Error("in-process notify runtime is not configured");
-      }
-      return runtime;
-    },
-  });
+  const identityClient = options.identityClient ?? createSchoolIdentityClient(options.env);
 
   return {
     env: options.env,
@@ -89,6 +80,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         const handle = await getResolvedSchoolHandle();
         const runtime = await getNotifyRuntime();
         schoolApp = await options.initSchoolApplication(handle.db as PostgresTransactionalDb, {
+          identityClient,
           notifyRuntime: runtime,
         });
         deliverySink.apply = async (event) => {
@@ -97,11 +89,10 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
       }
       return schoolApp;
     },
-    getAuth() {
-      return auth;
+    getIdentityClient() {
+      return identityClient;
     },
     close: async () => {
-      await options.authHandle.dispose();
       if (resolvedSchoolHandle) {
         await resolvedSchoolHandle.dispose();
       }

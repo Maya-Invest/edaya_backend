@@ -563,98 +563,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/dev/seed/mark-email-verified": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Mark a Better Auth user email-verified (seed / local only) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            /** @description User to mark verified */
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /** Format: email */
-                        email?: string;
-                        subjectId?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description User marked email-verified */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @enum {boolean} */
-                            ok: true;
-                        };
-                    };
-                };
-                /** @description Missing seed provision header or body */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Not available in production Workers */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description User not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-                /** @description Failed to update user */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/core/commands/register-school": {
         parameters: {
             query?: never;
@@ -9495,40 +9403,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/edaya/connected-apps": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List the signed-in parent's active delegations */
-        get: operations["listConnectedApps"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/edaya/connected-apps/{grantId}/revoke": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Immediately revoke an owned delegation */
-        post: operations["revokeConnectedApp"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9878,6 +9752,7 @@ export interface components {
             contactChannel: string;
             /** Format: email */
             contactEmail?: string;
+            contactPhone?: string;
             authAccountExists?: boolean;
         };
         AcceptInvitationResponse: {
@@ -10474,8 +10349,7 @@ export interface components {
         AcceptAccountInvitationCommand: {
             token: string;
             subjectId: string;
-            /** Format: email */
-            contactEmail: string;
+            contactValue: string;
         };
         StaffAssignment: {
             id: string;
@@ -12594,19 +12468,6 @@ export interface components {
         Filter_55: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
-        };
-        ConnectedApp: {
-            id: string;
-            clientId: string;
-            clientName: string;
-            purpose: string;
-            schoolId: string;
-            studentIds: string[];
-            scopes: string[];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            expiresAt: string;
         };
     };
     responses: never;
@@ -58427,111 +58288,6 @@ export interface operations {
             };
             /** @description Internal server error occurred */
             500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    listConnectedApps: {
-        parameters: {
-            query?: {
-                cursor?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Up to 50 grants in stable ID order. Use nextCursor for the next page. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        items: components["schemas"]["ConnectedApp"][];
-                        nextCursor: string | null;
-                    };
-                };
-            };
-            /** @description Invalid cursor */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid first-party access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    revokeConnectedApp: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                grantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Revoked, including an already-revoked owned grant */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                    };
-                };
-            };
-            /** @description Missing or invalid first-party access token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Unknown grant or grant owned by another user */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Authentication request quota exceeded */
-            429: {
                 headers: {
                     [name: string]: unknown;
                 };

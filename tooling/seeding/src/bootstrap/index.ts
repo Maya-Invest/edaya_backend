@@ -1,11 +1,4 @@
 export { HttpAuthProvisioner, signInViaHttp } from './auth/http-provisioner'
-export { markAuthUserEmailVerifiedBySql } from './auth/mark-email-verified'
-export {
-  isStagingSeedApiUrl,
-  repairStagingAuthUser,
-  shouldRepairStaleStagingAuthUsers,
-} from './auth/staging-user-repair'
-export { type AuthHandler, createHandlerAuthProvisioner } from './handler-auth-provisioner'
 export { seedMinimalSchool } from './seed-minimal-school'
 export {
   logProvisionedServiceAccountKey,

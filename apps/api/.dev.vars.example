@@ -10,17 +10,17 @@
 # NODE_ENV=development
 # LOG_LEVEL=info
 # RUNTIME=worker
-# BETTER_AUTH_URL=http://localhost:9999
+# SCHOOL_API_ORIGIN=http://localhost:9999
+# IDENTITY_ISSUER=http://localhost:9900
+# IDENTITY_DIRECTORY_URL=http://localhost:9900
 # TRUSTED_ORIGINS=http://localhost:5173,http://localhost:4173
 # ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
 
 # --- Required secret ---
-BETTER_AUTH_SECRET=dev-secret-change-in-production
+IDENTITY_DIRECTORY_SECRET=local-directory-secret
 
 # --- Hyperdrive local origin (wrangler dev only; must match --env Neon branch) ---
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
-# Same origin for auth (cache-disabled binding in deployed Workers; local wrangler ignores Hyperdrive cache)
-CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:password@host/neondb?sslmode=require
 
 # --- R2 (required on RUNTIME=worker; also used by `bun repo smoke-test r2`) ---
 # R2_BUCKET_NAME=edaya-files-staging
@@ -47,13 +47,11 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://user:
 
 # --- Optional ---
 # GRANTS_CACHE_TTL_MS=300000
-# COOKIE_DOMAIN=edayaplus.com
-# WEBAPP_ORIGIN=https://staging.app.edayaplus.com
+# WEBAPP_ORIGIN=https://staging.app.school.edayaplus.com
 # ACCOUNT_INVITATIONS_ENABLED=true
-# REQUIRE_EMAIL_VERIFICATION=false
 
 # --- Not used in Wrangler / worker ---
-# PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS= / AUTH_EMAIL_LOG_OTP=
+# PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS=
 #   → local only: `apps/api/.env`
 # GRAPHQL_* / LOCAL_FILES_PORT=
 #   → local only

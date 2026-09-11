@@ -2,6 +2,9 @@ name: Verify
 
 on:
   workflow_call:
+    secrets:
+      IDENTITY_CHECKOUT_TOKEN:
+        required: false
 
 permissions:
   actions: write
@@ -13,6 +16,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Checkout identity client
+        uses: ./.github/actions/checkout-identity-client
+        with:
+          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun and Turbo cache
         uses: ./.github/actions/ci-bun-turbo

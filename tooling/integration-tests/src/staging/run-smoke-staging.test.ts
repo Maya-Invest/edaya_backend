@@ -14,19 +14,23 @@ afterEach(() => {
 describe('loadSmokeStagingEnv', () => {
   it('defaults staging URLs when env vars are unset', () => {
     delete process.env.SEED_STAGING_API_URL
+    delete process.env.SEED_STAGING_AUTH_URL
     delete process.env.SEED_STAGING_APP_ORIGIN
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
-    expect(env.apiUrl).toBe('https://staging.api.edayaplus.com')
-    expect(env.appOrigin).toBe('https://staging.app.edayaplus.com')
+    expect(env.apiUrl).toBe('https://staging.api.school.edayaplus.com')
+    expect(env.authUrl).toBe('https://staging.identity.edayaplus.com')
+    expect(env.appOrigin).toBe('https://staging.app.school.edayaplus.com')
   })
 
   it('uses SEED_STAGING_API_URL when set', () => {
     process.env.SEED_STAGING_API_URL = 'https://api-staging.example.com/'
+    process.env.SEED_STAGING_AUTH_URL = 'https://identity-staging.example.com/'
     process.env.SEED_STAGING_APP_ORIGIN = 'https://app-staging.example.com'
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.example.com')
+    expect(env.authUrl).toBe('https://identity-staging.example.com')
     expect(env.appOrigin).toBe('https://app-staging.example.com')
   })
 
@@ -84,6 +88,13 @@ describe('runSmokeStaging', () => {
             'set-cookie': 'better-auth.session_token=session-token; Path=/; HttpOnly',
           },
         })
+      }
+
+      if (url.endsWith('/auth/edaya/access-token') && method === 'POST') {
+        return new Response(JSON.stringify({
+          accessToken: 'identity-jwt',
+          expiresAt: '2030-01-01T00:00:00.000Z',
+        }), { status: 200 })
       }
 
       if (url.endsWith('/core/authorization/effective-grants') && method === 'GET') {

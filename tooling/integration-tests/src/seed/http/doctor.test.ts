@@ -9,6 +9,7 @@ describe('dev seed doctor — HTTP doctor scope', () => {
     const { app, runtime, localFiles } = await createCoreRouteTestApp({
       withEmbeddedLocalFiles: true,
       autoCleanup: false,
+      identity: 'live',
     })
     const client = createHttpClientForApp(app)
 
@@ -33,7 +34,7 @@ describe('dev seed doctor — HTTP doctor scope', () => {
   }, 120_000)
 
   it('reports broken state when auth is missing', async () => {
-    const { app, runtime } = await createCoreRouteTestApp()
+    const { app, runtime } = await createCoreRouteTestApp({ identity: 'live' })
     const client = createHttpClientForApp(app)
 
     try {
@@ -43,7 +44,9 @@ describe('dev seed doctor — HTTP doctor scope', () => {
       })
 
       expect(doctor.doctor?.status).toBe('broken')
-      expect(doctor.doctor?.findings.some(entry => entry.code === 'auth-missing')).toBe(true)
+      expect(doctor.doctor?.findings.some(entry =>
+        entry.code === 'auth-missing' || entry.code === 'school-missing',
+      )).toBe(true)
     }
     finally {
       await runtime.close()

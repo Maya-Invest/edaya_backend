@@ -1,5 +1,7 @@
 # Unit Test Coverage — Sprint Plan
 
+> **Superseded for identity (2026-09-11):** `@edaya/adaptor-auth` moved to sibling `edaya_identity`. Coverage numbers for that package in this plan are historical.
+
 > **Status:** In progress — **U0 ✅ · U1 ✅ · U2 ✅ · U3 ✅ · U4 ✅ · U5 ✅ · U6 ✅** · **U7 in progress** (batch 1–4)  
 > **Last updated:** 2026-07-07  
 > **Created:** 2026-07-07  

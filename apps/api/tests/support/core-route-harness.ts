@@ -1,159 +1,178 @@
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/bindings";
 import { createDependenciesInjection } from "@/http/dependencies";
-import { isBetterAuthPath } from "@/http/dependencies/utils";
+import { createSessionActorDependency } from "@/http/dependencies/session-actor";
 import type { DependencyModule } from "@/http/dependency-injection";
-import {
-
-  createSessionActorDependency,
-} from "@/http/dependencies/session-actor";
-import type { AuthSessionProvider } from "@/http/dependencies/session-actor";
-import type { Environment } from "@/runtime/shared/env/schema";
+import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { buildInMemoryApiRuntime } from "@/runtime/in-memory/build-runtime";
 import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
-import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import type { ApiRuntime } from "@/runtime/types";
 import { resetApiRuntimesForTests } from "@/runtime/local/registry";
+import type { Environment } from "@/runtime/shared/env/schema";
+import type { ApiRuntime } from "@/runtime/types";
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
+import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
+import { Permission, StaffPermissionAssignment } from "@edaya/core";
+import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
+import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
-  createHandlerAuthProvisioner,
+  type AuthProvisioner,
   createInProcessAuthLinkSeedPort,
   runDevAccessSeed,
   runDevAuthLinkWithPort,
   runIntegrationLightSchoolSeed,
 } from "@edaya/seeding";
-import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { Permission, StaffPermissionAssignment } from "@edaya/core";
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
-import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
+import {
+  createTestIdentityKeys,
+  signTestIdentityToken,
+  type TestIdentityKeys,
+} from "@maya-invest/edaya-identity-client/testing";
+import {
+  createDirectoryClient,
+  IDENTITY_DIRECTORY_BY_CONTACT_PATH,
+  IDENTITY_DIRECTORY_BY_ID_PREFIX,
+  type IdentityClient,
+  verifyIdentityToken,
+} from "@maya-invest/edaya-identity-client";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 import {
   createLocalProfileTestEnv,
-
+  type EmbeddedLocalFilesServer,
   startEmbeddedLocalFilesServer,
   syncProcessEnvLocalFilesUrl,
 } from "./embedded-local-files";
-import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
 
-const ROUTE_INTEGRATION_TEST_TIMEOUT_MS = 120_000;
-setDefaultTimeout(ROUTE_INTEGRATION_TEST_TIMEOUT_MS);
-
-// Route integration tests seed `demoDataset` (sch-edaya-central / st*), not the dev default.
-// eslint-disable-next-line node/no-process-env -- test harness pins dataset for route integration tests
+// eslint-disable-next-line node/no-process-env -- route tests pin the demo fixture dataset
 process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
+setDefaultTimeout(120_000);
+const identityAccounts = new Map<string, { subjectId: string; name?: string }>();
+const activeTestRuntimes = new Set<ApiRuntime>();
+let testIdentityKeysPromise: Promise<TestIdentityKeys> | undefined;
+
+function loadTestIdentityKeys(): Promise<TestIdentityKeys> {
+  testIdentityKeysPromise ??= createTestIdentityKeys();
+  return testIdentityKeysPromise;
+}
 
 export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
-export { createSessionActorDependency } from "@/http/dependencies/session-actor";
-
-/** Backward-compatible aliases used by integration-tests. */
+export { createSessionActorDependency };
 export const apiPgliteEnv = pgliteEnv;
 export const createApiPgliteTestEnv = createPgliteTestEnv;
-
-export function collectSetCookieHeaders(response: Response): string[] {
-  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
-  if (typeof headers.getSetCookie === "function") {
-    return headers.getSetCookie();
-  }
-
-  const single = response.headers.get("set-cookie");
-  return single ? [single] : [];
-}
+export const TEST_ACADEMIC_YEAR_ID = DEMO_CENTRAL_ACADEMIC_YEAR_ID;
 
 export interface AuthenticatedRouteContext {
   app: Hono<AppBindings>;
   runtime: ApiRuntime;
   application: ApiSchoolApplication;
   env: Environment;
-  /** Present when `withEmbeddedLocalFiles` is true; stop via `stop()` when using `autoCleanup: false`. */
   localFiles?: EmbeddedLocalFilesServer;
-}
-
-const activeTestRuntimes = new Set<ApiRuntime>();
-
-function createIsolatedPgliteTestEnv(): Environment {
-  return createPgliteTestEnv({
-    DATABASE_URL: "pglite",
-  });
-}
-
-function registerTestRuntimeCleanup(runtime: ApiRuntime): void {
-  activeTestRuntimes.add(runtime);
-
-  onTestFinished(async () => {
-    activeTestRuntimes.delete(runtime);
-
-    try {
-      await runtime.close();
-    }
-    catch {
-      // Ignore teardown errors in tests.
-    }
-  });
-}
-
-/** Clears any runtimes still tracked by the harness (e.g. aborted tests). */
-export async function resetCoreRouteTestHarness(): Promise<void> {
-  await Promise.all(
-    [...activeTestRuntimes].map(async (runtime) => {
-      try {
-        await runtime.close();
-      }
-      catch {
-        // Ignore teardown errors in tests.
-      }
-    }),
-  );
-  activeTestRuntimes.clear();
-
-  await resetApiRuntimesForTests();
 }
 
 export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
-  /** When false, caller must close the runtime (e.g. shared beforeAll fixtures). */
   autoCleanup?: boolean;
-  /**
-   * Use RUNTIME=local with an embedded local-files server (for HTTP upload integration tests).
-   * Default: in-memory runtime.
-   */
   withEmbeddedLocalFiles?: boolean;
+  /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs edaya_identity running). */
+  identity?: "test" | "live";
 }
 
-export function wrapAuthWithVerifiedAssurance(auth: AuthSessionProvider): AuthSessionProvider {
-  const original = auth.api.getSession.bind(auth.api);
-  return {
-    api: {
-      getSession: async (args) => {
-        const session = await original(args);
-        if (!session?.user) {
-          return session;
-        }
+function subjectForEmail(email: string): string {
+  return identityAccounts.get(email)?.subjectId ?? `identity:${email.toLowerCase()}`;
+}
 
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            emailVerified: true,
-          },
-        };
-      },
+function findIdentityAccountByEmail(email: string) {
+  const needle = email.toLowerCase();
+  for (const [storedEmail, account] of identityAccounts) {
+    if (storedEmail.toLowerCase() === needle) {
+      return { email: storedEmail, ...account };
+    }
+  }
+  return undefined;
+}
+
+function testDirectoryFetch(input: RequestInfo | URL): Promise<Response> {
+  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+  if (url.pathname === IDENTITY_DIRECTORY_BY_CONTACT_PATH) {
+    const channel = url.searchParams.get("channel");
+    const value = url.searchParams.get("value") ?? "";
+    if (channel === "phone") {
+      return Promise.resolve(Response.json({ exists: false }));
+    }
+    const account = findIdentityAccountByEmail(value);
+    if (!account) {
+      return Promise.resolve(Response.json({ exists: false }));
+    }
+    return Promise.resolve(Response.json({ exists: true, id: account.subjectId }));
+  }
+  if (url.pathname.startsWith(IDENTITY_DIRECTORY_BY_ID_PREFIX)) {
+    const subjectId = decodeURIComponent(url.pathname.slice(IDENTITY_DIRECTORY_BY_ID_PREFIX.length));
+    for (const [email, account] of identityAccounts) {
+      if (account.subjectId === subjectId) {
+        return Promise.resolve(Response.json({ email }));
+      }
+    }
+    return Promise.resolve(new Response(null, { status: 404 }));
+  }
+  return Promise.resolve(new Response(null, { status: 404 }));
+}
+
+export const testIdentityProvisioner: AuthProvisioner = {
+  async ensureUser(account) {
+    const subjectId = subjectForEmail(account.email);
+    identityAccounts.set(account.email, { subjectId, name: account.name });
+    return { subjectId };
+  },
+  async lookupSubjectIdByEmail(email) {
+    return identityAccounts.get(email)?.subjectId;
+  },
+};
+
+const testIdentityClient: IdentityClient = {
+  directory: createDirectoryClient({
+    baseUrl: pgliteEnv.IDENTITY_DIRECTORY_URL,
+    secret: pgliteEnv.IDENTITY_DIRECTORY_SECRET,
+    fetch: testDirectoryFetch as unknown as typeof fetch,
+  }),
+  async verifyAccessToken(token) {
+    const keys = await loadTestIdentityKeys();
+    return verifyIdentityToken(token, {
+      issuer: pgliteEnv.IDENTITY_ISSUER,
+      audience: pgliteEnv.SCHOOL_API_ORIGIN,
+      jwks: keys.jwks,
+    });
+  },
+};
+
+function registerTestRuntimeCleanup(runtime: ApiRuntime): void {
+  activeTestRuntimes.add(runtime);
+  onTestFinished(async () => {
+    activeTestRuntimes.delete(runtime);
+    await runtime.close().catch(() => undefined);
+  });
+}
+
+export async function resetCoreRouteTestHarness(): Promise<void> {
+  await Promise.all([...activeTestRuntimes].map(runtime => runtime.close().catch(() => undefined)));
+  activeTestRuntimes.clear();
+  identityAccounts.clear();
+  await resetApiRuntimesForTests();
+}
+
+function createTestIdentityDependency(): DependencyModule<AppBindings> {
+  return {
+    name: "identityClient",
+    resolve(c) {
+      c.set("identityClient", testIdentityClient);
     },
   };
 }
 
-function createTestAuthDependency(runtime: ApiRuntime): DependencyModule<AppBindings> {
+function createLiveIdentityDependency(runtime: ApiRuntime): DependencyModule<AppBindings> {
   return {
-    name: "auth",
-    async resolve(c) {
-      if (isBetterAuthPath(c)) {
-        c.set("auth", runtime.getAuth());
-        return;
-      }
-
-      c.set("auth", runtime.getAuth());
+    name: "identityClient",
+    resolve(c) {
+      c.set("identityClient", runtime.getIdentityClient());
     },
   };
 }
@@ -162,10 +181,6 @@ function createTestSchoolAppDependency(runtime: ApiRuntime): DependencyModule<Ap
   return {
     name: "schoolApp",
     async resolve(c) {
-      if (isBetterAuthPath(c)) {
-        return;
-      }
-
       c.set("schoolApp", await runtime.getSchoolApplication());
     },
   };
@@ -174,10 +189,11 @@ function createTestSchoolAppDependency(runtime: ApiRuntime): DependencyModule<Ap
 export function createCoreRouteTestDependencies(
   runtime: ApiRuntime,
   sessionActor = createSessionActorDependency(),
+  identity: "test" | "live" = "test",
 ) {
   return createDependenciesInjection([
     createTestSchoolAppDependency(runtime),
-    createTestAuthDependency(runtime),
+    identity === "live" ? createLiveIdentityDependency(runtime) : createTestIdentityDependency(),
     sessionActor,
   ]);
 }
@@ -185,36 +201,39 @@ export function createCoreRouteTestDependencies(
 export async function createCoreRouteTestApp(
   options: CoreRouteTestAppOptions = {},
 ): Promise<AuthenticatedRouteContext> {
-  let embeddedLocalFiles: ReturnType<typeof startEmbeddedLocalFilesServer> | undefined;
+  let embeddedLocalFiles: EmbeddedLocalFilesServer | undefined;
   let restoreLocalFilesUrl: (() => void) | undefined;
+  const identity = options.identity ?? "test";
+  const identityEnv = identity === "live"
+    ? {
+        IDENTITY_DIRECTORY_SECRET: process.env["IDENTITY_DIRECTORY_SECRET"] ?? "local-directory-secret",
+      }
+    : {};
   const env = options.withEmbeddedLocalFiles
     ? (() => {
-        embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.BETTER_AUTH_SECRET);
+        embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.LOCAL_FILES_SECRET!);
         restoreLocalFilesUrl = syncProcessEnvLocalFilesUrl(embeddedLocalFiles.baseUrl);
         const originalStop = embeddedLocalFiles.stop.bind(embeddedLocalFiles);
         embeddedLocalFiles.stop = () => {
           originalStop();
           restoreLocalFilesUrl?.();
-          restoreLocalFilesUrl = undefined;
         };
-        return createLocalProfileTestEnv(embeddedLocalFiles);
+        return createLocalProfileTestEnv(embeddedLocalFiles, identityEnv);
       })()
-    : createIsolatedPgliteTestEnv();
+    : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv });
 
   if (embeddedLocalFiles && options.autoCleanup !== false) {
-    onTestFinished(async () => {
-      embeddedLocalFiles?.stop();
-    });
+    onTestFinished(() => embeddedLocalFiles?.stop());
   }
 
+  const identityClientExtras = identity === "live" ? {} : { identityClient: testIdentityClient };
   const runtime = env.RUNTIME === "local"
-    ? await buildLocalApiRuntime(env)
-    : await buildInMemoryApiRuntime(env);
+    ? await buildLocalApiRuntime(env, identityClientExtras)
+    : await buildInMemoryApiRuntime(env, identityClientExtras);
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }
   const application = await runtime.getSchoolApplication();
-
   const app = new Hono<AppBindings>();
   app.use(async (c, next) => {
     c.env = env;
@@ -223,19 +242,22 @@ export async function createCoreRouteTestApp(
   app.use(createCoreRouteTestDependencies(
     runtime,
     options.sessionActor ?? createSessionActorDependency(),
+    identity,
   ));
   app.route("/", indexRouter);
-
-  return { app, runtime, application, env, localFiles: embeddedLocalFiles };
+  return { app, runtime, application, env, ...(embeddedLocalFiles ? { localFiles: embeddedLocalFiles } : {}) };
 }
 
-export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, runtime: ApiRuntime) {
-  const auth = createHandlerAuthProvisioner(runtime.getAuth(), pgliteEnv.BETTER_AUTH_URL);
+export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, _runtime: ApiRuntime) {
   await runIntegrationLightSchoolSeed(application);
-  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), auth, {
+  await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), testIdentityProvisioner, {
     linkGuardians: false,
   });
+  const context = resolveDevSeedContext();
   await runDevAccessSeed(application, {
+    auth: testIdentityProvisioner,
+    ownerSubjectId: subjectForEmail(context.minimalStaffEmail),
+    authLinkPort: createInProcessAuthLinkSeedPort(application),
     includeClassSubjectStaffAssignments: false,
   });
 }
@@ -254,16 +276,13 @@ export async function provisionServiceAccountForTests(
   const context = resolveDevSeedContext();
   const creatorStaffId = input.creatorStaffId ?? context.minimalStaffId;
   const staff = await application.repositories.staffMembers.findById(creatorStaffId);
-  if (!staff?.subjectId) {
-    throw new Error(`Staff member ${creatorStaffId} is not linked to an auth subject`);
-  }
-
+  if (!staff?.subjectId)
+    throw new Error(`Staff member ${creatorStaffId} is not linked to an identity subject`);
   const grants = await application.repositories.authorization.resolveEffectiveGrants({
     staffMemberId: creatorStaffId,
     schoolId: SEED_SCHOOL_ID,
     academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
   });
-
   const actor = createStaffActorMetadata({
     subjectId: staff.subjectId,
     staffMemberId: creatorStaffId,
@@ -273,7 +292,6 @@ export async function provisionServiceAccountForTests(
     assuranceLevel: ActorAssuranceLevel.Verified,
     effectiveGrants: grants,
   });
-
   return createServiceAccount(application.repositories, actor, input);
 }
 
@@ -284,8 +302,53 @@ export async function signInDirectorWithBearer(
   return signInWithBearerThroughApp(app, { email });
 }
 
-export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
-  await grantStaffPermissionAssignments(application, staffId, [Permission.ACCESS_CONTROL_ASSIGN]);
+export function createAppRequest(path: string, init?: RequestInit): Request {
+  return new Request(`${pgliteEnv.SCHOOL_API_ORIGIN}${path}`, init);
+}
+
+export function collectSetCookieHeaders(response: Response): string[] {
+  const headers = response.headers as Headers & { getSetCookie?: () => string[] };
+  return typeof headers.getSetCookie === "function"
+    ? headers.getSetCookie()
+    : response.headers.get("set-cookie") ? [response.headers.get("set-cookie")!] : [];
+}
+
+export async function signInWithBearerThroughApp(
+  _app: Hono<AppBindings>,
+  input: { email: string; password?: string },
+): Promise<string> {
+  const keys = await loadTestIdentityKeys();
+  return signTestIdentityToken(keys, {
+    sub: subjectForEmail(input.email),
+    email: input.email,
+    email_verified: true,
+    iss: pgliteEnv.IDENTITY_ISSUER,
+    aud: pgliteEnv.SCHOOL_API_ORIGIN,
+  });
+}
+
+export async function signUpAuthUser(
+  _runtime: ApiRuntime,
+  input: { email: string; password?: string; name: string },
+): Promise<string> {
+  const subjectId = subjectForEmail(input.email);
+  identityAccounts.set(input.email, { subjectId, name: input.name });
+  return subjectId;
+}
+
+export function wrapAuthWithVerifiedAssurance(identityClient: IdentityClient): IdentityClient {
+  return identityClient;
+}
+
+export function withAcademicYearHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  return { ...headers, "x-academic-year-id": TEST_ACADEMIC_YEAR_ID };
+}
+
+export function buildSchoolWidePermissionAssignments(
+  permissions: readonly Permission[],
+  academicYearId = TEST_ACADEMIC_YEAR_ID,
+): ServiceAccountPermissionAssignmentInput[] {
+  return permissions.map(permission => ({ permission, scopeIds: "", academicYearId }));
 }
 
 export async function grantServiceAccountCreate(
@@ -297,93 +360,8 @@ export async function grantServiceAccountCreate(
   await grantStaffPermissionAssignments(application, staffId, permissions, scopeIds);
 }
 
-export function createAppRequest(path: string, init?: RequestInit): Request {
-  return new Request(`${pgliteEnv.BETTER_AUTH_URL}${path}`, init);
-}
-
-export async function signInWithBearerThroughApp(
-  app: Hono<AppBindings>,
-  input: { email: string; password?: string },
-): Promise<string> {
-  const response = await app.request(createAppRequest("/auth/sign-in/email", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      email: input.email,
-      password: input.password ?? DEV_AUTH_PASSWORD,
-    }),
-  }));
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Sign-in failed for ${input.email}: ${response.status} ${message}`);
-  }
-
-  const exchanged = await app.request(createAppRequest("/auth/edaya/access-token", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "origin": new URL(pgliteEnv.BETTER_AUTH_URL).origin,
-      "cookie": collectSetCookieHeaders(response).map(value => value.split(";")[0]).join("; "),
-    },
-    body: "{}",
-  }));
-  if (!exchanged.ok)
-    throw new Error(`Token exchange failed: ${exchanged.status}`);
-  return (await exchanged.json() as { accessToken: string }).accessToken;
-}
-
-export async function signUpAuthUser(
-  runtime: ApiRuntime,
-  input: { email: string; password?: string; name: string },
-): Promise<string> {
-  const response = await runtime.getAuth().handler(new Request(`${pgliteEnv.BETTER_AUTH_URL}/auth/sign-up/email`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      email: input.email,
-      password: input.password ?? DEV_AUTH_PASSWORD,
-      name: input.name,
-    }),
-  }));
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Sign-up failed for ${input.email}: ${response.status} ${message}`);
-  }
-
-  const body = await response.json() as { user?: { id?: string } };
-  if (!body.user?.id) {
-    throw new Error(`Sign-up for ${input.email} did not return a user id`);
-  }
-
-  return body.user.id;
-}
-
-export { resetApiRuntimesForTests };
-
-export const TEST_ACADEMIC_YEAR_ID = DEMO_CENTRAL_ACADEMIC_YEAR_ID;
-
-export function withAcademicYearHeaders(headers: Record<string, string> = {}): Record<string, string> {
-  return {
-    ...headers,
-    "x-academic-year-id": TEST_ACADEMIC_YEAR_ID,
-  };
-}
-
-export function buildSchoolWidePermissionAssignments(
-  permissions: readonly Permission[],
-  academicYearId = TEST_ACADEMIC_YEAR_ID,
-): ServiceAccountPermissionAssignmentInput[] {
-  return permissions.map(permission => ({
-    permission,
-    scopeIds: "",
-    academicYearId,
-  }));
+export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
+  await grantStaffPermissionAssignments(application, staffId, [Permission.ACCESS_CONTROL_ASSIGN]);
 }
 
 async function grantStaffPermissionAssignments(
@@ -406,3 +384,5 @@ async function grantStaffPermissionAssignments(
     }));
   }
 }
+
+export { resetApiRuntimesForTests };

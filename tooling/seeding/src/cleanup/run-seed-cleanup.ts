@@ -5,9 +5,9 @@ import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
 import { loadSeedEnvFiles } from '../support/load-seed-env'
 import { resolveRepoRoot } from '../support/resolve-repo-root'
+import { IDENTITY_AUTH_WIPE_HINT } from './parse-cleanup-args'
 import { probeLocalApiReachable } from './probe-local-api'
 import { wipeLocalData } from './wipe-local-data'
-import { wipeStagingAuthDatabase } from './wipe-staging-auth-db'
 import { wipeStagingSchoolDatabase } from './wipe-staging-school-db'
 
 async function confirm(message: string, autoYes: boolean): Promise<boolean> {
@@ -49,12 +49,7 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
   const repoRoot = resolveRepoRoot(import.meta.url)
 
   if (options.target === 'local') {
-    if (!options.school && !options.auth) {
-      throw new Error('Nothing to wipe: enable school and/or auth cleanup.')
-    }
-
     const apiUrl = process.env['SEED_API_URL']
-      ?? process.env['BETTER_AUTH_URL']
       ?? 'http://localhost:9999'
 
     if (await probeLocalApiReachable(apiUrl)) {
@@ -65,7 +60,7 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
     }
 
     const confirmed = await confirm(
-      'Delete local dev databases under .data/ (school PGlite, including auth schema)?',
+      'Delete local school PGlite under .data/?',
       options.yes,
     )
     if (!confirmed) {
@@ -81,20 +76,13 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
       console.log(`No ${result.dataDir} directory found (already clean).`)
     }
 
-    console.log('Local cleanup complete. Restart `bun repo dev`, then run `bun repo seed`.')
+    console.log(`Local school cleanup complete. ${IDENTITY_AUTH_WIPE_HINT}`)
+    console.log('Restart `bun repo dev`, then run `bun repo seed`.')
     return
   }
 
-  const actions: string[] = []
-  if (options.school) {
-    actions.push('truncate Neon staging public tables')
-  }
-  if (options.auth) {
-    actions.push('delete Better Auth users in staging Neon auth schema')
-  }
-
   const confirmed = await confirm(
-    `This will ${actions.join(' and ')}. Continue?`,
+    'This will truncate Neon staging public tables. Continue?',
     options.yes,
   )
   if (!confirmed) {
@@ -102,16 +90,9 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<void> {
     return
   }
 
-  if (options.school) {
-    const databaseUrl = resolveStagingDatabaseUrl()
-    const result = await wipeStagingSchoolDatabase(databaseUrl)
-    console.log(`Staging school database wiped (${result.tableCount} public tables truncated).`)
-  }
-
-  if (options.auth) {
-    await wipeStagingAuthDatabase()
-    console.log('Staging Better Auth tables wiped (auth.user/session/account/verification).')
-  }
-
-  console.log('Staging cleanup complete. Run `bun repo db migrate staging` if needed, then `bun repo seed --staging`.')
+  const databaseUrl = resolveStagingDatabaseUrl()
+  const result = await wipeStagingSchoolDatabase(databaseUrl)
+  console.log(`Staging school database wiped (${result.tableCount} public tables truncated).`)
+  console.log(IDENTITY_AUTH_WIPE_HINT)
+  console.log('Staging school cleanup complete. Run `bun repo db migrate staging` if needed, then `bun repo seed --staging`.')
 }

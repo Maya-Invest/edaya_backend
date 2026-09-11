@@ -12,6 +12,7 @@ import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtim
 import type { Environment } from "@/runtime/shared/env/schema";
 import { createRepositoryAuthorizationPolicy } from "@edaya/authorization";
 import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
+import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -20,7 +21,7 @@ export interface BuildSchoolApplicationOptions {
   fileStorage?: FileStoragePort;
   invitationDelivery?: InvitationDeliveryPort;
   notifyRuntime?: NotifyRuntime;
-  authDb?: unknown;
+  identityDirectory?: DirectoryClient;
   runMigrations?: boolean;
 }
 
@@ -58,8 +59,8 @@ export async function buildSchoolApplication(
     authCacheInvalidation: apiAuthCacheInvalidationPort,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
-    authContactResolver: options.authDb
-      ? createAuthContactResolver(options.authDb as Parameters<typeof createAuthContactResolver>[0])
+    authContactResolver: options.identityDirectory
+      ? createAuthContactResolver(options.identityDirectory)
       : undefined,
     repositories: repos,
     authorizationPolicy: createRepositoryAuthorizationPolicy({

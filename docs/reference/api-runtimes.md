@@ -1,6 +1,6 @@
 # API runtimes
 
-The API runs as one of three **profiles**: `in-memory`, `local`, or `worker`. Each profile declares which adapters to wire (school DB, auth DB, file storage, notifications). Configuration is validated through the same `EnvSchema`; only **how** env values are loaded differs.
+The API runs as one of three **profiles**: `in-memory`, `local`, or `worker`. Each profile declares which adapters to wire (school DB, identity client, file storage, notifications). Configuration is validated through the same `EnvSchema`; only **how** env values are loaded differs.
 
 **Contract:** [runtime-boundaries.md](./runtime-boundaries.md) — adapter matrix and bootstrap rules.
 
@@ -21,10 +21,11 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
-| `BETTER_AUTH_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |
-| `BETTER_AUTH_URL` | `.env` | `[vars]` or secret |
+| `SCHOOL_API_ORIGIN` | `http://localhost:9999` | `[vars]` |
+| `IDENTITY_ISSUER` | `http://localhost:9900` | `[vars]` |
+| `IDENTITY_DIRECTORY_URL` | `http://localhost:9900` | `[vars]` or `IDENTITY` service binding |
+| `IDENTITY_DIRECTORY_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
-| `COOKIE_DOMAIN` | optional `.env` | `[vars]` (production split-domain) |
 | `GRANTS_CACHE_TTL_MS` | optional `.env` | optional secret / `[vars]` |
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 | `LOCAL_FILES_*` | local profile only | ignored |
@@ -38,7 +39,7 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 | Adapter | in-memory | local | worker |
 |---------|-----------|-------|--------|
 | School DB | PGlite (ephemeral) | PGlite persisted (`.data/school`) | Postgres via Hyperdrive |
-| Auth DB | PGlite `auth` schema | PGlite `auth` schema (same DB) | Postgres `auth` schema via Hyperdrive |
+| Identity | Fixture client | HTTP identity client | HTTP/service-binding directory + issuer JWKS |
 | Migrations on startup | yes | yes (PGlite default) | no |
 | File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun repo dev` | R2 (required) |
 | Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
@@ -55,7 +56,7 @@ cp apps/api/.env.example apps/api/.env
 bun repo dev
 ```
 
-Set `RUNTIME=local` (default). `bun repo dev` starts the API and `@edaya/local-files-server` together. School data and auth live under repo-root `.data/` (gitignored). In-process notify uses the school PGlite `notify` schema and log email by default.
+Set `RUNTIME=local` (default). `bun repo dev` starts the school API and `@edaya/local-files-server` together. Start sibling `edaya_identity` separately on port 9900; it owns its own database. In-process notify uses the school PGlite `notify` schema and log email by default.
 
 Production containers using the local entry should inject env vars directly — no `.env` file, `NODE_ENV=production`.
 
@@ -68,11 +69,11 @@ cd apps/api && bun run dev:worker
 
 worker smoke uses the same adapter wiring as production (`RUNTIME=worker` via Miniflare).
 
-- **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `TRUSTED_ORIGINS`, …), Hyperdrive binding
+- **`wrangler.jsonc`** — non-secret `vars` (`RUNTIME`, `LOG_LEVEL`, identity origins, `TRUSTED_ORIGINS`, …), school Hyperdrive and optional identity service bindings
 - **`.dev.vars`** — Wrangler-only secrets (gitignored); loaded by `wrangler dev --env-file` and deploy — **not** by `bun repo dev`
-- **School + auth DB** — Postgres via Hyperdrive binding (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local wrangler dev); auth tables in the `auth` schema
+- **School DB** — Postgres via `HYPERDRIVE` (set `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` for local worker dev)
 
-Deploy with `bun repo deploy api production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env prod`) once `BETTER_AUTH_SECRET` is set in the Worker dashboard and migrations are applied to the Hyperdrive origin DB (school + `auth` schema).
+Deploy with `bun repo deploy api production` (root) or `bun run deploy:production` in `apps/api` (`wrangler deploy --env prod`) once `IDENTITY_DIRECTORY_SECRET` is set in the Worker dashboard, Central Identity is deployed, and school migrations are applied.
 
 **Staging:** `bun repo deploy api staging` deploys `[env.staging]` (`edaya-api-staging`). Use separate Hyperdrive and secrets from production. Full runbook: [deploy-staging.md](./deploy-staging.md).
 
@@ -84,33 +85,32 @@ Request
        └─ dependencies middleware (http/dependencies/)
             ├─ env → parseRuntimeEnv(prepareRuntimeBindings)
             ├─ school runtime → getApiRuntime (process) or resolveApiRuntime (worker)
-            ├─ auth → createAuth from runtime/shared/create-auth.ts
+            ├─ identity client → JWT verification + directory API
             └─ session actor → effective grants
-       └─ route handler → SchoolApplication / Better Auth handler
+       └─ route handler → SchoolApplication
 ```
 
 | Concern | in-memory / local | worker |
 |---------|-------------------|--------|
 | School DB | `in-memory/school-database.ts`, `local/school-database.ts` | `worker/school-database.ts` |
-| Auth DB | `in-memory/auth-database.ts`, `local/auth-database.ts` | `worker/auth-database.ts` |
 | Runtime cache | `local/registry.ts` — `getApiRuntime(env)` | `worker/resolve-api-runtime.ts` per request |
 
-Auth schema and SQL migrations live in `package/adaptor-auth`. Migration CLI lives in `tooling/db-migrate`. Runtime Better Auth config lives in `apps/api/src/runtime/shared/create-auth.ts`.
+Identity persistence and authentication runtime live in sibling `edaya_identity`. The school migration CLI in `tooling/db-migrate` applies only the school schema.
 
 Folder map: `apps/api/src/runtime/README.md`.
 
 ### Runtime registry (process profiles)
 
-Always obtain process runtimes through `getApiRuntime(env)`. The registry caches one instance per profile + database key so middleware, seeds, and handlers share the same database and auth service. Calling `buildProcessApiRuntime` directly creates an uncached handle that middleware will not see.
+Always obtain process runtimes through `getApiRuntime(env)`. The registry caches one instance per profile + database key so middleware, seeds, and handlers share the same school database and identity client. Calling `buildProcessApiRuntime` directly creates an uncached handle that middleware will not see.
 
 On Worker, use `resolveApiRuntime(c)` — each request gets a runtime that is closed in the dependency middleware's `onRequestComplete` hook.
 
-### Better Auth proxy
+### Central Identity
 
-`/auth/*` routes forward to the Better Auth handler. Incoming request URLs are rewritten to `BETTER_AUTH_URL` before delegation, so a port or host mismatch between the client request and `BETTER_AUTH_URL` does not break sign-in. Keep `BETTER_AUTH_URL` aligned with the public API URL in each environment (including reverse proxies).
+The school API does not mount `/auth/*`. Clients authenticate against `IDENTITY_ISSUER`, then send the resulting access JWT to school routes with `Authorization: Bearer …`. Cookies never authenticate school routes.
 
 `TRUSTED_ORIGINS` must include the webapp origin when the browser calls the API cross-origin (production split-domain). In local dev, the webapp Vite proxy keeps requests same-origin.
 
 ### Core command HTTP semantics
 
-Protected `POST /core/commands/*` routes validate the JSON body with OpenAPI/Zod **before** the route handler runs. A request with a malformed body therefore returns **422**, even when no session cookie is present. A well-formed body without a session returns **401**.
+Protected `POST /core/commands/*` routes validate the JSON body with OpenAPI/Zod **before** the route handler runs. A malformed body therefore returns **422** before authentication is evaluated. A well-formed body without a valid Bearer credential returns **401**.

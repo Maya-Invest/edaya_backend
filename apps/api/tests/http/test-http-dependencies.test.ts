@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock, spyOn } from "bun:test";
-import { authDependency } from "@/http/dependencies/auth";
+import { identityClientDependency } from "@/http/dependencies/auth";
 import { schoolAppDependency } from "@/http/dependencies/school-app";
 import * as resolveApiRuntimeModule from "@/runtime/resolve-api-runtime";
 
@@ -18,37 +18,27 @@ function createDependencyContext(path: string) {
   return { context: context as never, values };
 }
 
-describe("auth dependency", () => {
+describe("identity client dependency", () => {
   afterEach(() => {
     mock.restore();
   });
 
-  it("loads auth from the resolved API runtime", async () => {
-    const auth = { api: { getSession: async () => null } };
+  it("loads the identity client from the resolved API runtime", async () => {
+    const identityClient = { verifyAccessToken: async () => null };
     spyOn(resolveApiRuntimeModule, "resolveApiRuntime").mockResolvedValue({
-      getAuth: () => auth,
+      getIdentityClient: () => identityClient,
     } as never);
 
     const { context, values } = createDependencyContext("/core/entities/students/list");
-    await authDependency.resolve(context);
+    await identityClientDependency.resolve(context);
 
-    expect(values.get("auth")).toBe(auth);
+    expect(values.get("identityClient")).toBe(identityClient);
   });
 });
 
 describe("schoolApp dependency", () => {
   afterEach(() => {
     mock.restore();
-  });
-
-  it("skips school application resolution on Better Auth routes", async () => {
-    const resolveApiRuntime = spyOn(resolveApiRuntimeModule, "resolveApiRuntime");
-
-    const { context, values } = createDependencyContext("/auth/sign-in/email");
-    await schoolAppDependency.resolve(context);
-
-    expect(resolveApiRuntime).not.toHaveBeenCalled();
-    expect(values.get("schoolApp")).toBeUndefined();
   });
 
   it("loads the school application for core API routes", async () => {

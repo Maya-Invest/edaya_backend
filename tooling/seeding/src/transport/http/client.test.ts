@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { HttpSeedClient } from './client'
 
+const TEST_IDENTITY_JWT = 'eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.signature'
+
 describe('HttpSeedClient.request', () => {
   it('does not attach API session headers to external presigned storage URLs', async () => {
     let capturedHeaders: Headers | undefined
@@ -36,7 +38,7 @@ describe('HttpSeedClient.request', () => {
       fetch: async (input, init) => {
         if (String(input).endsWith('/auth/edaya/access-token')) {
           expect(new Headers(init?.headers).get('cookie')).toContain('session-token')
-          return Response.json({ accessToken: `edaya_at_${'a'.repeat(43)}`, expiresAt: new Date(Date.now() + 300000).toISOString() })
+          return Response.json({ accessToken: TEST_IDENTITY_JWT, expiresAt: new Date(Date.now() + 300000).toISOString() })
         }
         capturedHeaders = new Headers(init?.headers)
         return new Response(null, { status: 200 })
@@ -54,7 +56,7 @@ describe('HttpSeedClient.request', () => {
     })
 
     expect(capturedHeaders?.get('cookie')).toBeNull()
-    expect(capturedHeaders?.get('authorization')).toBe(`Bearer edaya_at_${'a'.repeat(43)}`)
+    expect(capturedHeaders?.get('authorization')).toBe(`Bearer ${TEST_IDENTITY_JWT}`)
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
 
@@ -102,7 +104,7 @@ describe('HttpSeedClient.request', () => {
       fetch: async (input) => {
         if (String(input).endsWith('/auth/edaya/access-token')) {
           exchanges++
-          return Response.json({ accessToken: `edaya_at_${'a'.repeat(43)}`, expiresAt: new Date(Date.now() + 300000).toISOString() })
+          return Response.json({ accessToken: TEST_IDENTITY_JWT, expiresAt: new Date(Date.now() + 300000).toISOString() })
         }
         return new Response(null, { status: 200 })
       },

@@ -102,7 +102,19 @@ export async function runHttpSeedDoctor(
     ? { client, serviceAccountApiKey, requestId: 'http-seed-doctor' }
     : { client, requestId: 'http-seed-doctor' }
 
-  const schools = await postEntityList(listOptions, 'schools')
+  let schools: unknown[] = []
+  try {
+    schools = await postEntityList(listOptions, 'schools')
+  }
+  catch {
+    findings.push(finding(
+      'error',
+      'school-missing',
+      'Could not list schools. The identity session may be valid while the school database is empty.',
+      `Run \`bun repo seed\`. ${WIPE_AND_RESEED_REPAIR}`,
+    ))
+    return { status: 'broken', findings }
+  }
   const demoSchool = schools.find(school => typeof school === 'object' && school && 'id' in school && school.id === context.schoolId)
 
   if (schools.length === 0) {

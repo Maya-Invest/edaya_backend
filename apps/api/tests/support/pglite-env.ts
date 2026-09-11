@@ -13,8 +13,11 @@ export const pgliteTestEnvInput = {
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
-  BETTER_AUTH_URL: "http://localhost:9999",
+  SCHOOL_API_ORIGIN: "http://localhost:9999",
+  IDENTITY_ISSUER: "http://localhost:9900",
+  IDENTITY_DIRECTORY_URL: "http://localhost:9900",
+  IDENTITY_DIRECTORY_SECRET: "test-directory-secret",
+  LOCAL_FILES_SECRET: "test-local-files-secret",
   ACCOUNT_INVITATIONS_ENABLED: false,
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: true,
 } as const;
