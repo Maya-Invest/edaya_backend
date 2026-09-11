@@ -120,6 +120,31 @@ describe('HttpSeedClient.request', () => {
     expect(client.cookieHeader()).toContain('original')
   })
 
+  it('retries identity POST 429 using Retry-After without replaying school writes', async () => {
+    let identityCalls = 0
+    const client = new HttpSeedClient({
+      baseUrl: 'http://localhost:9999',
+      authUrl: 'http://localhost:9900',
+      fetch: async (input) => {
+        if (String(input).includes('/auth/sign-in/email')) {
+          identityCalls += 1
+          if (identityCalls === 1) {
+            return new Response(null, { status: 429, headers: { 'retry-after': '0' } })
+          }
+          return new Response(null, { status: 200 })
+        }
+        return new Response(null, { status: 429, headers: { 'retry-after': '0' } })
+      },
+    })
+
+    const identity = await client.request('/auth/sign-in/email', { method: 'POST' })
+    const school = await client.request('/core/commands/pay', { method: 'POST' })
+
+    expect(identityCalls).toBe(2)
+    expect(identity.status).toBe(200)
+    expect(school.status).toBe(429)
+  })
+
   it('does not replay writes after a transient status or malformed response', async () => {
     for (const response of [{ body: null, status: 503 }, { body: '<html>unavailable</html>', status: 502 }, { body: 'invalid', status: 200 }]) {
       let calls = 0

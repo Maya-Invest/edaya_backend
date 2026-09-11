@@ -45,6 +45,7 @@ case "$action" in
       --publish 127.0.0.1:9200:9200 \
       --memory 4g \
       "$IMAGE_NAME"
+    bash "$SCRIPT_DIR/wait-for-url.sh" http://127.0.0.1:9900/ 120
     bash "$SCRIPT_DIR/wait-for-url.sh" http://127.0.0.1:9999/reference 120
     echo
     echo "Edaya API dev container is up."

@@ -33,6 +33,8 @@ const DEFAULT_REQUEST_RETRIES = 5
 const DEFAULT_RETRY_BASE_DELAY_MS = 500
 const STAGING_REQUEST_RETRIES = 12
 const STAGING_RETRY_BASE_DELAY_MS = 1500
+const IDENTITY_429_RETRIES = 2
+const IDENTITY_429_MAX_WAIT_MS = 65_000
 /** Min gap between staging API calls — kept low; retries handle transient Worker limits. */
 const STAGING_MIN_REQUEST_INTERVAL_MS = 5
 const STAGING_JSON_OUTER_RETRIES = 50
@@ -95,6 +97,18 @@ function isWorkerLimitHtml(text: string): boolean {
 
 function formatHttpFailure(path: string, status: number, detail: string): string {
   return `HTTP ${status} ${detail} (${path})`
+}
+
+function retryAfterDelayMs(response: Response, fallbackMs: number): number {
+  const header = response.headers.get('retry-after')
+  if (!header) {
+    return fallbackMs
+  }
+  const seconds = Number(header)
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return fallbackMs
+  }
+  return Math.min(seconds * 1000, IDENTITY_429_MAX_WAIT_MS)
 }
 
 export class HttpSeedClient {
@@ -257,12 +271,13 @@ export class HttpSeedClient {
       }
     }
 
-    const mayRetry = ['GET', 'HEAD'].includes((init.method ?? 'GET').toUpperCase())
-    const maxRetries = mayRetry
+    const method = (init.method ?? 'GET').toUpperCase()
+    const mayRetryGet = ['GET', 'HEAD'].includes(method)
+    const maxRetries = mayRetryGet
       ? (this.isStaging()
           ? STAGING_REQUEST_RETRIES
           : DEFAULT_REQUEST_RETRIES)
-      : 0
+      : (identityPath ? IDENTITY_429_RETRIES : 0)
     const retryBaseDelayMs = this.isStaging()
       ? STAGING_RETRY_BASE_DELAY_MS
       : DEFAULT_RETRY_BASE_DELAY_MS
@@ -279,14 +294,20 @@ export class HttpSeedClient {
         headers,
       })
 
-      if (!RETRYABLE_STATUS_CODES.has(response.status) || attempt === maxRetries) {
+      const retry429 = identityPath && response.status === 429
+      if ((!RETRYABLE_STATUS_CODES.has(response.status) && !retry429) || attempt === maxRetries) {
+        if (identityPath)
+          this.absorbCookies(response)
+        return response
+      }
+      if (!mayRetryGet && !retry429) {
         if (identityPath)
           this.absorbCookies(response)
         return response
       }
 
       lastResponse = response
-      await sleep(retryBaseDelayMs * (attempt + 1))
+      await sleep(retryAfterDelayMs(response, retryBaseDelayMs * (attempt + 1)))
     }
 
     if (identityPath)
