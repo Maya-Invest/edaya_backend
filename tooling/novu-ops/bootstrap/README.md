@@ -56,7 +56,7 @@ Trigger ids match core `eventKey` values (see `bootstrap/catalog/workflows.ts`):
 
 Standard notifications use **in-app + email** steps with `{{payload.title}}` / `{{payload.body}}`.
 
-Email bodies use a shared HTML shell in `templates/emails/edaya-shell.html` with `{{ payload.emailBody | raw }}`. Subjects stay `{{payload.emailSubject}}`. Each email step is `editorType: "html"` with `layoutId: null` so Novu does not wrap messages in the default placeholder layout.
+Email bodies use a shared HTML shell in `templates/emails/edaya-shell.html` with `{{ payload.emailBody | raw }}` so pre-rendered HTML (invite links, verify URLs) is not escaped. Subjects stay `{{payload.emailSubject}}`. Each email step is `editorType: "html"` with `layoutId: null` so Novu does not wrap messages in the default placeholder layout.
 
 After changing email templates or step ids, re-run `bun repo novu bootstrap apply` against **each** Novu environment (local, staging, prod) that sends mail. Code-only changes do not update Cloud workflows.
 
