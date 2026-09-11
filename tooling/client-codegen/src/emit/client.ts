@@ -150,7 +150,7 @@ export function formatCreateClientTypeScript(
 		.join('\n')
 
 	return `${banner}
-import type { BaseEntityResource, DirectSaveEntityResource } from '${runtimeImports.entityResource}'
+import type { PublicEntityOperations, PublicEntityResource } from '${runtimeImports.entityResource}'
 import type { Transport } from '${runtimeImports.transport}'
 import { EntityResource } from '${runtimeImports.entityResource}'
 import { clientBindings } from './client-bindings'
@@ -161,10 +161,8 @@ type SchemaName<TSchemas extends Record<string, unknown>, TName extends string>
 
 type EntityClient<
   TSchemas extends Record<string, unknown>,
-  TBinding extends { schemaName: string, allowDirectSave: boolean },
-> = TBinding['allowDirectSave'] extends true
-  ? DirectSaveEntityResource<SchemaName<TSchemas, TBinding['schemaName']>>
-  : BaseEntityResource<SchemaName<TSchemas, TBinding['schemaName']>>
+  TBinding extends { schemaName: string, publicOperations: PublicEntityOperations },
+> = PublicEntityResource<SchemaName<TSchemas, TBinding['schemaName']>, TBinding['publicOperations']>
 
 type EntityClients<TSchemas extends Record<string, unknown>> = {
   [K in keyof typeof clientBindings.entities]: EntityClient<
@@ -200,7 +198,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
   const entities = Object.fromEntries(
     Object.entries(clientBindings.entities).map(([key, binding]) => [
       key,
-      new EntityResource(transport, binding.publicName),
+      new EntityResource(transport, binding.publicName, binding.publicOperations),
     ]),
   ) as unknown as EntityClients<TSchemas>
 

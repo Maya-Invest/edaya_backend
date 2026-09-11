@@ -1,5 +1,6 @@
 import { MessageDeliveryRecipientKind } from "@edaya/core";
 import { describe, expect, test } from "bun:test";
+import { drainPendingSchoolNotifications } from "../src/jobs/drain-jobs";
 import { createNotifyNotificationGateway } from "../src/notification-gateway";
 import type { NotifySql } from "../src/store/types";
 import { createNotifyRuntime } from "../src/runtime";
@@ -17,7 +18,7 @@ function throwingSql(message: string): NotifySql {
 }
 
 describe("createNotifyNotificationGateway", () => {
-  test("swallows enqueue failures", async () => {
+  test("propagates enqueue failures so the transaction can roll back", async () => {
     const errors: unknown[] = [];
     const gateway = createNotifyNotificationGateway({
       runtime: createNotifyRuntime({
@@ -36,7 +37,7 @@ describe("createNotifyNotificationGateway", () => {
       title: "t",
       body: "b",
       recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "s1" }],
-    })).resolves.toBeUndefined();
+    })).rejects.toThrow("down");
     expect(errors).toHaveLength(1);
   });
 
@@ -75,6 +76,8 @@ describe("createNotifyNotificationGateway", () => {
       body: "<p>Hi</p>",
       recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "sub_1" }],
     });
+    expect(harness.sent).toHaveLength(0);
+    await drainPendingSchoolNotifications(harness.runtime);
     expect(harness.sent).toEqual([{ to: "g@school.edu", subject: "Hello" }]);
     await harness.close();
   });
@@ -99,6 +102,8 @@ describe("createNotifyNotificationGateway", () => {
     };
     await gateway.enqueue(input);
     await gateway.enqueue(input);
+    expect(harness.sent).toHaveLength(0);
+    await drainPendingSchoolNotifications(harness.runtime);
     expect(harness.sent).toHaveLength(1);
     await harness.close();
   });
@@ -127,6 +132,8 @@ describe("createNotifyNotificationGateway", () => {
       body: "Hi",
       recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g2", subjectId: "sub_push" }],
     });
+    expect(harness.pushes).toHaveLength(0);
+    await drainPendingSchoolNotifications(harness.runtime);
     expect(harness.pushes).toEqual([{
       token: "fcm-token-1",
       title: "Hello",

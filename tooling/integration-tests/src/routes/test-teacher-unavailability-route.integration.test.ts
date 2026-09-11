@@ -8,8 +8,8 @@ import { describeWithSeededSchool } from '../support/seeded-route-test-context'
 describeWithSeededSchool('teacher unavailability routes', (getContext) => {
   it('saves, lists, gets, and deletes a weekly rule through the generated client', async () => {
     const { app, authHeaders } = getContext()
-    const cookie = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie
-    const client = createInProcessSchoolClient(app, { headers: { cookie } })
+    const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
+    const client = createInProcessSchoolClient(app, { headers: { authorization } })
     const input = {
       id: 'route-teacher-unavailability',
       teacherId: 't1',

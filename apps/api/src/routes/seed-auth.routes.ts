@@ -1,8 +1,8 @@
+import type { AppRouteHandler } from "@/http/types";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import type { AppRouteHandler } from "@/http/types";
 import { isSeedAuthProvisionRequest, SEED_AUTH_PROVISION_HEADER } from "@/runtime/shared/adapters/seed-auth-provision";
 
 const commandMessageSchema = createMessageObjectSchema();
@@ -35,8 +35,8 @@ export const markSeedEmailVerifiedRoute = createRoute({
 });
 
 export const markSeedEmailVerifiedHandler: AppRouteHandler<typeof markSeedEmailVerifiedRoute> = async (c) => {
-  if (c.env.RUNTIME === "worker" && c.env.NODE_ENV === "production") {
-    // Staging/prod Workers: seed uses direct SQL against Neon instead.
+  if (c.env.RUNTIME === "worker" || !["development", "test"].includes(c.env.NODE_ENV)) {
+    // Verified fixture creation is limited to local development and tests.
     return c.json({ message: "Seed mark-email-verified is local-only" }, HttpStatusCodes.FORBIDDEN);
   }
 

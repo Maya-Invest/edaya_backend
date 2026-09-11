@@ -1,3 +1,6 @@
+export { type AccessSession, createAccessTokenStore, FIRST_PARTY_ACCESS_PREFIX, FIRST_PARTY_ACCESS_TTL_MS } from './adapters/access-tokens'
+export { createAuthTransactions } from './adapters/auth-transactions'
+export { createDelegationGrantStore, DELEGATION_LIFETIME_MS, type DelegationGrant, EXTERNAL_ACCESS_PREFIX, EXTERNAL_REFRESH_PREFIX, hashOAuthToken } from './adapters/delegation-grants'
 export {
   createInMemoryAuthSecondaryStorage,
   type InMemoryAuthSecondaryStorage,
@@ -8,6 +11,7 @@ export {
   createKvAuthSecondaryStorage,
   isAuthKeyValueStore,
 } from './adapters/key-value-store'
+export { createOAuthClientRegistry, type RegisteredOAuthClient } from './adapters/oauth-clients'
 export {
   BETTER_AUTH_KV_RATE_LIMIT_WINDOW_SECONDS,
   type BetterAuthSecondaryStorageConfig,

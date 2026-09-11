@@ -4,7 +4,6 @@ import type { AuthenticatedRouteContext } from './api-route-harness'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import {
@@ -18,11 +17,9 @@ import {
 import { afterAll, beforeAll, describe } from 'bun:test'
 import { apiPgliteEnv } from './api-pglite-env'
 import {
-
-  collectSetCookieHeaders,
-  createAppRequest,
   createCoreRouteTestApp,
   resetCoreRouteTestHarness,
+  signInWithBearerThroughApp,
 } from './api-route-harness'
 
 export type IntegrationFixtureKind = 'light' | 'full'
@@ -173,15 +170,10 @@ export async function provisionSeededRouteTestContext(
     application,
     seedResult,
     authHeaders: async (email = MINIMAL_AUTH_FIXTURE_STAFF_EMAIL) => {
-      const signIn = await app.request(createAppRequest('/auth/sign-in/email', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password: DEV_AUTH_PASSWORD }),
-      }))
-      const cookies = collectSetCookieHeaders(signIn)
+      const accessToken = await signInWithBearerThroughApp(app, { email })
       return {
         'content-type': 'application/json',
-        'cookie': cookies.join('; '),
+        'authorization': `Bearer ${accessToken}`,
         'x-academic-year-id': DEMO_CENTRAL_ACADEMIC_YEAR_ID,
       }
     },

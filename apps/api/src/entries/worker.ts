@@ -21,6 +21,9 @@ export default {
 
     ctx.waitUntil((async () => {
       try {
+        await runtime.getAuth().purgeExpiredCredentials?.();
+        await runtime.getSchoolApplication();
+        await runtime.drainNotifications?.();
         const asOf = new Date(controller.scheduledTime);
         await runCronHeartbeatWithRuntime(runtime, {
           asOf,

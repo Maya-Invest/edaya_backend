@@ -13,6 +13,9 @@ async function main(): Promise<void> {
   const runtime = await buildLocalApiRuntime(env);
 
   try {
+    await runtime.getAuth().purgeExpiredCredentials?.();
+    await runtime.getSchoolApplication();
+    await runtime.drainNotifications?.();
     const asOf = new Date();
     const jobKeys = parseCronJobKeysFilter(env.CRON_JOB_KEYS);
 

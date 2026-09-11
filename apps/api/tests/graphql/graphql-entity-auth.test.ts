@@ -45,6 +45,10 @@ function createGraphQLTestApp(actor: typeof mockActor | null) {
     } as any);
     await next();
   });
+  app.use(async (c, next) => {
+    c.env = { ...c.env, ENABLE_GRAPHQL: true };
+    await next();
+  });
   mountGraphQLRoute(app);
   return { app, listStudents };
 }

@@ -1,16 +1,16 @@
+import type { AppBindings } from "@/http/types";
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { DefaultAuthorizationRepository } from "@edaya/authorization";
+import { Permission } from "@edaya/core";
 import { Hono } from "hono";
+import { createDependenciesInjection } from "@/http/dependencies";
+import { createSessionActorDependency } from "@/http/dependencies/session-actor";
 import {
   clearEffectiveGrantsCache,
   invalidateEffectiveGrantsCacheForStaff,
   resolveCachedEffectiveGrants,
 } from "@/lib/authorization/grants-cache/resolve-cached";
 import { clearActorScopeCache } from "@/lib/authorization/scope-cache/resolve-cached";
-import type { AppBindings } from "@/http/types";
-import { createDependenciesInjection } from "@/http/dependencies";
-import { createSessionActorDependency } from "@/http/dependencies/session-actor";
-import { Permission } from "@edaya/core";
-import { DefaultAuthorizationRepository } from "@edaya/authorization";
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
   Permission.CLASS_LOGBOOK_CREATE,
@@ -287,7 +287,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     expect(body.actor.assuranceLevel).toBe("standard");
   });
 
-  it("should reuse cached staff effective grants for the same auth session", async () => {
+  it("should reload staff authority on each request in the same auth session", async () => {
     const createdAt = new Date().toISOString();
     getSession.mockResolvedValue({
       user: { id: "auth-user-cached" },
@@ -326,8 +326,8 @@ describe("session Middleware ActorMetadata Construction", () => {
     });
 
     expect(mockRepos.staffMembers.findOne).toHaveBeenCalledTimes(2);
-    expect(findStaffByIdMock).toHaveBeenCalledTimes(2);
-    expect(listPermissionAssignmentsMock).toHaveBeenCalledTimes(1);
+    expect(findStaffByIdMock).toHaveBeenCalledTimes(4);
+    expect(listPermissionAssignmentsMock).toHaveBeenCalledTimes(2);
   });
 
   it("should refresh cached staff effective grants after staff invalidation", async () => {
@@ -429,6 +429,7 @@ describe("session Middleware ActorMetadata Construction", () => {
 
     const mockGuardian = {
       id: "guardian-1",
+      hasAccess: true,
       schoolId: "school-1",
     };
 
@@ -547,6 +548,7 @@ describe("session Middleware ActorMetadata Construction", () => {
       guardians: {
         findOne: mock().mockResolvedValueOnce({
           id: "guardian-1",
+          hasAccess: true,
           schoolId: "school-1",
         }),
       },
@@ -716,6 +718,7 @@ describe("session Middleware ActorMetadata Construction", () => {
     };
     const mockGuardian = {
       id: "guardian-1",
+      hasAccess: true,
       schoolId: "school-1",
       subjectId: "auth-user-multi",
     };

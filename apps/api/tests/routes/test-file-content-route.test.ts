@@ -17,7 +17,7 @@ const baseEnv = parseEnv({
 });
 
 describe("file content route", () => {
-  it("redirects public profile images to a presigned download URL", async () => {
+  it("denies anonymous access to profile images", async () => {
     const presignedUrl = "https://account.r2.cloudflarestorage.com/bucket/school-1/uploads/staff/staff-1/att-1/profile.jpg?sig=test";
     const attachment = new Attachment({
       id: "att-1",
@@ -59,8 +59,8 @@ describe("file content route", () => {
     app.route("/", indexRouter);
 
     const res = await app.request("/core/files/att-1/content", { redirect: "manual" });
-    expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe(presignedUrl);
+    expect(res.status).toBe(401);
+    expect(res.headers.get("location")).toBeNull();
   });
 
   it("returns a direct download URL when the attachment only has fileUrl", async () => {

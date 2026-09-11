@@ -41,9 +41,22 @@ describe('local school + auth migrations', () => {
       )
 
       expect(schoolJournal.rows[0]?.count).toBe(readSchoolMigrationJournal().length)
-      expect(authJournal.rows[0]?.count).toBe(1)
+      expect(authJournal.rows[0]?.count).toBe(5)
       expect(authTables.rows.map(row => row.table_name)).toEqual([
         'account',
+        'edaya_access_tokens',
+        'edaya_auth_rate_buckets',
+        'edaya_delegation_children',
+        'edaya_delegation_grants',
+        'edaya_delegation_scopes',
+        'jwks',
+        'oauth_access_token',
+        'oauth_client',
+        'oauth_client_assertion',
+        'oauth_client_resource',
+        'oauth_consent',
+        'oauth_refresh_token',
+        'oauth_resource',
         'session',
         'user',
         'verification',
@@ -80,7 +93,7 @@ describe('local school + auth migrations', () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50)
       expect(schoolJournal.rows[0]?.count).toBe(readSchoolMigrationJournal().length)
-      expect(authJournal.rows[0]?.count).toBe(1)
+      expect(authJournal.rows[0]?.count).toBe(5)
     }
     finally {
       await pglite.close()

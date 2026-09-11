@@ -8,7 +8,7 @@ export function isNotifyConfigured(env: Environment | undefined): boolean {
   if (!env || env.RUNTIME === "in-memory") {
     return false;
   }
-  if (env.NOVU_SECRET_KEY?.trim()) {
+  if (env.NOTIFICATION_PROVIDER === "novu") {
     return false;
   }
   return env.RUNTIME === "local" || env.RUNTIME === "worker";
@@ -19,22 +19,22 @@ export function createLoggingNotificationGateway(logger: LoggerPort): Notificati
 
   return {
     enqueue: async (input: NotificationEnqueueInput) => {
-      notificationLogger.info({ notification: input }, "notification enqueued");
+      notificationLogger.info({ schoolId: input.schoolId, idempotencyKey: input.idempotencyKey, eventKey: input.eventKey }, "notification enqueued");
     },
     cancel: async (idempotencyKey: string) => {
       notificationLogger.info({ idempotencyKey }, "notification cancelled");
     },
     upsertRecipient: async (profile: NotificationRecipientProfile) => {
-      notificationLogger.info({ profile }, "notification recipient upserted");
+      notificationLogger.info({ schoolId: profile.schoolId, subjectId: profile.recipient.subjectId }, "notification recipient upserted");
     },
     removeRecipient: async (schoolId: string, recipient: NotificationRecipient) => {
       notificationLogger.info({ schoolId, recipient }, "notification recipient removed");
     },
     registerPushDevice: async (input: RegisterPushDeviceInput) => {
-      notificationLogger.info({ input }, "push device registered");
+      notificationLogger.info({ subjectId: input.subjectId, provider: input.provider }, "push device registered");
     },
     unregisterPushDevice: async (input: UnregisterPushDeviceInput) => {
-      notificationLogger.info({ input }, "push device unregistered");
+      notificationLogger.info({ subjectId: input.subjectId, provider: input.provider }, "push device unregistered");
     },
   };
 }
@@ -44,7 +44,7 @@ export function resolveNotificationGateway(
   logger?: LoggerPort,
   options: { runtime?: NotifyRuntime } = {},
 ): NotificationGatewayPort {
-  if (!env || env.LOG_LEVEL === "silent" || env.RUNTIME === "in-memory") {
+  if (!env || env.RUNTIME === "in-memory") {
     return noOpNotificationGateway;
   }
 
@@ -57,7 +57,7 @@ export function resolveNotificationGateway(
     });
   }
 
-  if (env.NOVU_SECRET_KEY) {
+  if (env.NOTIFICATION_PROVIDER === "novu" && env.NOVU_SECRET_KEY) {
     return createNovuNotificationGatewayFromSecretKey({
       secretKey: env.NOVU_SECRET_KEY,
       serverURL: env.NOVU_API_URL,

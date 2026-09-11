@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import type { CoreCommandConfig, CoreEntityConfig, CoreQueryConfig } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 
@@ -47,7 +48,7 @@ const ENTITY_ACTION_OPERATION_SUFFIX: Record<EntityRouteAction, string> = {
 };
 
 export function entityRouteOperation(
-  entity: Pick<CoreEntityConfig, "serviceName" | "publicName" | "responseSchema" | "allowDirectSave">,
+  entity: Pick<CoreEntityConfig, "serviceName" | "publicName" | "responseSchema" | "publicOperations">,
   action: EntityRouteAction,
 ): Record<string, unknown> {
   const operationId = `entities.${entity.serviceName}.${action}`;
@@ -62,7 +63,8 @@ export function entityRouteOperation(
     [X_EDAYA_ENTITY_KEY]: entity.serviceName,
     [X_EDAYA_ENTITY_PUBLIC_NAME]: entity.publicName,
     [X_EDAYA_RESPONSE_SCHEMA]: getOpenApiSchemaName(entity.responseSchema),
-    [X_EDAYA_ALLOW_DIRECT_SAVE]: entity.allowDirectSave,
+    [X_EDAYA_ALLOW_DIRECT_SAVE]: permitsPublicSave(entity.publicOperations),
+    "x-edaya-public-operations": entity.publicOperations,
   };
 }
 

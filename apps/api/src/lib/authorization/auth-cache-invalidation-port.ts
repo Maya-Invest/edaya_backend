@@ -13,9 +13,11 @@ export const apiAuthCacheInvalidationPort: AuthCacheInvalidationPort = {
         return;
       case "guardian-scope":
         invalidateEffectiveGrantsCacheForActor(event.guardianId, "guardian", event.schoolId);
+        invalidateActorScopeCacheForActor(event.guardianId, "guardian", event.schoolId);
         return;
       case "student-scope":
         invalidateEffectiveGrantsCacheForActor(event.studentId, "student", event.schoolId);
+        invalidateActorScopeCacheForActor(event.studentId, "student", event.schoolId);
         return;
       case "teacher-scope":
         invalidateActorScopeCacheForActor(event.teacherId, "teacher", event.schoolId);

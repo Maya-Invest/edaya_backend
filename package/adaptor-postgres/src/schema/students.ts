@@ -54,6 +54,7 @@ export const guardians = pgTable('guardians', {
   notificationPhone: text('notification_phone'),
   subjectId: text('subject_id'),
   contactMethods: jsonb('contact_methods').notNull(),
+  hasAccess: boolean('has_access').default(true).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('guardians', table))
 

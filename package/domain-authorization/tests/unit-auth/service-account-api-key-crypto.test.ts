@@ -31,7 +31,9 @@ describe('api key crypto', () => {
   })
 
   test('parseBearerApiKey extracts bearer token', () => {
-    expect(parseBearerApiKey('Bearer sk_live_abc123')).toBe('sk_live_abc123')
+    expect(parseBearerApiKey('Bearer sk_live_abc12345678901234567890123456789')).toBe('sk_live_abc12345678901234567890123456789')
+    expect(parseBearerApiKey(`Bearer edaya_at_${'a'.repeat(43)}`)).toBeUndefined()
+    expect(parseBearerApiKey('Bearer sk_live_short')).toBeUndefined()
     expect(parseBearerApiKey('Basic abc')).toBeUndefined()
     expect(parseBearerApiKey(undefined)).toBeUndefined()
   })

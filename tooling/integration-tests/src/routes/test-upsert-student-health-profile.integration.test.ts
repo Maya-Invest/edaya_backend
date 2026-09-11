@@ -7,8 +7,8 @@ import { describeWithSeededSchool } from '../support/seeded-route-test-context'
 describeWithSeededSchool('upsert student health profile command', (getContext) => {
   it('creates and updates a health profile without client timestamps', async () => {
     const { app, authHeaders } = getContext()
-    const cookie = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie
-    const client = createInProcessSchoolClient(app, { headers: { cookie } })
+    const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
+    const client = createInProcessSchoolClient(app, { headers: { authorization } })
 
     const created = await client.commands.upsertStudentHealthProfile({
       id: 'route-shp-s2',
@@ -59,8 +59,8 @@ describeWithSeededSchool('upsert student health profile command', (getContext) =
 
   it('rejects updatedAt without createdAt (timestamp skew)', async () => {
     const { app, authHeaders } = getContext()
-    const cookie = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie
-    const client = createInProcessSchoolClient(app, { headers: { cookie } })
+    const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
+    const client = createInProcessSchoolClient(app, { headers: { authorization } })
 
     let caught: unknown
     try {

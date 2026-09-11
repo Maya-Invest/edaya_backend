@@ -120,7 +120,7 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
 
   await signInForOnboarding(client)
 
-  if (await waitForCoreAccess(client) === 'authorized') {
+  if (await probeCoreAccess(client) === 'authorized') {
     return
   }
 

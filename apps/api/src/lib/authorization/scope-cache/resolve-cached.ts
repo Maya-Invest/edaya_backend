@@ -1,13 +1,13 @@
 import type { ResolvedActorScope } from "@edaya/authorization";
 import type { SchoolRepositories } from "@edaya/service";
+import type { Environment } from "@/runtime";
 import { resolveActorScope } from "@edaya/authorization";
 import {
   getActorScopeCacheStore,
   resetActorScopeCacheStore,
 } from "@/lib/authorization/scope-cache/store";
-import type { Environment } from "@/runtime";
 
-const DEFAULT_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_TTL_MS = 0;
 
 export type PortalActorKind = "guardian" | "student" | "teacher";
 
@@ -40,6 +40,15 @@ export async function resolveCachedActorScope({
   now = new Date(),
   ttlMs = DEFAULT_TTL_MS,
 }: ResolveCachedActorScopeArgs): Promise<ResolvedActorScope> {
+  if (ttlMs <= 0) {
+    return resolveActorScope({
+      actorKind,
+      actorId,
+      schoolId,
+      repositories,
+      ...(academicYearId ? { academicYearId } : {}),
+    });
+  }
   const store = getActorScopeCacheStore();
   const key = cacheKey({
     schoolId,

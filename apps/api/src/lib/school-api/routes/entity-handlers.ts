@@ -101,7 +101,7 @@ export function entityGetHandler(serviceName: CoreEntityKey, displayName: string
   };
 }
 
-export function entitySaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "allowDirectSave">): AppRouteHandler<any> {
+export function entitySaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "publicOperations">): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, entityConfig.serviceName);
     try {
@@ -131,7 +131,7 @@ export function entityDeleteHandler(serviceName: CoreEntityKey): AppRouteHandler
   };
 }
 
-export function entityBatchSaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "allowDirectSave">): AppRouteHandler<any> {
+export function entityBatchSaveHandler(entityConfig: Pick<CoreEntityConfig, "serviceName" | "displayName" | "createEntity" | "publicOperations">): AppRouteHandler<any> {
   return async (c) => {
     const { actor, schoolApp } = resolveServices(c, entityConfig.serviceName);
     try {

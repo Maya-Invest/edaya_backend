@@ -37,6 +37,7 @@ export function createStudentsEntityStores(db: any): Pick<EntityStores, 'student
         notificationEmail: entity.notificationEmail ?? null,
         notificationPhone: entity.notificationPhone ?? null,
         subjectId: entity.subjectId ?? null,
+        hasAccess: entity.hasAccess,
         contactMethods: entity.contactMethods.map(method => ({
           type: method.type,
           value: method.value,
@@ -58,6 +59,7 @@ export function createStudentsEntityStores(db: any): Pick<EntityStores, 'student
         notificationEmail: row.notificationEmail,
         notificationPhone: row.notificationPhone,
         subjectId: row.subjectId,
+        hasAccess: row.hasAccess,
         contactMethods: deserializeJsonb(row.contactMethods),
         createdAt: row.createdAt,
       }),

@@ -8,6 +8,7 @@ import {
 describe("resolveAuthEmailDelivery", () => {
   it("does not use Novu or notify on the in-memory runtime", () => {
     const env = createPgliteTestEnv({
+      NOTIFICATION_PROVIDER: "novu",
       NOVU_SECRET_KEY: "novu-test-key",
     });
 
@@ -19,6 +20,7 @@ describe("resolveAuthEmailDelivery", () => {
     const resolved = resolveAuthEmailDelivery(createPgliteTestEnv({
       RUNTIME: "local",
       DATABASE_URL: "pglite:.data/school",
+      NOTIFICATION_PROVIDER: "novu",
       NOVU_SECRET_KEY: "novu-test-key",
     }));
 

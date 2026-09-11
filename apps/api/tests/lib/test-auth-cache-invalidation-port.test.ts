@@ -8,11 +8,49 @@ import {
   resetActorScopeCacheStore,
   resolveCachedActorScope,
 } from "@/lib/authorization/scope-cache/resolve-cached";
+import { getActorScopeCacheStore } from "@/lib/authorization/scope-cache/store";
 
 describe("apiAuthCacheInvalidationPort", () => {
   beforeEach(() => {
     resetEffectiveGrantsCacheStore();
     resetActorScopeCacheStore();
+  });
+
+  it("invalidates the actual guardian and student scope stores", () => {
+    const store = getActorScopeCacheStore();
+    store.set("guardian", {
+      actorScope: "school-1:guardian:guardian-1",
+      generation: store.getGeneration(),
+      expiresAt: Date.now() + 60_000,
+      scope: { studentIds: ["student-1"], classGroupIds: [] },
+    });
+    store.set("student", {
+      actorScope: "school-1:student:student-1",
+      generation: store.getGeneration(),
+      expiresAt: Date.now() + 60_000,
+      scope: { studentId: "student-1" },
+    });
+    apiAuthCacheInvalidationPort.invalidateForEvent({ kind: "guardian-scope", guardianId: "guardian-1", schoolId: "school-1" });
+    expect(store.get("guardian")).toBeUndefined();
+    expect(store.get("student")).toBeDefined();
+    apiAuthCacheInvalidationPort.invalidateForEvent({ kind: "student-scope", studentId: "student-1", schoolId: "school-1" });
+    expect(store.get("student")).toBeUndefined();
+  });
+
+  it("ignores existing cached authority when cross-request caching is disabled", async () => {
+    const resolveActorGrants = mock(async () => ({ permissions: new Set<string>(), scopeGrants: [], isElevated: false }));
+    const args = {
+      actorId: "staff-1",
+      actorType: "staff" as const,
+      schoolId: "school-1",
+      subjectId: "subject-1",
+      authenticatedAt: new Date(),
+      repositories: { authorization: { resolveActorGrants } } as never,
+    };
+    await resolveCachedEffectiveGrants({ ...args, ttlMs: 60_000 });
+    await resolveCachedEffectiveGrants(args);
+    await resolveCachedEffectiveGrants(args);
+    expect(resolveActorGrants).toHaveBeenCalledTimes(3);
   });
 
   it("invalidates cached staff grants after staff-grants events", async () => {

@@ -21,6 +21,35 @@ export function createAppLogger(env: Environment): LoggerPort {
       ?? (env.NODE_ENV === "production" ? undefined : pretty());
     instance = pino({
       level: env.LOG_LEVEL || "info",
+      redact: {
+        paths: [
+          "authorization",
+          "cookie",
+          "password",
+          "otp",
+          "token",
+          "secret",
+          "accessToken",
+          "refreshToken",
+          "renewalCredential",
+          "*.authorization",
+          "*.cookie",
+          "*.password",
+          "*.otp",
+          "*.token",
+          "*.secret",
+          "*.accessToken",
+          "*.refreshToken",
+          "*.renewalCredential",
+          "req.headers.authorization",
+          "req.headers.cookie",
+          "request.headers.authorization",
+          "request.headers.cookie",
+          "res.headers[\"set-cookie\"]",
+          "res.headers[\"set-auth-token\"]",
+        ],
+        censor: "[REDACTED]",
+      },
     }, destination);
     loggers.set(key, instance);
   }

@@ -24,6 +24,7 @@ describe('extractClientBindingsFromOpenApi', () => {
 			publicName: 'schools',
 			schemaName: 'School',
 			allowDirectSave: true,
+			publicOperations: { create: true, update: true, delete: true, batchCreate: true, batchUpdate: true, batchDelete: true },
 		})
 		expect(bindings.commands.registerSchool.publicName).toBe('register-school')
 		expect(bindings.authorization.effectiveGrants).toEqual({
@@ -35,6 +36,15 @@ describe('extractClientBindingsFromOpenApi', () => {
 
 		const listOperation = openApi.paths?.['/core/entities/students/list']?.post
 		expect(listOperation?.[X_EDAYA_KIND]).toBe('entity')
+	})
+
+	it('rejects missing or malformed operation policies instead of inferring write authority', async () => {
+		const openApi = await loadOpenApi(fixturePath)
+		const operation = openApi.paths!['/core/entities/students/list']!.post!
+		delete operation['x-edaya-public-operations']
+		expect(() => extractClientBindingsFromOpenApi(openApi)).toThrow('explicit x-edaya-public-operations')
+		operation['x-edaya-public-operations'] = { create: 'false' }
+		expect(() => extractClientBindingsFromOpenApi(openApi)).toThrow('explicit x-edaya-public-operations')
 	})
 
 	it('discovers namespace routes without a hardcoded namespace list', async () => {

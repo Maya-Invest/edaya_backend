@@ -66,7 +66,7 @@ export const reportCardDefinitions = pgTable('report_card_definitions', {
 
 export const reportCardDefinitionSections = pgTable('report_card_definition_sections', {
   id: text('id').primaryKey(),
-  definitionId: text('definition_id').notNull(),
+  reportCardDefinitionId: text('definition_id').notNull(),
   name: text('name').notNull(),
   role: text('role'),
   coefficient: real('coefficient'),

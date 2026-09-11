@@ -9,11 +9,11 @@ import { describeWithLightSchool } from '../support/seeded-route-test-context'
 describeWithLightSchool('generated school client contract', (getContext) => {
   it('lists schools and reads effective grants through createSchoolClient', async () => {
     const { app, application, authHeaders } = getContext()
-    const cookies = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie
+    const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
     const client = createInProcessSchoolClient(app, {
-      headers: { cookie: cookies },
+      headers: { authorization },
     })
 
     const schools = await client.entities.schools.list({ $limit: 1 })

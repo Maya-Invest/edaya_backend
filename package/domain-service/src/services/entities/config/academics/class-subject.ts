@@ -15,6 +15,7 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
     write: write(operationModule(AcademicsOperations.programUpdate), authorizeClassGroupLinked(policy, 'classGroupId'), authorizeClassGroupLinkedDelete(policy)),
     gates: {
       preSave: validateClassSubjectSave,
+      preDelete: validateClassSubjectDelete,
     },
     atomicExecution,
   })
@@ -114,4 +115,23 @@ async function validateClassSubjectSave(
     'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
     'Inherited class subjects can only be updated through grade level sync or setClassSubjectOffered',
   )
+}
+
+/** Custom allocations may be removed only while unused; inherited curriculum is command-owned. */
+export async function validateClassSubjectDelete(classSubject: ClassSubject, repositories: SchoolRepositories): Promise<void> {
+  if (classSubject.gradeLevelSubjectId) {
+    throw new BusinessRuleViolationError('CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL', 'Remove inherited subjects through grade-level curriculum management')
+  }
+  const filter = { classSubjectId: classSubject.id, $limit: 1 }
+  const dependencies = await Promise.all([
+    repositories.assessments.list(filter),
+    repositories.schedules.list(filter),
+    repositories.lessonSessions.list(filter),
+    repositories.staffAssignments.list(filter),
+    repositories.teacherAssignments.list(filter),
+    repositories.classSubjectMatters.list(filter),
+  ])
+  if (dependencies.some(rows => rows.length > 0)) {
+    throw new BusinessRuleViolationError('CLASS_SUBJECT_HAS_DEPENDENCIES', 'A class subject with teaching, assessment or curriculum records cannot be deleted')
+  }
 }

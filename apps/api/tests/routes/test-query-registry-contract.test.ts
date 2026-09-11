@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { describe, expect, it } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -60,7 +61,7 @@ describe("core route registry contracts", () => {
         || !entity.querySchema
         || !entity.responseSchema
         || !entity.saveSchema
-        || typeof entity.allowDirectSave !== "boolean"
+        || Object.values(entity.publicOperations).some(value => typeof value !== "boolean")
         || typeof entity.createEntity !== "function",
       )
       .map(entity => entity.serviceName);
@@ -71,10 +72,18 @@ describe("core route registry contracts", () => {
     }
   });
 
-  it("generates command, query, and eight entity endpoints for every core registry entry", () => {
-    expect(coreRoutePairs).toHaveLength(
-      coreCommands.length + coreQueries.length + coreEntities.length * 8,
-    );
+  it("omits unavailable generic writes while retaining named commands", () => {
+    const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
+    for (const name of ["students", "enrollments", "payments", "student-fees", "assessment-results", "results", "account-invitations"]) {
+      for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
+        expect(paths.has(`/core/entities/${name}/${action}`)).toBe(false);
+      }
+      expect(paths.has(`/core/entities/${name}/list`)).toBe(true);
+    }
+    expect(paths.has("/core/commands/record-payment")).toBe(true);
+    expect(paths.has("/core/commands/cancel-student-fee")).toBe(true);
+    expect(paths.has("/core/entities/class-subjects/save")).toBe(false);
+    expect(paths.has("/core/entities/class-subjects/delete")).toBe(true);
   });
 
   it("does not register duplicate public route names", () => {
@@ -113,7 +122,7 @@ describe("core route registry contracts", () => {
   });
 
   it("marks command-only entities as disallowing direct save", () => {
-    const commandOnlyEntities = coreEntities.filter(entity => !entity.allowDirectSave);
+    const commandOnlyEntities = coreEntities.filter(entity => !permitsPublicSave(entity.publicOperations));
     expect(commandOnlyEntities.map(entity => entity.serviceName)).toEqual(expect.arrayContaining([
       "students",
       "enrollments",

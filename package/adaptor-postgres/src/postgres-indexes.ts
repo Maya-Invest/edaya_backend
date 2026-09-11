@@ -151,7 +151,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       ]
     case 'report_card_definition_sections':
       return [
-        index('report_card_definition_sections_definition_id_idx').on(col(table, 'definitionId')),
+        index('report_card_definition_sections_definition_id_idx').on(col(table, 'reportCardDefinitionId')),
         index('report_card_definition_sections_parent_section_id_idx').on(col(table, 'parentSectionId')),
       ]
     case 'report_card_results':

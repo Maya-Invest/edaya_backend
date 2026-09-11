@@ -50,6 +50,13 @@
       "when": 1785931200000,
       "tag": "0006_staff_profile_role",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788975972299,
+      "tag": "0007_guardian_access",
+      "breakpoints": true
     }
   ]
 }

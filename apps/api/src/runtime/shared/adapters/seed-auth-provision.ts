@@ -1,4 +1,4 @@
-/** Header sent by demo seed provisioners so sign-up creates email-verified users. */
+/** Intent marker on the local-only seed endpoint; never authentication authority. */
 export const SEED_AUTH_PROVISION_HEADER = "x-edaya-seed-provision";
 
 export function isSeedAuthProvisionRequest(

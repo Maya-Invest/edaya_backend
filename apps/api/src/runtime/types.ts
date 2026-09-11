@@ -12,6 +12,7 @@ export interface DatabaseHandle {
 }
 
 export interface AuthService {
+  purgeExpiredCredentials?: () => Promise<void>;
   handler: (request: Request) => Promise<Response>;
   api: {
     getSession: (args: { headers: Headers }) => Promise<unknown>;
@@ -26,6 +27,7 @@ export interface AuthService {
 }
 
 export interface ApiRuntime {
+  drainNotifications?: () => Promise<void>;
   readonly env: Environment;
   getSchoolApplication: () => Promise<ApiSchoolApplication>;
   getAuth: () => AuthService;

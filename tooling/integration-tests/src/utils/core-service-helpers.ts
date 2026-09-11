@@ -88,7 +88,7 @@ export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School
 export async function updateSchool(app: SchoolService, input: { schoolId: string } & Partial<Omit<ArgsOf<typeof School>, 'id'>>): Promise<School> {
   const existing = await app.baseService.entities.schools.findById(input.schoolId)
   if (!existing) {
-    throw new Error(`School ${input.schoolId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const school = new School({
     id: existing.id,
@@ -113,7 +113,7 @@ export async function createAcademicPeriod(app: SchoolService, input: ArgsOf<typ
 export async function publishAcademicPeriod(app: SchoolService, academicPeriodId: string): Promise<AcademicPeriod> {
   const existing = await app.baseService.entities.academicPeriods.findById(academicPeriodId)
   if (!existing) {
-    throw new Error(`Academic period ${academicPeriodId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const period = new AcademicPeriod({
     id: existing.id,
@@ -153,7 +153,7 @@ export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof 
 export async function updateClassGroup(app: SchoolService, input: { classGroupId: string } & Partial<Omit<ArgsOf<typeof ClassGroup>, 'id'>>): Promise<ClassGroup> {
   const existing = await app.baseService.entities.classGroups.findById(input.classGroupId)
   if (!existing) {
-    throw new Error(`Class group ${input.classGroupId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const classGroup = existing.copyWith({
     schoolId: input.schoolId ?? existing.schoolId,
@@ -177,7 +177,7 @@ export async function saveStaffMember(app: SchoolService, input: ArgsOf<typeof S
 export async function updateStaffStatus(app: SchoolService, staffId: string, isActive: boolean): Promise<StaffMember> {
   const existing = await app.baseService.entities.staffMembers.findById(staffId)
   if (!existing) {
-    throw new Error(`Staff member ${staffId} not found`)
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
   const staffMember = new StaffMember({
     id: existing.id,

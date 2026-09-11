@@ -1,11 +1,11 @@
-import indexRouter from "@/app-router";
-import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import createApp from "@/http/create-app";
-import { createBetterAuth, parseEnv } from "@/runtime";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
+import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
+import indexRouter from "@/app-router";
+import createApp from "@/http/create-app";
+import { createBetterAuth, parseEnv } from "@/runtime";
 
 const stagingEnv = parseEnv({
   RUNTIME: "in-memory",
@@ -13,7 +13,7 @@ const stagingEnv = parseEnv({
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
-  BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
+  BETTER_AUTH_SECRET: "9d44b86aec137c862bff0c5df41ac5816ac02c759",
   BETTER_AUTH_URL: "https://api.edaya.test",
   TRUSTED_ORIGINS: "https://app.edaya.test",
   COOKIE_DOMAIN: "edaya.test",
@@ -79,7 +79,7 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
     expect(response.headers.get("access-control-allow-headers")).toContain("X-Academic-Year-Id");
   });
 
-  it("sets Better Auth session cookies on the configured parent domain", async () => {
+  it("sets Secure HttpOnly host-only renewal cookies", async () => {
     const auth = createBetterAuth(db, stagingEnv);
 
     const signUpResponse = await auth.handler(new Request("https://api.edaya.test/auth/sign-up/email", {
@@ -99,6 +99,7 @@ describe("staging CORS and cross-subdomain auth cookies", () => {
 
     const cookies = collectSetCookieHeaders(signUpResponse);
     expect(cookies.length).toBeGreaterThan(0);
-    expect(cookies.some(cookie => /domain=\.?edaya\.test/i.test(cookie))).toBe(true);
+    expect(cookies.some(cookie => /domain=/i.test(cookie))).toBe(false);
+    expect(cookies.some(cookie => /secure/i.test(cookie) && /httponly/i.test(cookie))).toBe(true);
   });
 });

@@ -54,3 +54,6 @@ apps/api/secrets.prod.json
 apps/api/secrets.staging.json
 
 **/coverage/*
+
+# Provider CLI output is reviewed and merged into the maintained auth schema.
+package/adaptor-auth/generated-provider-schema.ts

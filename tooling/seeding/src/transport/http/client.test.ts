@@ -28,12 +28,16 @@ describe('HttpSeedClient.request', () => {
     expect(capturedHeaders?.get('content-type')).toBe('image/jpeg')
   })
 
-  it('still attaches session headers to API-origin requests', async () => {
+  it('exchanges renewal cookies and sends only Bearer on business requests', async () => {
     let capturedHeaders: Headers | undefined
     const client = new HttpSeedClient({
       baseUrl: 'http://localhost:9999',
       appOrigin: 'http://localhost:5173',
-      fetch: async (_input, init) => {
+      fetch: async (input, init) => {
+        if (String(input).endsWith('/auth/edaya/access-token')) {
+          expect(new Headers(init?.headers).get('cookie')).toContain('session-token')
+          return Response.json({ accessToken: `edaya_at_${'a'.repeat(43)}`, expiresAt: new Date(Date.now() + 300000).toISOString() })
+        }
         capturedHeaders = new Headers(init?.headers)
         return new Response(null, { status: 200 })
       },
@@ -49,7 +53,8 @@ describe('HttpSeedClient.request', () => {
       headers: { 'content-type': 'application/json' },
     })
 
-    expect(capturedHeaders?.get('cookie')).toContain('better-auth.session_token=session-token')
+    expect(capturedHeaders?.get('cookie')).toBeNull()
+    expect(capturedHeaders?.get('authorization')).toBe(`Bearer edaya_at_${'a'.repeat(43)}`)
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
 
@@ -89,5 +94,42 @@ describe('HttpSeedClient.request', () => {
 
     expect(requestCount).toBe(2)
     expect(elapsedMs).toBeLessThan(50)
+  })
+  it('keeps the original token across temporary account provisioning', async () => {
+    let exchanges = 0
+    const client = new HttpSeedClient({
+      baseUrl: 'http://localhost:9999',
+      fetch: async (input) => {
+        if (String(input).endsWith('/auth/edaya/access-token')) {
+          exchanges++
+          return Response.json({ accessToken: `edaya_at_${'a'.repeat(43)}`, expiresAt: new Date(Date.now() + 300000).toISOString() })
+        }
+        return new Response(null, { status: 200 })
+      },
+    })
+    client.absorbCookies(new Response(null, { headers: { 'set-cookie': 'better-auth.session_token=original' } }))
+    for (let i = 0; i < 35; i++) {
+      await client.withCookieSnapshot(async () => {
+        client.absorbCookies(new Response(null, { headers: { 'set-cookie': 'better-auth.session_token=temporary' } }))
+      })
+    }
+    await client.request('/core/entities/schools/list', { method: 'POST' })
+    expect(exchanges).toBe(1)
+    expect(client.cookieHeader()).toContain('original')
+  })
+
+  it('does not replay writes after a transient status or malformed response', async () => {
+    for (const response of [{ body: null, status: 503 }, { body: '<html>unavailable</html>', status: 502 }, { body: 'invalid', status: 200 }]) {
+      let calls = 0
+      const client = new HttpSeedClient({
+        baseUrl: 'https://staging.api.edayaplus.com',
+        fetch: async () => {
+          calls++
+          return new Response(response.body, { status: response.status })
+        },
+      })
+      await client.jsonRequest('/core/commands/pay', { method: 'POST' }).catch(() => undefined)
+      expect(calls).toBe(1)
+    }
   })
 })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { GraphQLInputObjectType } from "graphql";
-import { coreCommands, coreQueries } from "@/lib/school-api/registry";
 import { buildGraphQLSchema } from "@/lib/graphql/routes/entities";
+import { coreCommands, coreQueries } from "@/lib/school-api/registry";
 
 describe("buildGraphQLSchema", () => {
   it("mirrors core entity routes with query and mutation fields", () => {
@@ -16,7 +16,13 @@ describe("buildGraphQLSchema", () => {
 
     expect(mutationFields.saveStudent).toBeUndefined();
     expect(mutationFields.saveSchool).toBeDefined();
-    expect(mutationFields.deleteStudent).toBeDefined();
+    expect(mutationFields.deleteStudent).toBeUndefined();
+    expect(mutationFields.deletePayment).toBeUndefined();
+    expect(mutationFields.batchDeletePayment).toBeUndefined();
+    expect(mutationFields.saveClassSubject).toBeUndefined();
+    expect(mutationFields.batchSaveClassSubject).toBeUndefined();
+    expect(mutationFields.deleteClassSubject).toBeDefined();
+    expect(mutationFields.batchDeleteClassSubject).toBeDefined();
   });
 
   it("mirrors core query routes", () => {

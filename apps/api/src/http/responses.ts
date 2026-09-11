@@ -23,6 +23,7 @@ export function isBusinessRuleViolationError(error: unknown): error is BusinessR
 }
 
 export function unauthorizedResponse(c: Context<AppBindings>) {
+  c.header("WWW-Authenticate", "Bearer");
   return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
 }
 

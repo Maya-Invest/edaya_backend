@@ -11,6 +11,17 @@ const graphQLEntitySchema = buildGraphQLSchema();
 const graphiqlEnabled = isGraphiQLEnabled();
 
 export function mountGraphQLRoute(app: Hono<AppBindings>) {
+  const enabled = (c: { env: AppBindings["Bindings"] }) => c.env.ENABLE_GRAPHQL === true;
+  app.use("/graphql", async (c, next) => {
+    if (!enabled(c))
+      return c.json({ message: "Not Found" }, 404);
+    return next();
+  });
+  app.use("/graphiql*", async (c, next) => {
+    if (!enabled(c))
+      return c.json({ message: "Not Found" }, 404);
+    return next();
+  });
   app.all("/graphql", graphqlServer({
     schema: graphQLEntitySchema,
     graphiql: graphiqlEnabled,

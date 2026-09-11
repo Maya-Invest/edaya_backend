@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
 import { DefaultAuthorizationRepository } from '@edaya/authorization'
+import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
 import { buildSchoolOverview } from '@edaya/service'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
@@ -138,6 +139,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.authorization = new DefaultAuthorizationRepository(this)
 
     this.schools = {
+      forSchool: schoolId => this.schoolsStore.forSchool(schoolId),
       findById: (id: string) => this.schoolsStore.findById(id),
       findOne: (options, last) => this.schoolsStore.findOne(options, last),
       findByIds: (ids: readonly string[]) => this.schoolsStore.findByIds(ids),
@@ -148,16 +150,10 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
       batchSave: (entities: School[]) => this.schoolsStore.batchSave(entities),
       batchDelete: (ids: string[]) => this.schoolsStore.batchDelete(ids),
       getOverdueFeeCount: async (schoolId: string): Promise<number> => {
-        const schoolStudents = await this.students.list({ schoolId })
-        const studentIds = new Set(schoolStudents.map(s => s.id))
-        const allFees = await this.studentFees.list()
-        return allFees.filter(f => studentIds.has(f.studentId) && f.status === 'overdue').length
+        return this.studentFees.forSchool(schoolId).count({ status: FeeStatus.Overdue })
       },
       getPublishedReportCardCount: async (schoolId: string): Promise<number> => {
-        const schoolStudents = await this.students.list({ schoolId })
-        const studentIds = new Set(schoolStudents.map(s => s.id))
-        const rcs = await this.results.list()
-        return rcs.filter(rc => studentIds.has(rc.studentId) && rc.status === 'published').length
+        return this.results.forSchool(schoolId).count({ status: ReportCardResultStatus.Published })
       },
       getSchoolOverview: input => buildSchoolOverview(this, input),
     }

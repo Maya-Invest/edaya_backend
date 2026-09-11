@@ -1,6 +1,6 @@
 import type { SQL } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { NOTIFY_SCHEMA_SQL } from "./schema";
+import { NOTIFY_RELIABILITY_MIGRATION_SQL, NOTIFY_SCHEMA_SQL } from "./schema";
 import type { NotifySql } from "./types";
 
 function bindSql(query: string, params: unknown[] = []): SQL {
@@ -43,15 +43,15 @@ function extractRows(result: unknown): unknown[] {
   return [];
 }
 
-export function createNotifySqlFromDrizzle(db: unknown): NotifySql {
-  const executor = db as { execute: (query: SQL) => Promise<unknown> };
+export function createNotifySqlFromDrizzle(db: unknown, getExecutor?: () => unknown): NotifySql {
+  const executor = (): { execute: (query: SQL) => Promise<unknown> } => (getExecutor?.() ?? db) as { execute: (query: SQL) => Promise<unknown> };
   return {
     async query<T>(query: string, params: unknown[] = []) {
-      const result = await executor.execute(bindSql(query, params));
+      const result = await executor().execute(bindSql(query, params));
       return extractRows(result) as T[];
     },
     async execute(query: string, params: unknown[] = []) {
-      await executor.execute(bindSql(query, params));
+      await executor().execute(bindSql(query, params));
     },
     async close() {},
   };
@@ -66,7 +66,7 @@ function splitStatements(sqlText: string): string[] {
 }
 
 export async function applyNotifySchema(sqlClient: NotifySql): Promise<void> {
-  for (const statement of splitStatements(NOTIFY_SCHEMA_SQL)) {
+  for (const statement of splitStatements(`${NOTIFY_SCHEMA_SQL}\n${NOTIFY_RELIABILITY_MIGRATION_SQL}`)) {
     await sqlClient.execute(statement);
   }
 }

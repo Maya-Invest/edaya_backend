@@ -383,10 +383,10 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       assuranceLevel: ActorAssuranceLevel.Strong,
     }))
 
-    // Foreign actor attempting to query local school data gets Forbidden
+    // Scoped ID reads do not retrieve or disclose records from another school.
     await expect(foreignAdminApp.baseService.entities.students.findById('active-student'))
-      .rejects
-      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+      .resolves
+      .toBeUndefined()
 
     await expect(foreignAdminApp.baseService.entities.classGroups.list({ schoolId: 'school' }))
       .rejects

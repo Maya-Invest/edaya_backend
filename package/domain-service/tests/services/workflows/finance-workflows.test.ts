@@ -10,6 +10,39 @@ import {
 } from './workflow-test-context'
 
 describe('SchoolService finance workflows', () => {
+  test('replaying a payment does not add its amount again', async () => {
+    const { mockRepos, service } = createFinanceContext()
+    const result = await service.financeWorkflow.recordPayment({
+      id: 'pay1',
+      studentFeeId: 'sf1',
+      amount: 400,
+      paymentDate: new Date('2026-03-01T00:00:00Z'),
+      method: PaymentMethod.Cash,
+    })
+    expect(result.id).toBe('pay1')
+    expect(mockRepos.payments.save).not.toHaveBeenCalled()
+    expect(mockRepos.studentFees.save).not.toHaveBeenCalled()
+  })
+
+  test('rejects a payment ID reused with changed input', async () => {
+    const { mockRepos, service } = createFinanceContext()
+    await expect(service.financeWorkflow.recordPayment({
+      id: 'pay1',
+      studentFeeId: 'sf1',
+      amount: 401,
+      paymentDate: new Date('2026-03-01T00:00:00Z'),
+      method: PaymentMethod.Cash,
+    })).rejects.toMatchObject({ code: 'PAYMENT_REPLAY_CONFLICT' })
+    expect(mockRepos.studentFees.save).not.toHaveBeenCalled()
+  })
+
+  test('replaying a reversal leaves the balance unchanged', async () => {
+    const { mockRepos, service } = createFinanceContext({ paymentStatus: PaymentStatus.Reversed, paidAmount: 0 })
+    await service.financeWorkflow.reversePayment({ paymentId: 'pay1' })
+    expect(mockRepos.payments.save).not.toHaveBeenCalled()
+    expect(mockRepos.studentFees.save).not.toHaveBeenCalled()
+  })
+
   test('assignFeeToStudent materializes installments through managed service', async () => {
     const { mockPolicy, mockRepos, service } = createFinanceContext()
 
@@ -101,8 +134,8 @@ describe('SchoolService finance workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('reversePayment rejects non-recorded payments', async () => {
-    const { service } = createFinanceContext({ paymentStatus: PaymentStatus.Reversed })
+  test('reversePayment rejects a previously cancelled payment', async () => {
+    const { service } = createFinanceContext({ paymentStatus: PaymentStatus.Cancelled })
 
     await expect(service.financeWorkflow.reversePayment({
       paymentId: 'pay1',

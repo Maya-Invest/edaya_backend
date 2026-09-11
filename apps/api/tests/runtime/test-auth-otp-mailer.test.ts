@@ -123,7 +123,7 @@ describe("createAuthEmailSenders", () => {
 
 describe("shouldRequireEmailVerification", () => {
   it("defaults to true when Novu is configured", () => {
-    expect(shouldRequireEmailVerification({ NOVU_SECRET_KEY: "key" } as never)).toBe(true);
+    expect(shouldRequireEmailVerification({ NOTIFICATION_PROVIDER: "novu", NOVU_SECRET_KEY: "key" } as never)).toBe(true);
   });
 
   it("defaults to true when notify is configured", () => {

@@ -118,17 +118,11 @@ export async function insertJobIfAbsent(
   sql: NotifySql,
   job: Pick<NotifyJobRow, "idempotency_key" | "tenant" | "job_kind" | "event_key" | "title" | "body" | "email_subject" | "email_body" | "metadata">,
 ): Promise<{ created: boolean }> {
-  const existing = await sql.query<{ idempotency_key: string }>(
-    "SELECT idempotency_key FROM notify.jobs WHERE idempotency_key = $1",
-    [job.idempotency_key],
-  );
-  if (existing[0]) {
-    return { created: false };
-  }
-  await sql.execute(
+  const inserted = await sql.query<{ idempotency_key: string }>(
     `INSERT INTO notify.jobs (
       idempotency_key, tenant, job_kind, event_key, title, body, email_subject, email_body, metadata, status
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')`,
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')
+    ON CONFLICT (idempotency_key) DO NOTHING RETURNING idempotency_key`,
     [
       job.idempotency_key,
       job.tenant,
@@ -141,7 +135,7 @@ export async function insertJobIfAbsent(
       job.metadata,
     ],
   );
-  return { created: true };
+  return { created: inserted.length === 1 };
 }
 
 export async function getJob(sql: NotifySql, idempotencyKey: string): Promise<NotifyJobRow | undefined> {
@@ -183,16 +177,20 @@ export async function cancelJob(sql: NotifySql, idempotencyKey: string, tenant?:
 export async function upsertJobRecipient(
   sql: NotifySql,
   row: NotifyJobRecipientRow,
-): Promise<void> {
-  await sql.execute(
+  leaseId?: string,
+): Promise<boolean> {
+  const written = await sql.query<{ idempotency_key: string }>(
     `INSERT INTO notify.job_recipients (idempotency_key, subject_id, channel, status, provider_message_id, failure_reason)
-     VALUES ($1,$2,$3,$4,$5,$6)
+     SELECT $1,$2,$3,$4,$5,$6 WHERE $7::text IS NULL OR EXISTS (
+       SELECT 1 FROM notify.jobs WHERE idempotency_key = $1 AND lease_id = $7 AND status = 'sending'
+     )
      ON CONFLICT (idempotency_key, subject_id, channel) DO UPDATE SET
        status = EXCLUDED.status,
        provider_message_id = EXCLUDED.provider_message_id,
-       failure_reason = EXCLUDED.failure_reason`,
-    [row.idempotency_key, row.subject_id, row.channel, row.status, row.provider_message_id, row.failure_reason],
+       failure_reason = EXCLUDED.failure_reason RETURNING idempotency_key`,
+    [row.idempotency_key, row.subject_id, row.channel, row.status, row.provider_message_id, row.failure_reason, leaseId ?? null],
   );
+  return written.length > 0;
 }
 
 export async function listJobRecipients(

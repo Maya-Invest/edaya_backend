@@ -102,6 +102,11 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
     entity: AccountInvitation,
     options: SaveAccountInvitationOptions = {},
   ): Promise<void> {
+    if (this.schoolId) {
+      const existing = await this.findById(entity.id)
+      await this.saveScopedRow(toInsertRow(entity, options.tokenHash ?? existing?.tokenHash), ['tokenHash'])
+      return
+    }
     const existing = await this.getClient()
       .select({ id: schema.accountInvitations.id })
       .from(schema.accountInvitations)

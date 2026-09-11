@@ -38,7 +38,7 @@ export function resolveDatabaseUrl(source: RuntimeBindings, runtime: RuntimeKind
 /**
  * Auth/session DB URL for Worker: prefer cache-disabled Hyperdrive so Better Auth
  * read-after-write (sign-up → sign-in) is not served from Hyperdrive query cache.
- * Falls back to the school DATABASE_URL when the auth binding is absent.
+ * An explicit AUTH_DATABASE_URL takes precedence over the school fallback.
  */
 export function resolveAuthDatabaseUrl(source: RuntimeBindings, runtime: RuntimeKind): string {
   if (runtime === "worker") {
@@ -48,6 +48,12 @@ export function resolveAuthDatabaseUrl(source: RuntimeBindings, runtime: Runtime
     }
   }
 
+  if (typeof source.AUTH_DATABASE_URL === "string" && source.AUTH_DATABASE_URL.length > 0) {
+    return source.AUTH_DATABASE_URL;
+  }
+  if (runtime === "worker" && source.NODE_ENV === "production") {
+    throw new Error("Production requires cache-disabled HYPERDRIVE_AUTH or a direct AUTH_DATABASE_URL");
+  }
   return resolveDatabaseUrl(source, runtime);
 }
 

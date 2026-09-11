@@ -40,11 +40,5 @@ export function parseBearerApiKey(authorizationHeader: string | undefined): stri
     return undefined
   }
 
-  const [scheme, token] = authorizationHeader.split(/\s+/, 2)
-  if (!scheme || !token || scheme.toLowerCase() !== 'bearer') {
-    return undefined
-  }
-
-  const trimmed = token.trim()
-  return trimmed || undefined
+  return /^Bearer (sk_live_[\w-]{16,})$/i.exec(authorizationHeader)?.[1]
 }

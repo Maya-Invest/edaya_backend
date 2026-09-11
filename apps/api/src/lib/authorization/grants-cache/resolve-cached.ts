@@ -1,12 +1,12 @@
 import type { EffectiveGrants } from "@edaya/authorization";
 import type { SchoolRepositories } from "@edaya/service";
+import type { Environment } from "@/runtime";
 import {
   getEffectiveGrantsCacheStore,
   resetEffectiveGrantsCacheStore,
 } from "@/lib/authorization/grants-cache/store";
-import type { Environment } from "@/runtime";
 
-const DEFAULT_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_TTL_MS = 0;
 
 export interface ResolveCachedEffectiveGrantsArgs {
   actorId?: string;
@@ -42,6 +42,16 @@ export async function resolveCachedEffectiveGrants({
   const finalActorId = actorId ?? staffMemberId;
   if (!finalActorId) {
     throw new Error("actorId or staffMemberId is required");
+  }
+
+  if (ttlMs <= 0) {
+    return repositories.authorization.resolveActorGrants({
+      actorId: finalActorId,
+      actorType,
+      schoolId,
+      ...(academicYearId ? { academicYearId } : {}),
+      now,
+    });
   }
 
   const store = getEffectiveGrantsCacheStore();

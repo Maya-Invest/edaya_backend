@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
   createCoreRouteTestApp,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
 
@@ -14,13 +14,13 @@ describe("onboarding invite-staff-members route", () => {
       email,
       name: "Staff Owner",
     });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Staff Invite School",
@@ -36,7 +36,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         id: "2025",
@@ -52,7 +52,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         invites: [
@@ -83,13 +83,13 @@ describe("onboarding invite-staff-members route", () => {
     const { app, runtime } = await createCoreRouteTestApp();
     const email = "owner-invite@school.edu";
     await signUpAuthUser(runtime, { email, name: "Owner Invite" });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Owner Invite School",
@@ -103,7 +103,7 @@ describe("onboarding invite-staff-members route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         invites: [{ email, role: "secretary" }],

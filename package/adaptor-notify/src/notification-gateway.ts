@@ -33,7 +33,8 @@ export function createNotifyNotificationGateway(
         await enqueueSchoolNotification(runtime, input);
       }
       catch (error) {
-        onError?.(error, { operation: "enqueue", input });
+        onError?.(error, { operation: "enqueue", idempotencyKey: input.idempotencyKey });
+        throw error;
       }
     },
     cancel: async (idempotencyKey) => {

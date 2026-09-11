@@ -63,7 +63,7 @@ describe('auth link seed port', () => {
     expect(signInResponse.status).toBe(200)
   }, 30_000)
 
-  it('links seeded accounts and resolves the staff actor from the session cookie', async () => {
+  it('links seeded accounts and resolves the staff actor from a Bearer access token', async () => {
     const runtime = await getApiRuntime(apiPgliteEnv)
     const application = await runtime.getSchoolApplication()
     const auth = createHandlerAuthProvisioner(runtime.getAuth(), apiPgliteEnv.BETTER_AUTH_URL)
@@ -96,6 +96,13 @@ describe('auth link seed port', () => {
     expect(signInResponse.status).toBe(200)
 
     const cookies = collectSetCookieHeaders(signInResponse)
+    const exchange = await runtime.getAuth().handler(new Request(`${apiPgliteEnv.BETTER_AUTH_URL}/auth/edaya/access-token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': new URL(apiPgliteEnv.BETTER_AUTH_URL).origin, 'cookie': cookies.join('; ') },
+      body: '{}',
+    }))
+    expect(exchange.status).toBe(200)
+    const { accessToken } = await exchange.json() as { accessToken: string }
     const app = new Hono<AppBindings>()
     app.use(async (c, next) => {
       c.env = apiPgliteEnv
@@ -112,7 +119,7 @@ describe('auth link seed port', () => {
 
     const actorResponse = await app.request('/actor', {
       headers: {
-        cookie: cookies.join('; '),
+        authorization: `Bearer ${accessToken}`,
       },
     })
 

@@ -43,6 +43,7 @@ export function createNotifyRuntime(options: CreateNotifyRuntimeOptions): Notify
 
 export function createNotifyRuntimeFromDrizzle(options: {
   db: unknown;
+  getExecutor?: () => unknown;
   env: NotifyTransportEnv;
   log?: CreateNotifyRuntimeOptions["log"];
   onDeliveryEvent?: CreateNotifyRuntimeOptions["onDeliveryEvent"];
@@ -50,7 +51,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
   fcm?: FcmTransport;
 }): NotifyRuntime {
   return createNotifyRuntime({
-    sql: createNotifySqlFromDrizzle(options.db),
+    sql: createNotifySqlFromDrizzle(options.db, options.getExecutor),
     env: options.env,
     log: options.log,
     onDeliveryEvent: options.onDeliveryEvent,

@@ -17,7 +17,7 @@ export function resolveInvitationDelivery(
     return createNotifyInvitationDeliveryPort(options.runtime);
   }
 
-  if (!env.NOVU_SECRET_KEY) {
+  if (env.NOTIFICATION_PROVIDER !== "novu" || !env.NOVU_SECRET_KEY) {
     return noOpInvitationDeliveryPort;
   }
 

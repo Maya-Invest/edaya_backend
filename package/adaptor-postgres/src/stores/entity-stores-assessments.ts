@@ -127,7 +127,7 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
       schema.reportCardDefinitionSections,
       (entity: ReportCardDefinitionSection) => ({
         id: entity.id,
-        definitionId: entity.reportCardDefinitionId,
+        reportCardDefinitionId: entity.reportCardDefinitionId,
         name: entity.name,
         role: entity.role ?? null,
         coefficient: entity.coefficient ?? null,
@@ -139,7 +139,7 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
       }),
       row => new ReportCardDefinitionSectionCtor({
         id: row.id,
-        reportCardDefinitionId: row.definitionId,
+        reportCardDefinitionId: row.reportCardDefinitionId,
         name: row.name,
         kind: row.subjectId
           ? ReportCardDefinitionSectionKind.Subject

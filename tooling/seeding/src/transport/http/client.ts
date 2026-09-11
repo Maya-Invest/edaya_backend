@@ -100,6 +100,8 @@ export class HttpSeedClient {
   private readonly appOrigin?: string
   private readonly fetchImpl: HttpFetch
   private readonly cookies = new Map<string, string>()
+  private accessToken?: { value: string, expiresAt: number }
+  private exchange?: Promise<string | undefined>
   private lastRequestAt = 0
 
   constructor(options: HttpSeedClientOptions) {
@@ -114,6 +116,8 @@ export class HttpSeedClient {
 
   clearCookies(): void {
     this.cookies.clear()
+    this.accessToken = undefined
+    this.exchange = undefined
   }
 
   private isStaging(): boolean {
@@ -130,7 +134,11 @@ export class HttpSeedClient {
 
   /** Run a callback while temporarily isolating auth cookie mutations. */
   async withCookieSnapshot<T>(fn: () => Promise<T>): Promise<T> {
+    // Preserve a usable token before nested account provisioning changes identity.
+    // Otherwise each snapshot can restore an empty cache and exhaust the renewal quota.
+    await this.getAccessToken()
     const snapshot = new Map(this.cookies)
+    const accessToken = this.accessToken
     try {
       return await fn()
     }
@@ -139,6 +147,8 @@ export class HttpSeedClient {
       for (const [name, value] of snapshot) {
         this.cookies.set(name, value)
       }
+      this.accessToken = accessToken
+      this.exchange = undefined
     }
   }
 
@@ -154,6 +164,8 @@ export class HttpSeedClient {
     for (const setCookie of setCookies) {
       const parsed = parseSetCookie(setCookie)
       if (parsed) {
+        if (this.cookies.get(parsed.name) !== parsed.value)
+          this.accessToken = undefined
         this.cookies.set(parsed.name, parsed.value)
       }
     }
@@ -180,6 +192,33 @@ export class HttpSeedClient {
     }
   }
 
+  private async getAccessToken(): Promise<string | undefined> {
+    if (this.accessToken && this.accessToken.expiresAt > Date.now() + 30000)
+      return this.accessToken.value
+    if (!this.cookieHeader())
+      return undefined
+    this.exchange ??= (async () => {
+      const renewal = this.cookieHeader()
+      const response = await this.request('/auth/edaya/access-token', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      })
+      if (response.status === 401)
+        return undefined
+      if (!response.ok)
+        throw new Error(`Seed access-token exchange failed: HTTP ${response.status}`)
+      const token = await response.json() as { accessToken: string, expiresAt: string }
+      if (!/^edaya_at_[\w-]{43}$/.test(token.accessToken) || !Number.isFinite(Date.parse(token.expiresAt)))
+        throw new Error('Invalid seed access-token response')
+      if (renewal !== this.cookieHeader())
+        return undefined
+      this.accessToken = { value: token.accessToken, expiresAt: Date.parse(token.expiresAt) }
+      return token.accessToken
+    })().finally(() => { this.exchange = undefined })
+    return this.exchange
+  }
+
   async request(path: string, init: RequestInit = {}): Promise<Response> {
     const url = path.startsWith('http') ? path : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`
     const headers = new Headers(init.headers)
@@ -187,17 +226,29 @@ export class HttpSeedClient {
     const hasBearerAuth = headers.get('authorization')?.toLowerCase().startsWith('bearer ') ?? false
     // Presigned object-storage URLs (R2/S3) must not receive API session headers.
     if (this.isApiRequest(url)) {
-      if (cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
+      const authRequest = new URL(url).pathname.startsWith('/auth/')
+      if (authRequest && cookieHeader && !headers.has('cookie') && !hasBearerAuth) {
         headers.set('cookie', cookieHeader)
       }
-      if (this.appOrigin && !headers.has('origin')) {
-        headers.set('origin', this.appOrigin)
+      if (!authRequest) {
+        headers.delete('cookie')
+        if (!headers.has('authorization')) {
+          const accessToken = await this.getAccessToken()
+          if (accessToken)
+            headers.set('authorization', `Bearer ${accessToken}`)
+        }
+      }
+      if (!headers.has('origin')) {
+        headers.set('origin', this.appOrigin ?? new URL(this.baseUrl).origin)
       }
     }
 
-    const maxRetries = this.isStaging()
-      ? STAGING_REQUEST_RETRIES
-      : DEFAULT_REQUEST_RETRIES
+    const mayRetry = ['GET', 'HEAD'].includes((init.method ?? 'GET').toUpperCase())
+    const maxRetries = mayRetry
+      ? (this.isStaging()
+          ? STAGING_REQUEST_RETRIES
+          : DEFAULT_REQUEST_RETRIES)
+      : 0
     const retryBaseDelayMs = this.isStaging()
       ? STAGING_RETRY_BASE_DELAY_MS
       : DEFAULT_RETRY_BASE_DELAY_MS
@@ -215,7 +266,8 @@ export class HttpSeedClient {
       })
 
       if (!RETRYABLE_STATUS_CODES.has(response.status) || attempt === maxRetries) {
-        this.absorbCookies(response)
+        if (this.isApiRequest(url))
+          this.absorbCookies(response)
         return response
       }
 
@@ -223,12 +275,14 @@ export class HttpSeedClient {
       await sleep(retryBaseDelayMs * (attempt + 1))
     }
 
-    this.absorbCookies(lastResponse!)
+    if (this.isApiRequest(url))
+      this.absorbCookies(lastResponse!)
     return lastResponse!
   }
 
   async jsonRequest<T = unknown>(path: string, init: RequestInit = {}): Promise<{ response: Response, body: T | null }> {
-    const outerRetries = this.isStaging() ? STAGING_JSON_OUTER_RETRIES : 0
+    const mayRetry = ['GET', 'HEAD'].includes((init.method ?? 'GET').toUpperCase())
+    const outerRetries = mayRetry && this.isStaging() ? STAGING_JSON_OUTER_RETRIES : 0
 
     for (let outer = 0; outer <= outerRetries; outer++) {
       const response = await this.request(path, init)

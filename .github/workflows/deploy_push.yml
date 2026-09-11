@@ -33,6 +33,9 @@ permissions:
   packages: write
 
 jobs:
+  verify:
+    uses: ./.github/workflows/_verify.yml
+
   gate:
     runs-on: ubuntu-latest
     outputs:
@@ -97,7 +100,7 @@ jobs:
           echo "migrate_target=${MIGRATE_TARGET}" >> "$GITHUB_OUTPUT"
 
   migrate:
-    needs: gate
+    needs: [gate, verify]
     if: needs.gate.outputs.run_migrate == 'true'
     uses: ./.github/workflows/_migrate.yml
     with:
@@ -107,21 +110,22 @@ jobs:
       PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
   publish-api-dev-image:
-    needs: gate
+    needs: [gate, verify]
     if: needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-dev-image.yml
     secrets: inherit
 
   publish-api-client:
-    needs: gate
+    needs: [gate, verify]
     if: needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-client.yml
     secrets: inherit
 
   deploy-api:
-    needs: [gate, migrate]
+    needs: [gate, verify, migrate]
     if: >-
       always() &&
+      needs.verify.result == 'success' &&
       needs.gate.outputs.deploy_api == 'true' &&
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
     uses: ./.github/workflows/_deploy-api.yml

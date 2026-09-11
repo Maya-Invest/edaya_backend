@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { defaultHook } from "stoker/openapi";
@@ -24,16 +25,22 @@ export default function createApp() {
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
       "Content-Type",
-      "Cookie",
       "Authorization",
       "X-Academic-Year-Id",
       "X-Actor-Kind",
       "X-Actor-Id",
       "X-School-Id",
       "X-Request-Id",
+      "Idempotency-Key",
     ],
     credentials: true,
   }));
+  app.use(async (c, next) => {
+    if (c.req.path.startsWith("/core/files/memory/")) {
+      return next();
+    }
+    return bodyLimit({ maxSize: 1024 * 1024 })(c, next);
+  });
   app.use(dependenciesInjection);
 
   app.use(serveEmojiFavicon("📝"));

@@ -14,6 +14,7 @@ import { withTenantLookupCache } from './tenant-lookup-cache'
 export interface EntityTenantResolver<T> {
   resolve: (entity: T, repositories: SchoolRepositories) => Promise<string | undefined> | string | undefined
   resolveFromFilter?: (filter: Filter<T> | QueryOptions<T> | undefined) => string | undefined
+  scopeFilter?: (schoolId: string, repositories: SchoolRepositories) => Filter<T> | Promise<Filter<T>>
 }
 
 export type EntityReadAuthorization<T> = CoreEntityReadAuthorization<T, ActorMetadata>
@@ -70,6 +71,7 @@ export class ManagedEntityService<T> {
   private readonly actor: ActorMetadata
   private readonly repositories: SchoolRepositories
   private readonly config: ManagedEntityServiceConfig<T>
+  private boundRepository?: BaseRepositoryInterface<T>
 
   constructor(args: ManagedEntityServiceArgs<T>) {
     this.actor = args.actor
@@ -77,9 +79,13 @@ export class ManagedEntityService<T> {
     this.config = args.config
   }
 
+  private get scopedRepository(): BaseRepositoryInterface<T> {
+    return this.boundRepository ??= this.config.repository.forSchool?.(this.actor.schoolId) ?? this.config.repository
+  }
+
   async findById(id: string): Promise<T | undefined> {
     await this.config.read.checkModule(this.actor)
-    const entity = await this.config.repository.findById(id)
+    const entity = await this.scopedRepository.findById(id)
     if (!entity)
       return undefined
     await this.ensureEntityTenant(entity)
@@ -89,7 +95,7 @@ export class ManagedEntityService<T> {
 
   async findByIds(ids: readonly string[]): Promise<T[]> {
     await this.config.read.checkModule(this.actor)
-    const entities = await this.config.repository.findByIds(ids)
+    const entities = await this.scopedRepository.findByIds(ids)
     await this.ensureEntitiesTenant(entities)
     await this.config.read.checkAccess(this.actor, entities, this.repositories)
     return entities
@@ -98,7 +104,7 @@ export class ManagedEntityService<T> {
   async findOne(options?: QueryOptions<T>): Promise<T | undefined> {
     this.ensureFilterTenant(options)
     await this.config.read.checkModule(this.actor)
-    const entity = await this.config.repository.findOne(options)
+    const entity = await this.scopedRepository.findOne(await this.scopeQuery(options))
     if (!entity)
       return undefined
     await this.ensureEntityTenant(entity)
@@ -109,7 +115,7 @@ export class ManagedEntityService<T> {
   async list(options?: QueryOptions<T>): Promise<T[]> {
     this.ensureFilterTenant(options)
     await this.config.read.checkModule(this.actor)
-    const entities = await this.config.repository.list(options)
+    const entities = await this.scopedRepository.list(await this.scopeQuery(options))
     await this.ensureEntitiesTenant(entities)
     await this.config.read.checkAccess(this.actor, entities, this.repositories)
     return entities
@@ -119,13 +125,14 @@ export class ManagedEntityService<T> {
     this.ensureFilterTenant(filter)
     await this.config.read.checkModule(this.actor)
 
-    // Elevated staff / system actors already have school-wide access via module
-    // checks. Use SQL COUNT(*) and skip loading every row + per-row tenant/ACL.
-    if (canCountWithoutRowAccess(this.actor)) {
-      return this.config.repository.count(filter)
+    const scopedFilter = await this.scopeQuery(filter)
+    // Elevation does not remove tenant boundaries. The SQL shortcut is safe
+    // only when the configuration supplies an independent tenant predicate.
+    if ((this.config.repository.forSchool || this.config.tenant.scopeFilter) && canCountWithoutRowAccess(this.actor)) {
+      return this.scopedRepository.count(scopedFilter)
     }
 
-    const entities = await this.config.repository.list(filter as QueryOptions<T> | undefined)
+    const entities = await this.scopedRepository.list(scopedFilter)
     await this.ensureEntitiesTenant(entities)
     await this.config.read.checkAccess(this.actor, entities, this.repositories)
     return entities.length
@@ -144,7 +151,7 @@ export class ManagedEntityService<T> {
 
       await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
       await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
-      await this.config.repository.save(entity)
+      await this.scopedRepository.save(entity)
       await this.config.hooks?.postSave?.(entity, existing, this.repositories, this.actor)
     })
   }
@@ -167,7 +174,7 @@ export class ManagedEntityService<T> {
         await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
       }
 
-      const savedIds = await this.config.repository.batchSave(entities)
+      const savedIds = await this.scopedRepository.batchSave(entities)
 
       for (const entity of entities) {
         const id = getEntityId(entity)
@@ -190,7 +197,7 @@ export class ManagedEntityService<T> {
       await this.ensureEntityTenant(entity)
       await this.config.write.authorizeDelete(this.actor, entity, this.repositories)
       await this.config.gates?.preDelete?.(entity, this.repositories)
-      await this.config.repository.delete(id)
+      await this.scopedRepository.delete(id)
       await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
     })
   }
@@ -210,7 +217,7 @@ export class ManagedEntityService<T> {
       }
 
       const existingIds = entities.map(getEntityId).filter((id): id is string => id !== undefined)
-      await this.config.repository.batchDelete(existingIds)
+      await this.scopedRepository.batchDelete(existingIds)
 
       for (const entity of entities) {
         await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
@@ -228,6 +235,19 @@ export class ManagedEntityService<T> {
     const schoolId = this.config.tenant.resolveFromFilter?.(filter)
     if (schoolId && schoolId !== this.actor.schoolId)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  private async scopeQuery(options?: QueryOptions<T>): Promise<QueryOptions<T> | undefined> {
+    if (this.config.repository.forSchool || !this.config.tenant.scopeFilter)
+      return options
+    const scope = await this.config.tenant.scopeFilter(this.actor.schoolId, this.repositories)
+    const { $limit, $offset, $orderBy, ...filter } = options ?? {}
+    return {
+      $and: [scope, filter as Filter<T>],
+      ...($limit !== undefined ? { $limit } : {}),
+      ...($offset !== undefined ? { $offset } : {}),
+      ...($orderBy !== undefined ? { $orderBy } : {}),
+    } as QueryOptions<T>
   }
 
   private async ensureEntitiesTenant(entities: readonly T[]): Promise<void> {

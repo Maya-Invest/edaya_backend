@@ -35,6 +35,8 @@ export type QueryOptions<T> = Filter<T> & {
 }
 
 export interface BaseRepositoryInterface<T> {
+  /** Bind trusted school context independently of caller filters. Adapters must scope every operation. */
+  forSchool?: (schoolId: string) => BaseRepositoryInterface<T>
   findById: (id: string) => Promise<T | undefined>
   findOne: (options?: QueryOptions<T>, last?: boolean) => Promise<T | undefined>
   findByIds: (ids: readonly string[]) => Promise<T[]>

@@ -39,7 +39,8 @@ describe('buildWhereClause', () => {
     expect(clause).toBeDefined()
   })
 
-  test('ignores unknown table fields', () => {
-    expect(buildWhereClause(students, { unknownField: 'value' } as never)).toBeUndefined()
+  test('rejects unknown fields and malformed or unsupported operators', () => {
+    for (const filter of [{ unknownField: 'value' }, { score: { $unknown: 3 } }, { $or: 'all' }, { id: { $in: 's1' } }, { score: { $exists: 'yes' } }])
+      expect(() => buildWhereClause(students, filter as never)).toThrow()
   })
 })

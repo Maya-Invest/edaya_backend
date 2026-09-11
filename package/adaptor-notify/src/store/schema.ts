@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS notify.jobs (
   email_body TEXT,
   metadata TEXT,
   status TEXT NOT NULL DEFAULT 'pending',
+  lease_id TEXT,
+  lease_expires_at TIMESTAMPTZ,
+  next_attempt_at TIMESTAMPTZ,
+  attempts INTEGER NOT NULL DEFAULT 0,
   provider_message_id TEXT,
   failure_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -49,4 +53,12 @@ CREATE TABLE IF NOT EXISTS notify.job_recipients (
   failure_reason TEXT,
   PRIMARY KEY (idempotency_key, subject_id, channel)
 );
+`;
+
+export const NOTIFY_RELIABILITY_MIGRATION_SQL = `
+ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS lease_id TEXT;
+ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS lease_expires_at TIMESTAMPTZ;
+ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
+ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
+CREATE INDEX IF NOT EXISTS notify_jobs_pending_idx ON notify.jobs (job_kind, status, next_attempt_at, created_at);
 `;

@@ -1,21 +1,22 @@
-import * as authSchema from "@edaya/adaptor-auth/schema";
-import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { AuthSecondaryStoragePort } from "@edaya/adaptor-auth";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
+import type { Environment } from "@/runtime/shared/env/schema";
+import type { AuthService } from "@/runtime/types";
 import {
   buildBetterAuthRateLimitOptions,
   buildBetterAuthSessionOptions,
-  toBetterAuthSecondaryStorage,
+  createAccessTokenStore,
+  createDelegationGrantStore,
 } from "@edaya/adaptor-auth";
+import * as authSchema from "@edaya/adaptor-auth/schema";
 import { betterAuth } from "better-auth";
-import { emailOTP, openAPI } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import type { Environment } from "@/runtime/shared/env/schema";
-import type { AuthService } from "@/runtime/types";
-import { createAppLogger, createBetterAuthLogger } from "@/runtime/shared/adapters/pino-logger";
-import { createAuthEmailSenders } from "@/runtime/shared/adapters/auth-otp-mailer";
+import { bearer, emailOTP, openAPI } from "better-auth/plugins";
 import { shouldRequireEmailVerification } from "@/runtime/shared/adapters/auth-email-delivery";
-import { isSeedAuthProvisionRequest } from "@/runtime/shared/adapters/seed-auth-provision";
+import { createAuthEmailSenders } from "@/runtime/shared/adapters/auth-otp-mailer";
+import { createAppLogger, createBetterAuthLogger } from "@/runtime/shared/adapters/pino-logger";
 import { applyEmailVerificationCallbackUrl } from "@/runtime/shared/env/derived";
+import { createFirstPartyAuthFacade } from "./first-party-auth";
 
 export type BetterAuthEnv = Pick<
   Environment,
@@ -24,6 +25,7 @@ export type BetterAuthEnv = Pick<
   Partial<Environment>,
   "TRUSTED_ORIGINS" | "COOKIE_DOMAIN" | "NOVU_SECRET_KEY" | "NOVU_API_URL"
   | "REQUIRE_EMAIL_VERIFICATION" | "AUTH_EMAIL_LOG_OTP" | "WEBAPP_ORIGIN"
+  | "ALLOW_LEGACY_COOKIE_BUSINESS_AUTH" | "RUNTIME"
 >;
 
 export interface BuildBetterAuthConfigOptions {
@@ -67,16 +69,7 @@ export function buildBetterAuthConfig(
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/auth",
     trustedOrigins: resolveBetterAuthTrustedOrigins(env),
-    advanced: {
-      ...(env.COOKIE_DOMAIN
-        ? {
-            crossSubDomainCookies: {
-              enabled: true,
-              domain: env.COOKIE_DOMAIN,
-            },
-          }
-        : {}),
-    },
+    advanced: { defaultCookieAttributes: { httpOnly: true, sameSite: "lax", secure: env.BETTER_AUTH_URL.startsWith("https:") } },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification,
@@ -86,10 +79,7 @@ export function buildBetterAuthConfig(
       sendOnSignUp: requireEmailVerification,
       sendOnSignIn: requireEmailVerification,
       autoSignInAfterVerification: false,
-      sendVerificationEmail: async ({ user, url }, request) => {
-        if (isSeedAuthProvisionRequest(request?.headers)) {
-          return;
-        }
+      sendVerificationEmail: async ({ user, url }) => {
         // Await delivery so Cloudflare Workers do not tear down the isolate
         // before the Novu request completes (void + catch was fire-and-forget).
         try {
@@ -110,15 +100,7 @@ export function buildBetterAuthConfig(
     databaseHooks: {
       user: {
         create: {
-          before: async (user, ctx) => {
-            if (isSeedAuthProvisionRequest(ctx?.headers)) {
-              return {
-                data: {
-                  ...user,
-                  emailVerified: true,
-                },
-              };
-            }
+          before: async (user) => {
             if (!requireEmailVerification) {
               return {
                 data: {
@@ -131,12 +113,11 @@ export function buildBetterAuthConfig(
         },
       },
     },
-    session: buildBetterAuthSessionOptions(options),
-    ...(options.secondaryStorage
-      ? { secondaryStorage: toBetterAuthSecondaryStorage(options.secondaryStorage) }
-      : {}),
+    // Session authority must stay in Postgres: KV propagation delays revocation.
+    session: { ...buildBetterAuthSessionOptions(), expiresIn: 7 * 24 * 60 * 60, disableSessionRefresh: true },
     ...(rateLimit ? { rateLimit } : {}),
     plugins: [
+      bearer({ requireSignature: true }),
       openAPI({
         disableDefaultReference: true,
       }),
@@ -156,5 +137,8 @@ export function createBetterAuth(
   env: BetterAuthEnv,
   options: BuildBetterAuthConfigOptions = {},
 ): AuthService {
-  return betterAuth(buildBetterAuthConfig(db, env, options)) as AuthService;
+  const provider = betterAuth(buildBetterAuthConfig(db, env, options));
+  const tokens = createAccessTokenStore(db);
+  const facade = createFirstPartyAuthFacade(provider, tokens, env, createDelegationGrantStore(db));
+  return { ...provider, purgeExpiredCredentials: () => tokens.purgeExpired(), handler: facade.handler, api: { ...provider.api, getSession: facade.getBusinessSession } } as AuthService;
 }

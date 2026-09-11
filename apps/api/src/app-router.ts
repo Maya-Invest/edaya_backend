@@ -1,3 +1,4 @@
+import { registerAuthContracts } from "@/http/auth-contracts";
 import { toBetterAuthHandlerRequest } from "@/http/auth-request";
 import { createRouter } from "@/http/create-app";
 import type { AppBindings } from "@/http/types";
@@ -124,6 +125,7 @@ router
   });
 
 // Mount auth routes
+registerAuthContracts(router);
 router
   .on(["GET", "POST"], "/auth/*", (c: Context<AppBindings>) => c.var.auth.handler(toBetterAuthHandlerRequest(c)));
 

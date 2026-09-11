@@ -23,6 +23,7 @@ describe('extractClientBindingsFromOpenApi', () => {
       publicName: 'schools',
       schemaName: 'School',
       allowDirectSave: true,
+      publicOperations: { create: true, update: true, delete: true, batchCreate: true, batchUpdate: true, batchDelete: true },
     })
     expect(bindings.commands.registerSchool.publicName).toBe('register-school')
     expect(bindings.queries.getOverdueFeeCount.publicName).toBe(

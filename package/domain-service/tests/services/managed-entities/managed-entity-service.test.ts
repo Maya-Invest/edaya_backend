@@ -411,7 +411,7 @@ describe('ManagedEntityService', () => {
     expect(postDelete).toHaveBeenCalledTimes(1)
   })
 
-  test('count uses repository.count for elevated staff without row access checks', async () => {
+  test('count uses repository.count for elevated staff only with an independent tenant predicate', async () => {
     const repository = createRepository<TestEntity>()
     const allowed = { id: 'entity-1', schoolId: 'school' }
     const denied = { id: 'entity-2', schoolId: 'school' }
@@ -432,7 +432,7 @@ describe('ManagedEntityService', () => {
           count,
           list,
         },
-        tenant: { resolve: value => value.schoolId },
+        tenant: { resolve: value => value.schoolId, scopeFilter: schoolId => ({ schoolId }) },
         read: {
           checkModule: mock(async () => {}),
           checkAccess,
@@ -446,7 +446,7 @@ describe('ManagedEntityService', () => {
     })
 
     await expect(service.count()).resolves.toBe(2)
-    expect(count).toHaveBeenCalledWith(undefined)
+    expect(count).toHaveBeenCalledWith({ $and: [{ schoolId: actor.schoolId }, {}] })
     expect(list).not.toHaveBeenCalled()
     expect(checkAccess).not.toHaveBeenCalled()
   })

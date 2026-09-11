@@ -9,13 +9,14 @@ if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
 
 export const pgliteTestEnvInput = {
   RUNTIME: "in-memory",
-  NODE_ENV: "development",
+  NODE_ENV: "test",
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
   BETTER_AUTH_SECRET: "super-secret-placeholder-key-for-local-testing",
   BETTER_AUTH_URL: "http://localhost:9999",
   ACCOUNT_INVITATIONS_ENABLED: false,
+  ALLOW_PUBLIC_SCHOOL_REGISTRATION: true,
 } as const;
 
 export function createPgliteTestEnv(overrides: Record<string, unknown> = {}): Environment {

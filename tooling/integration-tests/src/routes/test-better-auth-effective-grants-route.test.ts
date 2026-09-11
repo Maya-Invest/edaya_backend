@@ -9,12 +9,12 @@ import { describeWithLightSchool } from '../support/seeded-route-test-context'
 describeWithLightSchool('better auth effective grants route', (getContext) => {
   it('returns effective grants after sign-in through the app router', async () => {
     const { app, application, authHeaders } = getContext()
-    const cookies = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).cookie
+    const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const staff = await application.repositories.staffMembers.findById(MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
     const response = await app.request(createAppRequest('/core/authorization/effective-grants', {
       headers: {
-        cookie: cookies,
+        authorization,
       },
     }))
 
@@ -43,7 +43,7 @@ describeWithLightSchool('better auth effective grants route', (getContext) => {
     expect(body.effectiveGrants.scopeIdsByPermission).toEqual({})
   })
 
-  it('returns 401 when the session cookie is missing', async () => {
+  it('returns 401 when the access token is missing', async () => {
     const { app } = getContext()
     const response = await app.request(createAppRequest('/core/authorization/effective-grants'))
     expect(response.status).toBe(401)

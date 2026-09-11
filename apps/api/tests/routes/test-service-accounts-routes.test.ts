@@ -7,8 +7,8 @@ import {
   grantServiceAccountCreate,
   provisionServiceAccountForTests,
   seedDevSchoolAndAuthLinks,
-  signInDirector,
-  signInThroughApp,
+  signInDirectorWithBearer,
+  signInWithBearerThroughApp,
   TEST_ACADEMIC_YEAR_ID,
   withAcademicYearHeaders,
   wrapAuthWithVerifiedAssurance,
@@ -120,10 +120,10 @@ describe("service account routes", () => {
       elevated: true,
     });
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/service-accounts", {
       headers: {
-        cookie: cookies.join("; "),
+        authorization: `Bearer ${accessToken}`,
       },
     }));
 
@@ -140,12 +140,12 @@ describe("service account routes", () => {
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/service-accounts", {
       method: "POST",
       headers: withAcademicYearHeaders({
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
         serviceId: "http-created",
@@ -182,14 +182,14 @@ describe("service account routes", () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const customApiKey = "sk_live_custom-key-for-route-test-only";
 
     const response = await app.request(createAppRequest("/core/service-accounts", {
       method: "POST",
       headers: withAcademicYearHeaders({
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
         serviceId: "custom-key-bot",
@@ -235,7 +235,7 @@ describe("service account routes", () => {
       ...STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
     ], "6a");
 
-    const cookies = await signInThroughApp(app, {
+    const accessToken = await signInWithBearerThroughApp(app, {
       email: staffAccount.email,
     });
 
@@ -243,7 +243,7 @@ describe("service account routes", () => {
       method: "POST",
       headers: withAcademicYearHeaders({
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
         serviceId: "over-privileged-bot",
@@ -293,12 +293,12 @@ describe("service account routes", () => {
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/commands/materialize-deliveries", {
       method: "POST",
       headers: withAcademicYearHeaders({
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
         announcementId: "announcement-1",
@@ -321,12 +321,12 @@ describe("service account routes", () => {
       permissionAssignments: teacherClassSubjectAssignments(),
     });
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest(`/core/service-accounts/${staffMember.id}`, {
       method: "PATCH",
       headers: withAcademicYearHeaders({
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       }),
       body: JSON.stringify({
         displayName: "Renamed Integration Bot",
@@ -340,7 +340,7 @@ describe("service account routes", () => {
     expect(body.displayName).toBe("Renamed Integration Bot");
   }, 30_000);
 
-  it("rejects service account management when session and API key are both present", async () => {
+  it("rejects a combined first-party and service credential header", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
@@ -350,13 +350,12 @@ describe("service account routes", () => {
       elevated: true,
     });
 
-    const cookies = await signInDirector(app);
+    const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/entities/schools/list", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
-        "authorization": `Bearer ${apiKey}`,
+        "authorization": `Bearer ${accessToken}, Bearer ${apiKey}`,
       },
       body: JSON.stringify({}),
     }));

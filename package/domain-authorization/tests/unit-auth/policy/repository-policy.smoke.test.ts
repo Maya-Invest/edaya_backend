@@ -34,7 +34,7 @@ function minimalRepos(): AuthorizationRepositories & { authorization: DefaultAut
       findById: mock(async id => id === 'student-1' ? { id, schoolId: 'school-1' } : undefined),
     },
     guardians: {
-      findById: mock(async id => id === 'guardian-1' ? { id, schoolId: 'school-1' } : undefined),
+      findById: mock(async id => id === 'guardian-1' ? { id, hasAccess: true, schoolId: 'school-1' } : undefined),
     },
     guardianLinks: {
       list: mock(async () => [{ guardianId: 'guardian-1', studentId: 'student-1', schoolId: 'school-1' }]),

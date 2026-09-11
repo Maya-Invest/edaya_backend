@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
   createCoreRouteTestApp,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
 
@@ -69,13 +69,13 @@ describe("onboarding apply-structure-template route", () => {
       email,
       name: "Structure Owner",
     });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Structure Test School",
@@ -91,7 +91,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         id: "2025",
@@ -107,7 +107,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         templates: ["ci-college"],
@@ -182,13 +182,13 @@ describe("onboarding apply-structure-template route", () => {
       email,
       name: "CI Structure Owner",
     });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "CI Structure Test School",
@@ -204,7 +204,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         id: "2025",
@@ -220,7 +220,7 @@ describe("onboarding apply-structure-template route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         templates: ["ci-college"],

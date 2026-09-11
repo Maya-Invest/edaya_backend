@@ -1,10 +1,10 @@
-import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
-import { createInMemoryAuthSecondaryStorage, runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
+import type { Environment } from "@/runtime";
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { createInMemoryAuthSecondaryStorage, runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
+import { DEV_AUTH_PASSWORD } from "@edaya/fixtures/demo-login";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { createBetterAuth } from "@/runtime";
-import type { Environment } from "@/runtime";
 import {
   getLastAuthVerificationUrlForTests,
   resetAuthOtpMailerForTests,
@@ -161,7 +161,7 @@ describe("createBetterAuth", () => {
     expect(referenceResponse.status).toBe(404);
   });
 
-  it("supports optional secondary storage without changing sign-in behavior", async () => {
+  it("keeps sessions authoritative in the database when optional storage is supplied", async () => {
     const secondaryStorage = createInMemoryAuthSecondaryStorage();
     const authWithStorage = createBetterAuth(db, testEnv, { secondaryStorage });
 
@@ -188,6 +188,6 @@ describe("createBetterAuth", () => {
     }));
 
     expect(sessionResponse.status).toBe(200);
-    expect(secondaryStorage.snapshot().size).toBeGreaterThan(0);
+    expect(secondaryStorage.snapshot().size).toBe(0);
   });
 });

@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "../public-operations";
 import { coreEntities } from "@/lib/school-api/registry";
 import { entityRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { arraySchema } from "@/lib/school-api/schemas/helpers";
@@ -22,7 +23,7 @@ import { schoolApiPath } from "./paths";
 const idParamSchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityIdParam");
 const deleteEntitySchema = z.object({ id: z.string().min(1) }).openapi("CoreEntityDelete");
 const batchDeleteSchema = z.object({
-  ids: z.array(z.string().min(1)),
+  ids: z.array(z.string().min(1)).max(100),
 }).openapi("CoreEntityBatchDelete");
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -96,74 +97,82 @@ export function buildEntityRoutes(): SchoolApiRoutePair[] {
     });
     pairs.push({ route: getRoute, handler: entityGetHandler(entityConfig.serviceName, entityConfig.displayName) });
 
-    const saveRoute = createRoute({
-      method: "post",
-      path: schoolApiPath("entities", entityConfig.publicName, "save"),
-      tags: ["Core Entities"],
-      summary: `Save ${entityConfig.displayName}`,
-      ...entityRouteOperation(entityConfig, "save"),
-      request: {
-        body: jsonContent(entityConfig.saveSchema, `${entityConfig.displayName} entity`),
-      },
-      responses: {
-        [HttpStatusCodes.OK]: jsonContent(entityConfig.responseSchema, `Saved ${entityConfig.displayName}`),
-        [HttpStatusCodes.METHOD_NOT_ALLOWED]: jsonContent(commandMessageSchema, "Use a domain command for this entity"),
-        ...coreRouteErrorResponses,
-      },
-    });
-    pairs.push({ route: saveRoute, handler: entitySaveHandler(entityConfig) });
+    if (permitsPublicSave(entityConfig.publicOperations)) {
+      const saveRoute = createRoute({
+        method: "post",
+        path: schoolApiPath("entities", entityConfig.publicName, "save"),
+        tags: ["Core Entities"],
+        summary: `Save ${entityConfig.displayName}`,
+        ...entityRouteOperation(entityConfig, "save"),
+        request: {
+          body: jsonContent(entityConfig.saveSchema, `${entityConfig.displayName} entity`),
+        },
+        responses: {
+          [HttpStatusCodes.OK]: jsonContent(entityConfig.responseSchema, `Saved ${entityConfig.displayName}`),
+          [HttpStatusCodes.METHOD_NOT_ALLOWED]: jsonContent(commandMessageSchema, "Use a domain command for this entity"),
+          ...coreRouteErrorResponses,
+        },
+      });
+      pairs.push({ route: saveRoute, handler: entitySaveHandler(entityConfig) });
+    }
 
-    const deleteRoute = createRoute({
-      method: "post",
-      path: schoolApiPath("entities", entityConfig.publicName, "delete"),
-      tags: ["Core Entities"],
-      summary: `Delete ${entityConfig.displayName}`,
-      ...entityRouteOperation(entityConfig, "delete"),
-      request: {
-        body: jsonContent(deleteEntitySchema, `${entityConfig.displayName} delete request`),
-      },
-      responses: {
-        [HttpStatusCodes.OK]: jsonContent(commandMessageSchema, `Deleted ${entityConfig.displayName}`),
-        ...coreRouteErrorResponses,
-      },
-    });
-    pairs.push({ route: deleteRoute, handler: entityDeleteHandler(entityConfig.serviceName) });
+    if (entityConfig.publicOperations.delete) {
+      const deleteRoute = createRoute({
+        method: "post",
+        path: schoolApiPath("entities", entityConfig.publicName, "delete"),
+        tags: ["Core Entities"],
+        summary: `Delete ${entityConfig.displayName}`,
+        ...entityRouteOperation(entityConfig, "delete"),
+        request: {
+          body: jsonContent(deleteEntitySchema, `${entityConfig.displayName} delete request`),
+        },
+        responses: {
+          [HttpStatusCodes.OK]: jsonContent(commandMessageSchema, `Deleted ${entityConfig.displayName}`),
+          ...coreRouteErrorResponses,
+        },
+      });
+      pairs.push({ route: deleteRoute, handler: entityDeleteHandler(entityConfig.serviceName) });
+    }
 
-    const batchSaveRoute = createRoute({
-      method: "post",
-      path: schoolApiPath("entities", entityConfig.publicName, "batch-save"),
-      tags: ["Core Entities"],
-      summary: `Batch save ${entityConfig.displayName}`,
-      ...entityRouteOperation(entityConfig, "batchSave"),
-      request: {
-        body: jsonContent(
-          z.object({ entities: z.array(entityConfig.saveSchema) }).openapi(`${entityConfig.displayName.replaceAll(" ", "")}BatchSave`),
-          `${entityConfig.displayName} batch save request`,
-        ),
-      },
-      responses: {
-        [HttpStatusCodes.OK]: jsonContent(z.object({ ids: z.array(z.string()) }), `Batch saved ${entityConfig.displayName}`),
-        [HttpStatusCodes.METHOD_NOT_ALLOWED]: jsonContent(commandMessageSchema, "Use a domain command for this entity"),
-        ...coreRouteErrorResponses,
-      },
-    });
-    pairs.push({ route: batchSaveRoute, handler: entityBatchSaveHandler(entityConfig) });
+    if (permitsPublicSave(entityConfig.publicOperations, true)) {
+      const batchSaveRoute = createRoute({
+        method: "post",
+        path: schoolApiPath("entities", entityConfig.publicName, "batch-save"),
+        tags: ["Core Entities"],
+        summary: `Batch save ${entityConfig.displayName}`,
+        ...entityRouteOperation(entityConfig, "batchSave"),
+        request: {
+          body: jsonContent(
+            z.object({ entities: z.array(entityConfig.saveSchema).max(100) }).openapi(`${entityConfig.displayName.replaceAll(" ", "")}BatchSave`),
+            `${entityConfig.displayName} batch save request`,
+          ),
+        },
+        responses: {
+          [HttpStatusCodes.OK]: jsonContent(z.object({ ids: z.array(z.string()) }), `Batch saved ${entityConfig.displayName}`),
+          [HttpStatusCodes.METHOD_NOT_ALLOWED]: jsonContent(commandMessageSchema, "Use a domain command for this entity"),
+          ...coreRouteErrorResponses,
+        },
+      });
+      pairs.push({ route: batchSaveRoute, handler: entityBatchSaveHandler(entityConfig) });
+    }
 
-    const batchDeleteRoute = createRoute({
-      method: "post",
-      path: schoolApiPath("entities", entityConfig.publicName, "batch-delete"),
-      tags: ["Core Entities"],
-      summary: `Batch delete ${entityConfig.displayName}`,
-      ...entityRouteOperation(entityConfig, "batchDelete"),
-      request: {
-        body: jsonContent(batchDeleteSchema, `${entityConfig.displayName} batch delete request`),
-      },
-      responses: {
-        [HttpStatusCodes.OK]: jsonContent(commandMessageSchema, `Batch deleted ${entityConfig.displayName}`),
-        ...coreRouteErrorResponses,
-      },
-    });
-    pairs.push({ route: batchDeleteRoute, handler: entityBatchDeleteHandler(entityConfig.serviceName) });
+    if (entityConfig.publicOperations.batchDelete) {
+      const batchDeleteRoute = createRoute({
+        method: "post",
+        path: schoolApiPath("entities", entityConfig.publicName, "batch-delete"),
+        tags: ["Core Entities"],
+        summary: `Batch delete ${entityConfig.displayName}`,
+        ...entityRouteOperation(entityConfig, "batchDelete"),
+        request: {
+          body: jsonContent(batchDeleteSchema, `${entityConfig.displayName} batch delete request`),
+        },
+        responses: {
+          [HttpStatusCodes.OK]: jsonContent(commandMessageSchema, `Batch deleted ${entityConfig.displayName}`),
+          ...coreRouteErrorResponses,
+        },
+      });
+      pairs.push({ route: batchDeleteRoute, handler: entityBatchDeleteHandler(entityConfig.serviceName) });
+    }
   });
 
   return pairs;

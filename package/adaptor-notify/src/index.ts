@@ -49,3 +49,5 @@ export type {
   NotifyRecipientRow,
   NotifySql,
 } from "./store/types";
+
+export { drainPendingSchoolNotifications } from "./jobs/drain-jobs";

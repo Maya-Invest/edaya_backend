@@ -76,7 +76,7 @@ async function resolveByActorKindAndSubject(
     }
     case 'guardian': {
       const guardian = await repositories.guardians.findOne(filter)
-      if (!guardian || (args.schoolId && guardian.schoolId !== args.schoolId)) {
+      if (!guardian?.hasAccess || (args.schoolId && guardian.schoolId !== args.schoolId)) {
         return null
       }
       return { kind: 'guardian', schoolId: guardian.schoolId, actorId: guardian.id }
@@ -115,7 +115,7 @@ async function resolveByActorKindAndId(
     }
     case 'guardian': {
       const guardian = await repositories.guardians.findById(args.actorId)
-      if (!guardian || guardian.subjectId !== args.subjectId) {
+      if (!guardian?.hasAccess || guardian.subjectId !== args.subjectId) {
         return null
       }
       if (args.schoolId && guardian.schoolId !== args.schoolId) {
@@ -163,7 +163,7 @@ async function listIdentitiesForSubject(
     identities.push({ kind: 'staff', schoolId: staff.schoolId, actorId: staff.id })
   }
 
-  if (guardian) {
+  if (guardian?.hasAccess) {
     identities.push({ kind: 'guardian', schoolId: guardian.schoolId, actorId: guardian.id })
   }
 

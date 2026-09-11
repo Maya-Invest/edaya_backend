@@ -58,10 +58,10 @@ describe("runStartupMigrations", () => {
       );
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
-      expect(authTables.rows[0]?.count).toBe(4);
+      expect(authTables.rows[0]?.count).toBe(17);
       expect(notifyTables.rows[0]?.count).toBe(4);
       expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
-      expect(authJournal.rows[0]?.count).toBe(1);
+      expect(authJournal.rows[0]?.count).toBe(5);
     }
     finally {
       await pglite.close();
@@ -94,7 +94,7 @@ describe("runStartupMigrations", () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
-      expect(authJournal.rows[0]?.count).toBe(1);
+      expect(authJournal.rows[0]?.count).toBe(5);
     }
     finally {
       await pglite.close();

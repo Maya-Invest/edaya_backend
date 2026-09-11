@@ -27,7 +27,7 @@ describe('resolveInteractiveActorIdentity', () => {
         findOne: async () => ({ id: 'staff-1', schoolId: 'school-1', subjectId: 'user-1' }),
       },
       guardians: {
-        findOne: async () => ({ id: 'guardian-1', schoolId: 'school-1', subjectId: 'user-1' }),
+        findOne: async () => ({ id: 'guardian-1', hasAccess: true, schoolId: 'school-1', subjectId: 'user-1' }),
       },
       students: { findOne: async () => undefined },
       teachers: { findOne: async () => undefined },
@@ -84,7 +84,7 @@ describe('resolveInteractiveActorIdentity', () => {
       guardians: {
         findOne: async () => {
           calls.guardian += 1
-          return { id: 'guardian-1', schoolId: 'school-1', subjectId: 'user-1' }
+          return { id: 'guardian-1', hasAccess: true, schoolId: 'school-1', subjectId: 'user-1' }
         },
       },
       students: {
@@ -196,7 +196,7 @@ describe('resolveInteractiveActorIdentity', () => {
       guardians: {
         findOne: async () => undefined,
         findById: async (id: string) => id === 'guardian-1'
-          ? { id: 'guardian-1', schoolId: 'school-1', subjectId: 'user-1' }
+          ? { id: 'guardian-1', hasAccess: true, schoolId: 'school-1', subjectId: 'user-1' }
           : undefined,
       },
       students: {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
   createCoreRouteTestApp,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
 
@@ -14,13 +14,13 @@ describe("onboarding account status route", () => {
       email,
       name: "Status Owner",
     });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const registerResponse = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Status Test School",
@@ -35,7 +35,7 @@ describe("onboarding account status route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         id: "2025",
@@ -50,7 +50,7 @@ describe("onboarding account status route", () => {
     const statusBefore = await app.request(createAppRequest("/core/onboarding/account-status", {
       method: "GET",
       headers: {
-        cookie: cookies.join("; "),
+        authorization: `Bearer ${accessToken}`,
       },
     }));
     expect(statusBefore.status).toBe(200);
@@ -67,7 +67,7 @@ describe("onboarding account status route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({}),
     }));

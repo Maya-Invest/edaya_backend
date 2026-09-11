@@ -9,7 +9,7 @@ export async function resolveGuardianScope(args: {
   repositories: AuthorizationRepositories
 }): Promise<GuardianScope> {
   const guardian = await args.repositories.guardians.findById(args.guardianId)
-  if (!guardian || guardian.schoolId !== args.schoolId) {
+  if (!guardian?.hasAccess || guardian.schoolId !== args.schoolId) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 

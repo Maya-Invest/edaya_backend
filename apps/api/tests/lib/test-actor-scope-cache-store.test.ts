@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { EMPTY_GUARDIAN_SCOPE } from "@edaya/authorization";
 import {
-  InMemoryActorScopeCacheStore,
-  resetActorScopeCacheStore,
-  setActorScopeCacheStore,
-} from "@/lib/authorization/scope-cache/store";
-import {
   invalidateActorScopeCacheForActor,
   resolveCachedActorScope,
   resolveScopeCacheTtlMs,
 } from "@/lib/authorization/scope-cache/resolve-cached";
+import {
+  InMemoryActorScopeCacheStore,
+  resetActorScopeCacheStore,
+  setActorScopeCacheStore,
+} from "@/lib/authorization/scope-cache/store";
 
 describe("actor scope cache store", () => {
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe("actor scope cache store", () => {
   });
 
   it("returns cached scope entries until they expire", async () => {
-    const findById = mock(async () => ({ id: "guardian-1", schoolId: "school-1" }));
+    const findById = mock(async () => ({ id: "guardian-1", hasAccess: true, schoolId: "school-1" }));
     const repositories = {
       guardians: { findById },
       guardianLinks: {
@@ -57,7 +57,7 @@ describe("actor scope cache store", () => {
   });
 
   it("deletes cached entries for a specific actor scope", async () => {
-    const findById = mock(async () => ({ id: "guardian-1", schoolId: "school-1" }));
+    const findById = mock(async () => ({ id: "guardian-1", hasAccess: true, schoolId: "school-1" }));
     const repositories = {
       guardians: { findById },
       guardianLinks: {
@@ -83,6 +83,6 @@ describe("actor scope cache store", () => {
 
   it("uses the configured grants cache ttl when present", () => {
     expect(resolveScopeCacheTtlMs({ GRANTS_CACHE_TTL_MS: 120_000 })).toBe(120_000);
-    expect(resolveScopeCacheTtlMs()).toBe(300_000);
+    expect(resolveScopeCacheTtlMs()).toBe(0);
   });
 });

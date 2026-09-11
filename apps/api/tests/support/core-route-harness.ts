@@ -277,11 +277,11 @@ export async function provisionServiceAccountForTests(
   return createServiceAccount(application.repositories, actor, input);
 }
 
-export async function signInDirector(
+export async function signInDirectorWithBearer(
   app: Hono<AppBindings>,
   email: string = resolveDevSeedContext().minimalStaffEmail,
-): Promise<string[]> {
-  return signInThroughApp(app, { email });
+): Promise<string> {
+  return signInWithBearerThroughApp(app, { email });
 }
 
 export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
@@ -301,10 +301,10 @@ export function createAppRequest(path: string, init?: RequestInit): Request {
   return new Request(`${pgliteEnv.BETTER_AUTH_URL}${path}`, init);
 }
 
-export async function signInThroughApp(
+export async function signInWithBearerThroughApp(
   app: Hono<AppBindings>,
   input: { email: string; password?: string },
-): Promise<string[]> {
+): Promise<string> {
   const response = await app.request(createAppRequest("/auth/sign-in/email", {
     method: "POST",
     headers: {
@@ -321,7 +321,18 @@ export async function signInThroughApp(
     throw new Error(`Sign-in failed for ${input.email}: ${response.status} ${message}`);
   }
 
-  return collectSetCookieHeaders(response);
+  const exchanged = await app.request(createAppRequest("/auth/edaya/access-token", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "origin": new URL(pgliteEnv.BETTER_AUTH_URL).origin,
+      "cookie": collectSetCookieHeaders(response).map(value => value.split(";")[0]).join("; "),
+    },
+    body: "{}",
+  }));
+  if (!exchanged.ok)
+    throw new Error(`Token exchange failed: ${exchanged.status}`);
+  return (await exchanged.json() as { accessToken: string }).accessToken;
 }
 
 export async function signUpAuthUser(

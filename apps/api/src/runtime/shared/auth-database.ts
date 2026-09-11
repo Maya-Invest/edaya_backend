@@ -1,11 +1,12 @@
+import type { DatabaseHandle } from "@/runtime/types";
 import { runMigrations as runAuthMigrations } from "@edaya/adaptor-auth";
 import { isPgliteDatabase, resolveMigrationDriver } from "@edaya/adaptor-postgres";
-import type { DatabaseHandle } from "@/runtime/types";
 import { createPostgresSchoolDatabase } from "@/runtime/shared/school-database";
 
 export interface AttachAuthDatabaseOptions {
   databaseUrl: string;
   runMigrations?: boolean;
+  ownership?: "borrowed" | "owned";
 }
 
 /** Reuse an existing Postgres/PGlite handle for Better Auth tables in the `auth` schema. */
@@ -13,16 +14,26 @@ export async function attachAuthDatabase(
   handle: DatabaseHandle,
   options: AttachAuthDatabaseOptions,
 ): Promise<DatabaseHandle> {
-  if (options.runMigrations) {
-    await runAuthMigrations(handle.db, {
-      driver: resolveMigrationDriver(options.databaseUrl),
-    });
+  let disposal: Promise<void> | undefined;
+  const dispose = () => disposal ??= Promise.resolve().then(() => handle.dispose());
+  try {
+    if (options.runMigrations) {
+      await runAuthMigrations(handle.db, {
+        driver: resolveMigrationDriver(options.databaseUrl),
+      });
+    }
+  }
+  catch (error) {
+    if (options.ownership === "owned") {
+      await dispose();
+    }
+    throw error;
   }
 
   return {
     db: handle.db,
     sqlClient: handle.sqlClient,
-    dispose: async () => {},
+    dispose: options.ownership === "owned" ? dispose : async () => {},
   };
 }
 
@@ -38,6 +49,7 @@ export async function createPostgresAuthDatabase(
   const handle = await createPostgresSchoolDatabase(databaseUrl);
   return attachAuthDatabase(handle, {
     databaseUrl,
+    ownership: "owned",
     runMigrations: options.runMigrations,
   });
 }
@@ -61,6 +73,7 @@ export async function createPgliteAuthDatabase(
   const databaseUrl = dataDir ? `pglite:${dataDir}` : "pglite";
   return attachAuthDatabase(handle, {
     databaseUrl,
+    ownership: "owned",
     runMigrations: options.runMigrations,
   });
 }

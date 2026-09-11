@@ -102,7 +102,7 @@ describe("core entity and command routes", () => {
     expect(mockDelete).toHaveBeenCalledWith("grade-level-6");
   });
 
-  it("returns 405 when direct save is disabled for command-only entities", async () => {
+  it("does not expose direct save for command-only entities", async () => {
     const mockSave = mock().mockResolvedValue(undefined);
     const app = setupTestApp({
       baseService: {
@@ -124,8 +124,28 @@ describe("core entity and command routes", () => {
       }),
     });
 
-    expect(res.status).toBe(405);
+    expect(res.status).toBe(404);
     expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch generic finance or enrollment writes even for an elevated actor", async () => {
+    const write = mock().mockResolvedValue(undefined);
+    const app = setupTestApp({ baseService: { entities: {
+      payments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      studentFees: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      enrollments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+    } } });
+    for (const entity of ["payments", "student-fees", "enrollments"]) {
+      for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
+        const response = await app.request(`/core/entities/${entity}/${action}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: "existing", ids: ["existing"], entities: [{ id: "existing" }] }),
+        });
+        expect(response.status).toBe(404);
+      }
+    }
+    expect(write).not.toHaveBeenCalled();
   });
 
   it("returns 422 when entity save payload fails OpenAPI schema validation", async () => {

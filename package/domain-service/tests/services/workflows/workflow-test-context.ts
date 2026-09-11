@@ -1,10 +1,11 @@
 import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
-import type { AcademicPeriod, Activity, AtomicExecutionPort, Attachment, AttendanceRecord, ClassGroup, FileStoragePort, MessageDelivery, NotificationGatewayPort, PeriodDefinition, Resource, ResourceAssignment, StaffAssignment, StaffMember, StudentNote } from '@edaya/core'
+import type { AcademicPeriod, Activity, AtomicExecutionPort, Attachment, AttendanceRecord, ClassGroup, FileStoragePort, Filter, MessageDelivery, NotificationGatewayPort, PeriodDefinition, Resource, ResourceAssignment, StaffAssignment, StaffMember, StudentNote } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { AcademicYear, Announcement, AnnouncementStatus, AssessmentKind, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, EnrollmentEndReason, Fee, FeeCategory, FeeStatus, GradeLevel, Guardian, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, ReportCardDefinitionSectionKind, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryActionStatus, StudentFee, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { mock } from 'bun:test'
 import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
+import { matchesFilter } from '../../support/filter-matcher'
 import { testFileStorage } from '../../support/test-file-storage'
 
 export const actor = createElevatedTestStaffActor('sch1', 'user1')
@@ -157,11 +158,11 @@ function createMemoryRepo<T extends { id: string }>() {
     store,
     repo: {
       findById: mock(async (id: string) => store.get(id)),
-      findOne: mock(async (filter: Record<string, unknown> = {}) => [...store.values()].find((entity) => {
-        return Object.entries(filter).every(([key, value]) => (entity as Record<string, unknown>)[key] === value)
+      findOne: mock(async (filter: Filter<T> = {}) => [...store.values()].find((entity) => {
+        return matchesFilter(entity, filter)
       })),
-      list: mock(async (filter: Record<string, unknown> = {}) => [...store.values()].filter((entity) => {
-        return Object.entries(filter).every(([key, value]) => (entity as Record<string, unknown>)[key] === value)
+      list: mock(async (filter: Filter<T> = {}) => [...store.values()].filter((entity) => {
+        return matchesFilter(entity, filter)
       })),
       save: mock(async (entity: T) => {
         store.set(entity.id, entity)

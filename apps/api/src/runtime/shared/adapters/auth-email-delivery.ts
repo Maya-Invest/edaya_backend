@@ -24,7 +24,7 @@ export function isAuthEmailDeliveryConfigured(env: Environment | undefined): boo
   if (!env || env.RUNTIME === "in-memory") {
     return false;
   }
-  return isNotifyConfigured(env) || Boolean(env.NOVU_SECRET_KEY?.trim());
+  return isNotifyConfigured(env) || (env.NOTIFICATION_PROVIDER === "novu" && Boolean(env.NOVU_SECRET_KEY?.trim()));
 }
 
 export function shouldRequireEmailVerification(env: Environment | undefined): boolean {
@@ -58,7 +58,7 @@ export function resolveAuthEmailDelivery(
     };
   }
 
-  if (!env.NOVU_SECRET_KEY) {
+  if (env.NOTIFICATION_PROVIDER !== "novu" || !env.NOVU_SECRET_KEY) {
     return { mode: "log", port: null };
   }
 

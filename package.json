@@ -22,6 +22,7 @@
     "test:integration:api": "bun --filter @edaya/integration-tests test:integration:api",
     "test:integration:http": "bun --filter @edaya/integration-tests test:integration:http",
     "test:integration:seed": "bun --filter @edaya/integration-tests test:integration:seed",
+    "test:integration:native": "bun --filter @edaya/integration-tests test:integration:native",
     "verify": "bun repo verify && turbo run quality && turbo run build && turbo run test -- --dots",
     "dev": "bun tooling/repo/dev/start-local-dev.ts",
     "dev:container": "bash tooling/api-dev-container/run.sh",

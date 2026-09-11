@@ -1,3 +1,7 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
+import type { GraphQLFieldConfigArgumentMap, GraphQLFieldConfigMap } from "graphql";
+import type { Context } from "hono";
+import type { AppBindings } from "@/http/types";
 import {
 
   GraphQLList,
@@ -6,15 +10,16 @@ import {
   GraphQLSchema,
   GraphQLString,
 } from "graphql";
-import type { GraphQLFieldConfigArgumentMap, GraphQLFieldConfigMap } from "graphql";
-import type { Context } from "hono";
-import { coreEntities } from "@/lib/school-api/registry";
-import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
-import type { AppBindings } from "@/http/types";
 import { appendGraphQLCommandFields } from "@/lib/graphql/routes/commands";
 import { createEntityMutationResolvers, createEntityQueryResolvers } from "@/lib/graphql/routes/entity-resolvers";
 import { appendGraphQLCoreQueryFields } from "@/lib/graphql/routes/queries";
+import { GraphQLJSON } from "@/lib/graphql/scalars/json";
 import { entityFieldNames } from "@/lib/graphql/utils/naming";
+import {
+  getSharedGraphQLFilterTypes,
+  GraphQLFilterTypeRegistry,
+  GraphQLSortDirectionEnum,
+} from "@/lib/graphql/zod-filter-to-graphql";
 import {
   buildEntityGraphQLTypes,
   GraphQLBatchSaveResultType,
@@ -22,12 +27,8 @@ import {
   GraphQLDeleteResultType,
   GraphQLTypeRegistry,
 } from "@/lib/graphql/zod-to-graphql";
-import {
-  getSharedGraphQLFilterTypes,
-  GraphQLFilterTypeRegistry,
-  GraphQLSortDirectionEnum,
-} from "@/lib/graphql/zod-filter-to-graphql";
-import { GraphQLJSON } from "@/lib/graphql/scalars/json";
+import { coreEntities } from "@/lib/school-api/registry";
+import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 
 type GraphQLContext = Context<AppBindings>;
 
@@ -78,7 +79,7 @@ function appendGraphQLEntityFields(
       resolve: queryResolvers.byId,
     };
 
-    if (entityConfig.allowDirectSave) {
+    if (permitsPublicSave(entityConfig.publicOperations)) {
       mutationFields[names.save] = {
         type: new GraphQLNonNull(outputType),
         args: {
@@ -86,6 +87,8 @@ function appendGraphQLEntityFields(
         },
         resolve: mutationResolvers.save,
       };
+    }
+    if (permitsPublicSave(entityConfig.publicOperations, true)) {
       mutationFields[names.batchSave] = {
         type: new GraphQLNonNull(GraphQLBatchSaveResultType),
         args: {
@@ -95,18 +98,22 @@ function appendGraphQLEntityFields(
       };
     }
 
-    mutationFields[names.delete] = {
-      type: new GraphQLNonNull(GraphQLDeleteResultType),
-      args: idArg,
-      resolve: mutationResolvers.delete,
-    };
-    mutationFields[names.batchDelete] = {
-      type: new GraphQLNonNull(GraphQLDeleteResultType),
-      args: {
-        ids: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(GraphQLString))) },
-      },
-      resolve: mutationResolvers.batchDelete,
-    };
+    if (entityConfig.publicOperations.delete) {
+      mutationFields[names.delete] = {
+        type: new GraphQLNonNull(GraphQLDeleteResultType),
+        args: idArg,
+        resolve: mutationResolvers.delete,
+      };
+    }
+    if (entityConfig.publicOperations.batchDelete) {
+      mutationFields[names.batchDelete] = {
+        type: new GraphQLNonNull(GraphQLDeleteResultType),
+        args: {
+          ids: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(GraphQLString))) },
+        },
+        resolve: mutationResolvers.batchDelete,
+      };
+    }
   }
 }
 

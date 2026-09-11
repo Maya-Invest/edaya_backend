@@ -49,7 +49,11 @@ bun add @maya-invest/edaya-api-client@production
 "@maya-invest/edaya-api-client": "file:../edaya_backend/package/api-client"
 ```
 
-Bindings are embedded in the OpenAPI document under `info.x-edaya-client-bindings`. The export step reads route metadata from `apps/api/src/lib/school-api/client-bindings.ts`.
+Bindings are extracted from each operation's `x-edaya-*` metadata in the exported OpenAPI document. Entity metadata comes from the API registry and `apps/api/src/lib/school-api/openapi/client-extensions.ts`.
+
+Every entity declares `publicOperations` with explicit `create`, `update`, `delete`, `batchCreate`, `batchUpdate`, and `batchDelete` flags. REST and GraphQL omit forbidden mutations. Generic save is an upsert and therefore requires both create and update permission; batch save requires both batch flags. The legacy `allowDirectSave` metadata is derived for compatibility and does not control exposure.
+
+Regenerate both TypeScript and Dart clients when these policies change. TypeScript removes unavailable methods from the generated public type; both runtimes reject forbidden writes before sending a request. Use the named command for command-owned records. Client flags describe API availability, not the caller's authorization: backend tenant, permission and business-rule checks still apply to every exposed operation.
 
 ## Pair PR with edaya_web
 

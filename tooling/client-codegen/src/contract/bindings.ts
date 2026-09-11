@@ -1,7 +1,17 @@
+export interface PublicEntityOperations {
+	readonly create: boolean
+	readonly update: boolean
+	readonly delete: boolean
+	readonly batchCreate: boolean
+	readonly batchUpdate: boolean
+	readonly batchDelete: boolean
+}
+
 export interface ClientEntityBinding {
 	publicName: string
 	schemaName: string
 	allowDirectSave: boolean
+	publicOperations: PublicEntityOperations
 }
 
 export interface ClientCommandBinding {

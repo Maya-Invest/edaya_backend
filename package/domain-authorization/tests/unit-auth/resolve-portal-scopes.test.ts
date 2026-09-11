@@ -9,7 +9,7 @@ describe('resolve portal scopes', () => {
       schoolId: 'school-1',
       repositories: {
         guardians: {
-          findById: mock(async () => ({ id: 'guardian-1', schoolId: 'school-1' })),
+          findById: mock(async () => ({ id: 'guardian-1', hasAccess: true, schoolId: 'school-1' })),
         },
         guardianLinks: {
           list: mock(async () => [{ guardianId: 'guardian-1', studentId: 'student-1', schoolId: 'school-1' }]),

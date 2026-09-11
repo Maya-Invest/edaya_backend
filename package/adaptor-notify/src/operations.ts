@@ -87,7 +87,8 @@ export async function enqueueSchoolNotification(
       failure_reason: null,
     });
   }
-  await sendJob(input.idempotencyKey, sendDeps(runtime));
+  // The durable job and recipients commit with the school transaction.
+  // The scheduled dispatcher delivers them after commit.
 }
 
 export async function cancelSchoolNotification(

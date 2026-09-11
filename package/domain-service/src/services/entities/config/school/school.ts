@@ -1,4 +1,4 @@
-import type { BaseRepositoryInterface, School } from '@edaya/core'
+import type { BaseRepositoryInterface, Filter, School } from '@edaya/core'
 import type { EntityConfigFactory, EntityConfigFactoryInput, EntityTenantResolver, EntityWithId, ManagedEntityServiceConfig } from '../../entity-config'
 import { SchoolStructureOperations, WorkspaceOperations } from '@edaya/authorization'
 import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
@@ -16,6 +16,7 @@ export function schoolEntityTenant<T extends EntityWithId>(): EntityTenantResolv
   return {
     resolve: entity => entity.id,
     resolveFromFilter: resolveIdFromFilter,
+    scopeFilter: schoolId => ({ id: schoolId } as Filter<T>),
   }
 }
 

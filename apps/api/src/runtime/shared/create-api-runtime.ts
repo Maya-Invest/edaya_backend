@@ -1,6 +1,8 @@
+import { transactionContext } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
   createNotifyRuntimeFromDrizzle,
+  drainPendingSchoolNotifications,
   type NotifyRuntime,
 } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
@@ -50,6 +52,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
       : undefined;
     notifyRuntime = createNotifyRuntimeFromDrizzle({
       db: handle.db,
+      getExecutor: () => transactionContext.getStore() ?? handle.db,
       env: options.env,
       log: logger
         ? (message, extra) => logger.info(extra ?? {}, message)
@@ -76,6 +79,11 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
 
   return {
     env: options.env,
+    async drainNotifications() {
+      const runtime = await getNotifyRuntime();
+      if (runtime)
+        await drainPendingSchoolNotifications(runtime);
+    },
     async getSchoolApplication() {
       if (!schoolApp) {
         const handle = await getResolvedSchoolHandle();

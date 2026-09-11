@@ -11,7 +11,7 @@ import { expect, it } from 'bun:test'
 import {
   createAppRequest,
   grantAccessControlAssign,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from '../support/api-route-harness'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
@@ -116,14 +116,14 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
       email: INVITEE_EMAIL,
       name: 'Paul Martin',
     })
-    const inviteeCookies = await signInThroughApp(app, { email: INVITEE_EMAIL })
+    const inviteeAccessToken = await signInWithBearerThroughApp(app, { email: INVITEE_EMAIL })
 
     const acceptResponse = await app.request(createAppRequest(
       `/public/invitations/${encodeURIComponent(token)}/accept`,
       {
         method: 'POST',
         headers: {
-          cookie: inviteeCookies.join('; '),
+          authorization: `Bearer ${inviteeAccessToken}`,
         },
       },
     ))

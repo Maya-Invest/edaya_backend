@@ -5,6 +5,7 @@ import {
 	type ClientBindingsDocument,
 	type ClientCommandBinding,
 	type ClientEntityBinding,
+	type PublicEntityOperations,
 	type ClientNamespaceRouteBinding,
 	type ClientQueryBinding,
 } from '../contract/bindings'
@@ -83,12 +84,22 @@ function readBasePath(operation: OpenApiOperation): 'core' | 'root' | undefined 
 	return value
 }
 
+function readPublicOperations(operation: OpenApiOperation): PublicEntityOperations {
+	const value = operation['x-edaya-public-operations']
+	const keys = ['create', 'update', 'delete', 'batchCreate', 'batchUpdate', 'batchDelete'] as const
+	if (!value || typeof value !== 'object' || keys.some(key => typeof (value as Record<string, unknown>)[key] !== 'boolean')) {
+		throw new Error('Entity metadata requires explicit x-edaya-public-operations; re-export the backend contract')
+	}
+	return Object.fromEntries(keys.map(key => [key, (value as Record<string, boolean>)[key]])) as unknown as PublicEntityOperations
+}
+
 function extractEntityBinding(operation: OpenApiOperation): [string, ClientEntityBinding] {
 	const key = readString(operation, X_EDAYA_ENTITY_KEY)
 	return [key, {
 		publicName: readString(operation, X_EDAYA_ENTITY_PUBLIC_NAME),
 		schemaName: readString(operation, X_EDAYA_RESPONSE_SCHEMA),
-		allowDirectSave: readBoolean(operation, X_EDAYA_ALLOW_DIRECT_SAVE, true),
+		allowDirectSave: readBoolean(operation, X_EDAYA_ALLOW_DIRECT_SAVE, false),
+		publicOperations: readPublicOperations(operation),
 	}]
 }
 
@@ -163,6 +174,9 @@ function mergeLegacyBindings(
 	legacy: Partial<ClientBindingsDocument>,
 ): ClientBindingsDocument {
 	const merged = { ...bindings }
+	for (const entity of Object.values(legacy.entities ?? {})) {
+		readPublicOperations({ 'x-edaya-public-operations': entity.publicOperations })
+	}
 
 	for (const [key, value] of Object.entries(legacy)) {
 		if (!value || typeof value !== 'object') {

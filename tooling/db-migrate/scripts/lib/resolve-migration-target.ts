@@ -68,9 +68,9 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
   }
 
   const databaseUrl = target === 'staging'
-    ? process.env['STAGING_DATABASE_URL'] ?? process.env['DATABASE_URL']
+    ? process.env['STAGING_DATABASE_URL']
     : target === 'production'
-      ? process.env['PRODUCTION_DATABASE_URL'] ?? process.env['DATABASE_URL']
+      ? process.env['PRODUCTION_DATABASE_URL']
       : process.env['DATABASE_URL']
 
   if (!databaseUrl || databaseUrl === 'memory') {
@@ -78,11 +78,11 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
       ? ['Set DATABASE_URL in apps/api/.env (e.g. pglite:.data/school).']
       : target === 'staging'
         ? [
-            'Set STAGING_DATABASE_URL (or DATABASE_URL) to the Neon staging branch connection string.',
+            'Set STAGING_DATABASE_URL to the Neon staging branch connection string.',
             'Example: STAGING_DATABASE_URL=postgres://… bun repo db migrate staging',
           ]
         : [
-            'Set PRODUCTION_DATABASE_URL (or DATABASE_URL) to the Neon production branch connection string.',
+            'Set PRODUCTION_DATABASE_URL to the Neon production branch connection string.',
             'Example: PRODUCTION_DATABASE_URL=postgres://… in repo root `.env`',
           ]
     fail(`Missing database URL for ${target} migrations.`, hints)

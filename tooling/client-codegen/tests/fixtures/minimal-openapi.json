@@ -12,7 +12,15 @@
         "x-edaya-entity-key": "schools",
         "x-edaya-entity-public-name": "schools",
         "x-edaya-response-schema": "School",
-        "x-edaya-allow-direct-save": true
+        "x-edaya-allow-direct-save": true,
+        "x-edaya-public-operations": {
+          "create": true,
+          "update": true,
+          "delete": true,
+          "batchCreate": true,
+          "batchUpdate": true,
+          "batchDelete": true
+        }
       }
     },
     "/core/entities/students/list": {
@@ -22,7 +30,15 @@
         "x-edaya-entity-key": "students",
         "x-edaya-entity-public-name": "students",
         "x-edaya-response-schema": "Student",
-        "x-edaya-allow-direct-save": true
+        "x-edaya-allow-direct-save": true,
+        "x-edaya-public-operations": {
+          "create": true,
+          "update": true,
+          "delete": true,
+          "batchCreate": true,
+          "batchUpdate": true,
+          "batchDelete": true
+        }
       }
     },
     "/core/commands/register-school": {

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/entries/local.ts ../../package/adaptor-postgres/src/postgres-store.ts",
+    "oauth:clients": "bun src/entries/oauth-clients.ts",
     "cron:local": "bun src/entries/cron-local.ts",
     "dev:worker": "wrangler dev --env staging --env-file .dev.vars",
     "deploy:staging": "wrangler deploy --env staging",
@@ -19,6 +20,7 @@
     "build": "tsup"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "1.7.3",
     "@edaya/adaptor-auth": "workspace:*",
     "@edaya/adaptor-docs": "workspace:*",
     "@edaya/adaptor-local-fs": "workspace:*",
@@ -35,7 +37,7 @@
     "@hono/node-server": "^1.14.1",
     "@hono/zod-openapi": "^0.16.4",
     "@scalar/hono-api-reference": "^0.8.8",
-    "better-auth": "^1.6.16",
+    "better-auth": "1.7.3",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",
     "drizzle-orm": "^0.39.0",

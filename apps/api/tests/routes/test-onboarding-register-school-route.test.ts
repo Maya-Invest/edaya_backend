@@ -7,7 +7,7 @@ import {
   createAppRequest,
   createCoreRouteTestApp,
   createCoreRouteTestDependencies,
-  signInThroughApp,
+  signInWithBearerThroughApp,
   signUpAuthUser,
 } from "../support/core-route-harness";
 
@@ -19,13 +19,13 @@ describe("onboarding register-school route", () => {
       email,
       name: "Ada Owner",
     });
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const response = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Bootstrap School",
@@ -51,7 +51,7 @@ describe("onboarding register-school route", () => {
 
     const grantsResponse = await app.request(createAppRequest("/core/authorization/effective-grants", {
       headers: {
-        cookie: cookies.join("; "),
+        authorization: `Bearer ${accessToken}`,
       },
     }));
 
@@ -81,13 +81,13 @@ describe("onboarding register-school route", () => {
     app.use(createCoreRouteTestDependencies(runtime));
     app.route("/", indexRouter);
 
-    const cookies = await signInThroughApp(app, { email });
+    const accessToken = await signInWithBearerThroughApp(app, { email });
 
     const response = await app.request(createAppRequest("/core/onboarding/register-school", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "cookie": cookies.join("; "),
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         name: "Blocked School",

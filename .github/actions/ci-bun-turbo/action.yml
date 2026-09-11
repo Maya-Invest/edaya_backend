@@ -29,7 +29,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: bun install
+      run: bun install --frozen-lockfile
 
     - name: Cache for Turbo
       uses: rharkor/caching-for-turbo@v2.5.0

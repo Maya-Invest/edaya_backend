@@ -16,6 +16,10 @@ describe("GraphiQL", () => {
     }
 
     const app = createRouter();
+    app.use(async (c, next) => {
+      c.env = { ...c.env, ENABLE_GRAPHQL: true };
+      await next();
+    });
     mountGraphQLRoute(app);
 
     const response = await app.request("/graphiql");

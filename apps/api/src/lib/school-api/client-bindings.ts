@@ -1,3 +1,4 @@
+import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import type { ClientBindingsDocument } from "@edaya/client-codegen";
@@ -156,7 +157,8 @@ export function buildClientBindings(): ClientBindingsDocument {
           {
             publicName: entity.publicName,
             schemaName: getOpenApiSchemaName(entity.responseSchema),
-            allowDirectSave: entity.allowDirectSave,
+            allowDirectSave: permitsPublicSave(entity.publicOperations),
+            publicOperations: entity.publicOperations,
           },
         ];
       }),
