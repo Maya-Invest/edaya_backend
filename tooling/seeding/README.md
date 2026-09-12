@@ -17,7 +17,7 @@ Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo 
 
 | Scope | Purpose |
 |-------|---------|
-| `auth` | Better Auth accounts only |
+| `auth` | Identity accounts only (HTTP against `SEED_AUTH_URL`) |
 | `auth:link` | Re-link auth subjects to staff/guardian records |
 | `access` | Staff permission + class assignments |
 | `profile-pictures` | Upload fixture profile photos |
@@ -54,9 +54,10 @@ bun repo seed --staging --clean
 
 ## Local dev flow
 
-1. Start the API: `bun repo dev`
-2. Seed: `bun repo seed`
-3. Log in at http://localhost:5173/login
+1. Start identity: `cd ../edaya_identity && bun repo dev` (`http://localhost:9900`)
+2. Start the API: `bun repo dev` (`http://localhost:9999` + files `:9200`)
+3. Seed: `bun repo seed`
+4. Log in at http://localhost:5173/login
 
 After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
 

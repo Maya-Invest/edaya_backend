@@ -52,7 +52,8 @@ Trigger ids match core `eventKey` values (see `bootstrap/catalog/workflows.ts`):
 
 - `announcement.published`, `report_card.published`, `attendance.recorded`, …
 - `account_invitation` (email-only invite flow)
-- `auth.otp`, `auth.email_verification` (Better Auth OTP + signup verification — no school tenant)
+
+Identity OTP and signup verification are sent by `edaya_identity`, not these Novu workflows.
 
 Standard notifications use **in-app + email** steps with `{{payload.title}}` / `{{payload.body}}`.
 

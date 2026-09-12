@@ -146,16 +146,20 @@ Seeding targets both local deployments: identity at `http://localhost:9900` and 
 **Order matters.** Never delete `.data` while `bun repo dev` is running — open PGlite/SQLite handles will corrupt the files.
 
 ```sh
-# 1. Stop bun repo dev (Ctrl+C)
+# 1. Stop bun repo dev in edaya_backend and edaya_identity (Ctrl+C)
 
-# 2. Wipe local databases
+# 2. Wipe local school data (this repo)
 rm -rf .data
 
-# 3. Start API + webapp
-bun repo dev          # terminal 1 — http://localhost:9999/
+# 3. Wipe local identity users (sibling repo; optional)
+cd ../edaya_identity && bun repo db wipe local --yes
 
-# 4. Seed demo data (once API is ready)
-bun repo seed    # terminal 2
+# 4. Start identity, then API
+cd ../edaya_identity && bun repo dev     # terminal 1 — http://localhost:9900
+cd edaya_backend && bun repo dev         # terminal 2 — http://localhost:9999
+
+# 5. Seed demo data (once both are ready)
+bun repo seed                            # terminal 3
 ```
 
 `bun repo seed` runs the full HTTP seed. On a fresh database the flow is:

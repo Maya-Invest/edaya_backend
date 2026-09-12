@@ -58,7 +58,7 @@ sequenceDiagram
   participant Op as assertOperation
   participant Policy as AuthorizationPolicy
 
-  Client->>Middleware: HTTP request + session cookie
+  Client->>Middleware: HTTP request + identity JWT (or sk_live_ key)
   Middleware->>Middleware: resolve subject → staff | teacher | guardian | student
   Middleware->>Cache: resolveCachedEffectiveGrants / resolveCachedActorScope
   Cache->>Repo: resolveActorGrants / resolveActorScope

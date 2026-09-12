@@ -87,9 +87,11 @@ Le seed dev utilise **`demoCiDataset`** par défaut (`sch-edaya-ci-cocody`, 30 �
 Mot de passe : `DevPassword1!`
 
 ```bash
+# identity + school API must both be running
+cd ../edaya_identity && bun repo dev     # terminal 1 — :9900
 cd edaya_backend && bun repo seed clean --yes
-bun repo dev          # terminal 1
-bun repo seed    # terminal 2, once API is ready
+bun repo dev                             # terminal 2 — :9999
+bun repo seed                            # terminal 3, once both are ready
 ```
 
 Pour le bulk ivoirien (1000 élèves) : `SEED_DATASET=ci`. Pour Ottawa : `SEED_DATASET=central` dans `apps/api/.env`.

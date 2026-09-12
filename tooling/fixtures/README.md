@@ -28,7 +28,7 @@ Records use `satisfies *Input` from `@edaya/core` so schema changes fail at comp
 
 | Dataset | Import | Purpose |
 |---------|--------|---------|
-| `minimalDataset` | `@edaya/fixtures` | Better Auth / register-school smoke (`st8`, `g1`) |
+| `minimalDataset` | `@edaya/fixtures` | Identity + register-school smoke (`st8`, `g1`) |
 | `integrationDataset` | `@edaya/fixtures` | Six auth-linked guardian/student pairs for fast tests |
 | `demoDataset` | `@edaya/fixtures` | Full dev school structure and domain entities |
 | `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan) — labels en français |

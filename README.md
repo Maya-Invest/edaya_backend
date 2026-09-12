@@ -47,6 +47,10 @@ flowchart TB
     Webapp["@edaya/webapp<br/>SvelteKit · Cloudflare"]
   end
 
+  subgraph identity["Identity (edaya_identity)"]
+    Identity["@edaya/identity<br/>Better Auth · JWT · directory"]
+  end
+
   subgraph api_layer["API"]
     API["@edaya/api<br/>Hono · Node + Worker"]
     Client["@maya-invest/edaya-api-client"]
@@ -61,8 +65,10 @@ flowchart TB
     DbMigrate["@edaya/db-migrate"]
   end
 
+  Webapp -->|/auth| Identity
   Webapp --> Client
-  Client -->|Browser HTTP / Vite proxy| API
+  Client -->|Bearer JWT / Vite proxy| API
+  API -->|verify JWT + directory| Identity
   API --> WorkerHost
   API --> Service
   API --> Authz
@@ -77,8 +83,8 @@ flowchart TB
 
 ### Request flow
 
-1. **Web clients** — Browser SPAs call identity for `/auth/*`, then call the school API with the issued Bearer JWT through `@maya-invest/edaya-api-client`.
-2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
+1. **Web clients** — Browser SPAs sign in on identity (`/auth/*`), exchange a short-lived school-audience JWT, then call the school API through `@maya-invest/edaya-api-client`.
+2. **API** — Hono middleware resolves env, verifies the identity JWT (or a `sk_live_` key), and a cached runtime (`getApiRuntime`).
 3. **Runtime** — Opens only the school Postgres DB, runs school migrations, wires the central identity JWT/directory client, and builds `SchoolApplication`.
 4. **Service** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
@@ -138,7 +144,7 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 | `@edaya/client-codegen` | `tooling/client-codegen` | OpenAPI → typed client generator |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (via `bun repo seed`) |
-| `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
+| `@edaya/db-migrate` | `tooling/db-migrate` | School-schema migration CLI (Neon / Hyperdrive / PGlite) |
 | `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
 | `@edaya/local-files-server` | `tooling/local-files-server` | Local-dev file storage HTTP service |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
@@ -148,6 +154,7 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (see `packageManager` in root `package.json`)
+- Sibling **[edaya_identity](../edaya_identity/README.md)** checkout (`../edaya_identity`) for JWT verify + directory (`@maya-invest/edaya-identity-client`)
 
 ## First-time setup
 
@@ -158,17 +165,30 @@ cp apps/api/.env.example apps/api/.env
 cp .env.example .env   # optional — seeding, migrations, smoke-test staging
 ```
 
-Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` in that repo).
+Keep `IDENTITY_DIRECTORY_SECRET` identical in `apps/api/.env` and `edaya_identity/apps/identity/.env` (example value: `local-directory-secret`).
+
+Identity: see **[edaya_identity](../edaya_identity/README.md)**. Web frontends: see **[edaya_web](../edaya_web/README.MD)**.
 
 ## Local development
 
+Identity must be running before seed or login:
+
 ```sh
-bun repo dev
+# Terminal 1 — identity
+cd ../edaya_identity && bun repo dev     # :9900
+
+# Terminal 2 — this repo
+bun repo dev                             # :9999 API + :9200 files
+
+# Terminal 3 — demo data (after both are up)
+bun repo seed
 ```
 
 | Service | URL |
 |---------|-----|
+| Identity | http://localhost:9900 |
 | API | http://localhost:9999 |
+| Local files | http://localhost:9200 |
 | OpenAPI reference | http://localhost:9999/reference |
 
 Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
@@ -257,6 +277,6 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 | `IDENTITY_DIRECTORY_SECRET` | Shared directory credential (secret) |
 | `TRUSTED_ORIGINS` | School API CORS origins |
 
-Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
+Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required. Auth users are provisioned against identity (`SEED_AUTH_URL`, default `http://localhost:9900`).
 
 Webapp env vars live in the **edaya_web** repo (`apps/webapp/.env` there).
