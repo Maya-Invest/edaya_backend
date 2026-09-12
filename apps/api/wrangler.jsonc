@@ -77,6 +77,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
       "routes": [
@@ -124,6 +125,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-production"
       },
       "hyperdrive": [

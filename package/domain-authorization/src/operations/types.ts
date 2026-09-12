@@ -3,6 +3,7 @@ import type { HomeroomCapability } from '../capabilities/homeroom-capability'
 import type { StudentCapability } from '../capabilities/student-capability'
 import type { TeachingCapability } from '../capabilities/teaching-capability'
 import type { Permission } from '../permissions/permission'
+import type { PlatformPermission } from '../permissions/platform-permission'
 
 export type OperationTargetKey = 'student' | 'classGroup' | 'classSubject' | 'none'
 
@@ -38,6 +39,8 @@ export type StaffOperationRule
   = | { readonly permission: Permission, readonly scopeFrom?: OperationTargetKey }
     | { readonly anyOf: readonly { readonly permission: Permission, readonly scopeFrom?: OperationTargetKey }[] }
 
+export interface PlatformOperationRule { readonly permission: PlatformPermission }
+
 export interface OperationDefinition {
   readonly id: string
   readonly requiresContext?: readonly OperationContextKey[]
@@ -46,6 +49,7 @@ export interface OperationDefinition {
   readonly teacher?: TeacherOperationRule
   readonly guardian?: GuardianOperationRule
   readonly student?: StudentOperationRule
+  readonly platform?: PlatformOperationRule
 }
 
 export interface OperationRef {

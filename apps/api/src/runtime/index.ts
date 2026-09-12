@@ -14,6 +14,7 @@ export {
   loadLocalProcessEnv,
   parseEnv,
   parseRuntimeEnv,
+  platformBootstrapEmails,
   prepareRuntimeBindings,
   resolveAccountInvitationsEnabled,
   resolveDatabaseUrl,

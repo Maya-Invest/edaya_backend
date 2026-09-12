@@ -26,6 +26,10 @@ export async function dispatchFeeAccess(
       return studentSelfFeeCatalogAccess(actor, feeIds, repos)
     case 'teacher':
       return teacherFeeCatalogAccess(actor, feeIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive

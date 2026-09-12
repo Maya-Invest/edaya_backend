@@ -1,4 +1,4 @@
-import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
+import type { AuthorizationPolicy, SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { noOpNotificationGateway } from '@edaya/core'
@@ -31,7 +31,7 @@ describe('core entity keys', () => {
     }
 
     const service = new BaseSchoolService({
-      actor: {} as ActorMetadata,
+      actor: {} as SchoolScopedActorMetadata,
       repositories,
       authorizationPolicy,
       atomicExecution,

@@ -226,3 +226,28 @@ export const teacherUnavailabilities = pgTable('teacher_unavailabilities', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('teacher_unavailabilities', table))
+
+export const platformUsers = pgTable('platform_users', {
+  id: text('id').primaryKey(),
+  subjectId: text('subject_id').notNull(),
+  email: text('email').notNull(),
+  permissions: jsonb('permissions').notNull().$type<string[]>(),
+  isActive: boolean('is_active').notNull().default(true),
+  createdBySubjectId: text('created_by_subject_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('platform_users', table))
+
+export const s2sClients = pgTable('s2s_clients', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  clientId: text('client_id').notNull(),
+  accessClass: text('access_class').notNull(),
+  keyPrefix: text('key_prefix').notNull(),
+  keyHash: text('key_hash').notNull(),
+  createdBySubjectId: text('created_by_subject_id').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }),
+  revokedAt: timestamp('revoked_at', { mode: 'date' }),
+  lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
+}, table => definePerformanceIndexes('s2s_clients', table))

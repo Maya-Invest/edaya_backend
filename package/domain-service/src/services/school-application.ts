@@ -2,6 +2,7 @@ import type { ActorMetadata } from '@edaya/authorization'
 import type { FileStoragePort } from '@edaya/core'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import type { ServiceArgs } from './service-args'
+import { AuthorizationError, AuthorizationErrorCode, isSchoolScopedActor } from '@edaya/authorization'
 import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
@@ -22,6 +23,9 @@ export class SchoolApplication {
   }
 
   forActor(actor: ActorMetadata): SchoolService {
+    if (!isSchoolScopedActor(actor)) {
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Platform actors are not school-scoped')
+    }
     return new SchoolService({ ...this.args, actor })
   }
 

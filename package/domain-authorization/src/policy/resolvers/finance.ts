@@ -23,7 +23,7 @@ export async function checkStudentFeeAccess(
     return
   }
 
-  const hasStaffAccess = actor.kind === 'staff'
+  const hasStaffAccess = (actor.kind === 'staff' || actor.kind === 's2s')
     && actorHasSchoolWideGrant(actor, STUDENT_FEE_STAFF_ACCESS_PERMISSIONS)
 
   if (hasStaffAccess) {

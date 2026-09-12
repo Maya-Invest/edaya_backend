@@ -8,7 +8,7 @@ import type {
   QueryOptions,
 } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
+import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
 import { withTenantLookupCache } from './tenant-lookup-cache'
 
 export interface EntityTenantResolver<T> {
@@ -80,7 +80,7 @@ export class ManagedEntityService<T> {
   }
 
   private get scopedRepository(): BaseRepositoryInterface<T> {
-    return this.boundRepository ??= this.config.repository.forSchool?.(this.actor.schoolId) ?? this.config.repository
+    return this.boundRepository ??= this.config.repository.forSchool?.(requireActorSchoolId(this.actor)) ?? this.config.repository
   }
 
   async findById(id: string): Promise<T | undefined> {
@@ -233,14 +233,14 @@ export class ManagedEntityService<T> {
 
   private ensureFilterTenant(filter: Filter<T> | QueryOptions<T> | undefined): void {
     const schoolId = this.config.tenant.resolveFromFilter?.(filter)
-    if (schoolId && schoolId !== this.actor.schoolId)
+    if (schoolId && schoolId !== requireActorSchoolId(this.actor))
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
   private async scopeQuery(options?: QueryOptions<T>): Promise<QueryOptions<T> | undefined> {
     if (this.config.repository.forSchool || !this.config.tenant.scopeFilter)
       return options
-    const scope = await this.config.tenant.scopeFilter(this.actor.schoolId, this.repositories)
+    const scope = await this.config.tenant.scopeFilter(requireActorSchoolId(this.actor), this.repositories)
     const { $limit, $offset, $orderBy, ...filter } = options ?? {}
     return {
       $and: [scope, filter as Filter<T>],
@@ -266,7 +266,7 @@ export class ManagedEntityService<T> {
     repositories: SchoolRepositories = this.repositories,
   ): Promise<void> {
     const schoolId = await this.config.tenant.resolve(entity, repositories)
-    if (!schoolId || schoolId !== this.actor.schoolId)
+    if (!schoolId || schoolId !== requireActorSchoolId(this.actor))
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }
@@ -277,7 +277,7 @@ export function getEntityId(entity: unknown): string | undefined {
 }
 
 function canCountWithoutRowAccess(actor: ActorMetadata): boolean {
-  if (actor.kind === 'system') {
+  if (actor.kind === 'system' || actor.kind === 's2s') {
     return true
   }
   return actor.kind === 'staff' && actor.effectiveGrants.isElevated

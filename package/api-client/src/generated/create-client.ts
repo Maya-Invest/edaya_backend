@@ -56,9 +56,23 @@ type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   provision: (payload: SchemaName<TSchemas, 'OnboardingProvisionRequest'>) => Promise<SchemaName<TSchemas, 'OnboardingProvisionResponse'>>
 }
 
+type PlatformUsersClients<TSchemas extends Record<string, unknown>> = {
+  me: () => Promise<SchemaName<TSchemas, 'PlatformMeResponse'>>
+  list: () => Promise<SchemaName<TSchemas, 'PlatformUserResponse'>[]>
+  create: (payload: SchemaName<TSchemas, 'CreatePlatformUserRequest'>) => Promise<SchemaName<TSchemas, 'PlatformUserResponse'>>
+  deactivate: (params: { id: string }) => Promise<SchemaName<TSchemas, 'PlatformUserResponse'>>
+}
+
 type PublicClients<TSchemas extends Record<string, unknown>> = {
   previewInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'InvitationPreviewResponse'>>
   acceptInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'AcceptInvitationResponse'>>
+}
+
+type S2sClientsClients<TSchemas extends Record<string, unknown>> = {
+  list: () => Promise<SchemaName<TSchemas, 'S2sClientResponse'>[]>
+  create: (payload: SchemaName<TSchemas, 'CreateS2sClientRequest'>) => Promise<SchemaName<TSchemas, 'CreateS2sClientResponse'>>
+  revoke: (params: { id: string }) => Promise<SchemaName<TSchemas, 'S2sClientResponse'>>
+  rotateKey: (params: { id: string }, payload: SchemaName<TSchemas, 'RotateS2sClientKeyRequest'>) => Promise<SchemaName<TSchemas, 'RotateS2sClientKeyResponse'>>
 }
 
 type ServiceAccountsClients<TSchemas extends Record<string, unknown>> = {
@@ -80,7 +94,9 @@ export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   authorization: AuthorizationClients<TSchemas>
   files: FilesClients<TSchemas>
   onboarding: OnboardingClients<TSchemas>
+  platformUsers: PlatformUsersClients<TSchemas>
   public: PublicClients<TSchemas>
+  s2sClients: S2sClientsClients<TSchemas>
   serviceAccounts: ServiceAccountsClients<TSchemas>
   webhooks: WebhooksClients<TSchemas>
 }
@@ -142,10 +158,22 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     inviteStaffMembers: (payload: SchemaName<TSchemas, 'OnboardingInviteStaffMembersRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/invite-staff-members'), { body: payload }),
     provision: (payload: SchemaName<TSchemas, 'OnboardingProvisionRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/provision'), { body: payload }),
   } as OnboardingClients<TSchemas>,
+    platformUsers: {
+    me: () => transport.request('GET', resolveClientRoutePath('platform/me')),
+    list: () => transport.request('GET', resolveClientRoutePath('platform-users')),
+    create: (payload: SchemaName<TSchemas, 'CreatePlatformUserRequest'>) => transport.request('POST', resolveClientRoutePath('platform-users'), { body: payload }),
+    deactivate: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('platform-users/{id}/deactivate', params)),
+  } as PlatformUsersClients<TSchemas>,
     public: {
     previewInvitation: (params: { token: string }) => transport.request('GET', resolveClientRoutePath('public/invitations/{token}', params, 'root')),
     acceptInvitation: (params: { token: string }) => transport.request('POST', resolveClientRoutePath('public/invitations/{token}/accept', params, 'root')),
   } as PublicClients<TSchemas>,
+    s2sClients: {
+    list: () => transport.request('GET', resolveClientRoutePath('s2s-clients')),
+    create: (payload: SchemaName<TSchemas, 'CreateS2sClientRequest'>) => transport.request('POST', resolveClientRoutePath('s2s-clients'), { body: payload }),
+    revoke: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('s2s-clients/{id}/revoke', params)),
+    rotateKey: (params: { id: string }, payload: SchemaName<TSchemas, 'RotateS2sClientKeyRequest'>) => transport.request('POST', resolveClientRoutePath('s2s-clients/{id}/rotate-key', params), { body: payload }),
+  } as S2sClientsClients<TSchemas>,
     serviceAccounts: {
     list: () => transport.request('GET', resolveClientRoutePath('service-accounts')),
     create: (payload: SchemaName<TSchemas, 'CreateServiceAccountRequest'>) => transport.request('POST', resolveClientRoutePath('service-accounts'), { body: payload }),

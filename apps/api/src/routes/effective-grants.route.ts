@@ -5,7 +5,7 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/http/types";
 import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
-import { requireInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
+import { requireSchoolInteractiveActor, serializeActorAuthorization } from "@/lib/authorization/serialize-grants";
 import { scopeGrantResponseSchema } from "@/lib/school-api/schemas/entities";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -51,7 +51,7 @@ export const getEffectiveGrantsHandler: AppRouteHandler<typeof getEffectiveGrant
     return unauthorizedResponse(c);
   }
 
-  const interactiveActor = requireInteractiveActor(actor);
+  const interactiveActor = requireSchoolInteractiveActor(actor);
   if (!interactiveActor) {
     return c.json({ message: "System actors cannot introspect grants" }, HttpStatusCodes.FORBIDDEN);
   }

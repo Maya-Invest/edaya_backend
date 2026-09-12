@@ -31,6 +31,8 @@ Staff permission assignments, role presets, scope seeds, and grant resolution af
 | Package boundaries | [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md) |
 | Notification router | [docs/architecture/notification-router.md](docs/architecture/notification-router.md) |
 | Document renderer | [docs/architecture/document-renderer.md](docs/architecture/document-renderer.md) |
+| Platform actors and S2S keys | [docs/architecture/platform-actors-and-s2s-keys.md](docs/architecture/platform-actors-and-s2s-keys.md) |
+| First-party sibling app | [docs/architecture/first-party-sibling-app.md](docs/architecture/first-party-sibling-app.md) |
 
 ## Verification
 

@@ -23,6 +23,8 @@ export type ClientRouteNamespace
     | "onboarding"
     | "files"
     | "serviceAccounts"
+    | "platformUsers"
+    | "s2sClients"
     | "public"
     | "webhooks";
 

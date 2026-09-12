@@ -6,6 +6,8 @@ const SKIPPED_REPOSITORY_KEYS = new Set([
   'cronJobSchedules',
   'schools',
   'serviceApiKeys',
+  'platformUsers',
+  's2sClients',
   'accountInvitations',
   'schoolNotificationTemplates',
 ])

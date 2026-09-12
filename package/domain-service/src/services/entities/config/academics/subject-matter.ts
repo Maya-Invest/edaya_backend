@@ -1,7 +1,7 @@
 import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { SubjectMatter } from '@edaya/core'
 import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AcademicsOperations, AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
+import { AcademicsOperations, AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
 import { config, noopDeleteAccess, noopReadAccess, operationModule, read, write } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 
@@ -25,7 +25,7 @@ function subjectMatterTenant(): EntityTenantResolver<SubjectMatter> {
 function authorizeSubjectMatter(_policy: AuthorizationPolicy): EntityWriteAuthorization<SubjectMatter>['authorizeSave'] {
   return async (actor, entity, _existing, repositories) => {
     const subject = await repositories.subjects.findById(entity.subjectId)
-    if (!subject || subject.schoolId !== actor.schoolId)
+    if (!subject || subject.schoolId !== requireActorSchoolId(actor))
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

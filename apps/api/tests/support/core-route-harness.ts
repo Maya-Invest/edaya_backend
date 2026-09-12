@@ -75,6 +75,7 @@ export interface CoreRouteTestAppOptions {
   withEmbeddedLocalFiles?: boolean;
   /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs edaya_identity running). */
   identity?: "test" | "live";
+  env?: Record<string, unknown>;
 }
 
 function subjectForEmail(email: string): string {
@@ -219,9 +220,9 @@ export async function createCoreRouteTestApp(
           originalStop();
           restoreLocalFilesUrl?.();
         };
-        return createLocalProfileTestEnv(embeddedLocalFiles, identityEnv);
+        return createLocalProfileTestEnv(embeddedLocalFiles, { ...identityEnv, ...options.env });
       })()
-    : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv });
+    : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv, ...options.env });
 
   if (embeddedLocalFiles && options.autoCleanup !== false) {
     onTestFinished(() => embeddedLocalFiles?.stop());

@@ -1,6 +1,6 @@
 import type { AcademicPeriod, ClassGroup, Student } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
-import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess } from '@edaya/authorization'
+import { AuthorizationError, AuthorizationErrorCode, denyResourceAccess, requireActorSchoolId } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 
 export class BaseServiceWorkflow {
@@ -9,7 +9,7 @@ export class BaseServiceWorkflow {
   ) {}
 
   protected checkActorSchool(schoolId: string): void {
-    if (schoolId !== this.baseService.actor.schoolId)
+    if (schoolId !== requireActorSchoolId(this.baseService.actor))
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 

@@ -35,6 +35,10 @@ export async function dispatchStudentAccess(
       return teacherStudentAccess(actor, uniqueStudentIds, repos)
     case 'staff':
       return staffStudentAccess(actor, uniqueStudentIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive
@@ -61,6 +65,10 @@ export async function dispatchClassGroupAccess(
       return teacherClassGroupAccess(actor, uniqueClassGroupIds, repos)
     case 'staff':
       return staffClassGroupAccess(actor, uniqueClassGroupIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive
@@ -89,6 +97,10 @@ export async function dispatchReportCardResultAccess(
       return guardianReportCardResultAccess(actor, results, repos)
     case 'student':
       return studentSelfReportCardResultAccess(actor, results, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive

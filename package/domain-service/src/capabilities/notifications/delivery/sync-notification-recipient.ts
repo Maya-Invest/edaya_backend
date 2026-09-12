@@ -67,6 +67,8 @@ export async function resolveNotificationRecipientProfileForActor(
       }
       return buildTeacherRecipientProfile(teacher)
     }
+    case 'platform':
+      return undefined
   }
 }
 

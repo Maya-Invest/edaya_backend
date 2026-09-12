@@ -57,6 +57,13 @@
       "when": 1788975972299,
       "tag": "0007_guardian_access",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789240219786,
+      "tag": "0008_platform_users_s2s_clients",
+      "breakpoints": true
     }
   ]
 }

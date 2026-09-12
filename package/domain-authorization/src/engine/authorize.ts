@@ -2,7 +2,7 @@ import type { ActorMetadata } from '../model/actor'
 import type { AuthorizationRequest } from '../model/request'
 import { effectiveGrantsForActor } from '../grants/effective-grants-for-actor'
 import { scopeGrantCovers } from '../grants/scope-grant-covers'
-import { isInteractiveActor } from '../model/actor'
+import { isInteractiveActor, isSchoolScopedActor } from '../model/actor'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { assertHumanOnlyPermission, assertPermissionAssurance } from '../permissions/permission-assurance'
 import { permissionDefinitions } from '../permissions/permission-definitions'
@@ -29,7 +29,7 @@ export function authorize(args: AuthorizeArgs): void {
 }
 
 function assertActorSchool(actor: ActorMetadata, schoolId: string): void {
-  if (actor.schoolId !== schoolId) {
+  if (!isSchoolScopedActor(actor) || actor.schoolId !== schoolId) {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

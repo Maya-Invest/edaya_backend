@@ -1,5 +1,6 @@
 export { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 export {
+  platformBootstrapEmails,
   resolveAccountInvitationsEnabled,
   resolveInviteBaseUrl,
   resolveWebappOrigin,

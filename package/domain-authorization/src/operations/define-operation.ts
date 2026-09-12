@@ -95,6 +95,7 @@ function validateDefinition(definition: OperationDefinition): void {
     definition.teacher,
     definition.guardian,
     definition.student,
+    definition.platform,
   ].filter(path => path !== undefined)
 
   if (paths.length === 0) {

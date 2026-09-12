@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { platformBootstrapEmails } from "@/runtime/shared/env/derived";
 import { parseEnv } from "@/runtime/shared/env/schema";
 
 describe("release-candidate runtime invariants", () => {
@@ -14,5 +15,17 @@ describe("release-candidate runtime invariants", () => {
 
   it("keeps cross-request grants caching disabled", () => {
     expect(() => parseEnv({ DATABASE_URL: "pglite", GRANTS_CACHE_TTL_MS: 300000 })).toThrow("GRANTS_CACHE_TTL_MS");
+  });
+
+  it("parses comma-separated PLATFORM_BOOTSTRAP_EMAILS", () => {
+    expect(parseEnv({ DATABASE_URL: "pglite" }).PLATFORM_BOOTSTRAP_EMAILS).toBe("");
+    expect(parseEnv({
+      DATABASE_URL: "pglite",
+      PLATFORM_BOOTSTRAP_EMAILS: "Op@Edaya.test, other@edaya.test",
+    }).PLATFORM_BOOTSTRAP_EMAILS).toBe("Op@Edaya.test, other@edaya.test");
+    expect(platformBootstrapEmails(parseEnv({
+      DATABASE_URL: "pglite",
+      PLATFORM_BOOTSTRAP_EMAILS: "Op@Edaya.test, other@edaya.test",
+    }))).toEqual(["op@edaya.test", "other@edaya.test"]);
   });
 });

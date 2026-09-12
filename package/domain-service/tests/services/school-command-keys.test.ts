@@ -1,4 +1,4 @@
-import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
+import type { AuthorizationPolicy, SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { noOpNotificationGateway } from '@edaya/core'
@@ -31,7 +31,7 @@ describe('school command keys', () => {
     }
 
     const service = new SchoolService({
-      actor: {} as ActorMetadata,
+      actor: {} as SchoolScopedActorMetadata,
       repositories,
       authorizationPolicy,
       atomicExecution,
@@ -61,7 +61,7 @@ describe('school command keys', () => {
       extra: [],
     })
     expect(new BaseSchoolService({
-      actor: {} as ActorMetadata,
+      actor: {} as SchoolScopedActorMetadata,
       repositories,
       authorizationPolicy,
       atomicExecution,

@@ -14,6 +14,7 @@ export * from './operations'
  * resolution or policy modules that transitively touch domain entities.
  */
 export * from './permissions'
+export * from './platform'
 export * from './policy'
 export {
   authorizeReportCardCommentSave,
@@ -30,6 +31,7 @@ export {
 } from './policy/strategies/scheduling-access'
 export * from './ports'
 export * from './resolution'
+export * from './s2s'
 export * from './scope'
 export * from './service-accounts'
 export * from './sync'

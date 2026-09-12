@@ -41,3 +41,10 @@ export function resolveInviteBaseUrl(env: Environment | undefined): string | und
 export function resolveAccountInvitationsEnabled(env: Environment | undefined): boolean {
   return env?.ACCOUNT_INVITATIONS_ENABLED !== false;
 }
+
+export function platformBootstrapEmails(env: Pick<Environment, "PLATFORM_BOOTSTRAP_EMAILS"> | undefined): string[] {
+  return (env?.PLATFORM_BOOTSTRAP_EMAILS ?? "")
+    .split(",")
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean);
+}
