@@ -1,55 +1,14 @@
-import type {
-  AcademicYear,
-  Assessment,
-  ClassGroup,
-  ClassSubject,
-  GradeLevelSubject,
-  LessonSession as LessonSessionEntity,
-  School,
-  TeacherAssignment,
+import { Permission } from '@edaya/core';
+import type { AcademicYear, Assessment, ClassGroup, ClassSubject, GradeLevelSubject, LessonSession as LessonSessionEntity, School, TeacherAssignment, TeacherUnavailability } from '@edaya/core';
+import type { OccupiedInterval, ResolveTimetableSpaceInput, SolveTimetableResult, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../capabilities/timetable';
+import type { SchoolRepositories } from '../../ports/school-repositories';
+import { randomUUID } from 'node:crypto';
 
-  TeacherUnavailability,
-} from '@edaya/core'
-import type {
-  OccupiedInterval,
-  ResolveTimetableSpaceInput,
-  SolveTimetableResult,
-  TimetableGenerationDefaults,
-  TimetablePlacement,
-  TimetableSubjectDemand,
-} from '../../capabilities/timetable'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import { randomUUID } from 'node:crypto'
-import { operationModule, SchedulingOperations } from '@edaya/authorization'
-import {
-  AssessmentKind,
-  BusinessRuleViolationError,
-  LessonSession,
-  normalizeDate,
-  OccurrenceStatus,
-  TeacherAssignmentKind,
-  TeacherAssignmentStatus,
-  TeacherUnavailabilityRecurrence,
-  TimetableGenerated,
-  TimetableGenerationMode,
-} from '@edaya/core'
-import {
-  collectNonSchoolDates,
-  countSessionPeriodSlots,
-  endExclusive,
-  occurrenceOverlaps,
-  placementOccupiedIntervals,
-  referenceDateForDayOfWeek,
-  resolveTimetableSpace,
-  resolveWeeklyTemplateSpace,
-  solveTimetable,
-  spreadWeeklyTemplate,
-  validateRange,
-  weekKey,
-} from '../../capabilities/timetable'
-import { BaseServiceWorkflow } from './base-service-workflow'
-import { assertNoSessionConflict } from './schedule-conflicts'
-import { expandTeacherUnavailability } from './teacher-unavailability'
+import { AssessmentKind, BusinessRuleViolationError, LessonSession, normalizeDate, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus, TeacherUnavailabilityRecurrence, TimetableGenerated, TimetableGenerationMode } from '@edaya/core';
+import { collectNonSchoolDates, countSessionPeriodSlots, endExclusive, occurrenceOverlaps, placementOccupiedIntervals, referenceDateForDayOfWeek, resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, validateRange, weekKey } from '../../capabilities/timetable';
+import { BaseServiceWorkflow } from './base-service-workflow';
+import { assertNoSessionConflict } from './schedule-conflicts';
+import { expandTeacherUnavailability } from './teacher-unavailability';
 
 export type {
   OccupiedCell,
@@ -821,13 +780,13 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
 
   private async authorizeCreate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(SchedulingOperations.timetableCreate, { classGroupId: classGroup.id })(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.TIMETABLE_CREATE, 'classGroups', [classGroup.id], 'write')
   }
 
   private async authorizePublish(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(SchedulingOperations.timetablePublish, { classGroupId: classGroup.id })(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.TIMETABLE_PUBLISH, 'classGroups', [classGroup.id], 'write')
   }
 }

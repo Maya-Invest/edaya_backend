@@ -1,19 +1,20 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { ResourceAssignment } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, ResourceOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { config, noopReadAccess, operationModule, read, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { ResourceAssignment } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/school/resource-assignment.ts (PR3)
-export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, policy, atomicExecution }) =>
+export const resourceAssignmentConfig: EntityConfigFactory<ResourceAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.resourceAssignments,
     tenant: resourceAssignmentTenant(),
-    read: read(operationModule(ResourceOperations.read), noopReadAccess),
-    write: write(operationModule(ResourceOperations.configure), authorizeResourceAssignment(policy), authorizeResourceAssignmentDelete(policy)),
+    authorization: { resource: 'resourceAssignments', read: [Permission.RESOURCE_READ], write: [Permission.RESOURCE_CONFIGURE] },
+    
     gates: {
       preSave: validateResourceAssignmentSave,
     },
@@ -25,32 +26,6 @@ function resourceAssignmentTenant(): EntityTenantResolver<ResourceAssignment> {
     const resource = await repositories.resources.findById(entity.resourceId)
     return resource?.schoolId
   })
-}
-
-function authorizeResourceAssignment(policy: AuthorizationPolicy): EntityWriteAuthorization<ResourceAssignment>['authorizeSave'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId)
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    if (entity.activitySessionId)
-      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
-    if (entity.assessmentId)
-      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
-  }
-}
-
-function authorizeResourceAssignmentDelete(policy: AuthorizationPolicy): EntityWriteAuthorization<ResourceAssignment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    if (entity.classGroupId)
-      await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-    if (entity.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [entity.lessonSessionId])
-    if (entity.activitySessionId)
-      await policy.checkActivitySessionAccess(actor, [entity.activitySessionId])
-    if (entity.assessmentId)
-      await policy.checkAssessmentAccess(actor, [entity.assessmentId])
-  }
 }
 
 async function validateResourceAssignmentSave(

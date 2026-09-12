@@ -127,11 +127,10 @@ export const staffPermissionAssignments = pgTable('staff_permission_assignments'
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
   permission: text('permission').notNull(),
-  scopeIds: text('scope_ids').notNull().default(''),
+  scopes: jsonb('scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
   status: text('status').notNull(),
   startsAt: timestamp('starts_at', { mode: 'date' }),
   endsAt: timestamp('ends_at', { mode: 'date' }),
-  sourceStaffAssignmentId: text('source_staff_assignment_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('staff_permission_assignments', table))

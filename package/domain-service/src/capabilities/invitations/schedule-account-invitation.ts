@@ -1,13 +1,11 @@
-import type { Guardian, StaffMember, Student } from '@edaya/core'
-import type { BaseSchoolService } from '../../services/base-school-service'
-import { AccessControlOperations } from '@edaya/authorization'
-import {
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-} from '@edaya/core'
-import { operationModule } from '../../services/entities/entity-config'
-import { AccountInvitationServiceWorkflow } from '../../services/workflows/account-invitation'
-import { resolveStudentInvitationEmail } from './resolve-invitation-contact'
+import { Permission } from '@edaya/core';
+import type { Guardian, StaffMember, Student } from '@edaya/core';
+import type { BaseSchoolService } from '../../services/base-school-service';
+
+import { AccountInvitationContactChannel, AccountInvitationKind } from '@edaya/core';
+
+import { AccountInvitationServiceWorkflow } from '../../services/workflows/account-invitation';
+import { resolveStudentInvitationEmail } from './resolve-invitation-contact';
 
 export interface ScheduleAccountInvitationInput {
   kind: AccountInvitationKind
@@ -35,7 +33,7 @@ export async function scheduleAccountInvitationIfEligible(
   }
 
   try {
-    await operationModule(AccessControlOperations.assign)(baseService.actor)
+    await baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
     const workflow = new AccountInvitationServiceWorkflow(baseService)
     await workflow.sendAccountInvitation({
       kind: input.kind,

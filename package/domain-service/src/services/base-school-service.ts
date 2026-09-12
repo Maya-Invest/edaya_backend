@@ -1,16 +1,17 @@
-import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
-import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
-import type { SchoolRepositories } from '../ports/school-repositories'
-import type { CoreEntityServices } from './runtime/core-entity-catalog'
-import type { ServiceArgs } from './service-args'
-import { noOpInvitationDeliveryPort } from '@edaya/core'
-import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
-import { createCoreEntityServices } from './runtime/core-entity-catalog'
+import type { ActorMetadata, AccessPolicies } from '@edaya/authorization';
+import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core';
+import type { SchoolRepositories } from '../ports/school-repositories';
+import type { CoreEntityServices } from './runtime/core-entity-catalog';
+import type { ServiceArgs } from './service-args';
+import { createAccessPolicies } from '@edaya/authorization';
+import { noOpInvitationDeliveryPort } from '@edaya/core';
+import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service';
+import { createCoreEntityServices } from './runtime/core-entity-catalog';
 
 export class BaseSchoolService {
   readonly actor: ActorMetadata
   readonly repositories: SchoolRepositories
-  readonly authorizationPolicy: AuthorizationPolicy
+  readonly access: AccessPolicies
   readonly atomicExecution: AtomicExecutionPort
   readonly notificationGateway: NotificationGatewayPort
   readonly fileStorage: FileStoragePort
@@ -24,7 +25,7 @@ export class BaseSchoolService {
   constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.repositories = args.repositories
-    this.authorizationPolicy = args.authorizationPolicy
+    this.access = createAccessPolicies({ actor: args.actor, repositories: args.repositories })
     this.atomicExecution = args.atomicExecution
     this.notificationGateway = args.notificationGateway
     this.fileStorage = args.fileStorage

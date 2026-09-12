@@ -1,35 +1,13 @@
-export * from './bootstrap-actor'
-export * from './capabilities'
-export * from './engine'
-export * from './gates'
-export * from './grants'
-export * from './lifecycle'
-export * from './migration'
 export * from './model'
-export * from './operations'
-/**
- * Public authorization API.
- *
- * Export order matters: `permissions` and `model` must initialize before grant
- * resolution or policy modules that transitively touch domain entities.
- */
 export * from './permissions'
-export * from './policy'
-export {
-  authorizeReportCardCommentSave,
-  guardianReportCardResultAccess,
-  staffReportCardResultAccess,
-  studentSelfReportCardResultAccess,
-  teacherReportCardResultAccess,
-} from './policy/strategies/report-card-access'
-export { authorizeTeacherReportCardCommentSave, teacherCanReadReportCard } from './policy/strategies/report-card-access/comment-access'
-export {
-  dispatchAttendanceRecordAccess,
-  dispatchLessonSessionAccess,
-  dispatchLessonSessionReadAccess,
-} from './policy/strategies/scheduling-access'
 export * from './ports'
-export * from './resolution'
-export * from './scope'
+export * from './bootstrap-actor'
+export * from './access/access-policies'
+export * from './access/facts'
+export * from './access/grant-administration'
+export * from './access/staff-assignment-policy'
+export * from './access/identity'
+export * from './access/interactive-actor-kind'
+export * from './access/assert-command-actor-kind'
 export * from './service-accounts'
-export * from './sync'
+export * from './access/action-grants'

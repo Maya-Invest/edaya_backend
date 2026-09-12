@@ -1,9 +1,9 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseInteractiveActorKind, resolveInteractiveActorIdentity } from "@edaya/authorization";
-import type { EffectiveGrants, GuardianScope, StudentScope, TeacherActorScope } from "@edaya/authorization";
+
 import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
-import { resolveCachedEffectiveGrants, resolveGrantsCacheTtlMs } from "@/lib/authorization/grants-cache/resolve-cached";
-import { resolveCachedActorScope } from "@/lib/authorization/scope-cache/resolve-cached";
+
+
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
@@ -44,6 +44,7 @@ interface ActorIdentityContext {
   sessionId?: string;
   authenticatedAt: Date;
   assuranceLevel: ActorAssuranceLevel;
+  academicYearId?: string;
 }
 
 type ActorIdentity
@@ -51,7 +52,6 @@ type ActorIdentity
     kind: "staff";
     schoolId: string;
     staffMemberId: string;
-    effectiveGrants?: EffectiveGrants;
     accountKind?: "human" | "service";
     requestId?: string;
   }
@@ -59,19 +59,16 @@ type ActorIdentity
     kind: "guardian";
     schoolId: string;
     guardianId: string;
-    guardianScope?: GuardianScope;
   }
   | {
     kind: "student";
     schoolId: string;
     studentId: string;
-    studentScope?: StudentScope;
   }
   | {
     kind: "teacher";
     schoolId: string;
     teacherId: string;
-    teacherScope?: TeacherActorScope;
   };
 
 type NormalizedAuthSession = AuthenticatedSession;
@@ -175,153 +172,29 @@ function resolveRequestId(headerValue: string | undefined): string {
 async function resolveActorIdentity(
   repos: SchoolRepositories,
   subjectId: string,
-  session: NormalizedAuthSession["session"],
-  academicYearId: string | undefined,
-  ttlMs: number,
-  resolution: {
-    actorKind?: ReturnType<typeof parseInteractiveActorKind>;
-    schoolId?: string;
-    actorId?: string;
-  },
+  resolution: { actorKind?: ReturnType<typeof parseInteractiveActorKind>; schoolId?: string; actorId?: string },
 ): Promise<ActorIdentity | null> {
-  const resolved = await resolveInteractiveActorIdentity(repos, {
-    subjectId,
-    ...(resolution.actorKind ? { actorKind: resolution.actorKind } : {}),
-    ...(resolution.schoolId ? { schoolId: resolution.schoolId } : {}),
-    ...(resolution.actorId ? { actorId: resolution.actorId } : {}),
-  });
-
-  if (!resolved) {
-    return null;
-  }
-
-  const identity: ActorIdentity = resolved.kind === "staff"
-    ? {
-        kind: "staff",
-        schoolId: resolved.schoolId,
-        staffMemberId: resolved.actorId,
-      }
-    : resolved.kind === "guardian"
-      ? {
-          kind: "guardian",
-          schoolId: resolved.schoolId,
-          guardianId: resolved.actorId,
-        }
-      : resolved.kind === "student"
-        ? {
-            kind: "student",
-            schoolId: resolved.schoolId,
-            studentId: resolved.actorId,
-          }
-        : {
-            kind: "teacher",
-            schoolId: resolved.schoolId,
-            teacherId: resolved.actorId,
-          };
-
-  try {
-    if (resolved.kind === "staff") {
-      const effectiveGrants = await resolveCachedEffectiveGrants({
-        actorId: resolved.actorId,
-        actorType: resolved.kind,
-        schoolId: resolved.schoolId,
-        ...(academicYearId ? { academicYearId } : {}),
-        subjectId,
-        ...(session.id ? { sessionId: session.id } : {}),
-        authenticatedAt: session.createdAt,
-        repositories: repos,
-        ttlMs,
-      });
-
-      return {
-        ...identity,
-        effectiveGrants,
-      } as ActorIdentity;
-    }
-
-    const scope = await resolveCachedActorScope({
-      actorId: resolved.actorId,
-      actorKind: resolved.kind,
-      schoolId: resolved.schoolId,
-      ...(academicYearId ? { academicYearId } : {}),
-      subjectId,
-      ...(session.id ? { sessionId: session.id } : {}),
-      authenticatedAt: session.createdAt,
-      repositories: repos,
-      ttlMs,
-    });
-
-    if (resolved.kind === "guardian") {
-      return {
-        kind: "guardian",
-        schoolId: resolved.schoolId,
-        guardianId: resolved.actorId,
-        guardianScope: scope as GuardianScope,
-      };
-    }
-
-    if (resolved.kind === "student") {
-      return {
-        kind: "student",
-        schoolId: resolved.schoolId,
-        studentId: resolved.actorId,
-        studentScope: scope as StudentScope,
-      };
-    }
-
-    return {
-      kind: "teacher",
-      schoolId: resolved.schoolId,
-      teacherId: resolved.actorId,
-      teacherScope: scope as TeacherActorScope,
-    };
-  }
-  catch {
-    return null;
+  const resolved = await resolveInteractiveActorIdentity(repos, { subjectId, ...resolution });
+  if (!resolved) return null;
+  switch (resolved.kind) {
+    case "staff": return { kind: "staff", schoolId: resolved.schoolId, staffMemberId: resolved.actorId };
+    case "guardian": return { kind: "guardian", schoolId: resolved.schoolId, guardianId: resolved.actorId };
+    case "student": return { kind: "student", schoolId: resolved.schoolId, studentId: resolved.actorId };
+    case "teacher": return { kind: "teacher", schoolId: resolved.schoolId, teacherId: resolved.actorId };
   }
 }
 
 async function resolveServiceActorIdentity(
   repos: SchoolRepositories,
   apiKey: string,
-  academicYearId: string | undefined,
-  ttlMs: number,
   requestId: string,
 ): Promise<Extract<ActorIdentity, { kind: "staff" }> | null> {
   const keyRecord = await repos.serviceApiKeys.findActiveByHash(hashApiKey(apiKey));
-  if (!keyRecord) {
-    return null;
-  }
-
+  if (!keyRecord) return null;
   const staffMember = await repos.staffMembers.findById(keyRecord.staffMemberId);
-  if (!staffMember || staffMember.accountKind !== "service" || !staffMember.isActive) {
-    return null;
-  }
-
-  try {
-    const effectiveGrants = await resolveCachedEffectiveGrants({
-      actorId: staffMember.id,
-      actorType: "staff",
-      schoolId: staffMember.schoolId,
-      ...(academicYearId ? { academicYearId } : {}),
-      subjectId: `service:${staffMember.id}`,
-      authenticatedAt: new Date(),
-      repositories: repos,
-      ttlMs,
-    });
-
-    return {
-      kind: "staff",
-      schoolId: staffMember.schoolId,
-      staffMemberId: staffMember.id,
-      effectiveGrants,
-      accountKind: "service" as const,
-      requestId,
-    };
-  }
-  catch {
-    return null;
-  }
+  if (!staffMember || staffMember.accountKind !== "service" || !staffMember.isActive
+      || staffMember.schoolId !== keyRecord.schoolId) return null;
+  return { kind: "staff", schoolId: staffMember.schoolId, staffMemberId: staffMember.id, accountKind: "service", requestId };
 }
 
 function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentityContext) {
@@ -329,40 +202,35 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
     case "staff":
       if (identity.accountKind === "service") {
         return createServiceStaffActorMetadata({
-          subjectId: context.subjectId,
+          ...context,
           schoolId: identity.schoolId,
           requestId: context.requestId,
           authenticatedAt: context.authenticatedAt,
           staffMemberId: identity.staffMemberId,
-          effectiveGrants: identity.effectiveGrants!,
         });
       }
       return createStaffActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         staffMemberId: identity.staffMemberId,
-        effectiveGrants: identity.effectiveGrants!,
       });
     case "guardian":
       return createGuardianActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         guardianId: identity.guardianId,
-        guardianScope: identity.guardianScope!,
       });
     case "student":
       return createStudentActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         studentId: identity.studentId,
-        studentScope: identity.studentScope!,
       });
     case "teacher":
       return createTeacherActorMetadata({
         ...context,
         schoolId: identity.schoolId,
         teacherId: identity.teacherId,
-        teacherScope: identity.teacherScope!,
       });
   }
 }
@@ -395,7 +263,6 @@ export function createSessionActorDependency(
 
       const requestId = resolveRequestId(c.req.header("x-request-id"));
       const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));
-      const ttlMs = resolveGrantsCacheTtlMs(c.env);
       const repos = c.var.schoolApp.repositories;
       const bearerApiKey = parseBearerApiKey(c.req.header("authorization"));
 
@@ -410,9 +277,6 @@ export function createSessionActorDependency(
         const identity = await resolveActorIdentity(
           repos,
           user.id,
-          session.session,
-          academicYearId,
-          ttlMs,
           {
             actorKind: parseInteractiveActorKind(c.req.header("x-actor-kind")),
             schoolId: resolveSchoolIdHeader(c.req.header("x-school-id")),
@@ -423,6 +287,7 @@ export function createSessionActorDependency(
           const interactiveContext = {
             subjectId: user.id,
             requestId,
+            academicYearId,
             ...(session.session.id ? { sessionId: session.session.id } : {}),
             authenticatedAt: session.session.createdAt,
             assuranceLevel: session.session.assuranceLevel,
@@ -439,8 +304,6 @@ export function createSessionActorDependency(
         const identity = await resolveServiceActorIdentity(
           repos,
           bearerApiKey,
-          academicYearId,
-          ttlMs,
           requestId,
         );
         if (identity) {
@@ -448,6 +311,7 @@ export function createSessionActorDependency(
             subjectId: `service:${identity.staffMemberId}`,
             requestId,
             authenticatedAt: new Date(),
+            academicYearId,
             assuranceLevel: ActorAssuranceLevel.Service,
           }));
           return;

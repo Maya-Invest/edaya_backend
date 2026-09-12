@@ -1,18 +1,19 @@
-import type { GradeLevelSubject } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { AcademicsOperations, denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { GradeLevelSubject } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/academics/grade-level-subject.ts (PR3)
 export const gradeLevelSubjectConfig: EntityConfigFactory<GradeLevelSubject> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.gradeLevelSubjects,
     tenant: gradeLevelSubjectTenant(),
-    read: read(operationModule(AcademicsOperations.curriculumReadScoped), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.programUpdate), noopSaveAccess, noopDeleteAccess),
+    authorization: { resource: 'gradeLevelSubjects', read: [Permission.QUERY_CLASS_CURRICULUM_READ], write: [Permission.ACADEMIC_PROGRAM_UPDATE] },
+    
     gates: {
       preSave: validateGradeLevelSubjectSave,
       preDelete: validateGradeLevelSubjectDelete,

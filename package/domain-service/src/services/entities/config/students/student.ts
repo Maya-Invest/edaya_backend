@@ -1,24 +1,21 @@
-import type { Student } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { StudentOperations } from '@edaya/authorization'
-import { AttachmentOwnerKind, BusinessRuleViolationError, StudentStatus } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { Student } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { AttachmentOwnerKind, BusinessRuleViolationError, StudentStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/students/student.ts (PR3)
-export const studentConfig: EntityConfigFactory<Student> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkStudentAccess(actor, ids))
+export const studentConfig: EntityConfigFactory<Student> = ({ repositories, atomicExecution }) => {
+  
 
   return config({
     repository: repositories.students,
     tenant: directSchoolTenant(),
-    read: read(operationModule(StudentOperations.directoryRead), readAccess),
-    write: write(
-      operationModule(StudentOperations.update),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    authorization: { resource: 'students', read: [Permission.QUERY_STUDENT_DIRECTORY_READ, Permission.QUERY_STUDENT_DETAIL_READ], write: [Permission.STUDENT_UPDATE] },
+    
     gates: {
       preSave: validateStudentSave,
       preDelete: validateStudentDelete,

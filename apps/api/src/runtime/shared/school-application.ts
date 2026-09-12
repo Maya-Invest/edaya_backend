@@ -2,7 +2,6 @@ import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
@@ -10,7 +9,6 @@ import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
 import type { Environment } from "@/runtime/shared/env/schema";
-import { createRepositoryAuthorizationPolicy } from "@edaya/authorization";
 import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
 import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
 
@@ -56,20 +54,12 @@ export async function buildSchoolApplication(
     notificationGateway,
     fileStorage,
     invitationDelivery,
-    authCacheInvalidation: apiAuthCacheInvalidationPort,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
     authContactResolver: options.identityDirectory
       ? createAuthContactResolver(options.identityDirectory)
       : undefined,
     repositories: repos,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: repos,
-      staffAssignmentRepository: repos.staffAssignments,
-      staffMemberRepository: repos.staffMembers,
-      guardianRepository: repos.guardians,
-      guardianStudentLinkRepository: repos.guardianLinks,
-      studentRepository: repos.students,
-    }),
+
   });
 }

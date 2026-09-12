@@ -1,27 +1,21 @@
-import type { Fee } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, FinanceOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { Fee } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/finances/fee.ts (PR3)
-export const feeConfig: EntityConfigFactory<Fee> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkFeeAccess(actor, ids))
+export const feeConfig: EntityConfigFactory<Fee> = ({ repositories, atomicExecution }) => {
+  
 
   return config({
     repository: repositories.fees,
     tenant: directSchoolTenant(),
-    read: read(
-      operationModule(FinanceOperations.feeCatalogRead),
-      readAccess,
-    ),
-    write: write(
-      operationModule(FinanceOperations.feeConfigure),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    authorization: { resource: 'fees', read: [Permission.FINANCIAL_CONFIG_READ, Permission.PAYMENT_READ], write: [Permission.FINANCIAL_CONFIG_CONFIGURE] },
+    
     gates: {
       preSave: validateFeeSave,
       preDelete: validateFeeDelete,

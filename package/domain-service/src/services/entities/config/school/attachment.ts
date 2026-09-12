@@ -1,26 +1,21 @@
-import type { Attachment } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityReadAuthorization } from '../../entity-config'
-import { AttachmentOperations, denyResourceAccess } from '@edaya/authorization'
-import { AttachmentOwnerKind, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { Attachment } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { AttachmentOwnerKind, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/school/attachment.ts (PR3)
-export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess: EntityReadAuthorization<Attachment>['checkAccess'] = async (actor, entities) => {
-    await policy.checkAttachmentAccess(actor, entities)
-  }
+export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, atomicExecution }) => {
+  
 
   return config({
     repository: repositories.attachments,
     tenant: directSchoolTenant(),
-    read: read(operationModule(AttachmentOperations.read), readAccess),
-    write: write(
-      operationModule(AttachmentOperations.configure),
-      authorizeExistingById(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    authorization: { resource: 'attachments', read: [Permission.ATTACHMENT_READ], write: [Permission.ATTACHMENT_CONFIGURE] },
+    
     gates: {
       preSave: validateAttachmentSave,
     },

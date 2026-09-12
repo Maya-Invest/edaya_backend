@@ -1,21 +1,21 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { ApplyStructureTemplateResult } from './apply-structure-template'
-import type { InviteStaffMembersResult } from './invite-staff-members'
-import type { OnboardingAccountStatus } from './onboarding-account-state'
-import type { OnboardingSchoolApplication } from './onboarding-application'
-import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
-import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
-import { randomUUID } from 'node:crypto'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { applyStructureTemplate } from './apply-structure-template'
-import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft'
-import { inviteStaffMembers } from './invite-staff-members'
-import { completeOnboardingWizard } from './onboarding-account-state'
-import { registerSchoolWithOwner } from './register-school-with-owner'
-import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { isStructureTemplateId } from './structure-naming'
+import type { ActorMetadata } from '@edaya/authorization';
+import type { ApplyStructureTemplateResult } from './apply-structure-template';
+import type { InviteStaffMembersResult } from './invite-staff-members';
+import type { OnboardingAccountStatus } from './onboarding-account-state';
+import type { OnboardingSchoolApplication } from './onboarding-application';
+import type { RegisterSchoolOwnerSession } from './register-school-with-owner';
+import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles';
+import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types';
+import { randomUUID } from 'node:crypto';
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { applyStructureTemplate } from './apply-structure-template';
+import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft';
+import { inviteStaffMembers } from './invite-staff-members';
+import { completeOnboardingWizard } from './onboarding-account-state';
+import { registerSchoolWithOwner } from './register-school-with-owner';
+import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles';
+import { isStructureTemplateId } from './structure-naming';
 
 export interface ProvisionOnboardingSchoolInput {
   name: string
@@ -69,6 +69,7 @@ function toOwnerSession(session: RegisterSchoolOwnerSession) {
   return {
     user: {
       id: session.user.id,
+      emailVerified: session.user.emailVerified,
       ...(session.user.email ? { email: session.user.email } : {}),
       ...(session.user.name ? { name: session.user.name } : {}),
     },
@@ -132,11 +133,13 @@ async function resolveOwnerActorAfterRegister(
       'Owner staff member was not found after school registration',
     )
   }
-  return createBootstrapStaffActorMetadata({
+  return createStaffActorMetadata({
     schoolId,
     requestId,
     staffMemberId: staff.id,
     subjectId: session.user.id,
+    authenticatedAt: new Date(),
+    assuranceLevel: session.user.emailVerified ? ActorAssuranceLevel.Verified : ActorAssuranceLevel.Standard,
   })
 }
 
@@ -175,12 +178,7 @@ export async function provisionOnboarding(
 
   if (options.existingActor?.kind === 'staff' && options.existingActor.schoolId) {
     schoolId = options.existingActor.schoolId
-    actor = createBootstrapStaffActorMetadata({
-      schoolId,
-      requestId,
-      staffMemberId: options.existingActor.staffMemberId,
-      subjectId: options.existingActor.subjectId,
-    })
+    actor = options.existingActor
   }
   else {
     if (!options.allowPublicSchoolRegistration) {

@@ -1,26 +1,23 @@
-import type { Teacher } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { AccessControlOperations, TeacherOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { Permission } from '@edaya/core';
+import type { Teacher } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
+import { assertUniquePersonCode } from '../person-code-uniqueness';
 
 // Extracted from domain/school/teacher.ts (PR3)
 export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
-  const readAccess = readByIds((actor, ids) => input.policy.checkTeacherAccess(actor, ids))
+  
 
   return {
     ...config({
       repository: input.repositories.teachers,
       tenant: directSchoolTenant(),
-      read: read(operationModule(TeacherOperations.selfRead), readAccess),
-      write: write(
-        operationModule(AccessControlOperations.assign),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
+      authorization: { resource: 'teachers', read: [Permission.ACCESS_CONTROL_ASSIGN, Permission.SCHOOL_STRUCTURE_CONFIGURE], write: [Permission.ACCESS_CONTROL_ASSIGN] },
+      
       atomicExecution: input.atomicExecution,
     }),
     gates: {

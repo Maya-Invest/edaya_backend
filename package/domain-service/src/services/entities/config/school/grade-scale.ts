@@ -1,19 +1,20 @@
-import type { GradeScale } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { AcademicsOperations, GradeOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { requireSchool } from '../../../require-school'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import { Permission } from '@edaya/core';
+import type { GradeScale } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
 
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { BusinessRuleViolationError } from '@edaya/core';
+import { requireSchool } from '../../../require-school';
+import { config } from '../../entity-config';
+
+import { directSchoolTenant } from '../../entity-config/tenant';
 // Extracted from domain/school/grade-scale.ts (PR3)
 export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    read: read(operationModule(GradeOperations.read), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.examConfigure), noopSaveAccess, noopDeleteAccess),
+    authorization: { resource: 'gradeScales', read: [Permission.GRADE_READ], write: [Permission.EXAM_CONFIG_CONFIGURE] },
+    
     gates: {
       preSave: validateGradeScaleSave,
     },

@@ -1,41 +1,20 @@
-import type { AuthorizationPolicy, OperationRef } from '@edaya/authorization'
-import type { CoreEntityRepositories, Payment } from '@edaya/core'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, FinanceOperations } from '@edaya/authorization'
-import { AttachmentOwnerKind, BusinessRuleViolationError, FeeStatus, PaymentStatus } from '@edaya/core'
-import { anyOperationModule, authorizeDeleteWithOperation, authorizeSaveWithOperation, config, operationModule, read, write } from '../../entity-config'
-import { dateTime, unique } from '../../entity-config/helper-utils'
+import { Permission } from '@edaya/core';
+import type { ActionSelection } from '@edaya/authorization';
+import type { CoreEntityRepositories, Payment } from '@edaya/core';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { AttachmentOwnerKind, BusinessRuleViolationError, FeeStatus, PaymentStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { dateTime } from '../../entity-config/helper-utils';
 
-import { indirectTenant } from '../../entity-config/tenant'
+import { indirectTenant } from '../../entity-config/tenant';
 // Extracted from domain/finances/payment.ts (PR3)
-export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, policy, atomicExecution }) =>
+export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.payments,
     tenant: paymentTenant(),
-    read: read(
-      operationModule(FinanceOperations.paymentsRead),
-      async (actor, entities) => {
-        const studentFeeIds = unique(entities.map(entity => entity.studentFeeId))
-        await policy.checkStudentFeeAccess(actor, studentFeeIds)
-      },
-    ),
-    write: write(
-      anyOperationModule([
-        FinanceOperations.paymentRecord,
-        FinanceOperations.paymentCancel,
-        FinanceOperations.paymentReverse,
-      ]),
-      authorizeSaveWithOperation(
-        resolvePaymentWriteOperation,
-        resolvePaymentContext,
-        authorizePaymentResource(policy),
-      ),
-      authorizeDeleteWithOperation(
-        FinanceOperations.paymentCancel,
-        (entity, repositories) => resolvePaymentContext(entity, undefined, repositories),
-        authorizePaymentDeleteResource(policy),
-      ),
-    ),
+    authorization: { resource: 'payments', read: [Permission.PAYMENT_READ], write: paymentWriteAction, delete: Permission.PAYMENT_CANCEL },
+    
     gates: {
       preSave: validatePaymentSave,
       preDelete: validatePaymentDelete,
@@ -43,45 +22,17 @@ export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, poli
     atomicExecution,
   })
 
-async function resolvePaymentContext(
-  entity: Payment,
-  _existing: Payment | undefined,
-  repositories: CoreEntityRepositories,
-) {
-  const studentFee = await repositories.studentFees.findById(entity.studentFeeId)
-  if (!studentFee) {
-    denyResourceAccess()
-  }
-  return { studentId: studentFee.studentId }
-}
-
-function resolvePaymentWriteOperation(
+function paymentWriteAction(
   entity: Payment,
   existing: Payment | undefined,
-): OperationRef {
+): ActionSelection {
   if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
-    return FinanceOperations.paymentCancel
+    return Permission.PAYMENT_CANCEL
   }
   if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
-    return FinanceOperations.paymentReverse
+    return Permission.PAYMENT_REVERSE
   }
-  return FinanceOperations.paymentRecord
-}
-
-function authorizePaymentResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<Payment>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
-  }
-}
-
-function authorizePaymentDeleteResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<Payment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkStudentFeeAccess(actor, [entity.studentFeeId])
-  }
+  return Permission.PAYMENT_RECORD
 }
 
 function paymentTenant(): EntityTenantResolver<Payment> {

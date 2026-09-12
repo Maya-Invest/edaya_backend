@@ -1,19 +1,20 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { StudentIncidentInvolvement } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, DisciplineOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, StudentClassEnrollmentStatus } from '@edaya/core'
-import { config, noopReadAccess, operationModule, read, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { StudentIncidentInvolvement } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, StudentClassEnrollmentStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/students/student-incident-involvement.ts (PR3)
-export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncidentInvolvement> = ({ repositories, policy, atomicExecution }) =>
+export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncidentInvolvement> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.studentIncidentInvolvements,
     tenant: incidentLinkedTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(operationModule(DisciplineOperations.create), authorizeIncidentLinked(policy), authorizeIncidentLinkedDelete(policy)),
+    authorization: { resource: 'studentIncidentInvolvements', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
+    
     gates: {
       preSave: validateStudentIncidentInvolvementSave,
     },
@@ -25,30 +26,6 @@ function incidentLinkedTenant(): EntityTenantResolver<StudentIncidentInvolvement
     const incident = await repositories.incidents.findById(entity.incidentId)
     return incident?.schoolId
   })
-}
-
-function authorizeIncidentLinked(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<StudentIncidentInvolvement>['authorizeSave'] {
-  return async (actor, entity, _existing, repositories) => {
-    const incident = await repositories.incidents.findById(entity.incidentId)
-    if (!incident) {
-      denyResourceAccess()
-    }
-    if (incident.classGroupId)
-      await policy.checkClassGroupAccess(actor, [incident.classGroupId])
-    if (incident.lessonSessionId)
-      await policy.checkLessonSessionAccess(actor, [incident.lessonSessionId])
-    await policy.checkStudentAccess(actor, [entity.studentId])
-  }
-}
-
-function authorizeIncidentLinkedDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<StudentIncidentInvolvement>['authorizeDelete'] {
-  return async (actor, entity, repositories) => {
-    await authorizeIncidentLinked(policy)(actor, entity, entity, repositories)
-  }
 }
 
 async function validateStudentIncidentInvolvementSave(

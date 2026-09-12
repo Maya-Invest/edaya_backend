@@ -1,17 +1,6 @@
 import { randomUUID } from "node:crypto";
-import {
-  Attachment,
-  AttachmentOwnerKind,
-  AttachmentStatus,
-  type DocumentRendererPort,
-  TeacherAssignmentKind,
-} from "@edaya/core";
-import {
-  buildReportCardV1Payload,
-  buildStorageKey,
-  catalogLangFromLocale,
-  catalogSubjectName,
-} from "@edaya/service";
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, type DocumentRendererPort, TeacherAssignmentKind } from "@edaya/core";
+import { buildReportCardV1Payload, buildStorageKey, catalogLangFromLocale, catalogSubjectName } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
 
 function collectClassSubjectIds(
@@ -85,7 +74,7 @@ export async function renderReportCardDocument(
       sizeBytes: stub.sizeBytes,
       uploadedById: stub.uploadedById,
       createdAt: stub.createdAt,
-    }), { moduleChecked: true });
+    }));
   }
 
   const student = await service.baseService.repositories.students.findById(result.studentId);
@@ -239,7 +228,7 @@ export async function renderReportCardDocument(
     mimeType: "application/pdf",
     sizeBytes: put.sizeBytes,
     ...(uploadedById ? { uploadedById } : {}),
-  }), { moduleChecked: true });
+  }));
 
   return { attachmentId, storageKey };
 }

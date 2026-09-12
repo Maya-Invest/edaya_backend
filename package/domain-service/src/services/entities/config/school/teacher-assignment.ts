@@ -1,26 +1,20 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { TeacherAssignment } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AccessControlOperations, TeacherOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, TeacherAssignmentKind } from '@edaya/core'
-import { config, operationModule, read, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { TeacherAssignment } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+
+import { BusinessRuleViolationError, TeacherAssignmentKind } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/school/teacher-assignment.ts (PR3)
-export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = ({ repositories, policy, atomicExecution }) =>
+export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.teacherAssignments,
     tenant: teacherAssignmentTenant(),
-    read: read(
-      operationModule(TeacherOperations.assignmentRead),
-      (actor, entities) => policy.checkTeacherAssignmentAccess(actor, entities),
-    ),
-    write: write(
-      operationModule(AccessControlOperations.assign),
-      authorizeTeacherAssignment(policy),
-      authorizeTeacherAssignmentDelete(policy),
-    ),
+    authorization: { resource: 'teacherAssignments', read: [Permission.ACCESS_CONTROL_ASSIGN, Permission.SCHOOL_STRUCTURE_CONFIGURE], write: [Permission.ACCESS_CONTROL_ASSIGN] },
+    
     gates: {
       preSave: validateTeacherAssignmentSave,
     },
@@ -32,22 +26,6 @@ function teacherAssignmentTenant(): EntityTenantResolver<TeacherAssignment> {
     const teacher = await repositories.teachers.findById(entity.teacherId)
     return teacher?.schoolId
   })
-}
-
-function authorizeTeacherAssignment(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<TeacherAssignment>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkTeacherAccess(actor, [entity.teacherId])
-  }
-}
-
-function authorizeTeacherAssignmentDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<TeacherAssignment>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkTeacherAccess(actor, [entity.teacherId])
-  }
 }
 
 export async function validateTeacherAssignmentSave(

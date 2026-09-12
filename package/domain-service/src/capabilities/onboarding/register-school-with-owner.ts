@@ -1,15 +1,16 @@
-import type { School, SchoolType } from '@edaya/core'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { OnboardingSchoolApplication } from './onboarding-application'
-import { randomUUID } from 'node:crypto'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
+import type { School, SchoolType } from '@edaya/core';
+import type { SchoolRepositories } from '../../ports/school-repositories';
+import type { OnboardingSchoolApplication } from './onboarding-application';
+import { randomUUID } from 'node:crypto';
+import { createSchoolBootstrapActor } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
 
 export interface RegisterSchoolOwnerSession {
   user: {
     id: string
     email?: string
     name?: string
+    emailVerified?: boolean
   }
 }
 
@@ -84,11 +85,9 @@ export async function registerSchoolWithOwner(
     : resolveOwnerProfile(session)
 
   const callerStaffId = input.ownerStaffId ?? randomUUID()
-  const actor = createBootstrapStaffActorMetadata({
+  const actor = createSchoolBootstrapActor({
     schoolId,
     requestId: input.requestId,
-    staffMemberId: callerStaffId,
-    subjectId,
   })
   const service = application.forActor(actor)
 

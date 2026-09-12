@@ -1,15 +1,8 @@
-import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import type { BaseSchoolService } from '../base-school-service'
-import { BusinessRuleViolationError, Guardian as GuardianEntity, MessageDeliveryRecipientKind, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
-import {
-  buildGuardianRecipientProfile,
-  buildStaffRecipientProfile,
-  buildStudentRecipientProfile,
-  buildTeacherRecipientProfile,
-  scheduleNotificationRecipientRemove,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
+import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core';
+import type { SchoolRepositories } from '../../ports/school-repositories';
+import type { BaseSchoolService } from '../base-school-service';
+import { BusinessRuleViolationError, Guardian as GuardianEntity, MessageDeliveryRecipientKind, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core';
+import { buildGuardianRecipientProfile, buildStaffRecipientProfile, buildStudentRecipientProfile, buildTeacherRecipientProfile, scheduleNotificationRecipientRemove, scheduleNotificationRecipientUpsert } from '../../capabilities/notifications';
 
 export interface LinkSubjectToActorInput {
   subjectId: string
@@ -130,7 +123,7 @@ export async function unlinkSubjectFromActor(
       profileRole: existing.profileRole,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+    await baseService.entities.staffMembers.save(staffMember)
     scheduleNotificationRecipientRemove(baseService, schoolId, {
       kind: MessageDeliveryRecipientKind.Staff,
       id: existing.id,
@@ -161,7 +154,7 @@ export async function unlinkSubjectFromActor(
       hasAccess: existing.hasAccess,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.guardians.save(guardian, { moduleChecked: true })
+    await baseService.entities.guardians.save(guardian)
     scheduleNotificationRecipientRemove(baseService, schoolId, {
       kind: MessageDeliveryRecipientKind.Guardian,
       id: existing.id,
@@ -192,7 +185,7 @@ export async function unlinkSubjectFromActor(
       isActive: existing.isActive,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.teachers.save(teacher, { moduleChecked: true })
+    await baseService.entities.teachers.save(teacher)
     scheduleNotificationRecipientRemove(baseService, schoolId, {
       kind: MessageDeliveryRecipientKind.Teacher,
       id: existing.id,
@@ -209,7 +202,7 @@ export async function unlinkSubjectFromActor(
     return { kind: 'student', entity: existing }
   }
   const student = existing.copyWith({ subjectId: undefined })
-  await baseService.entities.students.save(student, { moduleChecked: true })
+  await baseService.entities.students.save(student)
   scheduleNotificationRecipientRemove(baseService, schoolId, {
     kind: MessageDeliveryRecipientKind.Student,
     id: existing.id,
@@ -256,7 +249,7 @@ async function replaceActorSubject(
       profileRole: existing.profileRole,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+    await baseService.entities.staffMembers.save(staffMember)
     scheduleNotificationRecipientUpsert(baseService, buildStaffRecipientProfile(staffMember))
     return { kind: 'staff', entity: staffMember }
   }
@@ -283,7 +276,7 @@ async function replaceActorSubject(
       hasAccess: existing.hasAccess,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.guardians.save(guardian, { moduleChecked: true })
+    await baseService.entities.guardians.save(guardian)
     const links = await repositories.guardianLinks.list({ guardianId: guardian.id })
     scheduleNotificationRecipientUpsert(
       baseService,
@@ -314,7 +307,7 @@ async function replaceActorSubject(
       isActive: existing.isActive,
       createdAt: existing.createdAt,
     })
-    await baseService.entities.teachers.save(teacher, { moduleChecked: true })
+    await baseService.entities.teachers.save(teacher)
     scheduleNotificationRecipientUpsert(baseService, buildTeacherRecipientProfile(teacher))
     return { kind: 'teacher', entity: teacher }
   }
@@ -327,7 +320,7 @@ async function replaceActorSubject(
     assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
   }
   const student = existing.copyWith({ subjectId: input.subjectId })
-  await baseService.entities.students.save(student, { moduleChecked: true })
+  await baseService.entities.students.save(student)
   scheduleNotificationRecipientUpsert(baseService, buildStudentRecipientProfile(student))
   return { kind: 'student', entity: student }
 }

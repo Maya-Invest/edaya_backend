@@ -57,6 +57,13 @@
       "when": 1788975972299,
       "tag": "0007_guardian_access",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789171200000,
+      "tag": "0008_typed_staff_grants",
+      "breakpoints": true
     }
   ]
 }

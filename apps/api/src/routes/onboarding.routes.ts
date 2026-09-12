@@ -1,27 +1,10 @@
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
-import {
-  conflictResponse,
-  routeErrorResponse,
-  unauthorizedResponse,
-} from "@/http/responses";
+import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import type { AppRouteHandler } from "@/http/types";
-import {
-  applyStructureTemplate,
-  completeOnboardingWizard,
-  inviteStaffMembers,
-  isOnboardingStaffInviteRoleKey,
-  isStructureTemplateId,
-  provisionOnboarding,
-  recordOnboardingAccountProgress,
-  registerSchoolWithOwner,
-  resolveOnboardingAccountStatus,
-} from "@edaya/service";
+import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
 import type { StructureTemplateDefinition } from "@edaya/service";
-import {
-  listStructureTemplatesForCountry,
-  resolveStructureTemplates,
-} from "@edaya/fixtures/onboarding";
+import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
@@ -545,6 +528,7 @@ function toOwnerSession(session: AuthenticatedSession) {
   return {
     user: {
       id: session.user.id,
+      emailVerified: session.user.emailVerified,
       ...(session.user.email ? { email: session.user.email } : {}),
       ...(session.user.name ? { name: session.user.name } : {}),
     },

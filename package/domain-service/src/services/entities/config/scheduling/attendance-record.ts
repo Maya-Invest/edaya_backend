@@ -1,50 +1,26 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AttendanceOperations } from '@edaya/authorization'
-import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
-import { config, operationModule, read, write } from '../../entity-config'
-import { dateTime, unique } from '../../entity-config/helper-utils'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+
+import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core';
+import { config } from '../../entity-config';
+import { dateTime } from '../../entity-config/helper-utils';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/scheduling/attendance-record.ts (PR3)
-export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, policy, atomicExecution }) =>
+export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.attendance,
     tenant: attendanceRecordTenant(),
-    read: read(
-      operationModule(AttendanceOperations.read),
-      async (actor, entities) => {
-        await policy.checkStudentAccess(actor, unique(entities.map(entity => entity.studentId)))
-      },
-    ),
-    write: write(
-      operationModule(AttendanceOperations.record),
-      authorizeAttendanceSave(policy),
-      authorizeAttendanceDelete(policy),
-    ),
+    authorization: { resource: 'attendance', read: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_RECORD, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_JUSTIFY], write: [Permission.ATTENDANCE_RECORD] },
+    
     gates: {
       preSave: validateAttendanceSave,
     },
     atomicExecution,
   })
-
-function authorizeAttendanceSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
-
-function authorizeAttendanceDelete(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AttendanceRecord>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkAttendanceRecordAccess(actor, [entity])
-  }
-}
 
 function attendanceRecordTenant(): EntityTenantResolver<AttendanceRecord> {
   return indirectTenant(async (entity, repositories) => resolveAttendanceRecordSchoolId(repositories, entity))

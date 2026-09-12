@@ -1,22 +1,19 @@
-import type { CalendarEvent } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchedulingOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, CalendarEventScopeKind } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { CalendarEvent } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, CalendarEventScopeKind } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/scheduling/calendar-event.ts (PR3)
 export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = ({ repositories, atomicExecution }) => ({
   ...config({
     repository: repositories.calendarEvents,
     tenant: directSchoolTenant(),
-    read: read(operationModule(SchedulingOperations.calendarRead), noopReadAccess),
-    write: write(
-      operationModule(SchedulingOperations.calendarManage),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
+    authorization: { resource: 'calendarEvents', read: [Permission.QUERY_CALENDAR_READ], write: [Permission.TIMETABLE_UPDATE] },
+    
     atomicExecution,
   }),
   gates: {

@@ -1,39 +1,13 @@
-import type {
-  AnnouncementInput,
-  AnnouncementTarget,
-  AnnouncementTargetInput,
-  Guardian,
-  MessageDeliveryStatus,
-  StaffMember,
-} from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { CommunicationsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { CommunicationsOperations, denyResourceAccess, isInteractiveActor } from '@edaya/authorization'
-import {
-  Announcement,
-  AnnouncementStatus,
-  AnnouncementTarget as AnnouncementTargetEntity,
-  BusinessRuleViolationError,
-  MessageDeliveryStatus as DeliveryStatus,
-  Guardian as GuardianEntity,
-  MessageDelivery,
-  MessageDeliveryRecipientKind,
-  StaffMember as StaffMemberEntity,
-  StudentClassEnrollmentStatus,
-  AnnouncementTargetKind as TargetKind,
-} from '@edaya/core'
-import {
-  ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-  buildGuardianRecipientProfile,
-  buildNotificationDeliveryId,
-  buildStaffRecipientProfile,
-  ensureNotificationRecipientForActor,
-  runWorkflowNotifications,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import { Permission } from '@edaya/core';
+import type { AnnouncementInput, AnnouncementTarget, AnnouncementTargetInput, Guardian, MessageDeliveryStatus, StaffMember } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { CommunicationsWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess, isInteractiveActor } from '@edaya/authorization';
+import { Announcement, AnnouncementStatus, AnnouncementTarget as AnnouncementTargetEntity, BusinessRuleViolationError, MessageDeliveryStatus as DeliveryStatus, Guardian as GuardianEntity, MessageDelivery, MessageDeliveryRecipientKind, StaffMember as StaffMemberEntity, StudentClassEnrollmentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core';
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, buildGuardianRecipientProfile, buildNotificationDeliveryId, buildStaffRecipientProfile, ensureNotificationRecipientForActor, runWorkflowNotifications, scheduleNotificationRecipientUpsert } from '../../capabilities/notifications';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface PublishAnnouncementInput {
   announcementId: string
@@ -180,7 +154,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       publishedAt: publishedAt ?? new Date(),
       expiresAt: existing.expiresAt,
     })
-    await this.baseService.entities.announcements.save(announcement, { moduleChecked: true })
+    await this.baseService.entities.announcements.save(announcement)
     if (!options?.deferNotifications) {
       await this.dispatchPublishedAnnouncementNotifications(announcement)
     }
@@ -240,7 +214,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
     }
     else {
-      await operationModule(CommunicationsOperations.create)(this.baseService.actor)
+      await this.baseService.access.assertSchool(Permission.COMMUNICATION_CREATE)
     }
     const delivery = new MessageDelivery({
       id,
@@ -260,7 +234,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       createdAt,
       updatedAt,
     })
-    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+    await this.baseService.entities.messageDeliveries.save(delivery)
     return delivery
   }
 
@@ -303,7 +277,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
           createdAt,
           updatedAt: createdAt,
         })
-        await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+        await this.baseService.entities.messageDeliveries.save(delivery)
         deliveries.push(delivery)
       }
       return deliveries
@@ -323,7 +297,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     }
     this.checkActorSchool(existing.schoolId)
     if (this.baseService.actor.kind !== 'system') {
-      await operationModule(CommunicationsOperations.create)(this.baseService.actor)
+      await this.baseService.access.assertSchool(Permission.COMMUNICATION_CREATE)
     }
     if (!canTransitionDeliveryStatus(existing.status, status)) {
       return existing
@@ -353,7 +327,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: at,
     })
-    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+    await this.baseService.entities.messageDeliveries.save(delivery)
     return delivery
   }
 
@@ -370,7 +344,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     if (actor.kind === 'system' || existing.subjectId !== actor.subjectId) {
       denyResourceAccess()
     }
-    await operationModule(CommunicationsOperations.read)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.QUERY_COMMUNICATIONS_READ)
     if (existing.status === DeliveryStatus.Read) {
       return existing
     }
@@ -393,7 +367,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: at,
     })
-    await this.baseService.entities.messageDeliveries.save(delivery, { moduleChecked: true })
+    await this.baseService.entities.messageDeliveries.save(delivery)
     return delivery
   }
 
@@ -401,7 +375,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     input: UpdateNotificationContactInput,
   ): Promise<StaffMember | Guardian> {
     const actor = this.baseService.actor
-    await operationModule(CommunicationsOperations.read)(actor)
+    await this.baseService.access.assertSchool(Permission.QUERY_COMMUNICATIONS_READ)
 
     const notificationEmail = normalizeNotificationContact(input.notificationEmail)
     const notificationPhone = normalizeNotificationContact(input.notificationPhone)
@@ -435,7 +409,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         profileRole: existing.profileRole,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.staffMembers.save(staffMember, { moduleChecked: true })
+      await this.baseService.entities.staffMembers.save(staffMember)
       scheduleNotificationRecipientUpsert(this.baseService, buildStaffRecipientProfile(staffMember))
       return staffMember
     }
@@ -464,7 +438,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         hasAccess: existing.hasAccess,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
+      await this.baseService.entities.guardians.save(guardian)
       const links = await this.repositories.guardianLinks.list({ guardianId: guardian.id })
       scheduleNotificationRecipientUpsert(
         this.baseService,
@@ -481,7 +455,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async registerPushDevice(input: RegisterPushDeviceInput): Promise<void> {
     const actor = this.baseService.actor
-    await operationModule(CommunicationsOperations.read)(actor)
+    await this.baseService.access.assertSchool(Permission.QUERY_COMMUNICATIONS_READ)
 
     if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
@@ -517,7 +491,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
 
   async unregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
     const actor = this.baseService.actor
-    await operationModule(CommunicationsOperations.read)(actor)
+    await this.baseService.access.assertSchool(Permission.QUERY_COMMUNICATIONS_READ)
 
     if (actor.kind === 'system') {
       throw new BusinessRuleViolationError(
@@ -799,6 +773,6 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     announcementId?: string
   }): Promise<void> {
     this.checkActorSchool(resource.schoolId)
-    await operationModule(CommunicationsOperations.create)(this.baseService.actor)
+    
   }
 }

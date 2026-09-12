@@ -1,25 +1,22 @@
-import type { StudentHealthProfile } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, StudentHealthOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { StudentHealthProfile } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/students/student-health-profile.ts (PR3)
-export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkStudentHealthAccess(actor, ids))
+export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = ({ repositories, atomicExecution }) => {
+  
 
   return {
     ...config({
       repository: repositories.studentHealthProfiles,
       tenant: directSchoolTenant(),
-      read: read(operationModule(StudentHealthOperations.read), readAccess),
-      write: write(
-        operationModule(StudentHealthOperations.update),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
+      authorization: { resource: 'studentHealthProfiles', read: [Permission.STUDENT_HEALTH_READ], write: [Permission.STUDENT_HEALTH_UPDATE] },
+      
       atomicExecution,
     }),
     gates: {

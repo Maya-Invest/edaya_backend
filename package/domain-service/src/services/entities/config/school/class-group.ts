@@ -1,24 +1,21 @@
-import type { ClassGroup } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchoolStructureOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeSaveSkipReadOnCreate, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { ClassGroup } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/school/class-group.ts (PR3)
-export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkClassGroupAccess(actor, ids))
+export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, atomicExecution }) => {
+  
 
   return config({
     repository: repositories.classGroups,
     tenant: directSchoolTenant(),
-    read: read(operationModule(SchoolStructureOperations.classGroupRead), readAccess),
-    write: write(
-      operationModule(SchoolStructureOperations.configure),
-      authorizeSaveSkipReadOnCreate(readAccess),
-      authorizeDeleteByReadAccess(readAccess),
-    ),
+    authorization: { resource: 'classGroups', read: [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_UPDATE, Permission.QUERY_CLASS_DIRECTORY_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE, Permission.GRADE_READ, Permission.CLASS_LOGBOOK_READ, Permission.ATTENDANCE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
+    
     gates: {
       preSave: validateClassGroupSave,
       preDelete: validateClassGroupDelete,

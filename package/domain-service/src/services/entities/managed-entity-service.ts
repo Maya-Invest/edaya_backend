@@ -1,15 +1,7 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type {
-  AtomicExecutionPort,
-  BaseRepositoryInterface,
-  EntityReadAuthorization as CoreEntityReadAuthorization,
-  EntityWriteAuthorization as CoreEntityWriteAuthorization,
-  Filter,
-  QueryOptions,
-} from '@edaya/core'
-import type { SchoolRepositories } from '../../ports/school-repositories'
-import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
-import { withTenantLookupCache } from './tenant-lookup-cache'
+import type { ActionSelection, ActorMetadata } from '@edaya/authorization';
+import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions } from '@edaya/core';
+import type { SchoolRepositories } from '../../ports/school-repositories';
+import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization';
 
 export interface EntityTenantResolver<T> {
   resolve: (entity: T, repositories: SchoolRepositories) => Promise<string | undefined> | string | undefined
@@ -17,268 +9,147 @@ export interface EntityTenantResolver<T> {
   scopeFilter?: (schoolId: string, repositories: SchoolRepositories) => Filter<T> | Promise<Filter<T>>
 }
 
-export type EntityReadAuthorization<T> = CoreEntityReadAuthorization<T, ActorMetadata>
-export type EntityWriteAuthorization<T> = CoreEntityWriteAuthorization<T, ActorMetadata>
-
 export interface EntityBusinessGates<T> {
-  preSave?: (
-    entity: T,
-    existing: T | undefined,
-    repositories: SchoolRepositories,
-    actor: ActorMetadata,
-  ) => Promise<void>
-  preDelete?: (
-    entity: T,
-    repositories: SchoolRepositories,
-  ) => Promise<void>
+  preSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
+  preDelete?: (entity: T, repositories: SchoolRepositories) => Promise<void>
 }
-
 export interface EntityBusinessHooks<T> {
-  postSave?: (
-    entity: T,
-    existing: T | undefined,
-    repositories: SchoolRepositories,
-    actor: ActorMetadata,
-  ) => Promise<void>
-  postDelete?: (
-    entity: T,
-    repositories: SchoolRepositories,
-    actor: ActorMetadata,
-  ) => Promise<void>
+  postSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
+  postDelete?: (entity: T, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
 }
-
 export interface ManagedEntityServiceConfig<T> {
   repository: BaseRepositoryInterface<T>
   tenant: EntityTenantResolver<T>
-  read: EntityReadAuthorization<T>
-  write: EntityWriteAuthorization<T>
+  authorization: { resource: CoreEntityKey, read: ActionSelection, write: ActionSelection | ((entity: T, existing: T | undefined) => ActionSelection), delete?: ActionSelection }
   gates?: EntityBusinessGates<T>
   hooks?: EntityBusinessHooks<T>
   atomicExecution?: AtomicExecutionPort
 }
-
 export interface ManagedEntityServiceArgs<T> {
   actor: ActorMetadata
   repositories: SchoolRepositories
   config: ManagedEntityServiceConfig<T>
 }
 
-export interface ManagedEntityWriteOptions {
-  moduleChecked?: boolean
-}
-
 export class ManagedEntityService<T> {
   private readonly actor: ActorMetadata
   private readonly repositories: SchoolRepositories
   private readonly config: ManagedEntityServiceConfig<T>
-  private boundRepository?: BaseRepositoryInterface<T>
+  private readonly access: ReturnType<typeof createAccessPolicies>
 
   constructor(args: ManagedEntityServiceArgs<T>) {
     this.actor = args.actor
     this.repositories = args.repositories
     this.config = args.config
+    this.access = createAccessPolicies({ actor: args.actor, repositories: args.repositories })
   }
 
-  private get scopedRepository(): BaseRepositoryInterface<T> {
-    return this.boundRepository ??= this.config.repository.forSchool?.(this.actor.schoolId) ?? this.config.repository
+  private async readRepository(): Promise<BaseRepositoryInterface<T>> {
+    const { resource, read } = this.config.authorization
+    return this.config.repository.forAccess(await this.access.scope(read, resource))
   }
 
   async findById(id: string): Promise<T | undefined> {
-    await this.config.read.checkModule(this.actor)
-    const entity = await this.scopedRepository.findById(id)
-    if (!entity)
-      return undefined
-    await this.ensureEntityTenant(entity)
-    await this.config.read.checkAccess(this.actor, [entity], this.repositories)
-    return entity
+    return (await this.readRepository()).findById(id)
   }
-
   async findByIds(ids: readonly string[]): Promise<T[]> {
-    await this.config.read.checkModule(this.actor)
-    const entities = await this.scopedRepository.findByIds(ids)
-    await this.ensureEntitiesTenant(entities)
-    await this.config.read.checkAccess(this.actor, entities, this.repositories)
-    return entities
+    return (await this.readRepository()).findByIds(ids)
   }
-
   async findOne(options?: QueryOptions<T>): Promise<T | undefined> {
     this.ensureFilterTenant(options)
-    await this.config.read.checkModule(this.actor)
-    const entity = await this.scopedRepository.findOne(await this.scopeQuery(options))
-    if (!entity)
-      return undefined
-    await this.ensureEntityTenant(entity)
-    await this.config.read.checkAccess(this.actor, [entity], this.repositories)
-    return entity
+    return (await this.readRepository()).findOne(options)
   }
-
   async list(options?: QueryOptions<T>): Promise<T[]> {
     this.ensureFilterTenant(options)
-    await this.config.read.checkModule(this.actor)
-    const entities = await this.scopedRepository.list(await this.scopeQuery(options))
-    await this.ensureEntitiesTenant(entities)
-    await this.config.read.checkAccess(this.actor, entities, this.repositories)
-    return entities
+    return (await this.readRepository()).list(options)
   }
-
   async count(filter?: Filter<T>): Promise<number> {
     this.ensureFilterTenant(filter)
-    await this.config.read.checkModule(this.actor)
-
-    const scopedFilter = await this.scopeQuery(filter)
-    // Elevation does not remove tenant boundaries. The SQL shortcut is safe
-    // only when the configuration supplies an independent tenant predicate.
-    if ((this.config.repository.forSchool || this.config.tenant.scopeFilter) && canCountWithoutRowAccess(this.actor)) {
-      return this.scopedRepository.count(scopedFilter)
-    }
-
-    const entities = await this.scopedRepository.list(scopedFilter)
-    await this.ensureEntitiesTenant(entities)
-    await this.config.read.checkAccess(this.actor, entities, this.repositories)
-    return entities.length
+    return (await this.readRepository()).count(filter)
   }
 
-  async save(entity: T, options: ManagedEntityWriteOptions = {}): Promise<void> {
-    return this.executeWrite(async () => {
-      await this.ensureEntityTenant(entity)
-      if (!options.moduleChecked)
-        await this.config.write.checkModule(this.actor)
-
+  async save(entity: T): Promise<void> {
+    await this.executeWrite(async () => {
       const id = getEntityId(entity)
-      const existing = id ? await this.config.repository.findById(id) : undefined
-      if (existing)
-        await this.ensureEntityTenant(existing)
-
-      await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
+      const existing = id ? await this.tenantRepository().findById(id) : undefined
+      const repository = await this.authorizeSave(entity, existing)
       await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
-      await this.scopedRepository.save(entity)
+      await repository.save(entity)
       await this.config.hooks?.postSave?.(entity, existing, this.repositories, this.actor)
     })
   }
 
-  async batchSave(entities: T[], options: ManagedEntityWriteOptions = {}): Promise<string[]> {
+  async batchSave(entities: T[]): Promise<string[]> {
     return this.executeWrite(async () => {
-      await this.ensureEntitiesTenant(entities)
-      if (!options.moduleChecked)
-        await this.config.write.checkModule(this.actor)
-
-      const ids = entities.map(getEntityId).filter((id): id is string => id !== undefined)
-      const existingEntities = ids.length > 0 ? await this.config.repository.findByIds(ids) : []
-      await this.ensureEntitiesTenant(existingEntities)
-      const existingById = new Map(existingEntities.map(entity => [getEntityId(entity), entity]))
-
+      const ids = entities.map(getEntityId)
+      if (ids.some(id => !id) || new Set(ids).size !== ids.length) this.deny()
+      const existing = await this.tenantRepository().findByIds(ids as string[])
+      const existingById = new Map(existing.map(entity => [getEntityId(entity), entity]))
+      const authorized: BaseRepositoryInterface<T>[] = []
       for (const entity of entities) {
-        const id = getEntityId(entity)
-        const existing = id ? existingById.get(id) : undefined
-        await this.config.write.authorizeSave(this.actor, entity, existing, this.repositories)
-        await this.config.gates?.preSave?.(entity, existing, this.repositories, this.actor)
+        const before = existingById.get(getEntityId(entity))
+        authorized.push(await this.authorizeSave(entity, before))
+        await this.config.gates?.preSave?.(entity, before, this.repositories, this.actor)
       }
-
-      const savedIds = await this.scopedRepository.batchSave(entities)
-
-      for (const entity of entities) {
-        const id = getEntityId(entity)
-        const existing = id ? existingById.get(id) : undefined
-        await this.config.hooks?.postSave?.(entity, existing, this.repositories, this.actor)
+      for (const [index, entity] of entities.entries()) {
+        await authorized[index]!.save(entity)
+        await this.config.hooks?.postSave?.(entity, existingById.get(getEntityId(entity)), this.repositories, this.actor)
       }
-
-      return savedIds
+      return ids as string[]
     })
   }
 
-  async delete(id: string, options: ManagedEntityWriteOptions = {}): Promise<void> {
-    return this.executeWrite(async () => {
-      if (!options.moduleChecked)
-        await this.config.write.checkModule(this.actor)
-      const entity = await this.config.repository.findById(id)
-      if (!entity)
-        return
-
-      await this.ensureEntityTenant(entity)
-      await this.config.write.authorizeDelete(this.actor, entity, this.repositories)
-      await this.config.gates?.preDelete?.(entity, this.repositories)
-      await this.scopedRepository.delete(id)
-      await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
-    })
+  async delete(id: string): Promise<void> {
+    await this.batchDelete([id])
   }
 
-  async batchDelete(ids: string[], options: ManagedEntityWriteOptions = {}): Promise<void> {
-    return this.executeWrite(async () => {
-      if (!options.moduleChecked)
-        await this.config.write.checkModule(this.actor)
-      const entities = await this.config.repository.findByIds(ids)
-      if (entities.length === 0)
-        return
-
-      await this.ensureEntitiesTenant(entities)
+  async batchDelete(ids: string[]): Promise<void> {
+    await this.executeWrite(async () => {
+      const uniqueIds = [...new Set(ids)]
+      if (!uniqueIds.length) return
+      const { resource, write, delete: deleteAction } = this.config.authorization
+      const action = deleteAction ?? (typeof write === 'function' ? undefined : write)
+      if (!action) this.deny()
+      const scope = await this.access.scope(action, resource, 'write')
+      const repository = this.config.repository.forAccess(scope)
+      const entities = await this.tenantRepository().findByIds(uniqueIds)
+      if (entities.length !== uniqueIds.length) this.deny()
       for (const entity of entities) {
-        await this.config.write.authorizeDelete(this.actor, entity, this.repositories)
+        await repository.assertAccess(entity)
         await this.config.gates?.preDelete?.(entity, this.repositories)
       }
-
-      const existingIds = entities.map(getEntityId).filter((id): id is string => id !== undefined)
-      await this.scopedRepository.batchDelete(existingIds)
-
-      for (const entity of entities) {
-        await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
-      }
+      await repository.batchDelete(uniqueIds)
+      for (const entity of entities) await this.config.hooks?.postDelete?.(entity, this.repositories, this.actor)
     })
   }
 
-  private async executeWrite<R>(operation: () => Promise<R>): Promise<R> {
-    if (this.config.atomicExecution)
-      return this.config.atomicExecution.execute(operation)
-    return operation()
+  private async authorizeSave(entity: T, existing: T | undefined): Promise<BaseRepositoryInterface<T>> {
+    await this.ensureEntityTenant(entity)
+    if (existing) await this.ensureEntityTenant(existing)
+    const { resource, write } = this.config.authorization
+    const action = typeof write === 'function' ? write(entity, existing) : write
+    const scope = await this.access.assertSave(action, resource, entity as CoreEntityMap[CoreEntityKey], existing as CoreEntityMap[CoreEntityKey] | undefined)
+    return this.config.repository.forAccess(scope)
   }
 
+  private tenantRepository(): BaseRepositoryInterface<T> {
+    if (!this.config.repository.forSchool) return this.deny()
+    return this.config.repository.forSchool(this.actor.schoolId)
+  }
+  private async executeWrite<R>(operation: () => Promise<R>): Promise<R> {
+    if (!this.config.atomicExecution) throw new Error('Entity writes require atomic execution')
+    return this.config.atomicExecution.execute(operation)
+  }
   private ensureFilterTenant(filter: Filter<T> | QueryOptions<T> | undefined): void {
     const schoolId = this.config.tenant.resolveFromFilter?.(filter)
-    if (schoolId && schoolId !== this.actor.schoolId)
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    if (schoolId && schoolId !== this.actor.schoolId) this.deny()
   }
-
-  private async scopeQuery(options?: QueryOptions<T>): Promise<QueryOptions<T> | undefined> {
-    if (this.config.repository.forSchool || !this.config.tenant.scopeFilter)
-      return options
-    const scope = await this.config.tenant.scopeFilter(this.actor.schoolId, this.repositories)
-    const { $limit, $offset, $orderBy, ...filter } = options ?? {}
-    return {
-      $and: [scope, filter as Filter<T>],
-      ...($limit !== undefined ? { $limit } : {}),
-      ...($offset !== undefined ? { $offset } : {}),
-      ...($orderBy !== undefined ? { $orderBy } : {}),
-    } as QueryOptions<T>
+  private async ensureEntityTenant(entity: T): Promise<void> {
+    if (await this.config.tenant.resolve(entity, this.repositories) !== this.actor.schoolId) this.deny()
   }
-
-  private async ensureEntitiesTenant(entities: readonly T[]): Promise<void> {
-    if (entities.length === 0) {
-      return
-    }
-
-    const repositories = withTenantLookupCache(this.repositories)
-    for (const entity of entities) {
-      await this.ensureEntityTenant(entity, repositories)
-    }
-  }
-
-  private async ensureEntityTenant(
-    entity: T,
-    repositories: SchoolRepositories = this.repositories,
-  ): Promise<void> {
-    const schoolId = await this.config.tenant.resolve(entity, repositories)
-    if (!schoolId || schoolId !== this.actor.schoolId)
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
+  private deny(): never { throw new AuthorizationError(AuthorizationErrorCode.Forbidden) }
 }
 
-export function getEntityId(entity: unknown): string | undefined {
-  const id = (entity as { id?: unknown } | undefined)?.id
-  return typeof id === 'string' ? id : undefined
-}
-
-function canCountWithoutRowAccess(actor: ActorMetadata): boolean {
-  if (actor.kind === 'system') {
-    return true
-  }
-  return actor.kind === 'staff' && actor.effectiveGrants.isElevated
+function getEntityId(entity: unknown): string | undefined {
+  return entity && typeof entity === 'object' && 'id' in entity && typeof entity.id === 'string' ? entity.id : undefined
 }

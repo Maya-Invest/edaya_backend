@@ -1,35 +1,21 @@
-import type { AuthorizationPolicy, OperationRef } from '@edaya/authorization'
-import type { StudentFee } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { FinanceOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, FeeStatus } from '@edaya/core'
-import { anyOperationModule, authorizeDeleteWithOperation, authorizeSaveWithOperation, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { dateTime } from '../../entity-config/helper-utils'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { ActionSelection } from '@edaya/authorization';
+import type { StudentFee } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+
+import { BusinessRuleViolationError, FeeStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { dateTime } from '../../entity-config/helper-utils';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/finances/student-fee.ts (PR3)
-export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, policy, atomicExecution }) =>
+export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.studentFees,
     tenant: studentFeeTenant(),
-    read: read(
-      operationModule(FinanceOperations.paymentsRead),
-      readByIds((actor, ids) => policy.checkStudentFeeAccess(actor, ids)),
-    ),
-    write: write(
-      anyOperationModule([FinanceOperations.paymentRecord, FinanceOperations.paymentCancel]),
-      authorizeSaveWithOperation(
-        resolveStudentFeeWriteOperation,
-        async entity => ({ studentId: entity.studentId }),
-        authorizeStudentFeeResource(policy),
-      ),
-      authorizeDeleteWithOperation(
-        FinanceOperations.paymentCancel,
-        async entity => ({ studentId: entity.studentId }),
-        authorizeStudentFeeDeleteResource(policy),
-      ),
-    ),
+    authorization: { resource: 'studentFees', read: [Permission.PAYMENT_READ], write: studentFeeWriteAction, delete: Permission.PAYMENT_CANCEL },
+    
     gates: {
       preSave: validateStudentFeeSave,
       preDelete: validateStudentFeeDelete,
@@ -37,30 +23,14 @@ export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories
     atomicExecution,
   })
 
-function resolveStudentFeeWriteOperation(
+function studentFeeWriteAction(
   entity: StudentFee,
   existing: StudentFee | undefined,
-): OperationRef {
+): ActionSelection {
   if (existing?.status !== FeeStatus.Cancelled && entity.status === FeeStatus.Cancelled) {
-    return FinanceOperations.paymentCancel
+    return Permission.PAYMENT_CANCEL
   }
-  return FinanceOperations.paymentRecord
-}
-
-function authorizeStudentFeeResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<StudentFee>['authorizeSave'] {
-  return async (actor, entity) => {
-    await policy.checkStudentAccess(actor, [entity.studentId])
-  }
-}
-
-function authorizeStudentFeeDeleteResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<StudentFee>['authorizeDelete'] {
-  return async (actor, entity) => {
-    await policy.checkStudentFeeAccess(actor, [entity.id])
-  }
+  return Permission.PAYMENT_RECORD
 }
 
 function studentFeeTenant(): EntityTenantResolver<StudentFee> {

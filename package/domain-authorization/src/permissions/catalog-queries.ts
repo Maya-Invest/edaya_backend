@@ -13,3 +13,10 @@ export function listTenantWidePermissions(): readonly Permission[] {
     permission => permissionDefinitions[permission].scope === undefined,
   )
 }
+
+export function listPermissionCatalog() {
+  return Object.freeze(Object.values(permissionDefinitions))
+}
+export function getPermissionCatalogEntry(permission: Permission) {
+  return permissionDefinitions[permission]
+}

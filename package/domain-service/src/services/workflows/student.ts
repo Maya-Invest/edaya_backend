@@ -1,47 +1,14 @@
-import type {
-  ClassGroup,
-  GuardianInput,
-  GuardianStudentLink as GuardianStudentLinkType,
-  StudentHealthProfile,
-  StudentHealthProfileInput,
-  StudentInput,
-  StudentNote,
-  StudentNoteInput,
-} from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { StudentWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import {
-  CommunicationsOperations,
-  denyResourceAccess,
-  EnrollmentOperations,
-  GuardianOperations,
-  resolveAuditActorId,
-} from '@edaya/authorization'
-import {
-  AccountInvitationKind,
-  BusinessRuleViolationError,
-  EnrollmentEndReason,
-  Guardian,
-  GuardianStudentLink,
-  ProgressionDecision,
-  Student,
-  StudentClassEnrollment,
-  StudentClassEnrollmentStatus,
-  StudentHealthProfile as StudentHealthProfileEntity,
-  StudentNote as StudentNoteEntity,
-  StudentStatus,
-} from '@edaya/core'
-import {
-  resolveStudentInvitationEmail,
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildGuardianRecipientProfile,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import { Permission } from '@edaya/core';
+import type { ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { StudentWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
+import { AccountInvitationKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core';
+import { resolveStudentInvitationEmail, scheduleAccountInvitationIfEligible } from '../../capabilities/invitations';
+import { buildGuardianRecipientProfile, scheduleNotificationRecipientUpsert } from '../../capabilities/notifications';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface EnrollStudentInput {
   id: string
@@ -210,9 +177,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.ENROLLMENT_CREATE, 'students', [student.id], 'write')
+    await this.baseService.access.assertResources(Permission.ENROLLMENT_CREATE, 'classGroups', [classGroup.id], 'write')
 
     const existingEnrollments = await this.repositories.enrollments.list({ studentId })
     const activeEnrollment = existingEnrollments.find(
@@ -235,7 +202,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       enrollmentIndex: nextEnrollmentIndex,
       createdAt,
     })
-    await this.baseService.entities.enrollments.save(enrollment, { moduleChecked: true })
+    await this.baseService.entities.enrollments.save(enrollment)
     return enrollment
   }
 
@@ -263,9 +230,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(guardian.schoolId)
-    await operationModule(GuardianOperations.update)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(this.baseService.actor, [guardian.id])
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    
+    await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'guardians', [guardian.id], 'write')
+    await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'students', [student.id], 'write')
 
     await this.requireStudentEnrolledInSchool(student.id, guardian.schoolId)
 
@@ -287,7 +254,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       notes,
       createdAt: existing?.createdAt ?? createdAt,
     })
-    await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
+    await this.baseService.entities.guardianLinks.save(link)
     return link
   }
 
@@ -328,8 +295,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.entities.enrollments.save(completed, { moduleChecked: true })
-      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(completed)
+      await this.baseService.entities.enrollments.save(successor)
       return successor
     })
   }
@@ -355,8 +322,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroup: nextClassGroup,
         enrolledAt: effectiveAt,
       })
-      await this.baseService.entities.enrollments.save(transferred, { moduleChecked: true })
-      await this.baseService.entities.enrollments.save(successor, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(transferred)
+      await this.baseService.entities.enrollments.save(successor)
       return successor
     })
   }
@@ -397,8 +364,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         enrollmentDate: student.enrollmentDate,
         createdAt: student.createdAt,
       })
-      await this.baseService.entities.enrollments.save(graduatedEnrollment, { moduleChecked: true })
-      await this.baseService.entities.students.save(graduatedStudent, { moduleChecked: true })
+      await this.baseService.entities.enrollments.save(graduatedEnrollment)
+      await this.baseService.entities.students.save(graduatedStudent)
       return graduatedEnrollment
     })
   }
@@ -489,7 +456,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
 
     if (isSelfGuardian) {
-      operationModule(CommunicationsOperations.read)(actor)
+      
       const guardian = new Guardian({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -502,7 +469,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         hasAccess: existing.hasAccess,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.guardians.save(guardian, { moduleChecked: true })
+      await this.baseService.entities.guardians.save(guardian)
       const links = await this.repositories.guardianLinks.list({ guardianId: guardian.id })
       scheduleNotificationRecipientUpsert(
         this.baseService,
@@ -511,8 +478,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       return guardian
     }
 
-    await operationModule(GuardianOperations.update)(actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
+    
+    await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'guardians', [guardianId], 'write')
     const guardian = new Guardian({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -544,8 +511,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     const isSelfGuardian = actor.kind === 'guardian' && actor.actorId === guardianId
 
     if (isSelfGuardian) {
-      operationModule(CommunicationsOperations.read)(actor)
-      await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
+      
+      await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'students', [studentId], 'write')
       const link = new GuardianStudentLink({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -563,7 +530,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         notes: existing.notes,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.guardianLinks.save(link, { moduleChecked: true })
+      await this.baseService.entities.guardianLinks.save(link)
       const guardian = await this.requireEntity(this.baseService.entities.guardians, guardianId)
       const links = await this.repositories.guardianLinks.list({ guardianId })
       scheduleNotificationRecipientUpsert(
@@ -573,9 +540,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       return link
     }
 
-    await operationModule(GuardianOperations.update)(actor)
-    await this.baseService.authorizationPolicy.checkGuardianAccess(actor, [guardianId])
-    await this.baseService.authorizationPolicy.checkStudentAccess(actor, [studentId])
+    
+    await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'guardians', [guardianId], 'write')
+    await this.baseService.access.assertResources(Permission.PARENT_UPDATE, 'students', [studentId], 'write')
     const link = new GuardianStudentLink({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -616,9 +583,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(EnrollmentOperations.create)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.ENROLLMENT_UPDATE, 'students', [student.id], 'write')
+    await this.baseService.access.assertResources(Permission.ENROLLMENT_UPDATE, 'classGroups', [classGroup.id], 'write')
     return enrollment
   }
 
@@ -644,7 +611,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     if (nextClassGroup.schoolId !== sourceClassGroup.schoolId) {
       denyResourceAccess()
     }
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [nextClassGroup.id])
+    await this.baseService.access.assertResources(Permission.ENROLLMENT_UPDATE, 'classGroups', [nextClassGroup.id], 'write')
     return nextClassGroup
   }
 
@@ -705,7 +672,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     for (const enrollment of enrollments) {
       const classGroup = await this.repositories.classGroups.findById(enrollment.classGroupId)
       if (classGroup?.schoolId === schoolId) {
-        await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+        await this.baseService.access.assertResources(Permission.QUERY_STUDENT_DETAIL_READ, 'classGroups', [classGroup.id], 'read')
         return
       }
     }

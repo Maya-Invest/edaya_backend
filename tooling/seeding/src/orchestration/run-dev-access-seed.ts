@@ -6,7 +6,7 @@ import type {
 import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
-import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromTemplatePermissions } from '@edaya/authorization'
+import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromPreset } from '@edaya/authorization'
 import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
@@ -31,7 +31,7 @@ async function seedStaffPermissionAssignments(
       continue
     }
 
-    const rows = permissionRowsFromTemplatePermissions(
+    const rows = permissionRowsFromPreset(
       assignment.staffId,
       assignment.schoolId,
       assignment.academicYearId,
@@ -66,7 +66,7 @@ function countStaffPermissionAssignments(
       continue
     }
 
-    const rows = permissionRowsFromTemplatePermissions(
+    const rows = permissionRowsFromPreset(
       assignment.staffId,
       assignment.schoolId,
       assignment.academicYearId,

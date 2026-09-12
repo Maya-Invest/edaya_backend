@@ -1,36 +1,15 @@
-import type { AttendanceAnchor, AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput } from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { SchedulingWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { AttendanceOperations, denyResourceAccess, resolveAuditActorId, SchedulingOperations } from '@edaya/authorization'
-import {
-  ActivitySession,
-  Attendance,
-  AttendanceJustificationStatus,
-  AttendanceMode,
-  AttendanceRecord,
-  BusinessRuleViolationError,
-  CalendarEvent,
-  calendarEventBlocksTimetable,
-  CalendarEventScopeKind,
-  civilDateKey,
-  DayOfWeek,
-  isSameDate,
-  LessonSession,
-  normalizeDate,
-  OccurrenceStatus,
-  Schedule,
-  ScheduleKind,
-  StudentClassEnrollmentStatus,
-} from '@edaya/core'
-import {
-  ATTENDANCE_RECORDED_EVENT_KEY,
-  runWorkflowNotifications,
-} from '../../capabilities/notifications'
-import { findAttendanceRecordByAnchor } from '../entities/config/scheduling/attendance-record'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
-import { assertNoSessionConflict } from './schedule-conflicts'
+import { Permission } from '@edaya/core';
+import type { AttendanceAnchor, AttendanceStatus, CalendarEventInput, ClassGroup, ScheduleInput } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { SchedulingWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
+import { ActivitySession, Attendance, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, BusinessRuleViolationError, CalendarEvent, calendarEventBlocksTimetable, CalendarEventScopeKind, civilDateKey, DayOfWeek, isSameDate, LessonSession, normalizeDate, OccurrenceStatus, Schedule, ScheduleKind, StudentClassEnrollmentStatus } from '@edaya/core';
+import { ATTENDANCE_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications';
+import { findAttendanceRecordByAnchor } from '../entities/config/scheduling/attendance-record';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
+import { assertNoSessionConflict } from './schedule-conflicts';
 
 function nextUtcCalendarDate(date: Date): Date {
   const nextDate = new Date(date)
@@ -205,7 +184,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
                 displayLabel,
                 classSubjectId,
               })
-              await this.baseService.entities.lessonSessions.save(updated, { moduleChecked: true })
+              await this.baseService.entities.lessonSessions.save(updated)
               materialized.push(updated)
             }
             else if (!existing) {
@@ -221,7 +200,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
                 endsAt,
                 displayLabel,
               })
-              await this.baseService.entities.lessonSessions.save(lessonSession, { moduleChecked: true })
+              await this.baseService.entities.lessonSessions.save(lessonSession)
               materialized.push(lessonSession)
             }
           }
@@ -276,7 +255,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
                 displayLabel,
                 activityId,
               })
-              await this.baseService.entities.activitySessions.save(updated, { moduleChecked: true })
+              await this.baseService.entities.activitySessions.save(updated)
               materialized.push(updated)
             }
             else if (!existing) {
@@ -292,7 +271,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
                 endsAt,
                 displayLabel,
               })
-              await this.baseService.entities.activitySessions.save(activitySession, { moduleChecked: true })
+              await this.baseService.entities.activitySessions.save(activitySession)
               materialized.push(activitySession)
             }
           }
@@ -628,7 +607,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing?.createdAt ?? createdAt,
       updatedAt,
     })
-    await this.baseService.entities.attendance.save(record, { moduleChecked: true })
+    await this.baseService.entities.attendance.save(record)
     return record
   }
 
@@ -656,7 +635,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       return
     }
     const updated = lessonSession.copyWith({ status: OccurrenceStatus.Completed })
-    await this.baseService.entities.lessonSessions.save(updated, { moduleChecked: true })
+    await this.baseService.entities.lessonSessions.save(updated)
   }
 
   private requireDailyAttendanceMode(classGroup: ClassGroup): void {
@@ -690,7 +669,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       displayLabel: 'Daily attendance',
       createdAt,
     })
-    await this.baseService.entities.attendances.save(attendance, { moduleChecked: true })
+    await this.baseService.entities.attendances.save(attendance)
     return attendance
   }
 
@@ -900,32 +879,27 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId?: string
   }): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(
-      AttendanceOperations.record,
-      lessonSession
-        ? { classSubjectId: lessonSession.classSubjectId, classGroupId: classGroup.id }
-        : { classGroupId: classGroup.id },
-    )(this.baseService.actor)
+    
     if (classGroup.id) {
-      await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+      await this.baseService.access.assertResources(Permission.ATTENDANCE_RECORD, 'classGroups', [classGroup.id], 'write')
     }
     if (lessonSession) {
-      await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [lessonSession.id])
+      await this.baseService.access.assertResources(Permission.ATTENDANCE_RECORD, 'lessonSessions', [lessonSession.id], 'write')
     }
     if (studentId) {
-      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [studentId])
+      await this.baseService.access.assertResources(Permission.ATTENDANCE_RECORD, 'students', [studentId], 'write')
     }
   }
 
   private async authorizeTimetableUpdate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(SchedulingOperations.timetableManage, { classGroupId: classGroup.id })(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.TIMETABLE_UPDATE, 'classGroups', [classGroup.id], 'write')
   }
 
   private async authorizeTimetableCreate(classGroup: ClassGroup): Promise<void> {
     this.checkActorSchool(classGroup.schoolId)
-    await operationModule(SchedulingOperations.timetableCreate, { classGroupId: classGroup.id })(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [classGroup.id])
+    
+    await this.baseService.access.assertResources(Permission.TIMETABLE_CREATE, 'classGroups', [classGroup.id], 'write')
   }
 }

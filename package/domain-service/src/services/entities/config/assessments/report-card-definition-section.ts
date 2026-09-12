@@ -1,19 +1,20 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { ReportCardDefinitionSection } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AcademicsOperations, denyResourceAccess, ReportCardOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, ReportCardDefinitionSectionKind } from '@edaya/core'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { ReportCardDefinitionSection } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, ReportCardDefinitionSectionKind } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/assessments/report-card-definition-section.ts (PR3)
-export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDefinitionSection> = ({ repositories, policy, atomicExecution }) =>
+export const reportCardDefinitionSectionConfig: EntityConfigFactory<ReportCardDefinitionSection> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.sections,
     tenant: reportCardSectionTenant(),
-    read: read(operationModule(ReportCardOperations.read), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.examConfigure), authorizeReportCardSection(policy), authorizeReportCardSectionDelete(policy)),
+    authorization: { resource: 'sections', read: [Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: [Permission.EXAM_CONFIG_CONFIGURE] },
+    
     gates: {
       preSave: validateReportCardSectionSave,
       preDelete: validateReportCardSectionDelete,
@@ -59,10 +60,6 @@ async function validateReportCardSectionSave(
   await requireAcyclicSectionParent(section.id, parent, repositories)
 }
 
-export function authorizeReportCardSection(_policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardDefinitionSection>['authorizeSave'] {
-  return noopSaveAccess
-}
-
 async function requireAcyclicSectionParent(
   sectionId: string,
   parent: ReportCardDefinitionSection,
@@ -80,10 +77,6 @@ async function requireAcyclicSectionParent(
       ? await repositories.sections.findById(candidate.parentSectionId)
       : undefined
   }
-}
-
-export function authorizeReportCardSectionDelete(_policy: AuthorizationPolicy): EntityWriteAuthorization<ReportCardDefinitionSection>['authorizeDelete'] {
-  return noopDeleteAccess
 }
 
 async function validateReportCardSectionDelete(

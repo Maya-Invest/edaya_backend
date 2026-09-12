@@ -1,17 +1,12 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { OnboardingSchoolApplication } from './onboarding-application'
-import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { randomUUID } from 'node:crypto'
-import { AccessControlOperations, AuthorizationError, AuthorizationErrorCode, createBootstrapStaffActorMetadata, operationModule, permissionRowsFromTemplatePermissions } from '@edaya/authorization'
-import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
-import {
-  getStaffInvitePermissionPreset,
-} from './default-access-roles'
-import {
-  ACCESS_ROLE_ID_BY_INVITE_ROLE,
-  isOnboardingStaffInviteRoleKey,
-
-} from './staff-invite-roles'
+import { Permission } from '@edaya/core';
+import type { ActorMetadata } from '@edaya/authorization';
+import type { OnboardingSchoolApplication } from './onboarding-application';
+import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles';
+import { randomUUID } from 'node:crypto';
+import { AuthorizationError, AuthorizationErrorCode, permissionRowsFromPreset } from '@edaya/authorization';
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from '@edaya/core';
+import { getStaffInvitePermissionPreset } from './default-access-roles';
+import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles';
 
 export interface InviteStaffMemberInput {
   email: string
@@ -109,17 +104,7 @@ async function assertCanManageOnboardingInvites(
     return
   }
 
-  // Onboarding owner before access roles are assigned (same pattern as apply-structure-template).
-  const permissionAssignments = await application.repositories.staffPermissionAssignments.list({
-    schoolId: actor.schoolId,
-    staffId: staff.id,
-    status: 'active',
-  })
-  if (permissionAssignments.length === 0) {
-    return
-  }
-
-  await operationModule(AccessControlOperations.assign)(actor)
+  await application.forActor(actor).baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
 }
 
 async function rejectOwnerEmailInvites(
@@ -157,14 +142,6 @@ async function rejectOwnerEmailInvites(
     }
   }
 }
-function createOnboardingInviteActor(actor: Extract<ActorMetadata, { kind: 'staff' }>): ActorMetadata {
-  return createBootstrapStaffActorMetadata({
-    schoolId: actor.schoolId,
-    requestId: actor.requestId ?? randomUUID(),
-    staffMemberId: actor.staffMemberId,
-    subjectId: actor.subjectId,
-  })
-}
 
 export async function inviteStaffMembers(
   application: OnboardingSchoolApplication,
@@ -192,8 +169,7 @@ export async function inviteStaffMembers(
   }
 
   const schoolId = actor.schoolId
-  const elevatedActor = createOnboardingInviteActor(actor)
-  const service = application.forActor(elevatedActor)
+  const service = application.forActor(actor)
 
   const academicYears = await application.repositories.academicYears.list({ schoolId })
   const academicYear = academicYears.find(year => year.status === 'published') ?? academicYears[0]
@@ -228,9 +204,9 @@ export async function inviteStaffMembers(
         isActive: true,
         accountKind: 'human',
         profileRole: invite.role,
-      }), { moduleChecked: true })
+      }))
 
-      const permissionRows = permissionRowsFromTemplatePermissions(
+      const permissionRows = permissionRowsFromPreset(
         staffId,
         schoolId,
         academicYear.id,
@@ -241,7 +217,7 @@ export async function inviteStaffMembers(
           id: randomUUID(),
           ...row,
           status: 'active',
-        }), { moduleChecked: true }),
+        })),
       ))
       permissionAssignmentsEnsured += permissionRows.length
 

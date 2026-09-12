@@ -1,21 +1,12 @@
-import type {
-  DisciplinaryAction,
-  DisciplinaryActionInput,
-  Incident,
-  IncidentInput,
-  IncidentInvolvementRole,
-} from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { BehaviorWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { denyResourceAccess, DisciplineOperations, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, DisciplinaryAction as DisciplinaryActionEntity, DisciplinaryActionKind, Incident as IncidentEntity, IncidentStatus, Permission, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement } from '@edaya/core'
-import {
-  INCIDENT_RECORDED_EVENT_KEY,
-  runWorkflowNotifications,
-} from '../../capabilities/notifications'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import type { DisciplinaryAction, DisciplinaryActionInput, Incident, IncidentInput, IncidentInvolvementRole } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { BehaviorWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
+import { BusinessRuleViolationError, DisciplinaryAction as DisciplinaryActionEntity, DisciplinaryActionKind, Incident as IncidentEntity, IncidentStatus, Permission, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement } from '@edaya/core';
+import { INCIDENT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface AddStudentInvolvementInput {
   id: string
@@ -312,7 +303,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       throw new BusinessRuleViolationError('STUDENT_ALREADY_LINKED_TO_INCIDENT', `Student ${studentId} is already linked to incident ${incidentId}`)
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
-    await this.baseService.entities.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
+    await this.baseService.entities.studentIncidentInvolvements.save(involvement)
     return involvement
   }
 
@@ -336,11 +327,11 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
         notes: notes ?? existing.notes,
         createdAt: existing.createdAt,
       })
-      await this.baseService.entities.studentIncidentInvolvements.save(updated, { moduleChecked: true })
+      await this.baseService.entities.studentIncidentInvolvements.save(updated)
       return { involvement: updated, created: false }
     }
     const involvement = new StudentIncidentInvolvement({ id, incidentId, studentId, role, notes, createdAt })
-    await this.baseService.entities.studentIncidentInvolvements.save(involvement, { moduleChecked: true })
+    await this.baseService.entities.studentIncidentInvolvements.save(involvement)
     return { involvement, created: true }
   }
 
@@ -368,7 +359,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       notes,
       createdAt,
     })
-    await this.baseService.entities.studentDisciplinaryActions.save(applied, { moduleChecked: true })
+    await this.baseService.entities.studentDisciplinaryActions.save(applied)
     return applied
   }
 
@@ -432,20 +423,16 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
 
-    await operationModule(
-      permission === Permission.DISCIPLINE_VALIDATE
-        ? DisciplineOperations.validate
-        : DisciplineOperations.create,
-    )(this.baseService.actor)
+    
 
     if (resource.classGroupId) {
-      await this.baseService.authorizationPolicy.checkClassGroupAccess(this.baseService.actor, [resource.classGroupId])
+      await this.baseService.access.assertResources(permission, 'classGroups', [resource.classGroupId], 'write')
     }
     else if (resource.lessonSessionId) {
-      await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [resource.lessonSessionId])
+      await this.baseService.access.assertResources(permission, 'lessonSessions', [resource.lessonSessionId], 'write')
     }
     if (resource.studentId) {
-      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [resource.studentId])
+      await this.baseService.access.assertResources(permission, 'students', [resource.studentId], 'write')
     }
   }
 

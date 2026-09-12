@@ -1,40 +1,14 @@
-import type {
-  Assessment,
-  AssessmentInput,
-  AssessmentResult,
-  AssessmentResultInput,
-  GradeScale,
-  GradeScaleInput,
-  ReportCardAggregation,
-  ReportCardDefinitionInput,
-  ReportCardDefinitionSection,
-  ReportCardDefinitionSectionInput,
-  StudentClassEnrollment,
-} from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { denyResourceAccess, ReportCardOperations } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
-import {
-  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-  REPORT_CARD_PUBLISHED_EVENT_KEY,
-  runWorkflowNotifications,
-} from '../../capabilities/notifications'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
-import {
-  buildGroupResultFromChildren,
-  buildSubjectAverageFromAssessments,
-  buildSubjectAverageFromPriorReportCards,
-  childReportCardDefinitionSections,
-  dedupeReportCardDefinitionSections,
-  evaluateAggregationPublishReadiness,
-  listAssessmentResultsForStudentAndPeriods,
-  listPublishedPeriodIds,
-  loadPriorReportCardResults,
-  rootReportCardDefinitionSections,
-} from './report-card-aggregation'
+import { Permission } from '@edaya/core';
+import type { Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, GradeScale, GradeScaleInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, StudentClassEnrollment } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess } from '@edaya/authorization';
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core';
+import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
+import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, evaluateAggregationPublishReadiness, listAssessmentResultsForStudentAndPeriods, listPublishedPeriodIds, loadPriorReportCardResults, rootReportCardDefinitionSections } from './report-card-aggregation';
 
 export interface PublishReportCardResultInput {
   id: string
@@ -149,12 +123,12 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await operationModule(ReportCardOperations.comment)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+    
+    await this.baseService.access.assertResources(Permission.REPORT_CARD_GENERATE, 'students', [student.id], 'write')
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     await this.requireReportCardNotPublished(input.studentId, input.periodId)
     const reportCard = await this.buildReportCardResult(input)
-    await this.baseService.entities.results.save(reportCard, { moduleChecked: true })
+    await this.baseService.entities.results.save(reportCard)
     return reportCard
   }
 
@@ -162,8 +136,8 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const existing = await this.requireEntity(this.baseService.entities.results, input.id)
     const student = await this.requireStudent(existing.studentId)
     this.checkActorSchool(student.schoolId)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [existing.id])
+    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'students', [student.id], 'write')
+    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [existing.id], 'write')
 
     const updated = new ReportCardResult({
       id: existing.id,
@@ -185,16 +159,16 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       publishedAt: existing.publishedAt,
       aggregation: existing.aggregation,
     })
-    await this.baseService.entities.results.save(updated, { moduleChecked: true })
+    await this.baseService.entities.results.save(updated)
     return updated
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
-    await operationModule(ReportCardOperations.comment)(this.baseService.actor)
-    await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-    await this.baseService.authorizationPolicy.checkReportCardResultAccess(this.baseService.actor, [input.id])
+    
+    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'students', [student.id], 'write')
+    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [input.id], 'write')
     await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     return this.baseService.atomicExecution.execute(async () => {
       await this.requireReportCardNotPublished(input.studentId, input.periodId)
@@ -208,7 +182,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         status: ReportCardResultStatus.Published,
         publishedAt: input.publishedAt ?? new Date(),
       })
-      await this.baseService.entities.results.save(published, { moduleChecked: true })
+      await this.baseService.entities.results.save(published)
       await runWorkflowNotifications(this.baseService, REPORT_CARD_PUBLISHED_EVENT_KEY, {
         result: published,
         student,

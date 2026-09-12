@@ -1,68 +1,11 @@
-import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config'
-import type { ServiceArgs } from '../service-args'
-import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
-import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
-import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
-import { noOpAuthCacheInvalidationPort, withAuthCacheLifecycleHooks } from '../../integration/auth-cache-hooks'
-import {
-  academicPeriodConfig,
-  academicYearConfig,
-  accountInvitationConfig,
-  activityConfig,
-  activityEnrollmentConfig,
-  activitySessionConfig,
-  announcementConfig,
-  announcementTargetConfig,
-  assessmentConfig,
-  assessmentResultConfig,
-  attachmentConfig,
-  attendanceConfig,
-  attendanceRecordConfig,
-  calendarEventConfig,
-  classActivityEnrollmentConfig,
-  classGroupConfig,
-  classSubjectConfig,
-  classSubjectMatterConfig,
-  classSubjectProgressConfig,
-  disciplinaryActionConfig,
-  feeConfig,
-  gradeLevelConfig,
-  gradeLevelSubjectConfig,
-  gradeLevelSubjectMatterConfig,
-  gradeScaleConfig,
-  guardianConfig,
-  guardianStudentLinkConfig,
-  incidentConfig,
-  lessonSessionConfig,
-  messageDeliveryConfig,
-  paymentConfig,
-  periodDefinitionConfig,
-  reportCardDefinitionConfig,
-  reportCardDefinitionSectionConfig,
-  reportCardResultConfig,
-  resourceAssignmentConfig,
-  resourceConfig,
-  scheduleConfig,
-  schoolConfig,
-  schoolNotificationTemplatesConfig,
-  staffAssignmentConfig,
-  staffMemberConfig,
-  staffPermissionAssignmentConfig,
-  studentClassEnrollmentConfig,
-  studentConfig,
-  studentDisciplinaryActionConfig,
-  studentFeeConfig,
-  studentHealthProfileConfig,
-  studentIncidentInvolvementConfig,
-  studentNoteConfig,
-  subjectConfig,
-  subjectMatterConfig,
-  teacherAssignmentConfig,
-  teacherConfig,
-  teacherUnavailabilityConfig,
-} from '../entities/config'
-import { ManagedEntityService } from '../entities/managed-entity-service'
-import { CORE_ENTITY_KEYS } from './core-entity-map'
+import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config';
+import type { ServiceArgs } from '../service-args';
+import type { CoreEntityKey, CoreEntityMap } from './core-entity-map';
+import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry';
+import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service';
+import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, feeConfig, gradeLevelConfig, gradeLevelSubjectConfig, gradeLevelSubjectMatterConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentFeeConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config';
+import { ManagedEntityService } from '../entities/managed-entity-service';
+import { CORE_ENTITY_KEYS } from './core-entity-map';
 
 export type CoreEntityConfigFactoryMap = {
   readonly [Key in CoreEntityKey]: EntityConfigFactory<CoreEntityMap[Key]>
@@ -132,7 +75,6 @@ export const CORE_ENTITY_CONFIG_FACTORIES: CoreEntityConfigFactoryMap = {
 
 export function createCoreEntityServices(args: ServiceArgs): CoreEntityServices {
   const input: EntityConfigFactoryInput = {
-    policy: args.authorizationPolicy,
     atomicExecution: args.atomicExecution,
     repositories: args.repositories,
     notificationGateway: args.notificationGateway,
@@ -151,17 +93,12 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   input: EntityConfigFactoryInput,
 ): ManagedEntityService<CoreEntityMap[Key]> {
   const templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
-  const authCacheInvalidation = args.authCacheInvalidation ?? noOpAuthCacheInvalidationPort
   const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
-  const config = withAuthCacheLifecycleHooks(
+  const config = withNotificationPostSaveHook(
     key,
-    withNotificationPostSaveHook(
-      key,
-      baseConfig,
-      args.notificationGateway,
-      templateService,
-    ),
-    authCacheInvalidation,
+    baseConfig,
+    args.notificationGateway,
+    templateService,
   )
 
   return new ManagedEntityService<CoreEntityMap[Key]>({

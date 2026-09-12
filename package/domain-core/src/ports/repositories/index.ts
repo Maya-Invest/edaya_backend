@@ -1,5 +1,6 @@
 export * from './account-invitation-repository'
 export * from './base-repository'
+export * from './resource-access-scope'
 export * from './school-notification-templates-repository'
 export * from './school-repositories'
 export * from './service-api-key-repository'

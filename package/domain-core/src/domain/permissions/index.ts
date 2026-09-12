@@ -1,4 +1,5 @@
 export * from './permission'
+export * from './grant-scope'
 export * from './permission-scopes'
 export * from './scope-ids-parse'
 export * from './scope-ids-validate'

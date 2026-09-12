@@ -1,33 +1,20 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { ReportCardResult } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { denyResourceAccess, ReportCardOperations } from '@edaya/authorization'
-import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
-import { authorizeSaveWithOperation, config, operationModule, read, readByIds, resourceGateForDelete, write } from '../../entity-config'
-import { indirectTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { ReportCardResult } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+import { indirectTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/assessments/report-card-result.ts (PR3)
-export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, policy, atomicExecution }) =>
+export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    read: read(
-      operationModule(ReportCardOperations.read),
-      readByIds((actor, ids) => policy.checkReportCardResultAccess(actor, ids)),
-    ),
-    write: write(
-      operationModule(ReportCardOperations.comment),
-      authorizeSaveWithOperation(
-        ReportCardOperations.comment,
-        async entity => ({ studentId: entity.studentId, classGroupId: entity.classGroupId }),
-        authorizeReportCardResultSave(policy),
-      ),
-      resourceGateForDelete(
-        (actor, ids) => policy.checkReportCardResultAccess(actor, ids),
-        entity => [entity.id],
-      ),
-    ),
+    authorization: { resource: 'results', read: [Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: [Permission.REPORT_CARD_PUBLISH] },
+    
     gates: {
       preSave: validateReportCardResultSave,
       preDelete: validateReportCardResultDelete,
@@ -79,14 +66,6 @@ async function validateReportCardResultSave(
     return
   }
   throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${result.periodId} is immutable`)
-}
-
-function authorizeReportCardResultSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<ReportCardResult>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    await policy.authorizeReportCardResultSave(actor, entity, existing)
-  }
 }
 
 async function validateReportCardResultDelete(

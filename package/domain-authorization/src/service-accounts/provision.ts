@@ -1,28 +1,16 @@
-import type { StaffMember } from '@edaya/core'
-import type {
-  Permission,
-} from '../'
+import type { AtomicExecutionPort, GrantScope, StaffMember } from '@edaya/core'
+import { randomUUID } from 'node:crypto'
+import { BusinessRuleViolationError, Permission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
 import type { StaffActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
-import { randomUUID } from 'node:crypto'
-import {
-  BusinessRuleViolationError,
-  ServiceApiKey,
-  StaffMember as StaffMemberEntity,
-  StaffPermissionAssignment,
-} from '@edaya/core'
-import {
-  assertDelegatedPermissionAssignmentsSubset,
-  assertOwnerServiceAccountAllowed,
-  encodeApiKey,
-  generateApiKey,
-  ServiceAccountOperations,
-} from '../'
-import { operationModule } from '../gates/operation-module'
+import { AccessPolicies } from '../access/access-policies'
+import { AccessFacts, denied } from '../access/facts'
+import { assertGrantDelegation } from '../access/grant-administration'
+import { encodeApiKey, generateApiKey } from './api-key-crypto'
 
 export interface ServiceAccountPermissionAssignmentInput {
   permission: Permission
-  scopeIds: string
+  scopes: GrantScope[]
   academicYearId: string
 }
 
@@ -45,17 +33,17 @@ export interface UpdateServiceAccountInput {
   permissionAssignments?: readonly ServiceAccountPermissionAssignmentInput[]
 }
 
-export async function createServiceAccount(
+async function performCreateServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   input: CreateServiceAccountInput,
 ): Promise<CreateServiceAccountResult> {
-  await operationModule(ServiceAccountOperations.create)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_CREATE)
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
   const permissionAssignments = input.permissionAssignments ?? []
-  assertOwnerServiceAccountAllowed(actor.effectiveGrants, elevated)
+  if (elevated && !await new AccessFacts(actor, repositories).owner()) denied('Only a school owner can create an owner service account')
 
   if (elevated) {
     const existing = await repositories.serviceApiKeys.countActiveElevatedServiceAccounts(schoolId)
@@ -75,11 +63,7 @@ export async function createServiceAccount(
   }
 
   if (permissionAssignments.length > 0) {
-    assertDelegatedPermissionAssignmentsSubset(
-      actor.effectiveGrants,
-      permissionAssignments,
-      schoolId,
-    )
+    await assertGrantDelegation(new AccessFacts(actor, repositories), permissionAssignments)
   }
 
   const existingService = await repositories.staffMembers.findOne({
@@ -150,7 +134,7 @@ async function saveServiceAccountPermissionAssignments(
       schoolId,
       academicYearId: assignment.academicYearId,
       permission: assignment.permission,
-      scopeIds: assignment.scopeIds,
+      scopes: assignment.scopes,
       status: 'active',
     }))
   }
@@ -169,9 +153,7 @@ async function replaceServiceAccountPermissionAssignments(
   })
 
   await Promise.all(
-    existing
-      .filter(assignment => !assignment.sourceStaffAssignmentId)
-      .map(assignment => repositories.staffPermissionAssignments.delete(assignment.id)),
+    existing.map(assignment => repositories.staffPermissionAssignments.delete(assignment.id)),
   )
 
   await saveServiceAccountPermissionAssignments(
@@ -190,13 +172,13 @@ function splitDisplayName(displayName: string): { firstName: string, lastName: s
   }
 }
 
-export async function updateServiceAccount(
+async function performUpdateServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
   input: UpdateServiceAccountInput,
 ): Promise<StaffMember> {
-  await operationModule(ServiceAccountOperations.update)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_UPDATE)
 
   if (
     input.displayName === undefined
@@ -222,11 +204,7 @@ export async function updateServiceAccount(
   }
 
   if (input.permissionAssignments !== undefined) {
-    assertDelegatedPermissionAssignmentsSubset(
-      actor.effectiveGrants,
-      input.permissionAssignments,
-      actor.schoolId,
-    )
+    await assertGrantDelegation(new AccessFacts(actor, repositories), input.permissionAssignments)
     await replaceServiceAccountPermissionAssignments(
       repositories,
       staffMemberId,
@@ -264,19 +242,19 @@ export async function listServiceAccounts(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
 ): Promise<StaffMember[]> {
-  await operationModule(ServiceAccountOperations.read)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_READ)
   return repositories.staffMembers.list({
     schoolId: actor.schoolId,
     accountKind: 'service',
   })
 }
 
-export async function revokeServiceAccount(
+async function performRevokeServiceAccount(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
 ): Promise<StaffMember> {
-  await operationModule(ServiceAccountOperations.revoke)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_REVOKE)
 
   const existing = await repositories.staffMembers.findById(staffMemberId)
   if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service') {
@@ -328,13 +306,13 @@ export interface RotateServiceAccountKeyInput {
   apiKey?: string
 }
 
-export async function rotateServiceAccountKey(
+async function performRotateServiceAccountKey(
   repositories: AuthorizationRepositories,
   actor: StaffActorMetadata,
   staffMemberId: string,
   input: RotateServiceAccountKeyInput = {},
 ): Promise<{ apiKey: string }> {
-  await operationModule(ServiceAccountOperations.rotateKey)(actor)
+  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_ROTATE_KEY)
 
   const existing = await repositories.staffMembers.findById(staffMemberId)
   if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service' || !existing.isActive) {
@@ -376,4 +354,21 @@ export async function rotateServiceAccountKey(
   }))
 
   return { apiKey: generated.plaintext }
+}
+
+/** Each command reads its authority and changes its facts within the same transaction. */
+export function createServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, input: CreateServiceAccountInput, atomicExecution: AtomicExecutionPort): Promise<CreateServiceAccountResult> {
+  return atomicExecution.execute(() => performCreateServiceAccount(repositories, actor, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function updateServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, input: UpdateServiceAccountInput, atomicExecution: AtomicExecutionPort): Promise<StaffMember> {
+  return atomicExecution.execute(() => performUpdateServiceAccount(repositories, actor, id, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function revokeServiceAccount(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, atomicExecution: AtomicExecutionPort): Promise<StaffMember> {
+  return atomicExecution.execute(() => performRevokeServiceAccount(repositories, actor, id), { lockKeys: [`service-accounts:${actor.schoolId}`] })
+}
+
+export function rotateServiceAccountKey(repositories: AuthorizationRepositories, actor: StaffActorMetadata, id: string, input: RotateServiceAccountKeyInput, atomicExecution: AtomicExecutionPort): Promise<{ apiKey: string }> {
+  return atomicExecution.execute(() => performRotateServiceAccountKey(repositories, actor, id, input), { lockKeys: [`service-accounts:${actor.schoolId}`] })
 }

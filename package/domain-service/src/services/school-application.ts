@@ -1,8 +1,8 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { FileStoragePort } from '@edaya/core'
-import type { SchoolRepositories } from '../ports/school-repositories'
-import type { ServiceArgs } from './service-args'
-import { SchoolService } from './school-service'
+import type { ActorMetadata } from '@edaya/authorization';
+import type { AtomicExecutionPort, FileStoragePort } from '@edaya/core';
+import type { SchoolRepositories } from '../ports/school-repositories';
+import type { ServiceArgs } from './service-args';
+import { SchoolService } from './school-service';
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
 
@@ -15,6 +15,11 @@ export class SchoolApplication {
 
   get repositories(): SchoolRepositories {
     return this.args.repositories
+  }
+
+  get atomicExecution(): AtomicExecutionPort {
+    if (!this.args.atomicExecution) throw new Error('Application writes require atomic execution')
+    return this.args.atomicExecution
   }
 
   get fileStorage(): FileStoragePort {

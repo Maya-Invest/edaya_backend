@@ -1,18 +1,19 @@
-import type { AnnouncementTarget } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { CommunicationsOperations, denyResourceAccess } from '@edaya/authorization'
-import { AnnouncementStatus, AnnouncementTargetKind, BusinessRuleViolationError } from '@edaya/core'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import { Permission } from '@edaya/core';
+import type { AnnouncementTarget } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { AnnouncementStatus, AnnouncementTargetKind, BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
 
-import { announcementLinkedTenant } from '../../entity-config/tenant'
+import { announcementLinkedTenant } from '../../entity-config/tenant';
 // Extracted from domain/messaging/announcement-target.ts (PR3)
 export const announcementTargetConfig: EntityConfigFactory<AnnouncementTarget> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.announcementTargets,
     tenant: announcementLinkedTenant('announcementId'),
-    read: read(operationModule(CommunicationsOperations.read), noopReadAccess),
-    write: write(operationModule(CommunicationsOperations.create), noopSaveAccess, noopDeleteAccess),
+    authorization: { resource: 'announcementTargets', read: [Permission.QUERY_COMMUNICATIONS_READ], write: [Permission.COMMUNICATION_CREATE] },
+    
     gates: {
       preSave: validateAnnouncementTargetSave,
       preDelete: validateAnnouncementTargetDelete,

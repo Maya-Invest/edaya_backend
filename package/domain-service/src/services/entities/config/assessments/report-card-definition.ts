@@ -1,19 +1,20 @@
-import type { ReportCardDefinition } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { AcademicsOperations, denyResourceAccess, ReportCardOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { requireSchool } from '../../../require-school'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
+import { Permission } from '@edaya/core';
+import type { ReportCardDefinition } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError } from '@edaya/core';
+import { requireSchool } from '../../../require-school';
+import { config } from '../../entity-config';
 
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { directSchoolTenant } from '../../entity-config/tenant';
 // Extracted from domain/assessments/report-card-definition.ts (PR3)
 export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinition> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.definitions,
     tenant: directSchoolTenant(),
-    read: read(operationModule(ReportCardOperations.read), noopReadAccess),
-    write: write(operationModule(AcademicsOperations.examConfigure), noopSaveAccess, noopDeleteAccess),
+    authorization: { resource: 'definitions', read: [Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: [Permission.EXAM_CONFIG_CONFIGURE] },
+    
     gates: {
       preSave: validateReportCardDefinitionSave,
       preDelete: validateReportCardDefinitionDelete,

@@ -2,7 +2,6 @@ import type { GuardianActorMetadata } from "@edaya/authorization";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { randomUUID } from "node:crypto";
 import { AuthorizationError, AuthorizationErrorCode, createGuardianActorMetadata } from "@edaya/authorization";
-import { StudentClassEnrollmentStatus } from "@edaya/core";
 import { externalOAuthScopes } from "./scopes";
 
 interface DelegationGrant {
@@ -60,20 +59,17 @@ export function createGuardianDelegationAuthorization(getApplication: () => Prom
   }
 
   async function resolveActor(grant: DelegationGrant): Promise<GuardianActorMetadata> {
-    const { repositories, studentIds: linked } = await resolveGuardian(grant.subjectId, grant.schoolId, grant.guardianId);
+    const { studentIds: linked } = await resolveGuardian(grant.subjectId, grant.schoolId, grant.guardianId);
     const studentIds = grant.studentIds.filter(id => linked.has(id));
     if (!studentIds.length) {
       return denied();
     }
-    const enrollments = await repositories.enrollments.list({ studentId: { $in: studentIds }, status: StudentClassEnrollmentStatus.Active });
-    const classes = await repositories.classGroups.list({ schoolId: grant.schoolId, id: { $in: enrollments.map(enrollment => enrollment.classGroupId) } });
     return createGuardianActorMetadata({
       subjectId: grant.subjectId,
       schoolId: grant.schoolId,
       guardianId: grant.guardianId,
       authenticatedAt: grant.createdAt,
       requestId: randomUUID(),
-      guardianScope: { studentIds, classGroupIds: classes.map(group => group.id) },
     });
   }
 

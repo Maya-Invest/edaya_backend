@@ -1,17 +1,8 @@
-import type { AuthorizationRepository } from '@edaya/authorization'
-import type {
-  AccountInvitationRepository,
-  BaseRepositoryInterface,
-  CoreEntityRepositories,
-  School,
-  SchoolNotificationTemplatesRepository,
-  ServiceApiKeyRepository,
-} from '@edaya/core'
-import type { GetSchoolOverviewInput, SchoolOverview } from '../services/queries/school-overview'
-import type { CronJobSchedulePort } from './platform/cron-job-schedule'
+import type { AccountInvitationRepository, BaseRepositoryInterface, CoreEntityRepositories, School, SchoolNotificationTemplatesRepository, ServiceApiKeyRepository } from '@edaya/core';
+import type { GetSchoolOverviewInput, SchoolOverview } from '../services/queries/school-overview';
+import type { CronJobSchedulePort } from './platform/cron-job-schedule';
 
 export interface SchoolRepositories extends CoreEntityRepositories {
-  readonly authorization: AuthorizationRepository
   readonly cronJobSchedules: CronJobSchedulePort
   readonly serviceApiKeys: ServiceApiKeyRepository
   readonly accountInvitations: AccountInvitationRepository

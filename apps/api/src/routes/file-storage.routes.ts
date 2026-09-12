@@ -1,3 +1,4 @@
+import { Permission } from '@edaya/core';
 import type { AppRouteHandler } from "@/http/types";
 import { Buffer } from "node:buffer";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
@@ -6,7 +7,7 @@ import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/sc
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError } from "@edaya/core";
-import { AttachmentOperations, isInteractiveActor, operationModule } from "@edaya/authorization";
+import { isInteractiveActor } from "@edaya/authorization";
 import { assertUploadPolicyAllowed, buildStorageKey, validateAttachmentSave } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
@@ -159,7 +160,7 @@ export const createFileUploadIntentHandler: AppRouteHandler<typeof createFileUpl
 
   try {
     const body = validatedJson(c) as z.infer<typeof uploadIntentRequestSchema>;
-    await operationModule(AttachmentOperations.configure)(actor);
+    await c.var.schoolApp.forActor(actor).baseService.access.assertSchool(Permission.ATTACHMENT_CONFIGURE);
     assertUploadPolicyAllowed({
       ownerKind: body.ownerKind,
       mimeType: body.mimeType,
@@ -221,14 +222,14 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
 
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    await operationModule(AttachmentOperations.read)(actor);
+    
 
     const attachment = await c.var.schoolApp.repositories.attachments.findById(attachmentId);
     if (!attachment || attachment.schoolId !== actor.schoolId) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
 
-    await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess(actor, [attachment]);
+    await c.var.schoolApp.forActor(actor).baseService.access.assertResources(Permission.ATTACHMENT_READ, 'attachments', [attachment.id], 'read');
 
     if (!attachment.storageKey) {
       if (attachment.fileUrl) {
@@ -337,11 +338,11 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
     if (!actor) {
       return unauthorizedResponse(c);
     }
-    await operationModule(AttachmentOperations.read)(actor);
+    
     if (attachment.schoolId !== actor.schoolId) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
-    await c.var.schoolApp.forActor(actor).baseService.authorizationPolicy.checkAttachmentAccess(actor, [attachment]);
+    await c.var.schoolApp.forActor(actor).baseService.access.assertResources(Permission.ATTACHMENT_READ, 'attachments', [attachment.id], 'read');
     c.header("Cache-Control", "private, no-store");
     c.header("Vary", "Authorization");
 

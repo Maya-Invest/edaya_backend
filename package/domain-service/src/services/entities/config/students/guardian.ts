@@ -1,26 +1,23 @@
-import type { Guardian } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { GuardianOperations } from '@edaya/authorization'
-import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { Permission } from '@edaya/core';
+import type { Guardian } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
+import { assertUniquePersonCode } from '../person-code-uniqueness';
 
 // Extracted from domain/students/guardian.ts (PR3)
-export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, policy, atomicExecution }) => {
-  const readAccess = readByIds((actor, ids) => policy.checkGuardianAccess(actor, ids))
+export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, atomicExecution }) => {
+  
 
   return {
     ...config({
       repository: repositories.guardians,
       tenant: directSchoolTenant(),
-      read: read(operationModule(GuardianOperations.read), readAccess),
-      write: write(
-        operationModule(GuardianOperations.update),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
+      authorization: { resource: 'guardians', read: [Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ], write: [Permission.PARENT_UPDATE] },
+      
       atomicExecution,
     }),
     gates: {

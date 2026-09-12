@@ -33,185 +33,336 @@
               "service"
             ]
           },
-          "effectiveGrants": {
-            "type": "object",
-            "properties": {
-              "permissions": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "scopeGrants": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "permission": {
-                      "type": "string",
-                      "enum": [
-                        "SCHOOL_STRUCTURE_READ",
-                        "SCHOOL_STRUCTURE_CONFIGURE",
-                        "SCHOOL_LIFECYCLE_MANAGE",
-                        "STAFF_READ",
-                        "STAFF_CREATE",
-                        "STAFF_UPDATE",
-                        "STAFF_ARCHIVE",
-                        "ACCESS_CONTROL_READ",
-                        "ACCESS_CONTROL_CONFIGURE",
-                        "ACCESS_CONTROL_ASSIGN",
-                        "SERVICE_ACCOUNT_READ",
-                        "SERVICE_ACCOUNT_CREATE",
-                        "SERVICE_ACCOUNT_UPDATE",
-                        "SERVICE_ACCOUNT_REVOKE",
-                        "SERVICE_ACCOUNT_ROTATE_KEY",
-                        "ACADEMIC_PROGRAM_READ",
-                        "ACADEMIC_PROGRAM_CREATE",
-                        "ACADEMIC_PROGRAM_UPDATE",
-                        "ACADEMIC_PROGRAM_DELETE",
-                        "ACADEMIC_PROGRAM_ASSIGN",
-                        "STUDENT_READ",
-                        "STUDENT_CREATE",
-                        "STUDENT_UPDATE",
-                        "STUDENT_ARCHIVE",
-                        "STUDENT_HEALTH_READ",
-                        "STUDENT_HEALTH_UPDATE",
-                        "PARENT_READ",
-                        "PARENT_CREATE",
-                        "PARENT_UPDATE",
-                        "PARENT_ARCHIVE",
-                        "ENROLLMENT_READ",
-                        "ENROLLMENT_CREATE",
-                        "ENROLLMENT_UPDATE",
-                        "ENROLLMENT_ARCHIVE",
-                        "DISCIPLINE_READ",
-                        "DISCIPLINE_CREATE",
-                        "DISCIPLINE_UPDATE",
-                        "DISCIPLINE_VALIDATE",
-                        "DISCIPLINE_ARCHIVE",
-                        "ATTENDANCE_READ",
-                        "ATTENDANCE_RECORD",
-                        "ATTENDANCE_UPDATE",
-                        "ATTENDANCE_JUSTIFY",
-                        "ATTENDANCE_VALIDATE",
-                        "EXAM_CONFIG_READ",
-                        "EXAM_CONFIG_CREATE",
-                        "EXAM_CONFIG_UPDATE",
-                        "EXAM_CONFIG_CONFIGURE",
-                        "EXAM_CONFIG_LOCK",
-                        "EXAM_CONFIG_UNLOCK",
-                        "GRADE_READ",
-                        "GRADE_INPUT",
-                        "GRADE_UPDATE",
-                        "GRADE_VALIDATE",
-                        "GRADE_LOCK",
-                        "GRADE_UNLOCK",
-                        "GRADE_PUBLISH",
-                        "REPORT_CARD_READ",
-                        "REPORT_CARD_CONFIGURE",
-                        "REPORT_CARD_GENERATE",
-                        "REPORT_CARD_LOCK",
-                        "REPORT_CARD_UNLOCK",
-                        "REPORT_CARD_SIGN",
-                        "REPORT_CARD_PUBLISH",
-                        "REPORT_CARD_EXPORT",
-                        "CLASS_LOGBOOK_READ",
-                        "CLASS_LOGBOOK_CREATE",
-                        "CLASS_LOGBOOK_UPDATE",
-                        "CLASS_LOGBOOK_VALIDATE",
-                        "TIMETABLE_READ",
-                        "TIMETABLE_CREATE",
-                        "TIMETABLE_UPDATE",
-                        "TIMETABLE_PUBLISH",
-                        "TIMETABLE_LOCK",
-                        "TIMETABLE_UNLOCK",
-                        "FINANCIAL_CONFIG_READ",
-                        "FINANCIAL_CONFIG_CONFIGURE",
-                        "FINANCIAL_CONFIG_UPDATE",
-                        "PAYMENT_READ",
-                        "PAYMENT_RECORD",
-                        "PAYMENT_CANCEL",
-                        "PAYMENT_REVERSE",
-                        "PAYMENT_EXPORT",
-                        "FINANCIAL_REPORT_READ",
-                        "FINANCIAL_REPORT_EXPORT",
-                        "COMMUNICATION_READ",
-                        "COMMUNICATION_CREATE",
-                        "COMMUNICATION_UPDATE",
-                        "COMMUNICATION_SEND",
-                        "COMMUNICATION_APPROVE",
-                        "COMMUNICATION_DELETE",
-                        "RESOURCE_READ",
-                        "RESOURCE_CONFIGURE",
-                        "ATTACHMENT_READ",
-                        "ATTACHMENT_CONFIGURE",
-                        "QUERY_WORKSPACE_READ",
-                        "QUERY_OVERVIEW_READ",
-                        "QUERY_STUDENT_DIRECTORY_READ",
-                        "QUERY_STUDENT_DETAIL_READ",
-                        "QUERY_ENROLLMENT_HISTORY_READ",
-                        "QUERY_REPORT_CARD_DETAIL_READ",
-                        "QUERY_COMMUNICATIONS_READ",
-                        "QUERY_CALENDAR_READ",
-                        "QUERY_CURRICULUM_PROGRESS_READ",
-                        "QUERY_CLASS_DIRECTORY_READ",
-                        "QUERY_CLASS_CURRICULUM_READ",
-                        "QUERY_TIMETABLE_READ",
-                        "QUERY_ATTENDANCE_READ",
-                        "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
-                        "QUERY_GUARDIAN_SELF_READ",
-                        "QUERY_OVERDUE_FEES_READ",
-                        "PLATFORM_REGISTER_SCHOOL"
-                      ]
-                    },
-                    "scopeType": {
-                      "type": "string",
-                      "enum": [
-                        "platform",
-                        "school",
-                        "academic_year",
-                        "class_group",
-                        "subject",
-                        "course_assignment",
-                        "session",
-                        "student",
-                        "student_group"
-                      ]
-                    },
-                    "scopeEntityIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
+          "grants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "permission": {
+                  "type": "string",
+                  "enum": [
+                    "SCHOOL_STRUCTURE_READ",
+                    "SCHOOL_STRUCTURE_CONFIGURE",
+                    "SCHOOL_LIFECYCLE_MANAGE",
+                    "STAFF_READ",
+                    "STAFF_CREATE",
+                    "STAFF_UPDATE",
+                    "STAFF_ARCHIVE",
+                    "ACCESS_CONTROL_READ",
+                    "ACCESS_CONTROL_CONFIGURE",
+                    "ACCESS_CONTROL_ASSIGN",
+                    "SERVICE_ACCOUNT_READ",
+                    "SERVICE_ACCOUNT_CREATE",
+                    "SERVICE_ACCOUNT_UPDATE",
+                    "SERVICE_ACCOUNT_REVOKE",
+                    "SERVICE_ACCOUNT_ROTATE_KEY",
+                    "ACADEMIC_PROGRAM_READ",
+                    "ACADEMIC_PROGRAM_CREATE",
+                    "ACADEMIC_PROGRAM_UPDATE",
+                    "ACADEMIC_PROGRAM_DELETE",
+                    "ACADEMIC_PROGRAM_ASSIGN",
+                    "STUDENT_READ",
+                    "STUDENT_CREATE",
+                    "STUDENT_UPDATE",
+                    "STUDENT_ARCHIVE",
+                    "STUDENT_HEALTH_READ",
+                    "STUDENT_HEALTH_UPDATE",
+                    "PARENT_READ",
+                    "PARENT_CREATE",
+                    "PARENT_UPDATE",
+                    "PARENT_ARCHIVE",
+                    "ENROLLMENT_READ",
+                    "ENROLLMENT_CREATE",
+                    "ENROLLMENT_UPDATE",
+                    "ENROLLMENT_ARCHIVE",
+                    "DISCIPLINE_READ",
+                    "DISCIPLINE_CREATE",
+                    "DISCIPLINE_UPDATE",
+                    "DISCIPLINE_VALIDATE",
+                    "DISCIPLINE_ARCHIVE",
+                    "ATTENDANCE_READ",
+                    "ATTENDANCE_RECORD",
+                    "ATTENDANCE_UPDATE",
+                    "ATTENDANCE_JUSTIFY",
+                    "ATTENDANCE_VALIDATE",
+                    "EXAM_CONFIG_READ",
+                    "EXAM_CONFIG_CREATE",
+                    "EXAM_CONFIG_UPDATE",
+                    "EXAM_CONFIG_CONFIGURE",
+                    "EXAM_CONFIG_LOCK",
+                    "EXAM_CONFIG_UNLOCK",
+                    "GRADE_READ",
+                    "GRADE_INPUT",
+                    "GRADE_UPDATE",
+                    "GRADE_VALIDATE",
+                    "GRADE_LOCK",
+                    "GRADE_UNLOCK",
+                    "GRADE_PUBLISH",
+                    "REPORT_CARD_READ",
+                    "REPORT_CARD_CONFIGURE",
+                    "REPORT_CARD_GENERATE",
+                    "REPORT_CARD_LOCK",
+                    "REPORT_CARD_UNLOCK",
+                    "REPORT_CARD_SIGN",
+                    "REPORT_CARD_PUBLISH",
+                    "REPORT_CARD_EXPORT",
+                    "CLASS_LOGBOOK_READ",
+                    "CLASS_LOGBOOK_CREATE",
+                    "CLASS_LOGBOOK_UPDATE",
+                    "CLASS_LOGBOOK_VALIDATE",
+                    "TIMETABLE_READ",
+                    "TIMETABLE_CREATE",
+                    "TIMETABLE_UPDATE",
+                    "TIMETABLE_PUBLISH",
+                    "TIMETABLE_LOCK",
+                    "TIMETABLE_UNLOCK",
+                    "FINANCIAL_CONFIG_READ",
+                    "FINANCIAL_CONFIG_CONFIGURE",
+                    "FINANCIAL_CONFIG_UPDATE",
+                    "PAYMENT_READ",
+                    "PAYMENT_RECORD",
+                    "PAYMENT_CANCEL",
+                    "PAYMENT_REVERSE",
+                    "PAYMENT_EXPORT",
+                    "FINANCIAL_REPORT_READ",
+                    "FINANCIAL_REPORT_EXPORT",
+                    "COMMUNICATION_READ",
+                    "COMMUNICATION_CREATE",
+                    "COMMUNICATION_UPDATE",
+                    "COMMUNICATION_SEND",
+                    "COMMUNICATION_APPROVE",
+                    "COMMUNICATION_DELETE",
+                    "RESOURCE_READ",
+                    "RESOURCE_CONFIGURE",
+                    "ATTACHMENT_READ",
+                    "ATTACHMENT_CONFIGURE",
+                    "QUERY_WORKSPACE_READ",
+                    "QUERY_OVERVIEW_READ",
+                    "QUERY_STUDENT_DIRECTORY_READ",
+                    "QUERY_STUDENT_DETAIL_READ",
+                    "QUERY_ENROLLMENT_HISTORY_READ",
+                    "QUERY_REPORT_CARD_DETAIL_READ",
+                    "QUERY_COMMUNICATIONS_READ",
+                    "QUERY_CALENDAR_READ",
+                    "QUERY_CURRICULUM_PROGRESS_READ",
+                    "QUERY_CLASS_DIRECTORY_READ",
+                    "QUERY_CLASS_CURRICULUM_READ",
+                    "QUERY_TIMETABLE_READ",
+                    "QUERY_ATTENDANCE_READ",
+                    "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
+                    "QUERY_GUARDIAN_SELF_READ",
+                    "QUERY_OVERDUE_FEES_READ",
+                    "PLATFORM_REGISTER_SCHOOL"
+                  ]
+                },
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "school"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "all"
+                            ]
+                          },
+                          "grain": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level",
+                              "grade_level_subject",
+                              "class_group",
+                              "class_subject",
+                              "activity",
+                              "student"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "grain"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level"
+                            ]
+                          },
+                          "gradeLevelId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "gradeLevelId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level_subject"
+                            ]
+                          },
+                          "gradeLevelId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "gradeLevelSubjectId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "gradeLevelId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "class_group"
+                            ]
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "classGroupId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "class_subject"
+                            ]
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classSubjectId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "classGroupId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "activity"
+                            ]
+                          },
+                          "activityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "student"
+                            ]
+                          },
+                          "studentId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "studentId"
+                        ],
+                        "additionalProperties": false
                       }
-                    }
+                    ]
                   },
-                  "required": [
-                    "permission",
-                    "scopeType",
-                    "scopeEntityIds"
+                  "minItems": 1
+                },
+                "academicYearId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "manual",
+                    "assignment",
+                    "relationship",
+                    "owner"
                   ]
                 }
               },
-              "scopeIdsByPermission": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "isElevated": {
-                "type": "boolean"
-              },
-              "expiresAt": {
-                "type": "string",
-                "format": "date-time"
-              }
-            },
-            "required": [
-              "permissions",
-              "scopeGrants",
-              "scopeIdsByPermission",
-              "isElevated"
-            ]
+              "required": [
+                "permission",
+                "scopes",
+                "source"
+              ]
+            }
           }
         },
         "required": [
@@ -219,7 +370,7 @@
           "actorId",
           "schoolId",
           "assuranceLevel",
-          "effectiveGrants"
+          "grants"
         ]
       },
       "PermissionCatalogEntry": {
@@ -373,6 +524,21 @@
           "items"
         ]
       },
+      "BusinessRuleViolationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "code"
+        ]
+      },
       "ScopeRenderResponse": {
         "type": "object",
         "properties": {
@@ -381,9 +547,6 @@
             "items": {
               "type": "object",
               "properties": {
-                "scopeIds": {
-                  "type": "string"
-                },
                 "permission": {
                   "type": "string",
                   "enum": [
@@ -501,71 +664,202 @@
                     "PLATFORM_REGISTER_SCHOOL"
                   ]
                 },
-                "tenantWide": {
-                  "type": "boolean"
-                },
-                "clauses": {
+                "scopes": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "raw": {
-                        "type": "string"
+                      "scope": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "school"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "all"
+                                ]
+                              },
+                              "grain": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level",
+                                  "grade_level_subject",
+                                  "class_group",
+                                  "class_subject",
+                                  "activity",
+                                  "student"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "grain"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level"
+                                ]
+                              },
+                              "gradeLevelId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "gradeLevelId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level_subject"
+                                ]
+                              },
+                              "gradeLevelId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "gradeLevelSubjectId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "gradeLevelId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "class_group"
+                                ]
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "classGroupId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "class_subject"
+                                ]
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "classSubjectId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "classGroupId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "activity"
+                                ]
+                              },
+                              "activityId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "student"
+                                ]
+                              },
+                              "studentId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "studentId"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
                       },
                       "label": {
                         "type": "string"
-                      },
-                      "wildcard": {
-                        "type": "boolean"
-                      },
-                      "segments": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string"
-                            },
-                            "scope": {
-                              "type": "string",
-                              "enum": [
-                                "grade_level",
-                                "grade_level_subject",
-                                "class_group",
-                                "class_subject",
-                                "activity",
-                                "student",
-                                "platform"
-                              ]
-                            },
-                            "label": {
-                              "type": "string"
-                            },
-                            "missing": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "scope",
-                            "label"
-                          ]
-                        }
                       }
                     },
                     "required": [
-                      "raw",
-                      "label",
-                      "wildcard",
-                      "segments"
+                      "scope",
+                      "label"
                     ]
                   }
                 }
               },
               "required": [
-                "scopeIds",
-                "tenantWide",
-                "clauses"
+                "permission",
+                "scopes"
               ]
             }
           }
@@ -578,7 +872,8 @@
         "type": "object",
         "properties": {
           "academicYearId": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "items": {
             "type": "array",
@@ -702,18 +997,199 @@
                     "PLATFORM_REGISTER_SCHOOL"
                   ]
                 },
-                "scopeIds": {
-                  "type": "string"
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "school"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "all"
+                            ]
+                          },
+                          "grain": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level",
+                              "grade_level_subject",
+                              "class_group",
+                              "class_subject",
+                              "activity",
+                              "student"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "grain"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level"
+                            ]
+                          },
+                          "gradeLevelId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "gradeLevelId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "grade_level_subject"
+                            ]
+                          },
+                          "gradeLevelId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "gradeLevelSubjectId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "gradeLevelId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "class_group"
+                            ]
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "classGroupId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "class_subject"
+                            ]
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classSubjectId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "classGroupId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "activity"
+                            ]
+                          },
+                          "activityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "student"
+                            ]
+                          },
+                          "studentId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "studentId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "minItems": 1
                 }
               },
               "required": [
-                "scopeIds"
+                "permission",
+                "scopes"
               ]
             },
-            "minItems": 1
+            "minItems": 1,
+            "maxItems": 100
           }
         },
         "required": [
+          "academicYearId",
           "items"
         ]
       },
@@ -827,21 +1303,6 @@
           "id",
           "name",
           "timeZone"
-        ]
-      },
-      "BusinessRuleViolationResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message",
-          "code"
         ]
       },
       "OnboardingRegisterSchoolRequest": {
@@ -1906,8 +2367,186 @@
               "PLATFORM_REGISTER_SCHOOL"
             ]
           },
-          "scopeIds": {
-            "type": "string"
+          "scopes": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "school"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "all"
+                      ]
+                    },
+                    "grain": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level",
+                        "grade_level_subject",
+                        "class_group",
+                        "class_subject",
+                        "activity",
+                        "student"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "grain"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level_subject"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gradeLevelSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_group"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_subject"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "activity"
+                      ]
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "student"
+                      ]
+                    },
+                    "studentId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "studentId"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1
           },
           "academicYearId": {
             "type": "string",
@@ -1916,7 +2555,7 @@
         },
         "required": [
           "permission",
-          "scopeIds",
+          "scopes",
           "academicYearId"
         ]
       },
@@ -5121,9 +5760,186 @@
               "PLATFORM_REGISTER_SCHOOL"
             ]
           },
-          "scopeIds": {
-            "type": "string",
-            "default": ""
+          "scopes": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "school"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "all"
+                      ]
+                    },
+                    "grain": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level",
+                        "grade_level_subject",
+                        "class_group",
+                        "class_subject",
+                        "activity",
+                        "student"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "grain"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level_subject"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gradeLevelSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_group"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_subject"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "activity"
+                      ]
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "student"
+                      ]
+                    },
+                    "studentId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "studentId"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1
           },
           "status": {
             "type": "string",
@@ -5140,11 +5956,6 @@
           "endsAt": {
             "nullable": true
           },
-          "sourceStaffAssignmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
           "createdAt": {},
           "updatedAt": {}
         },
@@ -5153,7 +5964,8 @@
           "staffId",
           "schoolId",
           "academicYearId",
-          "permission"
+          "permission",
+          "scopes"
         ]
       },
       "StaffPermissionAssignmentConfigCommand": {
@@ -5292,9 +6104,186 @@
               "PLATFORM_REGISTER_SCHOOL"
             ]
           },
-          "scopeIds": {
-            "type": "string",
-            "default": ""
+          "scopes": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "school"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "all"
+                      ]
+                    },
+                    "grain": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level",
+                        "grade_level_subject",
+                        "class_group",
+                        "class_subject",
+                        "activity",
+                        "student"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "grain"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level_subject"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gradeLevelSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_group"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_subject"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "activity"
+                      ]
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "student"
+                      ]
+                    },
+                    "studentId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "studentId"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1
           },
           "status": {
             "type": "string",
@@ -5311,11 +6300,6 @@
           "endsAt": {
             "nullable": true
           },
-          "sourceStaffAssignmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
           "createdAt": {},
           "updatedAt": {}
         },
@@ -5324,7 +6308,8 @@
           "staffId",
           "schoolId",
           "academicYearId",
-          "permission"
+          "permission",
+          "scopes"
         ]
       },
       "ResourceAssignment": {
@@ -13339,6 +14324,27 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid authorization session",
             "content": {
@@ -13356,6 +14362,37 @@
                   "example": {
                     "message": "Hello World"
                   }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
                 }
               }
             }
@@ -13389,7 +14426,7 @@
         "tags": [
           "Core Authorization"
         ],
-        "summary": "Render scopeIds strings for admin UI display",
+        "summary": "Label typed permission scopes for the access-control UI",
         "operationId": "authorization.scopeRender",
         "x-edaya-kind": "authorization",
         "x-edaya-client-key": "scopeRender",
@@ -13417,6 +14454,27 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing or invalid authorization session",
             "content": {
@@ -13434,6 +14492,37 @@
                   "example": {
                     "message": "Hello World"
                   }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
                 }
               }
             }
@@ -14659,7 +15748,7 @@
         "tags": [
           "Core Service Accounts"
         ],
-        "summary": "Update a service account display name, roles, or scope grants",
+        "summary": "Update a service account display name or scoped permissions",
         "operationId": "serviceAccounts.update",
         "x-edaya-kind": "serviceAccounts",
         "x-edaya-client-key": "update",

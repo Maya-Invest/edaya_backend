@@ -1,22 +1,19 @@
-import type { Activity } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { DisciplineOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { Activity } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/school-life/activity.ts (PR3)
 export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, atomicExecution }) => ({
   ...config({
     repository: repositories.activities,
     tenant: directSchoolTenant(),
-    read: read(operationModule(DisciplineOperations.read), noopReadAccess),
-    write: write(
-      operationModule(DisciplineOperations.create),
-      authorizeExistingById(noopReadAccess),
-      authorizeDeleteByReadAccess(noopReadAccess),
-    ),
+    authorization: { resource: 'activities', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
+    
     atomicExecution,
   }),
   gates: {

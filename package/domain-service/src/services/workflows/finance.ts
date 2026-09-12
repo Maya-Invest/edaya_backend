@@ -1,12 +1,13 @@
-import type { OperationRef } from '@edaya/authorization'
-import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { denyResourceAccess, FinanceOperations, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '@edaya/core'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import { Permission } from '@edaya/core';
+import type { ActionSelection } from '@edaya/authorization';
+import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
+import { BusinessRuleViolationError, Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '@edaya/core';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface AssignFeeToStudentInput {
   id: string
@@ -78,8 +79,8 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     return this.executeFinance(async () => {
       const student = await this.requireStudent(studentId)
       this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(FinanceOperations.paymentRecord)
-      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
+      await this.authorizeFinance(Permission.PAYMENT_RECORD)
+      await this.baseService.access.assertResources(Permission.FINANCIAL_CONFIG_CONFIGURE, 'students', [student.id], 'write')
       const fee = await this.requireFee(feeId)
       if (fee.schoolId !== student.schoolId) {
         denyResourceAccess()
@@ -113,7 +114,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         }
         return existing
       }
-      await this.baseService.entities.studentFees.save(studentFee, { moduleChecked: true })
+      await this.baseService.entities.studentFees.save(studentFee)
       return studentFee
     }, `student-fee:${id}`)
   }
@@ -134,9 +135,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(FinanceOperations.paymentRecord)
-      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-      await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFeeId])
+      await this.authorizeFinance(Permission.PAYMENT_RECORD)
+      await this.baseService.access.assertResources(Permission.PAYMENT_RECORD, 'students', [student.id], 'write')
+      await this.baseService.access.assertResources(Permission.PAYMENT_RECORD, 'studentFees', [studentFeeId], 'write')
       const payment = new Payment({
         id,
         studentFeeId,
@@ -162,7 +163,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         }
         return existing
       }
-      await this.baseService.entities.payments.save(payment, { moduleChecked: true })
+      await this.baseService.entities.payments.save(payment)
       await this.savePaidAmount(
         studentFee,
         studentFee.paidAmount.amount + payment.amount.amount,
@@ -221,11 +222,10 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       const studentFee = await this.requireStudentFee(payment.studentFeeId)
       const student = await this.requireStudent(studentFee.studentId)
       this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(
-        status === PaymentStatus.Cancelled ? FinanceOperations.paymentCancel : FinanceOperations.paymentReverse,
-      )
-      await this.baseService.authorizationPolicy.checkStudentAccess(this.baseService.actor, [student.id])
-      await this.baseService.authorizationPolicy.checkStudentFeeAccess(this.baseService.actor, [studentFee.id])
+      const action = status === PaymentStatus.Cancelled ? Permission.PAYMENT_CANCEL : Permission.PAYMENT_REVERSE
+      await this.authorizeFinance(action)
+      await this.baseService.access.assertResources(action, 'students', [student.id], 'write')
+      await this.baseService.access.assertResources(action, 'studentFees', [studentFee.id], 'write')
       if (payment.status === status)
         return payment
       if (payment.status !== PaymentStatus.Recorded)
@@ -249,7 +249,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.baseService.actor) : undefined,
         createdAt: payment.createdAt,
       })
-      await this.baseService.entities.payments.save(changedPayment, { moduleChecked: true })
+      await this.baseService.entities.payments.save(changedPayment)
       await this.savePaidAmount(
         studentFee,
         studentFee.paidAmount.amount - payment.amount.amount,
@@ -317,8 +317,8 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async authorizeFinance(operation: OperationRef): Promise<void> {
-    await operationModule(operation)(this.baseService.actor)
+  private async authorizeFinance(operation: ActionSelection): Promise<void> {
+    await this.baseService.access.assertSchool(operation)
   }
 
   private async savePaidAmount(
@@ -336,7 +336,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         referenceDate: referenceDate ?? new Date(),
       }),
       updatedAt: updatedAt ?? new Date(),
-    }), { moduleChecked: true })
+    }))
   }
 
   private deriveFeeStatus({

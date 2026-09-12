@@ -1,18 +1,19 @@
-import type { AcademicYear } from '@edaya/core'
-import type { EntityConfigFactory } from '../../entity-config'
-import { SchoolStructureOperations, WorkspaceOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { config, noopDeleteAccess, noopReadAccess, noopSaveAccess, operationModule, read, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
-import { validateAcademicYearSave } from './validate-academic-year-save'
+import { Permission } from '@edaya/core';
+import type { AcademicYear } from '@edaya/core';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
+import { validateAcademicYearSave } from './validate-academic-year-save';
 
 // Extracted from domain/school/academic-year.ts (PR3)
 export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.academicYears,
     tenant: directSchoolTenant(),
-    read: read(operationModule(WorkspaceOperations.read), noopReadAccess),
-    write: write(operationModule(SchoolStructureOperations.configure), noopSaveAccess, noopDeleteAccess),
+    authorization: { resource: 'academicYears', read: [Permission.QUERY_WORKSPACE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
+    
     gates: {
       preSave: validateAcademicYearSave,
       preDelete: async (year, repos) => {

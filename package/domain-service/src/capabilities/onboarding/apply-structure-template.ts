@@ -1,40 +1,17 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { AppliedStructureLevelSubjects } from './apply-report-cards-from-template'
-import type { OnboardingSchoolApplication } from './onboarding-application'
-import type { ClassNamingMode } from './structure-naming'
-import type {
-  StructureTemplateCurriculumEntry,
-  StructureTemplateDefinition,
-  StructureTemplateId,
-} from './structure-template-types'
-import { randomUUID } from 'node:crypto'
-import { AcademicsOperations, operationModule } from '@edaya/authorization'
-import {
-  BusinessRuleViolationError,
-  ClassGroup,
-  ClassSubject,
-  ClassSubjectMatter,
-  ClassSubjectMatterStatus,
-  GradeLevel,
-  GradeLevelSubject,
-  GradeLevelSubjectMatter,
-  Subject,
-  SubjectCategory,
-  SubjectColor,
-  SubjectMatter,
-} from '@edaya/core'
-import {
-  applyReportCardsFromTemplate,
-  collectLevelSubjects,
-} from './apply-report-cards-from-template'
-import { ensureAcademicPeriodsFromTemplates } from './ensure-academic-periods-from-template'
-import { nextOnboardingClassGroupId } from './next-class-group-id'
-import {
-  classDisplayName,
-  parseGradeLevelTemplateId,
-  resolveOnboardingStructureTemplates,
-} from './structure-naming'
-import { structureGradeLevelSeedId } from './structure-seed-ids'
+import { Permission } from '@edaya/core';
+import type { ActorMetadata } from '@edaya/authorization';
+import type { AppliedStructureLevelSubjects } from './apply-report-cards-from-template';
+import type { OnboardingSchoolApplication } from './onboarding-application';
+import type { ClassNamingMode } from './structure-naming';
+import type { StructureTemplateCurriculumEntry, StructureTemplateDefinition, StructureTemplateId } from './structure-template-types';
+import { randomUUID } from 'node:crypto';
+
+import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core';
+import { applyReportCardsFromTemplate, collectLevelSubjects } from './apply-report-cards-from-template';
+import { ensureAcademicPeriodsFromTemplates } from './ensure-academic-periods-from-template';
+import { nextOnboardingClassGroupId } from './next-class-group-id';
+import { classDisplayName, parseGradeLevelTemplateId, resolveOnboardingStructureTemplates } from './structure-naming';
+import { structureGradeLevelSeedId } from './structure-seed-ids';
 
 export interface ApplyStructureLevelInput {
   gradeLevelId: string
@@ -433,7 +410,7 @@ export async function persistStructureBootstrapGraph(
   actor: ActorMetadata,
   graph: StructureBootstrapGraph,
 ): Promise<void> {
-  await operationModule(AcademicsOperations.programUpdate)(actor)
+  await application.forActor(actor).baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
   await persistCurriculumEntities(application, graph)
   await persistClassMirrorEntities(application, graph)
 }
@@ -523,7 +500,7 @@ export async function applyStructureTemplate(
       levels,
     )
 
-    await operationModule(AcademicsOperations.programUpdate)(actor)
+    await application.forActor(actor).baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
 
     await track('structure.curriculum', async () => {
       await persistCurriculumEntities(application, graph)

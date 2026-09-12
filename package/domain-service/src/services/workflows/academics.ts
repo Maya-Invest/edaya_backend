@@ -1,29 +1,14 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
-import { AcademicsOperations, denyResourceAccess, LogbookOperations, resolveAuditActorId } from '@edaya/authorization'
-import {
-  BusinessRuleViolationError,
-  ClassSubject,
-  ClassSubjectMatter,
-  ClassSubjectMatterStatus,
-  ClassSubjectProgress,
-  Subject as SubjectEntity,
-  SubjectMatter as SubjectMatterEntity,
-} from '@edaya/core'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
-import {
-  removeMirroredClassSubjects,
-  saveGradeLevelSubjectEntity,
-  saveGradeLevelSubjectMatterEntity,
+import { Permission } from '@edaya/core';
+import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import type { SyncClassSubjectOptions } from './grade-level-subject-sync';
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core';
 
-  syncGradeLevelSubjectMatterToClassSubject,
-  syncGradeLevelSubjectsToClassGroup,
-  syncGradeLevelSubjectToAllClassGroups,
-} from './grade-level-subject-sync'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
+import { removeMirroredClassSubjects, saveGradeLevelSubjectEntity, saveGradeLevelSubjectMatterEntity, syncGradeLevelSubjectMatterToClassSubject, syncGradeLevelSubjectsToClassGroup, syncGradeLevelSubjectToAllClassGroups } from './grade-level-subject-sync';
 
 export interface RecordLessonSessionProgressInput {
   id: string
@@ -103,7 +88,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async offerSubjectToGradeLevel(input: OfferSubjectToGradeLevelInput): Promise<GradeLevelSubject> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     const { classSubjectIdsByClassGroupId, classSubjectMatterIdsByClassGroupId, ...gradeLevelSubjectInput } = input
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -123,7 +108,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async removeSubjectFromGradeLevel({ gradeLevelSubjectId }: RemoveSubjectFromGradeLevelInput): Promise<void> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     await this.baseService.atomicExecution.execute(async () => {
       const gradeLevelSubject = await this.requireGradeLevelSubject(gradeLevelSubjectId)
       await removeMirroredClassSubjects(this.baseService, gradeLevelSubject.id)
@@ -136,7 +121,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
       const updated = await saveGradeLevelSubjectEntity(this.baseService, {
@@ -176,7 +161,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     coefficient,
     isOffered = true,
   }: AddCustomClassSubjectInput): Promise<ClassSubject> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     const classGroup = await this.repositories.classGroups.findById(classGroupId)
     if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
       denyResourceAccess()
@@ -189,12 +174,12 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       isOffered,
       completedPercentage: 0,
     })
-    await this.baseService.entities.classSubjects.save(classSubject, { moduleChecked: true })
+    await this.baseService.entities.classSubjects.save(classSubject)
     return classSubject
   }
 
   async setClassSubjectOffered({ classSubjectId, isOffered }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     const existing = await this.requireClassSubject(classSubjectId)
     const updated = new ClassSubject({
       id: existing.id,
@@ -209,7 +194,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       isOffered,
       createdAt: existing.createdAt,
     })
-    await this.baseService.entities.classSubjects.save(updated, { moduleChecked: true })
+    await this.baseService.entities.classSubjects.save(updated)
     return updated
   }
 
@@ -219,7 +204,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     minPeriodSpan,
     maxPeriodSpan,
   }: ConfigureClassSubjectTimetableInput): Promise<ClassSubject> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     const existing = await this.requireClassSubject(classSubjectId)
     const nextMinPeriodSpan = minPeriodSpan === undefined
       ? existing.minPeriodSpan
@@ -250,12 +235,12 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       isOffered: existing.isOffered,
       createdAt: existing.createdAt,
     })
-    await this.baseService.entities.classSubjects.save(updated, { moduleChecked: true })
+    await this.baseService.entities.classSubjects.save(updated)
     return updated
   }
 
   async assignMatterToGradeLevelSubject(input: AssignMatterToGradeLevelSubjectInput): Promise<GradeLevelSubjectMatter> {
-    await operationModule(AcademicsOperations.programUpdate)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACADEMIC_PROGRAM_UPDATE)
     const { classSubjectMatterIdsByClassGroupId, ...matterInput } = input
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -323,8 +308,8 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         denyResourceAccess()
       }
 
-      await operationModule(LogbookOperations.create)(this.baseService.actor)
-      await this.baseService.authorizationPolicy.checkLessonSessionAccess(this.baseService.actor, [lessonSessionId])
+      
+      await this.baseService.access.assertResources(Permission.CLASS_LOGBOOK_CREATE, 'lessonSessions', [lessonSessionId], 'write')
 
       const existing = await this.repositories.classSubjectProgress.findOne({ classSubjectMatterId, lessonSessionId })
       if (existing) {
@@ -356,8 +341,8 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         updatedAt: snapshot.recordedAt,
       })
 
-      await this.baseService.entities.classSubjectProgress.save(snapshot, { moduleChecked: true })
-      await this.baseService.entities.classSubjectMatters.save(updatedMatter, { moduleChecked: true })
+      await this.baseService.entities.classSubjectProgress.save(snapshot)
+      await this.baseService.entities.classSubjectMatters.save(updatedMatter)
       await this.updateClassSubjectAggregate(classSubject, updatedMatter)
       return snapshot
     })
@@ -424,6 +409,6 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       completedPercentage,
       isOffered: classSubject.isOffered,
       createdAt: classSubject.createdAt,
-    }), { moduleChecked: true })
+    }))
   }
 }

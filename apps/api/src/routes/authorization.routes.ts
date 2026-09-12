@@ -1,12 +1,12 @@
-import { Permission } from "@edaya/core";
-import { listPermissionCatalog, renderScopeIds } from "@edaya/authorization";
-import type { ScopeType } from "@edaya/authorization";
+import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
+import { grantScopeSchema, grantScopesSchema, Permission } from "@edaya/core";
+import { AccessFacts, listPermissionCatalog, validateGrantTargets } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/http/types";
-import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
+import { getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { requireInteractiveActor } from "@/lib/authorization/serialize-grants";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
@@ -42,8 +42,11 @@ export const getPermissionCatalogRoute = createRoute({
     responseSchemaName: "PermissionCatalogResponse",
   }),
   responses: {
+    ...coreRouteErrorResponses,
     [HttpStatusCodes.OK]: jsonContent(permissionCatalogResponseSchema, "Permission catalog"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(commandMessageSchema, "Access denied"),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(commandMessageSchema, "Invalid request"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(commandMessageSchema, "Internal server error occurred"),
   },
 });
@@ -71,53 +74,27 @@ export const getPermissionCatalogHandler: AppRouteHandler<typeof getPermissionCa
 };
 
 const scopeRenderItemRequestSchema = z.object({
-  permission: z.nativeEnum(Permission).optional(),
-  scopeIds: z.string(),
-});
-
-const scopeRenderSegmentSchema = z.object({
-  id: z.string(),
-  scope: z.enum([
-    "grade_level",
-    "grade_level_subject",
-    "class_group",
-    "class_subject",
-    "activity",
-    "student",
-    "platform",
-  ]),
-  label: z.string(),
-  missing: z.boolean().optional(),
-});
-
-const scopeRenderClauseSchema = z.object({
-  raw: z.string(),
-  label: z.string(),
-  wildcard: z.boolean(),
-  segments: z.array(scopeRenderSegmentSchema),
-});
-
-const scopeRenderItemResponseSchema = z.object({
-  scopeIds: z.string(),
-  permission: z.nativeEnum(Permission).optional(),
-  tenantWide: z.boolean(),
-  clauses: z.array(scopeRenderClauseSchema),
+  permission: z.nativeEnum(Permission),
+  scopes: grantScopesSchema,
 });
 
 const scopeRenderRequestSchema = z.object({
-  academicYearId: z.string().optional(),
-  items: z.array(scopeRenderItemRequestSchema).min(1),
+  academicYearId: z.string().trim().min(1),
+  items: z.array(scopeRenderItemRequestSchema).min(1).max(100),
 }).openapi("ScopeRenderRequest");
 
 const scopeRenderResponseSchema = z.object({
-  items: z.array(scopeRenderItemResponseSchema),
+  items: z.array(z.object({
+    permission: z.nativeEnum(Permission),
+    scopes: z.array(z.object({ scope: grantScopeSchema, label: z.string() })),
+  })),
 }).openapi("ScopeRenderResponse");
 
 export const postScopeRenderRoute = createRoute({
   method: "post",
   path: schoolApiPath("authorization", "scope", "render"),
   tags: ["Core Authorization"],
-  summary: "Render scopeIds strings for admin UI display",
+  summary: "Label typed permission scopes for the access-control UI",
   request: {
     body: jsonContent(scopeRenderRequestSchema, "Scope render batch"),
   },
@@ -129,8 +106,11 @@ export const postScopeRenderRoute = createRoute({
     responseSchemaName: "ScopeRenderResponse",
   }),
   responses: {
+    ...coreRouteErrorResponses,
     [HttpStatusCodes.OK]: jsonContent(scopeRenderResponseSchema, "Rendered scope labels"),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(commandMessageSchema, "Missing or invalid authorization session"),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(commandMessageSchema, "Access denied"),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(commandMessageSchema, "Invalid request"),
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(commandMessageSchema, "Internal server error occurred"),
   },
 });
@@ -148,73 +128,50 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
 
   const body = c.req.valid("json");
   const service = c.get("schoolApp").forActor(interactiveActor);
-  const repositories = service.baseService.repositories;
-
   try {
-    const items = await Promise.all(body.items.map(async (item) => {
-      return renderScopeIds(item.scopeIds, {
-        permission: item.permission,
-        resolveLabel: async (scope: ScopeType, entityId: string) => {
-          switch (scope) {
-            case "class_group": {
-              const entity = await repositories.classGroups.findById(entityId);
-              return entity?.name;
-            }
-            case "class_subject": {
-              const classSubject = await repositories.classSubjects.findById(entityId);
-              if (!classSubject) {
-                return undefined;
-              }
-              const subject = await repositories.subjects.findById(classSubject.subjectId);
-              return subject?.name;
-            }
-            case "grade_level": {
-              const entity = await repositories.gradeLevels.findById(entityId);
-              return entity?.name;
-            }
-            case "grade_level_subject": {
-              const gradeLevelSubject = await repositories.gradeLevelSubjects.findById(entityId);
-              if (!gradeLevelSubject) {
-                return undefined;
-              }
-              const subject = await repositories.subjects.findById(gradeLevelSubject.subjectId);
-              return subject?.name;
-            }
-            case "activity": {
-              const entity = await repositories.activities.findById(entityId);
-              return entity?.name;
-            }
-            case "student": {
-              const entity = await repositories.students.findById(entityId);
-              return entity ? `${entity.firstName} ${entity.lastName}` : undefined;
-            }
-            default:
-              return undefined;
+    await service.baseService.access.assertSchool(Permission.ACCESS_CONTROL_READ);
+    const facts = new AccessFacts(interactiveActor, service.baseService.repositories);
+    const items = [];
+    for (const item of body.items) {
+      await validateGrantTargets(facts, { ...item, academicYearId: body.academicYearId });
+      const scopes = [];
+      for (const scope of item.scopes) {
+        let label: string;
+        switch (scope.kind) {
+          case "school": label = "School"; break;
+          case "all": label = `All ${scope.grain.replaceAll("_", " ")} resources`; break;
+          case "student": {
+            const student = await facts.one("students", scope.studentId);
+            label = `${student.firstName} ${student.lastName}`;
+            break;
           }
-        },
-      });
-    }));
-
-    return c.json({
-      items: items.map(item => ({
-        scopeIds: item.scopeIds,
-        ...(item.permission ? { permission: item.permission } : {}),
-        tenantWide: item.tenantWide,
-        clauses: item.clauses.map(clause => ({
-          raw: clause.raw,
-          label: clause.label,
-          wildcard: clause.wildcard,
-          segments: clause.segments.map(segment => ({
-            id: segment.id,
-            scope: segment.scope,
-            label: segment.label,
-            ...(segment.missing ? { missing: true } : {}),
-          })),
-        })),
-      })),
-    }, HttpStatusCodes.OK);
+          case "class_group": label = (await facts.one("classGroups", scope.classGroupId)).name; break;
+          case "class_subject": {
+            const group = await facts.one("classGroups", scope.classGroupId);
+            const subject = scope.classSubjectId ? await facts.one("classSubjects", scope.classSubjectId) : undefined;
+            label = `${group.name} / ${subject ? (await facts.one("subjects", subject.subjectId)).name : "All subjects"}`;
+            break;
+          }
+          case "grade_level": label = (await facts.one("gradeLevels", scope.gradeLevelId)).name; break;
+          case "grade_level_subject": {
+            const grade = await facts.one("gradeLevels", scope.gradeLevelId);
+            const subject = scope.gradeLevelSubjectId ? await facts.one("gradeLevelSubjects", scope.gradeLevelSubjectId) : undefined;
+            label = `${grade.name} / ${subject ? (await facts.one("subjects", subject.subjectId)).name : "All subjects"}`;
+            break;
+          }
+          case "activity": {
+            const activity = scope.activityId ? (await facts.one("activities", scope.activityId)).name : "All activities";
+            label = scope.classGroupId ? `${(await facts.one("classGroups", scope.classGroupId)).name} / ${activity}` : activity;
+            break;
+          }
+        }
+        scopes.push({ scope, label });
+      }
+      items.push({ permission: item.permission, scopes });
+    }
+    return c.json({ items }, HttpStatusCodes.OK);
   }
-  catch (err) {
-    return c.json({ message: getErrorMessage(err) }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  catch (error) {
+    return routeErrorResponse(c, error);
   }
 };

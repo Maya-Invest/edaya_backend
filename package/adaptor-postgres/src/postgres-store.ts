@@ -1,4 +1,4 @@
-import type { BaseRepositoryInterface, Filter, QueryOptions } from '@edaya/core'
+import type { BaseRepositoryInterface, Filter, QueryOptions, ResourceAccessScope } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
 import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
 import { DomainValidationError } from '@edaya/core'
@@ -10,6 +10,7 @@ import {
 } from './lib/bulk-upsert'
 import { buildWhereClause } from './lib/filter'
 import { schoolScope } from './lib/school-scope'
+import { compileResourceAccess } from './lib/resource-access-scope'
 import { PostgresAtomicExecution, transactionContext } from './lib/transaction'
 
 export class PostgresStore<T extends { readonly id: string }>
@@ -22,6 +23,22 @@ implements BaseRepositoryInterface<T> {
   ) {}
 
   protected schoolId?: string
+  protected accessScope?: ResourceAccessScope
+
+  forAccess(scope: ResourceAccessScope): BaseRepositoryInterface<T> {
+    const scoped = this.forSchool(scope.schoolId) as this
+    compileResourceAccess(this.table, scope)
+    scoped.accessScope = scope
+    return scoped
+  }
+
+  async assertAccess(entity: T): Promise<void> {
+    if (!this.accessScope)
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+    const result = await this.getClient().execute(sql`select 1 where ${compileResourceAccess(this.table, this.accessScope, this.toRow(entity))}`)
+    if (result.rows.length !== 1)
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
 
   forSchool(schoolId: string): BaseRepositoryInterface<T> {
     if (!schoolId || (this.schoolId && this.schoolId !== schoolId))
@@ -33,7 +50,7 @@ implements BaseRepositoryInterface<T> {
   }
 
   protected scopedWhere(filter?: SQL): SQL | undefined {
-    return and(filter, this.schoolId ? schoolScope(this.table, this.schoolId) : undefined)
+    return and(filter, this.accessScope ? compileResourceAccess(this.table, this.accessScope) : this.schoolId ? schoolScope(this.table, this.schoolId) : undefined)
   }
 
   protected getClient() {
@@ -141,9 +158,9 @@ implements BaseRepositoryInterface<T> {
       .map(key => sql`${sql.identifier(columns[key]!.name)} = excluded.${sql.identifier(columns[key]!.name)}`), sql`, `)
     const result = await this.getClient().execute(sql`
       insert into ${this.table} (${fields}) select ${values}
-      where ${schoolScope(this.table, this.schoolId!, row)}
+      where ${this.accessScope ? compileResourceAccess(this.table, this.accessScope, row) : schoolScope(this.table, this.schoolId!, row)}
       on conflict (${sql.identifier(columns.id!.name)}) do update set ${updates}
-      where ${schoolScope(this.table, this.schoolId!)}
+      where ${this.accessScope ? compileResourceAccess(this.table, this.accessScope) : schoolScope(this.table, this.schoolId!)}
       returning ${this.table.id}
     `)
     if (result.rows.length !== 1)

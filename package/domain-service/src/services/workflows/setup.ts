@@ -1,69 +1,17 @@
-import type {
-  AcademicPeriod,
-  AcademicPeriodInput,
-  AcademicYear,
-  Activity,
-  ActivityEnrollment,
-  ActivityEnrollmentInput,
-  ActivityInput,
-  AttachmentInput,
-  ClassGroupInput,
-  GradeLevel,
-  GradeLevelInput,
-  PeriodDefinition,
-  PeriodDefinitionInput,
-  Resource,
-  ResourceAssignmentInput,
-  ResourceInput,
-  School,
-  SchoolInput,
-  StaffAssignment,
-  StaffAssignmentInput,
-  StaffMember,
-  StaffMemberInput,
-  StaffProfileRole,
-} from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import {
-  AttachmentOperations,
-  denyResourceAccess,
-  PlatformOperations,
-  SchoolStructureOperations,
-} from '@edaya/authorization'
-import {
-  AcademicPeriod as AcademicPeriodEntity,
-  AcademicYear as AcademicYearEntity,
-  AccountInvitationKind,
-  ActivityEnrollment as ActivityEnrollmentEntity,
-  Activity as ActivityEntity,
-  Attachment,
-  AttachmentStatus,
-  BusinessRuleViolationError,
-  ClassGroup,
-  GradeLevel as GradeLevelEntity,
-  MessageDeliveryRecipientKind,
-  PeriodDefinition as PeriodDefinitionEntity,
-  ResourceAssignment,
-  Resource as ResourceEntity,
-  School as SchoolEntity,
-  StaffAssignment as StaffAssignmentEntity,
-  StaffMember as StaffMemberEntity,
-} from '@edaya/core'
-import {
-  scheduleAccountInvitationIfEligible,
-} from '../../capabilities/invitations'
-import {
-  buildStaffRecipientProfile,
-  scheduleNotificationRecipientRemove,
-  scheduleNotificationRecipientUpsert,
-} from '../../capabilities/notifications'
-import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
-import { operationModule } from '../entities/entity-config'
-import { requireSchool } from '../require-school'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
-import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
+import { Permission } from '@edaya/core';
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { denyResourceAccess } from '@edaya/authorization';
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, Attachment, AttachmentStatus, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, MessageDeliveryRecipientKind, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core';
+import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations';
+import { buildStaffRecipientProfile, scheduleNotificationRecipientRemove, scheduleNotificationRecipientUpsert } from '../../capabilities/notifications';
+import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates';
+
+import { requireSchool } from '../require-school';
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
+import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync';
 
 export interface CreateAcademicYearInput {
   id: string
@@ -149,20 +97,20 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerSchool(input: RegisterSchoolInput): Promise<School> {
-    await operationModule(PlatformOperations.registerSchool)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.PLATFORM_REGISTER_SCHOOL)
     const { consortiumId: _ignoredConsortiumId, ...schoolInput } = input
     const school = new SchoolEntity(schoolInput)
     if (school.ownerSubjectId) {
       await this.validateOwnerSubject(school.id, school.ownerSubjectId)
     }
-    await this.baseService.entities.schools.save(school, { moduleChecked: true })
+    await this.baseService.entities.schools.save(school)
     await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
     return school
   }
 
   async updateSchoolConfiguration({ schoolId, ...changes }: UpdateSchoolConfigurationInput): Promise<School> {
     const existing = await this.requireEntity(this.baseService.entities.schools, schoolId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
     const ownerSubjectId = changes.ownerSubjectId === undefined ? existing.ownerSubjectId : changes.ownerSubjectId
     if (ownerSubjectId !== existing.ownerSubjectId) {
       await this.validateOwnerTransfer(existing, ownerSubjectId)
@@ -191,7 +139,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       timetableMaxPeriodSpan: changes.timetableMaxPeriodSpan ?? existing.timetableMaxPeriodSpan,
       createdAt: existing.createdAt,
     })
-    await this.baseService.entities.schools.save(school, { moduleChecked: true })
+    await this.baseService.entities.schools.save(school)
     return school
   }
 
@@ -204,7 +152,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
   }: CreateAcademicYearInput): Promise<AcademicYear> {
     this.checkActorSchool(schoolId)
-    await operationModule(SchoolStructureOperations.configure)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.SCHOOL_STRUCTURE_CONFIGURE)
     await requireSchool(this.repositories.schools, schoolId)
 
     return this.baseService.atomicExecution.execute(async () => {
@@ -217,7 +165,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         status: 'draft',
         createdAt,
       })
-      await this.baseService.entities.academicYears.save(academicYear, { moduleChecked: true })
+      await this.baseService.entities.academicYears.save(academicYear)
       return academicYear
     })
   }
@@ -228,7 +176,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(academicYear.schoolId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
 
     if (academicYear.status !== 'draft') {
       throw new BusinessRuleViolationError(
@@ -258,7 +206,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         status: 'published',
         createdAt: academicYear.createdAt,
       })
-      await this.baseService.entities.academicYears.save(published, { moduleChecked: true })
+      await this.baseService.entities.academicYears.save(published)
       return published
     })
   }
@@ -269,7 +217,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       denyResourceAccess()
     }
     this.checkActorSchool(academicYear.schoolId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
 
     if (academicYear.status !== 'published') {
       throw new BusinessRuleViolationError(
@@ -288,7 +236,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         status: 'archived',
         createdAt: academicYear.createdAt,
       })
-      await this.baseService.entities.academicYears.save(archived, { moduleChecked: true })
+      await this.baseService.entities.academicYears.save(archived)
       return archived
     })
   }
@@ -301,7 +249,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async publishAcademicPeriod({ academicPeriodId }: PublishAcademicPeriodInput): Promise<AcademicPeriod> {
     const existing = await this.requireEntity(this.baseService.entities.academicPeriods, academicPeriodId)
-    await operationModule(SchoolStructureOperations.lifecycleManage)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
     const period = new AcademicPeriodEntity({
       id: existing.id,
       schoolId: existing.schoolId,
@@ -313,7 +261,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       isPublished: true,
       createdAt: existing.createdAt,
     })
-    await this.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
+    await this.baseService.entities.academicPeriods.save(period)
     return period
   }
 
@@ -358,9 +306,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
     const actor = this.baseService.actor
     const isCurrentOwner = actor.kind === 'staff' && actor.subjectId === existing.ownerSubjectId
-    const canTransferOwner = actor.kind === 'system'
-      || isCurrentOwner
-      || (actor.kind === 'staff' && actor.effectiveGrants?.isElevated === true)
+    const canTransferOwner = isCurrentOwner
 
     if (existing.ownerSubjectId && !canTransferOwner) {
       denyResourceAccess()
@@ -505,7 +451,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ATTACHMENT_CONFIGURE)
     const attachment = new Attachment({
       ...input,
       status: input.storageKey ? AttachmentStatus.Ready : input.status,
@@ -536,7 +482,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
     const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
-    await operationModule(AttachmentOperations.configure)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ATTACHMENT_CONFIGURE)
     if (existing.storageKey) {
       await this.baseService.fileStorage.deleteObject(existing.storageKey)
     }
@@ -549,7 +495,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async saveConstructed<T extends { id: string }>(
-    managedService: { save: (entity: T, options?: { moduleChecked?: boolean }) => Promise<void> },
+    managedService: { save: (entity: T) => Promise<void> },
     entity: T,
   ): Promise<T> {
     await managedService.save(entity)

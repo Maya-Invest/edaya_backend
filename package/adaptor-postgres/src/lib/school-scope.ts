@@ -70,6 +70,9 @@ export function schoolScope(table: PgTable, schoolId: string, proposed?: Record<
   const parent = parents[name]
   if (parent)
     predicates.push(parentScope(...parent))
+  // A result belongs to both its assessment and its student. Corrupt links must
+  // never expose a foreign student's data through a local assessment.
+  if (name === 'assessment_results') predicates.push(parentScope('studentId', schema.students))
   const links = anchors[name]
   if (links) {
     // At least one anchor must exist; every supplied anchor must stay in-school.

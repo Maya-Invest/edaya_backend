@@ -1,3 +1,5 @@
+import type { ResourceAccessScope } from './resource-access-scope'
+
 export type FieldFilter<V>
   = | V
     | ({
@@ -35,6 +37,10 @@ export type QueryOptions<T> = Filter<T> & {
 }
 
 export interface BaseRepositoryInterface<T> {
+  /** Mandatory policy scope, independent of caller-provided filters. */
+  forAccess: (scope: ResourceAccessScope) => BaseRepositoryInterface<T>
+  /** Check proposed values using the same policy predicate as reads and writes. */
+  assertAccess: (entity: T) => Promise<void>
   /** Bind trusted school context independently of caller filters. Adapters must scope every operation. */
   forSchool?: (schoolId: string) => BaseRepositoryInterface<T>
   findById: (id: string) => Promise<T | undefined>

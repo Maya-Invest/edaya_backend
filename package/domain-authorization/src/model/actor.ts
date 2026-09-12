@@ -1,6 +1,4 @@
 import type { StaffAccountKind } from '@edaya/core'
-import type { GuardianScope, StudentScope, TeacherActorScope } from './actor-scope'
-import type { EffectiveGrants } from './effective-grants'
 import { DomainValidationError } from '@edaya/core'
 
 /**
@@ -25,31 +23,28 @@ export interface InteractiveActorBase {
   readonly authenticatedAt: Date
   readonly assuranceLevel: ActorAssuranceLevel
   readonly actorId: string
+  readonly academicYearId?: string
 }
 
 export interface StaffActorMetadata extends InteractiveActorBase {
   readonly kind: 'staff'
   readonly staffMemberId: string
   readonly accountKind: StaffAccountKind
-  readonly effectiveGrants: EffectiveGrants
 }
 
 export interface GuardianActorMetadata extends InteractiveActorBase {
   readonly kind: 'guardian'
   readonly guardianId: string
-  readonly guardianScope: GuardianScope
 }
 
 export interface StudentActorMetadata extends InteractiveActorBase {
   readonly kind: 'student'
   readonly studentId: string
-  readonly studentScope: StudentScope
 }
 
 export interface TeacherActorMetadata extends InteractiveActorBase {
   readonly kind: 'teacher'
   readonly teacherId: string
-  readonly teacherScope: TeacherActorScope
 }
 
 export interface SystemActorMetadata {
@@ -75,27 +70,24 @@ interface InteractiveActorBaseInput {
   sessionId?: string
   authenticatedAt: Date
   assuranceLevel?: ActorAssuranceLevel
+  academicYearId?: string
 }
 
 export interface StaffActorMetadataInput extends InteractiveActorBaseInput {
   staffMemberId: string
   accountKind?: StaffAccountKind
-  effectiveGrants: EffectiveGrants
 }
 
 export interface GuardianActorMetadataInput extends InteractiveActorBaseInput {
   guardianId: string
-  guardianScope: GuardianScope
 }
 
 export interface StudentActorMetadataInput extends InteractiveActorBaseInput {
   studentId: string
-  studentScope: StudentScope
 }
 
 export interface TeacherActorMetadataInput extends InteractiveActorBaseInput {
   teacherId: string
-  teacherScope: TeacherActorScope
 }
 
 export interface SystemActorMetadataInput {
@@ -120,7 +112,6 @@ export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffA
     actorId: staffMemberId,
     staffMemberId,
     accountKind,
-    effectiveGrants: input.effectiveGrants,
   })
 }
 
@@ -142,7 +133,6 @@ export function createGuardianActorMetadata(input: GuardianActorMetadataInput): 
     kind: 'guardian',
     actorId: guardianId,
     guardianId,
-    guardianScope: input.guardianScope,
   })
 }
 
@@ -154,7 +144,6 @@ export function createStudentActorMetadata(input: StudentActorMetadataInput): St
     kind: 'student',
     actorId: studentId,
     studentId,
-    studentScope: input.studentScope,
   })
 }
 
@@ -166,7 +155,6 @@ export function createTeacherActorMetadata(input: TeacherActorMetadataInput): Te
     kind: 'teacher',
     actorId: teacherId,
     teacherId,
-    teacherScope: input.teacherScope,
   })
 }
 
@@ -203,6 +191,7 @@ function normalizeInteractiveBase(input: InteractiveActorBaseInput): Interactive
     authenticatedAt: requireValidDate(input.authenticatedAt, 'authenticatedAt'),
     assuranceLevel: input.assuranceLevel ?? ActorAssuranceLevel.Standard,
     actorId: '',
+    ...(input.academicYearId ? { academicYearId: requireNonBlank(input.academicYearId, 'academicYearId') } : {}),
   })
 }
 

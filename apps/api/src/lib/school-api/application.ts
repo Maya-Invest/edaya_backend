@@ -1,4 +1,4 @@
-import type { FileStoragePort } from "@edaya/core";
+import type { AtomicExecutionPort, FileStoragePort } from "@edaya/core";
 import type { SchoolRepositories, SchoolService } from "@edaya/service";
 import type { ActorMetadata } from "@edaya/authorization";
 import { SchoolApplication as CoreSchoolApplication } from "@edaya/service";
@@ -14,6 +14,10 @@ export class ApiSchoolApplication {
 
   get repositories(): SchoolRepositories {
     return this.application.repositories;
+  }
+
+  get atomicExecution(): AtomicExecutionPort {
+    return this.application.atomicExecution;
   }
 
   get fileStorage(): FileStoragePort {

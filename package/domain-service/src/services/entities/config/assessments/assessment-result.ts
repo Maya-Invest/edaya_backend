@@ -1,38 +1,21 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { AssessmentResult, CoreEntityRepositories } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityTenantResolver, EntityWriteAuthorization } from '../../entity-config'
-import { AssessmentOperations, denyResourceAccess, GradeOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core'
-import { anyOperationModule, authorizeDeleteWithOperation, authorizeSaveWithOperation, config, operationModule, read, write } from '../../entity-config'
+import { Permission } from '@edaya/core';
 
-import { unique } from '../../entity-config/helper-utils'
-import { indirectTenant } from '../../entity-config/tenant'
+import type { AssessmentResult } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core';
+import { config } from '../../entity-config';
+
+
+import { indirectTenant } from '../../entity-config/tenant';
 // Extracted from domain/assessments/assessment-result.ts (PR3)
-export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, policy, atomicExecution }) =>
+export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.assessmentResults,
     tenant: assessmentResultTenant(),
-    read: read(
-      anyOperationModule([GradeOperations.read, AssessmentOperations.read]),
-      async (actor, entities, repos) => {
-        const assessments = await repos.assessments.findByIds(unique(entities.map(entity => entity.assessmentId)))
-        await policy.checkAssessmentAccess(actor, unique(assessments.map(assessment => assessment.id)))
-      },
-    ),
-    write: write(
-      operationModule(GradeOperations.input),
-      authorizeSaveWithOperation(
-        GradeOperations.input,
-        resolveGradeInputContext,
-        authorizeAssessmentResultResource(policy),
-      ),
-      authorizeDeleteWithOperation(
-        GradeOperations.input,
-        (entity, repositories) => resolveGradeInputContext(entity, undefined, repositories),
-        authorizeAssessmentResultDeleteResource(policy),
-      ),
-    ),
+    authorization: { resource: 'assessmentResults', read: [Permission.GRADE_READ, Permission.EXAM_CONFIG_CONFIGURE, Permission.QUERY_CURRICULUM_PROGRESS_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.GRADE_INPUT] },
+    
     gates: {
       preSave: validateAssessmentResultSave,
       preDelete: validateAssessmentResultDelete,
@@ -92,43 +75,6 @@ export async function validateAssessmentResultSave(
   if (reportCard?.status === ReportCardResultStatus.Published) {
     throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${assessment.periodId} is immutable`)
   }
-}
-
-async function resolveGradeInputContext(
-  entity: AssessmentResult,
-  _existing: AssessmentResult | undefined,
-  repositories: CoreEntityRepositories,
-) {
-  const assessment = await repositories.assessments.findById(entity.assessmentId)
-  if (!assessment) {
-    denyResourceAccess()
-  }
-  return { classSubjectId: assessment.classSubjectId }
-}
-
-function authorizeAssessmentResultResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AssessmentResult>['authorizeSave'] {
-  return async (actor, entity, _existing, _repositories) => {
-    await authorizeAssessmentResultAccess(policy, actor, entity)
-  }
-}
-
-function authorizeAssessmentResultDeleteResource(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<AssessmentResult>['authorizeDelete'] {
-  return async (actor, entity, _repositories) => {
-    await authorizeAssessmentResultAccess(policy, actor, entity)
-  }
-}
-
-async function authorizeAssessmentResultAccess(
-  policy: AuthorizationPolicy,
-  actor: Parameters<EntityWriteAuthorization<AssessmentResult>['authorizeSave']>[0],
-  entity: AssessmentResult,
-): Promise<void> {
-  await policy.checkAssessmentAccess(actor, [entity.assessmentId])
-  await policy.checkStudentAccess(actor, [entity.studentId])
 }
 
 async function validateAssessmentResultDelete(

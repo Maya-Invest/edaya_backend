@@ -1,28 +1,24 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { StaffMember } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { SchoolStructureOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { authorizeDeleteByReadAccess, authorizeExistingById, config, operationModule, read, write } from '../../entity-config'
-import { directSchoolTenant } from '../../entity-config/tenant'
-import { assertUniquePersonCode } from '../person-code-uniqueness'
+import { Permission } from '@edaya/core';
+import type { ActorMetadata } from '@edaya/authorization';
+import type { StaffMember } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+
+import { BusinessRuleViolationError } from '@edaya/core';
+import { config } from '../../entity-config';
+import { directSchoolTenant } from '../../entity-config/tenant';
+import { assertUniquePersonCode } from '../person-code-uniqueness';
 
 // Extracted from domain/school/staff-member.ts (PR3)
 export const staffMemberConfig: EntityConfigFactory<StaffMember> = (input) => {
-  const readAccess = (actor: ActorMetadata, entities: readonly StaffMember[]) =>
-    input.policy.checkStaffMemberReadAccess(actor, entities)
+  
 
   return {
     ...config({
       repository: input.repositories.staffMembers,
       tenant: directSchoolTenant<StaffMember>(),
-      read: read(operationModule(SchoolStructureOperations.staffRead), readAccess),
-      write: write(
-        operationModule(SchoolStructureOperations.configure),
-        authorizeExistingById(readAccess),
-        authorizeDeleteByReadAccess(readAccess),
-      ),
+      authorization: { resource: 'staffMembers', read: [Permission.QUERY_WORKSPACE_READ, Permission.SCHOOL_STRUCTURE_CONFIGURE, Permission.STAFF_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
+      
       atomicExecution: input.atomicExecution,
     }),
     gates: {

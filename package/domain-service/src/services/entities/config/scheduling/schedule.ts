@@ -1,22 +1,19 @@
-import type { Schedule } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory } from '../../entity-config'
-import { denyResourceAccess, SchedulingOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, isActivityAvailableForClassGroup, ScheduleKind } from '@edaya/core'
-import { authorizeClassGroupLinked, authorizeClassGroupLinkedDelete, config, noopReadAccess, operationModule, read, write } from '../../entity-config'
-import { classGroupLinkedTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+import type { Schedule } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, isActivityAvailableForClassGroup, ScheduleKind } from '@edaya/core';
+import { config } from '../../entity-config';
+import { classGroupLinkedTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/scheduling/schedule.ts (PR3)
-export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, policy, atomicExecution }) =>
+export const scheduleConfig: EntityConfigFactory<Schedule> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.schedules,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(operationModule(SchedulingOperations.timetableRead), noopReadAccess),
-    write: write(
-      operationModule(SchedulingOperations.timetableManage),
-      authorizeClassGroupLinked(policy, 'classGroupId'),
-      authorizeClassGroupLinkedDelete(policy),
-    ),
+    authorization: { resource: 'schedules', read: [Permission.QUERY_TIMETABLE_READ, Permission.TIMETABLE_UPDATE, Permission.TIMETABLE_CREATE, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.TIMETABLE_UPDATE] },
+    
     gates: {
       preSave: validateScheduleSave,
     },

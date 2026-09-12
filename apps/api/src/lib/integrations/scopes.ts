@@ -1,21 +1,21 @@
-import { GuardianCapability } from "@edaya/authorization";
+import { Permission } from "@edaya/core";
 
-/** The sole external read-scope vocabulary. No mutation capability is delegable. */
+/** The sole external read-scope vocabulary. OAuth consent admits read actions only. */
 export const guardianScopeRegistry = {
-  "guardian.profile:read": { capability: GuardianCapability.ReadSelfProfile, routes: ["/me"] },
-  "students.profile:read": { capability: GuardianCapability.ReadStudentDetail, routes: ["/students", "/students/:studentId"] },
-  "grades:read": { capability: GuardianCapability.ReadGrades, routes: ["/students/:studentId/grades"] },
-  "report-cards:read": { capability: GuardianCapability.ReadReportCard, routes: ["/students/:studentId/report-cards"] },
-  "attendance:read": { capability: GuardianCapability.ReadAttendance, routes: ["/students/:studentId/attendance"] },
-  "payments:read": { capability: GuardianCapability.ReadPayments, routes: ["/students/:studentId/fees", "/students/:studentId/payments"] },
-  "enrollments:read": { capability: GuardianCapability.ReadEnrollmentHistory, routes: ["/students/:studentId/enrollments"] },
-  "logbook:read": { capability: GuardianCapability.ReadLogbook, routes: ["/students/:studentId/logbook"] },
-  "timetable:read": { capability: GuardianCapability.ReadTimetable, routes: ["/students/:studentId/timetable"] },
-  "calendar:read": { capability: GuardianCapability.ReadCalendar, routes: ["/students/:studentId/calendar"] },
-  "communications:read": { capability: GuardianCapability.ReadCommunications, routes: ["/students/:studentId/communications"] },
-  "curriculum:read": { capability: GuardianCapability.ReadCurriculum, routes: ["/students/:studentId/curriculum"] },
-  "school-context:read": { capability: GuardianCapability.ReadWorkspaceShell, routes: ["/school-context"] },
-  "attachments:read": { capability: GuardianCapability.ReadAttachments, routes: ["/attachments/:attachmentId"] },
+  "guardian.profile:read": { permission: Permission.QUERY_GUARDIAN_SELF_READ, routes: ["/me"] },
+  "students.profile:read": { permission: Permission.QUERY_STUDENT_DETAIL_READ, routes: ["/students", "/students/:studentId"] },
+  "grades:read": { permission: Permission.GRADE_READ, routes: ["/students/:studentId/grades"] },
+  "report-cards:read": { permission: Permission.QUERY_REPORT_CARD_DETAIL_READ, routes: ["/students/:studentId/report-cards"] },
+  "attendance:read": { permission: Permission.ATTENDANCE_READ, routes: ["/students/:studentId/attendance"] },
+  "payments:read": { permission: Permission.PAYMENT_READ, routes: ["/students/:studentId/fees", "/students/:studentId/payments"] },
+  "enrollments:read": { permission: Permission.QUERY_ENROLLMENT_HISTORY_READ, routes: ["/students/:studentId/enrollments"] },
+  "logbook:read": { permission: Permission.CLASS_LOGBOOK_READ, routes: ["/students/:studentId/logbook"] },
+  "timetable:read": { permission: Permission.QUERY_TIMETABLE_READ, routes: ["/students/:studentId/timetable"] },
+  "calendar:read": { permission: Permission.QUERY_CALENDAR_READ, routes: ["/students/:studentId/calendar"] },
+  "communications:read": { permission: Permission.QUERY_COMMUNICATIONS_READ, routes: ["/students/:studentId/communications"] },
+  "curriculum:read": { permission: Permission.QUERY_CLASS_CURRICULUM_READ, routes: ["/students/:studentId/curriculum"] },
+  "school-context:read": { permission: Permission.QUERY_WORKSPACE_READ, routes: ["/school-context"] },
+  "attachments:read": { permission: Permission.ATTACHMENT_READ, routes: ["/attachments/:attachmentId"] },
 } as const;
 
 export type GuardianScope = keyof typeof guardianScopeRegistry;

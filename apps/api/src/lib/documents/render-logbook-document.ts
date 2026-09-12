@@ -1,22 +1,8 @@
+import { Permission } from '@edaya/core';
 import { randomUUID } from "node:crypto";
-import {
-  AssessmentKind,
-  BusinessRuleViolationError,
-  type DocumentRendererPort,
-  OccurrenceStatus,
-  TeacherAssignmentKind,
-  TeacherAssignmentStatus,
-} from "@edaya/core";
-import { LogbookOperations, operationModule } from "@edaya/authorization";
-import {
-  buildLogbookV1Payload,
-  catalogClassName,
-  catalogLangFromLocale,
-  catalogMatter,
-  catalogPeriodLabel,
-  catalogSubjectName,
-  sanitizeFileName,
-} from "@edaya/service";
+import { AssessmentKind, BusinessRuleViolationError, type DocumentRendererPort, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from "@edaya/core";
+
+import { buildLogbookV1Payload, catalogClassName, catalogLangFromLocale, catalogMatter, catalogPeriodLabel, catalogSubjectName, sanitizeFileName } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
 
 export interface RenderClassLogbookDocumentInput {
@@ -58,7 +44,7 @@ export async function renderClassLogbookDocument(
   service: SchoolService,
   input: RenderClassLogbookDocumentInput,
 ): Promise<RenderClassLogbookDocumentResult> {
-  await operationModule(LogbookOperations.read)(service.baseService.actor);
+  await service.baseService.access.assertSchool([Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.GRADE_INPUT]);
 
   const classGroup = await service.baseService.repositories.classGroups.findById(input.classGroupId);
   if (!classGroup) {

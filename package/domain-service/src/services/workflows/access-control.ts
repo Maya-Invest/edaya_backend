@@ -1,12 +1,13 @@
-import type { Guardian, StaffMember, StaffPermissionAssignment, StaffPermissionAssignmentInput, Student, Teacher } from '@edaya/core'
-import type { BaseSchoolService } from '../base-school-service'
-import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { AccessControlOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, StaffPermissionAssignment as StaffPermissionAssignmentEntity } from '@edaya/core'
-import { linkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import { Permission } from '@edaya/core';
+import type { Guardian, StaffMember, StaffPermissionAssignment, StaffPermissionAssignmentInput, Student, Teacher } from '@edaya/core';
+import type { BaseSchoolService } from '../base-school-service';
+import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+
+import { BusinessRuleViolationError, StaffPermissionAssignment as StaffPermissionAssignmentEntity } from '@edaya/core';
+import { linkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface LinkActorSubjectInput {
   subjectId: string
@@ -31,7 +32,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async linkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
-    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
 
     const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
     if (targetCount !== 1) {
@@ -54,7 +55,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async unlinkActorSubject(input: Omit<LinkActorSubjectInput, 'subjectId'>): Promise<LinkActorSubjectResult> {
-    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
 
     const targetCount = [input.staffMemberId, input.guardianId, input.studentId, input.teacherId].filter(Boolean).length
     if (targetCount !== 1) {

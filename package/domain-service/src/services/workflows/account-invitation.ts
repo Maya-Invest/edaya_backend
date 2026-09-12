@@ -1,36 +1,21 @@
-import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
-import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor'
-import type { BaseSchoolService } from '../base-school-service'
-import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { randomUUID } from 'node:crypto'
-import { AccessControlOperations, denyResourceAccess } from '@edaya/authorization'
-import {
-  AccountInvitation,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  AccountInvitationStatus,
-  BusinessRuleViolationError,
-  School as SchoolEntity,
-} from '@edaya/core'
-import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
-import {
-  buildInvitationUrl,
-  generateInvitationToken,
-  hashInvitationToken,
-} from '../../capabilities/invitations/invitation-token'
-import {
-  normalizeInvitationEmail,
-  resolveInvitationContact,
-  resolveInviteeDisplayName,
-  resolveStudentInvitationEmail,
-} from '../../capabilities/invitations/resolve-invitation-contact'
-import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys'
-import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content'
-import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
-import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
-import { operationModule } from '../entities/entity-config'
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import { BaseServiceWorkflow } from './base-service-workflow'
+import { Permission } from '@edaya/core';
+import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core';
+import type { LinkSubjectToActorResult } from '../account-linking/link-subject-to-actor';
+import type { BaseSchoolService } from '../base-school-service';
+import type { InvitationWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { randomUUID } from 'node:crypto';
+import { denyResourceAccess } from '@edaya/authorization';
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity } from '@edaya/core';
+import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants';
+import { buildInvitationUrl, generateInvitationToken, hashInvitationToken } from '../../capabilities/invitations/invitation-token';
+import { normalizeInvitationEmail, resolveInvitationContact, resolveInviteeDisplayName, resolveStudentInvitationEmail } from '../../capabilities/invitations/resolve-invitation-contact';
+import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys';
+import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content';
+import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name';
+import { linkSubjectToActor } from '../account-linking/link-subject-to-actor';
+
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
+import { BaseServiceWorkflow } from './base-service-workflow';
 
 export interface SendAccountInvitationInput {
   kind: AccountInvitationKind
@@ -71,12 +56,12 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async sendAccountInvitation(input: SendAccountInvitationInput): Promise<SendAccountInvitationResult> {
-    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
     return this.createAndDeliverInvitation(input)
   }
 
   async resendAccountInvitation(input: ResendAccountInvitationInput): Promise<SendAccountInvitationResult> {
-    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
     const existing = await this.requireInvitationInSchool(input.invitationId)
     if (existing.status === AccountInvitationStatus.Accepted) {
       throw new BusinessRuleViolationError(
@@ -100,7 +85,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async revokeAccountInvitation(input: RevokeAccountInvitationInput): Promise<AccountInvitation> {
-    await operationModule(AccessControlOperations.assign)(this.baseService.actor)
+    await this.baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
     const existing = await this.requireInvitationInSchool(input.invitationId)
     if (existing.status === AccountInvitationStatus.Accepted) {
       throw new BusinessRuleViolationError(

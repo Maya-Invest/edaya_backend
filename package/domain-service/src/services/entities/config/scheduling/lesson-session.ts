@@ -1,35 +1,21 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { LessonSession } from '@edaya/core'
-import type { SchoolRepositories } from '../../../../ports/school-repositories'
-import type { EntityConfigFactory, EntityWriteAuthorization } from '../../entity-config'
-import { AttendanceOperations, denyResourceAccess, LogbookOperations, SchedulingOperations } from '@edaya/authorization'
-import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
-import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts'
-import { anyOperationModule, authorizeClassGroupLinkedDelete, authorizeSaveWithOperation, config, operationModule, read, readByIds, write } from '../../entity-config'
-import { classGroupLinkedTenant } from '../../entity-config/tenant'
+import { Permission } from '@edaya/core';
+
+import type { LessonSession } from '@edaya/core';
+import type { SchoolRepositories } from '../../../../ports/school-repositories';
+import type { EntityConfigFactory } from '../../entity-config';
+import { denyResourceAccess } from '@edaya/authorization';
+import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core';
+import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts';
+import { config } from '../../entity-config';
+import { classGroupLinkedTenant } from '../../entity-config/tenant';
 
 // Extracted from domain/scheduling/lesson-session.ts (PR3)
-export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ repositories, policy, atomicExecution }) =>
+export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.lessonSessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    read: read(
-      operationModule(SchedulingOperations.timetableRead),
-      readByIds((actor, ids) => policy.checkLessonSessionReadAccess(actor, ids)),
-    ),
-    write: write(
-      anyOperationModule([
-        SchedulingOperations.timetableManage,
-        LogbookOperations.update,
-        AttendanceOperations.record,
-      ]),
-      authorizeSaveWithOperation(
-        (entity, existing) => resolveLessonSessionWriteOperation(entity, existing),
-        (entity, existing) => resolveLessonSessionWriteContext(entity, existing),
-        authorizeLessonSessionSave(policy),
-      ),
-      authorizeClassGroupLinkedDelete(policy),
-    ),
+    authorization: { resource: 'lessonSessions', read: [Permission.QUERY_TIMETABLE_READ, Permission.TIMETABLE_UPDATE, Permission.TIMETABLE_CREATE, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: resolveLessonSessionWriteAction, delete: Permission.TIMETABLE_UPDATE },
+    
     gates: {
       preSave: validateLessonSessionSave,
     },
@@ -73,49 +59,23 @@ export function isLessonSessionAttendanceCompletionUpdate(
     && entity.status === OccurrenceStatus.Completed
 }
 
-function resolveLessonSessionWriteOperation(
+function resolveLessonSessionWriteAction(
   entity: LessonSession,
   existing: LessonSession | undefined,
 ) {
   if (!existing) {
-    return SchedulingOperations.timetableManage
+    return Permission.TIMETABLE_UPDATE
   }
   if (isLessonSessionLogbookOnlyUpdate(entity, existing)) {
-    return LogbookOperations.update
+    return Permission.CLASS_LOGBOOK_UPDATE
   }
   if (isLessonSessionAttendanceCompletionUpdate(entity, existing)) {
-    return AttendanceOperations.record
+    return Permission.ATTENDANCE_RECORD
   }
-  return SchedulingOperations.timetableManage
+  return Permission.TIMETABLE_UPDATE
 }
 
-function resolveLessonSessionWriteContext(
-  entity: LessonSession,
-  existing: LessonSession | undefined,
-) {
-  if (existing && (
-    isLessonSessionLogbookOnlyUpdate(entity, existing)
-    || isLessonSessionAttendanceCompletionUpdate(entity, existing)
-  )) {
-    return { classSubjectId: entity.classSubjectId }
-  }
-  return { classGroupId: entity.classGroupId }
-}
 
-function authorizeLessonSessionSave(
-  policy: AuthorizationPolicy,
-): EntityWriteAuthorization<LessonSession>['authorizeSave'] {
-  return async (actor, entity, existing) => {
-    if (existing && (
-      isLessonSessionLogbookOnlyUpdate(entity, existing)
-      || isLessonSessionAttendanceCompletionUpdate(entity, existing)
-    )) {
-      await policy.checkLessonSessionAccess(actor, [entity.id])
-      return
-    }
-    await policy.checkClassGroupAccess(actor, [entity.classGroupId])
-  }
-}
 
 export async function validateLessonSessionSave(
   lessonSession: LessonSession,

@@ -2,7 +2,6 @@ import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, Activi
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
-import { DefaultAuthorizationRepository } from '@edaya/authorization'
 import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
 import { buildSchoolOverview } from '@edaya/service'
 import { runMigrations } from './lib/migrate'
@@ -15,7 +14,6 @@ import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
-  public readonly authorization: DefaultAuthorizationRepository
   public readonly schoolsStore: PostgresStore<School>
   public readonly academicYears: PostgresStore<AcademicYear>
   public readonly academicPeriods: PostgresStore<AcademicPeriod>
@@ -136,9 +134,10 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.incidents = stores.incidents
 
     this.staffPermissionAssignments = new PostgresStaffPermissionAssignmentStore(db)
-    this.authorization = new DefaultAuthorizationRepository(this)
 
     this.schools = {
+      forAccess: scope => this.schoolsStore.forAccess(scope),
+      assertAccess: entity => this.schoolsStore.assertAccess(entity),
       forSchool: schoolId => this.schoolsStore.forSchool(schoolId),
       findById: (id: string) => this.schoolsStore.findById(id),
       findOne: (options, last) => this.schoolsStore.findOne(options, last),
