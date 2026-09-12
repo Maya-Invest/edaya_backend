@@ -278,4 +278,20 @@ describe('resolveInteractiveActorIdentity', () => {
       schoolId: 'school-b',
     })).resolves.toBeNull()
   })
+
+  test('does not resolve school identities for X-Actor-Kind platform', async () => {
+    const repositories = {
+      staffMembers: {
+        findOne: async () => ({ id: 'staff-1', schoolId: 'school-1', subjectId: 'user-1' }),
+      },
+      guardians: { findOne: async () => undefined },
+      students: { findOne: async () => undefined },
+      teachers: { findOne: async () => undefined },
+    }
+
+    await expect(resolveInteractiveActorIdentity(repositories as never, {
+      subjectId: 'user-1',
+      actorKind: 'platform',
+    })).resolves.toBeNull()
+  })
 })

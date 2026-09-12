@@ -1,7 +1,9 @@
 import type { AuthorizationRepositories, InteractiveActorMetadata } from "@edaya/authorization";
 import { describeActionGrants, isInteractiveActor } from "@edaya/authorization";
 
-export async function serializeActorAuthorization(actor: InteractiveActorMetadata, repositories: AuthorizationRepositories) {
+export type SchoolInteractiveActorMetadata = Exclude<InteractiveActorMetadata, { kind: 'platform' }>;
+
+export async function serializeActorAuthorization(actor: SchoolInteractiveActorMetadata, repositories: AuthorizationRepositories) {
   const grants = await describeActionGrants(actor, repositories);
   return {
     kind: actor.kind,
@@ -21,4 +23,11 @@ export async function serializeActorAuthorization(actor: InteractiveActorMetadat
 
 export function requireInteractiveActor(actor: unknown): InteractiveActorMetadata | null {
   return isInteractiveActor(actor) ? actor : null;
+}
+
+export function requireSchoolInteractiveActor(actor: unknown): SchoolInteractiveActorMetadata | null {
+  if (!isInteractiveActor(actor) || actor.kind === "platform") {
+    return null;
+  }
+  return actor;
 }

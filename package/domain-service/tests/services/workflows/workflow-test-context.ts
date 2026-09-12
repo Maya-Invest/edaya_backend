@@ -1,4 +1,4 @@
-import type { ActorMetadata, AuthorizationPolicy } from '@edaya/authorization'
+import type { AuthorizationPolicy, SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AcademicPeriod, Activity, AtomicExecutionPort, Attachment, AttendanceRecord, ClassGroup, FileStoragePort, Filter, MessageDelivery, NotificationGatewayPort, PeriodDefinition, Resource, ResourceAssignment, StaffAssignment, StaffMember, StudentNote } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { AcademicYear, Announcement, AnnouncementStatus, AssessmentKind, AttendanceJustificationStatus, AttendanceMode, AttendanceStatus, EnrollmentEndReason, Fee, FeeCategory, FeeStatus, GradeLevel, Guardian, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, ReportCardDefinitionSectionKind, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryActionStatus, StudentFee, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
@@ -1204,7 +1204,7 @@ export function createCommunicationsContext({
   targets?: Array<{ id: string, announcementId: string, targetKind: TargetKind, targetId?: string }>
   existingDelivery?: MessageDelivery
   notificationGateway?: NotificationGatewayPort
-  actorOverride?: ActorMetadata
+  actorOverride?: SchoolScopedActorMetadata
 } = {}) {
   const publishedAt = announcementStatus === AnnouncementStatus.Published
     ? new Date('2026-05-01T00:00:00Z')

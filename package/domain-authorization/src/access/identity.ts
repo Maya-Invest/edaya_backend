@@ -2,7 +2,7 @@ import type { AuthorizationRepositories } from '../ports/authorization-repositor
 import type { InteractiveActorKind } from './interactive-actor-kind';
 
 export interface ResolvedInteractiveActorIdentity {
-  readonly kind: InteractiveActorKind
+  readonly kind: Exclude<InteractiveActorKind, 'platform'>
   readonly schoolId: string
   readonly actorId: string
 }
@@ -95,6 +95,8 @@ async function resolveByActorKindAndSubject(
       }
       return { kind: 'teacher', schoolId: teacher.schoolId, actorId: teacher.id }
     }
+    case 'platform':
+      return null
   }
 }
 
@@ -143,7 +145,17 @@ async function resolveByActorKindAndId(
       }
       return { kind: 'teacher', schoolId: teacher.schoolId, actorId: teacher.id }
     }
+    case 'platform':
+      return null
   }
+}
+
+export async function subjectHasSchoolInteractiveIdentity(
+  repositories: ActorRepositories,
+  subjectId: string,
+): Promise<boolean> {
+  const identities = await listIdentitiesForSubject(repositories, subjectId)
+  return identities.length > 0
 }
 
 async function listIdentitiesForSubject(

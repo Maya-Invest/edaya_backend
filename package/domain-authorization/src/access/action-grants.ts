@@ -19,7 +19,7 @@ export interface ActionGrantDisplay {
 
 /** Display projection only. Production enforcement always reads facts through policies. */
 export async function describeActionGrants(actor: ActorMetadata, repositories: AuthorizationRepositories): Promise<ActionGrantDisplay[]> {
-  if (actor.kind === 'system') denied('System actors cannot introspect grants')
+  if (actor.kind === 'system' || actor.kind === 'platform' || actor.kind === 's2s') denied('System actors cannot introspect grants')
   const facts = new AccessFacts(actor, repositories)
   await facts.validateActor()
   const owner = await facts.owner()

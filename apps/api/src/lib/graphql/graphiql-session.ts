@@ -27,7 +27,7 @@ export async function handleGraphiQLSession(c: Context<AppBindings>) {
       ? {
           kind: actor.kind,
           actorId: resolveAuditActorId(actor),
-          schoolId: actor.schoolId,
+          schoolId: actor.kind === "platform" ? null : actor.schoolId,
         }
       : null,
   });

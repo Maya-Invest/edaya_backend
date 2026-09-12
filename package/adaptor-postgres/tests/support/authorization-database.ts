@@ -3,10 +3,10 @@ import { resolve } from 'node:path'
 import type { PGlite } from '@electric-sql/pglite'
 
 export const migrationDirectory = resolve(import.meta.dir, '../../drizzle')
-export const typedGrantsMigration = readFileSync(resolve(migrationDirectory, '0008_typed_staff_grants.sql'), 'utf8')
+export const typedGrantsMigration = readFileSync(resolve(migrationDirectory, '0009_typed_staff_grants.sql'), 'utf8')
 
 export async function installSchemaBeforeTypedGrants(db: PGlite): Promise<void> {
-  for (const file of readdirSync(migrationDirectory).filter(name => /^000[0-7]_.*\.sql$/.test(name)).sort())
+  for (const file of readdirSync(migrationDirectory).filter(name => /^000[0-8]_.*\.sql$/.test(name)).sort())
     await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
 }
 

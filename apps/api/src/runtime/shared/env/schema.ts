@@ -30,7 +30,7 @@ export const EnvSchema = z.object({
   DATABASE_URL: z.string(),
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
-  SCHOOL_API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  API_ORIGIN: z.string().url().default("http://localhost:9999"),
   IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
@@ -52,6 +52,8 @@ export const EnvSchema = z.object({
   FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */
   ALLOW_PUBLIC_SCHOOL_REGISTRATION: envBooleanSchema.optional(),
+  /** Comma-separated identity emails that may bootstrap the first platform operators. */
+  PLATFORM_BOOTSTRAP_EMAILS: z.string().default(""),
   /** Webapp origin used to build invitation accept links, e.g. http://localhost:5173 */
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */

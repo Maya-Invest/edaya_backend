@@ -3,7 +3,7 @@ import { permissionScope, validatePermissionScopes, Permission } from '@edaya/co
 
 /** Explicit school-owner authority; preset labels never participate in decisions. */
 export const ELEVATED_STAFF_PERMISSIONS: readonly Permission[] = Object.values(Permission)
-  .filter(permission => permission !== Permission.PLATFORM_REGISTER_SCHOOL)
+  .filter(permission => permissionScope(permission) !== 'platform')
 
 export const COORDINATOR_PERMISSIONS: readonly Permission[] = [
   Permission.ACADEMIC_PROGRAM_UPDATE,

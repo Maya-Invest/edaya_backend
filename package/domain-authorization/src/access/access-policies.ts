@@ -1,7 +1,8 @@
+import { s2sMayExercise } from '../s2s/access-class'
 import { assertGrantDelegation } from './grant-administration';
 import { scopesForStaffAssignmentPermission } from './staff-assignment-policy';
 import type { BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core';
-import type { ActorMetadata } from '../model/actor';
+import type { SchoolScopedActorMetadata } from '../model/actor';
 import type { AuthorizationRepositories } from '../ports/authorization-repositories';
 import { assertCommentOnlyReportCardUpdate, assertDraftReportCardForTeacherComment, collectCommentChanges, Permission as P, resourceAccessScope } from '@edaya/core';
 import { ELEVATED_STAFF_PERMISSIONS } from '../permissions/presets';
@@ -22,7 +23,7 @@ const systemActions: Record<string, readonly Permission[]> = {
 }
 
 export class AccessPolicies {
-  constructor(readonly actor: ActorMetadata, readonly repositories: AuthorizationRepositories) {}
+  constructor(readonly actor: SchoolScopedActorMetadata, readonly repositories: AuthorizationRepositories) {}
 
   async scope(actions: ActionSelection, resource: CoreEntityKey, intent: 'read' | 'write' = 'read'): Promise<ResourceAccessScope> {
     const requested = typeof actions === 'string' ? [actions] : actions
@@ -37,6 +38,11 @@ export class AccessPolicies {
   private async actionScope(facts: AccessFacts, action: Permission, resource: CoreEntityKey, intent: 'read' | 'write'): Promise<ResourceAccessClause[]> {
     const actor = this.actor
     if (actor.kind === 'system') return systemActions[actor.systemId]?.includes(action) ? [{ target: { kind: 'school' } }] : []
+    if (actor.kind === 's2s') {
+      const client = await this.repositories.s2sClients.findById(actor.actorId)
+      return client?.isActive(facts.now) && client.schoolId === actor.schoolId && s2sMayExercise(client.accessClass, action)
+        ? [{ target: { kind: 'school' } }] : []
+    }
     if (actor.kind === 'teacher') return teacherPolicy(facts, action, resource, intent)
     if (actor.kind === 'guardian' || actor.kind === 'student') return familyPolicy(facts, action, resource, intent)
     const owner = await facts.owner()
@@ -135,6 +141,6 @@ export class AccessPolicies {
   }
 }
 
-export function createAccessPolicies(args: { actor: ActorMetadata, repositories: AuthorizationRepositories }): AccessPolicies {
+export function createAccessPolicies(args: { actor: SchoolScopedActorMetadata, repositories: AuthorizationRepositories }): AccessPolicies {
   return new AccessPolicies(args.actor, args.repositories)
 }

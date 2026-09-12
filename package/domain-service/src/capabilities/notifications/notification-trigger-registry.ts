@@ -1,16 +1,17 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { NotificationEnqueueInput, NotificationGatewayPort } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { EntityBusinessHooks, ManagedEntityServiceConfig } from '../../services/entities/managed-entity-service'
 import type { CoreEntityKey } from '../../services/runtime/core-entity-map'
 import type { NotificationTemplateService } from './templates/notification-template-service'
+import { isSchoolScopedActor } from '@edaya/authorization'
 import { deliverNotificationFromEnqueueInput } from './delivery/deliver-notification'
 
 export interface NotificationTriggerContext {
   notificationGateway: NotificationGatewayPort
   repositories: SchoolRepositories
   templateService: NotificationTemplateService
-  actor: ActorMetadata
+  actor: SchoolScopedActorMetadata
 }
 
 export type NotificationTriggerPredicate<T> = (
@@ -62,6 +63,10 @@ export function createNotificationPostSaveHook(
   return async (entity, existing, repositories, actor) => {
     const triggers = notificationTriggerRegistry.getTriggers(entityKey)
     if (triggers.length === 0) {
+      return
+    }
+
+    if (!isSchoolScopedActor(actor)) {
       return
     }
 

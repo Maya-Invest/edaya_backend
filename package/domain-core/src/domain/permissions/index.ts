@@ -1,6 +1,7 @@
 export * from './permission'
 export * from './grant-scope'
 export * from './permission-scopes'
+export * from './platform-actions'
 export * from './scope-ids-parse'
 export * from './scope-ids-validate'
 export * from './scope-segments'

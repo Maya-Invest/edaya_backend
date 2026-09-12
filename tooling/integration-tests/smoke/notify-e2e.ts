@@ -20,7 +20,7 @@ import { waitForApi } from '../../seeding/src/http/wait-for-api'
 
 loadDotenvFiles()
 
-const baseUrl = process.env.SCHOOL_API_ORIGIN ?? 'http://localhost:9999'
+const baseUrl = process.env.API_ORIGIN ?? 'http://localhost:9999'
 const director = DEV_AUTH_STAFF_ACCOUNTS.find(a => a.staffId === 'st5') ?? DEV_AUTH_STAFF_ACCOUNTS[0]!
 const announcementId = `ann-notify-smoke-${Date.now()}`
 

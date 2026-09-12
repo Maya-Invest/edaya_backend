@@ -1,5 +1,6 @@
 import type { StaffAccountKind } from '@edaya/core'
 import { DomainValidationError } from '@edaya/core'
+import { AuthorizationError, AuthorizationErrorCode } from './errors'
 
 /**
  * Interactive assurance for human sessions:
@@ -55,13 +56,45 @@ export interface SystemActorMetadata {
   readonly reason: string
 }
 
+export interface PlatformActorMetadata {
+  readonly kind: 'platform'
+  readonly subjectId: string
+  readonly actorId: string
+  readonly requestId: string
+  readonly sessionId?: string
+  readonly authenticatedAt: Date
+  readonly assuranceLevel: ActorAssuranceLevel
+  readonly email: string
+}
+
+export interface S2sActorMetadata {
+  readonly academicYearId?: string
+  readonly kind: 's2s'
+  readonly subjectId: string
+  readonly actorId: string
+  readonly schoolId: string
+  readonly requestId: string
+  readonly authenticatedAt: Date
+  readonly assuranceLevel: ActorAssuranceLevel.Service
+  readonly clientId: string
+}
+
 export type InteractiveActorMetadata
   = | StaffActorMetadata
     | GuardianActorMetadata
     | StudentActorMetadata
     | TeacherActorMetadata
+    | PlatformActorMetadata
 
-export type ActorMetadata = InteractiveActorMetadata | SystemActorMetadata
+export type SchoolScopedActorMetadata
+  = | StaffActorMetadata
+    | GuardianActorMetadata
+    | StudentActorMetadata
+    | TeacherActorMetadata
+    | SystemActorMetadata
+    | S2sActorMetadata
+
+export type ActorMetadata = InteractiveActorMetadata | SystemActorMetadata | S2sActorMetadata
 
 interface InteractiveActorBaseInput {
   subjectId: string
@@ -95,6 +128,24 @@ export interface SystemActorMetadataInput {
   schoolId: string
   requestId: string
   reason: string
+}
+
+export interface PlatformActorMetadataInput {
+  subjectId: string
+  actorId: string
+  requestId: string
+  sessionId?: string
+  authenticatedAt: Date
+  assuranceLevel?: ActorAssuranceLevel
+  email: string
+}
+
+export interface S2sActorMetadataInput {
+  actorId: string
+  schoolId: string
+  requestId: string
+  authenticatedAt?: Date
+  clientId: string
 }
 
 export function createStaffActorMetadata(input: StaffActorMetadataInput): StaffActorMetadata {
@@ -168,6 +219,35 @@ export function createSystemActorMetadata(input: SystemActorMetadataInput): Syst
   })
 }
 
+export function createPlatformActorMetadata(input: PlatformActorMetadataInput): PlatformActorMetadata {
+  const actorId = requireNonBlank(input.actorId, 'actorId')
+  const email = requireNonBlank(input.email, 'email').toLowerCase()
+  return Object.freeze({
+    kind: 'platform',
+    subjectId: requireNonBlank(input.subjectId, 'subjectId'),
+    actorId,
+    requestId: requireNonBlank(input.requestId, 'requestId'),
+    sessionId: input.sessionId ? requireNonBlank(input.sessionId, 'sessionId') : undefined,
+    authenticatedAt: requireValidDate(input.authenticatedAt, 'authenticatedAt'),
+    assuranceLevel: input.assuranceLevel ?? ActorAssuranceLevel.Standard,
+    email,
+  })
+}
+
+export function createS2sActorMetadata(input: S2sActorMetadataInput): S2sActorMetadata {
+  const actorId = requireNonBlank(input.actorId, 'actorId')
+  return Object.freeze({
+    kind: 's2s',
+    subjectId: `s2s:${actorId}`,
+    actorId,
+    schoolId: requireNonBlank(input.schoolId, 'schoolId'),
+    requestId: requireNonBlank(input.requestId, 'requestId'),
+    authenticatedAt: requireValidDate(input.authenticatedAt ?? new Date(), 'authenticatedAt'),
+    assuranceLevel: ActorAssuranceLevel.Service,
+    clientId: requireNonBlank(input.clientId, 'clientId'),
+  })
+}
+
 export function resolveAuditActorId(actor: ActorMetadata): string {
   return actor.kind === 'system' ? actor.systemId : actor.actorId
 }
@@ -180,6 +260,18 @@ export function isInteractiveActor(actor: unknown): actor is InteractiveActorMet
     || actor.kind === 'guardian'
     || actor.kind === 'student'
     || actor.kind === 'teacher'
+    || actor.kind === 'platform'
+}
+
+export function isSchoolScopedActor(actor: ActorMetadata): actor is SchoolScopedActorMetadata {
+  return actor.kind !== 'platform'
+}
+
+export function requireActorSchoolId(actor: ActorMetadata): string {
+  if (actor.kind === 'platform') {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Platform actors are not school-scoped')
+  }
+  return actor.schoolId
 }
 
 function normalizeInteractiveBase(input: InteractiveActorBaseInput): InteractiveActorBase {

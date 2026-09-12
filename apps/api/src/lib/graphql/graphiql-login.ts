@@ -55,7 +55,7 @@ export async function handleGraphiQLLogin(c: Context<AppBindings>) {
       "origin": identityOrigin,
       ...(cookie ? { cookie } : {}),
     },
-    body: "{}",
+    body: JSON.stringify({ resource: c.env?.API_ORIGIN ?? "http://localhost:9999" }),
   });
   if (!exchange.ok) {
     return c.json({ message: "Identity token exchange failed" }, 401);

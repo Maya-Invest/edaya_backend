@@ -1,4 +1,4 @@
-import type { ActionSelection, ActorMetadata } from '@edaya/authorization';
+import type { ActionSelection, SchoolScopedActorMetadata } from '@edaya/authorization';
 import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions } from '@edaya/core';
 import type { SchoolRepositories } from '../../ports/school-repositories';
 import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization';
@@ -10,12 +10,12 @@ export interface EntityTenantResolver<T> {
 }
 
 export interface EntityBusinessGates<T> {
-  preSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
+  preSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: SchoolScopedActorMetadata) => Promise<void>
   preDelete?: (entity: T, repositories: SchoolRepositories) => Promise<void>
 }
 export interface EntityBusinessHooks<T> {
-  postSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
-  postDelete?: (entity: T, repositories: SchoolRepositories, actor: ActorMetadata) => Promise<void>
+  postSave?: (entity: T, existing: T | undefined, repositories: SchoolRepositories, actor: SchoolScopedActorMetadata) => Promise<void>
+  postDelete?: (entity: T, repositories: SchoolRepositories, actor: SchoolScopedActorMetadata) => Promise<void>
 }
 export interface ManagedEntityServiceConfig<T> {
   repository: BaseRepositoryInterface<T>
@@ -26,13 +26,13 @@ export interface ManagedEntityServiceConfig<T> {
   atomicExecution?: AtomicExecutionPort
 }
 export interface ManagedEntityServiceArgs<T> {
-  actor: ActorMetadata
+  actor: SchoolScopedActorMetadata
   repositories: SchoolRepositories
   config: ManagedEntityServiceConfig<T>
 }
 
 export class ManagedEntityService<T> {
-  private readonly actor: ActorMetadata
+  private readonly actor: SchoolScopedActorMetadata
   private readonly repositories: SchoolRepositories
   private readonly config: ManagedEntityServiceConfig<T>
   private readonly access: ReturnType<typeof createAccessPolicies>

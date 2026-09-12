@@ -4,6 +4,7 @@ export * from './permission'
 export * from './permission-assurance'
 export * from './permission-definition'
 export * from './permission-definitions'
+export * from './platform-actions'
 export * from './scope-type'
 
 export * from './presets'

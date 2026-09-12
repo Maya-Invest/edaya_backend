@@ -7,6 +7,7 @@ import type {
   StructureTemplateReportCardStructure,
 } from './structure-template-types'
 import { randomUUID } from 'node:crypto'
+import { requireActorSchoolId } from '@edaya/authorization'
 import {
   ReportCardDefinitionKind,
   ReportCardDefinitionSection,
@@ -108,7 +109,7 @@ async function ensureGradeScale(
   const gradeScaleId = randomUUID()
   await service.assessmentsWorkflow.createGradeScale({
     id: gradeScaleId,
-    schoolId: actor.schoolId!,
+    schoolId: requireActorSchoolId(actor),
     name: `Sur ${structure.gradingScale}`,
     minScore: 0,
     maxScore: structure.gradingScale,

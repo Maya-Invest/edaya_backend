@@ -3,7 +3,7 @@ import { handleGraphiQLLogin, handleGraphiQLLogout } from "@/lib/graphql/graphiq
 
 function createContext(nodeEnv: string, body?: unknown) {
   return {
-    env: { NODE_ENV: nodeEnv, IDENTITY_ISSUER: "http://localhost:9900" },
+    env: { NODE_ENV: nodeEnv, IDENTITY_ISSUER: "http://localhost:9900", API_ORIGIN: "http://localhost:9999" },
     req: { json: async () => body },
     json: (value: unknown, status = 200) => ({ value, status }),
     body: (_value: unknown, status = 200) => ({ status }),

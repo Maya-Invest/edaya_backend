@@ -29,7 +29,7 @@ describe("GraphiQL", () => {
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).toContain("Edaya GraphiQL");
     expect(html).toContain("/graphql");
-    expect(html).toContain("credentials: 'include'");
+    expect(html).toContain("credentials: 'omit'");
     expect(html).toContain("auth-banner");
     expect(html).toContain("/graphiql/session");
   });

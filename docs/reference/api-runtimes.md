@@ -21,7 +21,7 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `RUNTIME` | `in-memory` or `local` (default `local`) | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` (local persisted), `pglite` (in-memory) | Hyperdrive `connectionString` (preferred) or `DATABASE_URL` fallback |
 | `RUN_MIGRATIONS_ON_STARTUP` | Optional on `local`; defaults on for PGlite | N/A — migrations are pre-applied |
-| `SCHOOL_API_ORIGIN` | `http://localhost:9999` | `[vars]` |
+| `API_ORIGIN` | `http://localhost:9999` | `[vars]` |
 | `IDENTITY_ISSUER` | `http://localhost:9900` | `[vars]` |
 | `IDENTITY_DIRECTORY_URL` | `http://localhost:9900` | `[vars]` or `IDENTITY` service binding |
 | `IDENTITY_DIRECTORY_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |

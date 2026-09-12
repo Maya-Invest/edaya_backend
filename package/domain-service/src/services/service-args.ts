@@ -1,10 +1,10 @@
-import type { ActorMetadata } from '@edaya/authorization';
+import type { SchoolScopedActorMetadata } from '@edaya/authorization';
 import type { AtomicExecutionPort, AuthContactResolverPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core';
 import type { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service';
 import type { SchoolRepositories } from '../ports/school-repositories';
 
 export interface ServiceArgs {
-  actor: ActorMetadata
+  actor: SchoolScopedActorMetadata
   atomicExecution: AtomicExecutionPort
   repositories: SchoolRepositories
   notificationGateway: NotificationGatewayPort

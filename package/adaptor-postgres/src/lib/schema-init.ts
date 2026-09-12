@@ -5,6 +5,8 @@ export const CLEAR_TABLE_ORDER = [
   'cron_job_schedules',
   'staff_permission_assignments',
   'service_api_keys',
+  's2s_clients',
+  'platform_users',
   'account_invitations',
   'school_notification_templates',
   'student_incident_involvements',

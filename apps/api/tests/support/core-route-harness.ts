@@ -75,6 +75,7 @@ export interface CoreRouteTestAppOptions {
   withEmbeddedLocalFiles?: boolean;
   /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs edaya_identity running). */
   identity?: "test" | "live";
+  env?: Record<string, unknown>;
 }
 
 function subjectForEmail(email: string): string {
@@ -138,7 +139,7 @@ const testIdentityClient: IdentityClient = {
     const keys = await loadTestIdentityKeys();
     return verifyIdentityToken(token, {
       issuer: pgliteEnv.IDENTITY_ISSUER,
-      audience: pgliteEnv.SCHOOL_API_ORIGIN,
+      audience: pgliteEnv.API_ORIGIN,
       jwks: keys.jwks,
     });
   },
@@ -206,7 +207,8 @@ export async function createCoreRouteTestApp(
   const identity = options.identity ?? "test";
   const identityEnv = identity === "live"
     ? {
-        IDENTITY_DIRECTORY_SECRET: process.env["IDENTITY_DIRECTORY_SECRET"] ?? "local-directory-secret",
+        // eslint-disable-next-line node/no-process-env -- live identity uses the host directory secret
+        IDENTITY_DIRECTORY_SECRET: process.env.IDENTITY_DIRECTORY_SECRET ?? "local-directory-secret",
       }
     : {};
   const env = options.withEmbeddedLocalFiles
@@ -218,9 +220,9 @@ export async function createCoreRouteTestApp(
           originalStop();
           restoreLocalFilesUrl?.();
         };
-        return createLocalProfileTestEnv(embeddedLocalFiles, identityEnv);
+        return createLocalProfileTestEnv(embeddedLocalFiles, { ...identityEnv, ...options.env });
       })()
-    : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv });
+    : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv, ...options.env });
 
   if (embeddedLocalFiles && options.autoCleanup !== false) {
     onTestFinished(() => embeddedLocalFiles?.stop());
@@ -303,7 +305,7 @@ export async function signInDirectorWithBearer(
 }
 
 export function createAppRequest(path: string, init?: RequestInit): Request {
-  return new Request(`${pgliteEnv.SCHOOL_API_ORIGIN}${path}`, init);
+  return new Request(`${pgliteEnv.API_ORIGIN}${path}`, init);
 }
 
 export function collectSetCookieHeaders(response: Response): string[] {
@@ -323,7 +325,7 @@ export async function signInWithBearerThroughApp(
     email: input.email,
     email_verified: true,
     iss: pgliteEnv.IDENTITY_ISSUER,
-    aud: pgliteEnv.SCHOOL_API_ORIGIN,
+    aud: pgliteEnv.API_ORIGIN,
   });
 }
 

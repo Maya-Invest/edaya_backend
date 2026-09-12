@@ -1,6 +1,6 @@
 import { resolveStaffAssignmentTarget, scopesForStaffAssignmentPermission } from './staff-assignment-policy';
 import type { BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, GrantScope, Permission, StaffAssignment } from '@edaya/core';
-import type { ActorMetadata, InteractiveActorMetadata } from '../model/actor';
+import type { SchoolScopedActorMetadata, InteractiveActorMetadata } from '../model/actor';
 import type { AuthorizationRepositories } from '../ports/authorization-repositories';
 import { StudentClassEnrollmentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core';
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors';
@@ -31,7 +31,7 @@ export class AccessFacts {
     return pending
   }
 
-  constructor(readonly actor: ActorMetadata, readonly repositories: AuthorizationRepositories, readonly now = new Date()) {}
+  constructor(readonly actor: SchoolScopedActorMetadata, readonly repositories: AuthorizationRepositories, readonly now = new Date()) {}
 
   repository<K extends CoreEntityKey>(key: K): BaseRepositoryInterface<CoreEntityMap[K]> {
     const repo = this.repositories[key]
@@ -51,6 +51,12 @@ export class AccessFacts {
   async validateActor(): Promise<void> {
     const actor = this.actor
     if (actor.kind === 'system') return
+    if (actor.kind === 's2s') {
+      const client = await this.repositories.s2sClients.findById(actor.actorId)
+      if (!client || !client.isActive(this.now) || client.schoolId !== actor.schoolId || client.clientId !== actor.clientId) denied()
+      await this.one('schools', actor.schoolId)
+      return
+    }
     if (actor.kind === 'staff') {
       const staff = await this.one('staffMembers', actor.staffMemberId)
       if (!staff.isActive || staff.accountKind !== actor.accountKind
@@ -160,6 +166,6 @@ export function effectiveAt(value: { startsAt?: Date, endsAt?: Date }, now: Date
   return (!value.startsAt || value.startsAt <= now) && (!value.endsAt || now < value.endsAt)
 }
 
-export function interactive(actor: ActorMetadata): InteractiveActorMetadata {
-  return actor.kind === 'system' ? denied() : actor
+export function interactive(actor: SchoolScopedActorMetadata): InteractiveActorMetadata {
+  return actor.kind === 'system' || actor.kind === 's2s' ? denied() : actor
 }

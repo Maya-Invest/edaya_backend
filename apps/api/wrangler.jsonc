@@ -66,7 +66,7 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "SCHOOL_API_ORIGIN": "https://staging.api.school.edayaplus.com",
+        "API_ORIGIN": "https://staging.api.school.edayaplus.com",
         "IDENTITY_ISSUER": "https://staging.identity.edayaplus.com",
         "IDENTITY_DIRECTORY_URL": "https://staging.identity.edayaplus.com",
         "TRUSTED_ORIGINS": "https://staging.app.school.edayaplus.com,https://staging.admin.edayaplus.com",
@@ -77,6 +77,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
       "routes": [
@@ -113,7 +114,7 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "SCHOOL_API_ORIGIN": "https://api.school.edayaplus.com",
+        "API_ORIGIN": "https://api.school.edayaplus.com",
         "IDENTITY_ISSUER": "https://identity.edayaplus.com",
         "IDENTITY_DIRECTORY_URL": "https://identity.edayaplus.com",
         "TRUSTED_ORIGINS": "https://app.school.edayaplus.com,https://admin.edayaplus.com",
@@ -124,6 +125,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-production"
       },
       "hyperdrive": [

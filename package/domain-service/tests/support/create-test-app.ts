@@ -1,5 +1,5 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { AcademicPeriod, AcademicYear, AccountInvitation, AccountInvitationKind, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, BaseRepositoryInterface, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, Filter, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, QueryOptions, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, ServiceApiKey, StaffAssignment, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, AccountInvitation, AccountInvitationKind, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, BaseRepositoryInterface, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, Filter, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlatformUser, QueryOptions, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, S2sClient, Schedule, School, SchoolNotificationTemplates, ServiceApiKey, StaffAssignment, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import {
   ActorAssuranceLevel,
@@ -189,6 +189,30 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
       return staff.length
     },
   }
+  const platformUserStore = createStore<PlatformUser>(transactionParticipants)
+  const platformUsers = {
+    ...platformUserStore,
+    findBySubjectId: async (subjectId: string) => {
+      const rows = await platformUserStore.list({ subjectId })
+      return rows[0]
+    },
+    findByEmail: async (email: string) => {
+      const rows = await platformUserStore.list({ email: email.trim().toLowerCase() })
+      return rows[0]
+    },
+  }
+  const s2sClientStore = createStore<S2sClient>(transactionParticipants)
+  const s2sClients = {
+    ...s2sClientStore,
+    findActiveByHash: async (keyHash: string, now: Date = new Date()) => {
+      const keys = await s2sClientStore.list()
+      return keys.find(key => key.keyHash === keyHash && key.isActive(now))
+    },
+    findActiveBySchoolAndClientId: async (schoolId: string, clientId: string, now: Date = new Date()) => {
+      const keys = await s2sClientStore.list({ schoolId, clientId })
+      return keys.find(key => key.isActive(now))
+    },
+  }
   const accountInvitationStore = createStore<AccountInvitation>(transactionParticipants)
   const schoolNotificationTemplates = createStore<SchoolNotificationTemplates>(transactionParticipants)
   const accountInvitations = {
@@ -277,6 +301,8 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     teacherAssignments,
     teacherUnavailabilities,
     serviceApiKeys,
+    platformUsers,
+    s2sClients,
     accountInvitations,
     cronJobSchedules: {
       listDue: async () => [],

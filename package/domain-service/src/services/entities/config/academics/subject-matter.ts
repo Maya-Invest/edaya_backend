@@ -1,3 +1,4 @@
+import { requireActorSchoolId } from '@edaya/authorization';
 import { Permission } from '@edaya/core';
 
 import type { SubjectMatter } from '@edaya/core';

@@ -1,4 +1,4 @@
-import { ActorAssuranceLevel, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseInteractiveActorKind, resolveInteractiveActorIdentity } from "@edaya/authorization";
+import { ActorAssuranceLevel, bootstrapPlatformUserIfAbsent, createGuardianActorMetadata, createPlatformActorMetadata, createS2sActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseBearerS2sKey, parseInteractiveActorKind, resolveInteractiveActorIdentity, subjectHasSchoolInteractiveIdentity } from "@edaya/authorization";
 
 import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
@@ -8,6 +8,7 @@ import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
 import type { IdentityClaims, IdentityClient } from "@maya-invest/edaya-identity-client";
+import { platformBootstrapEmails } from "@/runtime/shared/env/derived";
 
 export interface AuthSession {
   user: {
@@ -130,8 +131,9 @@ export async function resolveAuthenticatedSession(
 ): Promise<AuthenticatedSession | null> {
   const authorization = headers.get("authorization");
   const apiKey = parseBearerApiKey(authorization ?? undefined);
+  const s2sKey = parseBearerS2sKey(authorization ?? undefined);
   const token = resolveBearerToken(authorization);
-  if (!token || apiKey) {
+  if (!token || apiKey || s2sKey) {
     return null;
   }
   try {
@@ -235,6 +237,64 @@ function createActorFromIdentity(identity: ActorIdentity, context: ActorIdentity
   }
 }
 
+async function resolvePlatformActorMetadata(
+  repos: SchoolRepositories,
+  user: AuthenticatedSession["user"],
+  context: ActorIdentityContext,
+  bootstrapEmails: readonly string[],
+) {
+  const existing = await repos.platformUsers.findBySubjectId(user.id);
+  if (existing) {
+    if (!existing.isActive) {
+      return null;
+    }
+    return createPlatformActorMetadata({
+      ...context,
+      actorId: existing.id,
+
+      email: existing.email,
+    });
+  }
+
+  const email = user.email?.trim().toLowerCase();
+  if (!email || !bootstrapEmails.includes(email)) {
+    return null;
+  }
+
+  const bootstrapped = await bootstrapPlatformUserIfAbsent(repos.platformUsers, {
+    subjectId: user.id,
+    email,
+  });
+  if (!bootstrapped) {
+    return null;
+  }
+
+  return createPlatformActorMetadata({
+    ...context,
+    actorId: bootstrapped.id,
+
+    email: bootstrapped.email,
+  });
+}
+
+async function resolveS2sActor(
+  repos: SchoolRepositories,
+  apiKey: string,
+  requestId: string,
+) {
+  const keyRecord = await repos.s2sClients.findActiveByHash(hashApiKey(apiKey));
+  if (!keyRecord) {
+    return null;
+  }
+
+  return createS2sActorMetadata({
+    actorId: keyRecord.id,
+    schoolId: keyRecord.schoolId,
+    requestId,
+    clientId: keyRecord.clientId,
+  });
+}
+
 function resolveActorIdHeader(headerValue: string | undefined): string | undefined {
   const trimmed = headerValue?.trim();
   return trimmed || undefined;
@@ -265,38 +325,55 @@ export function createSessionActorDependency(
       const academicYearId = resolveAcademicYearId(c.req.header("x-academic-year-id"));
       const repos = c.var.schoolApp.repositories;
       const bearerApiKey = parseBearerApiKey(c.req.header("authorization"));
+      const bearerS2sKey = parseBearerS2sKey(c.req.header("authorization"));
 
-      if (session && bearerApiKey) {
+      if (session && (bearerApiKey || bearerS2sKey)) {
         c.set("actor", null);
         return;
       }
 
       if (session) {
         const { user } = session;
+        const actorKind = parseInteractiveActorKind(c.req.header("x-actor-kind"));
+        const interactiveContext = {
+          subjectId: user.id,
+          requestId,
+          ...(session.session.id ? { sessionId: session.session.id } : {}),
+          authenticatedAt: session.session.createdAt,
+          assuranceLevel: session.session.assuranceLevel,
+        };
+        const bootstrapEmails = platformBootstrapEmails(c.env);
+
+        if (actorKind === "platform") {
+          c.set("actor", await resolvePlatformActorMetadata(repos, user, interactiveContext, bootstrapEmails));
+          return;
+        }
 
         const identity = await resolveActorIdentity(
           repos,
           user.id,
           {
-            actorKind: parseInteractiveActorKind(c.req.header("x-actor-kind")),
+            actorKind,
             schoolId: resolveSchoolIdHeader(c.req.header("x-school-id")),
             actorId: resolveActorIdHeader(c.req.header("x-actor-id")),
           },
         );
         if (identity) {
-          const interactiveContext = {
-            subjectId: user.id,
-            requestId,
-            academicYearId,
-            ...(session.session.id ? { sessionId: session.session.id } : {}),
-            authenticatedAt: session.session.createdAt,
-            assuranceLevel: session.session.assuranceLevel,
-          };
           c.set("actor", createActorFromIdentity(identity, interactiveContext));
           return;
         }
 
+        if (!actorKind && !(await subjectHasSchoolInteractiveIdentity(repos, user.id))) {
+          c.set("actor", await resolvePlatformActorMetadata(repos, user, interactiveContext, bootstrapEmails));
+          return;
+        }
+
         c.set("actor", null);
+        return;
+      }
+
+      if (bearerS2sKey) {
+        c.set("actor", await resolveS2sActor(repos, bearerS2sKey, requestId));
         return;
       }
 

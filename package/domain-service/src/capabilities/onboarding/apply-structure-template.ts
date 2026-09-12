@@ -1,3 +1,4 @@
+import { requireActorSchoolId } from '@edaya/authorization';
 import { Permission } from '@edaya/core';
 import type { ActorMetadata } from '@edaya/authorization';
 import type { AppliedStructureLevelSubjects } from './apply-report-cards-from-template';
@@ -444,7 +445,7 @@ export async function applyStructureTemplate(
 ): Promise<ApplyStructureTemplateResult> {
   const templates = resolveOnboardingStructureTemplates(input.templates, input.templateSnapshots ?? [])
   const levels = parseStructureInput(input, templates)
-  const schoolId = actor.schoolId
+  const schoolId = requireActorSchoolId(actor)
   const service = application.forActor(actor)
   const phases: Array<{ phase: string, ms: number }> = []
 

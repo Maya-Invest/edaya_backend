@@ -5,7 +5,7 @@ import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-ov
 import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable';
 import type { ServiceArgs } from './service-args';
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation';
-import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization';
+import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization';
 import { BaseSchoolService } from './base-school-service';
 import { createSchoolCommandHandlers } from './commands/school-command-handlers';
 
@@ -107,7 +107,7 @@ export class SchoolService {
 
   async resolveTimetableSpace(input: ResolveTimetableSpaceInput): Promise<ResolvedTimetableCell[]> {
     const classGroup = await this.baseService.repositories.classGroups.findById(input.classGroupId)
-    if (!classGroup || classGroup.schoolId !== this.baseService.actor.schoolId) {
+    if (!classGroup || classGroup.schoolId !== requireActorSchoolId(this.baseService.actor)) {
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     }
     
@@ -116,7 +116,7 @@ export class SchoolService {
   }
 
   private checkActorSchool(schoolId: string): void {
-    if (schoolId !== this.baseService.actor.schoolId)
+    if (schoolId !== requireActorSchoolId(this.baseService.actor))
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }

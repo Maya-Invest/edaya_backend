@@ -1,3 +1,6 @@
+import { PlatformPolicies, createPlatformActorMetadata, createS2sActorMetadata, createS2sClient, createPlatformUser } from '@edaya/authorization'
+import { PlatformUser, S2sClient } from '@edaya/core'
+import { PostgresAtomicExecution } from '../src/lib/transaction'
 import { AccessPolicies, ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { AssessmentResult, Permission, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
@@ -143,4 +146,49 @@ describe('authorization policies against native repository scopes', () => {
     const job = createSystemActorMetadata({ schoolId: 'school-a', systemId: 'unknown', requestId: 'job', reason: 'test' })
     expect((await new AccessPolicies(job, repositories).grades.readScope()).clauses).toEqual([])
   })
+  test('S2S access classes use live facts, school boundaries and canonical actions', async () => {
+    const client = new S2sClient({ id: 'client', schoolId: 'school-a', clientId: 'integration', accessClass: 'read', keyPrefix: 's2s', keyHash: 'hash', createdBySubjectId: 'operator' })
+    await repositories.s2sClients.save(client)
+    const actor = createS2sActorMetadata({ actorId: client.id, schoolId: client.schoolId, clientId: client.clientId, requestId: 'test' })
+    expect('accessClass' in actor).toBe(false)
+    const access = new AccessPolicies(actor, repositories)
+    expect(await repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(3)
+    await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })).rejects.toThrow()
+    await repositories.s2sClients.save(new S2sClient({ ...client.data, accessClass: 'write' }))
+    await access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })
+    await expect(access.grades.assertInput({ assessmentId: 'assessment-b', studentId: 'student-b' })).rejects.toThrow()
+    for (const action of [Permission.ACCESS_CONTROL_ASSIGN, Permission.SERVICE_ACCOUNT_CREATE, Permission.PLATFORM_USER_CREATE, Permission.S2S_CLIENT_CREATE]) {
+      await expect(access.assertSchool(action)).rejects.toThrow()
+    }
+    await repositories.s2sClients.save(new S2sClient({ ...client.data, revokedAt: new Date() }))
+    await expect(access.grades.readScope()).rejects.toThrow()
+  })
+
+  test('platform grants are live, profile-isolated and bounded when delegated', async () => {
+    const user = new PlatformUser({ id: 'operator', subjectId: 'person-a', email: 'operator@example.com', isActive: true, createdBySubjectId: 'bootstrap',
+      permissions: [Permission.PLATFORM_USER_READ, Permission.PLATFORM_USER_CREATE, Permission.S2S_CLIENT_CREATE],
+    })
+    await repositories.platformUsers.save(user)
+    const actor = createPlatformActorMetadata({ actorId: user.id, subjectId: user.subjectId, email: user.email, authenticatedAt: new Date(), requestId: 'test' })
+    expect('permissions' in actor).toBe(false)
+    const policies = new PlatformPolicies(actor, repositories.platformUsers)
+    await policies.readUsers()
+    await expect(new PlatformPolicies(staff, repositories.platformUsers).readUsers()).rejects.toThrow()
+    await db.exec("UPDATE schools SET owner_subject_id = 'person-a' WHERE id = 'school-a'")
+    await expect(new AccessPolicies(staff, repositories).assertSchool(Permission.PLATFORM_USER_READ)).rejects.toThrow()
+    const atomic = new PostgresAtomicExecution(drizzle(db))
+    await expect(createPlatformUser(repositories.platformUsers, actor, {
+      subjectId: 'new-operator', email: 'new@example.com', permissions: [Permission.S2S_CLIENT_REVOKE],
+    }, atomic)).rejects.toThrow()
+    expect(await repositories.platformUsers.count()).toBe(1)
+    await expect(createS2sClient(repositories, actor, { schoolId: 'missing-school', clientId: 'missing', accessClass: 'read' }, atomic)).rejects.toThrow()
+    expect(await repositories.s2sClients.count()).toBe(0)
+    const created = await createS2sClient(repositories, actor, { schoolId: 'school-a', clientId: 'valid', accessClass: 'read' }, atomic)
+    expect(created.client.schoolId).toBe('school-a')
+    await repositories.platformUsers.save(new PlatformUser({ ...user.data, permissions: [Permission.PLATFORM_USER_CREATE] }))
+    await expect(policies.readUsers()).rejects.toThrow()
+    await repositories.platformUsers.save(new PlatformUser({ ...user.data, isActive: false }))
+    await expect(policies.createUser()).rejects.toThrow()
+  })
+
 })

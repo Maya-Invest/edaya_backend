@@ -61,8 +61,15 @@
     {
       "idx": 8,
       "version": "7",
-      "when": 1789171200000,
-      "tag": "0008_typed_staff_grants",
+      "when": 1789240219786,
+      "tag": "0008_platform_users_s2s_clients",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789240219787,
+      "tag": "0009_typed_staff_grants",
       "breakpoints": true
     }
   ]

@@ -152,7 +152,14 @@
                     "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                     "QUERY_GUARDIAN_SELF_READ",
                     "QUERY_OVERDUE_FEES_READ",
-                    "PLATFORM_REGISTER_SCHOOL"
+                    "PLATFORM_REGISTER_SCHOOL",
+                    "PLATFORM_USER_READ",
+                    "PLATFORM_USER_CREATE",
+                    "PLATFORM_USER_DEACTIVATE",
+                    "S2S_CLIENT_READ",
+                    "S2S_CLIENT_CREATE",
+                    "S2S_CLIENT_REVOKE",
+                    "S2S_CLIENT_ROTATE_KEY"
                   ]
                 },
                 "scopes": {
@@ -490,7 +497,14 @@
               "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
               "QUERY_GUARDIAN_SELF_READ",
               "QUERY_OVERDUE_FEES_READ",
-              "PLATFORM_REGISTER_SCHOOL"
+              "PLATFORM_REGISTER_SCHOOL",
+              "PLATFORM_USER_READ",
+              "PLATFORM_USER_CREATE",
+              "PLATFORM_USER_DEACTIVATE",
+              "S2S_CLIENT_READ",
+              "S2S_CLIENT_CREATE",
+              "S2S_CLIENT_REVOKE",
+              "S2S_CLIENT_ROTATE_KEY"
             ]
           },
           "scope": {
@@ -661,7 +675,14 @@
                     "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                     "QUERY_GUARDIAN_SELF_READ",
                     "QUERY_OVERDUE_FEES_READ",
-                    "PLATFORM_REGISTER_SCHOOL"
+                    "PLATFORM_REGISTER_SCHOOL",
+                    "PLATFORM_USER_READ",
+                    "PLATFORM_USER_CREATE",
+                    "PLATFORM_USER_DEACTIVATE",
+                    "S2S_CLIENT_READ",
+                    "S2S_CLIENT_CREATE",
+                    "S2S_CLIENT_REVOKE",
+                    "S2S_CLIENT_ROTATE_KEY"
                   ]
                 },
                 "scopes": {
@@ -994,7 +1015,14 @@
                     "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                     "QUERY_GUARDIAN_SELF_READ",
                     "QUERY_OVERDUE_FEES_READ",
-                    "PLATFORM_REGISTER_SCHOOL"
+                    "PLATFORM_REGISTER_SCHOOL",
+                    "PLATFORM_USER_READ",
+                    "PLATFORM_USER_CREATE",
+                    "PLATFORM_USER_DEACTIVATE",
+                    "S2S_CLIENT_READ",
+                    "S2S_CLIENT_CREATE",
+                    "S2S_CLIENT_REVOKE",
+                    "S2S_CLIENT_ROTATE_KEY"
                   ]
                 },
                 "scopes": {
@@ -2364,7 +2392,14 @@
               "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
               "QUERY_GUARDIAN_SELF_READ",
               "QUERY_OVERDUE_FEES_READ",
-              "PLATFORM_REGISTER_SCHOOL"
+              "PLATFORM_REGISTER_SCHOOL",
+              "PLATFORM_USER_READ",
+              "PLATFORM_USER_CREATE",
+              "PLATFORM_USER_DEACTIVATE",
+              "S2S_CLIENT_READ",
+              "S2S_CLIENT_CREATE",
+              "S2S_CLIENT_REVOKE",
+              "S2S_CLIENT_ROTATE_KEY"
             ]
           },
           "scopes": {
@@ -2616,6 +2651,264 @@
         ]
       },
       "RotateServiceAccountKeyRequest": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "PlatformMeResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "platform"
+            ]
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
+              ]
+            }
+          },
+          "assuranceLevel": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "verified",
+              "strong",
+              "service"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "actorId",
+          "subjectId",
+          "email",
+          "permissions",
+          "assuranceLevel"
+        ]
+      },
+      "PlatformUserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
+              ]
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdBySubjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "subjectId",
+          "email",
+          "permissions",
+          "isActive",
+          "createdBySubjectId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreatePlatformUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "S2sClientResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "accessClass": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write"
+            ]
+          },
+          "keyPrefix": {
+            "type": "string"
+          },
+          "createdBySubjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "clientId",
+          "accessClass",
+          "keyPrefix",
+          "createdBySubjectId",
+          "createdAt",
+          "isActive"
+        ]
+      },
+      "CreateS2sClientResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/S2sClientResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "apiKey": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "apiKey"
+            ]
+          }
+        ]
+      },
+      "CreateS2sClientRequest": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "accessClass": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write"
+            ]
+          },
+          "apiKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "schoolId",
+          "clientId",
+          "accessClass"
+        ]
+      },
+      "RotateS2sClientKeyResponse": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "apiKey"
+        ]
+      },
+      "RotateS2sClientKeyRequest": {
         "type": "object",
         "properties": {
           "apiKey": {
@@ -5123,7 +5416,14 @@
                 "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                 "QUERY_GUARDIAN_SELF_READ",
                 "QUERY_OVERDUE_FEES_READ",
-                "PLATFORM_REGISTER_SCHOOL"
+                "PLATFORM_REGISTER_SCHOOL",
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
               ]
             },
             "default": []
@@ -5297,7 +5597,14 @@
                 "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                 "QUERY_GUARDIAN_SELF_READ",
                 "QUERY_OVERDUE_FEES_READ",
-                "PLATFORM_REGISTER_SCHOOL"
+                "PLATFORM_REGISTER_SCHOOL",
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
               ]
             },
             "default": []
@@ -5451,7 +5758,14 @@
                 "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                 "QUERY_GUARDIAN_SELF_READ",
                 "QUERY_OVERDUE_FEES_READ",
-                "PLATFORM_REGISTER_SCHOOL"
+                "PLATFORM_REGISTER_SCHOOL",
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
               ]
             },
             "default": []
@@ -5605,7 +5919,14 @@
                 "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
                 "QUERY_GUARDIAN_SELF_READ",
                 "QUERY_OVERDUE_FEES_READ",
-                "PLATFORM_REGISTER_SCHOOL"
+                "PLATFORM_REGISTER_SCHOOL",
+                "PLATFORM_USER_READ",
+                "PLATFORM_USER_CREATE",
+                "PLATFORM_USER_DEACTIVATE",
+                "S2S_CLIENT_READ",
+                "S2S_CLIENT_CREATE",
+                "S2S_CLIENT_REVOKE",
+                "S2S_CLIENT_ROTATE_KEY"
               ]
             },
             "default": []
@@ -5757,7 +6078,14 @@
               "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
               "QUERY_GUARDIAN_SELF_READ",
               "QUERY_OVERDUE_FEES_READ",
-              "PLATFORM_REGISTER_SCHOOL"
+              "PLATFORM_REGISTER_SCHOOL",
+              "PLATFORM_USER_READ",
+              "PLATFORM_USER_CREATE",
+              "PLATFORM_USER_DEACTIVATE",
+              "S2S_CLIENT_READ",
+              "S2S_CLIENT_CREATE",
+              "S2S_CLIENT_REVOKE",
+              "S2S_CLIENT_ROTATE_KEY"
             ]
           },
           "scopes": {
@@ -6101,7 +6429,14 @@
               "QUERY_GUARDIAN_STUDENTS_ADMIN_READ",
               "QUERY_GUARDIAN_SELF_READ",
               "QUERY_OVERDUE_FEES_READ",
-              "PLATFORM_REGISTER_SCHOOL"
+              "PLATFORM_REGISTER_SCHOOL",
+              "PLATFORM_USER_READ",
+              "PLATFORM_USER_CREATE",
+              "PLATFORM_USER_DEACTIVATE",
+              "S2S_CLIENT_READ",
+              "S2S_CLIENT_CREATE",
+              "S2S_CLIENT_REVOKE",
+              "S2S_CLIENT_ROTATE_KEY"
             ]
           },
           "scopes": {
@@ -16062,6 +16397,1048 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RotateServiceAccountKeyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/platform/me": {
+      "get": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Return the current platform operator",
+        "operationId": "platformUsers.me",
+        "x-edaya-kind": "platformUsers",
+        "x-edaya-client-key": "me",
+        "x-edaya-client-path": "platform/me",
+        "x-edaya-response-schema": "PlatformMeResponse",
+        "responses": {
+          "200": {
+            "description": "Current platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformMeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/platform-users": {
+      "get": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "List platform operators",
+        "operationId": "platformUsers.list",
+        "x-edaya-kind": "platformUsers",
+        "x-edaya-client-key": "list",
+        "x-edaya-client-path": "platform-users",
+        "x-edaya-response-schema": "PlatformUserResponse",
+        "x-edaya-response-is-array": true,
+        "responses": {
+          "200": {
+            "description": "Platform operators",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlatformUserResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Create a platform operator for an existing identity user",
+        "operationId": "platformUsers.create",
+        "x-edaya-kind": "platformUsers",
+        "x-edaya-client-key": "create",
+        "x-edaya-client-path": "platform-users",
+        "x-edaya-request-schema": "CreatePlatformUserRequest",
+        "x-edaya-response-schema": "PlatformUserResponse",
+        "requestBody": {
+          "description": "Platform operator payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlatformUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/platform-users/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Deactivate a platform operator",
+        "operationId": "platformUsers.deactivate",
+        "x-edaya-kind": "platformUsers",
+        "x-edaya-client-key": "deactivate",
+        "x-edaya-client-path": "platform-users/{id}/deactivate",
+        "x-edaya-response-schema": "PlatformUserResponse",
+        "x-edaya-path-params": [
+          "id"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deactivated platform operator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/s2s-clients": {
+      "get": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "List school S2S clients",
+        "operationId": "s2sClients.list",
+        "x-edaya-kind": "s2sClients",
+        "x-edaya-client-key": "list",
+        "x-edaya-client-path": "s2s-clients",
+        "x-edaya-response-schema": "S2sClientResponse",
+        "x-edaya-response-is-array": true,
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "schoolId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "S2S clients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/S2sClientResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Mint a per-school S2S API key and return the plaintext once",
+        "operationId": "s2sClients.create",
+        "x-edaya-kind": "s2sClients",
+        "x-edaya-client-key": "create",
+        "x-edaya-client-path": "s2s-clients",
+        "x-edaya-request-schema": "CreateS2sClientRequest",
+        "x-edaya-response-schema": "CreateS2sClientResponse",
+        "requestBody": {
+          "description": "S2S client provisioning payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateS2sClientRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created S2S client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateS2sClientResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/s2s-clients/{id}/revoke": {
+      "post": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Revoke an S2S client key",
+        "operationId": "s2sClients.revoke",
+        "x-edaya-kind": "s2sClients",
+        "x-edaya-client-key": "revoke",
+        "x-edaya-client-path": "s2s-clients/{id}/revoke",
+        "x-edaya-response-schema": "S2sClientResponse",
+        "x-edaya-path-params": [
+          "id"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked S2S client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/S2sClientResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/s2s-clients/{id}/rotate-key": {
+      "post": {
+        "tags": [
+          "Core Platform"
+        ],
+        "summary": "Rotate the API key for an S2S client",
+        "operationId": "s2sClients.rotateKey",
+        "x-edaya-kind": "s2sClients",
+        "x-edaya-client-key": "rotateKey",
+        "x-edaya-client-path": "s2s-clients/{id}/rotate-key",
+        "x-edaya-request-schema": "RotateS2sClientKeyRequest",
+        "x-edaya-response-schema": "RotateS2sClientKeyResponse",
+        "x-edaya-path-params": [
+          "id"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Optional fixed API key for tests",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotateS2sClientKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rotated API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RotateS2sClientKeyResponse"
                 }
               }
             }

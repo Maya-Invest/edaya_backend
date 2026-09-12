@@ -34,6 +34,13 @@ export const PERMISSION_SCOPE_OVERRIDES: Partial<Record<Permission, ScopeType>> 
   [Permission.QUERY_CALENDAR_READ]: 'student',
   [Permission.QUERY_OVERDUE_FEES_READ]: 'student',
   [Permission.QUERY_GUARDIAN_SELF_READ]: 'student',
+  [Permission.PLATFORM_USER_READ]: 'platform',
+  [Permission.PLATFORM_USER_CREATE]: 'platform',
+  [Permission.PLATFORM_USER_DEACTIVATE]: 'platform',
+  [Permission.S2S_CLIENT_READ]: 'platform',
+  [Permission.S2S_CLIENT_CREATE]: 'platform',
+  [Permission.S2S_CLIENT_REVOKE]: 'platform',
+  [Permission.S2S_CLIENT_ROTATE_KEY]: 'platform',
   [Permission.PLATFORM_REGISTER_SCHOOL]: 'platform',
 }
 

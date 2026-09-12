@@ -7,7 +7,7 @@ import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import type { AppRouteHandler } from "@/http/types";
 import { getErrorMessage, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import { requireInteractiveActor } from "@/lib/authorization/serialize-grants";
+import { requireInteractiveActor, requireSchoolInteractiveActor } from "@/lib/authorization/serialize-grants";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 
@@ -121,7 +121,7 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
     return unauthorizedResponse(c);
   }
 
-  const interactiveActor = requireInteractiveActor(actor);
+  const interactiveActor = requireSchoolInteractiveActor(actor);
   if (!interactiveActor) {
     return unauthorizedResponse(c);
   }
