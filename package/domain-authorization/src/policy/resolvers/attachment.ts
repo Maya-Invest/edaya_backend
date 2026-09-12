@@ -22,6 +22,10 @@ export async function checkAttachmentAccess(
     return
   }
 
+  if (actor.kind === 's2s') {
+    return
+  }
+
   if (actor.kind === 'guardian' || actor.kind === 'student' || actor.kind === 'teacher') {
     await portalAttachmentAccess(actor, attachments, repos)
     return

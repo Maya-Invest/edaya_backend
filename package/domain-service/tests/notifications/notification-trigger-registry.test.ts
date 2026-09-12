@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { Assessment } from '@edaya/core'
 import { AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
@@ -73,7 +73,7 @@ describe('assessmentDueSoonPredicate', () => {
 })
 
 describe('assessmentDueSoonTrigger resolver', () => {
-  const actor = { schoolId: 'school-1' } as ActorMetadata
+  const actor = { schoolId: 'school-1' } as SchoolScopedActorMetadata
   const dueAt = new Date('2026-06-20T00:00:00Z')
 
   test('enqueues a job notification for active class students', async () => {
@@ -214,7 +214,7 @@ describe('withNotificationPostSaveHook', () => {
             list: async () => [],
           },
         } as any,
-        { schoolId: 'school-1' } as ActorMetadata,
+        { schoolId: 'school-1' } as SchoolScopedActorMetadata,
       )
 
       expect(existingPostSaveCalled).toBe(true)

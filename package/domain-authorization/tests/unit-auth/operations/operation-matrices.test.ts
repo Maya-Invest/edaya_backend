@@ -1,10 +1,13 @@
 import {
   AcademicsOperations,
   AccessControlOperations,
+  ActorAssuranceLevel,
   AssessmentOperations,
   AttachmentOperations,
   AttendanceOperations,
   CommunicationsOperations,
+  createPlatformActorMetadata,
+  createS2sActorMetadata,
   DisciplineOperations,
   EnrollmentOperations,
   FinanceOperations,
@@ -13,9 +16,11 @@ import {
   LogbookOperations,
   Permission,
   PlatformOperations,
+  PlatformUserOperations,
   QueryOperations,
   ReportCardOperations,
   ResourceOperations,
+  S2sClientOperations,
   SchedulingOperations,
   SchoolStructureOperations,
   ServiceAccountOperations,
@@ -24,6 +29,9 @@ import {
   TeacherOperations,
   WorkspaceOperations,
 } from '@edaya/authorization'
+import { ALL_PLATFORM_PERMISSIONS } from '@edaya/core'
+import { AuthFixtures } from '../../support/authorization-fixtures'
+import { describeOperationMatrix } from '../../support/operation-matrix'
 import {
   CLASS_GROUP,
   CLASS_SUBJECT,
@@ -260,3 +268,43 @@ describeMatrix(SchedulingOperations.timetableRead, [
   { label: 'assigned teacher', actor: { kind: 'teacherSubject' }, expect: 'allow' },
   { label: 'student self', actor: { kind: 'student' }, expect: 'allow' },
 ])
+
+const now = new Date('2026-09-01T00:00:00Z')
+
+function platformOperator() {
+  return createPlatformActorMetadata({
+    subjectId: 'subject-op',
+    actorId: 'platform-op',
+    requestId: 'test',
+    authenticatedAt: now,
+    assuranceLevel: ActorAssuranceLevel.Verified,
+    permissions: ALL_PLATFORM_PERMISSIONS,
+    email: 'op@edaya.test',
+  })
+}
+
+function s2sWrite() {
+  return createS2sActorMetadata({
+    actorId: 's2s-1',
+    schoolId: 'school-1',
+    requestId: 'test',
+    clientId: 'children-ai',
+    accessClass: 'write',
+  })
+}
+
+for (const operation of [
+  PlatformUserOperations.read,
+  PlatformUserOperations.create,
+  PlatformUserOperations.deactivate,
+  S2sClientOperations.read,
+  S2sClientOperations.create,
+  S2sClientOperations.revoke,
+  S2sClientOperations.rotateKey,
+]) {
+  describeOperationMatrix(operation, [
+    { label: 'platform allowed', actor: platformOperator, expect: 'allow' },
+    { label: 'staff denied', actor: () => AuthFixtures.staff.withPermissions([Permission.QUERY_WORKSPACE_READ]), expect: 'deny' },
+    { label: 's2s write denied', actor: s2sWrite, expect: 'deny' },
+  ])
+}

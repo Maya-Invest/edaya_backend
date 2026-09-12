@@ -1,5 +1,5 @@
 import type { AttachmentOwnerKind, AttendanceRecord, ReportCardResult } from '@edaya/core'
-import type { ActorMetadata } from '../model/actor'
+import type { ActorMetadata, SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 
 export interface AttachmentAccessInput {
@@ -40,7 +40,7 @@ export interface AuthorizationPolicy {
 }
 
 export interface AuthorizedServiceArgs {
-  actor: ActorMetadata
+  actor: SchoolScopedActorMetadata
   authorizationPolicy: AuthorizationPolicy
 }
 

@@ -19,6 +19,26 @@ import {
   updateServiceAccountRoute,
 } from "@/routes/service-accounts.routes";
 import {
+  createPlatformUserHandler,
+  createPlatformUserRoute,
+  deactivatePlatformUserHandler,
+  deactivatePlatformUserRoute,
+  getPlatformMeHandler,
+  getPlatformMeRoute,
+  listPlatformUsersHandler,
+  listPlatformUsersRoute,
+} from "@/routes/platform-users.routes";
+import {
+  createS2sClientHandler,
+  createS2sClientRoute,
+  listS2sClientsHandler,
+  listS2sClientsRoute,
+  revokeS2sClientHandler,
+  revokeS2sClientRoute,
+  rotateS2sClientKeyHandler,
+  rotateS2sClientKeyRoute,
+} from "@/routes/s2s-clients.routes";
+import {
   onboardingAccountStatusHandler,
   onboardingAccountStatusRoute,
   onboardingApplyStructureTemplateHandler,
@@ -100,6 +120,14 @@ router
   .openapi(updateServiceAccountRoute, updateServiceAccountHandler)
   .openapi(revokeServiceAccountRoute, revokeServiceAccountHandler)
   .openapi(rotateServiceAccountKeyRoute, rotateServiceAccountKeyHandler)
+  .openapi(getPlatformMeRoute, getPlatformMeHandler)
+  .openapi(listPlatformUsersRoute, listPlatformUsersHandler)
+  .openapi(createPlatformUserRoute, createPlatformUserHandler)
+  .openapi(deactivatePlatformUserRoute, deactivatePlatformUserHandler)
+  .openapi(listS2sClientsRoute, listS2sClientsHandler)
+  .openapi(createS2sClientRoute, createS2sClientHandler)
+  .openapi(revokeS2sClientRoute, revokeS2sClientHandler)
+  .openapi(rotateS2sClientKeyRoute, rotateS2sClientKeyHandler)
   .openapi(notificationDeliveryWebhookRoute, notificationDeliveryWebhookHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler)

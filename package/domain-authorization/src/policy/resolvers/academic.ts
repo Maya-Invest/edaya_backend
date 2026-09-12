@@ -131,6 +131,10 @@ export async function authorizeReportCardResultSave(
     return
   }
 
+  if (actor.kind === 's2s') {
+    return
+  }
+
   if (actor.kind !== 'staff' && actor.kind !== 'teacher') {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }

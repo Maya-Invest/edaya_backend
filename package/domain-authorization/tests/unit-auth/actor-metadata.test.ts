@@ -3,12 +3,17 @@ import {
   AuthorizationError,
   AuthorizationErrorCode,
   createGuardianActorMetadata,
+  createPlatformActorMetadata,
+  createS2sActorMetadata,
   createStaffActorMetadata,
   createStudentActorMetadata,
   createSystemActorMetadata,
   isInteractiveActor,
+  isSchoolScopedActor,
+  requireActorSchoolId,
   resolveAuditActorId,
 } from '@edaya/authorization'
+import { PlatformPermission } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 import { effectiveGrantsForRoles, portalScopeForGuardian, portalScopeForStudent } from '../support/effective-grants'
 
@@ -95,5 +100,35 @@ describe('actor metadata', () => {
     expect(error.name).toBe('AuthorizationError')
     expect(error.code).toBe(AuthorizationErrorCode.Forbidden)
     expect(error.message).toBe('Operation is not permitted')
+  })
+
+  it('creates platform actors without a school id and s2s machine actors with one', () => {
+    const platform = createPlatformActorMetadata({
+      subjectId: 'identity-op',
+      actorId: 'platform-1',
+      requestId: 'request-platform',
+      authenticatedAt: new Date('2026-09-01T08:00:00Z'),
+      assuranceLevel: ActorAssuranceLevel.Verified,
+      permissions: [PlatformPermission.PLATFORM_USER_READ],
+      email: 'Op@Edaya.test',
+    })
+    const s2s = createS2sActorMetadata({
+      actorId: 's2s-1',
+      schoolId: 'school-1',
+      requestId: 'request-s2s',
+      clientId: 'children-ai',
+      accessClass: 'read',
+    })
+
+    expect(platform.kind).toBe('platform')
+    expect(platform.email).toBe('op@edaya.test')
+    expect(isInteractiveActor(platform)).toBe(true)
+    expect(isSchoolScopedActor(platform)).toBe(false)
+    expect(() => requireActorSchoolId(platform)).toThrow(AuthorizationError)
+    expect(s2s.kind).toBe('s2s')
+    expect(s2s.subjectId).toBe('s2s:s2s-1')
+    expect(s2s.assuranceLevel).toBe(ActorAssuranceLevel.Service)
+    expect(isInteractiveActor(s2s)).toBe(false)
+    expect(requireActorSchoolId(s2s)).toBe('school-1')
   })
 })

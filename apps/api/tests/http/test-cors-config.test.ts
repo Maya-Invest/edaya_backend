@@ -24,7 +24,7 @@ describe("CORS configuration", () => {
       PORT: 9999,
       LOG_LEVEL: "silent",
       DATABASE_URL: "pglite",
-      SCHOOL_API_ORIGIN: "https://api.school.edaya.test",
+      API_ORIGIN: "https://api.school.edaya.test",
       IDENTITY_DIRECTORY_SECRET: "production-test-directory-secret",
       TRUSTED_ORIGINS: "https://app.edaya.test",
     });

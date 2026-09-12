@@ -3,6 +3,8 @@ import type {
   AccountInvitationRepository,
   BaseRepositoryInterface,
   CoreEntityRepositories,
+  PlatformUserRepository,
+  S2sClientRepository,
   School,
   SchoolNotificationTemplatesRepository,
   ServiceApiKeyRepository,
@@ -14,6 +16,8 @@ export interface SchoolRepositories extends CoreEntityRepositories {
   readonly authorization: AuthorizationRepository
   readonly cronJobSchedules: CronJobSchedulePort
   readonly serviceApiKeys: ServiceApiKeyRepository
+  readonly platformUsers: PlatformUserRepository
+  readonly s2sClients: S2sClientRepository
   readonly accountInvitations: AccountInvitationRepository
   readonly schoolNotificationTemplates: SchoolNotificationTemplatesRepository
   readonly schools: BaseRepositoryInterface<School> & {

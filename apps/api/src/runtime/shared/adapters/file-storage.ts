@@ -29,13 +29,13 @@ export function resolveFileStorage(
         if (env.LOG_LEVEL !== "silent") {
           logger?.info(
             {
-              baseUrl: env.SCHOOL_API_ORIGIN,
+              baseUrl: env.API_ORIGIN,
               rootDir: persistDir,
             },
             "Using persisted local dev file storage",
           );
         }
-        return createLocalDevFileStorage(env.SCHOOL_API_ORIGIN, { persistDir });
+        return createLocalDevFileStorage(env.API_ORIGIN, { persistDir });
       }
 
       const localConfig = resolveLocalFileStorageConfig(env);

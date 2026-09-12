@@ -11,7 +11,10 @@ export function actorHasAnyPermission(
   actor: ActorMetadata,
   permissions: readonly Permission[],
 ): boolean {
-  if (!isInteractiveActor(actor)) {
+  if (actor.kind === 's2s') {
+    return true
+  }
+  if (!isInteractiveActor(actor) || actor.kind === 'platform') {
     return false
   }
 
@@ -30,7 +33,10 @@ export function actorGrantCoversAny(
   scopeType: AuthorizationScopeType,
   scopeEntityId: string,
 ): boolean {
-  if (!isInteractiveActor(actor)) {
+  if (actor.kind === 's2s') {
+    return true
+  }
+  if (!isInteractiveActor(actor) || actor.kind === 'platform') {
     return false
   }
 
@@ -52,7 +58,10 @@ export function actorGrantCoversResourcePath(
   permission: Permission,
   resourcePath: string,
 ): boolean {
-  if (!isInteractiveActor(actor)) {
+  if (actor.kind === 's2s') {
+    return true
+  }
+  if (!isInteractiveActor(actor) || actor.kind === 'platform') {
     return false
   }
 
@@ -93,6 +102,9 @@ export function actorHasSchoolWideGrant(
   actor: ActorMetadata,
   permissions: readonly Permission[],
 ): boolean {
+  if (actor.kind === 's2s') {
+    return true
+  }
   if (!isInteractiveActor(actor) || actor.kind !== 'staff') {
     return false
   }

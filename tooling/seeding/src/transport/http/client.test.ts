@@ -38,6 +38,7 @@ describe('HttpSeedClient.request', () => {
       fetch: async (input, init) => {
         if (String(input).endsWith('/auth/edaya/access-token')) {
           expect(new Headers(init?.headers).get('cookie')).toContain('session-token')
+          expect(init?.body).toBe(JSON.stringify({ resource: 'http://localhost:9999' }))
           return Response.json({ accessToken: TEST_IDENTITY_JWT, expiresAt: new Date(Date.now() + 300000).toISOString() })
         }
         capturedHeaders = new Headers(init?.headers)

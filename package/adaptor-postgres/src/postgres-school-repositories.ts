@@ -10,6 +10,8 @@ import { clearAllTables } from './lib/schema-init'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
+import { PostgresPlatformUserStore } from './stores/platform-user-store'
+import { PostgresS2sClientStore } from './stores/s2s-client-store'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
@@ -27,6 +29,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly teacherAssignments: PostgresStore<TeacherAssignment>
   public readonly teacherUnavailabilities: PostgresStore<TeacherUnavailability>
   public readonly serviceApiKeys: PostgresServiceApiKeyStore
+  public readonly platformUsers: PostgresPlatformUserStore
+  public readonly s2sClients: PostgresS2sClientStore
   public readonly accountInvitations: PostgresAccountInvitationStore
   public readonly cronJobSchedules: PostgresCronJobScheduleStore
   public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
@@ -89,6 +93,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.teacherAssignments = stores.teacherAssignments
     this.teacherUnavailabilities = stores.teacherUnavailabilities
     this.serviceApiKeys = new PostgresServiceApiKeyStore(db)
+    this.platformUsers = new PostgresPlatformUserStore(db)
+    this.s2sClients = new PostgresS2sClientStore(db)
     this.accountInvitations = new PostgresAccountInvitationStore(db)
     this.cronJobSchedules = new PostgresCronJobScheduleStore(db)
     this.schoolNotificationTemplates = new PostgresSchoolNotificationTemplatesStore(db)

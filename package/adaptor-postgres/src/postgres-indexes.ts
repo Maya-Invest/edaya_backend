@@ -222,6 +222,17 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('teachers_school_id_idx').on(col(table, 'schoolId')),
         uniqueIndex('teachers_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
       ]
+    case 'platform_users':
+      return [
+        uniqueIndex('platform_users_subject_id_uidx').on(col(table, 'subjectId')),
+        uniqueIndex('platform_users_email_uidx').on(col(table, 'email')),
+      ]
+    case 's2s_clients':
+      return [
+        uniqueIndex('s2s_clients_key_hash_uidx').on(col(table, 'keyHash')),
+        index('s2s_clients_school_id_idx').on(col(table, 'schoolId')),
+        index('s2s_clients_school_client_idx').on(col(table, 'schoolId'), col(table, 'clientId')),
+      ]
     default:
       return []
   }

@@ -1,6 +1,8 @@
 import type { Permission } from "@edaya/core";
-import type { EffectiveGrants, InteractiveActorMetadata, ScopeGrant } from "@edaya/authorization";
+import type { EffectiveGrants, InteractiveActorMetadata, PlatformActorMetadata, ScopeGrant } from "@edaya/authorization";
 import { ALL_GUARDIAN_CAPABILITIES, ALL_HOMEROOM_CAPABILITIES, ALL_STUDENT_CAPABILITIES, ALL_TEACHING_CAPABILITIES, effectiveGrantsForActor, isInteractiveActor } from "@edaya/authorization";
+
+export type SchoolInteractiveActorMetadata = Exclude<InteractiveActorMetadata, PlatformActorMetadata>;
 
 export interface SerializedEffectiveGrants {
   permissions: string[];
@@ -11,10 +13,10 @@ export interface SerializedEffectiveGrants {
 }
 
 export interface SerializedActorAuthorization {
-  kind: InteractiveActorMetadata["kind"];
+  kind: SchoolInteractiveActorMetadata["kind"];
   actorId: string;
   schoolId: string;
-  assuranceLevel: InteractiveActorMetadata["assuranceLevel"];
+  assuranceLevel: SchoolInteractiveActorMetadata["assuranceLevel"];
   effectiveGrants: SerializedEffectiveGrants;
   capabilities?: string[];
   scope?: Record<string, unknown>;
@@ -48,7 +50,7 @@ export function serializeEffectiveGrants(grants: EffectiveGrants): SerializedEff
   };
 }
 
-export function serializeActorAuthorization(actor: InteractiveActorMetadata): SerializedActorAuthorization {
+export function serializeActorAuthorization(actor: SchoolInteractiveActorMetadata): SerializedActorAuthorization {
   const base = {
     kind: actor.kind,
     actorId: actor.actorId,
@@ -99,6 +101,13 @@ export function serializeActorAuthorization(actor: InteractiveActorMetadata): Se
 
 export function requireInteractiveActor(actor: unknown): InteractiveActorMetadata | null {
   if (!isInteractiveActor(actor)) {
+    return null;
+  }
+  return actor;
+}
+
+export function requireSchoolInteractiveActor(actor: unknown): SchoolInteractiveActorMetadata | null {
+  if (!isInteractiveActor(actor) || actor.kind === "platform") {
     return null;
   }
   return actor;

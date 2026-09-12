@@ -59,7 +59,7 @@ export async function checkStudentNoteAccess(
     return
   }
 
-  if (actor.kind !== 'staff') {
+  if (actor.kind !== 'staff' && actor.kind !== 's2s') {
     throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 

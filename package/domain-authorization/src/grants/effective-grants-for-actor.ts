@@ -16,6 +16,7 @@ export function effectiveGrantsForActor(actor: InteractiveActorMetadata): Effect
     case 'guardian':
     case 'student':
     case 'teacher':
+    case 'platform':
       return EMPTY_PORTAL_GRANTS
   }
 }

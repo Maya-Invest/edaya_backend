@@ -33,6 +33,7 @@ describe("GraphiQL login route", () => {
 
     expect(html).toContain("/graphiql/login");
     expect(html).toContain("graphiql-login-form");
+    expect(html).toContain("identityAccessToken");
     expect(html).toContain("limit: 50");
     expect(html).toContain("offset: 0");
   });

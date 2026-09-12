@@ -13,7 +13,7 @@ export const pgliteTestEnvInput = {
   PORT: 9999,
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
-  SCHOOL_API_ORIGIN: "http://localhost:9999",
+  API_ORIGIN: "http://localhost:9999",
   IDENTITY_ISSUER: "http://localhost:9900",
   IDENTITY_DIRECTORY_URL: "http://localhost:9900",
   IDENTITY_DIRECTORY_SECRET: "test-directory-secret",

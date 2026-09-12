@@ -55,6 +55,9 @@ export function assertCapability(
       return
     case 'student':
       assertStudentCapability(actor, capability as never, normalizeStudentTarget(target))
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 }
 

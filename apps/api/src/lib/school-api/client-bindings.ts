@@ -8,7 +8,7 @@ export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
 const manualClientRoutes: Pick<
   ClientBindingsDocument,
-  "authorization" | "onboarding" | "files" | "serviceAccounts" | "public" | "webhooks"
+  "authorization" | "onboarding" | "files" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public" | "webhooks"
 > = {
   authorization: {
     effectiveGrants: {
@@ -120,6 +120,58 @@ const manualClientRoutes: Pick<
       path: "service-accounts/{id}/rotate-key",
       pathParams: ["id"],
       responseSchemaName: "RotateServiceAccountKeyResponse",
+    },
+  },
+  platformUsers: {
+    me: {
+      method: "GET",
+      path: "platform/me",
+      responseSchemaName: "PlatformMeResponse",
+    },
+    list: {
+      method: "GET",
+      path: "platform-users",
+      responseSchemaName: "PlatformUserResponse",
+      responseIsArray: true,
+    },
+    create: {
+      method: "POST",
+      path: "platform-users",
+      requestSchemaName: "CreatePlatformUserRequest",
+      responseSchemaName: "PlatformUserResponse",
+    },
+    deactivate: {
+      method: "POST",
+      path: "platform-users/{id}/deactivate",
+      pathParams: ["id"],
+      responseSchemaName: "PlatformUserResponse",
+    },
+  },
+  s2sClients: {
+    list: {
+      method: "GET",
+      path: "s2s-clients",
+      responseSchemaName: "S2sClientResponse",
+      responseIsArray: true,
+    },
+    create: {
+      method: "POST",
+      path: "s2s-clients",
+      requestSchemaName: "CreateS2sClientRequest",
+      responseSchemaName: "CreateS2sClientResponse",
+    },
+    revoke: {
+      method: "POST",
+      path: "s2s-clients/{id}/revoke",
+      pathParams: ["id"],
+      responseSchemaName: "S2sClientResponse",
+    },
+    rotateKey: {
+      method: "POST",
+      path: "s2s-clients/{id}/rotate-key",
+      pathParams: ["id"],
+      requestSchemaName: "RotateS2sClientKeyRequest",
+      responseSchemaName: "RotateS2sClientKeyResponse",
     },
   },
   public: {

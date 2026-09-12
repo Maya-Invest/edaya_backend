@@ -229,7 +229,7 @@ Before opening a pull request, run `bun run verify`. For integration coverage (H
 | `POST /auth/sign-in/email` → 401 `Invalid email or password` | Identity database empty or identity service unavailable | Start `edaya_identity` on port 9900, then run the full seed |
 | Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun repo dev` |
-| Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; leave `PUBLIC_API_URL` empty in dev |
+| Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; set `PUBLIC_API_URL` to the school API origin (`http://localhost:9999`) |
 | DB browser fails on school tables | API still running (`bun repo dev`) holds the `.data/school` lock | Stop `bun repo dev`, then run `bun repo db browser school` |
 
 Quick health checks:
@@ -241,4 +241,4 @@ bun repo seed --scope doctor                                                    
 ```
 
 - **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.
-- **401 after login** — Verify the JWT issuer/audience match `IDENTITY_ISSUER` and `SCHOOL_API_ORIGIN`.
+- **401 after login** — Verify the JWT issuer/audience match `IDENTITY_ISSUER` and `API_ORIGIN`.

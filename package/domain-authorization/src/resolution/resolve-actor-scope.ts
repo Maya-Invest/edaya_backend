@@ -1,6 +1,7 @@
 import type { GuardianScope, StudentScope, TeacherActorScope } from '../model/actor-scope'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { InteractiveActorKind } from './interactive-actor-kind'
+import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 import { resolveGuardianScope, resolveStudentScope } from './resolve-portal-scopes'
 import { resolveTeacherScope } from './resolve-teacher-scope'
 
@@ -35,5 +36,7 @@ export async function resolveActorScope(args: ResolveActorScopeArgs): Promise<Re
         repositories: args.repositories,
         ...(args.academicYearId ? { academicYearId: args.academicYearId } : {}),
       })
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden, 'Platform actors have no school scope')
   }
 }

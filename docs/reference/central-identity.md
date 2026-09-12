@@ -1,6 +1,6 @@
 # Central identity (v1)
 
-School API authenticates **users** with a signed JWT from the `edaya_identity` service and **machines** with school `sk_live_` keys. This repo does not run Better Auth.
+School API authenticates **users** with a signed JWT from the `edaya_identity` service and **machines** with school `sk_live_` staff keys or `s2s_live_` S2S keys. This repo does not run Better Auth.
 
 ## Hosts
 
@@ -15,11 +15,12 @@ Auth cookies are host-only on the identity host. Web `credentials: 'include'` on
 
 ## Credentials (XOR)
 
-1. `Authorization: Bearer <JWT>` — identity assertion. School verifies JWKS (`iss`, `aud`, `exp`, `sub`, at least one of `email` | `phone`).
-2. `Authorization: Bearer sk_live_…` — school service account.
-3. Cookie on `/core`, both credentials, or unknown prefix → 401.
+1. `Authorization: Bearer <JWT>` — identity assertion. School verifies JWKS (`iss`, `aud`, `exp`, `sub`, at least one of `email` | `phone`). Platform operators also send `X-Actor-Kind: platform` when the same `sub` has a school profile.
+2. `Authorization: Bearer sk_live_…` — school staff service account.
+3. `Authorization: Bearer s2s_live_…` — per-school machine key minted by a platform operator ([platform-actors-and-s2s-keys.md](../architecture/platform-actors-and-s2s-keys.md)).
+4. Cookie on `/core`, both credentials, or unknown prefix → 401.
 
-JWT `aud` is the school API origin (identity env `SCHOOL_API_ORIGIN`). Callers cannot pick a different audience.
+JWT `aud` is this API's `API_ORIGIN`. Identity mints that value only when the caller requests `{ "resource": "<API origin>" }` from an allowlisted first-party origin. Callers cannot invent a different audience.
 
 ## School package
 

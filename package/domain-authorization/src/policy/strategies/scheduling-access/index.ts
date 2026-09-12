@@ -244,6 +244,10 @@ export async function dispatchLessonSessionReadAccess(
     case 'guardian':
     case 'student':
       return portalLessonSessionAccess(actor, lessonSessionIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive
@@ -271,6 +275,10 @@ export async function dispatchLessonSessionAccess(
     case 'guardian':
     case 'student':
       return portalLessonSessionAccess(actor, lessonSessionIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive
@@ -297,6 +305,10 @@ export async function dispatchActivitySessionAccess(
     case 'student':
     case 'teacher':
       return portalActivitySessionAccess(actor, activitySessionIds, repos)
+    case 's2s':
+      return
+    case 'platform':
+      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
     default: {
       const _exhaustive: never = actor
       void _exhaustive

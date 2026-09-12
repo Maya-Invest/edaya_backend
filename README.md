@@ -271,7 +271,7 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | `pglite:.data/school` (local), `pglite` (in-memory tests); Postgres via Hyperdrive on `worker` |
-| `SCHOOL_API_ORIGIN` | JWT audience and public school API origin |
+| `API_ORIGIN` | JWT audience and public school API origin |
 | `IDENTITY_ISSUER` | Central identity JWT issuer; JWKS is resolved at `/.well-known/jwks.json` |
 | `IDENTITY_DIRECTORY_URL` | Central identity internal directory base URL |
 | `IDENTITY_DIRECTORY_SECRET` | Shared directory credential (secret) |

@@ -4,9 +4,9 @@ import type { StudentCapabilityTarget } from '../capabilities/assert-student-cap
 import type { TeachingCapabilityTarget } from '../capabilities/assert-teaching-capability'
 import type { HomeroomCapability } from '../capabilities/homeroom-capability'
 import type { TeachingCapability } from '../capabilities/teaching-capability'
-import type { ActorMetadata, TeacherActorMetadata } from '../model/actor'
+import type { ActorMetadata, PlatformActorMetadata, S2sActorMetadata, TeacherActorMetadata } from '../model/actor'
 import type { AuthorizationRequest } from '../model/request'
-import type { OperationContext, OperationRef, OperationTargetKey, TeacherOperationRule } from './types'
+import type { OperationContext, OperationRef, OperationTargetKey, StaffOperationRule, TeacherOperationRule } from './types'
 import {
   assertGuardianCapability,
 } from '../capabilities/assert-guardian-capability'
@@ -23,6 +23,7 @@ import { ALL_HOMEROOM_CAPABILITIES } from '../capabilities/homeroom-capability'
 import { ALL_TEACHING_CAPABILITIES } from '../capabilities/teaching-capability'
 import { authorize } from '../engine/authorize'
 import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
+import { s2sMayExercise } from '../s2s/access-class'
 
 export type AssertOperationMode = 'full' | 'module'
 
@@ -185,6 +186,34 @@ function assertStaffRule(
   })
 }
 
+function staffPermissions(rule: StaffOperationRule): readonly { permission: AuthorizationRequest['permission'] }[] {
+  if ('anyOf' in rule) {
+    return rule.anyOf
+  }
+  return [rule]
+}
+
+function assertPlatformRule(actor: PlatformActorMetadata, operation: OperationRef): void {
+  const rule = operation.definition.platform
+  if (!rule) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+  if (!actor.permissions.has(rule.permission)) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+}
+
+function assertS2sRule(actor: S2sActorMetadata, operation: OperationRef): void {
+  if (operation.definition.platform || !operation.definition.staff) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+
+  const permissions = staffPermissions(operation.definition.staff)
+  if (!permissions.some(rule => s2sMayExercise(actor.accessClass, rule.permission))) {
+    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
+  }
+}
+
 function ensureRequiredContext(
   operation: OperationRef,
   context: OperationContext | undefined,
@@ -249,5 +278,20 @@ export function assertOperation(
     }
     ensureRequiredContext(operation, context, mode)
     assertStudentCapability(actor, definition.student.capability, studentTarget(context))
+    return
   }
+
+  if (actor.kind === 'platform') {
+    ensureRequiredContext(operation, context, mode)
+    assertPlatformRule(actor, operation)
+    return
+  }
+
+  if (actor.kind === 's2s') {
+    ensureRequiredContext(operation, context, mode)
+    assertS2sRule(actor, operation)
+    return
+  }
+
+  throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
 }

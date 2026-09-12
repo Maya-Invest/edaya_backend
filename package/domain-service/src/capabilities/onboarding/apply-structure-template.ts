@@ -8,7 +8,7 @@ import type {
   StructureTemplateId,
 } from './structure-template-types'
 import { randomUUID } from 'node:crypto'
-import { AcademicsOperations, operationModule } from '@edaya/authorization'
+import { AcademicsOperations, operationModule, requireActorSchoolId } from '@edaya/authorization'
 import {
   BusinessRuleViolationError,
   ClassGroup,
@@ -467,7 +467,7 @@ export async function applyStructureTemplate(
 ): Promise<ApplyStructureTemplateResult> {
   const templates = resolveOnboardingStructureTemplates(input.templates, input.templateSnapshots ?? [])
   const levels = parseStructureInput(input, templates)
-  const schoolId = actor.schoolId
+  const schoolId = requireActorSchoolId(actor)
   const service = application.forActor(actor)
   const phases: Array<{ phase: string, ms: number }> = []
 

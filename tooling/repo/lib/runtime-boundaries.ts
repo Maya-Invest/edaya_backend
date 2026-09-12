@@ -23,7 +23,7 @@ function findWranglerEnvRouteMismatches(wrangler: string): RuntimeBoundaryViolat
       continue
     }
 
-    const apiOrigin = envBlock.match(/"SCHOOL_API_ORIGIN"\s*:\s*"([^"]+)"/)?.[1]
+    const apiOrigin = envBlock.match(/"API_ORIGIN"\s*:\s*"([^"]+)"/)?.[1]
     const routePattern = envBlock.match(/"pattern"\s*:\s*"([^"]+)"/)?.[1]
     if (!apiOrigin || !routePattern) {
       continue
@@ -36,7 +36,7 @@ function findWranglerEnvRouteMismatches(wrangler: string): RuntimeBoundaryViolat
     catch {
       violations.push({
         label: `wrangler ${envName} route`,
-        message: `env.${envName} SCHOOL_API_ORIGIN is not a valid URL: ${apiOrigin}`,
+        message: `env.${envName} API_ORIGIN is not a valid URL: ${apiOrigin}`,
       })
       continue
     }
@@ -44,7 +44,7 @@ function findWranglerEnvRouteMismatches(wrangler: string): RuntimeBoundaryViolat
     if (apiHost !== routePattern) {
       violations.push({
         label: `wrangler ${envName} route`,
-        message: `env.${envName} routes[0].pattern (${routePattern}) must match SCHOOL_API_ORIGIN host (${apiHost})`,
+        message: `env.${envName} routes[0].pattern (${routePattern}) must match API_ORIGIN host (${apiHost})`,
       })
     }
   }

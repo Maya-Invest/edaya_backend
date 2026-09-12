@@ -50,7 +50,7 @@ describe("local dev env files", () => {
         "RUNTIME=local",
         "NODE_ENV=development",
         "DATABASE_URL=pglite",
-        "SCHOOL_API_ORIGIN=http://localhost:9999",
+        "API_ORIGIN=http://localhost:9999",
         "IDENTITY_DIRECTORY_SECRET=from-env",
       ].join("\n"));
       await writeFile(path.join(apiRoot, ".dev.vars"), [
@@ -64,7 +64,7 @@ describe("local dev env files", () => {
         RUNTIME: "local",
         NODE_ENV: "development",
         DATABASE_URL: "pglite",
-        SCHOOL_API_ORIGIN: "http://localhost:9999",
+        API_ORIGIN: "http://localhost:9999",
       };
       loadLocalEnvFile(apiRoot);
 
@@ -102,7 +102,7 @@ describe("local dev env files", () => {
       RUNTIME: "local",
       NODE_ENV: "development",
       DATABASE_URL: "pglite",
-      SCHOOL_API_ORIGIN: "http://localhost:9999",
+      API_ORIGIN: "http://localhost:9999",
       TRUSTED_ORIGINS: "http://localhost:5173",
       IDENTITY_DIRECTORY_SECRET: "test-secret",
     };
