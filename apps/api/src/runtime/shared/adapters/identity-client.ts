@@ -15,7 +15,7 @@ function identityFetch(env: Environment): typeof fetch | undefined {
 export function createSchoolIdentityClient(env: Environment): IdentityClient {
   return createIdentityClient({
     issuer: env.IDENTITY_ISSUER,
-    audience: env.SCHOOL_API_ORIGIN,
+    audience: env.API_ORIGIN,
     jwksUrl: new URL(IDENTITY_JWKS_PATH, env.IDENTITY_ISSUER).toString(),
     directoryBaseUrl: env.IDENTITY_DIRECTORY_URL,
     directorySecret: env.IDENTITY_DIRECTORY_SECRET,

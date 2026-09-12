@@ -198,12 +198,25 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
         document.getElementById('graphiql-login-form')?.addEventListener('submit', signIn);
       }
 
+      let identityAccessToken = null;
+
+      function authHeaders(init) {
+        const headers = new Headers(init && init.headers ? init.headers : undefined);
+        if (!headers.has('Authorization') && identityAccessToken) {
+          headers.set('Authorization', 'Bearer ' + identityAccessToken);
+        }
+        return headers;
+      }
+
       async function updateAuthBanner(errorMessage) {
         const banner = document.getElementById('auth-banner');
         if (!banner) return;
 
         try {
-          const response = await fetch('/graphiql/session', { credentials: 'include' });
+          const response = await fetch('/graphiql/session', {
+            credentials: 'omit',
+            headers: authHeaders(),
+          });
           const data = await response.json();
           if (data?.session) {
             renderSignedIn(banner, data.session, data.actor);
@@ -228,30 +241,35 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
           const response = await fetch('/graphiql/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            credentials: 'omit',
             body: JSON.stringify({ email, password }),
           });
 
           if (!response.ok) {
+            identityAccessToken = null;
             const payload = await response.json().catch(() => ({}));
             await updateAuthBanner(payload.message ?? 'Sign-in failed');
             return;
           }
 
+          const payload = await response.json().catch(() => ({}));
+          identityAccessToken = payload.accessToken ?? null;
           await updateAuthBanner();
         } catch (err) {
+          identityAccessToken = null;
           await updateAuthBanner(err instanceof Error ? err.message : 'Sign-in failed');
         }
       }
 
       async function signOut() {
-        await fetch('/graphiql/logout', { method: 'POST', credentials: 'include' });
+        identityAccessToken = null;
+        await fetch('/graphiql/logout', { method: 'POST', credentials: 'omit' });
         await updateAuthBanner();
       }
 
       const fetcher = createGraphiQLFetcher({
         url: ${JSON.stringify(endpointPath)},
-        fetch: (url, options) => fetch(url, { ...options, credentials: 'include' }),
+        fetch: (url, options) => fetch(url, { ...options, credentials: 'omit', headers: authHeaders(options) }),
       });
       const plugins = [HISTORY_PLUGIN, explorerPlugin()];
 

@@ -19,7 +19,7 @@ Auth cookies are host-only on the identity host. Web `credentials: 'include'` on
 2. `Authorization: Bearer sk_live_…` — school service account.
 3. Cookie on `/core`, both credentials, or unknown prefix → 401.
 
-JWT `aud` is the school API origin (identity env `SCHOOL_API_ORIGIN`). Callers cannot pick a different audience.
+JWT `aud` is this API's `API_ORIGIN`. Identity mints that value only when the caller requests `{ "resource": "<API origin>" }` from an allowlisted first-party origin. Callers cannot invent a different audience.
 
 ## School package
 

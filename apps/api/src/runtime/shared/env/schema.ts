@@ -30,7 +30,7 @@ export const EnvSchema = z.object({
   DATABASE_URL: z.string(),
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
-  SCHOOL_API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  API_ORIGIN: z.string().url().default("http://localhost:9999"),
   IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
