@@ -1,3 +1,4 @@
+import { recordClient } from "./record-client.mjs";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -10,6 +11,7 @@ if (mode === "identity") {
   const version = `0.0.0-staging.${sha}`;
   const source = JSON.parse(execFileSync("npm", ["view", `@maya-invest/edaya-identity-client@${version}`, "edayaSourceCommit", "--json"], { encoding: "utf8" }));
   if (source !== sha) throw new Error("Publish the matching identity client from its own repository before releasing");
+  recordClient("identity", version, sha, "verified-published");
   console.log(`Verified identity client ${version}`);
 } else if (mode === "signing") {
   let bundle;

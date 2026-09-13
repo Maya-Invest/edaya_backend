@@ -24,6 +24,7 @@ const manifest = {
   workflowRun: process.env.GITHUB_RUN_ID ? `https://github.com/Maya-Invest/edaya_backend/actions/runs/${process.env.GITHUB_RUN_ID}` : null,
   repositories,
   clients: { api: `0.0.0-staging.${repositories.backend.sha}`, identity: `0.0.0-staging.${repositories.identity.sha}` },
+  clientPublication: existsSync(resolve(output, "client-publication.json")) ? JSON.parse(readFileSync(resolve(output, "client-publication.json"), "utf8")) : { api: "unverified", identity: "unverified" },
   toolchains: { bun: run("bun", ["--version"]), node: process.version, flutter: JSON.parse(run("flutter", ["--version", "--machine"])) },
   dependencies: {
     lockSha256: Object.fromEntries(["backend", "identity", "frontend", "mobile"].map(name => [name, digest(resolve(root, `edaya_${name}`, name === "mobile" ? "pubspec.lock" : "bun.lock"))])),

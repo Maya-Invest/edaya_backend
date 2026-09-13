@@ -1,3 +1,4 @@
+import { recordClient } from "./record-client.mjs";
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -25,6 +26,7 @@ if (published !== undefined) {
 } else {
   execFileSync("npm", ["publish", "--tag", channel], { cwd, stdio: "inherit" });
 }
+recordClient("api", version, sha, published === undefined ? "published" : "reused");
 if (process.env.GITHUB_OUTPUT) {
   const { appendFileSync } = await import("node:fs");
   appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
