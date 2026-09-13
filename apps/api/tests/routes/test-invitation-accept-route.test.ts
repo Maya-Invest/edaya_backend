@@ -5,7 +5,8 @@ import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorizat
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { hashInvitationToken } from "@edaya/service";
-import { createDirectoryClient, type IdentityClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
+import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";

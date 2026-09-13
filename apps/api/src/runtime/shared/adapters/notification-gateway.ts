@@ -1,4 +1,5 @@
-import { createNotifyNotificationGateway, type NotifyRuntime } from "@edaya/adaptor-notify";
+import { createNotifyNotificationGateway } from "@edaya/adaptor-notify";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { LoggerPort, NotificationGatewayPort } from "@edaya/core";
 import { noOpNotificationGateway } from "@edaya/core";
 import type { Environment } from "@/runtime/shared/env/schema";

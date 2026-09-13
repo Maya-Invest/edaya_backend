@@ -187,7 +187,7 @@ export function logProvisionedServiceAccountKey(result: ProvisionSeedingServiceA
         ? 'key synced for'
         : 'reprovisioned'
     // eslint-disable-next-line no-console
-    console.log(`Seeding service account ${verb} ${schoolLabel} with profile API key (${result.apiKey.slice(0, 16)}…).`)
+    console.log(`Seeding service account ${verb} ${schoolLabel} with the configured profile API key.`)
     return
   }
 

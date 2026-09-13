@@ -1,4 +1,5 @@
-import { ALL_PLATFORM_PERMISSIONS, type PlatformUser, S2S_ACCESS_CLASSES, type S2sClient } from "@edaya/core";
+import { ALL_PLATFORM_PERMISSIONS, S2S_ACCESS_CLASSES } from "@edaya/core";
+import type { PlatformUser, S2sClient } from "@edaya/core";
 import { z } from "zod";
 
 export const platformPermissionSchema = z.enum(ALL_PLATFORM_PERMISSIONS);

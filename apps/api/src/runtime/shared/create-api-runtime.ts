@@ -1,3 +1,4 @@
+import { allowStagingNotification } from "@/staging-notifications";
 import { createNovuEmailTransportFromSecretKey } from "@edaya/adaptor-novu";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { resolveNotificationDispatchRecipient } from "@edaya/service";
@@ -6,8 +7,8 @@ import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
   createNotifyRuntimeFromDrizzle,
   drainPendingSchoolNotifications,
-  type NotifyRuntime,
 } from "@edaya/adaptor-notify";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createSchoolIdentityClient } from "@/runtime/shared/adapters/identity-client";
@@ -71,7 +72,8 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         if (!schoolApp)
           throw new Error("School notification resolver is not initialized");
         const actor = createSystemActorMetadata({ systemId: "notify-adapter", schoolId: request.schoolId, requestId: `notify:${request.deliveryId}`, reason: "Resolve current notification recipient" });
-        return resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
+        const profile = await resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
+        return allowStagingNotification(options.env.API_ORIGIN, profile?.email, options.env.STAGING_NOTIFICATION_EMAILS) ? profile : undefined;
       },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);

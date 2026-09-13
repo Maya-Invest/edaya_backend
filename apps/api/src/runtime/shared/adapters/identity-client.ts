@@ -1,8 +1,8 @@
 import {
   createIdentityClient,
   IDENTITY_JWKS_PATH,
-  type IdentityClient,
 } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 import type { Environment } from "@/runtime/shared/env/schema";
 
 function identityFetch(env: Environment): typeof fetch | undefined {

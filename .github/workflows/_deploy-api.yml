@@ -27,6 +27,7 @@ jobs:
       - name: Checkout identity client
         uses: ./.github/actions/checkout-identity-client
         with:
+          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
           token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun and Turbo cache
@@ -39,5 +40,5 @@ jobs:
         run: |
           case "${{ inputs.channel }}" in
             production) bun run deploy:production ;;
-            *) bun run deploy:staging ;;
+            *) echo "Use the staging release coordinator" >&2; exit 1 ;;
           esac

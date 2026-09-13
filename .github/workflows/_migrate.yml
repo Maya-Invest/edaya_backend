@@ -26,6 +26,7 @@ jobs:
       - name: Checkout identity client
         uses: ./.github/actions/checkout-identity-client
         with:
+          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
           token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun
@@ -45,11 +46,13 @@ jobs:
           missing=
           case "$MIGRATE_TARGET" in
             staging)
-              [ -z "$STAGING_DATABASE_URL" ] && missing=STAGING_DATABASE_URL
+              echo "Use the staging release coordinator" >&2
+              exit 1
               ;;
             production)
               [ -z "$PRODUCTION_DATABASE_URL" ] && missing=PRODUCTION_DATABASE_URL
               ;;
+            *) echo "Unknown migration target" >&2; exit 1 ;;
           esac
           if [ -n "$missing" ]; then
             echo "::error::Missing GitHub Actions secret: $missing (Settings → Secrets and variables → Actions)"
@@ -60,4 +63,5 @@ jobs:
         env:
           STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-        run: bun repo db migrate ${{ inputs.migrate_target }}
+          MIGRATE_TARGET: ${{ inputs.migrate_target }}
+        run: bun repo db migrate "$MIGRATE_TARGET"

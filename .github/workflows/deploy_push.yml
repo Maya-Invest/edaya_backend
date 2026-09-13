@@ -10,6 +10,22 @@ on:
         type: choice
         options: [staging, production]
         default: staging
+      identity_ref:
+        description: Identity revision for coordinated staging release
+        type: string
+        default: dev
+      web_ref:
+        description: Web revision for coordinated staging release
+        type: string
+        default: dev
+      mobile_ref:
+        description: Mobile revision for coordinated staging release
+        type: string
+        default: dev
+      reset_data:
+        description: Reset and reseed staging data (destructive)
+        type: boolean
+        default: false
       run_migrate:
         description: Run database migrations
         type: boolean
@@ -34,10 +50,12 @@ permissions:
 
 jobs:
   verify:
+    if: github.event_name != 'workflow_dispatch' || inputs.channel != 'staging'
     uses: ./.github/workflows/_verify.yml
     secrets: inherit
 
   gate:
+    if: github.event_name != 'workflow_dispatch' || inputs.channel != 'staging'
     runs-on: ubuntu-latest
     outputs:
       channel: ${{ steps.plan.outputs.channel }}
@@ -102,7 +120,7 @@ jobs:
 
   migrate:
     needs: [gate, verify]
-    if: needs.gate.outputs.run_migrate == 'true'
+    if: needs.gate.outputs.channel == 'production' && needs.gate.outputs.run_migrate == 'true'
     uses: ./.github/workflows/_migrate.yml
     with:
       migrate_target: ${{ needs.gate.outputs.migrate_target }}
@@ -113,13 +131,12 @@ jobs:
 
   publish-api-dev-image:
     needs: [gate, verify]
-    if: needs.gate.outputs.run_publish_api_dev == 'true'
+    if: needs.gate.outputs.channel == 'production' && needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-dev-image.yml
     secrets: inherit
 
   publish-api-client:
     needs: [gate, verify]
-    if: needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-client.yml
     secrets: inherit
 
@@ -128,6 +145,7 @@ jobs:
     if: >-
       always() &&
       needs.verify.result == 'success' &&
+      needs.gate.outputs.channel == 'production' &&
       needs.gate.outputs.deploy_api == 'true' &&
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
     uses: ./.github/workflows/_deploy-api.yml
@@ -136,3 +154,13 @@ jobs:
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+
+  staging-release:
+    if: github.event_name == 'workflow_dispatch' && inputs.channel == 'staging'
+    uses: ./.github/workflows/release-staging.yml
+    with:
+      identity_ref: ${{ inputs.identity_ref }}
+      web_ref: ${{ inputs.web_ref }}
+      mobile_ref: ${{ inputs.mobile_ref }}
+      reset_data: ${{ inputs.reset_data }}
+    secrets: inherit

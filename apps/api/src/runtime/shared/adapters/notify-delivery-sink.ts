@@ -1,4 +1,5 @@
-import { MessageDeliveryStatus, type NormalizedDeliveryEvent } from "@edaya/core";
+import { MessageDeliveryStatus } from "@edaya/core";
+import type { NormalizedDeliveryEvent } from "@edaya/core";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 

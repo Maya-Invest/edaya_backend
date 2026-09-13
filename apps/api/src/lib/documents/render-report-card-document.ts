@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { type AcademicPeriod, Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, type DocumentRendererPort, type ReportCardResult, ReportCardResultStatus } from "@edaya/core";
+import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ReportCardResultStatus } from "@edaya/core";
+import type { AcademicPeriod, DocumentRendererPort, ReportCardResult } from "@edaya/core";
 import { buildReportCardV1Payload, buildStorageKey, catalogLangFromLocale, catalogSubjectName, validateAttachmentSave } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";
 

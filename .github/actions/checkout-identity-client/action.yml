@@ -1,7 +1,10 @@
 name: Checkout identity client
-description: Places Maya-Invest/edaya_identity at ../edaya_identity so bun can resolve the file: identity-client link.
+description: "Places Maya-Invest/edaya_identity at ../edaya_identity so bun can resolve the file: identity-client link."
 
 inputs:
+  ref:
+    description: Explicit identity commit or branch
+    required: true
   token:
     description: GitHub token that can read Maya-Invest/edaya_identity
     required: true
@@ -13,6 +16,7 @@ runs:
       uses: actions/checkout@v5
       with:
         repository: Maya-Invest/edaya_identity
+        ref: ${{ inputs.ref }}
         path: .ci/edaya_identity
         token: ${{ inputs.token }}
 

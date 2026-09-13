@@ -22,7 +22,6 @@ import type { DevAccessSeedResult } from './run-dev-access-seed'
 import type { DevAuthLinkResult } from './run-dev-auth-link'
 import type { DevAuthProvisionResult } from './run-dev-auth-provision'
 import type { DevSchoolSeedResult } from './run-dev-school-seed'
-import { DEV_AUTH_PASSWORD } from '@edaya/fixtures/demo-login'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { ownerSubjectIdFromAuthProvision } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/adapters/in-process'
@@ -353,7 +352,7 @@ export function logDevSeedResults(
   if (results.authProvision) {
     const emails = results.authProvision.accounts.map(account => account.email).join(', ')
     // eslint-disable-next-line no-console
-    console.log(`Auth provision seeded ${results.authProvision.accounts.length} account(s): ${emails} (password: ${DEV_AUTH_PASSWORD})`)
+    console.log(`Auth provision seeded ${results.authProvision.accounts.length} account(s): ${emails}`)
   }
 
   if (results.authLink) {

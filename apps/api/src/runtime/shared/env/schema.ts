@@ -31,6 +31,7 @@ export const EnvSchema = z.object({
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  STAGING_NOTIFICATION_EMAILS: z.string().default(""),
   IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),

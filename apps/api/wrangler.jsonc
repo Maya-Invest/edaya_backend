@@ -67,6 +67,8 @@
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
         "API_ORIGIN": "https://staging.api.school.edayaplus.com",
+        "STAGING_MAINTENANCE": "false",
+        "STAGING_PAUSE_JOBS": "false",
         "IDENTITY_ISSUER": "https://staging.identity.edayaplus.com",
         "IDENTITY_DIRECTORY_URL": "https://staging.identity.edayaplus.com",
         "TRUSTED_ORIGINS": "https://staging.app.school.edayaplus.com,https://staging.admin.edayaplus.com",

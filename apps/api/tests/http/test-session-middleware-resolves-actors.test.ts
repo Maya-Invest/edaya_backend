@@ -2,7 +2,8 @@ import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency, resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
-import { createDirectoryClient, type IdentityClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
+import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 

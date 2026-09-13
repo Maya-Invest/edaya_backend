@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { BusinessRuleViolationError, type DocumentRendererPort, OccurrenceStatus } from "@edaya/core";
+import { BusinessRuleViolationError, OccurrenceStatus } from "@edaya/core";
+import type { DocumentRendererPort } from "@edaya/core";
 
 import { buildLogbookV1Payload, catalogClassName, catalogLangFromLocale, catalogMatter, catalogPeriodLabel, catalogSubjectName, sanitizeFileName } from "@edaya/service";
 import type { SchoolService } from "@edaya/service";

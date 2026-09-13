@@ -11,37 +11,41 @@ import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
 import { ActorAssuranceLevel, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
 import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
-import { type GrantScope, Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
+import { Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
+import type { GrantScope } from "@edaya/core";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
-  type AuthProvisioner,
+
   createInProcessAuthLinkSeedPort,
   runDevAccessSeed,
   runDevAuthLinkWithPort,
   runIntegrationLightSchoolSeed,
 } from "@edaya/seeding";
+import type { AuthProvisioner } from "@edaya/seeding";
 import {
   createTestIdentityKeys,
   signTestIdentityToken,
-  type TestIdentityKeys,
 } from "@maya-invest/edaya-identity-client/testing";
+import type { TestIdentityKeys } from "@maya-invest/edaya-identity-client/testing";
 import {
   createDirectoryClient,
   IDENTITY_DIRECTORY_BY_CONTACT_PATH,
   IDENTITY_DIRECTORY_BY_ID_PREFIX,
-  type IdentityClient,
+
   verifyIdentityToken,
 } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 import {
   createLocalProfileTestEnv,
-  type EmbeddedLocalFilesServer,
+
   startEmbeddedLocalFilesServer,
   syncProcessEnvLocalFilesUrl,
 } from "./embedded-local-files";
+import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
 
 // eslint-disable-next-line node/no-process-env -- route tests pin the demo fixture dataset
 process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";

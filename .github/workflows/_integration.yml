@@ -17,6 +17,7 @@ jobs:
       - name: Checkout identity client
         uses: ./.github/actions/checkout-identity-client
         with:
+          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
           token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun

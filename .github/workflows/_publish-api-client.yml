@@ -27,6 +27,7 @@ jobs:
       - name: Checkout identity client
         uses: ./.github/actions/checkout-identity-client
         with:
+          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
           token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Resolve channel
@@ -65,35 +66,5 @@ jobs:
         run: |
           set -euo pipefail
 
-          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
-          VERSION="0.0.0-${CHANNEL}.${SHORT_SHA}"
-          export VERSION
-
-          node -e "
-            const fs = require('node:fs')
-            const path = 'package/api-client/package.json'
-            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
-            pkg.version = process.env.VERSION
-            fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n')
-          "
-
           bun --filter @maya-invest/edaya-api-client build
-
-          cd package/api-client
-          npm publish --tag "${CHANNEL}"
-          echo "Published @maya-invest/edaya-api-client@${VERSION} (tag: ${CHANNEL})"
-
-      # - name: Commit regenerated client
-      #   run: |
-      #     set -euo pipefail
-
-      #     if git diff --quiet -- package/api-client tooling/repo/fixtures/openapi.json; then
-      #       echo "No api-client changes to commit."
-      #       exit 0
-      #     fi
-
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
-      #     git add package/api-client tooling/repo/fixtures/openapi.json
-      #     git commit -m "chore(api-client): regenerate from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-      #     git push origin "HEAD:${GITHUB_REF_NAME}"
+          node .github/scripts/publish-client.mjs package/api-client "$CHANNEL"

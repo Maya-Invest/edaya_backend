@@ -1,5 +1,8 @@
+/* eslint-disable dot-notation -- Explicit seeding process option */
 import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../../support/types'
 import type { HttpSeedClient } from '../../transport/http/client'
+import process from 'node:process'
+import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
 import { isTransientHttpStatus } from '../../transport/http/client'
 
 /** Must match identity `x-edaya-seed-provision` header. */
@@ -55,6 +58,14 @@ export class HttpAuthProvisioner implements AuthProvisioner {
   async ensureUser(account: AuthAccountInput, options?: EnsureUserOptions): Promise<{ subjectId: string }> {
     if (options?.preserveSession) {
       return this.client.withCookieSnapshot(() => this.ensureUser(account))
+    }
+
+    if (isStagingSeedApiUrl(this.client.origin) || process.env['SEED_PROVISIONED_IDENTITY'] === 'true') {
+      const existing = await this.signIn(account)
+      if (!existing.subjectId) {
+        throw new Error('Staging identity account is not provisioned; run the administrative identity fixture command first')
+      }
+      return { subjectId: existing.subjectId }
     }
 
     const attempts: string[] = []

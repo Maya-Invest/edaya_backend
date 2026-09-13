@@ -1,4 +1,5 @@
-import { createNotifyInvitationDeliveryPort, type NotifyRuntime } from "@edaya/adaptor-notify";
+import { createNotifyInvitationDeliveryPort } from "@edaya/adaptor-notify";
+import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { InvitationDeliveryPort } from "@edaya/core";
 import { noOpInvitationDeliveryPort } from "@edaya/core";
 import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";

@@ -30,5 +30,6 @@ describe('dev seed validation harness — HTTP validate scope', () => {
       await runtime.close()
       localFiles?.stop()
     }
-  }, 120_000)
+  // Full HTTP fixtures include password hashing, permission trees, and private photo uploads.
+  }, 600_000)
 })

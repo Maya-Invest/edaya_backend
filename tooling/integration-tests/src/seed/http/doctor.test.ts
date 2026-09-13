@@ -31,7 +31,8 @@ describe('dev seed doctor — HTTP doctor scope', () => {
       await runtime.close()
       localFiles?.stop()
     }
-  }, 120_000)
+  // Full HTTP fixtures include password hashing, permission trees, and private photo uploads.
+  }, 600_000)
 
   it('reports broken state when auth is missing', async () => {
     const { app, runtime } = await createCoreRouteTestApp({ identity: 'live' })
