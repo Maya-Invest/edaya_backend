@@ -25,12 +25,7 @@ describeWithLightSchool('better auth effective grants route', (getContext) => {
       actorId: string
       schoolId: string
       assuranceLevel: string
-      effectiveGrants: {
-        permissions: string[]
-        scopeGrants: unknown[]
-        scopeIdsByPermission: Record<string, string>
-        isElevated: boolean
-      }
+      grants: { permission: string, scopes: unknown[], source: string }[]
     }
 
     expect(body.kind).toBe('staff')
@@ -38,9 +33,10 @@ describeWithLightSchool('better auth effective grants route', (getContext) => {
     expect(staff?.schoolId).toBeTruthy()
     expect(body.schoolId).toBe(staff!.schoolId)
     expect(body.assuranceLevel).toBe('verified')
-    expect(Array.isArray(body.effectiveGrants.permissions)).toBe(true)
-    expect(Array.isArray(body.effectiveGrants.scopeGrants)).toBe(true)
-    expect(body.effectiveGrants.scopeIdsByPermission).toEqual({})
+    expect(body.grants.length).toBeGreaterThan(0)
+    expect(body.grants.every(grant => typeof grant.permission === 'string' && grant.scopes.length > 0)).toBe(true)
+    expect(body).not.toHaveProperty('effectiveGrants')
+    expect(body).not.toHaveProperty('capabilities')
   })
 
   it('returns 401 when the access token is missing', async () => {

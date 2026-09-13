@@ -2,8 +2,6 @@ import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, Activi
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
-import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
-import { buildSchoolOverview } from '@edaya/service'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
@@ -141,27 +139,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
 
     this.staffPermissionAssignments = new PostgresStaffPermissionAssignmentStore(db)
 
-    this.schools = {
-      forAccess: scope => this.schoolsStore.forAccess(scope),
-      assertAccess: entity => this.schoolsStore.assertAccess(entity),
-      forSchool: schoolId => this.schoolsStore.forSchool(schoolId),
-      findById: (id: string) => this.schoolsStore.findById(id),
-      findOne: (options, last) => this.schoolsStore.findOne(options, last),
-      findByIds: (ids: readonly string[]) => this.schoolsStore.findByIds(ids),
-      list: options => this.schoolsStore.list(options),
-      count: filter => this.schoolsStore.count(filter),
-      save: (entity: School) => this.schoolsStore.save(entity),
-      delete: (id: string) => this.schoolsStore.delete(id),
-      batchSave: (entities: School[]) => this.schoolsStore.batchSave(entities),
-      batchDelete: (ids: string[]) => this.schoolsStore.batchDelete(ids),
-      getOverdueFeeCount: async (schoolId: string): Promise<number> => {
-        return this.studentFees.forSchool(schoolId).count({ status: FeeStatus.Overdue })
-      },
-      getPublishedReportCardCount: async (schoolId: string): Promise<number> => {
-        return this.results.forSchool(schoolId).count({ status: ReportCardResultStatus.Published })
-      },
-      getSchoolOverview: input => buildSchoolOverview(this, input),
-    }
+    this.schools = this.schoolsStore
   }
 
   async init(options: { driver: MigrationDriver }): Promise<void> {

@@ -1,3 +1,4 @@
+import { AuthorizationErrorCode } from '@edaya/authorization'
 import { AcademicPeriodType, AttendanceMode, GradeLevel, SchoolType } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -103,6 +104,6 @@ describeIntegration('setup lifecycle journey', () => {
     expect((await updateStaffStatus(app, 'teacher', true)).isActive).toBe(true)
     await expect(updateStaffStatus(app, 'admin', false))
       .rejects
-      .toThrow('Transfer school ownership before deactivating the owner')
+      .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
   })
 })

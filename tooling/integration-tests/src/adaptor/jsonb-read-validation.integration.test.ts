@@ -52,17 +52,17 @@ describe('[Postgres PGlite] JSONB read validation', () => {
 
     await db.execute(sql`
       INSERT INTO staff_permission_assignments (
-        id, staff_id, school_id, academic_year_id, permission, scope_ids, status, created_at, updated_at
+        id, staff_id, school_id, academic_year_id, permission, scopes, status, created_at, updated_at
       )
       VALUES (
-        'spa-corrupt-1', 'staff-1', 'school', 'year-1', 'not_a_valid_permission', '', 'active', NOW(), NOW()
+        'spa-corrupt-1', 'staff-1', 'school', 'year-1', 'not_a_valid_permission', '[{"kind":"school"}]'::jsonb, 'active', NOW(), NOW()
       )
     `)
 
     await expect(repos.staffPermissionAssignments.findById('spa-corrupt-1')).rejects.toBeInstanceOf(DomainValidationError)
   })
 
-  test('StaffPermissionAssignment rejects invalid scopeIds on read', async () => {
+  test('StaffPermissionAssignment rejects invalid typed scopes on read', async () => {
     await repos.staffMembers.save(new StaffMember({
       id: 'staff-2',
       schoolId: 'school',
@@ -76,13 +76,13 @@ describe('[Postgres PGlite] JSONB read validation', () => {
       schoolId: 'school',
       academicYearId: 'year-1',
       permission: Permission.ATTENDANCE_RECORD,
-      scopeIds: 'class-1',
+      scopes: [{ kind: 'class_group', classGroupId: 'class-1' }],
       status: 'active',
     }))
 
     await db.execute(sql`
       UPDATE staff_permission_assignments
-      SET scope_ids = 'class-1:math'
+      SET scopes = '[{"kind":"class_subject","classGroupId":"class-1","classSubjectId":"math"}]'::jsonb
       WHERE id = 'spa-corrupt-2'
     `)
 

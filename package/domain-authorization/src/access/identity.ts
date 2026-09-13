@@ -1,5 +1,5 @@
-import type { AuthorizationRepositories } from '../ports/authorization-repositories';
-import type { InteractiveActorKind } from './interactive-actor-kind';
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
+import type { InteractiveActorKind } from './interactive-actor-kind'
 
 export interface ResolvedInteractiveActorIdentity {
   readonly kind: Exclude<InteractiveActorKind, 'platform'>

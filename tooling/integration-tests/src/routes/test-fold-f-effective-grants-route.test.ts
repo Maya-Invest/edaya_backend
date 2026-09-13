@@ -8,8 +8,8 @@ import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
 const GUARDIAN_EMAIL = 'c.laurent@mail.com'
 
-describeWithLightSchool('Fold F effective grants route', (getContext) => {
-  it('returns guardian capabilities with empty permission grants when X-Actor-Kind is guardian', async () => {
+describeWithLightSchool('selected-profile action grants route', (getContext) => {
+  it('returns only relationship action grants when X-Actor-Kind is guardian', async () => {
     const { app, application, authHeaders } = getContext()
     const authorization = (await authHeaders(GUARDIAN_EMAIL)).authorization
     const guardian = await application.repositories.guardians.findById(MINIMAL_AUTH_FIXTURE_GUARDIAN_ID)
@@ -27,18 +27,15 @@ describeWithLightSchool('Fold F effective grants route', (getContext) => {
       kind: string
       actorId: string
       schoolId: string
-      capabilities?: string[]
-      effectiveGrants: {
-        permissions: string[]
-        scopeGrants: unknown[]
-      }
+      grants: { permission: string, scopes: unknown[], source: string }[]
     }
 
     expect(body.kind).toBe('guardian')
     expect(body.actorId).toBe(MINIMAL_AUTH_FIXTURE_GUARDIAN_ID)
     expect(body.schoolId).toBe(guardian!.schoolId)
-    expect(body.effectiveGrants.permissions).toEqual([])
-    expect(body.capabilities?.length).toBeGreaterThan(0)
+    expect(body.grants.length).toBeGreaterThan(0)
+    expect(body.grants.every(grant => grant.source === 'relationship')).toBe(true)
+    expect(body).not.toHaveProperty('capabilities')
   })
 
   it('still returns staff grants when the same session omits X-Actor-Kind', async () => {
@@ -50,8 +47,8 @@ describeWithLightSchool('Fold F effective grants route', (getContext) => {
     }))
 
     expect(response.status).toBe(200)
-    const body = await response.json() as { kind: string, effectiveGrants: { permissions: string[] } }
+    const body = await response.json() as { kind: string, grants: { permission: string }[] }
     expect(body.kind).toBe('staff')
-    expect(body.effectiveGrants.permissions.length).toBeGreaterThan(0)
+    expect(body.grants.length).toBeGreaterThan(0)
   })
 })

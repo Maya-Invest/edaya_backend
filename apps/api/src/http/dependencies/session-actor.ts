@@ -3,7 +3,6 @@ import { ActorAssuranceLevel, bootstrapPlatformUserIfAbsent, createGuardianActor
 import type { SchoolRepositories } from "@edaya/service";
 import { randomUUID } from "node:crypto";
 
-
 import type { AppBindings } from "@/http/types";
 import type { Context } from "hono";
 import type { DependencyModule } from "@/http/dependency-injection";
@@ -71,8 +70,6 @@ type ActorIdentity
     schoolId: string;
     teacherId: string;
   };
-
-type NormalizedAuthSession = AuthenticatedSession;
 
 /** Interactive assurance tracks email verification; strong (2FA) is unused for now. */
 export function resolveAssuranceFromEmailVerified(
@@ -177,7 +174,8 @@ async function resolveActorIdentity(
   resolution: { actorKind?: ReturnType<typeof parseInteractiveActorKind>; schoolId?: string; actorId?: string },
 ): Promise<ActorIdentity | null> {
   const resolved = await resolveInteractiveActorIdentity(repos, { subjectId, ...resolution });
-  if (!resolved) return null;
+  if (!resolved)
+    return null;
   switch (resolved.kind) {
     case "staff": return { kind: "staff", schoolId: resolved.schoolId, staffMemberId: resolved.actorId };
     case "guardian": return { kind: "guardian", schoolId: resolved.schoolId, guardianId: resolved.actorId };
@@ -192,10 +190,13 @@ async function resolveServiceActorIdentity(
   requestId: string,
 ): Promise<Extract<ActorIdentity, { kind: "staff" }> | null> {
   const keyRecord = await repos.serviceApiKeys.findActiveByHash(hashApiKey(apiKey));
-  if (!keyRecord) return null;
+  if (!keyRecord)
+    return null;
   const staffMember = await repos.staffMembers.findById(keyRecord.staffMemberId);
   if (!staffMember || staffMember.accountKind !== "service" || !staffMember.isActive
-      || staffMember.schoolId !== keyRecord.schoolId) return null;
+    || staffMember.schoolId !== keyRecord.schoolId) {
+    return null;
+  }
   return { kind: "staff", schoolId: staffMember.schoolId, staffMemberId: staffMember.id, accountKind: "service", requestId };
 }
 

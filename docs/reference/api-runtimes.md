@@ -26,7 +26,6 @@ Same schema for all profiles (`apps/api/src/runtime/shared/env/schema.ts`):
 | `IDENTITY_DIRECTORY_URL` | `http://localhost:9900` | `[vars]` or `IDENTITY` service binding |
 | `IDENTITY_DIRECTORY_SECRET` | `.env` | Worker secret (`.dev.vars` / dashboard) |
 | `TRUSTED_ORIGINS` | `.env` (comma-separated) | `[vars]` |
-| `GRANTS_CACHE_TTL_MS` | optional `.env` | optional secret / `[vars]` |
 | `ALLOW_PUBLIC_SCHOOL_REGISTRATION` | optional; defaults on in `development` | `[vars]` |
 | `LOCAL_FILES_*` | local profile only | ignored |
 

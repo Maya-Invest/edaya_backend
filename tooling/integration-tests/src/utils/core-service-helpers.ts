@@ -1,7 +1,8 @@
+import type { Permission } from '@edaya/authorization'
 import type { AttendanceJustificationStatus, StudentFee } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
-import { AuthorizationError, AuthorizationErrorCode, authorize, createBootstrapStaffActorMetadata, Permission, permissionRowsFromTemplatePermissions, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, buildStudentFeeSummary, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Fee, FeeStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
+import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, buildStudentFeeSummary, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Fee, FeeStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -15,12 +16,18 @@ export async function seedStaffPermissionTemplate(
     idPrefix?: string
   },
 ): Promise<void> {
-  const rows = permissionRowsFromTemplatePermissions(
-    input.staffId,
-    input.schoolId,
-    input.academicYearId,
-    input.permissions,
-  )
+  const rows = input.permissions.map((permission) => {
+    const grain = permissionScope(permission)
+    if (grain === 'platform')
+      throw new Error('School fixtures cannot grant platform authority')
+    return {
+      staffId: input.staffId,
+      schoolId: input.schoolId,
+      academicYearId: input.academicYearId,
+      permission,
+      scopes: grain ? [{ kind: 'all' as const, grain }] : [{ kind: 'school' as const }],
+    }
+  })
 
   for (const [index, row] of rows.entries()) {
     await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
@@ -31,57 +38,10 @@ export async function seedStaffPermissionTemplate(
   }
 }
 
-async function ensureActorStaffMember(app: SchoolService): Promise<void> {
-  const actor = app.baseService.actor
-  if (actor.kind !== 'staff') {
-    return
-  }
-  const existing = await app.baseService.repositories.staffMembers.findById(actor.staffMemberId)
-  if (!existing) {
-    await app.baseService.repositories.staffMembers.save(new StaffMember({
-      id: actor.staffMemberId,
-      schoolId: actor.schoolId,
-      firstName: 'Fixture',
-      lastName: 'Administrator',
-      subjectId: actor.subjectId,
-    }))
-    return
-  }
-
-  if (!existing.subjectId) {
-    await app.baseService.repositories.staffMembers.save(new StaffMember({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      isActive: existing.isActive,
-      createdAt: existing.createdAt,
-      subjectId: actor.subjectId,
-    }))
-  }
-}
-
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {
-  await ensureActorStaffMember(app)
-  const actor = app.baseService.actor
-  const school = new School({
-    ...input,
-    ownerSubjectId: input.ownerSubjectId ?? (actor.kind === 'staff' ? actor.subjectId : undefined),
-  })
-  const registrationActor = createBootstrapStaffActorMetadata({
-    schoolId: school.id,
-    requestId: 'integration-school-registration',
-    staffMemberId: 'integration-fixture',
-  })
-  authorize({
-    actor: registrationActor,
-    request: {
-      schoolId: school.id,
-      permission: Permission.PLATFORM_REGISTER_SCHOOL,
-    },
-  })
-  await app.baseService.entities.schools.save(school, { moduleChecked: true })
+  const existing = await app.baseService.repositories.schools.findById(input.id)
+  const school = new School({ ...input, ownerSubjectId: input.ownerSubjectId ?? existing?.ownerSubjectId })
+  await app.baseService.entities.schools.save(school)
   return school
 }
 
@@ -111,37 +71,7 @@ export async function createAcademicPeriod(app: SchoolService, input: ArgsOf<typ
 }
 
 export async function publishAcademicPeriod(app: SchoolService, academicPeriodId: string): Promise<AcademicPeriod> {
-  const existing = await app.baseService.entities.academicPeriods.findById(academicPeriodId)
-  if (!existing) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-  const period = new AcademicPeriod({
-    id: existing.id,
-    schoolId: existing.schoolId,
-    academicYearId: existing.academicYearId,
-    name: existing.name,
-    type: existing.type,
-    startDate: existing.startDate,
-    endDate: existing.endDate,
-    isPublished: true,
-    createdAt: existing.createdAt,
-  })
-  await authorizeCoreServiceHelperPermission(app, Permission.SCHOOL_LIFECYCLE_MANAGE)
-  await app.baseService.entities.academicPeriods.save(period, { moduleChecked: true })
-  return period
-}
-
-async function authorizeCoreServiceHelperPermission(
-  app: SchoolService,
-  permission: Permission,
-): Promise<void> {
-  authorize({
-    actor: app.baseService.actor,
-    request: {
-      schoolId: app.baseService.actor.schoolId,
-      permission,
-    },
-  })
+  return app.setupWorkflow.publishAcademicPeriod({ academicPeriodId })
 }
 
 export async function createClassGroup(app: SchoolService, input: ArgsOf<typeof ClassGroup>): Promise<ClassGroup> {
@@ -453,7 +383,7 @@ export async function saveLessonSession(
     schoolId: input.schoolId ?? 'school',
     classGroupId: input.classGroupId,
     classSubjectId: input.classSubjectId,
-    scheduleId: input.scheduleId ?? `schedule-${input.id}`,
+    scheduleId: input.scheduleId,
     displayLabel: input.displayLabel ?? 'Lesson',
     startsAt: input.startsAt,
     endsAt: input.endsAt,

@@ -2,6 +2,7 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu({
   ignores: [
+    '**/package/api-client/src/schema.d.ts',
     '**/tooling/integration-tests/src/generated/**',
     '**/tooling/seeding/src/generated/**',
   ],

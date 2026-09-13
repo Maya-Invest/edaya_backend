@@ -6,7 +6,7 @@ An architecture diagram can show clean boundaries while the running application 
 
 The final test of an architecture is the path taken by a real operation.
 
-In this platform, a request enters a Hono API running either on Node or Cloudflare Workers. Middleware validates runtime configuration, resolves the appropriate application runtime, identifies the authenticated subject, loads effective grants, and constructs an actor. The route validates the request body, dispatches a domain command or query, and serializes the result.
+In this platform, a request enters a Hono API running either on Node or Cloudflare Workers. Middleware validates runtime configuration, resolves the appropriate application runtime, identifies the authenticated subject, and constructs an identity-only actor for the selected profile. Business policies load current manual grants and relationships when authorizing the requested action. The route validates the request body, dispatches a domain command or query, and serializes the result.
 
 The HTTP layer does not decide how enrollment works or whether a teacher may access a student. It supplies validated input and request context to the domain layer that owns those decisions.
 
@@ -36,7 +36,7 @@ A thin API still has important responsibilities:
 
 These concerns belong at the edge because they depend on the transport or runtime. Business invariants do not.
 
-The distinction also makes multiple runtimes manageable. On Node, the application can cache a runtime containing PGlite or Postgres repositories and a local SQLite authentication store. On Cloudflare Workers, each request resolves bindings for Postgres through Hyperdrive and authentication through D1, then closes request-scoped resources on completion.
+The distinction also makes multiple runtimes manageable. On Node, the application can reuse a runtime containing PGlite or Postgres repositories. On Cloudflare Workers, each request resolves Postgres through Hyperdrive and closes request-scoped resources on completion. Both runtimes use the central identity service; authorization facts remain local to each policy evaluation.
 
 The domain application remains the same. The runtime composition changes.
 

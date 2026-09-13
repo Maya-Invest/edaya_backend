@@ -1,7 +1,7 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import { PostgresAtomicExecution, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
-import { createRepositoryAuthorizationPolicy, createSystemActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Fee, FeeStatus, noOpFileStorage, noOpNotificationGateway, PaymentMethod, School, Student, StudentFee } from '@edaya/core'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { AcademicYear, Fee, FeeStatus, noOpFileStorage, noOpNotificationGateway, PaymentMethod, School, StaffMember, Student, StudentFee } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -14,7 +14,7 @@ if (!url || new URL(url).hostname !== '127.0.0.1')
 // single-connection pool accidentally running requests one at a time.
 const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
 const repositories = handles.map(handle => new PostgresSchoolRepositories(handle.db))
-const actor = createSystemActorMetadata({ schoolId: 'finance-school', systemId: 'native-fixture', requestId: 'native-test', reason: 'Synthetic concurrency verification' })
+const actor = createStaffActorMetadata({ schoolId: 'finance-school', staffMemberId: 'finance-owner', subjectId: 'finance-person', requestId: 'native-test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong })
 const services = handles.map((handle, index) => {
   const repos = repositories[index]!
   return new SchoolApplication({
@@ -22,14 +22,7 @@ const services = handles.map((handle, index) => {
     atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: repos,
-      staffAssignmentRepository: repos.staffAssignments,
-      staffMemberRepository: repos.staffMembers,
-      guardianRepository: repos.guardians,
-      guardianStudentLinkRepository: repos.guardianLinks,
-      studentRepository: repos.students,
-    }),
+
   }).forActor(actor)
 })
 const repos = repositories[0]!
@@ -37,7 +30,8 @@ const paymentDate = new Date('2026-09-08T00:00:00Z')
 
 beforeAll(async () => {
   await repos.init({ driver: 'node-postgres' })
-  await repos.schools.save(new School({ id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC' }))
+  await repos.schools.save(new School({ id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+  await repos.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, subjectId: actor.subjectId, firstName: 'Finance', lastName: 'Owner' }))
   await repos.academicYears.save(new AcademicYear({ id: 'finance-year', schoolId: actor.schoolId, name: '2026', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
   await repos.students.save(new Student({ id: 'finance-student', schoolId: actor.schoolId, firstName: 'Synthetic', lastName: 'Student' }))
   await repos.fees.save(new Fee({ id: 'finance-fee', schoolId: actor.schoolId, academicYearId: 'finance-year', name: 'Synthetic fee', defaultAmount: 1000, currency: 'USD' }))

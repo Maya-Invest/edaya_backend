@@ -1,519 +1,80 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { SchoolRepositories } from '@edaya/service'
-import type { TestEntity } from './managed-entity-test-context'
-import {
-  AuthorizationError,
-  AuthorizationErrorCode,
-  createStaffActorMetadata,
-} from '@edaya/authorization'
+import type { EntityBusinessGates, EntityBusinessHooks } from '@edaya/service'
+import { Student } from '@edaya/core'
 import { ManagedEntityService } from '@edaya/service'
-import {
-  describe,
-  expect,
-  mock,
-  test,
-} from 'bun:test'
-import {
-  actor,
-  createRepository,
+import { describe, expect, test } from 'bun:test'
+import { createTestApp } from '../../support/create-test-app'
 
-} from './managed-entity-test-context'
+async function context(gates: EntityBusinessGates<Student> = {}, hooks: EntityBusinessHooks<Student> = {}) {
+  const fixture = await createTestApp()
+  const service = new ManagedEntityService<Student>({
+    actor: fixture.app.baseService.actor,
+    repositories: fixture.schoolRepositories,
+    config: { resource: 'students', repository: fixture.schoolRepositories.students, tenant: { resolve: entity => entity.schoolId, resolveFromFilter: filter => typeof filter?.schoolId === 'string' ? filter.schoolId : undefined }, atomicExecution: fixture.atomicExecution, gates, hooks },
+  })
+  return { ...fixture, service }
+}
+const student = (id = 'student') => new Student({ id, schoolId: 'school', firstName: 'A', lastName: 'Student' })
 
-describe('ManagedEntityService', () => {
-  function createService(
-    repository = createRepository<TestEntity>(),
-    overrides: Partial<ConstructorParameters<typeof ManagedEntityService<TestEntity>>[0]['config']> = {},
-  ): ManagedEntityService<TestEntity> {
-    return new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: {
-          resolve: value => value.schoolId,
-          resolveFromFilter: filter => (filter as { schoolId?: string } | undefined)?.schoolId,
-        },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-        ...overrides,
-      },
-    })
-  }
-
-  test('findById, findOne, and list handle missing and authorized results', async () => {
-    const repository = createRepository<TestEntity>()
-    const entity = { id: 'entity-1', schoolId: 'school' }
-    await repository.save(entity)
-    const checkAccess = mock(async () => {})
-    const service = createService(repository, {
-      read: {
-        checkModule: mock(async () => {}),
-        checkAccess,
-      },
-    })
-
-    await expect(service.findById('missing')).resolves.toBeUndefined()
-    await expect(service.findById(entity.id)).resolves.toEqual(entity)
-    await expect(service.findOne({ id: 'missing' })).resolves.toBeUndefined()
-    await expect(service.findOne({ id: entity.id })).resolves.toEqual(entity)
-    await expect(service.list({ schoolId: 'school' })).resolves.toEqual([entity])
-
-    expect(checkAccess).toHaveBeenCalledWith(actor, [entity], {})
+describe('managed entities with native policy scopes', () => {
+  test('list, single, count and pagination use the same tenant scope', async () => {
+    const { service, schoolRepositories } = await context()
+    await service.batchSave([student('a'), student('b')])
+    await schoolRepositories.students.save(new Student({ id: 'foreign', schoolId: 'other-school', firstName: 'Other', lastName: 'Student' }))
+    expect((await service.findByIds(['a', 'foreign'])).map(row => row.id)).toEqual(['a'])
+    expect(await service.findById('foreign')).toBeUndefined()
+    expect(await service.findOne({ id: 'missing' })).toBeUndefined()
+    expect(await service.count()).toBe(2)
+    expect((await service.list({ $orderBy: [{ field: 'id', direction: 'asc' }], $offset: 1, $limit: 1 })).map(row => row.id)).toEqual(['b'])
+    await expect(service.list({ schoolId: 'other-school' })).rejects.toThrow()
   })
 
-  test('rejects cross-school read filters before repository access', async () => {
-    const repository = createRepository<TestEntity>()
-    const service = createService(repository)
-
-    await expect(service.findOne({ schoolId: 'other-school' })).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(service.list({ schoolId: 'other-school' })).rejects.toBeInstanceOf(AuthorizationError)
-    expect(await repository.count()).toBe(0)
+  test('business gates and hooks receive the previous persisted state', async () => {
+    const changes: Array<[string, string | undefined]> = []
+    const hooks: Array<[string, string | undefined]> = []
+    const { service } = await context({
+      preSave: async (after, before) => {
+        changes.push([after.firstName, before?.firstName])
+      },
+    }, {
+      postSave: async (after, before) => {
+        hooks.push([after.firstName, before?.firstName])
+      },
+    })
+    await service.save(student())
+    await service.save(student().copyWith({ firstName: 'Updated' }))
+    expect(changes).toEqual([['A', undefined], ['Updated', 'A']])
+    expect(hooks).toEqual(changes)
   })
 
-  test('findByIds checks module, tenant, and entity access', async () => {
-    const repository = createRepository<TestEntity>()
-    const first = { id: 'entity-1', schoolId: 'school' }
-    const second = { id: 'entity-2', schoolId: 'school' }
-    await repository.batchSave([first, second])
-    const checkModule = mock(async () => {})
-    const checkAccess = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule,
-          checkAccess,
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    const result = await service.findByIds(['entity-1', 'entity-2'])
-
-    expect(result).toEqual([first, second])
-    expect(checkModule).toHaveBeenCalledWith(actor)
-    expect(checkAccess).toHaveBeenCalledWith(actor, [first, second], {})
+  test('post-save failure rolls back all persisted rows in a batch', async () => {
+    const { service, schoolRepositories } = await context({}, { postSave: async (entity) => {
+      if (entity.id === 'b')
+        throw new Error('Hook failed')
+    } })
+    await expect(service.batchSave([student('a'), student('b')])).rejects.toThrow('Hook failed')
+    expect(await schoolRepositories.students.count()).toBe(0)
   })
 
-  test('passes undefined existing state to save gates for creates', async () => {
-    const repository = createRepository<TestEntity>()
-    const authorizeSave = mock(async () => {})
-    const preSave = mock(async () => {})
-    const entity = { id: 'entity-1', schoolId: 'school', parentId: 'parent-1' }
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave,
-          authorizeDelete: mock(async () => {}),
-        },
-        gates: { preSave },
-      },
-    })
-
-    await service.save(entity)
-
-    expect(authorizeSave).toHaveBeenCalledWith(actor, entity, undefined, {})
-    expect(preSave).toHaveBeenCalledWith(entity, undefined, {}, actor)
-    await expect(repository.findById(entity.id)).resolves.toEqual(entity)
+  test('a failed delete invariant preserves every row and does not call deletion hooks', async () => {
+    let hookCalls = 0
+    const { service } = await context({ preDelete: async (entity) => {
+      if (entity.id === 'b')
+        throw new Error('Student still enrolled')
+    } }, { postDelete: async () => { hookCalls += 1 } })
+    await service.batchSave([student('a'), student('b')])
+    await expect(service.batchDelete(['a', 'b'])).rejects.toThrow('Student still enrolled')
+    expect(await service.count()).toBe(2)
+    expect(hookCalls).toBe(0)
+    await service.delete('a')
+    expect(hookCalls).toBe(1)
   })
 
-  test('runs postSave after repository save with existing state', async () => {
-    const repository = createRepository<TestEntity>()
-    const existing = { id: 'entity-1', schoolId: 'school', parentId: 'old-parent' }
-    const updated = { id: 'entity-1', schoolId: 'school', parentId: 'new-parent' }
-    await repository.save(existing)
-    const postSave = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-        hooks: { postSave },
-      },
-    })
-
-    await service.save(updated)
-
-    expect(postSave).toHaveBeenCalledWith(updated, existing, {}, actor)
-    await expect(repository.findById(updated.id)).resolves.toEqual(updated)
-  })
-
-  test('batchSave authorizes and gates each proposed entity with existing state', async () => {
-    const repository = createRepository<TestEntity>()
-    const existing = { id: 'entity-1', schoolId: 'school', parentId: 'old-parent' }
-    const updated = { id: 'entity-1', schoolId: 'school', parentId: 'new-parent' }
-    const created = { id: 'entity-2', schoolId: 'school' }
-    await repository.save(existing)
-    const authorizeSave = mock(async () => {})
-    const preSave = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave,
-          authorizeDelete: mock(async () => {}),
-        },
-        gates: { preSave },
-      },
-    })
-
-    const result = await service.batchSave([updated, created])
-
-    expect(result).toEqual(['entity-1', 'entity-2'])
-    expect(authorizeSave).toHaveBeenCalledWith(actor, updated, existing, {})
-    expect(authorizeSave).toHaveBeenCalledWith(actor, created, undefined, {})
-    expect(preSave).toHaveBeenCalledWith(updated, existing, {}, actor)
-    expect(preSave).toHaveBeenCalledWith(created, undefined, {}, actor)
-    await expect(repository.findById('entity-1')).resolves.toEqual(updated)
-    await expect(repository.findById('entity-2')).resolves.toEqual(created)
-  })
-
-  test('batchSave runs postSave for each entity after repository batchSave', async () => {
-    const repository = createRepository<TestEntity>()
-    const existing = { id: 'entity-1', schoolId: 'school', parentId: 'old-parent' }
-    const updated = { id: 'entity-1', schoolId: 'school', parentId: 'new-parent' }
-    const created = { id: 'entity-2', schoolId: 'school' }
-    await repository.save(existing)
-    const postSave = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-        hooks: { postSave },
-      },
-    })
-
-    await service.batchSave([updated, created])
-
-    expect(postSave).toHaveBeenCalledWith(updated, existing, {}, actor)
-    expect(postSave).toHaveBeenCalledWith(created, undefined, {}, actor)
-    expect(postSave).toHaveBeenCalledTimes(2)
-  })
-
-  test('supports moduleChecked and atomic execution for writes', async () => {
-    const repository = createRepository<TestEntity>()
-    const checkModule = mock(async () => {})
-    const atomicExecute = mock(async (operation: () => Promise<unknown>) => operation()) as unknown as <T>(operation: () => Promise<T>) => Promise<T>
-    const service = createService(repository, {
-      write: {
-        checkModule,
-        authorizeSave: mock(async () => {}),
-        authorizeDelete: mock(async () => {}),
-      },
-      atomicExecution: {
-        execute: atomicExecute,
-      },
-    })
-
-    await service.save({ id: 'entity-1', schoolId: 'school' }, { moduleChecked: true })
-    await service.batchSave([{ schoolId: 'school' } as any], { moduleChecked: true })
-    await service.delete('entity-1', { moduleChecked: true })
-    await service.batchDelete(['missing'], { moduleChecked: true })
-
-    expect(checkModule).not.toHaveBeenCalled()
-    expect(atomicExecute).toHaveBeenCalledTimes(4)
-  })
-
-  test('rejects proposed entities outside the actor tenant', async () => {
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository: createRepository<TestEntity>(),
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.save({ id: 'entity-1', schoolId: 'other-school' })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('delete is idempotent when the entity does not exist', async () => {
-    const deleteEntity = mock(async () => {})
-    const repository = {
-      ...createRepository<TestEntity>(),
-      delete: deleteEntity,
-    }
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await service.delete('missing')
-
-    expect(deleteEntity).not.toHaveBeenCalled()
-  })
-
-  test('runs postDelete after repository delete', async () => {
-    const repository = createRepository<TestEntity>()
-    const entity = { id: 'entity-1', schoolId: 'school' }
-    await repository.save(entity)
-    const postDelete = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-        hooks: { postDelete },
-      },
-    })
-
-    await service.delete(entity.id)
-
-    expect(postDelete).toHaveBeenCalledWith(entity, {}, actor)
-    await expect(repository.findById(entity.id)).resolves.toBeUndefined()
-  })
-
-  test('batchDelete authorizes and gates existing entities only', async () => {
-    const repository = createRepository<TestEntity>()
-    const entity = { id: 'entity-1', schoolId: 'school' }
-    await repository.save(entity)
-    const authorizeDelete = mock(async () => {})
-    const preDelete = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete,
-        },
-        gates: { preDelete },
-      },
-    })
-
-    await service.batchDelete(['entity-1', 'missing'])
-
-    expect(authorizeDelete).toHaveBeenCalledWith(actor, entity, {})
-    expect(authorizeDelete).toHaveBeenCalledTimes(1)
-    expect(preDelete).toHaveBeenCalledWith(entity, {})
-    expect(preDelete).toHaveBeenCalledTimes(1)
-    await expect(repository.findById('entity-1')).resolves.toBeUndefined()
-  })
-
-  test('batchDelete runs postDelete for existing entities only', async () => {
-    const repository = createRepository<TestEntity>()
-    const entity = { id: 'entity-1', schoolId: 'school' }
-    await repository.save(entity)
-    const postDelete = mock(async () => {})
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-        hooks: { postDelete },
-      },
-    })
-
-    await service.batchDelete(['entity-1', 'missing'])
-
-    expect(postDelete).toHaveBeenCalledWith(entity, {}, actor)
-    expect(postDelete).toHaveBeenCalledTimes(1)
-  })
-
-  test('count uses repository.count for elevated staff only with an independent tenant predicate', async () => {
-    const repository = createRepository<TestEntity>()
-    const allowed = { id: 'entity-1', schoolId: 'school' }
-    const denied = { id: 'entity-2', schoolId: 'school' }
-    await repository.batchSave([allowed, denied])
-    const checkAccess = mock(async () => {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    })
-    const count = mock(async () => 2)
-    const list = mock(async () => {
-      throw new Error('list should not run for elevated count')
-    })
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository: {
-          ...repository,
-          count,
-          list,
-        },
-        tenant: { resolve: value => value.schoolId, scopeFilter: schoolId => ({ schoolId }) },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess,
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.count()).resolves.toBe(2)
-    expect(count).toHaveBeenCalledWith({ $and: [{ schoolId: actor.schoolId }, {}] })
-    expect(list).not.toHaveBeenCalled()
-    expect(checkAccess).not.toHaveBeenCalled()
-  })
-
-  test('count applies tenant and row access checks for non-elevated staff', async () => {
-    const repository = createRepository<TestEntity>()
-    const allowed = { id: 'entity-1', schoolId: 'school' }
-    const denied = { id: 'entity-2', schoolId: 'school' }
-    await repository.batchSave([allowed, denied])
-    const checkAccess = mock(async (_actor: ActorMetadata, entities: readonly TestEntity[]) => {
-      if (entities.some(entity => entity.id === denied.id))
-        throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    })
-    const limitedActor = createStaffActorMetadata({
-      subjectId: 'user-1',
-      schoolId: 'school',
-      requestId: 'req-1',
-      authenticatedAt: new Date('2026-01-01T00:00:00.000Z'),
-      staffMemberId: 'staff-1',
-      effectiveGrants: {
-        permissions: new Set(),
-        scopeGrants: [],
-        isElevated: false,
-      },
-    })
-    const service = new ManagedEntityService<TestEntity>({
-      actor: limitedActor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository,
-        tenant: { resolve: value => value.schoolId },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess,
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.count()).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(service.count({ id: allowed.id })).resolves.toBe(1)
-    expect(checkAccess).toHaveBeenCalled()
-  })
-
-  test('rejects entities whose tenant cannot be resolved', async () => {
-    const service = new ManagedEntityService<TestEntity>({
-      actor,
-      repositories: {} as SchoolRepositories,
-      config: {
-        repository: createRepository<TestEntity>(),
-        tenant: { resolve: () => undefined },
-        read: {
-          checkModule: mock(async () => {}),
-          checkAccess: mock(async () => {}),
-        },
-        write: {
-          checkModule: mock(async () => {}),
-          authorizeSave: mock(async () => {}),
-          authorizeDelete: mock(async () => {}),
-        },
-      },
-    })
-
-    await expect(service.save({ id: 'entity-1', schoolId: 'school' })).rejects.toBeInstanceOf(AuthorizationError)
+  test('duplicate batch IDs and tenant-conflicting identities cannot overwrite records', async () => {
+    const { service, schoolRepositories } = await context()
+    await expect(service.batchSave([student('a'), student('a')])).rejects.toThrow()
+    await schoolRepositories.students.save(new Student({ id: 'foreign', schoolId: 'other-school', firstName: 'Foreign', lastName: 'Student' }))
+    await expect(service.save(student('foreign'))).rejects.toThrow()
+    expect((await schoolRepositories.students.findById('foreign'))?.schoolId).toBe('other-school')
+    await expect(service.batchDelete(['foreign'])).rejects.toThrow()
   })
 })

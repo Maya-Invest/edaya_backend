@@ -1,9 +1,8 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '@edaya/service'
-import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy } from '@edaya/authorization'
-import { noOpFileStorage, noOpNotificationGateway, StaffMember } from '@edaya/core'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
-import { effectiveGrantsForRoles } from './effective-grants'
 
 export type FailableRepository
   = | 'classSubjectMatterRepository'
@@ -55,18 +54,14 @@ export function applyAllSaveFailureWraps(repos: any, getSaveFailure: () => any, 
 }
 
 export function createDefaultTestActor(actor?: ActorMetadata): ActorMetadata {
-  return actor ?? {
-    kind: 'staff',
-    accountKind: 'human',
-    actorId: 'admin',
+  return actor ?? createStaffActorMetadata({
     subjectId: 'admin-user',
     staffMemberId: 'admin',
     schoolId: 'school',
-    effectiveGrants: effectiveGrantsForRoles(['admin']),
     requestId: 'integration-test',
-    authenticatedAt: new Date('2026-09-01T00:00:00Z'),
+    authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Strong,
-  }
+  })
 }
 
 export function buildSchoolApplication(opts: {
@@ -79,24 +74,22 @@ export function buildSchoolApplication(opts: {
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: opts.repositories,
-      staffAssignmentRepository: opts.repositories.staffAssignments,
-      staffMemberRepository: opts.repositories.staffMembers,
-      guardianRepository: opts.repositories.guardians,
-      guardianStudentLinkRepository: opts.repositories.guardianLinks,
-      studentRepository: opts.repositories.students,
-    }),
+
   })
 }
 
-export async function seedDefaultStaffMember(repos: any, actor: ActorMetadata) {
+export async function seedDefaultStaffMember(repos: SchoolRepositories, actor: ActorMetadata, owner: boolean) {
   if (actor.kind === 'staff') {
+    if (owner) {
+      await repos.schools.save(new School({ id: actor.schoolId, name: 'Fixture school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+    }
     await repos.staffMembers.save(new StaffMember({
       id: actor.staffMemberId,
       schoolId: actor.schoolId,
       firstName: 'Fixture',
       lastName: 'Administrator',
+      accountKind: actor.accountKind,
+      ...(actor.accountKind === 'human' ? { subjectId: actor.subjectId } : { serviceId: 'fixture-service' }),
     }))
   }
 }

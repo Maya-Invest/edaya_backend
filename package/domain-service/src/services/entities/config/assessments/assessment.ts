@@ -1,21 +1,19 @@
-import { Permission } from '@edaya/core';
+import type { Assessment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AssessmentKind, BusinessRuleViolationError } from '@edaya/core'
+import { assertNoClassGroupScheduleConflict } from '../../../workflows/schedule-conflicts'
+import { config } from '../../entity-config'
 
-import type { Assessment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { AssessmentKind, BusinessRuleViolationError } from '@edaya/core';
-import { assertNoClassGroupScheduleConflict } from '../../../workflows/schedule-conflicts';
-import { config } from '../../entity-config';
-
-import { classGroupLinkedTenant } from '../../entity-config/tenant';
+import { classGroupLinkedTenant } from '../../entity-config/tenant'
 // Extracted from domain/assessments/assessment.ts (PR3)
 export const assessmentConfig: EntityConfigFactory<Assessment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.assessments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    authorization: { resource: 'assessments', read: [Permission.GRADE_READ, Permission.EXAM_CONFIG_CONFIGURE, Permission.QUERY_CURRICULUM_PROGRESS_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.GRADE_INPUT] },
-    
+    resource: 'assessments',
+
     gates: {
       preSave: validateAssessmentSave,
     },

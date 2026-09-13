@@ -29,6 +29,7 @@ export const messageDeliveries = pgTable('message_deliveries', {
   schoolId: text('school_id').notNull(),
   announcementId: text('announcement_id'),
   eventKey: text('event_key'),
+  sourceKey: text('source_key'),
   subjectId: text('subject_id').notNull(),
   title: text('title').notNull(),
   body: text('body').notNull(),

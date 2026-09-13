@@ -1,147 +1,36 @@
+import { Permission, StaffPermissionAssignment } from "@edaya/core";
 import { describe, expect, it } from "bun:test";
-import { parseEnv } from "@/runtime";
-import { Permission, RecordingNotificationGateway } from "@edaya/core";
-import { ActorAssuranceLevel } from "@edaya/authorization";
-import type { AppBindings } from "@/http/types";
-import indexRouter from "@/app-router";
-import { Hono } from "hono";
-
-const baseEnv = parseEnv({
-  RUNTIME: "in-memory",
-  NODE_ENV: "test",
-  PORT: 9999,
-  LOG_LEVEL: "silent",
-  DATABASE_URL: "postgres://admin:admin@localhost:5432/test_db",
-});
+import { createNativePolicyApp } from "../support/native-policy-app";
 
 describe("authorization routes", () => {
-  const mockActor = {
-    kind: "staff" as const,
-    accountKind: "human" as const,
-    actorId: "staff-1",
-    subjectId: "admin-user",
-    schoolId: "school-1",
-    staffMemberId: "staff-1",
-    effectiveGrants: {
-      permissions: new Set<Permission>([Permission.STUDENT_READ]),
-      scopeGrants: [{
-        permission: Permission.STUDENT_READ,
-        scopeType: "school" as const,
-        scopeEntityIds: ["school-1"],
-      }],
-      isElevated: false,
-    },
-    requestId: "request-id",
-    authenticatedAt: new Date("2026-01-01T00:00:00Z"),
-    assuranceLevel: ActorAssuranceLevel.Standard,
-  };
-
-  it("returns serialized effective grants for the current actor", async () => {
-    const gateway = new RecordingNotificationGateway();
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = baseEnv;
-      c.set("actor", mockActor);
-      c.set("schoolApp", {
-        forActor: () => ({
-          baseService: {
-            repositories: {},
-            notificationGateway: gateway,
-          },
-        }),
-      } as any);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/authorization/effective-grants");
-    const body = await res.json() as {
-      kind: string;
-      actorId: string;
-      schoolId: string;
-      effectiveGrants: {
-        permissions: string[];
-        scopeGrants: unknown[];
-        scopeIdsByPermission: Record<string, string>;
-        isElevated: boolean;
-      };
-    };
-
-    expect(res.status).toBe(200);
-    expect(body.kind).toBe("staff");
-    expect(body.actorId).toBe("staff-1");
-    expect(body.effectiveGrants.permissions).toContain("STUDENT_READ");
-    expect(body.effectiveGrants.scopeGrants).toHaveLength(1);
-    expect(body.effectiveGrants.scopeIdsByPermission).toEqual({});
-
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(gateway.upserted).toHaveLength(0);
+  it("projects current persisted grants and reflects immediate revocation", async () => {
+    const { app, repositories } = await createNativePolicyApp();
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "read", staffId: "staff-a", schoolId: "school-a", academicYearId: "year-a", permission: Permission.STUDENT_READ, scopes: [{ kind: "school" }] }));
+    const response = await app.request("/core/authorization/effective-grants");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ kind: "staff", actorId: "staff-a", grants: [{ permission: Permission.STUDENT_READ, scopes: [{ kind: "school" }], source: "manual" }] });
+    await repositories.staffPermissionAssignments.delete("read");
+    expect(await (await app.request("/core/authorization/effective-grants")).json()).toMatchObject({ grants: [] });
   });
 
   it("returns 401 when no actor is present", async () => {
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = baseEnv;
-      c.set("actor", null);
-      c.set("schoolApp", { forActor: () => ({}) } as any);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/authorization/effective-grants");
-    expect(res.status).toBe(401);
+    const { app } = await createNativePolicyApp(null);
+    expect((await app.request("/core/authorization/effective-grants")).status).toBe(401);
   });
 
-  it("returns the permission catalog for interactive staff actors", async () => {
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = baseEnv;
-      c.set("actor", mockActor);
-      c.set("schoolApp", { forActor: () => ({}) } as never);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/authorization/permission-catalog");
-    const body = await res.json() as { items: Array<{ permission: string; scope?: string }> };
-
-    expect(res.status).toBe(200);
-    expect(body.items.length).toBeGreaterThan(0);
-    expect(body.items.some(item => item.permission === "STUDENT_READ")).toBe(true);
+  it("returns the canonical permission catalog for interactive staff", async () => {
+    const { app } = await createNativePolicyApp();
+    const response = await app.request("/core/authorization/permission-catalog");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ items: expect.arrayContaining([expect.objectContaining({ permission: Permission.STUDENT_READ })]) });
   });
 
-  it("renders scope labels for admin UI batch requests", async () => {
-    const app = new Hono<AppBindings>();
-    app.use(async (c, next) => {
-      c.env = baseEnv;
-      c.set("actor", mockActor);
-      c.set("schoolApp", {
-        forActor: () => ({
-          baseService: {
-            repositories: {
-              classGroups: {
-                findById: async (id: string) => (id === "cg-1" ? { id, name: "6ème A" } : undefined),
-              },
-            },
-          },
-        }),
-      } as never);
-      await next();
-    });
-    app.route("/", indexRouter);
-
-    const res = await app.request("/core/authorization/scope/render", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: [{ scopeIds: "class_group:cg-1" }],
-      }),
-    });
-    const body = await res.json() as {
-      items: Array<{ scopeIds: string; clauses: Array<{ label: string }> }>;
-    };
-
-    expect(res.status).toBe(200);
-    expect(body.items[0]?.clauses[0]?.label).toContain("6ème A");
+  it("labels typed scope selections without disclosing foreign resources", async () => {
+    const { app, repositories } = await createNativePolicyApp();
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "admin", staffId: "staff-a", schoolId: "school-a", academicYearId: "year-a", permission: Permission.ACCESS_CONTROL_READ, scopes: [{ kind: "school" }] }));
+    const response = await app.request("/core/authorization/scope/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ academicYearId: "year-a", items: [{ permission: Permission.ATTENDANCE_RECORD, scopes: [{ kind: "class_group", classGroupId: "class-a" }, { kind: "class_group", classGroupId: "class-b" }] }] }) });
+    expect(response.status).toBe(200);
+    const body = await response.json() as { items: { scopes: { scope: unknown; label: string; missing: boolean }[] }[] };
+    expect(body.items[0]?.scopes).toEqual([{ label: "A", scope: { kind: "class_group", classGroupId: "class-a" }, missing: false }, { label: "Unavailable resource", scope: { kind: "class_group", classGroupId: "class-b" }, missing: true }]);
   });
 });

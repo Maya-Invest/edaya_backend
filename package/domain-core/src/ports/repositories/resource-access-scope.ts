@@ -1,16 +1,20 @@
-import type { GrantScope } from '../../domain/permissions/grant-scope'
+import type { AuthorityScope } from '../../domain/permissions/authority-scope'
+import type { AttachmentOwnerKind } from '../../domain/school/attachment'
 import type { CoreEntityKey } from '../../registry/core-entity-map'
 
 /** A policy-produced constraint. Clients cannot supply repository access scopes. */
-export type AccessTarget = GrantScope
+export type AccessTarget = AuthorityScope
   | { readonly kind: 'records', readonly ids: readonly string[] }
-  | { readonly kind: 'recipient', readonly actorKind: 'staff' | 'teacher' | 'guardian' | 'student', readonly actorId: string }
-  | { readonly kind: 'audience', readonly actorKind: 'teacher' | 'guardian' | 'student', readonly actorId: string, readonly studentIds: readonly string[], readonly classGroupIds: readonly string[] }
+  | { readonly kind: 'recipient', readonly actorKind: 'staff' | 'teacher' | 'guardian' | 'student', readonly actorId: string, readonly subjectId: string }
+  | { readonly kind: 'audience', readonly actorKind: 'staff' | 'teacher' | 'guardian' | 'student', readonly actorId: string, readonly classGroupIds: readonly string[] }
 
 export interface ResourceAccessClause {
   readonly target: AccessTarget
   readonly academicYearId?: string
+  /** Read-only calendar context includes school and grade events affecting a visible class. */
+  readonly calendarAncestors?: boolean
   readonly publishedOnly?: boolean
+  readonly attachmentOwners?: readonly AttachmentOwnerKind[]
   readonly noteVisibility?: 'staff' | 'guardian'
   readonly authorStaffId?: string
   readonly attendanceMode?: 'session' | 'daily'

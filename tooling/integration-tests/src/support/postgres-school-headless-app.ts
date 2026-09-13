@@ -22,7 +22,7 @@ export function createPostgresAppBuilder(db: any, repos: any, AtomicExecutionCto
       actor: defaultActor,
     })
 
-    await seedDefaultStaffMember(repos, defaultActor)
+    await seedDefaultStaffMember(repos, defaultActor, actor === undefined)
 
     return {
       app: application.forActor(defaultActor),

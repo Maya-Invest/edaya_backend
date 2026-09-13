@@ -1,13 +1,12 @@
-import { Permission } from '@edaya/core';
-import type { ActionSelection } from '@edaya/authorization';
-import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '@edaya/core';
-import type { BaseSchoolService } from '../base-school-service';
-import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
-import { BusinessRuleViolationError, Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '@edaya/core';
+import type { Fee, FeeInput, PaymentMethod, StudentFeeInstallment } from '@edaya/core'
+import type { BaseSchoolService } from '../base-school-service'
+import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
+import { BusinessRuleViolationError, Fee as FeeEntity, FeeStatus, Payment, PaymentStatus, StudentFee } from '@edaya/core'
 
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { BaseServiceWorkflow } from './base-service-workflow';
+import { validateStudentFeeSave } from '../entities/config/finances/student-fee'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AssignFeeToStudentInput {
   id: string
@@ -62,9 +61,11 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createFee(input: CreateFeeInput): Promise<Fee> {
-    const fee = new FeeEntity(input)
-    await this.baseService.entities.fees.save(fee)
-    return fee
+    return this.baseService.atomicExecution.execute(async () => {
+      const fee = new FeeEntity(input)
+      await this.baseService.entities.fees.save(fee)
+      return fee
+    })
   }
 
   async assignFeeToStudent({
@@ -76,47 +77,48 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     createdAt,
     referenceDate,
   }: AssignFeeToStudentInput): Promise<StudentFee> {
-    return this.executeFinance(async () => {
-      const student = await this.requireStudent(studentId)
-      this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(Permission.PAYMENT_RECORD)
-      await this.baseService.access.assertResources(Permission.FINANCIAL_CONFIG_CONFIGURE, 'students', [student.id], 'write')
-      const fee = await this.requireFee(feeId)
-      if (fee.schoolId !== student.schoolId) {
-        denyResourceAccess()
-      }
-      const amount = expectedAmount ?? fee.defaultAmount.amount
-      const installments = this.materializeInstallments(id, amount, fee)
-      const effectiveDueDate = dueDate ?? installments.at(-1)?.dueDate ?? undefined
-      const studentFee = new StudentFee({
-        id,
-        studentId,
-        feeId,
-        academicYearId: fee.academicYearId,
-        expectedAmount: amount,
-        currency: fee.defaultAmount.currency,
-        dueDate: effectiveDueDate,
-        installments,
-        status: this.deriveFeeStatus({
-          expectedAmount: amount,
-          paidAmount: 0,
-          dueDate: effectiveDueDate,
-          referenceDate: referenceDate ?? new Date(),
-        }),
-        createdAt,
-      })
-      const existing = await this.repositories.studentFees.findById(id)
-      if (existing) {
-        if (existing.studentId !== studentId || existing.feeId !== feeId
-          || existing.expectedAmount.amount !== studentFee.expectedAmount.amount
-          || existing.dueDate?.getTime() !== studentFee.dueDate?.getTime()) {
-          throw new BusinessRuleViolationError('FEE_ASSIGNMENT_REPLAY_CONFLICT', 'Fee assignment ID was already used with a different payload')
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.executeFinance(async () => {
+        const student = await this.requireStudent(studentId)
+        this.checkActorSchool(student.schoolId)
+        await this.baseService.access.finance.assertAssignFee(student.id)
+        const fee = await this.requireFee(feeId)
+        if (fee.schoolId !== student.schoolId) {
+          denyResourceAccess()
         }
-        return existing
-      }
-      await this.baseService.entities.studentFees.save(studentFee)
-      return studentFee
-    }, `student-fee:${id}`)
+        const amount = expectedAmount ?? fee.defaultAmount.amount
+        const installments = this.materializeInstallments(id, amount, fee)
+        const effectiveDueDate = dueDate ?? installments.at(-1)?.dueDate ?? undefined
+        const studentFee = new StudentFee({
+          id,
+          studentId,
+          feeId,
+          academicYearId: fee.academicYearId,
+          expectedAmount: amount,
+          currency: fee.defaultAmount.currency,
+          dueDate: effectiveDueDate,
+          installments,
+          status: this.deriveFeeStatus({
+            expectedAmount: amount,
+            paidAmount: 0,
+            dueDate: effectiveDueDate,
+            referenceDate: referenceDate ?? new Date(),
+          }),
+          createdAt,
+        })
+        const existing = await this.repositories.studentFees.findById(id)
+        if (existing) {
+          if (existing.studentId !== studentId || existing.feeId !== feeId
+            || existing.expectedAmount.amount !== studentFee.expectedAmount.amount
+            || existing.dueDate?.getTime() !== studentFee.dueDate?.getTime()) {
+            throw new BusinessRuleViolationError('FEE_ASSIGNMENT_REPLAY_CONFLICT', 'Fee assignment ID was already used with a different payload')
+          }
+          return existing
+        }
+        await this.baseService.entities.studentFees.save(studentFee)
+        return studentFee
+      }, `student-fee:${id}`)
+    })
   }
 
   async recordPayment({
@@ -131,47 +133,48 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: RecordPaymentInput): Promise<Payment> {
-    return this.executeFinance(async () => {
-      const studentFee = await this.requireStudentFee(studentFeeId)
-      const student = await this.requireStudent(studentFee.studentId)
-      this.checkActorSchool(student.schoolId)
-      await this.authorizeFinance(Permission.PAYMENT_RECORD)
-      await this.baseService.access.assertResources(Permission.PAYMENT_RECORD, 'students', [student.id], 'write')
-      await this.baseService.access.assertResources(Permission.PAYMENT_RECORD, 'studentFees', [studentFeeId], 'write')
-      const payment = new Payment({
-        id,
-        studentFeeId,
-        amount,
-        currency: studentFee.expectedAmount.currency,
-        paymentDate,
-        method,
-        reference,
-        notes,
-        recordedById: resolveAuditActorId(this.baseService.actor),
-        createdAt,
-      })
-      const existing = await this.repositories.payments.findById(id)
-      if (existing) {
-        if (existing.studentFeeId !== payment.studentFeeId
-          || existing.amount.amount !== payment.amount.amount
-          || existing.amount.currency !== payment.amount.currency
-          || existing.paymentDate.getTime() !== payment.paymentDate.getTime()
-          || existing.method !== payment.method
-          || existing.reference !== payment.reference
-          || existing.notes !== payment.notes) {
-          throw new BusinessRuleViolationError('PAYMENT_REPLAY_CONFLICT', 'Payment ID was already used with a different payload')
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.executeFinance(async () => {
+        const studentFee = await this.requireStudentFee(studentFeeId)
+        const student = await this.requireStudent(studentFee.studentId)
+        this.checkActorSchool(student.schoolId)
+        await this.baseService.access.finance.assertRecordPayment(studentFeeId)
+        const payment = new Payment({
+          id,
+          studentFeeId,
+          amount,
+          currency: studentFee.expectedAmount.currency,
+          paymentDate,
+          method,
+          reference,
+          notes,
+          recordedById: resolveAuditActorId(this.baseService.actor),
+          createdAt,
+        })
+        const existing = await this.repositories.payments.findById(id)
+        if (existing) {
+          if (existing.studentFeeId !== payment.studentFeeId
+            || existing.amount.amount !== payment.amount.amount
+            || existing.amount.currency !== payment.amount.currency
+            || existing.paymentDate.getTime() !== payment.paymentDate.getTime()
+            || existing.method !== payment.method
+            || existing.reference !== payment.reference
+            || existing.notes !== payment.notes) {
+            throw new BusinessRuleViolationError('PAYMENT_REPLAY_CONFLICT', 'Payment ID was already used with a different payload')
+          }
+          return existing
         }
-        return existing
-      }
-      await this.baseService.entities.payments.save(payment)
-      await this.savePaidAmount(
-        studentFee,
-        studentFee.paidAmount.amount + payment.amount.amount,
-        updatedAt,
-        referenceDate,
-      )
-      return payment
-    }, `payment:${id}`)
+        await this.baseService.entities.payments.save(payment)
+        await this.savePaidAmount(
+          payment,
+          studentFee,
+          studentFee.paidAmount.amount + payment.amount.amount,
+          updatedAt,
+          referenceDate,
+        )
+        return payment
+      }, `payment:${id}`)
+    })
   }
 
   async reversePayment({
@@ -180,12 +183,14 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: UpdatePaymentStatusInput): Promise<Payment> {
-    return this.updatePaymentStatus({
-      paymentId,
-      status: PaymentStatus.Reversed,
-      changedAt: reversedAt,
-      updatedAt,
-      referenceDate,
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.updatePaymentStatus({
+        paymentId,
+        status: PaymentStatus.Reversed,
+        changedAt: reversedAt,
+        updatedAt,
+        referenceDate,
+      })
     })
   }
 
@@ -195,12 +200,14 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt,
     referenceDate,
   }: UpdatePaymentStatusInput): Promise<Payment> {
-    return this.updatePaymentStatus({
-      paymentId,
-      status: PaymentStatus.Cancelled,
-      changedAt: cancelledAt,
-      updatedAt,
-      referenceDate,
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.updatePaymentStatus({
+        paymentId,
+        status: PaymentStatus.Cancelled,
+        changedAt: cancelledAt,
+        updatedAt,
+        referenceDate,
+      })
     })
   }
 
@@ -217,47 +224,47 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     updatedAt?: Date
     referenceDate?: Date
   }): Promise<Payment> {
-    return this.executeFinance(async () => {
-      const payment = await this.requirePayment(paymentId)
-      const studentFee = await this.requireStudentFee(payment.studentFeeId)
-      const student = await this.requireStudent(studentFee.studentId)
-      this.checkActorSchool(student.schoolId)
-      const action = status === PaymentStatus.Cancelled ? Permission.PAYMENT_CANCEL : Permission.PAYMENT_REVERSE
-      await this.authorizeFinance(action)
-      await this.baseService.access.assertResources(action, 'students', [student.id], 'write')
-      await this.baseService.access.assertResources(action, 'studentFees', [studentFee.id], 'write')
-      if (payment.status === status)
-        return payment
-      if (payment.status !== PaymentStatus.Recorded)
-        throw new BusinessRuleViolationError('PAYMENT_TERMINAL_STATUS', 'A terminal payment cannot change status')
-      if (studentFee.paidAmount.amount < payment.amount.amount)
-        throw new BusinessRuleViolationError('PAYMENT_BALANCE_INCONSISTENT', 'Reconcile the fee balance before reversing this payment')
-      const changedPayment = new Payment({
-        id: payment.id,
-        studentFeeId: payment.studentFeeId,
-        amount: payment.amount.amount,
-        currency: payment.amount.currency,
-        paymentDate: payment.paymentDate,
-        method: payment.method,
-        status,
-        reference: payment.reference,
-        notes: payment.notes,
-        recordedById: payment.recordedById,
-        reversedAt: status === PaymentStatus.Reversed ? changedAt ?? new Date() : undefined,
-        reversedById: status === PaymentStatus.Reversed ? resolveAuditActorId(this.baseService.actor) : undefined,
-        cancelledAt: status === PaymentStatus.Cancelled ? changedAt ?? new Date() : undefined,
-        cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.baseService.actor) : undefined,
-        createdAt: payment.createdAt,
-      })
-      await this.baseService.entities.payments.save(changedPayment)
-      await this.savePaidAmount(
-        studentFee,
-        studentFee.paidAmount.amount - payment.amount.amount,
-        updatedAt,
-        referenceDate,
-      )
-      return changedPayment
-    }, `payment:${paymentId}`)
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.executeFinance(async () => {
+        const payment = await this.requirePayment(paymentId)
+        const studentFee = await this.requireStudentFee(payment.studentFeeId)
+        const student = await this.requireStudent(studentFee.studentId)
+        this.checkActorSchool(student.schoolId)
+        await this.baseService.access.finance.assertChangePaymentStatus({ paymentId: payment.id, status })
+        if (payment.status === status)
+          return payment
+        if (payment.status !== PaymentStatus.Recorded)
+          throw new BusinessRuleViolationError('PAYMENT_TERMINAL_STATUS', 'A terminal payment cannot change status')
+        if (studentFee.paidAmount.amount < payment.amount.amount)
+          throw new BusinessRuleViolationError('PAYMENT_BALANCE_INCONSISTENT', 'Reconcile the fee balance before reversing this payment')
+        const changedPayment = new Payment({
+          id: payment.id,
+          studentFeeId: payment.studentFeeId,
+          amount: payment.amount.amount,
+          currency: payment.amount.currency,
+          paymentDate: payment.paymentDate,
+          method: payment.method,
+          status,
+          reference: payment.reference,
+          notes: payment.notes,
+          recordedById: payment.recordedById,
+          reversedAt: status === PaymentStatus.Reversed ? changedAt ?? new Date() : undefined,
+          reversedById: status === PaymentStatus.Reversed ? resolveAuditActorId(this.baseService.actor) : undefined,
+          cancelledAt: status === PaymentStatus.Cancelled ? changedAt ?? new Date() : undefined,
+          cancelledById: status === PaymentStatus.Cancelled ? resolveAuditActorId(this.baseService.actor) : undefined,
+          createdAt: payment.createdAt,
+        })
+        await this.baseService.entities.payments.save(changedPayment)
+        await this.savePaidAmount(
+          changedPayment,
+          studentFee,
+          studentFee.paidAmount.amount - payment.amount.amount,
+          updatedAt,
+          referenceDate,
+        )
+        return changedPayment
+      }, `payment:${paymentId}`)
+    })
   }
 
   async adjustStudentFee({
@@ -265,32 +272,36 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     adjustmentAmount,
     reason,
   }: AdjustStudentFeeInput): Promise<StudentFee> {
-    return this.executeFinance(async () => {
-      const existing = await this.requireStudentFee(studentFeeId)
-      const adjusted = existing.copyWith({
-        adjustmentAmount,
-        adjustmentReason: reason,
-        adjustedById: resolveAuditActorId(this.baseService.actor),
-        adjustedAt: new Date(),
-        updatedAt: new Date(),
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.executeFinance(async () => {
+        const existing = await this.requireStudentFee(studentFeeId)
+        const adjusted = existing.copyWith({
+          adjustmentAmount,
+          adjustmentReason: reason,
+          adjustedById: resolveAuditActorId(this.baseService.actor),
+          adjustedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        await this.baseService.entities.studentFees.save(adjusted)
+        return adjusted
       })
-      await this.baseService.entities.studentFees.save(adjusted)
-      return adjusted
     })
   }
 
   async cancelStudentFee({ studentFeeId, reason }: CancelStudentFeeInput): Promise<StudentFee> {
-    return this.executeFinance(async () => {
-      const existing = await this.requireStudentFee(studentFeeId)
-      const cancelled = existing.copyWith({
-        status: FeeStatus.Cancelled,
-        cancellationReason: reason,
-        cancelledById: resolveAuditActorId(this.baseService.actor),
-        cancelledAt: new Date(),
-        updatedAt: new Date(),
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.executeFinance(async () => {
+        const existing = await this.requireStudentFee(studentFeeId)
+        const cancelled = existing.copyWith({
+          status: FeeStatus.Cancelled,
+          cancellationReason: reason,
+          cancelledById: resolveAuditActorId(this.baseService.actor),
+          cancelledAt: new Date(),
+          updatedAt: new Date(),
+        })
+        await this.baseService.entities.studentFees.save(cancelled)
+        return cancelled
       })
-      await this.baseService.entities.studentFees.save(cancelled)
-      return cancelled
     })
   }
 
@@ -317,17 +328,14 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async authorizeFinance(operation: ActionSelection): Promise<void> {
-    await this.baseService.access.assertSchool(operation)
-  }
-
   private async savePaidAmount(
+    payment: Payment,
     studentFee: StudentFee,
     paidAmount: number,
     updatedAt?: Date,
     referenceDate?: Date,
   ): Promise<void> {
-    await this.baseService.entities.studentFees.save(studentFee.copyWith({
+    const updated = studentFee.copyWith({
       paidAmount,
       status: this.deriveFeeStatus({
         expectedAmount: studentFee.expectedAmount.amount - studentFee.adjustmentAmount.amount,
@@ -336,7 +344,10 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         referenceDate: referenceDate ?? new Date(),
       }),
       updatedAt: updatedAt ?? new Date(),
-    }))
+    })
+    const scope = await this.baseService.access.finance.assertBalanceChange(payment, studentFee, updated)
+    await validateStudentFeeSave(updated, studentFee)
+    await this.repositories.studentFees.forAccess(scope).save(updated)
   }
 
   private deriveFeeStatus({

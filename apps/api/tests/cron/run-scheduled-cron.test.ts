@@ -1,4 +1,5 @@
-import { describe, expect, mock, test } from "bun:test";
+import { createNativePolicyApp } from "../support/native-policy-app";
+import { describe, expect, mock, spyOn, test } from "bun:test";
 import type { LoggerPort } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ApiRuntime } from "@/runtime/types";
@@ -93,19 +94,8 @@ describe("runCronHeartbeatWithRuntime", () => {
 
 describe("runScheduledCronWithRuntime", () => {
   test("runs selected cron jobs directly for each school", async () => {
-    const application = {
-      repositories: {
-        schools: { list: async () => [{ id: "school-1" }] },
-      },
-      forActor: () => ({
-        baseService: {
-          repositories: {
-            accountInvitations: { list: async () => [] },
-          },
-          invitationDelivery: { revoke: async () => undefined },
-        },
-      }),
-    } as unknown as ApiSchoolApplication;
+    const { school: application } = await createNativePolicyApp();
+    const actors = spyOn(application, "forActor");
     const runtime = {
       getSchoolApplication: mock(async () => application),
     } as unknown as ApiRuntime;
@@ -116,9 +106,13 @@ describe("runScheduledCronWithRuntime", () => {
       requestIdPrefix: "local-cron",
     });
 
-    expect(summary.results).toHaveLength(1);
+    expect(summary.results).toHaveLength(2);
+    expect(actors.mock.calls.map(([actor]) => actor)).toEqual([
+      expect.objectContaining({ kind: "system", schoolId: "school-a", systemId: "expireAccountInvitations" }),
+      expect.objectContaining({ kind: "system", schoolId: "school-b", systemId: "expireAccountInvitations" }),
+    ]);
     expect(summary.results[0]).toMatchObject({
-      schoolId: "school-1",
+      schoolId: "school-a",
       jobKey: "expireAccountInvitations",
       result: { processed: 0, skipped: 0 },
     });

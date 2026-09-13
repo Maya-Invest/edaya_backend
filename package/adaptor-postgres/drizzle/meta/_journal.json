@@ -71,6 +71,27 @@
       "when": 1789240219787,
       "tag": "0009_typed_staff_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789240219788,
+      "tag": "0010_guardian_relationship_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789240219789,
+      "tag": "0011_notification_delivery_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789240219790,
+      "tag": "0012_notification_contact_authority",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,1 @@
-export type {
-  AuthorizationScopeType,
-  LegacyScopeType,
-  PlatformScopeType,
-  PortalScopeType,
-  ScopeType,
-  StaffGrantScopeType,
-} from '@edaya/core'
+export type { ScopeType } from '@edaya/core'

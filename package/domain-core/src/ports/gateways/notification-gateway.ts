@@ -1,6 +1,5 @@
 import type {
   AnnouncementPriority,
-  MessageDeliveryChannel,
   MessageDeliveryRecipientKind,
 } from '../../domain'
 
@@ -17,9 +16,9 @@ export interface NotificationRecipientProfile {
   schoolId: string
   recipient: NotificationRecipient
   displayName?: string
-  /** Resolved delivery email — populated when upserting to the provider */
+  /** Resolved delivery email from current profile and identity contacts */
   email?: string
-  /** Resolved delivery phone — populated when upserting to the provider */
+  /** Resolved delivery phone from current profile and identity contacts */
   phone?: string
   /** Explicit notification override; defaults to auth email when unset */
   notificationEmail?: string
@@ -59,6 +58,19 @@ export interface NotificationEnqueueInput {
   metadata?: Record<string, string>
 }
 
+/** A durable school send must resolve its exact recipient from current business facts. */
+export interface NotificationDispatchRequest {
+  deliveryId: string
+  schoolId: string
+  subjectId: string
+  eventKey: string
+  metadata: Readonly<Record<string, string>>
+}
+
+export type ResolveNotificationDispatchRecipient = (
+  request: NotificationDispatchRequest,
+) => Promise<NotificationRecipientProfile | undefined>
+
 export interface NotificationDeliveryStatusLookup {
   status: 'sent' | 'failed' | 'read' | 'cancelled'
   providerMessageId?: string
@@ -92,17 +104,12 @@ export interface UnregisterPushDeviceInput {
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
   cancel: (idempotencyKey: string) => Promise<void>
-  upsertRecipient: (profile: NotificationRecipientProfile) => Promise<void>
-  removeRecipient: (schoolId: string, recipient: NotificationRecipient) => Promise<void>
   /** Poll provider message status — used by reconcilePendingDeliveries cron when webhooks are unavailable */
   lookupDeliveryStatuses?: (
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,
   ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>
-  /** Attach a mobile push token to the provider subscriber (Novu credentials API). */
+  /** Attach a mobile push token to the authenticated login. */
   registerPushDevice?: (input: RegisterPushDeviceInput) => Promise<void>
-  /** Remove push credentials for the provider subscriber. */
+  /** Remove push credentials for the authenticated login. */
   unregisterPushDevice?: (input: UnregisterPushDeviceInput) => Promise<void>
 }
-
-/** Channel preference mapping for subscriber sync — not used for routing in domain */
-export type NotificationChannelPreference = MessageDeliveryChannel

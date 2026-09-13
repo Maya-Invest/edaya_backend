@@ -1,7 +1,7 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
 import { AuthorizationError } from '@edaya/authorization'
 import { DomainValidationError, LessonSession, OccurrenceStatus } from '@edaya/core'
-import { isLessonSessionLogbookOnlyUpdate, validateLessonSessionSave } from '@edaya/service'
+import { validateLessonSessionSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 
 const startsAt = new Date('2026-06-01T09:00:00.000Z')
@@ -57,19 +57,6 @@ describe('LessonSession domain invariants', () => {
     expect(updated.id).toBe('session-1')
     expect(updated.sessionNote).toBe('Exam prep')
     expect(updated.displayLabel).toBe('Math review')
-  })
-
-  test('detects logbook-only updates when structural fields are unchanged', () => {
-    const existing = lessonSession({ sessionNote: 'Day 1' })
-    const updated = existing.copyWith({
-      sessionNote: 'Day 2',
-      displayLabel: 'Math recap',
-    })
-
-    expect(isLessonSessionLogbookOnlyUpdate(updated, existing)).toBe(true)
-    expect(isLessonSessionLogbookOnlyUpdate(updated.copyWith({
-      status: OccurrenceStatus.Completed,
-    }), existing)).toBe(false)
   })
 })
 

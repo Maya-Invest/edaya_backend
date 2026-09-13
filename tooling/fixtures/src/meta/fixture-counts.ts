@@ -1,6 +1,10 @@
 import type { StudentClassEnrollmentInput } from '@edaya/core'
 import type { FixtureDataset } from '../datasets/types'
+import { AnnouncementTargetKind, MessageDeliveryRecipientKind } from '@edaya/core'
 import { demoDataset } from '../datasets/demo'
+import { DEMO_CI_SCHOOL_ID } from '../shared/ids'
+import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from './dev-auth-fixtures'
+import { DEV_CI_AUTH_GUARDIAN_ACCOUNTS, DEV_CI_AUTH_STAFF_ACCOUNTS } from './dev-auth-fixtures-ci'
 
 export type ExpectedFixtureCounts = ReturnType<typeof resolveExpectedCounts>
 
@@ -186,21 +190,28 @@ function countAttachments(dataset: FixtureDataset): number {
 }
 
 export function countMessageDeliveriesMinimum(dataset: FixtureDataset): number {
-  const guardians = dataset.entities.guardians ?? []
-  const students = dataset.entities.students ?? []
-  const staff = dataset.entities.staffMembers ?? []
-  const explicit = countArray(dataset.entities.messageDeliveries)
+  const ci = dataset.schoolId === DEMO_CI_SCHOOL_ID
+  const guardianAccounts = ci ? DEV_CI_AUTH_GUARDIAN_ACCOUNTS : DEV_AUTH_GUARDIAN_ACCOUNTS
+  const staffAccounts = ci ? DEV_CI_AUTH_STAFF_ACCOUNTS : DEV_AUTH_STAFF_ACCOUNTS
+  const guardians = new Set((dataset.entities.guardians ?? [])
+    .filter(guardian => guardian.hasAccess !== false && guardianAccounts.some(account => account.guardianId === guardian.id))
+    .map(guardian => guardian.id))
+  const staff = new Set((dataset.entities.staffMembers ?? [])
+    .filter(member => member.isActive !== false && staffAccounts.some(account => account.staffId === member.id))
+    .map(member => member.id))
+  // Seed students have no provisioned login. Placeholder fixture subject IDs are not recipients.
+  const explicit = (dataset.entities.messageDeliveries ?? []).filter(delivery =>
+    delivery.recipientKind === MessageDeliveryRecipientKind.Guardian
+      ? guardians.has(delivery.recipientId ?? '')
+      : delivery.recipientKind === MessageDeliveryRecipientKind.Staff && staff.has(delivery.recipientId ?? ''),
+  ).length
   let materialized = 0
   for (const plan of dataset.extensions?.announcementMaterializePlans ?? []) {
-    if (plan.announcementId === 'ann-rentree') {
-      materialized += guardians.length
-    }
-    else if (plan.announcementId === 'ann-sports-day') {
-      materialized += students.length
-    }
-    else if (plan.announcementId === 'ann-staff-training') {
-      materialized += staff.length
-    }
+    const targets = (dataset.entities.announcementTargets ?? []).filter(target => target.announcementId === plan.announcementId)
+    if (targets.some(target => target.targetKind === AnnouncementTargetKind.AllGuardians))
+      materialized += guardians.size
+    if (targets.some(target => target.targetKind === AnnouncementTargetKind.AllStaff))
+      materialized += staff.size
   }
   return explicit + materialized
 }

@@ -14,7 +14,7 @@ import { isInJobNotificationWindow } from '../due-window'
 export async function scanCalendarEventReminders(
   context: SchoolCronJobContext,
 ): Promise<CronJobResult> {
-  const events = await context.service.baseService.repositories.calendarEvents.list({})
+  const events = await context.service.baseService.entities.calendarEvents.list({})
   let processed = 0
   let skipped = 0
 

@@ -1,21 +1,19 @@
-import { Permission } from '@edaya/core';
+import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 
-import type { AttendanceAnchor, AttendanceRecord } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-
-import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core';
-import { config } from '../../entity-config';
-import { dateTime } from '../../entity-config/helper-utils';
-import { indirectTenant } from '../../entity-config/tenant';
+import { AttendanceJustificationStatus, AttendanceStatus, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/attendance-record.ts (PR3)
 export const attendanceRecordConfig: EntityConfigFactory<AttendanceRecord> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.attendance,
     tenant: attendanceRecordTenant(),
-    authorization: { resource: 'attendance', read: [Permission.ATTENDANCE_READ, Permission.ATTENDANCE_RECORD, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_JUSTIFY], write: [Permission.ATTENDANCE_RECORD] },
-    
+    resource: 'attendance',
+
     gates: {
       preSave: validateAttendanceSave,
     },

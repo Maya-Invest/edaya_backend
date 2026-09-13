@@ -1,13 +1,15 @@
 import type { NotifyTransportEnv } from "../env";
+import type { EmailTransportPort } from "./port";
 import { DEFAULT_EMAIL_FROM, parseNotifyFromAddress } from "../env";
 import { createCloudflareEmailTransport } from "./cloudflare";
 import { createLogEmailTransport } from "./log";
-import type { EmailTransportPort } from "./port";
 
 export function resolveEmailTransport(
   env: NotifyTransportEnv,
   log: (message: string, extra?: Record<string, unknown>) => void,
 ): EmailTransportPort {
+  if (env.EMAIL_TRANSPORT === "novu")
+    throw new Error("EMAIL_TRANSPORT=novu requires an explicitly configured Novu email transport");
   if (env.EMAIL_TRANSPORT === "cloudflare") {
     if (!env.EMAIL) {
       throw new Error("EMAIL_TRANSPORT=cloudflare requires the EMAIL send_email binding");

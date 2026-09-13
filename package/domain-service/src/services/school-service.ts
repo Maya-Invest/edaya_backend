@@ -1,28 +1,29 @@
-import { Permission } from '@edaya/core';
-import type { SchoolCommandHandlerMap } from './commands/school-command-handlers';
-import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts';
-import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview';
-import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable';
-import type { ServiceArgs } from './service-args';
-import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation';
-import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization';
-import { BaseSchoolService } from './base-school-service';
-import { createSchoolCommandHandlers } from './commands/school-command-handlers';
+import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
+import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
+import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
+import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
+import type { ServiceArgs } from './service-args'
+import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
+import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
+import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
+import { BaseSchoolService } from './base-school-service'
+import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 
-import { buildAppShellCounts } from './queries/app-shell-counts';
-import { buildClassGroupTimetable } from './queries/timetable';
-import { AcademicsServiceWorkflow } from './workflows/academics';
-import { AccessControlServiceWorkflow } from './workflows/access-control';
-import { AccountInvitationServiceWorkflow } from './workflows/account-invitation';
-import { AssessmentsServiceWorkflow } from './workflows/assessments';
-import { BehaviorServiceWorkflow } from './workflows/behavior';
-import { CommunicationsServiceWorkflow } from './workflows/communications';
-import { FinanceServiceWorkflow } from './workflows/finance';
-import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates';
-import { SchedulingServiceWorkflow } from './workflows/scheduling';
-import { SetupServiceWorkflow } from './workflows/setup';
-import { StudentServiceWorkflow } from './workflows/student';
-import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation';
+import { buildAppShellCounts } from './queries/app-shell-counts'
+import { buildSchoolOverview } from './queries/school-overview'
+import { buildClassGroupTimetable } from './queries/timetable'
+import { AcademicsServiceWorkflow } from './workflows/academics'
+import { AccessControlServiceWorkflow } from './workflows/access-control'
+import { AccountInvitationServiceWorkflow } from './workflows/account-invitation'
+import { AssessmentsServiceWorkflow } from './workflows/assessments'
+import { BehaviorServiceWorkflow } from './workflows/behavior'
+import { CommunicationsServiceWorkflow } from './workflows/communications'
+import { FinanceServiceWorkflow } from './workflows/finance'
+import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates'
+import { SchedulingServiceWorkflow } from './workflows/scheduling'
+import { SetupServiceWorkflow } from './workflows/setup'
+import { StudentServiceWorkflow } from './workflows/student'
+import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation'
 
 export class SchoolService {
   readonly baseService: BaseSchoolService
@@ -72,47 +73,36 @@ export class SchoolService {
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.baseService.access.assertSchool(Permission.QUERY_OVERDUE_FEES_READ)
-    return this.baseService.repositories.schools.getOverdueFeeCount(schoolId)
+    const scope = await this.baseService.access.finance.overdueFeesScope()
+    return this.baseService.repositories.studentFees.forAccess(scope).count({ status: FeeStatus.Overdue })
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    await this.baseService.access.assertSchool([Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE])
-    return this.baseService.repositories.schools.getPublishedReportCardCount(schoolId)
+    const scope = await this.baseService.access.reportCards.readScope()
+    return this.baseService.repositories.results.forAccess(scope).count({ status: ReportCardResultStatus.Published })
   }
 
   async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
     this.checkActorSchool(input.schoolId)
-    await this.baseService.access.assertSchool(Permission.QUERY_OVERVIEW_READ)
-    return this.baseService.repositories.schools.getSchoolOverview(input)
+    await this.baseService.access.overview.assertContext(input)
+    return buildSchoolOverview(await this.baseService.access.overview.repositories(), input)
   }
 
   async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {
     this.checkActorSchool(input.schoolId)
-    await this.baseService.access.assertSchool(Permission.QUERY_OVERVIEW_READ)
-    return buildAppShellCounts(this.baseService.repositories, input)
+    await this.baseService.access.overview.assertContext(input)
+    return buildAppShellCounts(await this.baseService.access.overview.repositories(), input)
   }
 
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {
-    const classGroup = await this.baseService.repositories.classGroups.findById(input.classGroupId)
-    if (!classGroup) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    this.checkActorSchool(classGroup.schoolId)
-    
-    await this.baseService.access.assertResources(Permission.QUERY_TIMETABLE_READ, 'classGroups', [input.classGroupId], 'read')
-    return buildClassGroupTimetable(this.baseService.repositories, input)
+    const repositories = await this.baseService.access.timetable.eventRepositories(input.classGroupId)
+    return buildClassGroupTimetable(repositories, input)
   }
 
   async resolveTimetableSpace(input: ResolveTimetableSpaceInput): Promise<ResolvedTimetableCell[]> {
-    const classGroup = await this.baseService.repositories.classGroups.findById(input.classGroupId)
-    if (!classGroup || classGroup.schoolId !== requireActorSchoolId(this.baseService.actor)) {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    }
-    
-    await this.baseService.access.assertResources(Permission.QUERY_TIMETABLE_READ, 'classGroups', [input.classGroupId], 'read')
-    return resolveTimetableSpace(this.baseService.repositories, input)
+    const repositories = await this.baseService.access.timetable.spaceRepositories(input)
+    return resolveTimetableSpace(repositories, input)
   }
 
   private checkActorSchool(schoolId: string): void {

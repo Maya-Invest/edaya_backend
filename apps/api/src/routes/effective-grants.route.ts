@@ -1,5 +1,4 @@
-import { grantScopesSchema, Permission } from "@edaya/core";
-import { scheduleNotificationRecipientBackfillForActor } from "@edaya/service";
+import { authorityScopeSchema, Permission } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -19,7 +18,7 @@ const effectiveGrantsResponseSchema = z.object({
   assuranceLevel: z.enum(["standard", "verified", "strong", "service"]),
   grants: z.array(z.object({
     permission: z.nativeEnum(Permission),
-    scopes: grantScopesSchema,
+    scopes: z.array(authorityScopeSchema).min(1),
     academicYearId: z.string().optional(),
     startsAt: z.string().datetime().optional(),
     endsAt: z.string().datetime().optional(),
@@ -58,9 +57,6 @@ export const getEffectiveGrantsHandler: AppRouteHandler<typeof getEffectiveGrant
   }
 
   try {
-    const service = c.get("schoolApp").forActor(interactiveActor);
-    scheduleNotificationRecipientBackfillForActor(service.baseService, interactiveActor);
-
     return c.json(await serializeActorAuthorization(interactiveActor, c.get("schoolApp").repositories), HttpStatusCodes.OK);
   }
   catch (err) {

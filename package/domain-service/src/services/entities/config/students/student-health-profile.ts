@@ -1,22 +1,19 @@
-import { Permission } from '@edaya/core';
-import type { StudentHealthProfile } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { StudentHealthProfile } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-health-profile.ts (PR3)
 export const studentHealthProfileConfig: EntityConfigFactory<StudentHealthProfile> = ({ repositories, atomicExecution }) => {
-  
-
   return {
     ...config({
       repository: repositories.studentHealthProfiles,
       tenant: directSchoolTenant(),
-      authorization: { resource: 'studentHealthProfiles', read: [Permission.STUDENT_HEALTH_READ], write: [Permission.STUDENT_HEALTH_UPDATE] },
-      
+      resource: 'studentHealthProfiles',
+
       atomicExecution,
     }),
     gates: {

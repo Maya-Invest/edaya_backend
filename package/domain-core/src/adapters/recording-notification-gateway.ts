@@ -3,15 +3,11 @@ import type {
   NotificationDeliveryStatusQuery,
   NotificationEnqueueInput,
   NotificationGatewayPort,
-  NotificationRecipient,
-  NotificationRecipientProfile,
 } from '../ports/gateways/notification-gateway'
 
 export class RecordingNotificationGateway implements NotificationGatewayPort {
   readonly enqueued: NotificationEnqueueInput[] = []
   readonly cancelled: string[] = []
-  readonly upserted: NotificationRecipientProfile[] = []
-  readonly removed: Array<{ schoolId: string, recipient: NotificationRecipient }> = []
   readonly registeredPushDevices: Array<{ subjectId: string, schoolId: string, token: string, provider: 'fcm' | 'apns' }> = []
   readonly unregisteredPushDevices: Array<{ subjectId: string, provider: 'fcm' | 'apns' }> = []
   readonly statusLookups: NotificationDeliveryStatusQuery[][] = []
@@ -33,14 +29,6 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
   async cancel(idempotencyKey: string): Promise<void> {
     this.cancelled.push(idempotencyKey)
     this.enqueuedKeys.delete(idempotencyKey)
-  }
-
-  async upsertRecipient(profile: NotificationRecipientProfile): Promise<void> {
-    this.upserted.push(profile)
-  }
-
-  async removeRecipient(schoolId: string, recipient: NotificationRecipient): Promise<void> {
-    this.removed.push({ schoolId, recipient })
   }
 
   async registerPushDevice(input: {
@@ -76,8 +64,6 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
   clear(): void {
     this.enqueued.length = 0
     this.cancelled.length = 0
-    this.upserted.length = 0
-    this.removed.length = 0
     this.registeredPushDevices.length = 0
     this.unregisteredPushDevices.length = 0
     this.statusLookups.length = 0

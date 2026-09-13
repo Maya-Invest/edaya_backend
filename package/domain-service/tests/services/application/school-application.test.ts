@@ -1,4 +1,3 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
 import type { AtomicExecutionPort } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { createSystemActorMetadata } from '@edaya/authorization'
@@ -15,7 +14,6 @@ describe('SchoolApplication', () => {
     reason: 'school application facade test',
   })
 
-  const authorizationPolicy = {} as AuthorizationPolicy
   const repositories = {} as SchoolRepositories
   const atomicExecution: AtomicExecutionPort = {
     execute: async operation => operation(),
@@ -23,7 +21,6 @@ describe('SchoolApplication', () => {
 
   test('creates actor-scoped SchoolService instances', () => {
     const application = new SchoolApplication({
-      authorizationPolicy,
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
@@ -35,7 +32,8 @@ describe('SchoolApplication', () => {
     expect(application.repositories).toBe(repositories)
     expect(service).toBeInstanceOf(SchoolService)
     expect(service.baseService.actor).toBe(actor)
-    expect(service.baseService.authorizationPolicy).toBe(authorizationPolicy)
+    expect(service.baseService.access.actor).toBe(actor)
+    expect(service.baseService.access.repositories).toBe(repositories)
     expect(service.baseService.repositories).toBe(repositories)
     expect(service.baseService.atomicExecution).toBe(atomicExecution)
     expect(service.baseService.notificationGateway).toBe(noOpNotificationGateway)
@@ -43,7 +41,6 @@ describe('SchoolApplication', () => {
 
   test('does not expose legacy grouped services', () => {
     const application = new SchoolApplication({
-      authorizationPolicy,
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
@@ -67,7 +64,6 @@ describe('SchoolApplication', () => {
 
   test('delegates auth account lookup to the configured resolver', async () => {
     const application = new SchoolApplication({
-      authorizationPolicy,
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
@@ -84,7 +80,6 @@ describe('SchoolApplication', () => {
 
   test('returns false when no auth contact resolver is configured', async () => {
     const application = new SchoolApplication({
-      authorizationPolicy,
       repositories,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,

@@ -1,4 +1,4 @@
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { createSchoolBootstrapActor } from '@edaya/authorization'
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
@@ -20,10 +20,9 @@ describeWithLightSchool('link-actor-subject command route', (getContext) => {
     const { app, runtime, application, authHeaders } = getContext()
     await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
 
-    const bootstrapActor = createBootstrapStaffActorMetadata({
+    const bootstrapActor = createSchoolBootstrapActor({
       schoolId: SEED_SCHOOL_ID,
       requestId: 'link-actor-subject-test',
-      staffMemberId: 'link-actor-subject-test',
     })
     const service = application.forActor(bootstrapActor)
 

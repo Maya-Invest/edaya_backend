@@ -30,7 +30,7 @@ const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
 function teacherClassSubjectAssignments() {
   return STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map(permission => ({
     permission,
-    scopeIds: "6a",
+    scopes: [{ kind: "class_group" as const, classGroupId: "6a" }],
     academicYearId: TEST_ACADEMIC_YEAR_ID,
   }));
 }
@@ -89,8 +89,8 @@ describe("service account routes", () => {
       serviceId: "narrow-teacher",
       displayName: "Teacher Integration",
       permissionAssignments: [
-        { permission: Permission.QUERY_WORKSPACE_READ, scopeIds: "", academicYearId: TEST_ACADEMIC_YEAR_ID },
-        { permission: Permission.GRADE_READ, scopeIds: "6a", academicYearId: TEST_ACADEMIC_YEAR_ID },
+        { permission: Permission.QUERY_WORKSPACE_READ, scopes: [{ kind: "school" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
+        { permission: Permission.GRADE_READ, scopes: [{ kind: "class_group" as const, classGroupId: "6a" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
       ],
     });
 
@@ -232,7 +232,7 @@ describe("service account routes", () => {
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
       ...STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
-    ], "6a");
+    ], [{ kind: "class_group", classGroupId: "6a" }]);
 
     const accessToken = await signInWithBearerThroughApp(app, {
       email: staffAccount.email,
@@ -285,7 +285,7 @@ describe("service account routes", () => {
     expect(response.status).toBe(403);
   }, 30_000);
 
-  it("returns 403 when a human calls a service-only command", async () => {
+  it("returns 403 when a human requests direct delivery materialization", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),

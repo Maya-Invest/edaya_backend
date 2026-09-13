@@ -1,13 +1,11 @@
 import { Permission } from '@edaya/authorization'
 import { describe, expect, test } from 'bun:test'
 import {
+  getPermissionCatalogEntry,
+  listPermissionCatalog,
   listPermissionsWithCatalogScope,
   listTenantWidePermissions,
 } from '../../src/permissions/catalog-queries'
-import {
-  getPermissionCatalogEntry,
-  listPermissionCatalog,
-} from '../../src/scope/permission-catalog'
 
 describe('permission catalog queries', () => {
   test('lists permissions for a catalog scope', () => {

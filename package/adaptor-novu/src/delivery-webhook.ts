@@ -1,6 +1,6 @@
 import type { NormalizedDeliveryEvent, NotificationDeliveryWebhookAdapter } from "@edaya/core";
-import { Webhook } from "svix";
 import crypto from "node:crypto";
+import { Webhook } from "svix";
 
 export type { NormalizedDeliveryEvent, NotificationDeliveryWebhookAdapter } from "@edaya/core";
 
@@ -64,13 +64,6 @@ function extractMessageObject(data: unknown): Record<string, unknown> | undefine
   return readRecord(readRecordField(record, "object")) ?? record;
 }
 
-function extractSubscriberId(message: Record<string, unknown>): string | undefined {
-  const subscriber = readRecordField(message, "subscriber");
-  return readStringField(message, "subscriberId")
-    ?? readStringField(subscriber ?? {}, "subscriberId")
-    ?? readStringField(subscriber ?? {}, "id");
-}
-
 function extractFailureReason(message: Record<string, unknown>): string | undefined {
   const error = readRecordField(message, "error");
   return readStringField(message, "failureReason")
@@ -108,11 +101,12 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
     return [];
   }
 
-  const deliveryId = readStringField(message, "transactionId")
-    ?? readStringField(message, "transaction_id");
-  if (!deliveryId) {
+  const payload = readRecordField(message, "payload") ?? {};
+  const deliveryId = readStringField(payload, "deliveryId");
+  const subjectId = readStringField(payload, "subjectId");
+  const transactionId = readStringField(message, "transactionId");
+  if (!deliveryId || !subjectId || transactionId !== `${deliveryId}:${subjectId}:email` || readStringField(message, "channel") !== "email")
     return [];
-  }
 
   return [{
     deliveryId,
@@ -123,7 +117,7 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
     channel: readStringField(message, "channel"),
     failureReason: status === "failed" ? extractFailureReason(message) : undefined,
     occurredAt: extractOccurredAt(envelope, message),
-    subjectId: extractSubscriberId(message),
+    subjectId,
   }];
 }
 

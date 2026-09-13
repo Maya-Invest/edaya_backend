@@ -5,27 +5,25 @@ import type {
   NotificationDeliveryStatusLookup,
   NotificationDeliveryStatusQuery,
   NotificationEnqueueInput,
-  NotificationRecipient,
-  NotificationRecipientProfile,
   RegisterPushDeviceInput,
   UnregisterPushDeviceInput,
 } from "@edaya/core";
+import type { SendJobDependencies } from "./jobs/send-job";
+import type { NotifyRuntime } from "./runtime";
 import { formatOtpEmail, formatVerificationLinkEmail } from "./email/auth-copy";
 import { NotifySendError } from "./errors";
 import { buildAuthRecipientId, buildInvitationRecipientId, normalizeEmail, NOTIFY_PLATFORM_TENANT } from "./ids";
 import { sendJob } from "./jobs/send-job";
-import type { SendJobDependencies } from "./jobs/send-job";
-import type { NotifyRuntime } from "./runtime";
 import {
   cancelJob,
+  deleteCommandRecipient,
   deleteDevice,
-  deleteRecipient,
   getJob,
   insertJobIfAbsent,
   lookupJobRecipients,
+  upsertCommandRecipient,
   upsertDevice,
   upsertJobRecipient,
-  upsertRecipient,
 } from "./store/queries";
 
 function sendDeps(runtime: NotifyRuntime): SendJobDependencies {
@@ -36,19 +34,16 @@ function sendDeps(runtime: NotifyRuntime): SendJobDependencies {
     from: runtime.from,
     log: runtime.log,
     onDeliveryEvent: runtime.onDeliveryEvent,
+    resolveSchoolRecipient: runtime.resolveSchoolRecipient,
   };
 }
 
 async function sendAwaitedJob(runtime: NotifyRuntime, idempotencyKey: string, failureMessage: string): Promise<void> {
   await sendJob(idempotencyKey, sendDeps(runtime));
   const job = await getJob(runtime.sql, idempotencyKey);
-  if (job?.status === "failed") {
-    throw new NotifySendError(job.failure_reason ?? failureMessage);
+  if (job?.status !== "sent") {
+    throw new NotifySendError(job?.failure_reason ?? failureMessage);
   }
-}
-
-function resolvedEmail(profile: NotificationRecipientProfile): string | null {
-  return profile.notificationEmail ?? profile.email ?? profile.fallbackEmail ?? null;
 }
 
 export async function enqueueSchoolNotification(
@@ -97,39 +92,6 @@ export async function cancelSchoolNotification(
   schoolId?: string,
 ): Promise<void> {
   await cancelJob(runtime.sql, idempotencyKey, schoolId);
-}
-
-export async function upsertSchoolRecipient(
-  runtime: NotifyRuntime,
-  profile: NotificationRecipientProfile,
-): Promise<void> {
-  if (!profile.recipient.subjectId) {
-    return;
-  }
-  const allows = profile.preferences.allowsNotifications !== false;
-  await upsertRecipient(runtime.sql, {
-    subject_id: profile.recipient.subjectId,
-    tenant: profile.schoolId,
-    email: resolvedEmail(profile),
-    display_name: profile.displayName ?? null,
-    locale: profile.locale ?? null,
-    allows_notifications: allows,
-    channel_email: allows && (profile.preferences.channels?.email ?? true),
-    channel_push: allows && (profile.preferences.channels?.push ?? false),
-    recipient_kind: profile.recipient.kind,
-    recipient_id: profile.recipient.id,
-  });
-}
-
-export async function removeSchoolRecipient(
-  runtime: NotifyRuntime,
-  schoolId: string,
-  recipient: NotificationRecipient,
-): Promise<void> {
-  if (!recipient.subjectId) {
-    return;
-  }
-  await deleteRecipient(runtime.sql, recipient.subjectId, schoolId);
 }
 
 export async function registerSchoolPushDevice(
@@ -185,7 +147,7 @@ export async function deliverInvitation(
 ): Promise<void> {
   const subjectId = buildInvitationRecipientId(input.invitationId);
   const email = input.contactChannel === "email" ? input.contactValue : undefined;
-  await upsertRecipient(runtime.sql, {
+  await upsertCommandRecipient(runtime.sql, {
     subject_id: subjectId,
     tenant: input.schoolId,
     email: email ?? null,
@@ -221,14 +183,14 @@ export async function deliverInvitation(
 
 export async function revokeInvitation(runtime: NotifyRuntime, invitationId: string): Promise<void> {
   await cancelJob(runtime.sql, invitationId);
-  await deleteRecipient(runtime.sql, buildInvitationRecipientId(invitationId));
+  await deleteCommandRecipient(runtime.sql, buildInvitationRecipientId(invitationId));
 }
 
 export async function sendAuthOtp(runtime: NotifyRuntime, input: AuthOtpEmailInput): Promise<void> {
   const email = normalizeEmail(input.email);
   const subjectId = buildAuthRecipientId(email);
   const copy = formatOtpEmail(input);
-  await upsertRecipient(runtime.sql, {
+  await upsertCommandRecipient(runtime.sql, {
     subject_id: subjectId,
     tenant: NOTIFY_PLATFORM_TENANT,
     email,
@@ -270,7 +232,7 @@ export async function sendAuthVerification(
   const email = normalizeEmail(input.email);
   const subjectId = buildAuthRecipientId(email);
   const copy = formatVerificationLinkEmail(input);
-  await upsertRecipient(runtime.sql, {
+  await upsertCommandRecipient(runtime.sql, {
     subject_id: subjectId,
     tenant: NOTIFY_PLATFORM_TENANT,
     email,

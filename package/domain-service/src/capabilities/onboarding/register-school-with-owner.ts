@@ -1,9 +1,9 @@
-import type { School, SchoolType } from '@edaya/core';
-import type { SchoolRepositories } from '../../ports/school-repositories';
-import type { OnboardingSchoolApplication } from './onboarding-application';
-import { randomUUID } from 'node:crypto';
-import { createSchoolBootstrapActor } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
+import type { School, SchoolType } from '@edaya/core'
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { OnboardingSchoolApplication } from './onboarding-application'
+import { randomUUID } from 'node:crypto'
+import { createSchoolBootstrapActor } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
 
 export interface RegisterSchoolOwnerSession {
   user: {
@@ -36,13 +36,14 @@ export async function assertSubjectUnlinked(
   repositories: SchoolRepositories,
   subjectId: string,
 ): Promise<void> {
-  const [staff, guardian, student] = await Promise.all([
+  const [staff, guardian, student, teacher] = await Promise.all([
     repositories.staffMembers.findOne({ subjectId }),
     repositories.guardians.findOne({ subjectId }),
     repositories.students.findOne({ subjectId }),
+    repositories.teachers.findOne({ subjectId }),
   ])
 
-  if (staff || guardian || student) {
+  if (staff || guardian || student || teacher) {
     throw new BusinessRuleViolationError(
       'SUBJECT_ALREADY_LINKED',
       'This account is already linked to a school actor',
@@ -73,7 +74,6 @@ export async function registerSchoolWithOwner(
   input: RegisterSchoolWithOwnerInput,
 ): Promise<RegisterSchoolWithOwnerResult> {
   const subjectId = session.user.id
-  await assertSubjectUnlinked(application.repositories, subjectId)
 
   const schoolId = input.id ?? randomUUID()
   const owner = input.ownerFirstName && input.ownerLastName
@@ -91,34 +91,39 @@ export async function registerSchoolWithOwner(
   })
   const service = application.forActor(actor)
 
-  const school = await service.setupWorkflow.registerSchool({
-    id: schoolId,
-    name: input.name,
-    timeZone: input.timeZone,
-    ownerSubjectId: subjectId,
-    ...(input.type ? { type: input.type } : {}),
-    ...(input.country ? { country: input.country } : {}),
-    ...(input.city ? { city: input.city } : {}),
-  })
+  return service.baseService.atomicExecution.execute(async () => {
+    await assertSubjectUnlinked(application.repositories, subjectId)
+    const school = await service.setupWorkflow.registerSchool({
+      id: schoolId,
+      name: input.name,
+      timeZone: input.timeZone,
+      ownerSubjectId: subjectId,
+      ...(input.type ? { type: input.type } : {}),
+      ...(input.country ? { country: input.country } : {}),
+      ...(input.city ? { city: input.city } : {}),
+    })
 
-  await service.setupWorkflow.registerStaffMember({
-    id: callerStaffId,
-    schoolId,
-    firstName: owner.firstName,
-    lastName: owner.lastName,
-    subjectId,
-    ...(owner.email ? { email: owner.email } : {}),
-  })
+    await service.setupWorkflow.registerStaffMember({
+      id: callerStaffId,
+      schoolId,
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      sendAccountInvitation: false,
+      ...(owner.email ? { email: owner.email } : {}),
+    })
 
-  const persistedSchool = await application.repositories.schools.findById(schoolId)
-  if (!persistedSchool?.ownerSubjectId) {
-    throw new BusinessRuleViolationError(
-      'ONBOARDING_OWNER_ASSIGNMENT_FAILED',
-      'Failed to assign the caller as school owner',
-    )
-  }
+    await service.accessControlWorkflow.linkActorSubject({ staffMemberId: callerStaffId, subjectId })
 
-  return { school: persistedSchool ?? school }
+    const persistedSchool = await application.repositories.schools.findById(schoolId)
+    if (!persistedSchool?.ownerSubjectId) {
+      throw new BusinessRuleViolationError(
+        'ONBOARDING_OWNER_ASSIGNMENT_FAILED',
+        'Failed to assign the caller as school owner',
+      )
+    }
+
+    return { school: persistedSchool ?? school }
+  }, { lockKeys: [`school-owner:${subjectId}`] })
 }
 
 function parseDisplayName(name: string | undefined): { firstName?: string, lastName?: string } {

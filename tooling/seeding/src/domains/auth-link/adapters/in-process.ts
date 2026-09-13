@@ -1,15 +1,16 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AuthLinkSeedPort } from '../port'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
-import { Guardian, School, StaffMember } from '@edaya/core'
+import { createSystemActorMetadata } from '@edaya/authorization'
+import { School } from '@edaya/core'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { SeedPortError, withSeedPortError } from '../../../support/seed-port-error'
 
 export function createInProcessAuthLinkSeedPort(application: SeedApplication): AuthLinkSeedPort {
-  const actor = createBootstrapStaffActorMetadata({
+  const actor = createSystemActorMetadata({
     schoolId: SEED_SCHOOL_ID,
     requestId: 'dev-staff-auth-seed',
-    staffMemberId: 'dev-staff-auth-seed',
+    systemId: 'fixture-seed',
+    reason: 'Install the selected local development dataset',
   })
   const service = application.forActor(actor)
 
@@ -42,25 +43,7 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
       await service.setupWorkflow.registerStaffMember(input)
     }),
     replaceStaffSubjectId: (staffId, subjectId) => withSeedPortError('replaceStaffSubjectId', async () => {
-      const staff = await application.repositories.staffMembers.findById(staffId)
-      if (!staff) {
-        throw new SeedPortError('replaceStaffSubjectId', { detail: `Staff member not found: ${staffId}` })
-      }
-      await application.repositories.staffMembers.save(new StaffMember({
-        id: staff.id,
-        schoolId: staff.schoolId,
-        firstName: staff.firstName,
-        lastName: staff.lastName,
-        email: staff.email,
-        subjectId,
-        accountKind: staff.accountKind,
-        serviceId: staff.serviceId,
-        createdBySubjectId: staff.createdBySubjectId,
-        serviceElevated: staff.serviceElevated,
-        isActive: staff.isActive,
-        profileRole: staff.profileRole,
-        createdAt: staff.createdAt,
-      }))
+      await service.accessControlWorkflow.relinkActorSubject({ staffMemberId: staffId, subjectId })
     }),
     findGuardianById: id => withSeedPortError('findGuardianById', async () => {
       const guardian = await application.repositories.guardians.findById(id)
@@ -71,22 +54,7 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
       return teacher ? { id: teacher.id, subjectId: teacher.subjectId } : undefined
     }),
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {
-      const guardian = await application.repositories.guardians.findById(guardianId)
-      if (!guardian) {
-        throw new SeedPortError('replaceGuardianSubjectId', { detail: `Guardian not found: ${guardianId}` })
-      }
-      await application.repositories.guardians.save(new Guardian({
-        id: guardian.id,
-        schoolId: guardian.schoolId,
-        firstName: guardian.firstName,
-        lastName: guardian.lastName,
-        email: guardian.email,
-        phone: guardian.phone,
-        subjectId,
-        contactMethods: [...guardian.contactMethods],
-        hasAccess: guardian.hasAccess,
-        createdAt: guardian.createdAt,
-      }))
+      await service.accessControlWorkflow.relinkActorSubject({ guardianId, subjectId })
     }),
     linkActorSubject: input => withSeedPortError('linkActorSubject', async () => {
       await service.accessControlWorkflow.linkActorSubject(input)

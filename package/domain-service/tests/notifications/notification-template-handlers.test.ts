@@ -1,292 +1,73 @@
-import { Announcement, AnnouncementPriority, Assessment, AssessmentKind, AssessmentResult, IncidentInvolvementRole, IncidentKind, IncidentStatus, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway, ReportCardResult, ReportCardResultStatus, SchoolNotificationTemplates, Student } from '@edaya/core'
+import { AcademicPeriod, Announcement, AnnouncementPriority, AnnouncementTarget, AnnouncementTargetKind, ClassGroup, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, SchoolNotificationTemplates, Student, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import {
-  ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-  ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-  handleAnnouncementPublished,
-  handleAssessmentResultRecorded,
-  handleIncidentRecorded,
-  handleReportCardPublished,
-  INCIDENT_RECORDED_EVENT_KEY,
-  REPORT_CARD_PUBLISHED_EVENT_KEY,
-} from '../../src/capabilities/notifications'
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, INCIDENT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../src/capabilities/notifications'
 import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
-import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+import { createReportCardContext } from '../services/workflows/report-card-workflow-context'
 
-async function createHandlerTemplateService(): Promise<NotificationTemplateService> {
-  const templates = await buildDefaultNotificationTemplateDocument()
-  return new NotificationTemplateService({
-    schoolNotificationTemplates: {
-      findById: async () => new SchoolNotificationTemplates({
-        schoolId: 'sch1',
-        templates,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    },
-  } as never)
+async function createContext() {
+  const gateway = new RecordingNotificationGateway()
+  const fixture = await createReportCardContext({ notificationGateway: gateway })
+  const r = fixture.repositories
+  const student = (await r.students.findById('stu1'))!
+  await r.students.save(new Student({ ...student.data, firstName: 'Noah', lastName: 'Martin' }))
+  const group = (await r.classGroups.findById('cg1'))!
+  await r.classGroups.save(new ClassGroup({ ...group.data, name: '6ème A' }))
+  const period = (await r.academicPeriods.findById('per1'))!
+  await r.academicPeriods.save(new AcademicPeriod({ ...period.data, name: 'Term 2' }))
+  const subject = (await r.subjects.findById('subject-math'))!
+  await r.subjects.save(new Subject({ ...subject.data, name: 'Mathematics' }))
+  await r.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', templates: await buildDefaultNotificationTemplateDocument() }))
+  return { ...fixture, gateway }
 }
 
-function createHandlerRepositories() {
-  return {
-    schools: {
-      findById: async () => ({ id: 'sch1', name: 'Edaya School', timeZone: 'UTC' }),
-    },
-    students: {
-      findById: async (id: string) => ({
-        id,
-        schoolId: 'sch1',
-        subjectId: 'subject-stu1',
-        firstName: 'Noah',
-        lastName: 'Martin',
-      }),
-    },
-    guardianLinks: {
-      list: async () => [{ guardianId: 'gua1', studentId: 'stu1', receivesAcademicReports: true }],
-    },
-    guardians: {
-      findById: async () => ({
-        id: 'gua1',
-        schoolId: 'sch1',
-        subjectId: 'subject-gua1',
-        contactMethods: [],
-      }),
-    },
-    classGroups: {
-      findById: async () => ({ id: 'cg1', name: '6ème A' }),
-    },
-    academicPeriods: {
-      findById: async () => ({ id: 'per1', name: 'Term 2' }),
-    },
-    classSubjects: {
-      findById: async () => ({ id: 'cs1', subjectId: 'sub1' }),
-    },
-    subjects: {
-      findById: async () => ({ id: 'sub1', name: 'Mathematics' }),
-    },
-    messageDeliveries: {
-      findById: async () => undefined,
-      save: async () => {},
-    },
-  }
-}
-
-describe('templated notification handlers', () => {
-  test('handleIncidentRecorded uses a patched school template document', async () => {
-    const gateway = new RecordingNotificationGateway()
+describe('templated notifications through authorized workflows', () => {
+  test('incident notifications use a saved school template document', async () => {
+    const { service, repositories, gateway } = await createContext()
     const templates = await buildDefaultNotificationTemplateDocument()
-    templates['incident.recorded'] = {
-      email: {
-        subject: 'Email: {{incidentTitle}}',
-        body: '<p>Email body for {{incidentTitle}}</p>',
-      },
-      in_app: {
-        subject: 'In-app: {{incidentTitle}}',
-        body: 'In-app body for {{incidentTitle}}',
-      },
-    }
-
-    const templateService = new NotificationTemplateService({
-      schoolNotificationTemplates: {
-        findById: async () => new SchoolNotificationTemplates({
-          schoolId: 'sch1',
-          templates,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
-      },
-    } as never)
-
-    await handleIncidentRecorded({
-      notificationGateway: gateway,
-      templateService,
-      actor: { schoolId: 'sch1' } as never,
-      repositories: {
-        schools: {
-          findById: async () => ({ id: 'sch1', name: 'Edaya School', timeZone: 'UTC' }),
-        },
-        students: {
-          findById: async () => ({
-            id: 'stu1',
-            firstName: 'Noah',
-            lastName: 'Martin',
-          }),
-        },
-        guardianLinks: {
-          list: async () => [{ guardianId: 'gua1', studentId: 'stu1' }],
-        },
-        guardians: {
-          findById: async () => ({
-            id: 'gua1',
-            schoolId: 'sch1',
-            subjectId: 'subject-gua1',
-            contactMethods: [],
-          }),
-        },
-        messageDeliveries: {
-          findById: async () => undefined,
-          save: async () => {},
-        },
-      } as never,
-    }, {
-      incident: {
-        id: 'inc1',
-        schoolId: 'sch1',
-        title: 'Hall incident',
-        description: 'Incident description',
-        date: new Date('2026-05-01T10:00:00Z'),
-        kind: IncidentKind.MinorInfraction,
-        reporterId: 'user1',
-        classGroupId: 'cg1',
-        lessonSessionId: 'sess1',
-        status: IncidentStatus.Open,
-        createdAt: new Date('2026-05-01T10:00:00Z'),
-        updatedAt: new Date('2026-05-01T10:00:00Z'),
-      } as any,
-      involvement: {
-        id: 'inv1',
-        incidentId: 'inc1',
-        studentId: 'stu1',
-        role: IncidentInvolvementRole.Subject,
-        createdAt: new Date('2026-05-01T10:00:00Z'),
-      } as any,
-    })
-
+    templates['incident.recorded'] = { email: { subject: 'Email: {{incidentTitle}}', body: '<p>Email body for {{incidentTitle}}</p>' }, in_app: { subject: 'In-app: {{incidentTitle}}', body: 'In-app body for {{incidentTitle}}' } }
+    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', templates }))
+    await service.behaviorWorkflow.recordIncident({ id: 'inc1', schoolId: 'sch1', title: 'Hall incident', description: 'Incident description', date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, classGroupId: 'cg1' })
+    await service.behaviorWorkflow.addStudentInvolvement({ id: 'inv1', incidentId: 'inc1', studentId: 'stu1', role: IncidentInvolvementRole.Subject })
     expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]).toMatchObject({
-      eventKey: INCIDENT_RECORDED_EVENT_KEY,
-      title: 'In-app: Hall incident',
-      body: 'In-app body for Hall incident',
-      emailSubject: 'Email: Hall incident',
-      emailBody: '<p>Email body for Hall incident</p>',
-    })
+    expect(gateway.enqueued[0]).toMatchObject({ eventKey: INCIDENT_RECORDED_EVENT_KEY, title: 'In-app: Hall incident', body: 'In-app body for Hall incident', emailSubject: 'Email: Hall incident', emailBody: '<p>Email body for Hall incident</p>' })
   })
 
-  test('handleAnnouncementPublished enqueues one notification per materialized delivery', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const templateService = await createHandlerTemplateService()
-    const announcement = new Announcement({
-      id: 'ann1',
-      schoolId: 'sch1',
-      title: 'School closure',
-      content: 'School closed tomorrow due to weather.',
-      createdBy: 'staff1',
-      priority: AnnouncementPriority.Important,
-      publishedAt: new Date('2026-06-01T00:00:00Z'),
-    })
-
-    await handleAnnouncementPublished({
-      notificationGateway: gateway,
-      templateService,
-      actor: { schoolId: 'sch1' } as never,
-      repositories: createHandlerRepositories() as never,
-    }, {
-      announcement,
-      deliveries: [
-        new MessageDelivery({
-          id: 'delivery-ann1-gua1',
-          schoolId: 'sch1',
-          announcementId: 'ann1',
-          subjectId: 'subject-gua1',
-          recipientKind: MessageDeliveryRecipientKind.Guardian,
-          recipientId: 'gua1',
-          title: 'School closure',
-          body: 'School closed tomorrow due to weather.',
-        }),
-      ],
-    })
-
+  test('announcement publication enqueues one notification per materialized profile delivery', async () => {
+    const { service, repositories, gateway } = await createContext()
+    await repositories.announcements.save(new Announcement({ id: 'ann1', schoolId: 'sch1', title: 'School closure', content: 'School closed tomorrow due to weather.', priority: AnnouncementPriority.Important }))
+    await repositories.announcementTargets.save(new AnnouncementTarget({ id: 'target', announcementId: 'ann1', targetKind: AnnouncementTargetKind.Guardian, targetId: 'gua1' }))
+    await service.communicationsWorkflow.publishAnnouncement({ announcementId: 'ann1' })
     expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]).toMatchObject({
-      eventKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-      announcementId: 'ann1',
-      priority: AnnouncementPriority.Important,
-    })
+    expect(gateway.enqueued[0]).toMatchObject({ eventKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY, announcementId: 'ann1', priority: AnnouncementPriority.Important })
     expect(gateway.enqueued[0]?.body).toContain('School closed tomorrow')
   })
 
-  test('handleReportCardPublished notifies guardians who receive academic reports', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const templateService = await createHandlerTemplateService()
-    const student = new Student({
-      id: 'stu1',
-      schoolId: 'sch1',
-      firstName: 'Noah',
-      lastName: 'Martin',
-      subjectId: 'subject-stu1',
-    })
-
-    await handleReportCardPublished({
-      notificationGateway: gateway,
-      templateService,
-      actor: { schoolId: 'sch1' } as never,
-      repositories: createHandlerRepositories() as never,
-    }, {
-      student,
-      result: new ReportCardResult({
-        id: 'rc1',
-        reportCardDefinitionId: 'def1',
-        studentId: 'stu1',
-        classGroupId: 'cg1',
-        periodId: 'per1',
-        sectionResults: [],
-        attendanceSummary: { presentCount: 20, absenceCount: 0, lateCount: 0 },
-        assessmentResultCount: 4,
-        status: ReportCardResultStatus.Published,
-        publishedAt: new Date('2026-06-01T00:00:00Z'),
-      }),
-    })
-
-    expect(gateway.enqueued.length).toBeGreaterThan(0)
-    expect(gateway.enqueued[0]).toMatchObject({
-      eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
-    })
+  test('report-card notifications include period and class context', async () => {
+    const { service, gateway } = await createContext()
+    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' })
+    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued[0]).toMatchObject({ eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY })
     expect(gateway.enqueued[0]?.body).toContain('Term 2')
     expect(gateway.enqueued[0]?.body).toContain('6ème A')
   })
 
-  test('handleAssessmentResultRecorded renders score context for guardians', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const templateService = await createHandlerTemplateService()
-    const student = new Student({
-      id: 'stu1',
-      schoolId: 'sch1',
-      firstName: 'Noah',
-      lastName: 'Martin',
-      subjectId: 'subject-stu1',
-    })
-
-    await handleAssessmentResultRecorded({
-      notificationGateway: gateway,
-      templateService,
-      actor: { schoolId: 'sch1' } as never,
-      repositories: createHandlerRepositories() as never,
-    }, {
-      student,
-      assessment: new Assessment({
-        id: 'ass1',
-        classGroupId: 'cg1',
-        classSubjectId: 'cs1',
-        periodId: 'per1',
-        title: 'Math quiz',
-        kind: AssessmentKind.Quiz,
-        maxScore: 20,
-        startsAt: new Date('2026-06-16T09:00:00Z'),
-        endsAt: new Date('2026-06-16T10:00:00Z'),
-      }),
-      result: new AssessmentResult({
-        id: 'res1',
-        studentId: 'stu1',
-        assessmentId: 'ass1',
-        score: 18,
-      }),
-    })
-
-    expect(gateway.enqueued.length).toBeGreaterThan(0)
-    expect(gateway.enqueued[0]).toMatchObject({
-      eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-    })
+  test('assessment-result notifications render score context for guardians', async () => {
+    const { service, repositories, gateway } = await createContext()
+    await repositories.assessmentResults.delete('ar1')
+    await service.assessmentsWorkflow.recordAssessmentResult({ id: 'res1', studentId: 'stu1', assessmentId: 'ass1', score: 18 })
+    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued[0]).toMatchObject({ eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY })
     expect(gateway.enqueued[0]?.body).toContain('Mathematics')
     expect(gateway.enqueued[0]?.body).toContain('18')
+  })
+
+  test('persisted academic-report opt-out suppresses guardian notifications', async () => {
+    const { service, repositories, gateway } = await createContext()
+    const link = (await repositories.guardianLinks.findById('link'))!
+    await repositories.guardianLinks.save(new GuardianStudentLink({ ...link.data, receivesAcademicReports: false }))
+    await service.assessmentsWorkflow.publishReportCardResult({ id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' })
+    expect(gateway.enqueued).toHaveLength(1)
+    expect(gateway.enqueued[0]?.recipients).toEqual([{ kind: MessageDeliveryRecipientKind.Student, id: 'stu1', subjectId: 'subject-stu1' }])
+    expect(await repositories.messageDeliveries.count({ recipientKind: MessageDeliveryRecipientKind.Guardian })).toBe(0)
   })
 })

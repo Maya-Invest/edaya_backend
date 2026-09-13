@@ -1,8 +1,8 @@
+import type { NotifySql } from "../src/store/types";
 import { MessageDeliveryRecipientKind } from "@edaya/core";
 import { describe, expect, test } from "bun:test";
 import { drainPendingSchoolNotifications } from "../src/jobs/drain-jobs";
 import { createNotifyNotificationGateway } from "../src/notification-gateway";
-import type { NotifySql } from "../src/store/types";
 import { createNotifyRuntime } from "../src/runtime";
 import { createTestNotifyRuntime } from "./harness";
 
@@ -61,7 +61,7 @@ describe("createNotifyNotificationGateway", () => {
   test("enqueues and sends email when prefs allow", async () => {
     const harness = await createTestNotifyRuntime();
     const gateway = createNotifyNotificationGateway({ runtime: harness.runtime });
-    await gateway.upsertRecipient({
+    harness.runtime.resolveSchoolRecipient = async () => ({
       schoolId: "sch_1",
       recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "sub_1" },
       email: "g@school.edu",
@@ -85,7 +85,7 @@ describe("createNotifyNotificationGateway", () => {
   test("does not resend a duplicate enqueue", async () => {
     const harness = await createTestNotifyRuntime();
     const gateway = createNotifyNotificationGateway({ runtime: harness.runtime });
-    await gateway.upsertRecipient({
+    harness.runtime.resolveSchoolRecipient = async () => ({
       schoolId: "sch_1",
       recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "sub_1" },
       email: "g@school.edu",
@@ -111,7 +111,7 @@ describe("createNotifyNotificationGateway", () => {
   test("sends FCM when a device is registered", async () => {
     const harness = await createTestNotifyRuntime();
     const gateway = createNotifyNotificationGateway({ runtime: harness.runtime });
-    await gateway.upsertRecipient({
+    harness.runtime.resolveSchoolRecipient = async () => ({
       schoolId: "sch_1",
       recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: "g2", subjectId: "sub_push" },
       email: "g2@school.edu",

@@ -1,211 +1,56 @@
-import {
-  ActorAssuranceLevel,
-  assertCommandActorKind,
-  AuthorizationError,
-  authorize,
-  createServiceStaffActorMetadata,
-  createStaffActorMetadata,
-  Permission,
-} from '@edaya/authorization'
-import { describe, expect, test } from 'bun:test'
-import { effectiveGrantsForRoles } from '../support/effective-grants'
+import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createServiceStaffActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
+import { Permission, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
 
-const now = new Date('2026-01-01T00:00:00Z')
-
-describe('service account assurance and account kind', () => {
-  test('createServiceStaffActorMetadata sets service assurance and account kind', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(actor.accountKind).toBe('service')
-    expect(actor.assuranceLevel).toBe(ActorAssuranceLevel.Service)
+describe('assurance and account kind in complete policies', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+  })
+  afterEach(async () => {
+    await fixture.db.close()
   })
 
-  test('service accounts cannot manage other service accounts', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
+  const identity = { schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'assurance', authenticatedAt: new Date() }
+  async function grant(permission: Permission) {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'school' }] }))
+  }
 
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.SERVICE_ACCOUNT_CREATE,
-      },
-    })).toThrow(AuthorizationError)
+  test.each([Permission.SERVICE_ACCOUNT_CREATE, Permission.SERVICE_ACCOUNT_UPDATE, Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE, Permission.FINANCIAL_CONFIG_UPDATE])('%s needs verified human assurance and a current grant', async (permission) => {
+    await grant(permission)
+    const standard = new AccessPolicies(createStaffActorMetadata({ ...identity, assuranceLevel: ActorAssuranceLevel.Standard }), fixture.repositories)
+    const verified = new AccessPolicies(createStaffActorMetadata({ ...identity, assuranceLevel: ActorAssuranceLevel.Verified }), fixture.repositories)
+    await expect(standard.assertSchool(permission)).rejects.toBeInstanceOf(AuthorizationError)
+    await verified.assertSchool(permission)
+    await fixture.repositories.staffPermissionAssignments.delete(permission)
+    await expect(verified.assertSchool(permission)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('non-elevated human staff need verified assurance to create service accounts', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Standard,
-      effectiveGrants: effectiveGrantsForRoles(['teacher']),
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.SERVICE_ACCOUNT_CREATE,
-      },
-    })).toThrow(AuthorizationError)
+  test('owner authority bypasses service-management step-up only, and disappears after ownership transfer', async () => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
+    const access = new AccessPolicies(createStaffActorMetadata({ ...identity, assuranceLevel: ActorAssuranceLevel.Standard }), fixture.repositories)
+    await access.serviceAccounts.assertCreate({ elevated: true })
+    await expect(access.assertSchool(Permission.PAYMENT_REVERSE)).rejects.toThrow()
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = \'new-owner\' WHERE id = \'school-a\'')
+    await expect(access.serviceAccounts.assertCreate({ elevated: true })).rejects.toThrow()
   })
 
-  test('elevated school owners may create service accounts with standard assurance', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Standard,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.SERVICE_ACCOUNT_CREATE,
-      },
-    })).not.toThrow()
-  })
-
-  test('verified human staff can create service accounts', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Verified,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.SERVICE_ACCOUNT_CREATE,
-      },
-    })).not.toThrow()
-  })
-
-  test('elevated service accounts may configure access control for operational seeding', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: {
-        ...effectiveGrantsForRoles(['admin']),
-        isElevated: true,
-      },
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.ACCESS_CONTROL_CONFIGURE,
-      },
-    })).not.toThrow()
-  })
-
-  test('non-elevated service accounts cannot configure access control', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: effectiveGrantsForRoles(['accountant']),
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.ACCESS_CONTROL_CONFIGURE,
-      },
-    })).toThrow(AuthorizationError)
-  })
-
-  test('service accounts skip human assurance ladder for operational permissions', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: effectiveGrantsForRoles(['accountant']),
-    })
-
-    expect(() => authorize({
-      actor,
-      request: {
-        schoolId: 'school-1',
-        permission: Permission.PAYMENT_RECORD,
-      },
-    })).not.toThrow()
-  })
-})
-
-describe('service-only command gate', () => {
-  test('allows service accounts to call service-only commands', () => {
-    const actor = createServiceStaffActorMetadata({
-      subjectId: 'service-subject',
-      staffMemberId: 'staff-service-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(() => assertCommandActorKind(actor, { serviceOnly: true })).not.toThrow()
-  })
-
-  test('rejects human staff on service-only commands', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Verified,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(() => assertCommandActorKind(actor, { serviceOnly: true })).toThrow(AuthorizationError)
-  })
-
-  test('allows any actor when serviceOnly is not set', () => {
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-staff',
-      staffMemberId: 'staff-1',
-      schoolId: 'school-1',
-      requestId: 'request-1',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Verified,
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
-    })
-
-    expect(() => assertCommandActorKind(actor, {})).not.toThrow()
+  test.each([false, true])('service account elevated=%s never manages service credentials', async (elevated) => {
+    const existing = (await fixture.repositories.staffMembers.findById('staff-a'))!
+    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated }))
+    const access = new AccessPolicies(createServiceStaffActorMetadata(identity), fixture.repositories)
+    for (const permission of [Permission.SERVICE_ACCOUNT_READ, Permission.SERVICE_ACCOUNT_CREATE, Permission.SERVICE_ACCOUNT_UPDATE, Permission.SERVICE_ACCOUNT_REVOKE, Permission.SERVICE_ACCOUNT_ROTATE_KEY]) {
+      await grant(permission)
+      await expect(access.assertSchool(permission)).rejects.toThrow()
+    }
+    await grant(Permission.PAYMENT_RECORD)
+    await access.assertSchool(Permission.PAYMENT_RECORD)
+    await grant(Permission.ACCESS_CONTROL_ASSIGN)
+    if (elevated)
+      await access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
+    else await expect(access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)).rejects.toThrow()
+    await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated, isActive: false }))
+    await expect(access.assertSchool(Permission.PAYMENT_RECORD)).rejects.toThrow()
   })
 })

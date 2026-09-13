@@ -1,4 +1,3 @@
-import { createNovuInvitationDeliveryPortFromSecretKey } from "@edaya/adaptor-novu";
 import { createNotifyInvitationDeliveryPort, type NotifyRuntime } from "@edaya/adaptor-notify";
 import type { InvitationDeliveryPort } from "@edaya/core";
 import { noOpInvitationDeliveryPort } from "@edaya/core";
@@ -17,12 +16,5 @@ export function resolveInvitationDelivery(
     return createNotifyInvitationDeliveryPort(options.runtime);
   }
 
-  if (env.NOTIFICATION_PROVIDER !== "novu" || !env.NOVU_SECRET_KEY) {
-    return noOpInvitationDeliveryPort;
-  }
-
-  return createNovuInvitationDeliveryPortFromSecretKey({
-    secretKey: env.NOVU_SECRET_KEY,
-    serverURL: env.NOVU_API_URL,
-  });
+  throw new Error("The invitation dispatcher must be initialized");
 }

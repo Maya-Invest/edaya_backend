@@ -97,8 +97,8 @@
       "name": "@edaya/adaptor-novu",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/adaptor-notify": "workspace:*",
         "@edaya/core": "workspace:*",
-        "@edaya/service": "workspace:*",
         "@novu/api": "^3.17.0",
         "svix": "^1.82.0",
       },

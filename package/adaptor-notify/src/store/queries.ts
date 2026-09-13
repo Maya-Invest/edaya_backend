@@ -38,7 +38,7 @@ function mapRecipient(row: RecipientRecord): NotifyRecipientRow {
   };
 }
 
-export async function upsertRecipient(
+export async function upsertCommandRecipient(
   sql: NotifySql,
   row: Omit<NotifyRecipientRow, "updated_at">,
 ): Promise<void> {
@@ -73,7 +73,7 @@ export async function upsertRecipient(
   );
 }
 
-export async function getRecipient(sql: NotifySql, subjectId: string): Promise<NotifyRecipientRow | undefined> {
+export async function getCommandRecipient(sql: NotifySql, subjectId: string): Promise<NotifyRecipientRow | undefined> {
   const rows = await sql.query<RecipientRecord>(
     "SELECT * FROM notify.recipients WHERE subject_id = $1",
     [subjectId],
@@ -82,7 +82,7 @@ export async function getRecipient(sql: NotifySql, subjectId: string): Promise<N
   return row ? mapRecipient(row) : undefined;
 }
 
-export async function deleteRecipient(sql: NotifySql, subjectId: string, tenant?: string): Promise<void> {
+export async function deleteCommandRecipient(sql: NotifySql, subjectId: string, tenant?: string): Promise<void> {
   await sql.execute("DELETE FROM notify.devices WHERE subject_id = $1", [subjectId]);
   if (tenant) {
     await sql.execute("DELETE FROM notify.recipients WHERE subject_id = $1 AND tenant = $2", [subjectId, tenant]);

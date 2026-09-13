@@ -1,4 +1,4 @@
-import type { AuthorizationPolicy, SchoolScopedActorMetadata } from '@edaya/authorization'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import { noOpNotificationGateway } from '@edaya/core'
@@ -23,9 +23,6 @@ describe('school command keys', () => {
     const repositories = new Proxy({}, {
       get: () => repository,
     }) as SchoolRepositories
-    const authorizationPolicy = new Proxy({}, {
-      get: () => async () => undefined,
-    }) as AuthorizationPolicy
     const atomicExecution: AtomicExecutionPort = {
       execute: operation => operation(),
     }
@@ -33,7 +30,6 @@ describe('school command keys', () => {
     const service = new SchoolService({
       actor: {} as SchoolScopedActorMetadata,
       repositories,
-      authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
       fileStorage: testFileStorage,
@@ -63,7 +59,6 @@ describe('school command keys', () => {
     expect(new BaseSchoolService({
       actor: {} as SchoolScopedActorMetadata,
       repositories,
-      authorizationPolicy,
       atomicExecution,
       notificationGateway: noOpNotificationGateway,
       fileStorage: testFileStorage,

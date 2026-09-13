@@ -82,8 +82,10 @@ export function createStudentsEntityStores(db: any): Pick<EntityStores, 'student
         medicalConditions: deserializeJsonb(row.medicalConditions),
         medications: row.medications ?? undefined,
         clinicalNotes: row.clinicalNotes ?? undefined,
+        emergencyProtocols: row.emergencyProtocols ?? undefined,
         lastVisit: row.lastVisit ?? undefined,
         createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
       }),
     ),
 

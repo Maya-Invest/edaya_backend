@@ -42,7 +42,7 @@ function refineStaffPermissionAssignmentScope(
   catch (error) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: error instanceof Error ? error.message : 'Invalid scopeIds',
+      message: error instanceof Error ? error.message : 'Invalid grant scopes',
       path: ['scopes'],
     })
   }
@@ -61,7 +61,7 @@ export const staffPermissionAssignmentUpdateSchema = staffPermissionAssignmentBa
   .required({ id: true })
   .superRefine(refineStaffPermissionAssignmentScope)
 
-/** Direct staff capability grant (replaces role assignment rows in the target model). */
+/** Manual permission grant with typed scopes, validity and provenance. */
 export class StaffPermissionAssignment {
   readonly data: StaffPermissionAssignmentData
 

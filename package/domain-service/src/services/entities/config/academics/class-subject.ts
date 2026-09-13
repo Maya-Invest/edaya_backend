@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { ClassSubject } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { classGroupLinkedTenant } from '../../entity-config/tenant';
+import type { ClassSubject } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/academics/class-subject.ts (PR3)
 export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
-    authorization: { resource: 'classSubjects', read: [Permission.QUERY_CLASS_CURRICULUM_READ, Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.ACADEMIC_PROGRAM_UPDATE] },
-    
+    resource: 'classSubjects',
+
     gates: {
       preSave: validateClassSubjectSave,
       preDelete: validateClassSubjectDelete,
@@ -123,6 +122,11 @@ export async function validateClassSubjectDelete(classSubject: ClassSubject, rep
   if (classSubject.gradeLevelSubjectId) {
     throw new BusinessRuleViolationError('CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL', 'Remove inherited subjects through grade-level curriculum management')
   }
+  await assertClassSubjectUnused(classSubject, repositories)
+}
+
+/** Also applies when a curriculum command removes inherited allocations. */
+export async function assertClassSubjectUnused(classSubject: ClassSubject, repositories: SchoolRepositories): Promise<void> {
   const filter = { classSubjectId: classSubject.id, $limit: 1 }
   const dependencies = await Promise.all([
     repositories.assessments.list(filter),

@@ -1,20 +1,19 @@
-import { Permission } from '@edaya/core';
-import type { GradeScale } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
+import type { GradeScale } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
 
-import { BusinessRuleViolationError } from '@edaya/core';
-import { requireSchool } from '../../../require-school';
-import { config } from '../../entity-config';
+import { BusinessRuleViolationError } from '@edaya/core'
+import { requireSchool } from '../../../require-school'
+import { config } from '../../entity-config'
 
-import { directSchoolTenant } from '../../entity-config/tenant';
+import { directSchoolTenant } from '../../entity-config/tenant'
 // Extracted from domain/school/grade-scale.ts (PR3)
 export const gradeScaleConfig: EntityConfigFactory<GradeScale> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.gradeScales,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'gradeScales', read: [Permission.GRADE_READ], write: [Permission.EXAM_CONFIG_CONFIGURE] },
-    
+    resource: 'gradeScales',
+
     gates: {
       preSave: validateGradeScaleSave,
     },

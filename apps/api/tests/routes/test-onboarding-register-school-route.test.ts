@@ -58,10 +58,11 @@ describe("onboarding register-school route", () => {
     expect(grantsResponse.status).toBe(200);
     const grants = await grantsResponse.json() as {
       kind: string;
-      effectiveGrants: { isElevated: boolean };
+      grants: { source: string }[];
     };
     expect(grants.kind).toBe("staff");
-    expect(grants.effectiveGrants.isElevated).toBe(true);
+    expect(grants.grants.length).toBeGreaterThan(0);
+    expect(grants.grants.every(grant => grant.source === "owner")).toBe(true);
   });
 
   it("returns 503 when public school registration is disabled", async () => {

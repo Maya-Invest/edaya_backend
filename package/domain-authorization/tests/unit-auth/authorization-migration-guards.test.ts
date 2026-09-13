@@ -14,7 +14,7 @@ async function sourceFiles(dir: string): Promise<string[]> {
     if (entry.isDirectory()) {
       return sourceFiles(path)
     }
-    return entry.isFile() && entry.name.endsWith('.ts') ? [path] : []
+    return entry.isFile() && entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts') ? [path] : []
   }))
   return files.flat()
 }
@@ -50,28 +50,13 @@ describe('authorization migration guards', () => {
     expect(offenders).toEqual([])
   })
 
-  // Allowlist removed in G5.7 — domain entity configs must not branch on actor.kind.
-
-  test('domain entity configs do not branch on actor.kind', async () => {
+  test('domain entity business validation has no actor input', async () => {
     const sources = await readSourceUnder(schoolServiceRoot, ['src/services/entities/config'])
     const offenders = sources
-      .filter(source => /actor\.kind\s*[=!]==/.test(authorizationConfigSource(source)))
+      .filter(source => /\b(?:ActorMetadata|SchoolScopedActorMetadata|actor|_actor)\b/.test(source.text))
       .map(source => source.path)
 
     expect(offenders).toEqual([])
-  })
-
-  test('entity-config authorization does not add new WriteModule or ReadModule helpers', async () => {
-    const path = join(schoolServiceRoot, 'src/services/entities/entity-config/authorization.ts')
-    const text = await readFile(path, 'utf8')
-    const helperPattern = /export function \w+(?:Write|Read)Module\b/g
-    const matches = [...text.matchAll(helperPattern)].map(match => match[0])
-    const allowed = new Set<string>([])
-    const unexpected = matches
-      .map(match => match.replace('export function ', ''))
-      .filter(name => !allowed.has(name))
-
-    expect(unexpected).toEqual([])
   })
 
   test('entity configs and workflows do not use permissionAction', async () => {
@@ -86,14 +71,45 @@ describe('authorization migration guards', () => {
     expect(offenders).toEqual([])
   })
 
+  test('runtime policies do not import administration presets', async () => {
+    const sources = await readSourceUnder(authorizationRoot, ['src/access'])
+    expect(sources.filter(source => /from ['"][^'"]*presets['"]/.test(source.text)).map(source => source.path)).toEqual([])
+  })
+
+  test('production callers use action-bound policies rather than assembling permission checks', async () => {
+    const sources = [
+      ...(await readSourceUnder(schoolServiceRoot, ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../../apps/api'), ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../../tooling/seeding'), ['src'])),
+    ]
+    const offenders = sources
+      .filter(source => /\baccess\.(?:scope|assertResources|assertSchool|assertSave|assertIntegrationCaller)\s*\(/.test(source.text))
+      .map(source => source.path)
+    expect(offenders).toEqual([])
+  })
+
   test('legacy authorization engine entry points stay removed from production source', async () => {
     const sources = [
       ...(await readSourceUnder(authorizationRoot, ['src'])),
       ...(await readSourceUnder(schoolServiceRoot, ['src'])),
       ...(await readSourceUnder(coreRoot, ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../adaptor-postgres'), ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../adaptor-notify'), ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../adaptor-novu'), ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../../apps/api'), ['src'])),
+      ...(await readSourceUnder(join(authorizationRoot, '../../tooling/seeding'), ['src'])),
     ]
     const forbiddenPatterns = [
+      /\b(?:GRANTS_CACHE_TTL_MS|NOTIFICATION_PROVIDER|createNovuNotificationGateway|createNovuSubscriberClient|upsertSchoolRecipient|removeSchoolRecipient)\b/,
+      /\b(?:scheduleNotificationRecipientUpsert|scheduleNotificationRecipientRemove|scheduleNotificationRecipientBackfillForActor)\b/,
+      /\b(?:scopeIds|scopeGrants|sourceStaffAssignmentId|moduleChecked)\b/,
+      /\b(?:TeacherCapability|GuardianCapability|StudentCapability|PlatformPermission)\b/,
+      /\b(?:assertOperation|defineOperation|DefaultAuthorizationRepository|resolveActorScope|resolveActorGrants)\b/,
+      /\b(?:syncStaffAssignmentPermissions|invalidateAuthCacheForEvents|resolveCachedEffectiveGrants)\b/,
+      /\beffectiveGrants\s*:/,
+      /\.(?:effectiveGrants|teacherScope|guardianScope|studentScope)\b/,
       /\bcheckGlobalAction\b/,
+      /\b(?:serviceOnly|assertCommandActorKind)\b/,
       /\bAuthorizationAction\b/,
       /\blegacy-action-map\b/,
       /\bauthorization-engine\b/,
@@ -101,6 +117,7 @@ describe('authorization migration guards', () => {
       /\bstaffMember\.roles\b/,
     ]
     const offenders = sources
+      .filter(source => source.path !== 'src/lib/school-api/client-bindings.ts')
       .filter(source => forbiddenPatterns.some(pattern => pattern.test(source.text)))
       .map(source => source.path)
 

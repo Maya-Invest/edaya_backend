@@ -35,17 +35,14 @@ export const EnvSchema = z.object({
   IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
-  /** Cross-request authorization caching is disabled until shared revisions exist. */
-  GRANTS_CACHE_TTL_MS: z.coerce.number().int().min(0).max(0).optional(),
-  NOTIFICATION_PROVIDER: z.enum(["in-process", "novu"]).default("in-process"),
-  /** Required only when NOTIFICATION_PROVIDER is explicitly novu. */
+  /** Required for EMAIL_TRANSPORT=novu. */
   NOVU_SECRET_KEY: z.string().min(1).optional(),
   /** Optional Novu API base URL (e.g. https://api.novu.co) */
   NOVU_API_URL: z.string().url().optional(),
-  /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery while Novu is the fallback */
+  /** Provider webhook signing secret (Novu: Svix) — required for POST /webhooks/notification-delivery for Novu email receipts */
   NOVU_WEBHOOK_SECRET: z.string().min(1).optional(),
   /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */
-  EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp"]).optional(),
+  EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp", "novu"]).optional(),
   /** From header for in-process notify, e.g. `EDAYA <noreply@edayaplus.com>` */
   EMAIL_FROM: z.string().min(1).optional(),
   /** Firebase Cloud Messaging HTTP v1 service-account JSON (Worker secret) */

@@ -1,21 +1,19 @@
-import { Permission } from '@edaya/core';
+import type { AssessmentResult } from '@edaya/core'
 
-import type { AssessmentResult } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
 
-
-import { indirectTenant } from '../../entity-config/tenant';
+import { indirectTenant } from '../../entity-config/tenant'
 // Extracted from domain/assessments/assessment-result.ts (PR3)
 export const assessmentResultConfig: EntityConfigFactory<AssessmentResult> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.assessmentResults,
     tenant: assessmentResultTenant(),
-    authorization: { resource: 'assessmentResults', read: [Permission.GRADE_READ, Permission.EXAM_CONFIG_CONFIGURE, Permission.QUERY_CURRICULUM_PROGRESS_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.GRADE_INPUT] },
-    
+    resource: 'assessmentResults',
+
     gates: {
       preSave: validateAssessmentResultSave,
       preDelete: validateAssessmentResultDelete,

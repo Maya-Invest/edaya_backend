@@ -1,7 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 import indexRouter from "@/app-router";
-import type { Permission } from "@edaya/core";
 import { GradeLevel } from "@edaya/core";
 import { ActorAssuranceLevel } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
@@ -14,11 +13,6 @@ describe("core entity and command routes", () => {
     subjectId: "admin-user",
     schoolId: "school-1",
     staffMemberId: "staff-1",
-    effectiveGrants: {
-      permissions: new Set<Permission>(),
-      scopeGrants: [],
-      isElevated: true,
-    },
     requestId: "request-id",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Strong,

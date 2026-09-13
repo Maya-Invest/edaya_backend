@@ -1,3 +1,4 @@
+import { MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { devSeedDataset } from '@edaya/fixtures'
 import {
   parseSeedDate,
@@ -17,6 +18,7 @@ import {
   buildSeedValidationTargets,
 } from '@edaya/fixtures/meta/validation-harness'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { createInProcessCommunicationsSeedPort } from '@edaya/seeding'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
 import { buildSchoolOverview } from '@edaya/service'
 import { expect, it } from 'bun:test'
@@ -51,6 +53,39 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     }
 
     expect(failures).toEqual([])
+  })
+
+  it('materializes only linked recipients and preserves explicit inbox history', async () => {
+    const { application } = getContext()
+    const guardian = await application.repositories.guardians.findById('g1')
+    const delivery = await application.repositories.messageDeliveries.findOne({ sourceKey: 'ann-parent-meeting', recipientId: 'g1' })
+    expect(guardian?.subjectId).toBeTruthy()
+    expect(delivery?.subjectId).toBe(guardian!.subjectId)
+    expect(delivery?.recipientId).toBe('g1')
+    expect(delivery?.status).toBe(MessageDeliveryStatus.Read)
+    expect(delivery?.readAt).toBeTruthy()
+    const beforeCount = await application.repositories.messageDeliveries.count()
+    await createInProcessCommunicationsSeedPort(application).recordDelivery({
+      id: 'duplicate-seed-id',
+      schoolId: SEED_SCHOOL_ID,
+      announcementId: 'ann-parent-meeting',
+      subjectId: guardian!.subjectId!,
+      recipientKind: MessageDeliveryRecipientKind.Guardian,
+      recipientId: 'g1',
+      title: delivery!.title,
+      body: delivery!.body,
+      status: MessageDeliveryStatus.Sent,
+      sentAt: '2026-01-28T18:05:00.000Z',
+    })
+    expect(await application.repositories.messageDeliveries.count()).toBe(beforeCount)
+    const retained = await application.repositories.messageDeliveries.findById(delivery!.id)
+    expect(retained?.status).toBe(MessageDeliveryStatus.Read)
+    expect(retained?.readAt).toEqual(delivery!.readAt)
+    expect(await application.repositories.messageDeliveries.findById('duplicate-seed-id')).toBeUndefined()
+    expect(await application.repositories.messageDeliveries.findById('md-parent-st3-read')).toBeUndefined()
+    const deliveries = await application.repositories.messageDeliveries.list()
+    expect(deliveries.some(record => record.announcementId === 'ann-rentree' && record.recipientId === 'g1')).toBe(true)
+    expect(deliveries.some(record => record.recipientKind === MessageDeliveryRecipientKind.Student)).toBe(false)
   })
 
   it('lets seeded non-owner staff list students after permission assignments are provisioned', async () => {

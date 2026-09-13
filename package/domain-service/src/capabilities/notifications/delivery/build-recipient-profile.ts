@@ -87,7 +87,7 @@ export function buildGuardianRecipientProfile(
 }
 
 export function buildStudentRecipientProfile(student: Student): NotificationRecipientProfile | undefined {
-  if (!student.subjectId) {
+  if (!student.subjectId || student.status !== 'active') {
     return undefined
   }
 

@@ -1,200 +1,121 @@
-import { Buffer } from "node:buffer";
-import {
-  AcademicPeriod,
-  AcademicYear,
-  Assessment,
-  AssessmentKind,
-  ClassGroup,
-  ClassSubject,
-  ClassSubjectMatter,
-  ClassSubjectMatterStatus,
-  ClassSubjectProgress,
-  LessonSession,
-  OccurrenceStatus,
-  Permission,
-  School,
-  Subject,
-  SubjectMatter,
-} from "@edaya/core";
-import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
-import { describe, expect, mock, test } from "bun:test";
+import type { SchoolScopedActorMetadata } from "@edaya/authorization";
+import type { DocumentRendererPort, StaffPermissionAssignmentInput } from "@edaya/core";
+import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from "@edaya/authorization";
+import { LessonSession, noOpFileStorage, noOpNotificationGateway, Permission, StaffAssignment, StaffPermissionAssignment } from "@edaya/core";
+import { SchoolService } from "@edaya/service";
+import { describe, expect, mock, onTestFinished, test } from "bun:test";
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
 import { renderClassLogbookDocument } from "@/lib/documents/render-logbook-document";
 
-function createLogbookTestStaffActor() {
-  return createStaffActorMetadata({
-    schoolId: "school-1",
-    subjectId: "auth-staff",
-    requestId: "req-1",
-    authenticatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    assuranceLevel: ActorAssuranceLevel.Standard,
-    staffMemberId: "staff-1",
-    effectiveGrants: {
-      permissions: new Set([Permission.CLASS_LOGBOOK_READ]),
-      scopeGrants: [],
-      scopeIdsByPermission: {},
-      isElevated: false,
-    },
-  });
+const identity = { schoolId: "school-a", subjectId: "person-a", academicYearId: "year-a", requestId: "logbook-document", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified };
+const staff = createStaffActorMetadata({ ...identity, staffMemberId: "staff-a" });
+
+async function fixture(actor: SchoolScopedActorMetadata = staff) {
+  const { db, repositories, atomic } = await createAuthorizationDatabase();
+  onTestFinished(() => db.close());
+  await seedAuthorizationRelationships(db);
+  for (const [id, classGroupId, classSubjectId, note] of [["math", "class-a", "math-a", "Math lesson"], ["french", "class-a", "french-a", "French lesson"], ["other", "class-other", "math-other", "Other class"], ["foreign", "class-b", "math-b", "Foreign class"]]) {
+    await repositories.lessonSessions.save(new LessonSession({ id: id!, schoolId: id === "foreign" ? "school-b" : "school-a", classGroupId: classGroupId!, classSubjectId: classSubjectId!, displayLabel: note!, sessionNote: note!, startsAt: new Date("2026-05-01T08:00:00Z"), endsAt: new Date("2026-05-01T09:00:00Z") }));
+  }
+  const putObject = mock(async () => ({ sizeBytes: 4096 }));
+  const createPresignedDownload = mock(async () => ({ downloadUrl: "https://example.test/logbook.pdf", expiresAt: new Date("2026-10-01") }));
+  const render = mock(async (_input: Parameters<DocumentRendererPort["render"]>[0]) => ({ bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" }));
+  const service = new SchoolService({ actor, repositories, atomicExecution: atomic, notificationGateway: noOpNotificationGateway, fileStorage: { ...noOpFileStorage, putObject, createPresignedDownload } });
+  const grant = async (extra: Partial<StaffPermissionAssignmentInput> = {}) => repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "grant", schoolId: "school-a", staffId: "staff-a", academicYearId: "year-a", permission: Permission.CLASS_LOGBOOK_READ, scopes: [{ kind: "class_group", classGroupId: "class-a" }], ...extra }));
+  const generate = (extra: { classGroupId?: string; classSubjectId?: string; academicPeriodId?: string } = {}) => renderClassLogbookDocument(service, { classGroupId: "class-a", academicPeriodId: "period-a", ...extra, renderer: { render }, locale: "en" });
+  return { db, repositories, service, putObject, createPresignedDownload, render, grant, generate };
 }
 
-describe("renderClassLogbookDocument", () => {
-  const school = new School({
-    id: "sch-1",
-    name: "Collège Edaya",
-    timeZone: "UTC",
-    city: "Abidjan",
-  });
-  const year = new AcademicYear({
-    id: "ay-1",
-    schoolId: school.id,
-    name: "2025-2026",
-    startDate: new Date("2025-09-01T00:00:00.000Z"),
-    endDate: new Date("2026-06-30T00:00:00.000Z"),
-  });
-  const period = new AcademicPeriod({
-    id: "per-1",
-    schoolId: school.id,
-    academicYearId: year.id,
-    name: "1er Trimestre",
-    startDate: new Date("2025-09-01T00:00:00.000Z"),
-    endDate: new Date("2025-12-31T00:00:00.000Z"),
-  });
-  const classGroup = new ClassGroup({
-    id: "cg-1",
-    schoolId: school.id,
-    academicYearId: year.id,
-    gradeLevelId: "gl-1",
-    name: "6ème A",
-  });
-  const subject = new Subject({
-    id: "sub-math",
-    schoolId: school.id,
-    name: "Mathématiques",
-  });
-  const classSubject = new ClassSubject({
-    id: "cs-math",
-    classGroupId: classGroup.id,
-    subjectId: subject.id,
-  });
-  const matter = new SubjectMatter({
-    id: "sm-1",
-    subjectId: subject.id,
-    name: "Nombres relatifs",
-    sequenceOrder: 1,
-  });
-  const classSubjectMatter = new ClassSubjectMatter({
-    id: "csm-1",
-    classSubjectId: classSubject.id,
-    subjectMatterId: matter.id,
-    status: ClassSubjectMatterStatus.InProgress,
-    completedPercentage: 25,
-  });
-  const session = new LessonSession({
-    id: "ls-1",
-    schoolId: school.id,
-    classGroupId: classGroup.id,
-    classSubjectId: classSubject.id,
-    startsAt: new Date("2025-09-16T08:00:00.000Z"),
-    endsAt: new Date("2025-09-16T09:00:00.000Z"),
-    displayLabel: "Math",
-    sessionNote: "Introduction aux relatifs",
-    status: OccurrenceStatus.Completed,
-  });
-  const progress = new ClassSubjectProgress({
-    id: "prog-1",
-    classSubjectMatterId: classSubjectMatter.id,
-    lessonSessionId: session.id,
-    completedPercentage: 25,
-  });
-  const homework = new Assessment({
-    id: "as-1",
-    classGroupId: classGroup.id,
-    classSubjectId: classSubject.id,
-    periodId: period.id,
-    title: "Exercices 1 à 5",
-    kind: AssessmentKind.Homework,
-    maxScore: 20,
-    lessonSessionId: session.id,
-    dueAt: new Date("2025-09-17T00:00:00.000Z"),
+describe("logbook document policy", () => {
+  test("scoped staff export only the permitted class and its counts", async () => {
+    const f = await fixture();
+    await f.grant();
+    const outcome = await f.generate();
+    expect(outcome.subjectCount).toBe(2);
+    expect(outcome.sessionCount).toBe(2);
+    expect(outcome.downloadUrl).toBe("https://example.test/logbook.pdf");
+    const payload = JSON.stringify(f.render.mock.calls[0]![0].payload);
+    expect(payload).toContain("Math lesson");
+    expect(payload).toContain("A Teacher");
+    expect(payload).toContain("French lesson");
+    expect(payload).not.toContain("Other class");
+    expect(payload).not.toContain("Foreign class");
   });
 
-  function serviceStub(overrides?: {
-    sessions?: LessonSession[];
-    progress?: ClassSubjectProgress[];
-    assessments?: Assessment[];
-  }) {
-    return {
-      baseService: {
-        actor: createLogbookTestStaffActor(),
-        repositories: {
-          classGroups: { findById: async () => classGroup },
-          schools: { findById: async () => school },
-          academicPeriods: { findById: async () => period },
-          academicYears: { findById: async () => year },
-          classSubjects: { list: async () => [classSubject] },
-          lessonSessions: { list: async () => overrides?.sessions ?? [session] },
-          classSubjectProgress: { list: async () => overrides?.progress ?? [progress] },
-          classSubjectMatters: { list: async () => [classSubjectMatter] },
-          subjects: { list: async () => [subject] },
-          subjectMatters: { list: async () => [matter] },
-          teacherAssignments: { list: async () => [] },
-          staffAssignments: { list: async () => [] },
-          teachers: { list: async () => [] },
-          staffMembers: { list: async () => [] },
-          assessments: { list: async () => overrides?.assessments ?? [homework] },
-        },
-        fileStorage: {
-          putObject: mock(async () => ({ sizeBytes: 24 })),
-          createPresignedDownload: mock(async () => ({
-            downloadUrl: "https://cdn.example/logbook.pdf",
-            expiresAt: new Date("2026-07-23T12:00:00.000Z"),
-          })),
-        },
-      },
-    } as never;
-  }
+  test("unrelated actions, classes, subjects and periods cannot broaden the export", async () => {
+    const f = await fixture();
+    await f.grant({ permission: Permission.CLASS_LOGBOOK_UPDATE });
+    await expect(f.generate()).rejects.toThrow();
+    await f.grant();
+    for (const input of [{ classGroupId: "class-other" }, { classGroupId: "class-b" }, { classSubjectId: "math-other" }, { academicPeriodId: "period-b" }]) {
+      await expect(f.generate(input)).rejects.toThrow();
+    }
+    expect(f.render).not.toHaveBeenCalled();
+    expect(f.putObject).not.toHaveBeenCalled();
+  });
 
-  test("renders inline PDF, stores object, and returns download URL", async () => {
-    const service = serviceStub();
-    const render = mock(async () => ({
-      renderId: "render-1",
-      sha256: "abc",
-      bytes: new Uint8Array(Buffer.from("%PDF-logbook")),
-      contentType: "application/pdf",
-    }));
+  test("expired grants and a different selected academic year deny exports", async () => {
+    const f = await fixture();
+    await f.grant({ endsAt: new Date("2000-01-01") });
+    await expect(f.generate()).rejects.toThrow();
+    await f.grant({ academicYearId: "year-old", scopes: [{ kind: "class_group", classGroupId: "class-old" }] });
+    await expect(f.generate()).rejects.toThrow();
+    expect(f.putObject).not.toHaveBeenCalled();
+  });
 
-    const outcome = await renderClassLogbookDocument(service, {
-      classGroupId: classGroup.id,
-      academicPeriodId: period.id,
-      renderer: { render },
+  test("subject teacher uses live assignments and loses access immediately on removal", async () => {
+    const f = await fixture(createTeacherActorMetadata({ ...identity, teacherId: "teacher-a" }));
+    expect((await f.generate()).subjectCount).toBe(1);
+    await f.repositories.teacherAssignments.delete("teaching");
+    await expect(f.generate()).rejects.toThrow();
+    expect(f.render).toHaveBeenCalledTimes(1);
+  });
+
+  test("homeroom assignment alone cannot read a subject logbook", async () => {
+    const f = await fixture(createTeacherActorMetadata({ ...identity, teacherId: "teacher-a" }));
+    await f.db.exec("UPDATE teacher_assignments SET kind = 'homeroom', class_subject_id = NULL, class_group_id = 'class-a'");
+    await expect(f.generate()).rejects.toThrow();
+    expect(f.render).not.toHaveBeenCalled();
+  });
+
+  test("guardian selection uses current child enrollment and never borrows staff grants", async () => {
+    const f = await fixture(createGuardianActorMetadata({ ...identity, guardianId: "guardian-a" }));
+    await f.grant({ scopes: [{ kind: "class_group", classGroupId: "class-other" }] });
+    expect((await f.generate()).subjectCount).toBe(2);
+    await expect(f.generate({ classGroupId: "class-other" })).rejects.toThrow();
+    await f.repositories.guardianLinks.delete("guardian-link");
+    await expect(f.generate()).rejects.toThrow();
+    expect(f.render).toHaveBeenCalledTimes(1);
+  });
+
+  test("teacher names exclude inactive assignments and never use staff responsibility labels", async () => {
+    const f = await fixture();
+    await f.grant();
+    await f.db.exec("UPDATE teacher_assignments SET ends_at = '2000-01-01'");
+    await f.repositories.staffAssignments.save(new StaffAssignment({ id: "staff-teacher", staffId: "staff-a", academicYearId: "year-a", responsibility: "Teacher", permissions: [], classSubjectId: "math-a" }));
+    await f.generate();
+    const payload = JSON.stringify(f.render.mock.calls[0]![0].payload);
+    expect(payload).not.toContain("A Teacher");
+    expect(payload).not.toContain("A Staff");
+  });
+
+  test("empty content rejects before rendering or uploading", async () => {
+    const f = await fixture();
+    await f.grant();
+    await f.db.exec("UPDATE lesson_sessions SET session_note = NULL");
+    await expect(f.generate()).rejects.toMatchObject({ code: "LOGBOOK_EMPTY" });
+    expect(f.render).not.toHaveBeenCalled();
+    expect(f.putObject).not.toHaveBeenCalled();
+  });
+
+  test("relationship removal during rendering blocks upload and signing", async () => {
+    const f = await fixture(createTeacherActorMetadata({ ...identity, teacherId: "teacher-a" }));
+    f.render.mockImplementationOnce(async () => {
+      await f.repositories.teacherAssignments.delete("teaching");
+      return { bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" };
     });
-
-    expect(outcome.downloadUrl).toBe("https://cdn.example/logbook.pdf");
-    expect(outcome.fileName).toContain("cahier-de-texte");
-    expect(outcome.subjectCount).toBe(1);
-    expect(outcome.sessionCount).toBe(1);
-    expect(render).toHaveBeenCalledTimes(1);
-    const [renderArg] = render.mock.calls[0] as unknown as [{
-      templateKey: string;
-      payload: { subjects: unknown[] };
-    }];
-    expect(renderArg.templateKey).toBe("logbook.v1");
-    expect(renderArg.payload.subjects).toHaveLength(1);
-  });
-
-  test("rejects empty logbook with LOGBOOK_EMPTY", async () => {
-    const emptySession = session.copyWith({ sessionNote: undefined });
-
-    await expect(renderClassLogbookDocument(serviceStub({
-      sessions: [emptySession],
-      progress: [],
-      assessments: [],
-    }), {
-      classGroupId: classGroup.id,
-      academicPeriodId: period.id,
-      renderer: { render: mock(async () => {
-        throw new Error("should not render");
-      }) },
-    })).rejects.toMatchObject({ code: "LOGBOOK_EMPTY" });
+    await expect(f.generate()).rejects.toThrow();
+    expect(f.putObject).not.toHaveBeenCalled();
+    expect(f.createPresignedDownload).not.toHaveBeenCalled();
   });
 });

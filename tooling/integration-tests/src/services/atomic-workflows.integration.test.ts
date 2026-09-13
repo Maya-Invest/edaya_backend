@@ -305,26 +305,28 @@ describeIntegration('atomic workflow safeguards', () => {
   it('rolls back generated communications deliveries when a later recipient save fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
     await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
-    await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba', subjectId: 'subject:guardian-a' })
-    await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba', subjectId: 'subject:guardian-b' })
+    await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba' })
+    await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba' })
+    await app.accessControlWorkflow.linkActorSubject({ guardianId: 'guardian-a', subjectId: 'subject:guardian-a' })
+    await app.accessControlWorkflow.linkActorSubject({ guardianId: 'guardian-b', subjectId: 'subject:guardian-b' })
     const publishedAt = new Date('2026-01-15T10:00:00Z')
     await saveAnnouncement(app, {
       id: 'announcement',
       schoolId: 'school',
       title: 'Reminder',
       content: 'Administrative reminder.',
-      status: AnnouncementStatus.Published,
-      publishedAt,
+      status: AnnouncementStatus.Draft,
     })
     await saveAnnouncementTarget(app, {
       id: 'all-guardians',
       announcementId: 'announcement',
       targetKind: AnnouncementTargetKind.AllGuardians,
     })
+    await app.communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement', publishedAt }, { deferNotifications: true })
     failSaveOnAttempt('messageDeliveryRepository', 2)
-    await expect(app.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'announcement',
-    })).rejects.toThrow('Simulated messageDeliveryRepository save failure')
+    await expect(app.communicationsWorkflow.dispatchPublishedAnnouncementNotifications('announcement'))
+      .rejects
+      .toThrow('Simulated messageDeliveryRepository save failure')
     expect(await repositories.messageDeliveryRepository.list({ announcementId: 'announcement' })).toHaveLength(0)
   })
 })

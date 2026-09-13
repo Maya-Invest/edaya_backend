@@ -4,12 +4,11 @@ import {
   expect,
   test,
 } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
-import { actor } from './managed-entity-test-context'
+import { createAcademicTestApp } from './academic-test-app'
 
 describe('Entity config delete gates', () => {
   test('blocks deleting an academic year with class groups', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.academicYearRepository.save(new AcademicYear({
       id: 'year-1',
       schoolId: 'school',
@@ -29,7 +28,7 @@ describe('Entity config delete gates', () => {
   })
 
   test('enrollment direct save rejects capacity bypass and active deletes', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-existing',
       schoolId: 'school',
@@ -71,7 +70,7 @@ describe('Entity config delete gates', () => {
   })
 
   test('published report cards and linked assessment results cannot be deleted directly', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -146,7 +145,7 @@ describe('Entity config delete gates', () => {
   })
 
   test('academic period preDelete rejects dependent assessments and report cards', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     const period = new AcademicPeriod({
       id: 'period-1',
       schoolId: 'school',
@@ -173,7 +172,7 @@ describe('Entity config delete gates', () => {
   })
 
   test('announcement target preDelete allows draft targets and rejects published ones', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.announcementRepository.save(new Announcement({
       id: 'announcement-draft',
       schoolId: 'school',
@@ -207,7 +206,7 @@ describe('Entity config delete gates', () => {
   })
 
   test('announcement target preDelete rejects archived announcement targets', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.announcementRepository.save(new Announcement({
       id: 'announcement-archived',
       schoolId: 'school',

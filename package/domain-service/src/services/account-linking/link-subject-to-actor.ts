@@ -1,8 +1,7 @@
-import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core';
-import type { SchoolRepositories } from '../../ports/school-repositories';
-import type { BaseSchoolService } from '../base-school-service';
-import { BusinessRuleViolationError, Guardian as GuardianEntity, MessageDeliveryRecipientKind, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core';
-import { buildGuardianRecipientProfile, buildStaffRecipientProfile, buildStudentRecipientProfile, buildTeacherRecipientProfile, scheduleNotificationRecipientRemove, scheduleNotificationRecipientUpsert } from '../../capabilities/notifications';
+import type { Guardian, StaffMember, Student, Teacher } from '@edaya/core'
+import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { BaseSchoolService } from '../base-school-service'
+import { BusinessRuleViolationError, Guardian as GuardianEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
 
 export interface LinkSubjectToActorInput {
   subjectId: string
@@ -110,25 +109,10 @@ export async function unlinkSubjectFromActor(
     if (!existing.subjectId) {
       return { kind: 'staff', entity: existing }
     }
-    const staffMember = new StaffMemberEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: undefined,
-      isActive: existing.isActive,
-      profileRole: existing.profileRole,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.staffMembers.save(staffMember)
-    scheduleNotificationRecipientRemove(baseService, schoolId, {
-      kind: MessageDeliveryRecipientKind.Staff,
-      id: existing.id,
-      subjectId: existing.subjectId,
-    })
+    const staffMember = new StaffMemberEntity({ ...existing.data, subjectId: undefined })
+    const scope = await baseService.access.identities.assertLink('staffMembers', staffMember, existing)
+    await repositories.staffMembers.forAccess(scope).save(staffMember)
+
     return { kind: 'staff', entity: staffMember }
   }
 
@@ -140,26 +124,10 @@ export async function unlinkSubjectFromActor(
     if (!existing.subjectId) {
       return { kind: 'guardian', entity: existing }
     }
-    const guardian = new GuardianEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      phone: existing.phone,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: undefined,
-      contactMethods: [...existing.contactMethods],
-      hasAccess: existing.hasAccess,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.guardians.save(guardian)
-    scheduleNotificationRecipientRemove(baseService, schoolId, {
-      kind: MessageDeliveryRecipientKind.Guardian,
-      id: existing.id,
-      subjectId: existing.subjectId,
-    })
+    const guardian = new GuardianEntity({ ...existing.data, contactMethods: [...existing.contactMethods], subjectId: undefined })
+    const scope = await baseService.access.identities.assertLink('guardians', guardian, existing)
+    await repositories.guardians.forAccess(scope).save(guardian)
+
     return { kind: 'guardian', entity: guardian }
   }
 
@@ -171,26 +139,10 @@ export async function unlinkSubjectFromActor(
     if (!existing.subjectId) {
       return { kind: 'teacher', entity: existing }
     }
-    const teacher = new TeacherEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      photoUrl: existing.photoUrl,
-      email: existing.email,
-      phone: existing.phone,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: undefined,
-      isActive: existing.isActive,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.teachers.save(teacher)
-    scheduleNotificationRecipientRemove(baseService, schoolId, {
-      kind: MessageDeliveryRecipientKind.Teacher,
-      id: existing.id,
-      subjectId: existing.subjectId,
-    })
+    const teacher = new TeacherEntity({ ...existing.data, subjectId: undefined })
+    const scope = await baseService.access.identities.assertLink('teachers', teacher, existing)
+    await repositories.teachers.forAccess(scope).save(teacher)
+
     return { kind: 'teacher', entity: teacher }
   }
 
@@ -202,12 +154,9 @@ export async function unlinkSubjectFromActor(
     return { kind: 'student', entity: existing }
   }
   const student = existing.copyWith({ subjectId: undefined })
-  await baseService.entities.students.save(student)
-  scheduleNotificationRecipientRemove(baseService, schoolId, {
-    kind: MessageDeliveryRecipientKind.Student,
-    id: existing.id,
-    subjectId: existing.subjectId,
-  })
+  const scope = await baseService.access.identities.assertLink('students', student, existing)
+  await repositories.students.forAccess(scope).save(student)
+
   return { kind: 'student', entity: student }
 }
 
@@ -236,21 +185,10 @@ async function replaceActorSubject(
     if (!options.allowReplace) {
       assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     }
-    const staffMember = new StaffMemberEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: input.subjectId,
-      isActive: existing.isActive,
-      profileRole: existing.profileRole,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.staffMembers.save(staffMember)
-    scheduleNotificationRecipientUpsert(baseService, buildStaffRecipientProfile(staffMember))
+    const staffMember = new StaffMemberEntity({ ...existing.data, subjectId: input.subjectId })
+    const scope = await baseService.access.identities.assertLink('staffMembers', staffMember, existing)
+    await repositories.staffMembers.forAccess(scope).save(staffMember)
+
     return { kind: 'staff', entity: staffMember }
   }
 
@@ -262,26 +200,10 @@ async function replaceActorSubject(
     if (!options.allowReplace) {
       assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     }
-    const guardian = new GuardianEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      email: existing.email,
-      phone: existing.phone,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: input.subjectId,
-      contactMethods: [...existing.contactMethods],
-      hasAccess: existing.hasAccess,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.guardians.save(guardian)
-    const links = await repositories.guardianLinks.list({ guardianId: guardian.id })
-    scheduleNotificationRecipientUpsert(
-      baseService,
-      buildGuardianRecipientProfile(guardian, links),
-    )
+    const guardian = new GuardianEntity({ ...existing.data, contactMethods: [...existing.contactMethods], subjectId: input.subjectId })
+    const scope = await baseService.access.identities.assertLink('guardians', guardian, existing)
+    await repositories.guardians.forAccess(scope).save(guardian)
+
     return { kind: 'guardian', entity: guardian }
   }
 
@@ -293,22 +215,10 @@ async function replaceActorSubject(
     if (!options.allowReplace) {
       assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
     }
-    const teacher = new TeacherEntity({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      firstName: existing.firstName,
-      lastName: existing.lastName,
-      photoUrl: existing.photoUrl,
-      email: existing.email,
-      phone: existing.phone,
-      notificationEmail: existing.notificationEmail,
-      notificationPhone: existing.notificationPhone,
-      subjectId: input.subjectId,
-      isActive: existing.isActive,
-      createdAt: existing.createdAt,
-    })
-    await baseService.entities.teachers.save(teacher)
-    scheduleNotificationRecipientUpsert(baseService, buildTeacherRecipientProfile(teacher))
+    const teacher = new TeacherEntity({ ...existing.data, subjectId: input.subjectId })
+    const scope = await baseService.access.identities.assertLink('teachers', teacher, existing)
+    await repositories.teachers.forAccess(scope).save(teacher)
+
     return { kind: 'teacher', entity: teacher }
   }
 
@@ -320,7 +230,8 @@ async function replaceActorSubject(
     assertEntitySubjectLinkable(existing.subjectId, input.subjectId)
   }
   const student = existing.copyWith({ subjectId: input.subjectId })
-  await baseService.entities.students.save(student)
-  scheduleNotificationRecipientUpsert(baseService, buildStudentRecipientProfile(student))
+  const scope = await baseService.access.identities.assertLink('students', student, existing)
+  await repositories.students.forAccess(scope).save(student)
+
   return { kind: 'student', entity: student }
 }

@@ -131,7 +131,7 @@ async function seedSchoolFixture(
     return runIntegrationLightSchoolSeed(application)
   }
 
-  return runDevSchoolSeed(application)
+  return runDevSchoolSeed(application, { auth: testIdentityProvisioner })
 }
 
 export async function provisionSeededSchoolDataContext(

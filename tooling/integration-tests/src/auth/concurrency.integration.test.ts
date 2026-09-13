@@ -1,5 +1,4 @@
-import type { GuardianScope, StudentScope } from '@edaya/authorization'
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, Permission, resolveActorScope, resolveEffectiveGrants } from '@edaya/authorization'
+import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, Permission } from '@edaya/authorization'
 import { AttendanceStatus, GradeLevel, PaymentMethod, Subject } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -133,79 +132,55 @@ async function createConcurrencyFixture() {
     feeId: 'tuition',
   })
 
+  await app.accessControlWorkflow.linkActorSubject({ staffMemberId: 'teacher', subjectId: 'teacher-user' })
+  await app.accessControlWorkflow.linkActorSubject({ staffMemberId: 'accountant', subjectId: 'accountant-user' })
+  await app.accessControlWorkflow.linkActorSubject({ guardianId: 'guardian', subjectId: 'guardian-user' })
+  await app.accessControlWorkflow.linkActorSubject({ studentId: 'student', subjectId: 'student-user' })
+
   return { app, repositories, schoolRepositories, forActor, session, studentFee }
 }
 
 describeIntegration('Shared-repository multi-actor concurrency safeguards', () => {
   it('correctly isolates attributions and validates permissions for overlapping concurrent operations', async () => {
-    const { repositories, schoolRepositories, forActor, session, studentFee } = await createConcurrencyFixture()
-
-    // Resolve grants eagerly from the persisted state
-    const teacherGrants = await resolveEffectiveGrants({
-      staffMemberId: 'teacher',
-      schoolId: 'school',
-      academicYearId: 'year',
-      repositories: schoolRepositories,
-    })
-
-    const accountantGrants = await resolveEffectiveGrants({
-      staffMemberId: 'accountant',
-      schoolId: 'school',
-      academicYearId: 'year',
-      repositories: schoolRepositories,
-    })
-
-    const guardianScope = await resolveActorScope({
-      actorKind: 'guardian',
-      actorId: 'guardian',
-      schoolId: 'school',
-      repositories: schoolRepositories,
-    })
-
-    const studentScope = await resolveActorScope({
-      actorKind: 'student',
-      actorId: 'student',
-      schoolId: 'school',
-      repositories: schoolRepositories,
-    })
+    const { repositories, forActor, session, studentFee } = await createConcurrencyFixture()
 
     // Instantiate concurrent actor-bound facades
     const teacherApp = forActor(createStaffActorMetadata({
       subjectId: 'teacher-user',
       staffMemberId: 'teacher',
       schoolId: 'school',
+      academicYearId: 'year',
       requestId: 'teacher-request-101',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
-      effectiveGrants: teacherGrants,
     }))
 
     const accountantApp = forActor(createStaffActorMetadata({
       subjectId: 'accountant-user',
       staffMemberId: 'accountant',
       schoolId: 'school',
+      academicYearId: 'year',
       requestId: 'accountant-request-202',
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Verified,
-      effectiveGrants: accountantGrants,
     }))
 
     const guardianApp = forActor(createGuardianActorMetadata({
       subjectId: 'guardian-user',
       guardianId: 'guardian',
       schoolId: 'school',
+      academicYearId: 'year',
       requestId: 'guardian-request-303',
       authenticatedAt: new Date(),
-      guardianScope: guardianScope as GuardianScope,
     }))
 
     const studentApp = forActor(createStudentActorMetadata({
       subjectId: 'student-user',
       studentId: 'student',
       schoolId: 'school',
+      academicYearId: 'year',
       requestId: 'student-request-404',
       authenticatedAt: new Date(),
-      studentScope: studentScope as StudentScope,
     }))
 
     // Execute multiple overlapping read & write actions concurrently

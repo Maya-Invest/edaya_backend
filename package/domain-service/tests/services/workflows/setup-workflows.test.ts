@@ -1,26 +1,37 @@
+import type { ActorMetadata } from '@edaya/authorization'
 import type { FileStoragePort } from '@edaya/core'
 import {
   ActorAssuranceLevel,
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, Resource, ResourceKind, School, StaffMember } from '@edaya/core'
+import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student } from '@edaya/core'
 import {
   describe,
   expect,
   mock,
   test,
 } from 'bun:test'
-import { createPlatformRegisterTestActor } from '../../support/elevated-test-actor'
+import { createTestApp } from '../../support/create-test-app'
+import { createPlatformRegisterTestActor, createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
-import {
-  createFullSetupContext,
-  createSetupContext,
-} from './workflow-test-context'
+
+async function createContext({ fileStorage = testFileStorage, actorOverride }: { fileStorage?: FileStoragePort, actorOverride?: ActorMetadata } = {}) {
+  const owner = createTestStaffActor('sch1', 'user1')
+  const fixture = await createTestApp(owner, { owner: true, fileStorage })
+  const repositories = fixture.schoolRepositories
+  if (actorOverride?.kind === 'staff')
+    await repositories.staffMembers.save(new StaffMember({ id: actorOverride.staffMemberId, schoolId: actorOverride.schoolId, firstName: 'Other', lastName: 'Staff', subjectId: actorOverride.subjectId }))
+  await repositories.academicYears.save(new AcademicYear({ id: 'ay-current', schoolId: 'sch1', name: '2025-2026', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
+  await repositories.academicYears.save(new AcademicYear({ id: 'ay-next', schoolId: 'sch1', name: '2026-2027', startDate: new Date('2026-09-01'), endDate: new Date('2027-06-30'), status: 'draft' }))
+  await repositories.gradeLevels.save(new GradeLevel({ id: 'grade-1', schoolId: 'sch1', name: 'Grade 7', label: 'G7', order: 7 }))
+  await repositories.students.save(new Student({ id: 'stu1', schoolId: 'sch1', firstName: 'Student', lastName: 'One', birthDate: new Date('2010-01-01') }))
+  return { ...repositories, service: actorOverride ? fixture.forActor(actorOverride) : fixture.app }
+}
 
 describe('SchoolService setup workflows', () => {
   test('createAcademicYear creates a draft year without changing existing years', async () => {
-    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
+    const { academicYears, service } = await createContext()
 
     const result = await service.setupWorkflow.createAcademicYear({
       id: 'ay-new',
@@ -33,15 +44,14 @@ describe('SchoolService setup workflows', () => {
 
     expect(result.id).toBe('ay-new')
     expect(result.status).toBe('draft')
-    expect(academicYears.get('ay-current')?.status).toBe('published')
-    expect(academicYears.get('ay-new')?.status).toBe('draft')
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+    expect((await academicYears.findById('ay-current'))?.status).toBe('published')
+    expect((await academicYears.findById('ay-new'))?.status).toBe('draft')
+    expect((await academicYears.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('publishAcademicYear publishes a draft year when no other year is published', async () => {
-    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
-    academicYears.set('ay-current', new AcademicYear({
+    const { academicYears, service } = await createContext()
+    await academicYears.save(new AcademicYear({
       id: 'ay-current',
       schoolId: 'sch1',
       name: '2025-2026',
@@ -57,13 +67,12 @@ describe('SchoolService setup workflows', () => {
 
     expect(result.id).toBe('ay-next')
     expect(result.status).toBe('published')
-    expect(academicYears.get('ay-next')?.status).toBe('published')
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+    expect((await academicYears.findById('ay-next'))?.status).toBe('published')
+    expect((await academicYears.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('publishAcademicYear rejects when another year is already published', async () => {
-    const { service } = createSetupContext()
+    const { service } = await createContext()
 
     await expect(service.setupWorkflow.publishAcademicYear({
       academicYearId: 'ay-next',
@@ -71,7 +80,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('publishAcademicYear rejects when year is not draft', async () => {
-    const { service } = createSetupContext()
+    const { service } = await createContext()
 
     await expect(service.setupWorkflow.publishAcademicYear({
       academicYearId: 'ay-current',
@@ -81,7 +90,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('archiveAcademicYear archives a published year', async () => {
-    const { academicYears, mockAtomic, mockRepos, service } = createSetupContext()
+    const { academicYears, service } = await createContext()
 
     const result = await service.setupWorkflow.archiveAcademicYear({
       academicYearId: 'ay-current',
@@ -89,13 +98,12 @@ describe('SchoolService setup workflows', () => {
 
     expect(result.id).toBe('ay-current')
     expect(result.status).toBe('archived')
-    expect(academicYears.get('ay-current')?.status).toBe('archived')
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.academicYears.save).toHaveBeenCalledWith(result)
+    expect((await academicYears.findById('ay-current'))?.status).toBe('archived')
+    expect((await academicYears.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('archiveAcademicYear rejects when year is not published', async () => {
-    const { service } = createSetupContext()
+    const { service } = await createContext()
 
     await expect(service.setupWorkflow.archiveAcademicYear({
       academicYearId: 'ay-next',
@@ -105,7 +113,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('publishAcademicYear rejects unknown academic years', async () => {
-    const { service } = createSetupContext()
+    const { service } = await createContext()
 
     await expect(service.setupWorkflow.publishAcademicYear({
       academicYearId: 'missing-year',
@@ -113,7 +121,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('registerSchool seeds notification templates for a new school', async () => {
-    const { mockRepos, schools, service } = createFullSetupContext({
+    const { schoolNotificationTemplates, schools, service } = await createContext({
       actorOverride: createPlatformRegisterTestActor('sch-new'),
     })
 
@@ -124,17 +132,17 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(school.id).toBe('sch-new')
-    expect(schools.store.get('sch-new')?.name).toBe('New School')
-    expect(mockRepos.schoolNotificationTemplates.save).toHaveBeenCalled()
+    expect((await schools.findById('sch-new'))?.name).toBe('New School')
+    expect(await schoolNotificationTemplates.findById('sch-new')).toBeDefined()
   })
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {
-    const { schools, service } = createFullSetupContext()
-    schools.store.set('sch1', new School({
+    const { schools, service } = await createContext()
+    await schools.save(new School({
       id: 'sch1',
       name: 'School',
       timeZone: 'UTC',
-      ownerSubjectId: 'owner-subject',
+      ownerSubjectId: 'subject-test',
       enforceScheduleConflicts: true,
       timetableEnforceWorkloadFulfillment: false,
       timetableExcludeBreakSlots: false,
@@ -160,7 +168,7 @@ describe('SchoolService setup workflows', () => {
     expect(updated.timetablePreferredPeriodDefinitionIds).toEqual(['period-1'])
     expect(updated.timetableAllowUnassignedTeacherPlacements).toBe(true)
     expect(updated.timetableUseHomeroomTeacherFallback).toBe(true)
-    expect(schools.store.get('sch1')?.name).toBe('Renamed School')
+    expect((await schools.findById('sch1'))?.name).toBe('Renamed School')
   })
 
   test('updateSchoolConfiguration rejects owner transfer from non-owner staff', async () => {
@@ -171,13 +179,8 @@ describe('SchoolService setup workflows', () => {
       requestId: 'request',
       authenticatedAt: new Date('2026-01-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
-      effectiveGrants: {
-        permissions: new Set(),
-        scopeGrants: [],
-        isElevated: false,
-      },
     })
-    const { service } = createFullSetupContext({ actorOverride: limitedActor })
+    const { service } = await createContext({ actorOverride: limitedActor })
 
     await expect(service.setupWorkflow.updateSchoolConfiguration({
       schoolId: 'sch1',
@@ -186,7 +189,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('createAcademicPeriod and publishAcademicPeriod persist period state', async () => {
-    const { academicPeriods, service } = createFullSetupContext()
+    const { academicPeriods, service } = await createContext()
 
     const created = await service.setupWorkflow.createAcademicPeriod({
       id: 'period-1',
@@ -199,18 +202,18 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(created.isPublished).toBe(false)
-    expect(academicPeriods.store.get('period-1')).toBeDefined()
+    expect((await academicPeriods.findById('period-1'))).toBeDefined()
 
     const published = await service.setupWorkflow.publishAcademicPeriod({
       academicPeriodId: 'period-1',
     })
 
     expect(published.isPublished).toBe(true)
-    expect(academicPeriods.store.get('period-1')?.isPublished).toBe(true)
+    expect((await academicPeriods.findById('period-1'))?.isPublished).toBe(true)
   })
 
   test('createClassGroup persists the class and syncs grade-level subjects', async () => {
-    const { classGroups, mockAtomic, mockRepos, service } = createFullSetupContext()
+    const { classGroups, classSubjects, service } = await createContext()
 
     const classGroup = await service.setupWorkflow.createClassGroup({
       id: 'cg-new',
@@ -222,14 +225,13 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(classGroup.id).toBe('cg-new')
-    expect(classGroups.store.get('cg-new')).toBeDefined()
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.classSubjects.save).not.toHaveBeenCalled()
+    expect((await classGroups.findById('cg-new'))).toBeDefined()
+    expect(await classSubjects.count()).toBe(0)
   })
 
   test('updateClassGroupConfiguration updates an existing class group', async () => {
-    const { classGroups, service } = createFullSetupContext()
-    classGroups.store.set('cg-existing', new ClassGroup({
+    const { classGroups, service } = await createContext()
+    await classGroups.save(new ClassGroup({
       id: 'cg-existing',
       schoolId: 'sch1',
       academicYearId: 'ay-current',
@@ -244,11 +246,11 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(updated.name).toBe('Grade 7B Honors')
-    expect(classGroups.store.get('cg-existing')?.name).toBe('Grade 7B Honors')
+    expect((await classGroups.findById('cg-existing'))?.name).toBe('Grade 7B Honors')
   })
 
   test('registerStaffMember and updateStaffMemberStatus persist staff lifecycle', async () => {
-    const { staffMembers, service } = createFullSetupContext()
+    const { staffMembers, service } = await createContext()
 
     const created = await service.setupWorkflow.registerStaffMember({
       id: 'staff-new',
@@ -259,9 +261,9 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(created.isActive).toBe(true)
-    expect(staffMembers.store.get('staff-new')).toBeDefined()
+    expect((await staffMembers.findById('staff-new'))).toBeDefined()
 
-    staffMembers.store.set('staff-new', new StaffMember({
+    await staffMembers.save(new StaffMember({
       id: 'staff-new',
       schoolId: 'sch1',
       firstName: 'Jane',
@@ -277,12 +279,12 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(deactivated.isActive).toBe(false)
-    expect(staffMembers.store.get('staff-new')?.isActive).toBe(false)
+    expect((await staffMembers.findById('staff-new'))?.isActive).toBe(false)
   })
 
   test('updateStaffMemberProfile updates profile fields', async () => {
-    const { staffMembers, service } = createFullSetupContext()
-    staffMembers.store.set('staff-profile', new StaffMember({
+    const { staffMembers, service } = await createContext()
+    await staffMembers.save(new StaffMember({
       id: 'staff-profile',
       schoolId: 'sch1',
       firstName: 'Jane',
@@ -313,7 +315,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('configureGradeLevel, period definition, resource, and activity persist configuration entities', async () => {
-    const { activities, gradeLevels, periodDefinitions, resources, service } = createFullSetupContext()
+    const { activities, gradeLevels, periodDefinitions, resources, service } = await createContext()
 
     const gradeLevel = await service.setupWorkflow.configureGradeLevel({
       id: 'grade-1',
@@ -352,15 +354,15 @@ describe('SchoolService setup workflows', () => {
       endDate: new Date('2026-06-30'),
     })
 
-    expect(gradeLevels.store.get(gradeLevel.id)).toBeDefined()
-    expect(periodDefinitions.store.get(periodDefinition.id)).toBeDefined()
-    expect(resources.store.get(resource.id)).toBeDefined()
-    expect(activities.store.get(activity.id)).toBeDefined()
+    expect((await gradeLevels.findById(gradeLevel.id))).toBeDefined()
+    expect((await periodDefinitions.findById(periodDefinition.id))).toBeDefined()
+    expect((await resources.findById(resource.id))).toBeDefined()
+    expect((await activities.findById(activity.id))).toBeDefined()
   })
 
   test('assignResourceToClass and removeResourceAssignment manage resource assignments', async () => {
-    const { classGroups, resourceAssignments, resources, service } = createFullSetupContext()
-    classGroups.store.set('cg-new', new ClassGroup({
+    const { classGroups, resourceAssignments, resources, service } = await createContext()
+    await classGroups.save(new ClassGroup({
       id: 'cg-new',
       schoolId: 'sch1',
       academicYearId: 'ay-current',
@@ -368,7 +370,7 @@ describe('SchoolService setup workflows', () => {
       name: 'Grade 7A',
       attendanceMode: AttendanceMode.Session,
     }))
-    resources.store.set('res-1', new Resource({
+    await resources.save(new Resource({
       id: 'res-1',
       schoolId: 'sch1',
       name: 'Room 101',
@@ -381,9 +383,9 @@ describe('SchoolService setup workflows', () => {
       classGroupId: 'cg-new',
     })
 
-    expect(resourceAssignments.store.get('ra-1')).toBeDefined()
+    expect((await resourceAssignments.findById('ra-1'))).toBeDefined()
     await service.setupWorkflow.removeResourceAssignment({ resourceAssignmentId: assignment.id })
-    expect(resourceAssignments.store.has('ra-1')).toBe(false)
+    expect(Boolean(await resourceAssignments.findById('ra-1'))).toBe(false)
   })
 
   test('registerAttachment validates storage metadata before saving', async () => {
@@ -396,7 +398,7 @@ describe('SchoolService setup workflows', () => {
       headObject,
       deleteObject: mock(async () => {}),
     }
-    const { attachments, service } = createFullSetupContext({ fileStorage })
+    const { attachments, service } = await createContext({ fileStorage })
 
     const attachment = await service.setupWorkflow.registerAttachment({
       id: 'att-1',
@@ -411,12 +413,12 @@ describe('SchoolService setup workflows', () => {
     })
 
     expect(attachment.status).toBe(AttachmentStatus.Ready)
-    expect(attachments.store.get('att-1')).toBeDefined()
+    expect((await attachments.findById('att-1'))).toBeDefined()
     expect(headObject).toHaveBeenCalledWith('uploads/report.pdf')
   })
 
   test('registerAttachment rejects missing storage objects and metadata mismatches', async () => {
-    const { service: missingObjectService } = createFullSetupContext()
+    const { service: missingObjectService } = await createContext()
     await expect(missingObjectService.setupWorkflow.registerAttachment({
       id: 'att-missing',
       schoolId: 'sch1',
@@ -432,7 +434,7 @@ describe('SchoolService setup workflows', () => {
       ...testFileStorage,
       headObject: mock(async () => ({ sizeBytes: 512, contentType: 'application/pdf' })),
     }
-    const { service: mismatchService } = createFullSetupContext({ fileStorage: mismatchedStorage })
+    const { service: mismatchService } = await createContext({ fileStorage: mismatchedStorage })
     await expect(mismatchService.setupWorkflow.registerAttachment({
       id: 'att-size',
       schoolId: 'sch1',
@@ -451,8 +453,8 @@ describe('SchoolService setup workflows', () => {
       ...testFileStorage,
       deleteObject,
     }
-    const { attachments, service } = createFullSetupContext({ fileStorage })
-    attachments.store.set('att-remove', new Attachment({
+    const { attachments, service } = await createContext({ fileStorage })
+    await attachments.save(new Attachment({
       id: 'att-remove',
       schoolId: 'sch1',
       ownerKind: AttachmentOwnerKind.Student,
@@ -465,6 +467,6 @@ describe('SchoolService setup workflows', () => {
     await service.setupWorkflow.removeAttachment({ attachmentId: 'att-remove' })
 
     expect(deleteObject).toHaveBeenCalledWith('uploads/report.pdf')
-    expect(attachments.store.has('att-remove')).toBe(false)
+    expect(Boolean(await attachments.findById('att-remove'))).toBe(false)
   })
 })

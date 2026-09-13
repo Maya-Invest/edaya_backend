@@ -11,13 +11,13 @@ describe("isNotifyConfigured", () => {
     expect(isNotifyConfigured(createPgliteTestEnv())).toBe(false);
   });
 
-  it("is false when Novu is explicitly selected", () => {
+  it("uses the same dispatcher with the Novu email transport", () => {
     expect(isNotifyConfigured(createPgliteTestEnv({
       RUNTIME: "local",
       DATABASE_URL: "pglite:.data/school",
-      NOTIFICATION_PROVIDER: "novu",
+      EMAIL_TRANSPORT: "novu",
       NOVU_SECRET_KEY: "novu-test-key",
-    }))).toBe(false);
+    }))).toBe(true);
   });
 
   it("is true on local and worker when Novu is not set", () => {
@@ -35,7 +35,7 @@ describe("isNotifyConfigured", () => {
 describe("resolveNotificationGateway", () => {
   it("no-ops on the in-memory runtime even when Novu is set", () => {
     const env = createPgliteTestEnv({
-      NOTIFICATION_PROVIDER: "novu",
+      EMAIL_TRANSPORT: "novu",
       NOVU_SECRET_KEY: "novu-test-key",
     });
 

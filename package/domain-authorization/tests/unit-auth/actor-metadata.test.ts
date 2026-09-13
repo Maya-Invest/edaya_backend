@@ -13,17 +13,14 @@ import {
   requireActorSchoolId,
   resolveAuditActorId,
 } from '@edaya/authorization'
-import { PlatformPermission } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
-import { effectiveGrantsForRoles, portalScopeForGuardian, portalScopeForStudent } from '../support/effective-grants'
 
 describe('actor metadata', () => {
-  it('creates immutable grant-backed staff context with audit identity', () => {
+  it('creates immutable identity-only staff context with audit identity', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'user-1',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles([]),
       requestId: 'request-1',
       sessionId: 'session-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
@@ -33,24 +30,21 @@ describe('actor metadata', () => {
     expect(actor.assuranceLevel).toBe(ActorAssuranceLevel.Verified)
     expect(resolveAuditActorId(actor)).toBe('teacher-1')
     expect(Object.isFrozen(actor)).toBe(true)
-    expect(actor.effectiveGrants).toBeDefined()
+    expect(Object.keys(actor)).not.toContain('effectiveGrants')
+    expect(Object.keys(actor)).not.toContain('permissions')
   })
 
-  it('allows grant-backed staff context without legacy roles', () => {
+  it('does not preload authorization state on staff context', () => {
     const actor = createStaffActorMetadata({
       subjectId: 'user-1',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
       requestId: 'request-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
-      effectiveGrants: {
-        permissions: new Set(),
-        scopeGrants: [],
-        isElevated: false,
-      },
     })
 
-    expect(actor.effectiveGrants).toBeDefined()
+    expect(Object.keys(actor)).not.toContain('effectiveGrants')
+    expect(Object.keys(actor)).not.toContain('permissions')
     expect(resolveAuditActorId(actor)).toBe('teacher-1')
   })
 
@@ -61,7 +55,6 @@ describe('actor metadata', () => {
       schoolId: 'school',
       requestId: 'request-guardian',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
-      guardianScope: portalScopeForGuardian(['student']),
     })
     const student = createStudentActorMetadata({
       subjectId: 'user-student',
@@ -69,7 +62,6 @@ describe('actor metadata', () => {
       schoolId: 'school',
       requestId: 'request-student',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
-      studentScope: portalScopeForStudent('student'),
     })
     const system = createSystemActorMetadata({
       systemId: 'nightly-fee-job',
@@ -91,7 +83,6 @@ describe('actor metadata', () => {
       subjectId: 'user-1',
       staffMemberId: '',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles([]),
       requestId: 'request-1',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
     })).toThrow()
@@ -109,7 +100,6 @@ describe('actor metadata', () => {
       requestId: 'request-platform',
       authenticatedAt: new Date('2026-09-01T08:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Verified,
-      permissions: [PlatformPermission.PLATFORM_USER_READ],
       email: 'Op@Edaya.test',
     })
     const s2s = createS2sActorMetadata({
@@ -117,9 +107,10 @@ describe('actor metadata', () => {
       schoolId: 'school-1',
       requestId: 'request-s2s',
       clientId: 'children-ai',
-      accessClass: 'read',
     })
 
+    expect(Object.keys(platform)).not.toContain('permissions')
+    expect(Object.keys(s2s)).not.toContain('accessClass')
     expect(platform.kind).toBe('platform')
     expect(platform.email).toBe('op@edaya.test')
     expect(isInteractiveActor(platform)).toBe(true)

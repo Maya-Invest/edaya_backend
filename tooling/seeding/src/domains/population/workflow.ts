@@ -19,7 +19,6 @@ async function seedPopulationFromDataset(
   port: PopulationSeedPort,
   dataset: FixtureDataset,
 ): Promise<void> {
-  const seedSubjectId = (id: string) => `subject-${id}`
   const students = dataset.entities.students ?? []
   const enrollments = dataset.entities.enrollments ?? []
   const guardians = dataset.entities.guardians ?? []
@@ -33,7 +32,6 @@ async function seedPopulationFromDataset(
       firstName: student.firstName,
       lastName: student.lastName,
       birthDate: birthDate ? seedDateTime(birthDate) : undefined,
-      subjectId: seedSubjectId(student.id),
       sendAccountInvitation: false,
     })
   }
@@ -54,7 +52,6 @@ async function seedPopulationFromDataset(
       lastName: guardian.lastName,
       email: guardian.email ?? undefined,
       phone: guardian.phone ?? undefined,
-      subjectId: seedSubjectId(guardian.id),
       sendAccountInvitation: false,
     })
   }

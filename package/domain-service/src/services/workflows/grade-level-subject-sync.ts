@@ -8,6 +8,7 @@ import {
   GradeLevelSubject as GradeLevelSubjectEntity,
   GradeLevelSubjectMatter as GradeLevelSubjectMatterEntity,
 } from '@edaya/core'
+import { assertClassSubjectUnused } from '../entities/config/academics/class-subject'
 
 export interface SyncClassSubjectOptions {
   classSubjectId?: string
@@ -42,7 +43,8 @@ export async function syncGradeLevelSubjectToClassGroup(
     createdAt: existing?.createdAt ?? new Date(),
   })
 
-  await baseService.repositories.classSubjects.save(classSubject)
+  const scope = await baseService.access.curriculum.assertMirrorSubject(classSubject, existing)
+  await baseService.repositories.classSubjects.forAccess(scope).save(classSubject)
 
   const gradeMatters = await baseService.repositories.gradeLevelSubjectMatters.list({
     gradeLevelSubjectId: gradeLevelSubject.id,
@@ -80,7 +82,8 @@ export async function syncGradeLevelSubjectMatterToClassSubject(
     updatedAt: existing?.updatedAt ?? new Date(),
   })
 
-  await baseService.repositories.classSubjectMatters.save(matter)
+  const scope = await baseService.access.curriculum.assertMirrorMatter(matter, existing)
+  await baseService.repositories.classSubjectMatters.forAccess(scope).save(matter)
   return matter
 }
 
@@ -136,9 +139,11 @@ export async function removeMirroredClassSubjects(
   for (const classSubject of classSubjects) {
     const matters = await baseService.repositories.classSubjectMatters.list({ classSubjectId: classSubject.id })
     for (const matter of matters) {
-      await baseService.repositories.classSubjectMatters.delete(matter.id)
+      await baseService.entities.classSubjectMatters.delete(matter.id)
     }
-    await baseService.repositories.classSubjects.delete(classSubject.id)
+    const scope = await baseService.access.entity('classSubjects').assertDelete([classSubject.id])
+    await assertClassSubjectUnused(classSubject, baseService.repositories)
+    await baseService.repositories.classSubjects.forAccess(scope).delete(classSubject.id)
   }
 }
 
@@ -147,7 +152,7 @@ export async function saveGradeLevelSubjectEntity(
   input: ConstructorParameters<typeof GradeLevelSubjectEntity>[0],
 ): Promise<GradeLevelSubject> {
   const gradeLevelSubject = new GradeLevelSubjectEntity(input)
-  await baseService.repositories.gradeLevelSubjects.save(gradeLevelSubject)
+  await baseService.entities.gradeLevelSubjects.save(gradeLevelSubject)
   return gradeLevelSubject
 }
 
@@ -156,6 +161,6 @@ export async function saveGradeLevelSubjectMatterEntity(
   input: ConstructorParameters<typeof GradeLevelSubjectMatterEntity>[0],
 ): Promise<GradeLevelSubjectMatter> {
   const matter = new GradeLevelSubjectMatterEntity(input)
-  await baseService.repositories.gradeLevelSubjectMatters.save(matter)
+  await baseService.entities.gradeLevelSubjectMatters.save(matter)
   return matter
 }

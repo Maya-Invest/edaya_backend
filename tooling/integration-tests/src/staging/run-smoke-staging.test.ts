@@ -100,7 +100,7 @@ describe('runSmokeStaging', () => {
       if (url.endsWith('/core/authorization/effective-grants') && method === 'GET') {
         return new Response(JSON.stringify({
           kind: 'staff',
-          effectiveGrants: { permissions: ['STUDENT_READ'], scopeGrants: [], isElevated: false },
+          grants: [{ permission: 'STUDENT_READ', source: 'manual', scopes: [{ kind: 'school' }], academicYearId: 'year' }],
         }), { status: 200 })
       }
 

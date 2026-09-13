@@ -1,17 +1,16 @@
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicYear, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentNote, Subject, SubjectMatter } from '@edaya/core'
 import {
   describe,
   expect,
   test,
 } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
-import { effectiveGrantsForRoles } from '../../support/effective-grants'
 import { actor } from './managed-entity-test-context'
 
 describe('Entity config tenant and access gates', () => {
   test('uses indirect tenant resolution for resource assignments', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createTestApp(actor, { owner: true })
     await repositories.resourceRepository.save(new Resource({
       id: 'resource-1',
       schoolId: 'other-school',
@@ -31,12 +30,11 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles(['teacher']),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
     })
-    const { app, repositories } = createTestApp(teacherActor)
+    const { app, repositories } = await createTestApp(teacherActor)
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-unassigned-1',
       schoolId: 'school',
@@ -91,12 +89,11 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'teacher-user',
       staffMemberId: 'teacher-1',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles(['teacher']),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
     })
-    const { app, repositories } = createTestApp(teacherActor)
+    const { app, repositories } = await createTestApp(teacherActor)
     await repositories.studentRepository.save(new Student({
       id: 'student-unassigned',
       schoolId: 'school',
@@ -128,7 +125,7 @@ describe('Entity config tenant and access gates', () => {
   })
 
   test('uses managed proposed-state authorization for subject matters', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createTestApp(actor, { owner: true })
 
     await expect(app.baseService.entities.subjectMatters.save(new SubjectMatter({
       id: 'matter-1',
@@ -159,20 +156,11 @@ describe('Entity config tenant and access gates', () => {
       subjectId: 'configure-user',
       staffMemberId: 'staff-configure',
       schoolId: 'school',
-      effectiveGrants: {
-        permissions: new Set([Permission.SCHOOL_STRUCTURE_CONFIGURE]),
-        scopeGrants: [{
-          permission: Permission.SCHOOL_STRUCTURE_CONFIGURE,
-          scopeType: 'school',
-          scopeEntityIds: ['school'],
-        }],
-        isElevated: false,
-      },
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Standard,
     })
-    const { app, repositories } = createTestApp(configureActor)
+    const { app, repositories, schoolRepositories } = await createTestApp(configureActor)
 
     await repositories.academicYearRepository.save(new AcademicYear({
       id: 'year-1',
@@ -189,6 +177,8 @@ describe('Entity config tenant and access gates', () => {
       label: '6ème',
       order: 1,
     }))
+
+    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'configure', schoolId: 'school', academicYearId: 'year-1', staffId: configureActor.staffMemberId, permission: Permission.SCHOOL_STRUCTURE_CONFIGURE, scopes: [{ kind: 'school' }] }))
 
     const classGroup = new ClassGroup({
       id: 'class-new',

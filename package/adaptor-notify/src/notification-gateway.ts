@@ -1,21 +1,17 @@
 import type {
   NotificationEnqueueInput,
   NotificationGatewayPort,
-  NotificationRecipient,
-  NotificationRecipientProfile,
   RegisterPushDeviceInput,
   UnregisterPushDeviceInput,
 } from "@edaya/core";
+import type { NotifyRuntime } from "./runtime";
 import {
   cancelSchoolNotification,
   enqueueSchoolNotification,
   lookupSchoolDeliveryStatuses,
   registerSchoolPushDevice,
-  removeSchoolRecipient,
   unregisterSchoolPushDevice,
-  upsertSchoolRecipient,
 } from "./operations";
-import type { NotifyRuntime } from "./runtime";
 
 export interface CreateNotifyNotificationGatewayOptions {
   runtime: NotifyRuntime;
@@ -43,22 +39,6 @@ export function createNotifyNotificationGateway(
       }
       catch (error) {
         onError?.(error, { operation: "cancel", idempotencyKey });
-      }
-    },
-    upsertRecipient: async (profile: NotificationRecipientProfile) => {
-      try {
-        await upsertSchoolRecipient(runtime, profile);
-      }
-      catch (error) {
-        onError?.(error, { operation: "upsertRecipient", profile });
-      }
-    },
-    removeRecipient: async (schoolId: string, recipient: NotificationRecipient) => {
-      try {
-        await removeSchoolRecipient(runtime, schoolId, recipient);
-      }
-      catch (error) {
-        onError?.(error, { operation: "removeRecipient", schoolId, recipient });
       }
     },
     lookupDeliveryStatuses: async (deliveries) => {

@@ -164,7 +164,7 @@ async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | un
 async function checkEffectiveGrants(client: HttpSeedClient): Promise<SmokeCheckResult> {
   const { response, body } = await client.jsonRequest<{
     kind?: string
-    effectiveGrants?: { permissions?: string[] }
+    grants?: Array<{ permission: string }>
   }>('/core/authorization/effective-grants')
 
   if (!response.ok) {

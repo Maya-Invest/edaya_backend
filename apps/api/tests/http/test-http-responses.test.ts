@@ -1,18 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { BusinessRuleViolationError, DomainValidationError } from "@edaya/core";
-import { AuthorizationError, AuthorizationErrorCode, invalidateAuthCacheForEvents, resolveAuthCacheInvalidationEvents } from "@edaya/authorization";
+import { AuthorizationError, AuthorizationErrorCode } from "@edaya/authorization";
 import {
   badRequestResponse,
   conflictResponse,
   forbiddenResponse,
   routeErrorResponse,
 } from "@/http/responses";
-import { apiAuthCacheInvalidationPort } from "@/lib/authorization/auth-cache-invalidation-port";
-import {
-  clearEffectiveGrantsCache,
-  resolveCachedEffectiveGrants,
-} from "@/lib/authorization/grants-cache/resolve-cached";
-import { getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 
 function createTestContext(): { context: any; json: ReturnType<typeof mock> } {
   const json = mock((body: unknown, status: number) => ({ body, status }));
@@ -78,126 +72,5 @@ describe("response helpers", () => {
     const { context, json } = createTestContext();
     badRequestResponse(context as any, "Invalid", { field: "name" });
     expect(json).toHaveBeenCalledWith({ message: "Invalid", field: "name" }, 400);
-  });
-});
-
-describe("auth cache invalidation via entity lifecycle port", () => {
-  beforeEach(() => {
-    clearEffectiveGrantsCache();
-  });
-
-  async function expectCacheInvalidatedAfterEvents(
-    events: ReturnType<typeof resolveAuthCacheInvalidationEvents>,
-    actorType: "student" | "guardian" | "staff",
-    actorId: string,
-  ) {
-    const resolveActorGrants = mock().mockResolvedValue({
-      permissions: new Set(),
-      scopeGrants: [],
-      isElevated: false,
-    });
-    const repositories = {
-      authorization: { resolveActorGrants },
-    } as any;
-
-    const cacheArgs = {
-      actorId,
-      actorType,
-      schoolId: "school-1",
-      subjectId: "auth-subject",
-      sessionId: "session-1",
-      authenticatedAt: new Date("2026-01-01T00:00:00Z"),
-      repositories,
-    };
-
-    await resolveCachedEffectiveGrants(cacheArgs);
-    expect(resolveActorGrants).toHaveBeenCalledTimes(1);
-
-    invalidateAuthCacheForEvents(events, apiAuthCacheInvalidationPort);
-
-    await resolveCachedEffectiveGrants(cacheArgs);
-    expect(resolveActorGrants).toHaveBeenCalledTimes(2);
-  }
-
-  it("invalidates student grants when enrollment lifecycle events fire", async () => {
-    await expectCacheInvalidatedAfterEvents(
-      resolveAuthCacheInvalidationEvents("enrollments", {
-        studentId: "student-1",
-        schoolId: "school-1",
-      }),
-      "student",
-      "student-1",
-    );
-  });
-
-  it("invalidates guardian and student grants when guardian link lifecycle events fire", async () => {
-    const resolveActorGrants = mock().mockResolvedValue({
-      permissions: new Set(),
-      scopeGrants: [],
-      isElevated: false,
-    });
-    const repositories = {
-      authorization: { resolveActorGrants },
-    } as any;
-
-    const guardianCacheArgs = {
-      actorId: "guardian-1",
-      actorType: "guardian" as const,
-      schoolId: "school-1",
-      subjectId: "auth-guardian",
-      sessionId: "session-guardian",
-      authenticatedAt: new Date("2026-01-01T00:00:00Z"),
-      repositories,
-    };
-    const studentCacheArgs = {
-      actorId: "student-1",
-      actorType: "student" as const,
-      schoolId: "school-1",
-      subjectId: "auth-student",
-      sessionId: "session-student",
-      authenticatedAt: new Date("2026-01-01T00:00:00Z"),
-      repositories,
-    };
-
-    await resolveCachedEffectiveGrants(guardianCacheArgs);
-    await resolveCachedEffectiveGrants(studentCacheArgs);
-    expect(resolveActorGrants).toHaveBeenCalledTimes(2);
-
-    invalidateAuthCacheForEvents(
-      resolveAuthCacheInvalidationEvents("guardianLinks", {
-        guardianId: "guardian-1",
-        studentId: "student-1",
-        schoolId: "school-1",
-      }),
-      apiAuthCacheInvalidationPort,
-    );
-
-    await resolveCachedEffectiveGrants(guardianCacheArgs);
-    await resolveCachedEffectiveGrants(studentCacheArgs);
-    expect(resolveActorGrants).toHaveBeenCalledTimes(4);
-  });
-
-  it("getEntityWriteService returns the domain entity service without API dispatch wrapping", () => {
-    const inner = {
-      list: mock(),
-      findOne: mock(),
-      count: mock(),
-      findById: mock(),
-      findByIds: mock(),
-      save: mock(),
-      batchSave: mock(),
-      delete: mock(),
-      batchDelete: mock(),
-    };
-
-    const service = {
-      baseService: {
-        entities: {
-          enrollments: inner,
-        },
-      },
-    } as any;
-
-    expect(getEntityWriteService(service, "enrollments")).toBe(inner);
   });
 });

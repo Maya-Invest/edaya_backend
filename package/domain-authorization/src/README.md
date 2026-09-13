@@ -1,380 +1,149 @@
-# Authorization model
+# Authorization
 
-`@edaya/authorization` (`package/domain-authorization`) owns the four-layer authorization pipeline for managed entities. Every interactive request carries an `ActorMetadata` value:
+`@edaya/authorization` owns business access policies. `Permission`, defined by `@edaya/core`, is the action vocabulary for staff, teachers, guardians, students, platform operators, and admitted machine callers.
 
-- **Staff** — preloaded `effectiveGrants` (permission + scope paths).
-- **Teacher** — preloaded `teacherScope` (teaching + homeroom assignments).
-- **Guardian** — preloaded `guardianScope` (linked students and enrollments).
-- **Student** — preloaded `studentScope` (self + class enrollments).
+## Identity and facts
 
-Grant and scope resolution happens **once per session** in the API middleware. The engine never hits the database during the synchronous operation gate.
+Actors contain identity, the selected school/profile, request context, and authentication assurance. Policies read current authorization facts from repositories. Selecting a guardian profile uses guardian relationships even when that person also owns the school or has a staff profile.
 
-`Permission` and staff grant scope validation are defined in `@edaya/core` and re-exported here for convenience. Import `Permission` from `@edaya/core` in new code. Public authorization API is `@edaya/authorization`.
+| Fact | Authoritative record |
+|------|----------------------|
+| Manual staff permission | `StaffPermissionAssignment`: action, typed scopes, academic year, status, validity |
+| Authority from a staff placement | `StaffAssignment`: permissions and placement |
+| Subject teaching or homeroom responsibility | Active `TeacherAssignment`, with its year and validity |
+| Staff coordinator contact (no runtime authority) | `ClassGroup.homeroomStaffId` |
+| Family access | Guardian access flag, guardian/student links, student profile, active enrollments |
+| School ownership | School owner subject; elevated service authority is explicit on the service account |
+| Platform authority | Active `PlatformUser` and its canonical platform permissions |
+| S2S authority | Active `S2sClient`, school, and access class |
 
----
+Presets populate ordinary manual grants. Their names have no authorization meaning. Staff assignments remain separate business records; their permissions are derived directly when policies run.
 
-## Enforcement pipeline
+`AccessFacts` memoizes repository reads within a policy evaluation. Authorization facts and decisions are never stored in a shared cache or on actor metadata. A subsequent evaluation sees relationship removal, expiration, or account deactivation.
 
-Every managed-entity read/write runs through **four layers in order**:
+## Enforcement
 
-```mermaid
-flowchart LR
-  L0[0. Tenant resolver]
-  L1[1. Operation gate sync]
-  L2[2. Resource policy async]
-  L3[3. Business gate preSave/preDelete]
-
-  L0 --> L1 --> L2 --> L3
-```
-
-| Layer | Name | Sync/async | Declared in entity config | Examples |
-|-------|------|------------|---------------------------|----------|
-| **0** | Tenant | Sync (before auth) | `tenant:` resolver | `schoolId` match, indirect tenant via enrollment |
-| **1** | Operation gate | Sync | `read.checkModule` / `write.checkModule` via `operationModule()` | `GradeOperations.input`, `StudentOperations.update` |
-| **2** | Resource policy | Async | `read.checkAccess` / `write.authorizeSave` / `authorizeDelete` via `resourceGate*` | `policy.checkStudentAccess`, `policy.checkAssessmentAccess` |
-| **3** | Business gate | Async | `gates.preSave` / `gates.preDelete` | Published report card immutability, enrollment status rules |
-
-**Rules**
-
-- Layer 1 answers: “May this **actor kind** perform this **operation** (optionally on a target)?”
-- Layer 2 answers: “May this actor reach **this specific resource** (relationship graph)?”
-- Layer 3 answers: “Is this **mutation valid** regardless of who is asking?” — no `actor` branching for authorization.
-- Do not call `authorize()` or `assertCapability()` from business gates or resource gates.
-- Do not re-run the operation in layer 2 — `checkModule` already ran in `write.checkModule` / `read.checkModule`.
-
-**Actor switches live in exactly two places:** `assertOperation()` (layer 1) and `policy/compose.ts` (layer 2). Not in `src/domain/**`.
-
----
-
-## End-to-end request flow
-
-```mermaid
-sequenceDiagram
-  participant Client
-  participant Middleware as API session middleware
-  participant Cache as grants + scope cache
-  participant Repo as AuthorizationRepository
-  participant Service as ManagedEntityService / workflow
-  participant Op as assertOperation
-  participant Policy as AuthorizationPolicy
-
-  Client->>Middleware: HTTP request + session cookie
-  Middleware->>Middleware: resolve subject → staff | teacher | guardian | student
-  Middleware->>Cache: resolveCachedEffectiveGrants / resolveCachedActorScope
-  Cache->>Repo: resolveActorGrants / resolveActorScope
-  Repo-->>Cache: EffectiveGrants or ActorScope
-  Cache-->>Middleware: preloaded credentials
-  Middleware->>Middleware: createStaffActorMetadata / teacher / guardian / student
-  Middleware->>Service: actor + authorizationPolicy
-  Service->>Op: operationModule(StudentOperations.read)(actor)
-  Op-->>Service: ok | AuthorizationError
-  Service->>Policy: checkStudentAccess(actor, ids)
-  Policy-->>Service: ok | AuthorizationError
-```
-
-**Takeaway:** middleware assembles the actor; entity configs declare operations (layer 1) and policy resolvers (layer 2).
-
----
-
-## Core concepts
-
-### Operation
-
-An **operation** is the vocabulary entity configs and workflows use for authorization. Each operation has a stable string `id` (e.g. `students.directory.read`) and per-kind rules:
-
-| Actor kind | Rule shape | Enforcement |
-|------------|------------|-------------|
-| `staff` | `StaffOperationRule` — `permission` + optional `scopeFrom` | `authorize(Permission)` |
-| `teacher` | `TeacherOperationRule` — teaching/homeroom capability + target | `assertTeachingCapability` / `assertHomeroomCapability` |
-| `guardian` | `GuardianOperationRule` — guardian capability + target | `assertGuardianCapability` |
-| `student` | `StudentOperationRule` — student capability + target | `assertStudentCapability` |
-
-Operations are defined in `operations/` via `defineOperationFamily()` and registered at module load. `Permission` is a **staff implementation detail** inside the operation catalog — entity configs do not call `permissionAction()`.
-
-`OperationContext` carries optional `studentId`, `classGroupId`, `classSubjectId` for scoped checks. `requiresContext` on an operation definition validates that the right keys are present in `full` mode.
-
-### Permission (staff only)
-
-An atomic business capability (`Permission` enum in `permissions/permission.ts`). Examples: `ATTENDANCE_RECORD`, `PAYMENT_READ`, `STUDENT_UPDATE`.
-
-Each permission has metadata in `permissionDefinitions` (`permissions/permission-definitions.ts`):
-
-| Field | Purpose |
-|-------|---------|
-| `scope` | Optional `ScopeType` grain for path-based grants (`class_group`, `class_subject`, `activity`, `student`, …). Omitted = tenant-wide. |
-| `allowedScopes` | Legacy `ScopeType` values accepted on `AuthorizationRequest` (being phased out in favour of path matching). |
-
-Permission labels live in client i18n (keyed by `Permission` enum value), not in core.
-
-Resolver permission sets live in `policy/resolvers/permission-sets.ts`.
-
-### ScopeType and `scopeIds`
-
-Staff grants are stored on `StaffPermissionAssignment` rows:
-
-| Field | Purpose |
-|-------|---------|
-| `permission` | Which capability is granted |
-| `scopeIds` | Opaque path string (grammar §3 in sprint plan); empty when permission is tenant-wide |
-| `academicYearId` | Year filter at resolution time (not encoded in `scopeIds`) |
-| `sourceStaffAssignmentId` | When set, row is synced from a `StaffAssignment` and is read-only in admin UI |
-
-**Path grammar** (segment order per `ScopeType`):
-
-- `class_group` → `{classGroupId}`
-- `class_subject` → `{classGroupId}:{classSubjectId}` or `{classGroupId}:*` wildcard
-- `activity` → `{activityId}` or `{classGroupId}:{activityId}`
-- `student` → `{studentId}`
-
-Helpers: `parseScopeIds` / `serializeScopeIds`, `scopePathCovers`, `resolveResourcePath` family in `scope/`.
-
-### EffectiveGrants
+Policy methods bind their actions and authorize the complete affected resources. Narrow helpers implement typed-grant matching and live relationship lookup. Production services and routes call named policies; they cannot assemble checks through the generic internal action helpers. Repository guards enforce this boundary and prevent policies from importing administration presets.
 
 ```ts
-interface EffectiveGrants {
-  permissions: ReadonlySet<Permission>
-  scopeGrants: readonly ScopeGrant[] // legacy API pass-through (empty for staff); do not derive from scopeIdsByPermission
-  scopeIdsByPermission?: Partial<Record<Permission, string>> // merged paths per permission — staff/web/mobile clients
-  isElevated: boolean // school owner / elevated service account
-  expiresAt?: Date // earliest assignment expiry; bounds API cache TTL
-}
+await access.grades.assertInput({ assessmentId, studentId })
+const scope = await access.grades.readScope()
+const results = await repositories.assessmentResults.forAccess(scope).list(query)
 ```
 
-Attached to every staff actor as `actor.effectiveGrants`. **Must be supplied at actor construction** — the engine does not synthesize default grants.
+A read scope is a tenant plus alternatives of resource constraints. The Postgres adapter compiles those constraints into SQL before listing, pagination, counting, and single-record lookup. A constraint describes placement; it does not choose a permission. Attachments follow the permitted owner resource, including publication restrictions.
 
-### ActorMetadata
+A write runs inside the command's transaction. It authorizes existing and proposed placement and all affected resources before saving. When a policy admits alternative actions, one action must authorize the complete mutation. Permissions for different actions cannot supply different halves of a mutation. A payment reversal applies reversal authority to both the payment and its resulting fee balance update. Batch authorization preflights every proposal, then business validation and writes proceed in the same transaction so later proposals see earlier changes; any conflict rolls the whole batch back.
 
-| Kind | Use case | Key fields |
-|------|----------|------------|
-| `staff` | School employees | `staffMemberId`, `effectiveGrants`, `assuranceLevel` |
-| `teacher` | Teacher portal | `teacherId`, `teacherScope` |
-| `guardian` | Parent portal | `guardianId`, `guardianScope` |
-| `student` | Student portal | `studentId`, `studentScope` |
-| `system` | Background jobs, migrations | `systemId`, `reason` — bypasses grant checks |
+Business validations remain mandatory after authorization: enrollment consistency, scores, published report immutability, payment balances, and other actor-independent invariants. Owner and machine authority retain tenant constraints on every related resource.
 
-Factory functions in `model/actor.ts` produce frozen, validated objects.
+## Discipline and shared resources
 
-**Assurance levels** (`ActorAssuranceLevel`: `standard` · `verified` · `strong`) gate sensitive staff permissions independently of grants. See `permissions/permission-assurance.ts`.
+Incident content changes bind `DISCIPLINE_UPDATE`; resolution binds `DISCIPLINE_VALIDATE`; cancellation, reopening a cancelled incident and deletion bind `DISCIPLINE_ARCHIVE`. Creating a resolved or cancelled incident also needs the corresponding action. Mixed content/status changes require each action to cover both existing and proposed placement. Subject teachers are limited to their subject occurrences; homeroom teachers retain class-wide incident visibility. Participant and sanction scopes constrain the incident and student together, including the incident's academic year. Supplying both class and lesson never bypasses the lesson boundary.
 
----
+Resource assignments follow their class, lesson, activity or assessment into the selected academic year. Resource configuration remains school-wide according to the existing permission catalog. Mandatory business validation rejects duplicate and overlapping reservations consistently across occurrence kinds, including conflicts within one batch. Adjacent reservations and untimed homework do not create a time conflict.
 
-## Layer 1: Operation gate
+## Profile and account administration
 
-Entry points: `gates/operation-module.ts`.
+Guardians may update their own contact methods and photo, and notification opt-outs on their existing guardian–student links. The policy rejects identity, access, relationship-rights and placement changes, creation, and deletion. Notification email/phone overrides use the separate personal communications command. Neither path inherits privileges from another profile sharing the login.
 
-| Helper | Role |
-|--------|------|
-| `operationModule(operation, context?)` | Returns `(actor) => void \| Promise<void>` for entity `checkModule` |
-| `anyOperationModule(operations, context?)` | Succeeds if **any** listed operation passes |
-| `authorizeSaveWithOperation(operation, resolveContext, authorizeSave)` | Layer 1 + layer 2 for writes with dynamic operation/context |
-| `authorizeDeleteWithOperation(...)` | Same for deletes |
-| `resourceGate(policy.checkX)` | Wraps a policy resolver for layer 2 |
+Staff may not deactivate or delete their own selected staff account. Owner non-removal and ownership uniqueness are business invariants; only the current human owner may transfer ownership. A transfer takes effect for subsequent policy evaluations immediately.
 
-`assertOperation(actor, operation, context, mode)` in `operations/assert-operation.ts` dispatches by `actor.kind`:
+Service accounts and their permissions are managed through service-account commands. Ordinary staff entity writes, deletion, grant administration and business-assignment writes cannot alter service accounts. Dedicated commands enforce human/owner requirements, delegation bounds, key lifecycle and atomic revocation.
 
-- `staff` → `authorize()` with permission from operation definition
-- `teacher` → teaching/homeroom capability assertions
-- `guardian` / `student` → link-scope capability assertions
-- `system` → allowed
+## Restricted integration commands
 
-`mode` is `module` (layer 1 only) or `full` (layer 1 + context validation).
+Machine-only command decisions live in business policies. Subject/matter import commands admit active service accounts or the named fixture importer, and bind the relevant curriculum action to both existing and proposed placement. Direct delivery materialization admits those same callers with current send authority. Human publishing uses its explicit send policy and materializes deliveries within the publication workflow.
 
----
+Invitation acceptance admits service accounts with permission-assignment authority and the verified `account-invitation-public` or fixture identities. Token, contact, status, expiry and ownership checks remain mandatory, including on retries. Provider delivery events admit authorized service accounts and the named webhook, notification adapter, reconciliation and fixture identities. Missing delivery IDs still require an admitted caller and action.
 
-## Grant and scope resolution
+REST and GraphQL only dispatch these commands. They contain no additional caller-kind policy or runtime authorization selector; direct workflows reach the same policies.
 
-Resolution lives in `resolution/` and is exposed through `SchoolRepositories.authorization`.
+Guardian linking requires `PARENT_UPDATE`, without borrowing student-detail read authority. Shared entity validation retains the student's same-school enrollment requirement for commands and direct saves.
 
-### Staff (`resolveEffectiveGrants`)
+## Document policies
 
-1. Load active `StaffMember` for the school.
-2. **School owner** or **elevated service account** → `isElevated: true`, all permissions except `PLATFORM_REGISTER_SCHOOL`.
-3. Resolve `academicYearId` from request header or fall back to the school’s active academic year.
-4. Load active `StaffPermissionAssignment` rows for `(staffId, schoolId, academicYearId)`.
-5. Merge rows per permission (`scopeIds` joined with `;`); manual and synced rows stay separate in DB but merge at resolution.
-6. Build `scopeIdsByPermission`, `permissions` set, legacy `scopeGrants` bridge, and `expiresAt`.
+Report generation uses `access.reportCards.documentContext` and `assertDocumentAttachment`, both bound to `REPORT_CARD_PUBLISH`. Publication remains school-wide according to the permission catalog. Teacher comment authority cannot generate documents. A cached PDF still requires current publication authority. The command requires a published result and period, retains tenant and placement invariants, and checks attachment ownership before writes in its transaction. Class statistics query only the permitted published results for the same class, period and definition.
 
-### Portal actors
+Logbook generation uses `access.logbooks.documentContext` and `assertDocumentExport`, bound to `CLASS_LOGBOOK_READ`. Queries apply the action scope before assembling subjects, sessions, progress, homework and counts. Export rechecks the complete included subject/session set before upload and signing. Staff use their permitted classes, subject teachers their current subjects, and families their current child enrollments. Homeroom assignment alone does not authorize subject logbooks.
 
-`resolveTeacherScope`, `resolveGuardianScope`, `resolveStudentScope` preload relationship-native scopes used by operation assertions and policy strategies.
+Document teacher names come only from active teacher assignments in the document's academic year and validity period, with an active teacher profile. Staff coordination and staff responsibility labels never substitute for subject or homeroom teachers.
 
-### Dispatcher
+## Typed staff scopes
 
-`resolveActorGrants({ actorId, actorType, schoolId, repositories, academicYearId? })` routes to staff, guardian, or student grant resolution.
+The same `GrantScope` union is used in persistence, application code, and contracts:
 
----
+- `school` for actions whose catalog grain is school-wide.
+- `all` with an explicit grain for every resource at that grain.
+- `grade_level` or `class_group` with their identifiers.
+- `grade_level_subject` or `class_subject` with an explicit parent and optional subject. Omitted subject means all subjects of that parent.
+- `activity` with an activity, a class, or both.
+- `student` with a student identifier.
 
-## Layer 2: `AuthorizationPolicy`
+The action's catalog grain, tenant, year, parent relationships, and validity constrain delegation. Empty or ambiguous selections are rejected. Platform actions cannot be persisted as school staff grants.
 
-Interface: `policy/types.ts`. Factory: `createRepositoryAuthorizationPolicy()`.
+## Timetable availability
 
-`policy/compose.ts` dispatches by `actor.kind` to focused strategy files under `policy/strategies/`. Resolvers combine preloaded credentials with live repository relationships:
+`access.timetable.spaceRepositories` binds timetable-read authority to the requested class and its academic year. It returns only that class/year, the shared period grid for that year, and applicable class/grade/school calendar events. SQL applies these constraints before availability cells or supporting counts are built. The calculation has no access to the full repository catalog.
 
-| Resolver | Typical use |
-|----------|-------------|
-| `checkStudentAccess` | Student records; strategies per actor kind |
-| `checkGuardianAccess` | Guardian records; self-access for portal actors |
-| `checkTeacherAccess` | Teacher records |
-| `checkStaffMemberReadAccess` | Staff directory; self-read for staff actors |
-| `checkStaffAssignmentAccess` | Staff assignment rows |
-| `checkTeacherAssignmentAccess` | Teacher assignment rows |
-| `checkClassGroupAccess` | Class-scoped resources |
-| `checkAssessmentAccess` | Assessments (class-subject path) |
-| `checkReportCardResultAccess` | Report cards and results |
-| `checkLessonSessionAccess` / `checkAttendanceRecordAccess` | Timetable and attendance |
-| `checkFeeAccess` / `checkStudentFeeAccess` | Finance entities |
-| `checkAttachmentAccess` | File attachments |
+## Shared curriculum and activities
 
-**System actors** short-circuit all resolvers (allowed).
+Subjects and chapters are shared catalog records. Grade-level allocations apply to every class in that grade and academic year. Their write policies authorize all affected classes for the same action, including both old and proposed placements; access to one consuming class is insufficient to change a shared record. Catalog creation, update and deletion retain distinct actions. Reads may follow any authorized consuming class.
 
----
+Family activity visibility uses the canonical `ActivityEnrollmentStatus.Approved` relationship. Pending and denied enrollment records remain visible to their own student/family, but do not grant access to the activity. Removing the family link or changing approval is observed on the next policy evaluation. Subject-only teaching does not grant class activity access; homeroom assignments and current student class enrollment do. Homeroom teachers and staff with class-scoped activity authority can read activities assigned to that class, plus school-wide activities with no class assignments. The class must exist in the authorized academic year; an all-class grant still excludes assignments from other years. A missing class does not grant school-wide activity access.
 
-## Admin APIs
+## Financial mutations
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET authorization/permission-catalog` | `{ permission, scope? }[]` for UI pickers |
-| `POST authorization/scope/render` | Human labels for `scopeIds` paths |
-| `staffPermissionAssignments` entity | CRUD for manual grants |
-| `GET authorization/effective-grants` | Current actor grants (`scopeIdsByPermission` + legacy `scopeGrants`) |
+Payment cancellation and reversal bind their distinct actions. A direct save that also changes financial details, or creates an already cancelled/reversed payment, additionally requires `PAYMENT_RECORD` for the complete record. Fee cancellation likewise cannot create a fee or rewrite its placement, amounts, installments or adjustments using cancellation authority alone. Status-only workflow operations retain their own action, including the resulting fee balance update inside the transaction.
 
----
+## Academic lifecycle
 
-## Entity configuration pattern
-
-```ts
-import { StudentOperations } from '../../capabilities/authorization/operations/students'
-import { operationModule, resourceGate } from '../entity-config/authorization'
+Publishing and archiving academic years and publishing periods use `SCHOOL_LIFECYCLE_MANAGE`. These actions do not grant permission to change dates, names, or placement. Structural edits use `SCHOOL_STRUCTURE_CONFIGURE`; a write that also changes publication state must satisfy both decisions for the affected records. Direct entity writes enforce the same rules as commands.
 
-const readAccess = resourceGate(
-  (actor, entities) => policy.checkStudentAccess(actor, entities.map(e => e.id)),
-)
-
-const authorization = {
-  read: read(
-    operationModule(StudentOperations.directoryRead),
-    readAccess,
-  ),
-  write: write(
-    operationModule(StudentOperations.update),
-    authorizeExistingById(readAccess),
-    authorizeDeleteByReadAccess(readAccess),
-  ),
-}
-```
+## Files
 
-Workflows receive `{ actor, authorizationPolicy }` and pass them into managed entity services. Workflows that gate ad-hoc actions call `operationModule(SomeOperations.action)(actor)` directly.
+- `model/`: actor identities and authorization errors.
+- `access/`: business policies, live facts, identity selection, grant administration, and display projections.
+- `permissions/`: action metadata, assurance rules, and administration presets.
+- `platform/`, `s2s/`, `service-accounts/`: account/key commands and credential helpers.
+- `ports/`: repositories required by policies.
 
----
+The grants endpoint returns a display projection of the same policy facts. Clients use it for access displays; server policies decide access to each requested resource.
 
-## Auth cache lifecycle
+## Validation and cutover
 
-Grant and scope caches are invalidated from **entity `postSave` / `postDelete` hooks** wired in `createCoreEntityServices()` via `withAuthCacheLifecycleHooks()`.
+Native database policy tests cover selected-profile isolation, typed grants, assignment removal, assurance, tenant boundaries, action isolation, scoped reads, complete writes, and transactional service-account administration. The repository guard rejects production references to removed mechanisms.
 
-| Module | Role |
-|--------|------|
-| `lifecycle/entity-events.ts` | Maps entity keys + saved/deleted rows → `AuthCacheInvalidationEvent[]` |
-| `lifecycle/invalidation-registry.ts` | Forwards events to `AuthCacheInvalidationPort` |
-| `lifecycle/auth-cache-hooks.ts` | Chains invalidation after existing entity hooks |
-| `ports/gateways/auth-cache-invalidation.ts` | Port implemented by API runtime (`apiAuthCacheInvalidationPort`) |
+Migration `0009_typed_staff_grants.sql` runs through deployment tooling after the platform identity migration. It validates existing scopes and provenance, converts manual grants, removes verified assignment-derived copies, and drops the replaced columns. Ambiguous data aborts migration. Deploy matching application/client contracts and data together; rollback restores matching application and data versions.
 
-Entities covered: `staffPermissionAssignments`, `staffMembers`, `staffAssignments`, `guardianLinks`, `enrollments`, `students`, `guardians`, `teachers`, `teacherAssignments`.
+## Communications and scheduled work
 
-Pass `authCacheInvalidation` in `ServiceArgs` (defaults to no-op in tests). The API wires `apiAuthCacheInvalidationPort` in `buildSchoolApplication()`.
+Personal inbox access binds `QUERY_COMMUNICATIONS_READ` to the selected profile and its linked subject. Staff and guardian notification contact changes use the same personal policy and can change only notification email/phone fields. They do not require staff or guardian administration permissions. Revoked profiles cannot read or update their inbox. A staff member can read their own business assignments through workspace access; reading another staff member's assignments requires permission administration access.
 
----
+Published announcement audiences come from one relationship lookup and one SQL predicate, used for portal reads and delivery eligibility. School broadcasts reach all profile kinds. Staff, guardian, and student broadcasts and direct messages reach only the named profile kind. Class and grade audiences use current enrollments, guardian links, and teaching/homeroom assignments. A guardian does not receive a private message addressed directly to a student. Draft, archived, and expired announcements are excluded from personal audience reads.
 
-## API integration
+`COMMUNICATION_SEND` authorizes every announcement target before publication or delivery materialization. A class grant may address that class; broader broadcasts and direct-recipient administration require school authority. Editing content remains separate from sending it. Delivery identity includes the selected recipient profile as well as its login account, so one person's staff and guardian inboxes do not share read state. Personal inbox queries include both, even when an owner can administratively read other deliveries. Personal communication navigation does not require an administrative grant; the row policies remain authoritative.
 
-| Location | Responsibility |
-|----------|----------------|
-| `apps/api/src/http/dependencies/session-actor.ts` | Session → identity → cached grants/scope → `ActorMetadata` |
-| `apps/api/src/lib/authorization/grants-cache/` | In-memory cache; TTL capped by `grants.expiresAt` |
-| `invalidateEffectiveGrantsCacheForActor()` | Call when permission assignments change (via `AuthCacheInvalidationPort` in API runtime) |
+Automatically generated deliveries persist a `sourceKey`. The unique identity is school, source, login subject, recipient kind and recipient ID. `id` is an opaque provider correlation key; retries and cancellation find it through the persisted identity. Delivery recipients and source cannot be reassigned. Direct delivery creation and edits, including imports and provider events, require an admitted machine caller and their canonical communication action. Human publication creates its deliveries under the send policy; personal read receipts use the exact-recipient policy. Administrative deletion remains a separate `COMMUNICATION_DELETE` action. Announcement dispatch takes an ID, reloads the published record and reauthorizes existing deliveries inside its transaction. Cancellation uses persisted recipients, including recipients who have since lost their account link or enrollment.
 
-Staff requests should send `X-Academic-Year-Id` so grants resolve for the correct year. Portal requests send `X-Actor-Kind` and `X-Actor-Id` for multi-profile sessions.
+Migration `0011_notification_delivery_sources.sql` backfills source keys offline without changing delivery IDs, read status, provider history or queued provider jobs. It rejects ambiguous source/profile data and duplicate identities. The application never parses an old delivery ID or falls back to a login-only lookup. See the [coordinated cutover](../../../docs/architecture/authorization-cutover.md).
 
----
+Calendar read context includes school and grade events affecting an authorized class. Calendar writes affect only the explicitly authorized placement; a class grant does not permit editing a school-wide holiday.
 
-## Package layout
+Scheduled work uses named system identities with canonical actions:
 
-```
-authorization/
-├── model/           Actor types, EffectiveGrants, ScopeGrant, errors
-├── permissions/     Permission enum, definitions, assurance, catalog
-├── capabilities/    Teaching, homeroom, guardian, student capability enums + assert*
-├── scope/           scopeIds grammar, path matching, resolveResourcePath
-├── grants/          Scope helpers, portal sets, actor grant checks
-├── resolution/      resolve* functions, AuthorizationRepository
-├── operations/      Operation catalog (defineOperationFamily, assertOperation)
-├── gates/           operationModule, resourceGate*, authorizeSaveWithOperation
-├── engine/          authorize() — staff permission gate (used inside assertOperation)
-└── policy/          compose, strategies, repository-policy factory
-```
+| System identity | Authority |
+| --- | --- |
+| `processDueNotifications` | Read assessments, activities/timetables, and calendar events for its school |
+| `reconcilePendingDeliveries` | Read school deliveries and apply delivery-status updates |
+| `expireAccountInvitations` | Read and expire invitations for its school |
+| `notify-adapter` | Persist delivery records from authorized business notifications |
+| `notification-delivery-webhook` | Apply provider delivery events for its school |
 
----
+Each job runs in a transaction. Its reads use native policy scopes before limits and counts. An unrelated or unknown job identity cannot exercise another job's authority, including no-op retries.
 
-## Adding a new operation
+The local dataset importer uses the explicit `fixture-seed` system identity. It can import historical student notes only with an existing staff author in the same school. Other jobs cannot impersonate that author. School and population fixtures start with unlinked profiles; the identity-linking commands establish their central account links. Communication fixtures create drafts, add their audiences, then publish, and never create deliveries using placeholder login IDs.
 
-Use this when wiring authorization on a new entity or workflow action. Adding a new **staff permission** to the admin catalog is a separate step (enum + definitions + i18n).
+### Delayed notification authority
 
-1. **Define the operation** in the appropriate `operations/*.ts` file:
-
-```ts
-export const MyFeatureOperations = defineOperationFamily({
-  read: {
-    id: 'my-feature.read',
-    staff: { permission: Permission.MY_FEATURE_READ, scopeFrom: 'classGroup' },
-    teacher: { capability: TeachingCapability.ReadSubjectRoster, target: 'classSubject' },
-    guardian: { capability: GuardianCapability.ReadStudentDetail, target: 'student' },
-    requiresContext: ['classSubjectId'], // when scoped
-  },
-})
-```
-
-2. **Wire entity config** — layer 1 via `operationModule()`, layer 2 via `resourceGate()` or an existing policy resolver.
-3. **Add policy strategy** if layer 2 needs new relationship logic — add a strategy under `policy/strategies/` and register in `compose.ts`; do not branch on `actor.kind` in `src/domain/**`.
-4. **Add operation matrix tests** in `tests/unit/auth/operations/` using `describeOperationMatrix`.
-5. **Add policy tests** in `tests/unit/auth/policy/` or extend `repository-authorization-policy.test.ts`.
-6. **Run static guards** — `authorization-migration-guards.test.ts` enforces zero `permissionAction` and zero `actor.kind` in domain code.
-
-For staff-only admin permissions (no portal actor): add enum value, `permissionDefinitions`, assurance if needed, seed presets, and i18n in `edaya_web`.
-
----
-
-## Testing
-
-| Area | Location |
-|------|----------|
-| Operation matrix | `tests/unit/auth/operations/*.test.ts` |
-| `authorize()` and assurance | `tests/unit/auth/permission-authorization.test.ts` |
-| Grant resolution | `tests/unit/auth/effective-grants.test.ts` |
-| Policy resolvers | `tests/unit/auth/repository-authorization-policy.test.ts` |
-| Portal grants | `tests/unit/auth/portal-permission-policy.test.ts` |
-| Scope path matching | `tests/unit/auth/scope-path-covers.test.ts` |
-| Migration guards | `tests/unit/auth/authorization-migration-guards.test.ts` |
-
-Integration tests under `tooling/integration-tests/src/auth/` exercise persistence-backed resolution.
-
-Use `createRepositoryAuthorizationPolicy({ repositories })` in workflow tests — empty `{} as AuthorizationPolicy` mocks break when entity configs call policy resolvers during saves.
-
----
-
-## Design principles
-
-1. **Entity configs speak Operations, not Permissions** — `Permission` is staff implementation detail inside the operation catalog.
-2. **Actor switches live in exactly two places** — `assertOperation()` (layer 1) and `policy/compose.ts` (layer 2). Not in `src/domain/**`.
-3. **Separate capability from relationship** — passing layer 1 does not automatically grant every resource; layer 2 enforces enrollment and teaching relationships.
-4. **Fail closed** — missing grants, scope mismatch, failed assurance, or failed capability → `AuthorizationError`.
-5. **Elevated staff** — school owners bypass scope checks via `isElevated`.
-6. **No DB in the hot path** — layer 1 (`assertOperation`) is synchronous; only layer 2 resolvers and session resolution touch repositories.
-7. **Business gates stay auth-free** — `preSave` / `preDelete` immutability rules are layer 3 only.
-
----
-
-## Related documentation
-
-- [authorization-operations-plan.md](../../../../docs/sprints/archive/authorization-operations-plan.md) — operations migration sprint (G0–G6).
-- [relationship-native-auth-plan.md](../../../../docs/sprints/relationship-native-auth-plan.md) — portal scope resolution (Fold F).
-- [authorization-model-simplification-plan.md](../../../../docs/sprints/archive/authorization-model-simplification-plan.md) — path grammar and grant model.
-- [domain/README.md](../../../domain-core/src/domain/README.md) — entity file layout; configs live in `@edaya/service`.
+`access.notifications.recipient` admits only the school-bound `notify-adapter` system actor. It resolves the immutable delivery tuple and current source eligibility without manufacturing a guardian or student actor. The shared dispatcher invokes it before each channel attempt, projects current contacts from that exact profile, and cancels denied deliveries. No school contact or channel preferences are copied into provider subscriber state. Novu is an email transport on this same dispatch path, with one immediate email workflow and an explicit per-message destination. Authentication and invitation destinations remain explicit command facts; their emails are not school authorization state.

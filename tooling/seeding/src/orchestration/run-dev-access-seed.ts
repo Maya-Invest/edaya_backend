@@ -36,7 +36,7 @@ async function seedStaffPermissionAssignments(
       assignment.schoolId,
       assignment.academicYearId,
       role.permissions,
-      assignment.scopeGrants ?? [],
+      assignment.scopesByPermission ?? {},
     )
 
     for (const [index, row] of rows.entries()) {
@@ -71,7 +71,7 @@ function countStaffPermissionAssignments(
       assignment.schoolId,
       assignment.academicYearId,
       role.permissions,
-      assignment.scopeGrants ?? [],
+      assignment.scopesByPermission ?? {},
     )
     count += rows.length
   }

@@ -1,14 +1,13 @@
-import { Permission } from '@edaya/core';
-import type { SchoolNotificationTemplates } from '@edaya/core';
-import type { NotificationTemplateKey } from '../../capabilities/notifications/templates/keys';
-import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates';
-import type { BaseSchoolService } from '../base-school-service';
+import type { SchoolNotificationTemplates } from '@edaya/core'
+import type { NotificationTemplateKey } from '../../capabilities/notifications/templates/keys'
+import type { SchoolNotificationTemplateDocumentPatch } from '../../capabilities/notifications/templates/merge-school-notification-templates'
+import type { BaseSchoolService } from '../base-school-service'
+import { BusinessRuleViolationError, SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '@edaya/core'
 
-import { BusinessRuleViolationError, SchoolNotificationTemplates as SchoolNotificationTemplatesEntity } from '@edaya/core';
-import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest';
-import { mergeSchoolNotificationTemplateDocument } from '../../capabilities/notifications/templates/merge-school-notification-templates';
+import { buildDefaultNotificationTemplateDocument } from '../../capabilities/notifications/templates/defaults/manifest'
+import { mergeSchoolNotificationTemplateDocument } from '../../capabilities/notifications/templates/merge-school-notification-templates'
 
-import { BaseServiceWorkflow } from './base-service-workflow';
+import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface UpdateSchoolNotificationTemplatesInput {
   schoolId: string
@@ -29,40 +28,44 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
   async updateSchoolNotificationTemplates(
     input: UpdateSchoolNotificationTemplatesInput,
   ): Promise<SchoolNotificationTemplates> {
-    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
-    this.checkActorSchool(input.schoolId)
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.access.school.assertManageLifecycle()
+      this.checkActorSchool(input.schoolId)
 
-    const existing = await this.requireTemplateDocument(input.schoolId)
-    if (
-      input.expectedUpdatedAt
-      && existing.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()
-    ) {
-      throw new BusinessRuleViolationError(
-        'NOTIFICATION_TEMPLATE_DOCUMENT_CONFLICT',
-        'Notification templates were updated by another change',
-      )
-    }
+      const existing = await this.requireTemplateDocument(input.schoolId)
+      if (
+        input.expectedUpdatedAt
+        && existing.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()
+      ) {
+        throw new BusinessRuleViolationError(
+          'NOTIFICATION_TEMPLATE_DOCUMENT_CONFLICT',
+          'Notification templates were updated by another change',
+        )
+      }
 
-    const templates = mergeSchoolNotificationTemplateDocument(existing.templates, input.templates)
-    return this.saveTemplateDocument(existing, templates)
+      const templates = mergeSchoolNotificationTemplateDocument(existing.templates, input.templates)
+      return this.saveTemplateDocument(existing, templates)
+    })
   }
 
   async resetSchoolNotificationTemplates(
     input: ResetSchoolNotificationTemplatesInput,
   ): Promise<SchoolNotificationTemplates> {
-    await this.baseService.access.assertSchool(Permission.SCHOOL_LIFECYCLE_MANAGE)
-    this.checkActorSchool(input.schoolId)
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.access.school.assertManageLifecycle()
+      this.checkActorSchool(input.schoolId)
 
-    const existing = await this.requireTemplateDocument(input.schoolId)
-    const defaults = await buildDefaultNotificationTemplateDocument()
+      const existing = await this.requireTemplateDocument(input.schoolId)
+      const defaults = await buildDefaultNotificationTemplateDocument()
 
-    const templates = input.templateKey
-      ? mergeSchoolNotificationTemplateDocument(existing.templates, {
-          [input.templateKey]: defaults[input.templateKey],
-        })
-      : defaults
+      const templates = input.templateKey
+        ? mergeSchoolNotificationTemplateDocument(existing.templates, {
+            [input.templateKey]: defaults[input.templateKey],
+          })
+        : defaults
 
-    return this.saveTemplateDocument(existing, templates)
+      return this.saveTemplateDocument(existing, templates)
+    })
   }
 
   private async requireTemplateDocument(schoolId: string): Promise<SchoolNotificationTemplates> {
@@ -87,7 +90,8 @@ export class NotificationTemplatesServiceWorkflow extends BaseServiceWorkflow {
       createdAt: existing.createdAt,
       updatedAt: now,
     })
-    await this.baseService.repositories.schoolNotificationTemplates.save(updated)
+    const scope = await this.baseService.access.notificationTemplates.assertUpdate(updated, existing)
+    await this.baseService.repositories.schoolNotificationTemplates.forAccess(scope).save(updated)
     return updated
   }
 }

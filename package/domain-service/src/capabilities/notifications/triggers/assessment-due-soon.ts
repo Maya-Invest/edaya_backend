@@ -53,7 +53,7 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
   entityKey: 'assessments',
   predicate: assessmentDueSoonPredicate,
   resolver: async (entity, existing, context) => {
-    if (entity.kind !== AssessmentKind.Homework) {
+    if (entity.kind !== AssessmentKind.Homework && existing?.kind !== AssessmentKind.Homework) {
       return null
     }
     const idempotencyKey = assessmentDueSoonIdempotencyKey(entity.id)
@@ -67,19 +67,20 @@ export const assessmentDueSoonTrigger: NotificationTriggerRegistration<Assessmen
       return null
     }
 
+    if (entity.kind !== AssessmentKind.Homework || entity.completedAt || !entity.dueAt) {
+      await cancelNotificationDeliveries(deps, classGroup.schoolId, idempotencyKey)
+      return null
+    }
+
     const enrollments = await context.repositories.enrollments.list({
       classGroupId: entity.classGroupId,
+      academicYearId: classGroup.academicYearId,
       status: StudentClassEnrollmentStatus.Active,
     })
     const recipients = enrollments.map(enrollment => ({
       kind: MessageDeliveryRecipientKind.Student,
       id: enrollment.studentId,
     }))
-
-    if (entity.completedAt || !entity.dueAt) {
-      await cancelNotificationDeliveries(deps, idempotencyKey, recipients)
-      return null
-    }
 
     if (existing?.dueAt?.getTime() === entity.dueAt.getTime()) {
       return null

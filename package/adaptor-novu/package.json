@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@edaya/core": "workspace:*",
-    "@edaya/service": "workspace:*",
     "@novu/api": "^3.17.0",
-    "svix": "^1.82.0"
+    "svix": "^1.82.0",
+    "@edaya/adaptor-notify": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

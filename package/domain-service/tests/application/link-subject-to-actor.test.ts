@@ -1,116 +1,20 @@
 import type { BusinessRuleViolationError } from '@edaya/core'
-import type { BaseSchoolService } from '@edaya/service'
 import { Guardian, GuardianStudentLink, RecordingNotificationGateway, StaffMember, Student, Teacher } from '@edaya/core'
 import { assertEntitySubjectLinkable, linkSubjectToActor, unlinkSubjectFromActor } from '@edaya/service'
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
+import { createTestApp } from '../support/create-test-app'
+import { createTestStaffActor } from '../support/test-actor'
 
-function createLinkContext() {
+async function createLinkContext() {
   const gateway = new RecordingNotificationGateway()
-  const staffMember = new StaffMember({
-    id: 'staff-1',
-    schoolId: 'school-1',
-    firstName: 'Ada',
-    lastName: 'Lovelace',
-    email: 'ada@school.edu',
-    isActive: true,
-  })
-  const guardian = new Guardian({
-    id: 'guardian-1',
-    schoolId: 'school-1',
-    firstName: 'Grace',
-    lastName: 'Hopper',
-    hasAccess: true,
-  })
-  const teacher = new Teacher({
-    id: 'teacher-1',
-    schoolId: 'school-1',
-    firstName: 'Alan',
-    lastName: 'Turing',
-    email: 'alan@school.edu',
-    isActive: true,
-  })
-  const student = new Student({
-    id: 'student-1',
-    schoolId: 'school-1',
-    firstName: 'Katherine',
-    lastName: 'Johnson',
-    subjectId: 'auth-old',
-  })
-
-  const repositories = {
-    staffMembers: {
-      findById: async (id: string) => (id === staffMember.id ? staffMember : undefined),
-      findOne: async () => undefined,
-    },
-    guardians: {
-      findById: async (id: string) => (id === guardian.id ? guardian : undefined),
-      findOne: async () => undefined,
-    },
-    teachers: {
-      findById: async (id: string) => (id === teacher.id ? teacher : undefined),
-      findOne: async () => undefined,
-    },
-    students: {
-      findById: async (id: string) => (id === student.id ? student : undefined),
-      findOne: async () => undefined,
-    },
-    guardianLinks: {
-      list: async () => [
-        new GuardianStudentLink({
-          id: 'link-1',
-          schoolId: 'school-1',
-          guardianId: guardian.id,
-          studentId: student.id,
-        }),
-      ],
-    },
-  }
-
-  const saved = {
-    staffMembers: [] as StaffMember[],
-    guardians: [] as Guardian[],
-    teachers: [] as Teacher[],
-    students: [] as Student[],
-  }
-
-  const baseService = {
-    entities: {
-      staffMembers: {
-        save: mock(async (entity: StaffMember) => {
-          saved.staffMembers.push(entity)
-        }),
-      },
-      guardians: {
-        save: mock(async (entity: Guardian) => {
-          saved.guardians.push(entity)
-        }),
-      },
-      teachers: {
-        save: mock(async (entity: Teacher) => {
-          saved.teachers.push(entity)
-        }),
-      },
-      students: {
-        save: mock(async (entity: Student) => {
-          saved.students.push(entity)
-        }),
-      },
-    },
-    notificationGateway: gateway,
-  } as unknown as BaseSchoolService
-
-  return {
-    baseService,
-    repositories: repositories as Pick<
-      import('../../src/ports').SchoolRepositories,
-      'staffMembers' | 'guardians' | 'students' | 'teachers' | 'guardianLinks'
-    >,
-    saved,
-    staffMember,
-    guardian,
-    teacher,
-    student,
-  }
+  const fixture = await createTestApp(createTestStaffActor('school-1', 'admin'), { owner: true, notificationGateway: gateway })
+  const repositories = fixture.schoolRepositories
+  await repositories.staffMembers.save(new StaffMember({ id: 'staff-1', schoolId: 'school-1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@school.edu' }))
+  await repositories.guardians.save(new Guardian({ id: 'guardian-1', schoolId: 'school-1', firstName: 'Grace', lastName: 'Hopper' }))
+  await repositories.teachers.save(new Teacher({ id: 'teacher-1', schoolId: 'school-1', firstName: 'Alan', lastName: 'Turing', email: 'alan@school.edu' }))
+  await repositories.students.save(new Student({ id: 'student-1', schoolId: 'school-1', firstName: 'Katherine', lastName: 'Johnson', subjectId: 'auth-old' }))
+  await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link-1', schoolId: 'school-1', guardianId: 'guardian-1', studentId: 'student-1' }))
+  return { baseService: fixture.app.baseService, repositories, gateway }
 }
 
 describe('linkSubjectToActor', () => {
@@ -122,7 +26,7 @@ describe('linkSubjectToActor', () => {
   })
 
   test('links staff, guardian, teacher, and student actors to auth subjects', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
 
     const staffResult = await linkSubjectToActor(
       ctx.baseService,
@@ -156,14 +60,14 @@ describe('linkSubjectToActor', () => {
     )
     expect(studentResult).toMatchObject({ kind: 'student', entity: { subjectId: 'auth-student' } })
 
-    expect(ctx.saved.staffMembers).toHaveLength(1)
-    expect(ctx.saved.guardians).toHaveLength(1)
-    expect(ctx.saved.teachers).toHaveLength(1)
-    expect(ctx.saved.students).toHaveLength(1)
+    expect((await ctx.repositories.staffMembers.findById('staff-1'))?.subjectId).toBe('auth-staff')
+    expect((await ctx.repositories.guardians.findById('guardian-1'))?.subjectId).toBe('auth-guardian')
+    expect((await ctx.repositories.teachers.findById('teacher-1'))?.subjectId).toBe('auth-teacher')
+    expect((await ctx.repositories.students.findById('student-1'))?.subjectId).toBe('auth-student')
   })
 
   test('rejects ambiguous actor targets', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
 
     await expect(linkSubjectToActor(
       ctx.baseService,
@@ -178,7 +82,7 @@ describe('linkSubjectToActor', () => {
 
 describe('unlinkSubjectFromActor', () => {
   test('clears subject links and schedules recipient removal', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
     const linkedStaff = new StaffMember({
       id: 'staff-1',
       schoolId: 'school-1',
@@ -188,7 +92,7 @@ describe('unlinkSubjectFromActor', () => {
       subjectId: 'auth-staff',
       isActive: true,
     })
-    ctx.repositories.staffMembers.findById = async () => linkedStaff
+    await ctx.repositories.staffMembers.save(linkedStaff)
 
     const result = await unlinkSubjectFromActor(
       ctx.baseService,
@@ -198,11 +102,11 @@ describe('unlinkSubjectFromActor', () => {
     )
 
     expect(result.entity.subjectId).toBeUndefined()
-    expect(ctx.saved.staffMembers[0]?.subjectId).toBeUndefined()
+    expect((await ctx.repositories.staffMembers.findById('staff-1'))?.subjectId).toBeUndefined()
   })
 
   test('clears guardian, teacher, and student subject links', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
     const linkedGuardian = new Guardian({
       id: 'guardian-1',
       schoolId: 'school-1',
@@ -228,9 +132,9 @@ describe('unlinkSubjectFromActor', () => {
       subjectId: 'auth-student',
     })
 
-    ctx.repositories.guardians.findById = async () => linkedGuardian
-    ctx.repositories.teachers.findById = async () => linkedTeacher
-    ctx.repositories.students.findById = async () => linkedStudent
+    await ctx.repositories.guardians.save(linkedGuardian)
+    await ctx.repositories.teachers.save(linkedTeacher)
+    await ctx.repositories.students.save(linkedStudent)
 
     const guardianResult = await unlinkSubjectFromActor(
       ctx.baseService,
@@ -254,13 +158,13 @@ describe('unlinkSubjectFromActor', () => {
     expect(guardianResult.entity.subjectId).toBeUndefined()
     expect(teacherResult.entity.subjectId).toBeUndefined()
     expect(studentResult.entity.subjectId).toBeUndefined()
-    expect(ctx.saved.guardians[0]?.subjectId).toBeUndefined()
-    expect(ctx.saved.teachers[0]?.subjectId).toBeUndefined()
-    expect(ctx.saved.students[0]?.subjectId).toBeUndefined()
+    expect((await ctx.repositories.guardians.findById('guardian-1'))?.subjectId).toBeUndefined()
+    expect((await ctx.repositories.teachers.findById('teacher-1'))?.subjectId).toBeUndefined()
+    expect((await ctx.repositories.students.findById('student-1'))?.subjectId).toBeUndefined()
   })
 
   test('returns entities that are already unlinked without saving', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
 
     const result = await unlinkSubjectFromActor(
       ctx.baseService,
@@ -270,11 +174,11 @@ describe('unlinkSubjectFromActor', () => {
     )
 
     expect(result.entity.id).toBe('staff-1')
-    expect(ctx.saved.staffMembers).toHaveLength(0)
+    expect((await ctx.repositories.staffMembers.findById('staff-1'))?.subjectId).toBeUndefined()
   })
 
   test('rejects missing actor targets in the school', async () => {
-    const ctx = createLinkContext()
+    const ctx = await createLinkContext()
 
     await expect(unlinkSubjectFromActor(
       ctx.baseService,

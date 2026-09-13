@@ -1,19 +1,17 @@
-import { Permission } from '@edaya/core';
+import type { TeacherUnavailability } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 
-import type { TeacherUnavailability } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-
-import { BusinessRuleViolationError, TeacherUnavailabilityRecurrence } from '@edaya/core';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import { BusinessRuleViolationError, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 export const teacherUnavailabilityConfig: EntityConfigFactory<TeacherUnavailability> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.teacherUnavailabilities,
     tenant: teacherUnavailabilityTenant(),
-    authorization: { resource: 'teacherUnavailabilities', read: [Permission.ACCESS_CONTROL_ASSIGN, Permission.SCHOOL_STRUCTURE_CONFIGURE], write: [Permission.ACCESS_CONTROL_ASSIGN] },
-    
+    resource: 'teacherUnavailabilities',
+
     gates: { preSave: validateTeacherUnavailabilitySave },
     atomicExecution,
   })

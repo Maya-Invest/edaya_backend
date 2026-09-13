@@ -19,7 +19,6 @@ export function isPlatformPermission(value: string): value is PlatformAction {
 export const S2S_ACCESS_CLASSES = ['read', 'write'] as const
 export type S2sAccessClass = (typeof S2S_ACCESS_CLASSES)[number]
 
-
 export function isS2sAccessClass(value: string): value is S2sAccessClass {
   return value === 'read' || value === 'write'
 }

@@ -45,6 +45,7 @@ export interface MessageDeliverySeedRecord {
 }
 
 export interface CommunicationsSeedPort {
+  findRecipientSubjectId: (kind: MessageDeliveryRecipientKind, id: string) => Promise<string | undefined>
   createAnnouncement: (record: AnnouncementSeedRecord) => Promise<void>
   addTarget: (record: AnnouncementTargetSeedRecord) => Promise<void>
   publishAnnouncement: (record: PublishAnnouncementSeedRecord) => Promise<void>

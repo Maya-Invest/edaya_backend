@@ -1,121 +1,27 @@
 import type { Activity, CalendarEvent } from '@edaya/core'
-import { ActivityEnrollmentStatus, RecordingNotificationGateway, SchoolNotificationTemplates, StudentClassEnrollmentStatus } from '@edaya/core'
-import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
-import { NotificationTemplateService } from '../../src/capabilities/notifications/templates/notification-template-service'
+import { createSystemActorMetadata } from '@edaya/authorization'
+import { AcademicYear, ActivityEnrollment, ActivityEnrollmentStatus, ClassGroup, GradeLevel, Guardian, GuardianContactMethod, GuardianContactMethodType, GuardianStudentLink, RecordingNotificationGateway, School, Student, StudentClassEnrollment } from '@edaya/core'
+import { createTestApp } from './create-test-app'
 
-export async function createReminderTemplateService(): Promise<NotificationTemplateService> {
-  const templates = await buildDefaultNotificationTemplateDocument()
-  return new NotificationTemplateService({
-    schoolNotificationTemplates: {
-      findById: async () => new SchoolNotificationTemplates({
-        schoolId: 'school-1',
-        templates,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    },
-  } as never)
-}
-
-export function createReminderScanRepositories() {
-  return {
-    schools: {
-      findById: async () => ({
-        id: 'school-1',
-        name: 'Edaya School',
-        timeZone: 'Africa/Douala',
-      }),
-    },
-    classGroups: {
-      findById: async (id: string) => (
-        id === 'cg1'
-          ? {
-              id: 'cg1',
-              schoolId: 'school-1',
-              name: '6ème A',
-              academicYearId: 'y1',
-              gradeLevelId: 'gl1',
-            }
-          : undefined
-      ),
-      list: async () => [],
-    },
-    enrollments: {
-      list: async () => [{
-        studentId: 'stu1',
-        status: StudentClassEnrollmentStatus.Active,
-      }],
-    },
-    guardianLinks: {
-      list: async () => [{
-        guardianId: 'gua1',
-        studentId: 'stu1',
-        receivesAcademicReports: true,
-      }],
-    },
-    guardians: {
-      findById: async () => ({
-        id: 'gua1',
-        schoolId: 'school-1',
-        subjectId: 'subject-gua1',
-        contactMethods: [{ allowsNotifications: true }],
-      }),
-    },
-    students: {
-      findById: async () => ({
-        id: 'stu1',
-        schoolId: 'school-1',
-        subjectId: 'subject-stu1',
-      }),
-    },
-    activityEnrollments: {
-      list: async () => [{
-        activityId: 'act1',
-        studentId: 'stu1',
-        status: ActivityEnrollmentStatus.Approved,
-      }],
-    },
-    messageDeliveries: {
-      findById: async () => undefined,
-      save: async () => {},
-    },
-  }
-}
-
-export async function createReminderCronContext(options: {
-  asOf: Date
-  calendarEvents?: CalendarEvent[]
-  activities?: Activity[]
-}) {
+export async function createReminderCronContext(options: { asOf: Date, calendarEvents?: CalendarEvent[], activities?: Activity[] }) {
   const gateway = new RecordingNotificationGateway()
-  const templateService = await createReminderTemplateService()
-
-  return {
-    context: {
-      asOf: options.asOf,
-      actor: {
-        kind: 'system' as const,
-        systemId: 'cron',
-        schoolId: 'school-1',
-        requestId: 'cron:test',
-        reason: 'test',
-      },
-      service: {
-        baseService: {
-          repositories: {
-            ...createReminderScanRepositories(),
-            calendarEvents: {
-              list: async () => options.calendarEvents ?? [],
-            },
-            activities: {
-              list: async () => options.activities ?? [],
-            },
-          },
-          notificationGateway: gateway,
-          templateService,
-        },
-      },
-    } as never,
-    gateway,
+  const actor = createSystemActorMetadata({ systemId: 'processDueNotifications', schoolId: 'school-1', requestId: 'reminder', reason: 'Reminder scan' })
+  const fixture = await createTestApp(actor, { notificationGateway: gateway })
+  const repositories = fixture.schoolRepositories
+  await repositories.schools.save(new School({ id: 'school-1', name: 'Edaya School', timeZone: 'Africa/Douala' }))
+  await repositories.schools.save(new School({ id: 'school-2', name: 'Other School', timeZone: 'UTC' }))
+  await repositories.academicYears.save(new AcademicYear({ id: 'y1', schoolId: 'school-1', name: '2026', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+  await repositories.gradeLevels.save(new GradeLevel({ id: 'gl1', schoolId: 'school-1', name: '6', label: '6', order: 1 }))
+  await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'school-1', academicYearId: 'y1', gradeLevelId: 'gl1', name: '6A' }))
+  await repositories.students.save(new Student({ id: 'stu1', schoolId: 'school-1', firstName: 'A', lastName: 'Student', subjectId: 'subject-stu1' }))
+  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'school-1', firstName: 'A', lastName: 'Guardian', subjectId: 'subject-gua1', contactMethods: [new GuardianContactMethod({ type: GuardianContactMethodType.Email, value: 'guardian@example.test', allowsNotifications: true })] }))
+  await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'school-1', studentId: 'stu1', guardianId: 'gua1', relationship: 'parent', isPrimary: true, receivesAcademicReports: true }))
+  await repositories.enrollments.save(new StudentClassEnrollment({ id: 'enrollment', studentId: 'stu1', classGroupId: 'cg1', academicYearId: 'y1', enrollmentIndex: 1 }))
+  for (const event of options.calendarEvents ?? []) await repositories.calendarEvents.save(event)
+  for (const activity of options.activities ?? []) {
+    await repositories.activities.save(activity)
+    if (activity.schoolId === 'school-1')
+      await repositories.activityEnrollments.save(new ActivityEnrollment({ id: `enrollment-${activity.id}`, activityId: activity.id, studentId: 'stu1', status: ActivityEnrollmentStatus.Approved }))
   }
+  return { context: { asOf: options.asOf, actor, service: fixture.app }, gateway }
 }

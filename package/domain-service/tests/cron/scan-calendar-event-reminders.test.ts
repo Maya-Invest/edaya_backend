@@ -78,7 +78,7 @@ describe('scanCalendarEventReminders', () => {
 
     const result = await scanCalendarEventReminders(context)
 
-    expect(result).toEqual({ processed: 0, skipped: 5 })
+    expect(result).toEqual({ processed: 0, skipped: 4 })
     expect(gateway.enqueued).toHaveLength(0)
   })
 })

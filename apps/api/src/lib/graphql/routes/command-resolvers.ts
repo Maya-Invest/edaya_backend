@@ -1,4 +1,3 @@
-import { assertCommandActorKind } from "@edaya/authorization";
 import { executeSchoolCommand } from "@/lib/school-api/execute-command";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import type { CoreCommandConfig } from "@/lib/school-api/registry";
@@ -7,7 +6,6 @@ import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 export function createCommandMutationResolver(commandConfig: CoreCommandConfig) {
   return wrapResolver(async (context, args: { input: unknown }) => {
     const actor = requireActor(context);
-    assertCommandActorKind(actor, { serviceOnly: commandConfig.serviceOnly });
 
     const service = context.get("schoolApp").forActor(actor);
     const result = await executeSchoolCommand(context, service, commandConfig.methodName, args.input);

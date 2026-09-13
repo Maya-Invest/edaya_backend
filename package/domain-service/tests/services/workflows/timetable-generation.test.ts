@@ -1,5 +1,4 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { AtomicExecutionPort, SchoolInput } from '@edaya/core'
+import type { SchoolInput } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { ResolvedTimetableCell, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../../src/services/workflows/timetable-generation'
 import {
@@ -12,11 +11,11 @@ import {
   DayOfWeek,
   GradeLevel,
   LessonSession,
-  noOpNotificationGateway,
   OccurrenceStatus,
   PeriodDefinition,
+  Permission,
   School,
-  StaffMember,
+  StaffPermissionAssignment,
   Subject,
   SubjectCategory,
   SubjectColor,
@@ -28,11 +27,10 @@ import {
   TimetableGenerated,
   TimetableGenerationMode,
 } from '@edaya/core'
-import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
-import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
-import { testFileStorage } from '../../support/test-file-storage'
+import { createTestApp } from '../../support/create-test-app'
+import { createTestStaffActor } from '../../support/test-actor'
 
 const weekStart = new Date('2026-09-07T00:00:00.000Z')
 const weekEnd = new Date('2026-09-11T00:00:00.000Z')
@@ -635,7 +633,7 @@ describe('timetable resolver and solver', () => {
   })
 })
 
-function createWorkflowContext(
+async function createWorkflowContext(
   unavailabilities: TeacherUnavailability[] = [],
   config: { unassignedFirstSubject?: boolean, homeroomTeacherLinked?: boolean, omitPeriodsPerWeek?: boolean } = {},
   calendarEvents: CalendarEvent[] = [],
@@ -646,6 +644,7 @@ function createWorkflowContext(
     name: 'School',
     timeZone: 'UTC',
     timetableMinDayGapSameSubject: 1,
+    ownerSubjectId: createTestStaffActor('school-1', 'staff-1').subjectId,
   } satisfies SchoolInput)
   const academicYear = new AcademicYear({
     id: 'year-1',
@@ -663,7 +662,6 @@ function createWorkflowContext(
       academicYearId: academicYear.id,
       gradeLevelId: grade.id,
       name: 'A',
-      homeroomStaffId: config.homeroomTeacherLinked ? 'staff-homeroom' : undefined,
     }),
     new ClassGroup({ id: 'class-2', schoolId: school.id, academicYearId: academicYear.id, gradeLevelId: grade.id, name: 'B' }),
   ]
@@ -692,84 +690,28 @@ function createWorkflowContext(
       classSubjectId: classSubject.id,
     }))
   const periods = weekdays.map(day => period(day))
-  const sessions = new Map<string, LessonSession>()
-
-  const repositories = {
-    schools: { findById: async () => school },
-    academicYears: { findById: async () => academicYear },
-    gradeLevels: { findByIds: async () => [grade] },
-    classGroups: {
-      findById: async (id: string) => groups.find(group => group.id === id),
-      list: async () => groups,
-    },
-    classSubjects: {
-      list: async (filter: { classGroupId?: string } = {}) => classSubjects.filter(item => !filter.classGroupId || item.classGroupId === filter.classGroupId),
-    },
-    subjects: { findByIds: async () => [subject] },
-    gradeLevelSubjects: { findByIds: async () => [] },
-    teacherAssignments: { list: async () => assignments },
-    teacherUnavailabilities: { list: async () => unavailabilities },
-    staffMembers: {
-      findById: async (id: string) => id === 'staff-homeroom'
-        ? new StaffMember({ id, schoolId: school.id, firstName: 'Home', lastName: 'Room', subjectId: 'account-homeroom' })
-        : undefined,
-    },
-    teachers: {
-      findOne: async (filter: { subjectId?: string }) => filter.subjectId === 'account-homeroom'
-        ? new Teacher({ id: 'teacher-homeroom', schoolId: school.id, firstName: 'Home', lastName: 'Room', subjectId: 'account-homeroom' })
-        : undefined,
-    },
-    periodDefinitions: { list: async () => periods },
-    calendarEvents: { list: async () => calendarEvents },
-    lessonSessions: {
-      findById: async (id: string) => sessions.get(id),
-      list: async (filter: {
-        classGroupId?: string
-        classSubjectId?: { $in?: string[] }
-        startsAt?: { $lt?: Date, $gte?: Date, $lte?: Date }
-        endsAt?: { $gt?: Date }
-      } = {}) => [...sessions.values()].filter(session =>
-        (!filter.classGroupId || session.classGroupId === filter.classGroupId)
-        && (!filter.classSubjectId?.$in || filter.classSubjectId.$in.includes(session.classSubjectId))
-        && (!filter.startsAt?.$lt || session.startsAt < filter.startsAt.$lt)
-        && (!filter.startsAt?.$gte || session.startsAt >= filter.startsAt.$gte)
-        && (!filter.startsAt?.$lte || session.startsAt <= filter.startsAt.$lte)
-        && (!filter.endsAt?.$gt || session.endsAt > filter.endsAt.$gt)),
-      save: async (session: LessonSession) => { sessions.set(session.id, session) },
-      delete: async (id: string) => { sessions.delete(id) },
-      batchSave: async (entities: LessonSession[]) => {
-        for (const session of entities) {
-          sessions.set(session.id, session)
-        }
-        return entities.map(session => session.id)
-      },
-      batchDelete: async (ids: string[]) => {
-        for (const id of ids) {
-          sessions.delete(id)
-        }
-      },
-    },
-    activitySessions: { list: async () => [] },
-    assessments: { list: async () => [] },
-  } as unknown as SchoolRepositories
-  const atomicExecution: AtomicExecutionPort = { execute: operation => operation() }
-  const authorizationPolicy = {
-    checkClassGroupAccess: async () => {},
-  } as unknown as AuthorizationPolicy
-  const service = new SchoolService({
-    actor: createElevatedTestStaffActor(school.id, 'staff-1'),
-    repositories,
-    authorizationPolicy,
-    atomicExecution,
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: testFileStorage,
-  })
-  return { service, sessions }
+  const { app: service, schoolRepositories: repositories } = await createTestApp(createTestStaffActor(school.id, 'staff-1'), { owner: true })
+  await repositories.schools.save(school)
+  await repositories.academicYears.save(academicYear)
+  await repositories.gradeLevels.save(grade)
+  await repositories.classGroups.batchSave(groups)
+  await repositories.subjects.save(subject)
+  await repositories.classSubjects.batchSave(classSubjects)
+  await repositories.teachers.save(new Teacher({ id: 'teacher-shared', schoolId: school.id, firstName: 'Subject', lastName: 'Teacher' }))
+  await repositories.teacherAssignments.batchSave(assignments)
+  if (config.homeroomTeacherLinked) {
+    await repositories.teachers.save(new Teacher({ id: 'teacher-homeroom', schoolId: school.id, firstName: 'Homeroom', lastName: 'Teacher' }))
+    await repositories.teacherAssignments.save(new TeacherAssignment({ id: 'homeroom', teacherId: 'teacher-homeroom', academicYearId: academicYear.id, kind: TeacherAssignmentKind.Homeroom, classGroupId: 'class-1' }))
+  }
+  await repositories.teacherUnavailabilities.batchSave(unavailabilities)
+  await repositories.periodDefinitions.batchSave(periods)
+  await repositories.calendarEvents.batchSave(calendarEvents)
+  return { service, sessions: repositories.lessonSessions, repositories }
 }
 
 describe('timetable generation workflow', () => {
   test('fails strictly when a class subject has no teacher', async () => {
-    const { service } = createWorkflowContext([], { unassignedFirstSubject: true })
+    const { service } = await createWorkflowContext([], { unassignedFirstSubject: true })
     await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -779,7 +721,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('allows unassigned placements without teacher occupancy when configured', async () => {
-    const { service } = createWorkflowContext([], { unassignedFirstSubject: true })
+    const { service } = await createWorkflowContext([], { unassignedFirstSubject: true })
     const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -792,7 +734,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('uses and persists the linked homeroom teacher fallback', async () => {
-    const { service } = createWorkflowContext([], { unassignedFirstSubject: true, homeroomTeacherLinked: true })
+    const { service } = await createWorkflowContext([], { unassignedFirstSubject: true, homeroomTeacherLinked: true })
     const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -804,8 +746,38 @@ describe('timetable generation workflow', () => {
     expect(result.sessions.every(session => session.timetableTeacherIds.includes('teacher-homeroom'))).toBe(true)
   })
 
+  test('homeroom fallback loses authority after assignment expiry or profile deactivation', async () => {
+    const { service, repositories } = await createWorkflowContext([], { unassignedFirstSubject: true, homeroomTeacherLinked: true })
+    const input = { classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd, options: { useHomeroomTeacherFallback: true } }
+    const assignment = (await repositories.teacherAssignments.findById('homeroom'))!
+    await repositories.teacherAssignments.save(new TeacherAssignment({ ...assignment.data, endsAt: new Date('2026-09-06') }))
+    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable(input)).rejects.toMatchObject({ code: 'TIMETABLE_TEACHER_ASSIGNMENT_REQUIRED' })
+    await repositories.teacherAssignments.save(assignment)
+    const teacher = (await repositories.teachers.findById('teacher-homeroom'))!
+    await repositories.teachers.save(new Teacher({ ...teacher.data, isActive: false }))
+    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable(input)).rejects.toMatchObject({ code: 'TIMETABLE_TEACHER_ASSIGNMENT_REQUIRED' })
+    expect(await repositories.lessonSessions.count()).toBe(0)
+  })
+
+  test('scoped creation cannot borrow another action to generate or publish unrelated classes', async () => {
+    const { service, repositories } = await createWorkflowContext()
+    const school = (await repositories.schools.findById('school-1'))!
+    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
+    for (const [id, permission, classGroupId] of [['create', Permission.TIMETABLE_CREATE, 'class-1'], ['other-read', Permission.QUERY_TIMETABLE_READ, 'class-2']] as const)
+      await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id, staffId: 'staff-1', schoolId: 'school-1', academicYearId: 'year-1', permission, scopes: [{ kind: 'class_group', classGroupId }] }))
+    const input = { classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd }
+    const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable(input)
+    expect(generated.sessions.length).toBeGreaterThan(0)
+    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({ ...input, classGroupId: 'class-2' })).rejects.toThrow()
+    await expect(service.timetableGenerationWorkflow.publishClassGroupTimetable(input)).rejects.toThrow()
+    expect((await repositories.lessonSessions.list()).every(session => session.classGroupId === 'class-1' && session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+    await repositories.staffPermissionAssignments.delete('create')
+    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable(input)).rejects.toThrow()
+    expect(await repositories.lessonSessions.count()).toBe(generated.sessions.length)
+  })
+
   test('generates sequential school drafts without double-booking a shared teacher', async () => {
-    const { service } = createWorkflowContext()
+    const { service } = await createWorkflowContext()
     const result = await service.timetableGenerationWorkflow.generateSchoolTimetable({
       academicYearId: 'year-1',
       startDate: weekStart,
@@ -845,7 +817,7 @@ describe('timetable generation workflow', () => {
         scopeId: 'class-1',
       }),
     ]
-    const { service } = createWorkflowContext([], {}, calendarEvents)
+    const { service } = await createWorkflowContext([], {}, calendarEvents)
 
     const classOne = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
@@ -862,7 +834,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('does not place lessons in a recurring teacher-unavailable slot', async () => {
-    const { service } = createWorkflowContext([new TeacherUnavailability({
+    const { service } = await createWorkflowContext([new TeacherUnavailability({
       id: 'monday-contract-hours',
       teacherId: 'teacher-shared',
       academicYearId: 'year-1',
@@ -885,7 +857,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('publishes and atomically republishes while preserving completed and standalone sessions', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -900,8 +872,8 @@ describe('timetable generation workflow', () => {
     })
     expect(publication.publishedSessionIds).toHaveLength(2)
 
-    const completed = sessions.get(generated.sessions[0]!.id)!.copyWith({ status: OccurrenceStatus.Completed })
-    sessions.set(completed.id, completed)
+    const completed = (await sessions.findById(generated.sessions[0]!.id))!.copyWith({ status: OccurrenceStatus.Completed })
+    await sessions.save(completed)
     const replacedSessionId = generated.sessions[1]!.id
     const standalone = new LessonSession({
       id: 'standalone',
@@ -912,7 +884,7 @@ describe('timetable generation workflow', () => {
       endsAt: new Date('2026-09-08T09:00:00.000Z'),
       displayLabel: 'Manual lesson',
     })
-    sessions.set(standalone.id, standalone)
+    await sessions.save(standalone)
 
     const republished = await service.timetableGenerationWorkflow.republishClassGroupTimetable({
       classGroupId: 'class-1',
@@ -921,14 +893,14 @@ describe('timetable generation workflow', () => {
       endDate: weekEnd,
       options: { enforceWorkloadFulfillment: false },
     })
-    expect(sessions.has(completed.id)).toBe(true)
-    expect(sessions.has(standalone.id)).toBe(true)
-    expect(sessions.has(replacedSessionId)).toBe(false)
+    expect(await sessions.findById(completed.id)).toBeDefined()
+    expect(await sessions.findById(standalone.id)).toBeDefined()
+    expect(await sessions.findById(replacedSessionId)).toBeUndefined()
     expect(republished.publication.publishedSessionIds).toHaveLength(0)
   })
 
   test('keeps all drafts on publish fail and publishes conflict-free drafts with skip', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -944,14 +916,14 @@ describe('timetable generation workflow', () => {
       endsAt: generated.sessions[0]!.endsAt,
       displayLabel: 'Conflicting lesson',
     })
-    sessions.set(conflicting.id, conflicting)
+    await sessions.save(conflicting)
 
     await expect(service.timetableGenerationWorkflow.publishClassGroupTimetable({
       classGroupId: 'class-1',
       startDate: weekStart,
       endDate: weekEnd,
     })).rejects.toMatchObject({ code: 'SCHEDULE_CONFLICT' })
-    expect(generated.sessions.every(session => sessions.get(session.id)?.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
+    expect((await sessions.findByIds(generated.sessions.map(session => session.id))).every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
 
     const skipped = await service.timetableGenerationWorkflow.publishClassGroupTimetable({
       classGroupId: 'class-1',
@@ -964,7 +936,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('regenerates class timetables by discarding existing drafts and published sessions in range', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -986,12 +958,12 @@ describe('timetable generation workflow', () => {
     })
 
     expect(regenerated.sessions).toHaveLength(2)
-    expect(publishedIds.every(sessionId => !sessions.has(sessionId))).toBe(true)
+    expect(await sessions.findByIds(publishedIds)).toEqual([])
     expect(regenerated.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
   })
 
   test('regenerates class drafts by discarding existing drafts in range', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const first = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -1008,12 +980,12 @@ describe('timetable generation workflow', () => {
     })
 
     expect(second.sessions).toHaveLength(2)
-    expect(first.sessions.every(session => !sessions.has(session.id))).toBe(true)
+    expect(await sessions.findByIds(first.sessions.map(session => session.id))).toEqual([])
     expect(second.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
   })
 
   test('derives periodsPerWeek from coefficient when class subject workload is unset', async () => {
-    const { service } = createWorkflowContext([], { omitPeriodsPerWeek: true })
+    const { service } = await createWorkflowContext([], { omitPeriodsPerWeek: true })
     const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -1025,7 +997,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('blocks single-class generation when a shared teacher is occupied in another class', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const otherClassLesson = new LessonSession({
       id: 'other-class-lesson',
       schoolId: 'school-1',
@@ -1035,7 +1007,7 @@ describe('timetable generation workflow', () => {
       endsAt: new Date('2026-09-07T09:00:00.000Z'),
       displayLabel: 'Existing lesson',
     })
-    sessions.set(otherClassLesson.id, otherClassLesson)
+    await sessions.save(otherClassLesson)
 
     const result = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
@@ -1050,7 +1022,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('persists resolved teacher snapshots when publishing drafts without stored teacher ids', async () => {
-    const { service, sessions } = createWorkflowContext()
+    const { service, sessions } = await createWorkflowContext()
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -1058,7 +1030,7 @@ describe('timetable generation workflow', () => {
       endDate: weekEnd,
     })
     for (const session of generated.sessions) {
-      sessions.set(session.id, session.copyWith({ timetableTeacherIds: [] }))
+      await sessions.save(session.copyWith({ timetableTeacherIds: [] }))
     }
 
     await service.timetableGenerationWorkflow.publishClassGroupTimetable({
@@ -1068,13 +1040,13 @@ describe('timetable generation workflow', () => {
     })
 
     for (const session of generated.sessions) {
-      expect(sessions.get(session.id)?.timetableTeacherIds).toEqual(['teacher-shared'])
-      expect(sessions.get(session.id)?.timetableGenerated).toBe(TimetableGenerated.Published)
+      expect((await sessions.findById(session.id))?.timetableTeacherIds).toEqual(['teacher-shared'])
+      expect((await sessions.findById(session.id))?.timetableGenerated).toBe(TimetableGenerated.Published)
     }
   })
 
   test('regenerates published class timetables during school generation', async () => {
-    const { service } = createWorkflowContext()
+    const { service } = await createWorkflowContext()
     await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -1099,7 +1071,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('regenerates school drafts for classes without published timetables', async () => {
-    const { service } = createWorkflowContext()
+    const { service } = await createWorkflowContext()
     await service.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class-1',
       academicYearId: 'year-1',
@@ -1118,7 +1090,7 @@ describe('timetable generation workflow', () => {
   })
 
   test('regenerates all class groups during school generation even when timetables were published', async () => {
-    const { service } = createWorkflowContext()
+    const { service } = await createWorkflowContext()
     await service.timetableGenerationWorkflow.generateSchoolTimetable({
       academicYearId: 'year-1',
       startDate: weekStart,

@@ -1,9 +1,9 @@
-import { AuthorizationError, AuthorizationErrorCode, isSchoolScopedActor } from '@edaya/authorization';
-import type { ActorMetadata } from '@edaya/authorization';
-import type { AtomicExecutionPort, FileStoragePort } from '@edaya/core';
-import type { SchoolRepositories } from '../ports/school-repositories';
-import type { ServiceArgs } from './service-args';
-import { SchoolService } from './school-service';
+import type { ActorMetadata } from '@edaya/authorization'
+import type { AtomicExecutionPort, FileStoragePort } from '@edaya/core'
+import type { SchoolRepositories } from '../ports/school-repositories'
+import type { ServiceArgs } from './service-args'
+import { AuthorizationError, AuthorizationErrorCode, isSchoolScopedActor } from '@edaya/authorization'
+import { SchoolService } from './school-service'
 
 export type SchoolApplicationArgs = Omit<ServiceArgs, 'actor'>
 
@@ -19,7 +19,8 @@ export class SchoolApplication {
   }
 
   get atomicExecution(): AtomicExecutionPort {
-    if (!this.args.atomicExecution) throw new Error('Application writes require atomic execution')
+    if (!this.args.atomicExecution)
+      throw new Error('Application writes require atomic execution')
     return this.args.atomicExecution
   }
 

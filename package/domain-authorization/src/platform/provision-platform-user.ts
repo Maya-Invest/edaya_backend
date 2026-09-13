@@ -1,5 +1,4 @@
-import type { AtomicExecutionPort } from '@edaya/core'
-import type { PlatformAction, PlatformUserRepository } from '@edaya/core'
+import type { AtomicExecutionPort, PlatformAction, PlatformUserRepository } from '@edaya/core'
 import type { PlatformActorMetadata } from '../model/actor'
 import { randomUUID } from 'node:crypto'
 import {
@@ -8,7 +7,6 @@ import {
   PlatformUser,
 } from '@edaya/core'
 import { PlatformPolicies } from '../access/platform-policies'
-import { AuthorizationError, AuthorizationErrorCode } from '../model/errors'
 
 export const PLATFORM_BOOTSTRAP_SUBJECT_ID = 'bootstrap'
 
@@ -73,13 +71,6 @@ async function performDeactivatePlatformUser(
   id: string,
 ): Promise<PlatformUser> {
   await new PlatformPolicies(actor, repository).deactivateUser(id)
-
-  if (id === actor.actorId) {
-    throw new BusinessRuleViolationError(
-      'PLATFORM_USER_SELF_DEACTIVATE',
-      'A platform user cannot deactivate themselves',
-    )
-  }
 
   const existing = await repository.findById(id)
   if (!existing || !existing.isActive) {

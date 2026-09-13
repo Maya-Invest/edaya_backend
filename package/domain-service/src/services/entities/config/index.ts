@@ -22,7 +22,7 @@ export { activitySessionConfig, validateActivitySessionSave } from './scheduling
 export { attendanceConfig } from './scheduling/attendance'
 export { attendanceRecordConfig } from './scheduling/attendance-record'
 export { calendarEventConfig, validateCalendarEventSave } from './scheduling/calendar-event'
-export { isLessonSessionAttendanceCompletionUpdate, isLessonSessionLogbookOnlyUpdate, lessonSessionConfig, validateLessonSessionSave } from './scheduling/lesson-session'
+export { lessonSessionConfig, validateLessonSessionSave } from './scheduling/lesson-session'
 export { periodDefinitionConfig } from './scheduling/period-definition'
 export { scheduleConfig, validateScheduleSave } from './scheduling/schedule'
 export { activityConfig, validateActivityDelete } from './school-life/activity'

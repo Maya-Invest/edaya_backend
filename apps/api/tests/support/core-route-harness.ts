@@ -9,9 +9,9 @@ import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
 import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
-import { ActorAssuranceLevel, ASSIGNMENT_SCOPED_PERMISSIONS, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
+import { ActorAssuranceLevel, createServiceAccount, createStaffActorMetadata } from "@edaya/authorization";
 import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorization";
-import { Permission, StaffPermissionAssignment } from "@edaya/core";
+import { type GrantScope, Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
@@ -280,11 +280,6 @@ export async function provisionServiceAccountForTests(
   const staff = await application.repositories.staffMembers.findById(creatorStaffId);
   if (!staff?.subjectId)
     throw new Error(`Staff member ${creatorStaffId} is not linked to an identity subject`);
-  const grants = await application.repositories.authorization.resolveEffectiveGrants({
-    staffMemberId: creatorStaffId,
-    schoolId: SEED_SCHOOL_ID,
-    academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
-  });
   const actor = createStaffActorMetadata({
     subjectId: staff.subjectId,
     staffMemberId: creatorStaffId,
@@ -292,9 +287,9 @@ export async function provisionServiceAccountForTests(
     requestId: "service-account-test",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Verified,
-    effectiveGrants: grants,
+    academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
   });
-  return createServiceAccount(application.repositories, actor, input);
+  return createServiceAccount(application.repositories, actor, input, application.atomicExecution);
 }
 
 export async function signInDirectorWithBearer(
@@ -350,16 +345,16 @@ export function buildSchoolWidePermissionAssignments(
   permissions: readonly Permission[],
   academicYearId = TEST_ACADEMIC_YEAR_ID,
 ): ServiceAccountPermissionAssignmentInput[] {
-  return permissions.map(permission => ({ permission, scopeIds: "", academicYearId }));
+  return permissions.map(permission => ({ permission, scopes: [{ kind: "school" }], academicYearId }));
 }
 
 export async function grantServiceAccountCreate(
   application: ApiSchoolApplication,
   staffId: string,
   permissions: readonly Permission[] = [Permission.SERVICE_ACCOUNT_CREATE],
-  scopeIds = "",
+  scopes: GrantScope[] = [{ kind: "school" }],
 ) {
-  await grantStaffPermissionAssignments(application, staffId, permissions, scopeIds);
+  await grantStaffPermissionAssignments(application, staffId, permissions, scopes);
 }
 
 export async function grantAccessControlAssign(application: ApiSchoolApplication, staffId: string) {
@@ -370,18 +365,18 @@ async function grantStaffPermissionAssignments(
   application: ApiSchoolApplication,
   staffId: string,
   permissions: readonly Permission[],
-  scopeIds = "",
+  scopes: GrantScope[] = [{ kind: "school" }],
   academicYearId = TEST_ACADEMIC_YEAR_ID,
 ): Promise<void> {
   for (const [index, permission] of permissions.entries()) {
-    const assignmentScoped = ASSIGNMENT_SCOPED_PERMISSIONS.includes(permission);
+    const assignmentScoped = permissionScope(permission) !== undefined;
     await application.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
       id: `spa-grant-${staffId}-${permission}-${index}`,
       staffId,
       schoolId: SEED_SCHOOL_ID,
       academicYearId,
       permission,
-      scopeIds: assignmentScoped ? scopeIds : "",
+      scopes: assignmentScoped ? scopes : [{ kind: "school" }],
       status: "active",
     }));
   }

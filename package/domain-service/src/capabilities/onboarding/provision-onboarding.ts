@@ -1,21 +1,21 @@
-import type { ActorMetadata } from '@edaya/authorization';
-import type { ApplyStructureTemplateResult } from './apply-structure-template';
-import type { InviteStaffMembersResult } from './invite-staff-members';
-import type { OnboardingAccountStatus } from './onboarding-account-state';
-import type { OnboardingSchoolApplication } from './onboarding-application';
-import type { RegisterSchoolOwnerSession } from './register-school-with-owner';
-import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles';
-import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types';
-import { randomUUID } from 'node:crypto';
-import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { applyStructureTemplate } from './apply-structure-template';
-import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft';
-import { inviteStaffMembers } from './invite-staff-members';
-import { completeOnboardingWizard } from './onboarding-account-state';
-import { registerSchoolWithOwner } from './register-school-with-owner';
-import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles';
-import { isStructureTemplateId } from './structure-naming';
+import type { ActorMetadata } from '@edaya/authorization'
+import type { ApplyStructureTemplateResult } from './apply-structure-template'
+import type { InviteStaffMembersResult } from './invite-staff-members'
+import type { OnboardingAccountStatus } from './onboarding-account-state'
+import type { OnboardingSchoolApplication } from './onboarding-application'
+import type { RegisterSchoolOwnerSession } from './register-school-with-owner'
+import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
+import type { StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
+import { randomUUID } from 'node:crypto'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { applyStructureTemplate } from './apply-structure-template'
+import { ensureAcademicStructureFromDraft } from './ensure-academic-structure-from-draft'
+import { inviteStaffMembers } from './invite-staff-members'
+import { completeOnboardingWizard } from './onboarding-account-state'
+import { registerSchoolWithOwner } from './register-school-with-owner'
+import { isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
+import { isStructureTemplateId } from './structure-naming'
 
 export interface ProvisionOnboardingSchoolInput {
   name: string

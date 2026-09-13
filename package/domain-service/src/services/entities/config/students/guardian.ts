@@ -1,23 +1,20 @@
-import { Permission } from '@edaya/core';
-import type { Guardian } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
+import type { Guardian } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
 
-import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
-import { assertUniquePersonCode } from '../person-code-uniqueness';
+import { AttachmentOwnerKind, BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
+import { assertUniquePersonCode } from '../person-code-uniqueness'
 
 // Extracted from domain/students/guardian.ts (PR3)
 export const guardianConfig: EntityConfigFactory<Guardian> = ({ repositories, atomicExecution }) => {
-  
-
   return {
     ...config({
       repository: repositories.guardians,
       tenant: directSchoolTenant(),
-      authorization: { resource: 'guardians', read: [Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ], write: [Permission.PARENT_UPDATE] },
-      
+      resource: 'guardians',
+
       atomicExecution,
     }),
     gates: {

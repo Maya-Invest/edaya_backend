@@ -33,8 +33,7 @@ function resolveInboxProbeAnnouncement(dataset: FixtureDataset) {
 
 /**
  * Records unread inbox deliveries keyed to each auth-linked guardian's current subjectId.
- * Fixture deliveries use placeholder `subject-${guardianId}` ids; auth linking replaces the
- * guardian subject before mobile integration tests query the inbox.
+ * Profiles without a central identity link receive no delivery until that link exists.
  *
  * Uses the school-wide guardians announcement when present so every linked guardian is eligible.
  */

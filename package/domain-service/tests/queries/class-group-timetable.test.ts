@@ -252,6 +252,44 @@ describe('buildClassGroupTimetable', () => {
     expect(activity?.teacherName).toBe('Coach Martin')
   })
 
+  test('current teacher labels exclude expired, future and inactive facts and retain all co-teachers', async () => {
+    const rows = [
+      { id: 'valid-z', name: 'Zoe', isActive: true },
+      { id: 'valid-a', name: 'Ada', isActive: true },
+      { id: 'expired', name: 'Expired', isActive: true, endsAt: new Date('2000-01-01') },
+      { id: 'future', name: 'Future', isActive: true, startsAt: new Date('2999-01-01') },
+      { id: 'inactive', name: 'Inactive', isActive: false },
+    ]
+    const repos = {
+      classGroups: { findById: async () => ({ id: 'cg-1', academicYearId: 'year' }) },
+      lessonSessions: { list: async () => [lessonSession({ id: 'lesson', classSubjectId: 'math' })] },
+      activitySessions: { list: async () => [] },
+      assessments: { list: async () => [] },
+      teacherAssignments: { list: async () => rows.map(row => new TeacherAssignment({
+        id: row.id,
+        teacherId: row.id,
+        academicYearId: 'year',
+        kind: TeacherAssignmentKind.Subject,
+        classSubjectId: 'math',
+        startsAt: row.startsAt,
+        endsAt: row.endsAt,
+      })) },
+      teachers: { findByIds: async () => rows.map(row => new Teacher({
+        id: row.id,
+        schoolId: 'school-1',
+        firstName: row.name,
+        lastName: 'Teacher',
+        isActive: row.isActive,
+      })) },
+    } as unknown as SchoolRepositories
+    const timetable = await buildClassGroupTimetable(repos, {
+      classGroupId: 'cg-1',
+      startDate: new Date('2026-05-01'),
+      endDate: new Date('2026-05-31'),
+    })
+    expect(timetable.events[0]?.teacherName).toBe('Ada Teacher, Zoe Teacher')
+  })
+
   test('prefers timetable teacher snapshots over live assignments for lesson display', async () => {
     const repos = {
       classGroups: {

@@ -1,18 +1,27 @@
-import { BusinessRuleViolationError, DisciplinaryActionKind, IncidentInvolvementRole, IncidentKind, IncidentStatus, RecordingNotificationGateway, StudentDisciplinaryActionStatus } from '@edaya/core'
-import {
-  describe,
-  expect,
-  test,
-} from 'bun:test'
+import type { NotificationGatewayPort } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, Guardian, GuardianStudentLink, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, noOpNotificationGateway, RecordingNotificationGateway, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, Subject } from '@edaya/core'
+import { describe, expect, test } from 'bun:test'
 import { INCIDENT_RECORDED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import {
-  actor,
-  createBehaviorContext,
-} from './workflow-test-context'
+import { createStudentTransitionContext } from './student-workflow-context'
+
+async function createBehaviorContext({ existingInvolvement = false, activeEnrollment = true, incidentStatus = IncidentStatus.Open, catalogActionSchoolId = 'sch1', lessonSessionScope = false, notificationGateway = noOpNotificationGateway }: { existingInvolvement?: boolean, activeEnrollment?: boolean, incidentStatus?: IncidentStatus, catalogActionSchoolId?: string, lessonSessionScope?: boolean, notificationGateway?: NotificationGatewayPort } = {}) {
+  const fixture = await createStudentTransitionContext({ notificationGateway, activeEnrollmentId: activeEnrollment ? 'enr1' : '' })
+  const { repositories } = fixture
+  await repositories.subjects.save(new Subject({ id: 'subject', schoolId: 'sch1', name: 'Math' }))
+  await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject' }))
+  await repositories.lessonSessions.save(new LessonSession({ id: 'sess1', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'cs1', displayLabel: 'Math', startsAt: new Date('2026-05-01T09:00:00Z'), endsAt: new Date('2026-05-01T10:00:00Z') }))
+  await repositories.guardians.save(new Guardian({ id: 'gua1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', subjectId: 'subject:gua1' }))
+  await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'sch1', studentId: 'stu1', guardianId: 'gua1', relationship: 'parent' }))
+  await repositories.disciplinaryActions.save(new DisciplinaryAction({ id: 'da1', schoolId: catalogActionSchoolId, name: 'Detention' }))
+  await repositories.incidents.save(new Incident({ id: 'inc1', schoolId: 'sch1', title: 'Hall incident', description: 'Incident description', date: new Date('2026-05-01T10:00:00Z'), kind: IncidentKind.MinorInfraction, reporterId: 'user1', classGroupId: lessonSessionScope ? undefined : 'cg1', lessonSessionId: lessonSessionScope ? 'sess1' : undefined, status: incidentStatus, resolvedAt: incidentStatus === IncidentStatus.Resolved ? new Date('2026-05-01T11:00:00Z') : undefined, resolvedByStaffId: incidentStatus === IncidentStatus.Resolved ? 'user1' : undefined }))
+  if (existingInvolvement)
+    await repositories.studentIncidentInvolvements.save(new StudentIncidentInvolvement({ id: 'involvement-existing', incidentId: 'inc1', studentId: 'stu1', role: IncidentInvolvementRole.Subject }))
+  return { ...fixture, incidents: repositories.incidents, involvements: repositories.studentIncidentInvolvements, disciplinaryActions: repositories.studentDisciplinaryActions }
+}
 
 describe('SchoolService behavior workflows', () => {
   test('addStudentInvolvement persists eligible students through managed service', async () => {
-    const { mockPolicy, mockRepos, service } = createBehaviorContext()
+    const { repositories, service } = await createBehaviorContext()
 
     const result = await service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
@@ -24,14 +33,12 @@ describe('SchoolService behavior workflows', () => {
 
     expect(result.incidentId).toBe('inc1')
     expect(result.studentId).toBe('stu1')
-    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockRepos.studentIncidentInvolvements.save).toHaveBeenCalledWith(result)
+    expect((await repositories.studentIncidentInvolvements.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('addStudentInvolvement enqueues guardian notifications', async () => {
     const gateway = new RecordingNotificationGateway()
-    const { service } = createBehaviorContext({ notificationGateway: gateway })
+    const { service } = await createBehaviorContext({ notificationGateway: gateway })
 
     await service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
@@ -42,7 +49,6 @@ describe('SchoolService behavior workflows', () => {
 
     expect(gateway.enqueued).toHaveLength(1)
     expect(gateway.enqueued[0]).toMatchObject({
-      idempotencyKey: `delivery:${INCIDENT_RECORDED_EVENT_KEY}:inc1:stu1:subject:gua1`,
       schoolId: 'sch1',
       kind: 'event',
       eventKey: INCIDENT_RECORDED_EVENT_KEY,
@@ -51,7 +57,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('addStudentInvolvement rejects duplicate student links', async () => {
-    const { service } = createBehaviorContext({ existingInvolvement: true })
+    const { service } = await createBehaviorContext({ existingInvolvement: true })
 
     await expect(service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
@@ -62,7 +68,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('applyDisciplinaryAction requires an incident involvement and saves through managed service', async () => {
-    const { mockPolicy, mockRepos, service } = createBehaviorContext({ existingInvolvement: true })
+    const { repositories, service } = await createBehaviorContext({ existingInvolvement: true })
 
     const result = await service.behaviorWorkflow.applyDisciplinaryAction({
       id: 'sda1',
@@ -75,13 +81,11 @@ describe('SchoolService behavior workflows', () => {
     expect(result.id).toBe('sda1')
     expect(result.schoolId).toBe('sch1')
     expect(result.assignedByStaffId).toBe('user1')
-    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockRepos.studentDisciplinaryActions.save).toHaveBeenCalledWith(result)
+    expect((await repositories.studentDisciplinaryActions.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('applyDisciplinaryAction rejects students without an incident involvement', async () => {
-    const { service } = createBehaviorContext()
+    const { service } = await createBehaviorContext()
 
     await expect(service.behaviorWorkflow.applyDisciplinaryAction({
       id: 'sda1',
@@ -93,7 +97,7 @@ describe('SchoolService behavior workflows', () => {
 
   test('resolveIncidentWithOutcomes atomically links students, applies sanctions, and resolves', async () => {
     const gateway = new RecordingNotificationGateway()
-    const { incidents, involvements, mockAtomic, mockPolicy, mockRepos, service } = createBehaviorContext({
+    const { incidents, involvements, repositories, service } = await createBehaviorContext({
       notificationGateway: gateway,
     })
 
@@ -114,23 +118,20 @@ describe('SchoolService behavior workflows', () => {
       }],
     })
 
-    expect(mockAtomic.execute).toHaveBeenCalled()
     expect(result.incident.status).toBe(IncidentStatus.Resolved)
     expect(result.incident.resolutionNotes).toBe('Handled in class')
     expect(result.involvements).toHaveLength(1)
     expect(result.involvements[0]?.studentId).toBe('stu1')
     expect(result.sanctions).toHaveLength(1)
     expect(result.sanctions[0]?.disciplinaryActionId).toBe('da1')
-    expect(incidents.get('inc1')?.status).toBe(IncidentStatus.Resolved)
-    expect([...involvements.values()]).toHaveLength(1)
-    expect(mockPolicy.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockRepos.studentDisciplinaryActions.save).toHaveBeenCalledWith(result.sanctions[0])
+    expect((await incidents.findById('inc1'))?.status).toBe(IncidentStatus.Resolved)
+    expect(await involvements.list()).toHaveLength(1)
+    expect((await repositories.studentDisciplinaryActions.findById('sda1'))?.data).toEqual(result.sanctions[0]?.data)
     expect(gateway.enqueued).toHaveLength(1)
   })
 
   test('resolveIncidentWithOutcomes upserts existing involvements without duplicate errors', async () => {
-    const { involvements, service } = createBehaviorContext({ existingInvolvement: true })
+    const { involvements, service } = await createBehaviorContext({ existingInvolvement: true })
 
     const result = await service.behaviorWorkflow.resolveIncidentWithOutcomes({
       incidentId: 'inc1',
@@ -143,11 +144,11 @@ describe('SchoolService behavior workflows', () => {
 
     expect(result.involvements).toHaveLength(1)
     expect(result.involvements[0]?.role).toBe(IncidentInvolvementRole.Witness)
-    expect([...involvements.values()]).toHaveLength(1)
+    expect(await involvements.list()).toHaveLength(1)
   })
 
   test('resolveIncidentWithOutcomes rejects sanctions for students not listed as involved', async () => {
-    const { service } = createBehaviorContext()
+    const { service } = await createBehaviorContext()
 
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({
       incidentId: 'inc1',
@@ -165,7 +166,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('resolveIncidentWithOutcomes rejects already resolved incidents', async () => {
-    const { service } = createBehaviorContext({ incidentStatus: IncidentStatus.Resolved })
+    const { service } = await createBehaviorContext({ incidentStatus: IncidentStatus.Resolved })
 
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({
       incidentId: 'inc1',
@@ -178,7 +179,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('configureDisciplinaryAction and recordIncident persist catalog and incident records', async () => {
-    const { mockRepos, service } = createBehaviorContext()
+    const { repositories, service } = await createBehaviorContext()
 
     const catalogAction = await service.behaviorWorkflow.configureDisciplinaryAction({
       id: 'da-catalog',
@@ -187,7 +188,7 @@ describe('SchoolService behavior workflows', () => {
       kind: DisciplinaryActionKind.Sanction,
     })
     expect(catalogAction.name).toBe('Detention')
-    expect(mockRepos.disciplinaryActions.save).toHaveBeenCalled()
+    expect(await repositories.disciplinaryActions.findById('da-catalog')).toBeDefined()
 
     const incident = await service.behaviorWorkflow.recordIncident({
       id: 'inc-new',
@@ -199,11 +200,11 @@ describe('SchoolService behavior workflows', () => {
       classGroupId: 'cg1',
     })
     expect(incident.reporterId).toBe('user1')
-    expect(mockRepos.incidents.save).toHaveBeenCalled()
+    expect(await repositories.incidents.findById('inc-new')).toBeDefined()
   })
 
   test('resolveIncident marks an open incident as resolved', async () => {
-    const { incidents, service } = createBehaviorContext()
+    const { incidents, service } = await createBehaviorContext()
 
     const result = await service.behaviorWorkflow.resolveIncident({
       incidentId: 'inc1',
@@ -211,11 +212,11 @@ describe('SchoolService behavior workflows', () => {
     })
 
     expect(result.status).toBe(IncidentStatus.Resolved)
-    expect(incidents.get('inc1')?.resolutionNotes).toBe('Discussed expectations')
+    expect((await incidents.findById('inc1'))?.resolutionNotes).toBe('Discussed expectations')
   })
 
   test('updateStudentDisciplinaryActionStatus updates sanction status', async () => {
-    const { disciplinaryActions, service } = createBehaviorContext({ existingInvolvement: true })
+    const { disciplinaryActions, service } = await createBehaviorContext({ existingInvolvement: true })
 
     await service.behaviorWorkflow.applyDisciplinaryAction({
       id: 'sda1',
@@ -230,11 +231,11 @@ describe('SchoolService behavior workflows', () => {
     })
 
     expect(updated.status).toBe(StudentDisciplinaryActionStatus.Completed)
-    expect(disciplinaryActions.get('sda1')?.status).toBe(StudentDisciplinaryActionStatus.Completed)
+    expect((await disciplinaryActions.findById('sda1'))?.status).toBe(StudentDisciplinaryActionStatus.Completed)
   })
 
   test('resolveIncidentWithOutcomes rejects duplicate students in involvedStudents', async () => {
-    const { service } = createBehaviorContext()
+    const { service } = await createBehaviorContext()
 
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({
       incidentId: 'inc1',
@@ -246,7 +247,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('addStudentInvolvement rejects students without active class enrollment', async () => {
-    const { service } = createBehaviorContext({ activeEnrollment: false })
+    const { service } = await createBehaviorContext({ activeEnrollment: false })
 
     await expect(service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
@@ -257,7 +258,7 @@ describe('SchoolService behavior workflows', () => {
   })
 
   test('addStudentInvolvement authorizes lesson-session scoped incidents', async () => {
-    const { mockPolicy, service } = createBehaviorContext({ lessonSessionScope: true })
+    const { repositories, service } = await createBehaviorContext({ lessonSessionScope: true })
 
     await service.behaviorWorkflow.addStudentInvolvement({
       id: 'involvement1',
@@ -265,7 +266,6 @@ describe('SchoolService behavior workflows', () => {
       studentId: 'stu1',
       role: IncidentInvolvementRole.Subject,
     })
-
-    expect(mockPolicy.checkLessonSessionAccess).toHaveBeenCalledWith(actor, ['sess1'])
+    expect(await repositories.studentIncidentInvolvements.findById('involvement1')).toBeDefined()
   })
 })

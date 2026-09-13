@@ -1,10 +1,9 @@
-import type { GrantScope, StaffAssignment } from '@edaya/core';
-import type { ScopeType } from '../permissions/scope-type';
-import type { AuthorizationRepositories } from '../ports/authorization-repositories';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { Permission } from '../permissions/permission';
-import { permissionDefinitions } from '../permissions/permission-definitions';
-import { validatePermissionScopes } from '@edaya/core';
+import type { AuthorityScope, StaffAssignment } from '@edaya/core'
+import type { ScopeType } from '../permissions/scope-type'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { Permission } from '../permissions/permission'
+import { permissionDefinitions } from '../permissions/permission-definitions'
 
 export type StaffAssignmentTargetKind
   = | 'class_group'
@@ -19,6 +18,9 @@ export interface StaffAssignmentResolvedTarget {
   readonly classGroupId: string
   readonly classSubjectId?: string
   readonly activityId?: string
+  readonly lessonSessionId?: string
+  readonly activitySessionId?: string
+  readonly assessmentId?: string
 }
 
 const TARGET_ALLOWED_SCOPES: Record<StaffAssignmentTargetKind, readonly (ScopeType | undefined)[]> = {
@@ -78,6 +80,7 @@ async function resolvePlacement(
     }
     return {
       kind: 'lesson_session',
+      lessonSessionId: session.id,
       schoolId: session.schoolId,
       classGroupId: session.classGroupId,
       classSubjectId: session.classSubjectId,
@@ -91,6 +94,7 @@ async function resolvePlacement(
     }
     return {
       kind: 'activity_session',
+      activitySessionId: session.id,
       schoolId: session.schoolId,
       classGroupId: session.classGroupId,
       activityId: session.activityId,
@@ -108,6 +112,8 @@ async function resolvePlacement(
     }
     return {
       kind: 'assessment',
+      assessmentId: assessment.id,
+      lessonSessionId: assessment.lessonSessionId,
       schoolId: classGroup.schoolId,
       classGroupId: assessment.classGroupId,
       classSubjectId: assessment.classSubjectId,
@@ -144,19 +150,25 @@ export function assertPermissionAllowedOnStaffAssignmentTarget(
   }
 }
 
-export function scopesForStaffAssignmentPermission(permission: Permission, target: StaffAssignmentResolvedTarget): GrantScope[] {
+export function scopesForStaffAssignmentPermission(permission: Permission, target: StaffAssignmentResolvedTarget): AuthorityScope[] {
   assertPermissionAllowedOnStaffAssignmentTarget(permission, target.kind)
-  const grain = permissionDefinitions[permission].scope
-  if (grain === 'class_group') return [{ kind: 'class_group', classGroupId: target.classGroupId }]
-  if (grain === 'class_subject' && (target.kind === 'class_group' || target.classSubjectId))
-    return [{ kind: 'class_subject', classGroupId: target.classGroupId, ...(target.classSubjectId ? { classSubjectId: target.classSubjectId } : {}) }]
-  if (grain === 'activity' && target.activityId)
-    return [{ kind: 'activity', activityId: target.activityId, classGroupId: target.classGroupId }]
+  const { classGroupId, classSubjectId, lessonSessionId, activitySessionId, assessmentId, activityId } = target
+  if (target.kind === 'class_group')
+    return [{ kind: permissionDefinitions[permission].scope === 'class_subject' ? 'class_subject' : 'class_group', classGroupId }]
+  if (target.kind === 'class_subject' && classSubjectId)
+    return [{ kind: 'class_subject', classGroupId, classSubjectId }]
+  if (target.kind === 'lesson_session' && lessonSessionId && classSubjectId)
+    return [{ kind: 'lesson_session', lessonSessionId, classGroupId, classSubjectId }]
+  if (target.kind === 'activity_session' && activitySessionId && activityId)
+    return [{ kind: 'activity_session', activitySessionId, classGroupId, activityId }]
+  if (target.kind === 'assessment' && assessmentId && classSubjectId)
+    return [{ kind: 'assessment', assessmentId, classGroupId, classSubjectId, ...(lessonSessionId ? { lessonSessionId } : {}) }]
   throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_SCOPE_UNRESOLVED', 'The assignment cannot grant this action at its placement')
 }
 
 export function validateStaffAssignmentPermissionSelection(assignment: Pick<StaffAssignment, 'permissions'>, target: StaffAssignmentResolvedTarget): void {
-  for (const permission of new Set(assignment.permissions)) validatePermissionScopes(permission, scopesForStaffAssignmentPermission(permission, target))
+  for (const permission of new Set(assignment.permissions))
+    scopesForStaffAssignmentPermission(permission, target)
 }
 
 export async function resolveStaffAssignmentTarget(assignment: StaffAssignment, repositories: AuthorizationRepositories): Promise<StaffAssignmentResolvedTarget> {
@@ -167,8 +179,9 @@ export async function resolveStaffAssignmentTarget(assignment: StaffAssignment, 
     repositories.academicYears.findById(assignment.academicYearId),
   ])
   if (!staff || !group || !year || staff.schoolId !== target.schoolId
-    || group.schoolId !== target.schoolId || year.schoolId !== target.schoolId || group.academicYearId !== year.id)
+    || group.schoolId !== target.schoolId || year.schoolId !== target.schoolId || group.academicYearId !== year.id) {
     throw new BusinessRuleViolationError('STAFF_ASSIGNMENT_PLACEMENT_MISMATCH', 'Staff assignment must remain in one school and academic year')
+  }
   validateStaffAssignmentPermissionSelection(assignment, target)
   return target
 }

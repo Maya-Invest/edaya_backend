@@ -24,7 +24,6 @@ src/
   capabilities/           # notifications, invitations, files, documents, onboarding, cron, timetable
   ports/                  # SchoolRepositories + cron platform ports
   adapters/               # Inline cron dispatcher (in-process)
-  integration/            # Auth cache hooks
 ```
 
 ## Where to put new code
@@ -33,7 +32,7 @@ src/
 |------|----------|
 | New entity or command catalog entry | `services/runtime/` |
 | Managed-entity CRUD orchestration | `services/entities/managed-entity-service.ts` |
-| Entity tenant/auth/gate config | `services/entities/config/<context>/` |
+| Entity tenant and business validation config | `services/entities/config/<context>/` |
 | Multi-step business process | `services/workflows/<context>.ts` |
 | Command handler wired to catalog | `services/commands/school-command-handlers.ts` |
 | Aggregated read/query surface | `services/queries/` |

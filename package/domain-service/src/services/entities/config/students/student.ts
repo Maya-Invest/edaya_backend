@@ -1,21 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { Student } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
+import type { Student } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
 
-import { AttachmentOwnerKind, BusinessRuleViolationError, StudentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import { AttachmentOwnerKind, BusinessRuleViolationError, StudentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student.ts (PR3)
 export const studentConfig: EntityConfigFactory<Student> = ({ repositories, atomicExecution }) => {
-  
-
   return config({
     repository: repositories.students,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'students', read: [Permission.QUERY_STUDENT_DIRECTORY_READ, Permission.QUERY_STUDENT_DETAIL_READ], write: [Permission.STUDENT_UPDATE] },
-    
+    resource: 'students',
+
     gates: {
       preSave: validateStudentSave,
       preDelete: validateStudentDelete,

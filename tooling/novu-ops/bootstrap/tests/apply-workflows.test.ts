@@ -1,9 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import type { Novu } from "@novu/api";
 import type { WorkflowResponseDto } from "@novu/api/models/components";
-import { mergeStepsForUpdate } from "../lib/apply-workflows";
 import type { BootstrapWorkflowStep } from "../lib/types";
+import { describe, expect, test } from "bun:test";
+import { buildBootstrapWorkflows } from "../catalog/workflows";
+import { applyBootstrapWorkflows, mergeStepsForUpdate } from "../lib/apply-workflows";
 import {
-  EDAYA_AUTH_EMAIL_STEP_ID,
+  EDAYA_EMAIL_STEP_ID,
   EDAYA_PAYLOAD_EMAIL_SUBJECT,
   edayaHtmlEmailControlValues,
 } from "../lib/templates";
@@ -29,7 +31,7 @@ function existingEmailStep(stepId: string, id: string): WorkflowResponseDto["ste
 describe("mergeStepsForUpdate", () => {
   test("does not reuse another step id when stepId differs", () => {
     const desired: BootstrapWorkflowStep[] = [{
-      stepId: EDAYA_AUTH_EMAIL_STEP_ID,
+      stepId: EDAYA_EMAIL_STEP_ID,
       name: "Auth email",
       type: "email",
       controlValues: htmlControls,
@@ -41,7 +43,7 @@ describe("mergeStepsForUpdate", () => {
 
     expect(merged).toHaveLength(1);
     expect(merged[0]).toMatchObject({
-      stepId: EDAYA_AUTH_EMAIL_STEP_ID,
+      stepId: EDAYA_EMAIL_STEP_ID,
       name: "Auth email",
       type: "email",
     });
@@ -50,19 +52,37 @@ describe("mergeStepsForUpdate", () => {
 
   test("reuses the existing step id when stepId matches", () => {
     const desired: BootstrapWorkflowStep[] = [{
-      stepId: EDAYA_AUTH_EMAIL_STEP_ID,
+      stepId: EDAYA_EMAIL_STEP_ID,
       name: "Auth email",
       type: "email",
       controlValues: htmlControls,
     }];
 
     const merged = mergeStepsForUpdate(desired, [
-      existingEmailStep(EDAYA_AUTH_EMAIL_STEP_ID, "existing-html-step-id"),
+      existingEmailStep(EDAYA_EMAIL_STEP_ID, "existing-html-step-id"),
     ]);
 
     expect(merged[0]).toMatchObject({
       id: "existing-html-step-id",
-      stepId: EDAYA_AUTH_EMAIL_STEP_ID,
+      stepId: EDAYA_EMAIL_STEP_ID,
     });
   });
+});
+
+test("bootstrap replaces remote channel preferences instead of preserving a second routing decision", async () => {
+  const definitions = buildBootstrapWorkflows({ edayaShell: "<html>{{payload.emailBody}}</html>" });
+  const definition = definitions[0]!;
+  const updates: Record<string, unknown>[] = [];
+  const client = { workflows: {
+    list: async () => ({ result: { workflows: [{ workflowId: definition.workflowId }] } }),
+    get: async () => ({ result: {
+      ...definition,
+      active: false,
+      preferences: { user: null, default: { all: { enabled: true, readOnly: false }, channels: { email: { enabled: false }, push: { enabled: true } } } },
+    } }),
+    update: async (input: Record<string, unknown>) => { updates.push(input); },
+  } } as unknown as Novu;
+  const result = await applyBootstrapWorkflows(client, definitions);
+  expect(result.updated).toEqual([definition.workflowId]);
+  expect(updates[0]).toMatchObject({ active: true, preferences: { user: null, workflow: { all: { enabled: true, readOnly: true }, channels: { email: { enabled: true }, push: { enabled: false }, in_app: { enabled: false } } } } });
 });

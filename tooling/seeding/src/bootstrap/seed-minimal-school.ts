@@ -1,5 +1,5 @@
 import type { SeedApplication } from '../support/types'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { createSystemActorMetadata } from '@edaya/authorization'
 import { Guardian } from '@edaya/core'
 import { minimalDataset } from '@edaya/fixtures'
 import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from '@edaya/fixtures/meta/dev-auth-fixtures'
@@ -19,10 +19,11 @@ export async function seedMinimalSchool(application: SeedApplication): Promise<v
     return
   }
 
-  const actor = createBootstrapStaffActorMetadata({
+  const actor = createSystemActorMetadata({
     schoolId: school.id,
     requestId: 'auth-integration-seed',
-    staffMemberId: 'auth-integration-seed',
+    systemId: 'fixture-seed',
+    reason: 'Install the selected local development dataset',
   })
   const service = application.forActor(actor)
 

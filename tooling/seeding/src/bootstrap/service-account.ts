@@ -1,6 +1,4 @@
-import type { SeedApplication } from '../support/types'
 import type { HttpSeedClient } from '../transport/http/client'
-import { ActorAssuranceLevel, createServiceAccount, createStaffActorMetadata } from '@edaya/authorization'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { resolveSeedingApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { isSeedingServiceAccountApiKeyReady } from '../transport/http/verify-service-account'
@@ -104,71 +102,6 @@ async function createSeedingServiceAccountHttp(
   }
 
   return createResponse.body
-}
-
-export async function provisionSeedingServiceAccountInProcess(
-  application: SeedApplication,
-  input: {
-    schoolId?: string
-    creatorStaffId?: string
-    apiKey?: string
-  } = {},
-): Promise<ProvisionSeedingServiceAccountResult> {
-  const context = resolveDevSeedContext()
-  const schoolId = input.schoolId ?? context.schoolId
-  const creatorStaffId = input.creatorStaffId ?? context.minimalStaffId
-  const apiKey = input.apiKey ?? resolveSeedingApiKeyForSchool(schoolId)
-
-  const existing = await application.repositories.staffMembers.findOne({
-    schoolId,
-    accountKind: 'service',
-    serviceId: SEEDING_SERVICE_ID,
-    isActive: true,
-  })
-
-  if (existing) {
-    return {
-      status: 'skipped',
-      schoolId,
-      apiKey,
-      staffMemberId: existing.id,
-      reason: 'Active seeding service account already exists',
-    }
-  }
-
-  const staff = await application.repositories.staffMembers.findById(creatorStaffId)
-  if (!staff?.subjectId) {
-    throw new Error(`Cannot provision seeding service account: staff ${creatorStaffId} is not linked to auth`)
-  }
-
-  const grants = await application.repositories.authorization.resolveEffectiveGrants({
-    staffMemberId: creatorStaffId,
-    schoolId,
-  })
-
-  const actor = createStaffActorMetadata({
-    subjectId: staff.subjectId,
-    staffMemberId: creatorStaffId,
-    schoolId,
-    requestId: 'seed-service-account',
-    authenticatedAt: new Date(),
-    assuranceLevel: ActorAssuranceLevel.Standard,
-    effectiveGrants: grants,
-  })
-
-  const result = await createServiceAccount(application.repositories, actor, {
-    serviceId: SEEDING_SERVICE_ID,
-    displayName: 'Seeding Integration',
-    elevated: true,
-    apiKey,
-  })
-
-  return {
-    status: 'created',
-    schoolId,
-    apiKey: result.apiKey,
-    staffMemberId: result.staffMember.id,
-  }
 }
 
 export async function provisionSeedingServiceAccountHttp(

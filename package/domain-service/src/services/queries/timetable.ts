@@ -1,5 +1,6 @@
 import type { ActivitySession, Assessment, LessonSession, OccurrenceStatus } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import { effectiveAt } from '@edaya/authorization'
 import { AssessmentKind, normalizeDate, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 
 export type TimetableEventKind = 'lesson' | 'activity' | 'assessment'
@@ -39,7 +40,7 @@ export interface ClassGroupTimetable {
 }
 
 export async function buildClassGroupTimetable(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
   input: GetClassGroupTimetableInput,
 ): Promise<ClassGroupTimetable> {
   const rangeStart = normalizeDate(input.startDate)
@@ -182,7 +183,7 @@ function uniqueStrings(values: Iterable<string | undefined>): string[] {
 }
 
 async function enrichTimetableEventPresentation(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'lessonSessions' | 'activitySessions' | 'assessments' | 'classGroups' | 'teacherAssignments' | 'teachers' | 'activities'>,
   classGroupId: string,
   events: TimetableEvent[],
 ): Promise<void> {
@@ -213,10 +214,12 @@ async function enrichTimetableEventPresentation(
       : Promise.resolve([]),
   ])
 
+  const now = new Date()
   const activeSubjectAssignments = assignments.filter(
     assignment =>
       assignment.status === TeacherAssignmentStatus.Active
       && assignment.kind === TeacherAssignmentKind.Subject
+      && effectiveAt(assignment, now)
       && assignment.classSubjectId,
   )
   const snapshotTeacherIds = uniqueStrings(events.flatMap(event => event.timetableTeacherIds ?? []))
@@ -228,15 +231,17 @@ async function enrichTimetableEventPresentation(
   const teacherNameById = new Map(
     teachers.map(teacher => [teacher.id, teacher.fullName.trim()] as const),
   )
-  const teacherNameByClassSubjectId = new Map<string, string>()
+  const activeTeacherIds = new Set(teachers.filter(teacher => teacher.isActive).map(teacher => teacher.id))
+  const teacherNamesByClassSubjectId = new Map<string, Set<string>>()
   for (const assignment of activeSubjectAssignments) {
-    const classSubjectId = assignment.classSubjectId!
-    if (teacherNameByClassSubjectId.has(classSubjectId)) {
+    if (!activeTeacherIds.has(assignment.teacherId))
       continue
-    }
+    const classSubjectId = assignment.classSubjectId!
     const teacherName = teacherNameById.get(assignment.teacherId)
     if (teacherName) {
-      teacherNameByClassSubjectId.set(classSubjectId, teacherName)
+      const names = teacherNamesByClassSubjectId.get(classSubjectId) ?? new Set<string>()
+      names.add(teacherName)
+      teacherNamesByClassSubjectId.set(classSubjectId, names)
     }
   }
 
@@ -261,7 +266,7 @@ async function enrichTimetableEventPresentation(
       }
     }
     if (event.classSubjectId) {
-      event.teacherName = teacherNameByClassSubjectId.get(event.classSubjectId)
+      event.teacherName = [...teacherNamesByClassSubjectId.get(event.classSubjectId) ?? []].sort().join(', ') || undefined
     }
   }
 }

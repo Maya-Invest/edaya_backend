@@ -3,19 +3,18 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectProgress, EnrollmentEndReason, Fee, FeeStatus, GradeLevel, GradeScale, Incident, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectProgress, DisciplinaryAction, EnrollmentEndReason, Fee, FeeStatus, GradeLevel, GradeLevelSubject, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee, StudentIncidentInvolvement, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
 import {
   describe,
   expect,
   test,
 } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
-import { effectiveGrantsForRoles } from '../../support/effective-grants'
-import { actor } from './managed-entity-test-context'
+import { createAcademicTestApp } from './academic-test-app'
 
 describe('Entity config save gates', () => {
   test('allows progress-only updates on inherited class subjects with periodsPerWeek', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
       schoolId: 'school',
@@ -30,6 +29,7 @@ describe('Entity config save gates', () => {
       category: SubjectCategory.Literary,
       color: SubjectColor.Warm,
     }))
+    await app.baseService.repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'grade-subject-1', gradeLevelId: 'grade-1', academicYearId: 'year-1', subjectId: 'subject-1', coefficient: 3, periodsPerWeek: 4 }))
     await repositories.classSubjectRepository.save(new ClassSubject({
       id: 'class-subject-1',
       classGroupId: 'class-1',
@@ -54,7 +54,7 @@ describe('Entity config save gates', () => {
   })
 
   test('rejects orphan class subject progress before save', async () => {
-    const { app } = createTestApp(actor)
+    const { app } = await createAcademicTestApp()
 
     await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
       id: 'progress-orphan',
@@ -65,7 +65,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment config preSave rejects duplicate default grade scales', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
@@ -93,7 +93,7 @@ describe('Entity config save gates', () => {
   })
 
   test('report-card definition preSave rejects invalid resources and duplicate defaults', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
@@ -152,7 +152,7 @@ describe('Entity config save gates', () => {
   })
 
   test('report-card section preSave rejects invalid parent relationships', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
@@ -216,7 +216,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment preSave rejects inconsistent class subject, period, and lesson session references', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
       schoolId: 'school',
@@ -284,7 +284,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment preSave rejects class subjects that are not offered', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
       schoolId: 'school',
@@ -322,7 +322,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment preSave rejects self-timed overlap when schedule conflict enforcement is enabled', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
@@ -376,7 +376,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment preSave rejects completion after results are recorded', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
       schoolId: 'school',
@@ -432,7 +432,7 @@ describe('Entity config save gates', () => {
   })
 
   test('enrollment preSave rejects closing an enrollment that is not current active', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -478,7 +478,7 @@ describe('Entity config save gates', () => {
   })
 
   test('attendance preSave rejects reviewing non-absent attendance', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -496,12 +496,12 @@ describe('Entity config save gates', () => {
       id: 'session-1',
       schoolId: 'school',
       classGroupId: 'class-1',
-      scheduleId: 'schedule-1',
       classSubjectId: 'class-subject-1',
       displayLabel: 'Math',
       startsAt: new Date('2026-05-01T08:00:00Z'),
       endsAt: new Date('2026-05-01T09:00:00Z'),
     }))
+    await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({ id: 'enrollment-1', studentId: 'student-1', classGroupId: 'class-1', academicYearId: 'year-1', enrollmentIndex: 1 }))
     const attendance = new AttendanceRecord({
       id: 'attendance-1',
       studentId: 'student-1',
@@ -515,12 +515,13 @@ describe('Entity config save gates', () => {
       justificationStatus: AttendanceJustificationStatus.Excused,
       reason: 'Medical',
       justifiedAt: new Date('2026-05-02T08:00:00Z'),
-      justifiedByStaffId: 'staff-1',
+      justifiedByStaffId: 'staff-test',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('student fee preSave rejects invalid adjustments and paid cancellation', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
+    await repositories.feeRepository.save(new Fee({ id: 'fee-1', schoolId: 'school', academicYearId: 'year-1', name: 'Tuition', defaultAmount: 1000, currency: 'XAF' }))
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -555,7 +556,7 @@ describe('Entity config save gates', () => {
   })
 
   test('incident preSave rejects invalid scope and non-open resolution', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await expect(app.baseService.entities.incidents.save(new Incident({
       id: 'incident-invalid-scope',
       schoolId: 'school',
@@ -595,7 +596,12 @@ describe('Entity config save gates', () => {
   })
 
   test('student disciplinary action preSave rejects terminal status changes', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
+    await repositories.studentRepository.save(new Student({ id: 'student-1', schoolId: 'school', firstName: 'Student', lastName: 'One' }))
+    await repositories.staffMemberRepository.save(new StaffMember({ id: 'staff-1', schoolId: 'school', firstName: 'Staff', lastName: 'One' }))
+    await repositories.incidentRepository.save(new Incident({ id: 'incident-1', schoolId: 'school', title: 'Incident', description: 'Description', date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, reporterId: 'staff-1', classGroupId: 'class-1' }))
+    await repositories.disciplinaryActionRepository.save(new DisciplinaryAction({ id: 'catalog-1', schoolId: 'school', name: 'Sanction' }))
+    await repositories.studentIncidentInvolvementRepository.save(new StudentIncidentInvolvement({ id: 'involvement-1', incidentId: 'incident-1', studentId: 'student-1', role: IncidentInvolvementRole.Subject }))
     const completedAction = new StudentDisciplinaryAction({
       id: 'disciplinary-action-1',
       schoolId: 'school',
@@ -619,22 +625,24 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('setup preSave rejects staff self-deactivation through managed save', async () => {
+  test('staff policy rejects self-deactivation and deletion through managed entities', async () => {
     const staffActor = createStaffActorMetadata({
       subjectId: 'staff-user',
       staffMemberId: 'staff-1',
       schoolId: 'school',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
     })
-    const { app, repositories } = createTestApp(staffActor)
+    const { app, repositories, schoolRepositories } = await createTestApp(staffActor)
+    await schoolRepositories.academicYears.save(new AcademicYear({ id: 'archive-year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive', schoolId: 'school', academicYearId: 'archive-year', staffId: staffActor.staffMemberId, permission: Permission.STAFF_ARCHIVE, scopes: [{ kind: 'school' }] }))
     const staffMember = new StaffMember({
       id: 'staff-1',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Admin',
+      subjectId: staffActor.subjectId,
     })
     await repositories.staffMemberRepository.save(staffMember)
 
@@ -644,18 +652,21 @@ describe('Entity config save gates', () => {
       firstName: staffMember.firstName,
       lastName: staffMember.lastName,
       isActive: false,
+      subjectId: staffActor.subjectId,
       createdAt: staffMember.createdAt,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }))).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(app.baseService.entities.staffMembers.delete(staffMember.id)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('setup preSave rejects school owner deactivation and delete', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
       timeZone: 'UTC',
       ownerSubjectId: 'subject-owner',
     }))
+    await app.baseService.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive-owner', schoolId: 'school', academicYearId: 'year-1', staffId: 'staff-test', permission: Permission.STAFF_ARCHIVE, scopes: [{ kind: 'school' }] }))
     const owner = new StaffMember({
       id: 'owner',
       schoolId: 'school',
@@ -671,6 +682,7 @@ describe('Entity config save gates', () => {
       firstName: owner.firstName,
       lastName: owner.lastName,
       isActive: false,
+      subjectId: owner.subjectId,
       createdAt: owner.createdAt,
     }))).rejects.toThrow('Transfer school ownership before deactivating the owner')
 
@@ -680,7 +692,7 @@ describe('Entity config save gates', () => {
   })
 
   test('resource assignment preSave rejects overlapping lesson session assignments', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.resourceRepository.save(new Resource({
       id: 'resource-1',
       schoolId: 'school',
@@ -698,7 +710,6 @@ describe('Entity config save gates', () => {
       id: 'session-1',
       schoolId: 'school',
       classGroupId: 'class-1',
-      scheduleId: 'schedule-1',
       classSubjectId: 'class-subject-1',
       displayLabel: 'Math',
       startsAt: new Date('2026-05-01T08:00:00Z'),
@@ -708,7 +719,6 @@ describe('Entity config save gates', () => {
       id: 'session-2',
       schoolId: 'school',
       classGroupId: 'class-1',
-      scheduleId: 'schedule-2',
       classSubjectId: 'class-subject-1',
       displayLabel: 'Science',
       startsAt: new Date('2026-05-01T08:30:00Z'),
@@ -728,7 +738,7 @@ describe('Entity config save gates', () => {
   })
 
   test('assessment result preSave rejects writes after report card is published', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -796,7 +806,7 @@ describe('Entity config save gates', () => {
   })
 
   test('announcement target preSave rejects targets outside announcement school', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.announcementRepository.save(new Announcement({
       id: 'announcement-1',
       schoolId: 'school',
@@ -821,7 +831,7 @@ describe('Entity config save gates', () => {
   })
 
   test('fee preSave rejects academic years outside the fee school', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
       name: 'School',
@@ -846,7 +856,8 @@ describe('Entity config save gates', () => {
   })
 
   test('payment preSave rejects cancelled student fees and terminal payment transitions', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
+    await repositories.feeRepository.save(new Fee({ id: 'fee-1', schoolId: 'school', academicYearId: 'year-1', name: 'Tuition', defaultAmount: 1000, currency: 'USD' }))
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
@@ -912,7 +923,7 @@ describe('Entity config save gates', () => {
   })
 
   test('report-card result preSave rejects direct edits to published cards', async () => {
-    const { app, repositories } = createTestApp(actor)
+    const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',

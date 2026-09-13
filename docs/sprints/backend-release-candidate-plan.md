@@ -2,6 +2,8 @@
 
 > **Superseded for identity (2026-09-11):** Better Auth, opaque `edaya_at_` tokens, and in-process `/auth` now live in sibling `edaya_identity`. School authenticates users with identity JWTs. Ignore in-process auth instructions below.
 
+> **V1 feature-sequence amendment (2026-09-13):** The approved [seven-plan sequence](v1/00-common-requirements.md) now governs the five added features and their release rehearsal. [Plan 03](v1/03-service-catalog-and-accounting.md) supersedes this document's finance-model freeze and “no new finance ledger” instruction; the existing backend and identity architecture remain the target. [Plan 00](v1/00-common-requirements.md) reconciles shared prerequisites with current authorization work, and [Plan 06](v1/06-final-release-rehearsal.md) owns final coordinated qualification. Other RC launch requirements remain in force and are not silently deferred by this amendment.
+
 Date: 8 September 2026. Updated: 10 September 2026. Status: implementation in progress; not code-complete or RC-qualified.
 
 ## Implementation progress — 10 September 2026

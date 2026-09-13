@@ -1,3 +1,6 @@
+import { createNovuEmailTransportFromSecretKey } from "@edaya/adaptor-novu";
+import { createSystemActorMetadata } from "@edaya/authorization";
+import { resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
@@ -52,13 +55,24 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     const logger = options.env.LOG_LEVEL !== "silent"
       ? createAppLogger(options.env)
       : undefined;
+    if (options.env.EMAIL_TRANSPORT === "novu" && !options.env.NOVU_SECRET_KEY)
+      throw new Error("EMAIL_TRANSPORT=novu requires NOVU_SECRET_KEY");
     notifyRuntime = createNotifyRuntimeFromDrizzle({
+      email: options.env.EMAIL_TRANSPORT === "novu"
+        ? createNovuEmailTransportFromSecretKey({ secretKey: options.env.NOVU_SECRET_KEY!, serverURL: options.env.NOVU_API_URL })
+        : undefined,
       db: handle.db,
       getExecutor: () => transactionContext.getStore() ?? handle.db,
       env: options.env,
       log: logger
         ? (message, extra) => logger.info(extra ?? {}, message)
         : undefined,
+      resolveSchoolRecipient: async (request) => {
+        if (!schoolApp)
+          throw new Error("School notification resolver is not initialized");
+        const actor = createSystemActorMetadata({ systemId: "notify-adapter", schoolId: request.schoolId, requestId: `notify:${request.deliveryId}`, reason: "Resolve current notification recipient" });
+        return resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
+      },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);
       },
@@ -68,27 +82,30 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
 
   const identityClient = options.identityClient ?? createSchoolIdentityClient(options.env);
 
+  async function getSchoolApplication() {
+    if (!schoolApp) {
+      const handle = await getResolvedSchoolHandle();
+      const runtime = await getNotifyRuntime();
+      schoolApp = await options.initSchoolApplication(handle.db as PostgresTransactionalDb, {
+        identityClient,
+        notifyRuntime: runtime,
+      });
+      deliverySink.apply = async (event) => {
+        await applyInProcessNotifyDeliveryEvent(schoolApp!, event);
+      };
+    }
+    return schoolApp;
+  }
+
   return {
     env: options.env,
     async drainNotifications() {
+      await getSchoolApplication();
       const runtime = await getNotifyRuntime();
       if (runtime)
         await drainPendingSchoolNotifications(runtime);
     },
-    async getSchoolApplication() {
-      if (!schoolApp) {
-        const handle = await getResolvedSchoolHandle();
-        const runtime = await getNotifyRuntime();
-        schoolApp = await options.initSchoolApplication(handle.db as PostgresTransactionalDb, {
-          identityClient,
-          notifyRuntime: runtime,
-        });
-        deliverySink.apply = async (event) => {
-          await applyInProcessNotifyDeliveryEvent(schoolApp!, event);
-        };
-      }
-      return schoolApp;
-    },
+    getSchoolApplication,
     getIdentityClient() {
       return identityClient;
     },

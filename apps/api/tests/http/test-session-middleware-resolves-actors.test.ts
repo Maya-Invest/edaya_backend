@@ -61,14 +61,6 @@ describe("identity JWT session actor", () => {
         save: mock(async (user: unknown) => user),
       },
     };
-    repos.authorization = {
-      resolveActorGrants: mock(async () => ({
-        permissions: new Set(),
-        scopeGrants: [],
-        scopeIdsByPermission: {},
-        isElevated: false,
-      })),
-    };
 
     const app = new Hono<AppBindings>();
     app.use(async (c, next) => {

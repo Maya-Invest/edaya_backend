@@ -1,140 +1,53 @@
 import { AuthorizationError, createTeacherActorMetadata } from '@edaya/authorization'
-import { AttendanceStatus, ClassGroup, ClassSubject, LessonSession, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, Subject } from '@edaya/core'
-import { describe, expect, test } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
+import { AttendanceStatus, LessonSession, noOpNotificationGateway, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { SchoolService } from '@edaya/service'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { testFileStorage } from '../../support/test-file-storage'
 
-const startsAt = new Date('2026-06-01T09:00:00.000Z')
-const endsAt = new Date('2026-06-01T10:00:00.000Z')
+const actor = createTeacherActorMetadata({ schoolId: 'school-a', teacherId: 'teacher-a', subjectId: 'person-a', requestId: 'teacher-workflows', authenticatedAt: new Date() })
+const startsAt = new Date('2026-06-01T09:00:00Z')
+const endsAt = new Date('2026-06-01T10:00:00Z')
 
-describe('Teacher lesson attendance save', () => {
-  test('allows assigned subject teachers to record lesson session attendance', async () => {
-    const teacherActor = createTeacherActorMetadata({
-      subjectId: 'teacher-user',
-      teacherId: 'teacher-1',
-      schoolId: 'school',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-06-01T00:00:00.000Z'),
-      teacherScope: {
-        teaching: { classSubjectIds: ['cs-1'] },
-        homeroom: { classGroupIds: [] },
-      },
-    })
-    const { app, repositories } = createTestApp(teacherActor)
-
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-    await repositories.studentRepository.save(new Student({
-      id: 'student-1',
-      schoolId: 'school',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-    }))
-    await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({
-      id: 'enrollment-1',
-      studentId: 'student-1',
-      classGroupId: 'class-1',
-      academicYearId: 'year-1',
-      enrollmentIndex: 1,
-      status: StudentClassEnrollmentStatus.Active,
-    }))
-    await repositories.subjectRepository.save(new Subject({
-      id: 'subject-1',
-      schoolId: 'school',
-      name: 'Math',
-    }))
-    await repositories.classSubjectRepository.save(new ClassSubject({
-      id: 'cs-1',
-      classGroupId: 'class-1',
-      subjectId: 'subject-1',
-    }))
-    await repositories.lessonSessionRepository.save(new LessonSession({
-      id: 'session-1',
-      schoolId: 'school',
-      classGroupId: 'class-1',
-      scheduleId: 'schedule-1',
-      classSubjectId: 'cs-1',
-      displayLabel: 'Math',
-      startsAt,
-      endsAt,
-    }))
-
-    const record = await app.schedulingWorkflow.recordAttendance({
-      id: 'student-1-session-1',
-      studentId: 'student-1',
-      lessonSessionId: 'session-1',
-      status: AttendanceStatus.Present,
-    })
-
-    expect(record.status).toBe(AttendanceStatus.Present)
-    expect(record.lessonSessionId).toBe('session-1')
+describe('teacher attendance and logbook writes use current subject and homeroom assignments', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  let service: SchoolService
+  let lesson: LessonSession
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+    await seedAuthorizationRelationships(fixture.db)
+    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    lesson = new LessonSession({ id: 'lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', displayLabel: 'Math', startsAt, endsAt })
+    await fixture.repositories.lessonSessions.save(lesson)
+  })
+  afterEach(async () => {
+    await fixture.db.close()
   })
 
-  test('denies homeroom teachers from recording subject lesson attendance', async () => {
-    const teacherActor = createTeacherActorMetadata({
-      subjectId: 'teacher-user',
-      teacherId: 'teacher-1',
-      schoolId: 'school',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-06-01T00:00:00.000Z'),
-      teacherScope: {
-        teaching: { classSubjectIds: [] },
-        homeroom: { classGroupIds: ['class-1'] },
-      },
-    })
-    const { app, repositories } = createTestApp(teacherActor)
+  test('subject teacher records lesson attendance, but unrelated students and removed assignments are denied', async () => {
+    const input = { id: 'attendance', studentId: 'student-a', lessonSessionId: 'lesson', status: AttendanceStatus.Present }
+    expect((await service.schedulingWorkflow.recordAttendance(input)).lessonSessionId).toBe('lesson')
+    await expect(service.schedulingWorkflow.recordAttendance({ ...input, id: 'other', studentId: 'student-other' })).rejects.toThrow()
+    await fixture.repositories.teacherAssignments.delete('teaching')
+    await expect(service.schedulingWorkflow.recordAttendance({ ...input, id: 'revoked' })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await fixture.repositories.attendance.count()).toBe(1)
+  })
 
-    await repositories.classGroupRepository.save(new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'Grade 1',
-    }))
-    await repositories.studentRepository.save(new Student({
-      id: 'student-1',
-      schoolId: 'school',
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-    }))
-    await repositories.StudentClassEnrollmentRepository.save(new StudentClassEnrollment({
-      id: 'enrollment-1',
-      studentId: 'student-1',
-      classGroupId: 'class-1',
-      academicYearId: 'year-1',
-      enrollmentIndex: 1,
-      status: StudentClassEnrollmentStatus.Active,
-    }))
-    await repositories.subjectRepository.save(new Subject({
-      id: 'subject-1',
-      schoolId: 'school',
-      name: 'Math',
-    }))
-    await repositories.classSubjectRepository.save(new ClassSubject({
-      id: 'cs-1',
-      classGroupId: 'class-1',
-      subjectId: 'subject-1',
-    }))
-    await repositories.lessonSessionRepository.save(new LessonSession({
-      id: 'session-1',
-      schoolId: 'school',
-      classGroupId: 'class-1',
-      scheduleId: 'schedule-1',
-      classSubjectId: 'cs-1',
-      displayLabel: 'Math',
-      startsAt,
-      endsAt,
-    }))
+  test('homeroom assignment cannot record subject lesson attendance', async () => {
+    await fixture.repositories.teacherAssignments.delete('teaching')
+    await fixture.repositories.teacherAssignments.save(new TeacherAssignment({ id: 'homeroom', teacherId: 'teacher-a', academicYearId: 'year-a', classGroupId: 'class-a', kind: TeacherAssignmentKind.Homeroom }))
+    await expect(service.schedulingWorkflow.recordAttendance({ id: 'attendance', studentId: 'student-a', lessonSessionId: 'lesson', status: AttendanceStatus.Present })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await fixture.repositories.attendance.count()).toBe(0)
+  })
 
-    await expect(app.schedulingWorkflow.recordAttendance({
-      id: 'student-1-session-1',
-      studentId: 'student-1',
-      lessonSessionId: 'session-1',
-      status: AttendanceStatus.Present,
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test('subject teacher edits logbook content, while timing, placement and revocation remain protected', async () => {
+    const updated = lesson.copyWith({ sessionNote: 'Covered fractions', displayLabel: 'Math recap' })
+    await service.baseService.entities.lessonSessions.save(updated)
+    expect((await fixture.repositories.lessonSessions.findById('lesson'))?.sessionNote).toBe('Covered fractions')
+    await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ startsAt: new Date('2026-06-01T09:30:00Z'), endsAt: new Date('2026-06-01T10:30:00Z') }))).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ classSubjectId: 'french-a' }))).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.teacherAssignments.delete('teaching')
+    await expect(service.baseService.entities.lessonSessions.save(updated.copyWith({ sessionNote: 'Revoked edit' }))).rejects.toBeInstanceOf(AuthorizationError)
+    expect((await fixture.repositories.lessonSessions.findById('lesson'))?.sessionNote).toBe('Covered fractions')
   })
 })

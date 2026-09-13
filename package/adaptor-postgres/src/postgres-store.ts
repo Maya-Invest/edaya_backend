@@ -9,8 +9,8 @@ import {
   chunkArray,
 } from './lib/bulk-upsert'
 import { buildWhereClause } from './lib/filter'
-import { schoolScope } from './lib/school-scope'
 import { compileResourceAccess } from './lib/resource-access-scope'
+import { schoolScope } from './lib/school-scope'
 import { PostgresAtomicExecution, transactionContext } from './lib/transaction'
 
 export class PostgresStore<T extends { readonly id: string }>

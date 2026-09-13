@@ -1,21 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { Attachment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { AttachmentOwnerKind, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { Attachment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AttachmentOwnerKind, BusinessRuleViolationError, resolveAttendanceRecordSchoolId } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/attachment.ts (PR3)
 export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories, atomicExecution }) => {
-  
-
   return config({
     repository: repositories.attachments,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'attachments', read: [Permission.ATTACHMENT_READ], write: [Permission.ATTACHMENT_CONFIGURE] },
-    
+    resource: 'attachments',
+
     gates: {
       preSave: validateAttachmentSave,
     },

@@ -1,5 +1,5 @@
-import { permissionScope } from '@edaya/core'
 import type { Permission } from '../permissions/permission'
+import { permissionScope } from '@edaya/core'
 import { HUMAN_ONLY_PERMISSIONS } from '../permissions/permission-assurance'
 
 const S2S_DENIED_PERMISSION_PREFIXES = [

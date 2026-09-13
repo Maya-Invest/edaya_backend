@@ -15,18 +15,16 @@ export function createInProcessActivitiesSeedPort(
         ...record,
         startDate: new Date(record.startDate),
         endDate: new Date(record.endDate),
-      }), { moduleChecked: true })
+      }))
     }),
     saveEnrollment: record => withSeedPortError('activities.saveEnrollment', async () => {
-      await service.baseService.entities.activityEnrollments.save(new ActivityEnrollment(record), {
-        moduleChecked: true,
-      })
+      await service.baseService.entities.activityEnrollments.save(new ActivityEnrollment(record))
     }),
     saveClassActivityEnrollment: record => withSeedPortError('activities.saveClassActivityEnrollment', async () => {
       await service.baseService.entities.classActivityEnrollments.save(new ClassActivityEnrollment({
         ...record,
         createdAt: new Date(),
-      }), { moduleChecked: true })
+      }))
     }),
   }
 }

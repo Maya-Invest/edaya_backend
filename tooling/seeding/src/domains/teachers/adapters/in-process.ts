@@ -19,10 +19,10 @@ export function createInProcessTeachersSeedPort(
         email: record.email,
         subjectId: record.subjectId,
         isActive: true,
-      }), { moduleChecked: true })
+      }))
     }),
     saveTeacherAssignment: record => withSeedPortError('teachers.saveTeacherAssignment', async () => {
-      await service.baseService.entities.teacherAssignments.save(new TeacherAssignment(record), { moduleChecked: true })
+      await service.baseService.entities.teacherAssignments.save(new TeacherAssignment(record))
     }),
   }
 }

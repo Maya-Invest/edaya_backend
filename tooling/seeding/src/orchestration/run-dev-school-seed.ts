@@ -19,6 +19,7 @@ import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { syncDevAuthAndGuardianInboxProbes } from '../bootstrap/sync-dev-auth-inbox'
 import { createInProcessActivitiesSeedPort } from '../domains/activities/adapters/in-process'
 import { seedDevActivities } from '../domains/activities/workflow'
@@ -30,6 +31,7 @@ import { createInProcessAttendanceSeedPort } from '../domains/attendance/adapter
 import { seedDevAttendance } from '../domains/attendance/workflow'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/adapters/in-process'
 import { createInProcessCommunicationsSeedPort } from '../domains/communications/adapters/in-process'
+import { seedAuthLinkedGuardianInboxProbes } from '../domains/communications/guardian-inbox-probe'
 import { seedDevCommunications } from '../domains/communications/workflow'
 import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapters/in-process'
 import { seedDevCurriculum } from '../domains/curriculum/workflow'
@@ -258,6 +260,16 @@ export async function runDevSchoolSeed(
   const financeCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevFinance(financePort, seedDataset))
 
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(
+      options.authLinkPort ?? createInProcessAuthLinkSeedPort(
+        requireSeedApplication(application, 'authLinkPort'),
+      ),
+      options.auth,
+      ownerSubjectId,
+    )
+  }
+
   const communicationsCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevCommunications(communicationsPort, seedDataset))
   const attachmentCounts = options?.skipAttachments
@@ -276,13 +288,13 @@ export async function runDevSchoolSeed(
           + (seedDataset.entities.guardians?.length ?? 0),
       })
   if (options?.auth) {
-    await syncDevAuthAndGuardianInboxProbes(
+    await seedAuthLinkedGuardianInboxProbes(
+      communicationsPort,
       options.authLinkPort ?? createInProcessAuthLinkSeedPort(
         requireSeedApplication(application, 'authLinkPort'),
       ),
-      communicationsPort,
-      options.auth,
-      ownerSubjectId,
+      seedDataset,
+      seedContext.guardianAccounts.map(account => account.guardianId),
     )
   }
 

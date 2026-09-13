@@ -1,23 +1,21 @@
-import { Permission } from '@edaya/core';
-
-import type { StaffAssignment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess, resolveStaffAssignmentTarget, validateStaffAssignmentPermissionSelection } from '@edaya/authorization';
-import { config } from '../../entity-config';
-import { indirectTenant, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId } from '../../entity-config/tenant';
+import type { StaffAssignment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess, resolveStaffAssignmentTarget, validateStaffAssignmentPermissionSelection } from '@edaya/authorization'
+import { config } from '../../entity-config'
+import { indirectTenant, resolveActivitySessionSchoolId, resolveClassSubjectSchoolId, resolveLessonSessionSchoolId } from '../../entity-config/tenant'
 
 // Extracted from domain/school/staff-assignment.ts (PR3)
 export const staffAssignmentConfig: EntityConfigFactory<StaffAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.staffAssignments,
     tenant: staffAssignmentTenant(),
-    authorization: { resource: 'staffAssignments', read: [Permission.QUERY_WORKSPACE_READ, Permission.SCHOOL_STRUCTURE_CONFIGURE], write: [Permission.ACCESS_CONTROL_ASSIGN] },
-    
+    resource: 'staffAssignments',
+
     gates: {
       preSave: validateStaffAssignmentSave,
     },
-    
+
     atomicExecution,
   })
 

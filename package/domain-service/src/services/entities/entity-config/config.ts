@@ -1,6 +1,6 @@
-import type { AtomicExecutionPort, NotificationGatewayPort } from '@edaya/core';
-import type { SchoolRepositories } from '../../../ports/school-repositories';
-import type { ManagedEntityServiceConfig } from '../../entities/managed-entity-service';
+import type { AtomicExecutionPort, NotificationGatewayPort } from '@edaya/core'
+import type { SchoolRepositories } from '../../../ports/school-repositories'
+import type { ManagedEntityServiceConfig } from '../../entities/managed-entity-service'
 
 export interface EntityConfigFactoryInput {
   repositories: SchoolRepositories
@@ -21,4 +21,3 @@ export interface EntityWithId {
 export function config<T>(input: ManagedEntityServiceConfig<T>): ManagedEntityServiceConfig<T> {
   return input
 }
-

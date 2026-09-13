@@ -1,11 +1,9 @@
 import type { AtomicExecutionPort, GrantScope, StaffMember } from '@edaya/core'
-import { randomUUID } from 'node:crypto'
-import { BusinessRuleViolationError, Permission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
 import type { StaffActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
+import { randomUUID } from 'node:crypto'
+import { BusinessRuleViolationError, Permission, ServiceApiKey, StaffMember as StaffMemberEntity, StaffPermissionAssignment } from '@edaya/core'
 import { AccessPolicies } from '../access/access-policies'
-import { AccessFacts, denied } from '../access/facts'
-import { assertGrantDelegation } from '../access/grant-administration'
 import { encodeApiKey, generateApiKey } from './api-key-crypto'
 
 export interface ServiceAccountPermissionAssignmentInput {
@@ -38,12 +36,11 @@ async function performCreateServiceAccount(
   actor: StaffActorMetadata,
   input: CreateServiceAccountInput,
 ): Promise<CreateServiceAccountResult> {
-  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_CREATE)
+  await new AccessPolicies(actor, repositories).serviceAccounts.assertCreate(input)
 
   const schoolId = actor.schoolId
   const elevated = input.elevated ?? false
   const permissionAssignments = input.permissionAssignments ?? []
-  if (elevated && !await new AccessFacts(actor, repositories).owner()) denied('Only a school owner can create an owner service account')
 
   if (elevated) {
     const existing = await repositories.serviceApiKeys.countActiveElevatedServiceAccounts(schoolId)
@@ -60,10 +57,6 @@ async function performCreateServiceAccount(
       'SERVICE_ACCOUNT_GRANTS_REQUIRED',
       'permissionAssignments are required unless elevated',
     )
-  }
-
-  if (permissionAssignments.length > 0) {
-    await assertGrantDelegation(new AccessFacts(actor, repositories), permissionAssignments)
   }
 
   const existingService = await repositories.staffMembers.findOne({
@@ -178,7 +171,7 @@ async function performUpdateServiceAccount(
   staffMemberId: string,
   input: UpdateServiceAccountInput,
 ): Promise<StaffMember> {
-  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_UPDATE)
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertUpdate(staffMemberId, input.permissionAssignments)
 
   if (
     input.displayName === undefined
@@ -190,21 +183,7 @@ async function performUpdateServiceAccount(
     )
   }
 
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (
-    !existing
-    || existing.schoolId !== actor.schoolId
-    || existing.accountKind !== 'service'
-    || !existing.isActive
-  ) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Active service account not found for this school',
-    )
-  }
-
   if (input.permissionAssignments !== undefined) {
-    await assertGrantDelegation(new AccessFacts(actor, repositories), input.permissionAssignments)
     await replaceServiceAccountPermissionAssignments(
       repositories,
       staffMemberId,
@@ -254,15 +233,7 @@ async function performRevokeServiceAccount(
   actor: StaffActorMetadata,
   staffMemberId: string,
 ): Promise<StaffMember> {
-  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_REVOKE)
-
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service') {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Service account not found for this school',
-    )
-  }
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertRevoke(staffMemberId)
 
   const revoked = new StaffMemberEntity({
     id: existing.id,
@@ -312,15 +283,7 @@ async function performRotateServiceAccountKey(
   staffMemberId: string,
   input: RotateServiceAccountKeyInput = {},
 ): Promise<{ apiKey: string }> {
-  await new AccessPolicies(actor, repositories).assertSchool(Permission.SERVICE_ACCOUNT_ROTATE_KEY)
-
-  const existing = await repositories.staffMembers.findById(staffMemberId)
-  if (!existing || existing.schoolId !== actor.schoolId || existing.accountKind !== 'service' || !existing.isActive) {
-    throw new BusinessRuleViolationError(
-      'SERVICE_ACCOUNT_NOT_FOUND',
-      'Active service account not found for this school',
-    )
-  }
+  const existing = await new AccessPolicies(actor, repositories).serviceAccounts.assertRotateKey(staffMemberId)
 
   const keys = await repositories.serviceApiKeys.list({ staffMemberId: existing.id })
   const now = new Date()

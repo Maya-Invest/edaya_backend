@@ -381,7 +381,7 @@ export function validateRange(classGroup: ClassGroup, academicYear: AcademicYear
 }
 
 export async function resolveTimetableSpace(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'classGroups' | 'academicYears' | 'periodDefinitions' | 'calendarEvents'>,
   input: ResolveTimetableSpaceInput,
   options: { excludeBreakSlots?: boolean } = {},
 ): Promise<ResolvedTimetableCell[]> {

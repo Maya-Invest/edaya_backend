@@ -15,7 +15,6 @@ export interface CoreCommandConfig {
   methodName: SchoolCommandKey;
   requestSchema: AnySchema;
   responseSchema: AnySchema;
-  serviceOnly?: boolean;
 }
 
 export interface CoreQueryConfig {
@@ -166,7 +165,7 @@ export const coreCommands = [
   command("send-account-invitation", "sendAccountInvitation", commandSchemas.sendAccountInvitationCommandSchema),
   command("resend-account-invitation", "resendAccountInvitation", commandSchemas.resendAccountInvitationCommandSchema),
   command("revoke-account-invitation", "revokeAccountInvitation", commandSchemas.revokeAccountInvitationCommandSchema),
-  command("accept-account-invitation", "acceptAccountInvitation", commandSchemas.acceptAccountInvitationCommandSchema, { serviceOnly: true }),
+  command("accept-account-invitation", "acceptAccountInvitation", commandSchemas.acceptAccountInvitationCommandSchema),
   command("assign-staff-to-class", "assignStaffToClass", commandSchemas.assignStaffToClassCommandSchema),
   command("assign-staff-to-class-subject", "assignStaffToClassSubject", commandSchemas.assignStaffToClassSubjectCommandSchema),
   command("assign-staff-to-lesson-session", "assignStaffToLessonSession", commandSchemas.assignStaffToLessonSessionCommandSchema),
@@ -194,8 +193,8 @@ export const coreCommands = [
   command("update-guardian-student-link", "updateGuardianStudentLink", commandSchemas.updateGuardianStudentLinkCommandSchema),
   command("configure-subject", "configureSubject", commandSchemas.subjectConfigCommandSchema),
   command("configure-subject-matter", "configureSubjectMatter", commandSchemas.subjectMatterConfigCommandSchema),
-  command("offer-subject-to-class", "offerSubjectToClass", commandSchemas.offerSubjectToClassCommandSchema, { serviceOnly: true }),
-  command("assign-matter-to-class-subject", "assignMatterToClassSubject", commandSchemas.assignMatterToClassSubjectCommandSchema, { serviceOnly: true }),
+  command("offer-subject-to-class", "offerSubjectToClass", commandSchemas.offerSubjectToClassCommandSchema),
+  command("assign-matter-to-class-subject", "assignMatterToClassSubject", commandSchemas.assignMatterToClassSubjectCommandSchema),
   command("offer-subject-to-grade-level", "offerSubjectToGradeLevel", commandSchemas.offerSubjectToGradeLevelCommandSchema),
   command("remove-subject-from-grade-level", "removeSubjectFromGradeLevel", commandSchemas.removeSubjectFromGradeLevelCommandSchema),
   command("update-grade-level-subject", "updateGradeLevelSubject", commandSchemas.updateGradeLevelSubjectCommandSchema),
@@ -251,8 +250,8 @@ export const coreCommands = [
   command("add-target", "addTarget", commandSchemas.addTargetCommandSchema),
   command("publish-announcement", "publishAnnouncement", commandSchemas.publishAnnouncementCommandSchema),
   command("record-delivery", "recordDelivery", commandSchemas.recordDeliveryCommandSchema),
-  command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema, { serviceOnly: true }),
-  command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema, { serviceOnly: true }),
+  command("materialize-deliveries", "materializeDeliveries", commandSchemas.materializeDeliveriesCommandSchema),
+  command("apply-delivery-event", "applyDeliveryEvent", commandSchemas.applyDeliveryEventCommandSchema),
   command("mark-delivery-read", "markDeliveryRead", commandSchemas.markDeliveryReadCommandSchema),
   command("update-notification-contact", "updateNotificationContact", commandSchemas.updateNotificationContactCommandSchema),
   command("register-push-device", "registerPushDevice", commandSchemas.registerPushDeviceCommandSchema),
@@ -310,13 +309,11 @@ function command(
   publicName: string,
   methodName: SchoolCommandKey,
   requestSchema: AnySchema,
-  options: { serviceOnly?: boolean } = {},
 ): CoreCommandConfig {
   return {
     publicName,
     methodName,
     requestSchema,
     responseSchema: commandResponseSchemas.resolveCommandResponseSchema(methodName),
-    ...(options.serviceOnly ? { serviceOnly: true } : {}),
   };
 }

@@ -1,12 +1,12 @@
-import type { SchoolScopedActorMetadata, AccessPolicies } from '@edaya/authorization';
-import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core';
-import type { SchoolRepositories } from '../ports/school-repositories';
-import type { CoreEntityServices } from './runtime/core-entity-catalog';
-import type { ServiceArgs } from './service-args';
-import { createAccessPolicies } from '@edaya/authorization';
-import { noOpInvitationDeliveryPort } from '@edaya/core';
-import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service';
-import { createCoreEntityServices } from './runtime/core-entity-catalog';
+import type { AccessPolicies, SchoolScopedActorMetadata } from '@edaya/authorization'
+import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
+import type { SchoolRepositories } from '../ports/school-repositories'
+import type { CoreEntityServices } from './runtime/core-entity-catalog'
+import type { ServiceArgs } from './service-args'
+import { createAccessPolicies } from '@edaya/authorization'
+import { noOpInvitationDeliveryPort } from '@edaya/core'
+import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
+import { createCoreEntityServices } from './runtime/core-entity-catalog'
 
 export class BaseSchoolService {
   readonly actor: SchoolScopedActorMetadata

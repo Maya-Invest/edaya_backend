@@ -1,12 +1,12 @@
-import type { DisciplinaryAction, DisciplinaryActionInput, Incident, IncidentInput, IncidentInvolvementRole } from '@edaya/core';
-import type { BaseSchoolService } from '../base-school-service';
-import type { BehaviorWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization';
-import { BusinessRuleViolationError, DisciplinaryAction as DisciplinaryActionEntity, DisciplinaryActionKind, Incident as IncidentEntity, IncidentStatus, Permission, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement } from '@edaya/core';
-import { INCIDENT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications';
+import type { DisciplinaryAction, DisciplinaryActionInput, Incident, IncidentInput, IncidentInvolvementRole } from '@edaya/core'
+import type { BaseSchoolService } from '../base-school-service'
+import type { BehaviorWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
+import { BusinessRuleViolationError, DisciplinaryAction as DisciplinaryActionEntity, DisciplinaryActionKind, Incident as IncidentEntity, IncidentStatus, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement } from '@edaya/core'
+import { INCIDENT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { BaseServiceWorkflow } from './base-service-workflow';
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface AddStudentInvolvementInput {
   id: string
@@ -85,20 +85,24 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async configureDisciplinaryAction(input: DisciplinaryActionInput & { schoolId?: string }): Promise<DisciplinaryAction> {
-    const schoolId = input.schoolId ?? this.baseService.actor.schoolId
-    this.checkActorSchool(schoolId)
-    const action = new DisciplinaryActionEntity({ ...input, schoolId })
-    await this.baseService.entities.disciplinaryActions.save(action)
-    return action
+    return this.baseService.atomicExecution.execute(async () => {
+      const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      const action = new DisciplinaryActionEntity({ ...input, schoolId })
+      await this.baseService.entities.disciplinaryActions.save(action)
+      return action
+    })
   }
 
   async recordIncident(input: RecordIncidentInput): Promise<Incident> {
-    const incident = new IncidentEntity({
-      ...input,
-      reporterId: input.reporterId ?? resolveAuditActorId(this.baseService.actor),
+    return this.baseService.atomicExecution.execute(async () => {
+      const incident = new IncidentEntity({
+        ...input,
+        reporterId: input.reporterId ?? resolveAuditActorId(this.baseService.actor),
+      })
+      await this.baseService.entities.incidents.save(incident)
+      return incident
     })
-    await this.baseService.entities.incidents.save(incident)
-    return incident
   }
 
   async addStudentInvolvement({
@@ -109,26 +113,23 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: AddStudentInvolvementInput): Promise<StudentIncidentInvolvement> {
-    const incident = await this.requireIncident(incidentId)
-    await this.authorize(Permission.DISCIPLINE_CREATE, {
-      schoolId: incident.schoolId,
-      classGroupId: incident.classGroupId,
-      lessonSessionId: incident.lessonSessionId,
-      studentId,
+    return this.baseService.atomicExecution.execute(async () => {
+      const incident = await this.requireIncident(incidentId)
+      await this.baseService.access.discipline.assertAddInvolvement({ incidentId: incident.id, studentId })
+      const involvement = await this.persistNewStudentInvolvement({
+        id,
+        incidentId,
+        studentId,
+        role,
+        notes,
+        createdAt,
+      }, incident)
+      await runWorkflowNotifications(this.baseService, INCIDENT_RECORDED_EVENT_KEY, {
+        incident,
+        involvement,
+      })
+      return involvement
     })
-    const involvement = await this.persistNewStudentInvolvement({
-      id,
-      incidentId,
-      studentId,
-      role,
-      notes,
-      createdAt,
-    }, incident)
-    await runWorkflowNotifications(this.baseService, INCIDENT_RECORDED_EVENT_KEY, {
-      incident,
-      involvement,
-    })
-    return involvement
   }
 
   async applyDisciplinaryAction({
@@ -141,23 +142,20 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     notes,
     createdAt,
   }: ApplyDisciplinaryActionInput): Promise<StudentDisciplinaryAction> {
-    const incident = await this.requireIncident(incidentId)
-    await this.authorize(Permission.DISCIPLINE_VALIDATE, {
-      schoolId: incident.schoolId,
-      classGroupId: incident.classGroupId,
-      lessonSessionId: incident.lessonSessionId,
-      studentId,
+    return this.baseService.atomicExecution.execute(async () => {
+      const incident = await this.requireIncident(incidentId)
+      await this.baseService.access.discipline.assertApplySanction({ incidentId: incident.id, studentId })
+      return this.persistDisciplinaryAction({
+        id,
+        incidentId,
+        studentId,
+        disciplinaryActionId,
+        startsAt,
+        endsAt,
+        notes,
+        createdAt,
+      }, incident)
     })
-    return this.persistDisciplinaryAction({
-      id,
-      incidentId,
-      studentId,
-      disciplinaryActionId,
-      startsAt,
-      endsAt,
-      notes,
-      createdAt,
-    }, incident)
   }
 
   async updateStudentDisciplinaryActionStatus({
@@ -165,31 +163,35 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     actionId,
     status,
   }: UpdateStudentDisciplinaryActionStatusInput): Promise<StudentDisciplinaryAction> {
-    const existing = await this.requireEntity(
-      this.baseService.entities.studentDisciplinaryActions,
-      studentDisciplinaryActionId ?? actionId ?? '',
-    )
-    const action = new StudentDisciplinaryAction({
-      id: existing.id,
-      schoolId: existing.schoolId,
-      incidentId: existing.incidentId,
-      studentId: existing.studentId,
-      disciplinaryActionId: existing.disciplinaryActionId,
-      assignedByStaffId: existing.assignedByStaffId,
-      startsAt: existing.startsAt,
-      endsAt: existing.endsAt,
-      status,
-      notes: existing.notes,
-      createdAt: existing.createdAt,
-      updatedAt: new Date(),
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(
+        this.baseService.entities.studentDisciplinaryActions,
+        studentDisciplinaryActionId ?? actionId ?? '',
+      )
+      const action = new StudentDisciplinaryAction({
+        id: existing.id,
+        schoolId: existing.schoolId,
+        incidentId: existing.incidentId,
+        studentId: existing.studentId,
+        disciplinaryActionId: existing.disciplinaryActionId,
+        assignedByStaffId: existing.assignedByStaffId,
+        startsAt: existing.startsAt,
+        endsAt: existing.endsAt,
+        status,
+        notes: existing.notes,
+        createdAt: existing.createdAt,
+        updatedAt: new Date(),
+      })
+      await this.baseService.entities.studentDisciplinaryActions.save(action)
+      return action
     })
-    await this.baseService.entities.studentDisciplinaryActions.save(action)
-    return action
   }
 
   async resolveIncident({ incidentId, resolutionNotes }: ResolveIncidentInput): Promise<Incident> {
-    const existing = await this.requireEntity(this.baseService.entities.incidents, incidentId)
-    return this.persistIncidentResolution(existing, resolutionNotes)
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.baseService.access.discipline.resolutionContext(incidentId)
+      return this.persistIncidentResolution(existing, resolutionNotes)
+    })
   }
 
   async resolveIncidentWithOutcomes({
@@ -198,85 +200,76 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
     involvedStudents,
     sanctions = [],
   }: ResolveIncidentWithOutcomesInput): Promise<ResolveIncidentWithOutcomesResult> {
-    const incident = await this.requireIncident(incidentId)
-    if (incident.status === IncidentStatus.Resolved) {
-      throw new BusinessRuleViolationError('INCIDENT_ALREADY_RESOLVED', `Incident ${incidentId} is already resolved`)
-    }
-    this.assertUniqueInvolvedStudents(involvedStudents)
-    const involvedStudentIds = new Set(involvedStudents.map(student => student.studentId))
-    for (const sanction of sanctions) {
-      if (!involvedStudentIds.has(sanction.studentId)) {
-        throw new BusinessRuleViolationError(
-          'SANCTION_STUDENT_NOT_INVOLVED',
-          `Student ${sanction.studentId} must be listed in involvedStudents before applying a sanction`,
-        )
-      }
-    }
-
-    for (const student of involvedStudents) {
-      await this.authorize(Permission.DISCIPLINE_CREATE, {
-        schoolId: incident.schoolId,
-        classGroupId: incident.classGroupId,
-        lessonSessionId: incident.lessonSessionId,
-        studentId: student.studentId,
-      })
-      await this.requireStudentInIncidentScope(student.studentId, incident)
-    }
-    for (const sanction of sanctions) {
-      await this.authorize(Permission.DISCIPLINE_VALIDATE, {
-        schoolId: incident.schoolId,
-        classGroupId: incident.classGroupId,
-        lessonSessionId: incident.lessonSessionId,
-        studentId: sanction.studentId,
-      })
-      await this.requireStudentInIncidentScope(sanction.studentId, incident)
-    }
-
     return this.baseService.atomicExecution.execute(async () => {
-      const involvements: StudentIncidentInvolvement[] = []
-      const createdInvolvements: StudentIncidentInvolvement[] = []
-      for (const student of involvedStudents) {
-        const result = await this.persistStudentInvolvementUpsert({
-          id: student.id,
-          incidentId,
-          studentId: student.studentId,
-          role: student.role,
-          notes: student.notes,
-          createdAt: student.createdAt,
-        }, incident)
-        involvements.push(result.involvement)
-        if (result.created) {
-          createdInvolvements.push(result.involvement)
+      const incident = await this.baseService.access.discipline.resolutionContext(incidentId, involvedStudents.map(student => student.studentId))
+      if (incident.status === IncidentStatus.Resolved) {
+        throw new BusinessRuleViolationError('INCIDENT_ALREADY_RESOLVED', `Incident ${incidentId} is already resolved`)
+      }
+      this.assertUniqueInvolvedStudents(involvedStudents)
+      const involvedStudentIds = new Set(involvedStudents.map(student => student.studentId))
+      for (const sanction of sanctions) {
+        if (!involvedStudentIds.has(sanction.studentId)) {
+          throw new BusinessRuleViolationError(
+            'SANCTION_STUDENT_NOT_INVOLVED',
+            `Student ${sanction.studentId} must be listed in involvedStudents before applying a sanction`,
+          )
         }
       }
 
-      const appliedSanctions: StudentDisciplinaryAction[] = []
+      for (const student of involvedStudents) {
+        await this.requireStudentInIncidentScope(student.studentId, incident)
+      }
       for (const sanction of sanctions) {
-        appliedSanctions.push(await this.persistDisciplinaryAction({
-          id: sanction.id,
-          incidentId,
-          studentId: sanction.studentId,
-          disciplinaryActionId: sanction.disciplinaryActionId,
-          startsAt: sanction.startsAt,
-          endsAt: sanction.endsAt,
-          notes: sanction.notes,
-          createdAt: sanction.createdAt,
-        }, incident))
+        await this.baseService.access.discipline.assertApplySanction({ incidentId: incident.id, studentId: sanction.studentId })
+        await this.requireStudentInIncidentScope(sanction.studentId, incident)
       }
 
-      const resolvedIncident = await this.persistIncidentResolution(incident, resolutionNotes)
-      for (const involvement of createdInvolvements) {
-        await runWorkflowNotifications(this.baseService, INCIDENT_RECORDED_EVENT_KEY, {
+      return this.baseService.atomicExecution.execute(async () => {
+        const involvements: StudentIncidentInvolvement[] = []
+        const createdInvolvements: StudentIncidentInvolvement[] = []
+        for (const student of involvedStudents) {
+          const result = await this.persistStudentInvolvementUpsert({
+            id: student.id,
+            incidentId,
+            studentId: student.studentId,
+            role: student.role,
+            notes: student.notes,
+            createdAt: student.createdAt,
+          }, incident)
+          involvements.push(result.involvement)
+          if (result.created) {
+            createdInvolvements.push(result.involvement)
+          }
+        }
+
+        const appliedSanctions: StudentDisciplinaryAction[] = []
+        for (const sanction of sanctions) {
+          appliedSanctions.push(await this.persistDisciplinaryAction({
+            id: sanction.id,
+            incidentId,
+            studentId: sanction.studentId,
+            disciplinaryActionId: sanction.disciplinaryActionId,
+            startsAt: sanction.startsAt,
+            endsAt: sanction.endsAt,
+            notes: sanction.notes,
+            createdAt: sanction.createdAt,
+          }, incident))
+        }
+
+        const resolvedIncident = await this.persistIncidentResolution(incident, resolutionNotes)
+        for (const involvement of createdInvolvements) {
+          await runWorkflowNotifications(this.baseService, INCIDENT_RECORDED_EVENT_KEY, {
+            incident: resolvedIncident,
+            involvement,
+          })
+        }
+
+        return {
           incident: resolvedIncident,
-          involvement,
-        })
-      }
-
-      return {
-        incident: resolvedIncident,
-        involvements,
-        sanctions: appliedSanctions,
-      }
+          involvements,
+          sanctions: appliedSanctions,
+        }
+      })
     })
   }
 
@@ -407,32 +400,6 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
       if (enrollments.length === 0) {
         throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${studentId} does not have an active enrollment in classGroup ${incident.classGroupId}`)
       }
-    }
-  }
-
-  private async authorize(
-    permission: Permission.DISCIPLINE_CREATE | Permission.DISCIPLINE_VALIDATE,
-    resource: {
-      schoolId: string
-      classGroupId?: string
-      lessonSessionId?: string
-      studentId?: string
-    },
-  ): Promise<void> {
-    if (resource.schoolId !== this.baseService.actor.schoolId) {
-      denyResourceAccess()
-    }
-
-    
-
-    if (resource.classGroupId) {
-      await this.baseService.access.assertResources(permission, 'classGroups', [resource.classGroupId], 'write')
-    }
-    else if (resource.lessonSessionId) {
-      await this.baseService.access.assertResources(permission, 'lessonSessions', [resource.lessonSessionId], 'write')
-    }
-    if (resource.studentId) {
-      await this.baseService.access.assertResources(permission, 'students', [resource.studentId], 'write')
     }
   }
 

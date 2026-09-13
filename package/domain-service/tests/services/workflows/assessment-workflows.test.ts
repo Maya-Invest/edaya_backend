@@ -1,20 +1,18 @@
-import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardResultStatus } from '@edaya/core'
+import { AuthorizationError } from '@edaya/authorization'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardDefinition, ReportCardResultStatus, School } from '@edaya/core'
 import {
   describe,
   expect,
-  mock,
   test,
 } from 'bun:test'
 import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
 import {
-  actor,
   createReportCardContext,
-} from './workflow-test-context'
+} from './report-card-workflow-context'
 
 describe('SchoolService assessment workflows', () => {
   test('generateReportCardResult creates a draft report card through managed service', async () => {
-    const { mockPolicy, mockRepos, savedReportCards, service } = createReportCardContext()
+    const { repositories, service } = await createReportCardContext()
     const generatedAt = new Date('2026-04-01T00:00:00Z')
 
     const result = await service.assessmentsWorkflow.generateReportCardResult({
@@ -34,14 +32,12 @@ describe('SchoolService assessment workflows', () => {
     expect(result.attendanceSummary.absenceCount).toBe(1)
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
     expect(result.attendanceSummary.lateCount).toBe(1)
-    expect(savedReportCards.get('rc1')).toBe(result)
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockRepos.results.save).toHaveBeenCalledWith(result)
+    expect((await repositories.results.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('generateReportCardResult reuses existing draft id and generatedAt', async () => {
     const existingGeneratedAt = new Date('2026-03-25T00:00:00Z')
-    const { mockPolicy, mockRepos, service } = createReportCardContext({
+    const { repositories, service } = await createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
         reportCardDefinitionId: 'def1',
@@ -63,13 +59,12 @@ describe('SchoolService assessment workflows', () => {
 
     expect(result.id).toBe('rc-existing')
     expect(result.status).toBe(ReportCardResultStatus.Draft)
-    expect(result.generatedAt).toBe(existingGeneratedAt)
-    expect(mockPolicy.authorizeReportCardResultSave).toHaveBeenCalled()
-    expect(mockRepos.results.save).toHaveBeenCalledWith(result)
+    expect(result.generatedAt).toEqual(existingGeneratedAt)
+    expect((await repositories.results.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('generateReportCardResult rejects already published report cards', async () => {
-    const { service } = createReportCardContext({
+    const { service } = await createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
         studentId: 'stu1',
@@ -87,7 +82,7 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('writeHomeroomReportComment updates only the teacher comment on draft cards', async () => {
-    const { savedReportCards, service } = createReportCardContext()
+    const { results, service } = await createReportCardContext()
 
     await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
@@ -102,11 +97,11 @@ describe('SchoolService assessment workflows', () => {
     })
 
     expect(result.teacherComment).toBe('Bon début d\'année.')
-    expect(savedReportCards.get('rc1')?.teacherComment).toBe('Bon début d\'année.')
+    expect((await results.findById('rc1'))?.teacherComment).toBe('Bon début d\'année.')
   })
 
   test('publishReportCardResult publishes generated report cards through managed service', async () => {
-    const { mockAtomic, mockPolicy, mockRepos, service } = createReportCardContext()
+    const { repositories, service } = await createReportCardContext()
 
     const result = await service.assessmentsWorkflow.publishReportCardResult({
       id: 'rc1',
@@ -122,15 +117,12 @@ describe('SchoolService assessment workflows', () => {
     expect(result.assessmentResultCount).toBe(1)
     expect(result.attendanceSummary.presentCount).toBe(1)
     expect(result.attendanceSummary.excusedAbsenceCount).toBe(1)
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockPolicy.checkStudentAccess).toHaveBeenCalledWith(actor, ['stu1'])
-    expect(mockPolicy.authorizeReportCardResultSave).toHaveBeenCalled()
-    expect(mockRepos.results.save).toHaveBeenCalledWith(result)
+    expect((await repositories.results.findById(result.id))?.data).toEqual(result.data)
   })
 
   test('publishReportCardResult enqueues guardian and student notifications', async () => {
     const gateway = new RecordingNotificationGateway()
-    const { service } = createReportCardContext({ notificationGateway: gateway })
+    const { repositories, service } = await createReportCardContext({ notificationGateway: gateway })
 
     await service.assessmentsWorkflow.publishReportCardResult({
       id: 'rc1',
@@ -141,17 +133,15 @@ describe('SchoolService assessment workflows', () => {
     })
 
     expect(gateway.enqueued).toHaveLength(2)
-    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(expect.arrayContaining([
-      `delivery:${REPORT_CARD_PUBLISHED_EVENT_KEY}:rc1:subject-stu1`,
-      `delivery:${REPORT_CARD_PUBLISHED_EVENT_KEY}:rc1:subject-gua1`,
-    ]))
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey).sort()).toEqual((await repositories.messageDeliveries.list()).map(entry => entry.id).sort())
     expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === REPORT_CARD_PUBLISHED_EVENT_KEY)).toBe(true)
   })
 
   test('recordAssessmentResult enqueues guardian and student notifications', async () => {
     const gateway = new RecordingNotificationGateway()
-    const { service } = createReportCardContext({ notificationGateway: gateway })
+    const { repositories, service } = await createReportCardContext({ notificationGateway: gateway })
 
+    await repositories.assessmentResults.delete('ar1')
     await service.assessmentsWorkflow.recordAssessmentResult({
       id: 'ar-new',
       studentId: 'stu1',
@@ -160,15 +150,12 @@ describe('SchoolService assessment workflows', () => {
     })
 
     expect(gateway.enqueued).toHaveLength(2)
-    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(expect.arrayContaining([
-      `delivery:${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new:subject-stu1`,
-      `delivery:${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:ar-new:subject-gua1`,
-    ]))
+    expect(gateway.enqueued.map(entry => entry.idempotencyKey).sort()).toEqual((await repositories.messageDeliveries.list()).map(entry => entry.id).sort())
     expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === ASSESSMENT_RESULT_RECORDED_EVENT_KEY)).toBe(true)
   })
 
   test('publishReportCardResult rejects unpublished academic periods', async () => {
-    const { service } = createReportCardContext({
+    const { service } = await createReportCardContext({
       academicPeriodPublished: false,
     })
 
@@ -181,7 +168,7 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('publishReportCardResult rejects already published report cards', async () => {
-    const { service } = createReportCardContext({
+    const { service } = await createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
         studentId: 'stu1',
@@ -199,8 +186,8 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('createGradeScale and completeAssessment persist assessment catalog entities', async () => {
-    const { mockRepos, service } = createReportCardContext()
-    mockRepos.assessments.findById = mock(async () => new Assessment({
+    const { repositories, service } = await createReportCardContext()
+    await repositories.assessments.save(new Assessment({
       id: 'ass1',
       classGroupId: 'cg1',
       classSubjectId: 'cs1',
@@ -223,20 +210,20 @@ describe('SchoolService assessment workflows', () => {
       ranges: [{ letter: 'A', minScore: 16, maxScore: 20, isPassing: true }],
     })
     expect(gradeScale.name).toBe('20-point')
-    expect(mockRepos.gradeScales.save).toHaveBeenCalled()
+    expect(await repositories.gradeScales.findById('gs1')).toBeDefined()
 
-    mockRepos.assessmentResults.list = mock(async () => [])
+    await repositories.assessmentResults.delete('ar1')
 
     const completed = await service.assessmentsWorkflow.completeAssessment({
       assessmentId: 'ass1',
       completedAt: new Date('2026-02-01T10:30:00Z'),
     })
     expect(completed.completedAt?.toISOString()).toBe('2026-02-01T10:30:00.000Z')
-    expect(mockRepos.assessments.save).toHaveBeenCalled()
+    expect((await repositories.assessments.findById('ass1'))?.completedAt).toEqual(completed.completedAt)
   })
 
   test('listClassSubjectAssessmentResultsForPeriod returns assessment results for a class subject', async () => {
-    const { service } = createReportCardContext()
+    const { service } = await createReportCardContext()
 
     const results = await service.assessmentsWorkflow.listClassSubjectAssessmentResultsForPeriod({
       classSubjectId: 'cs1',
@@ -248,8 +235,9 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('recordAssessmentResultCompliance delegates to recordAssessmentResult', async () => {
-    const { service } = createReportCardContext()
+    const { repositories, service } = await createReportCardContext()
 
+    await repositories.assessmentResults.delete('ar1')
     const result = await service.assessmentsWorkflow.recordAssessmentResultCompliance({
       id: 'ar-compliance',
       studentId: 'stu1',
@@ -261,14 +249,9 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('generateReportCardResult uses the default definition when none is provided', async () => {
-    const { mockRepos, service } = createReportCardContext()
-    mockRepos.definitions.findOne = mock(async () => ({
-      id: 'def-default',
-      schoolId: 'sch1',
-      academicYearId: 'ay1',
-      gradeLevelId: 'grade1',
-      isDefault: true,
-    })) as unknown as typeof mockRepos.definitions.findOne
+    const { repositories, service } = await createReportCardContext()
+    const definition = (await repositories.definitions.findById('def1'))!
+    await repositories.definitions.save(new ReportCardDefinition({ ...definition.data, id: 'def-default', isDefault: true }))
 
     const result = await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc-default',
@@ -280,7 +263,7 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('publishReportCardResult rejects aggregated sources that are not ready', async () => {
-    const { service } = createReportCardContext()
+    const { service } = await createReportCardContext()
 
     await expect(service.assessmentsWorkflow.publishReportCardResult({
       id: 'rc-agg',
@@ -295,10 +278,7 @@ describe('SchoolService assessment workflows', () => {
   })
 
   test('writeHomeroomReportComment rejects actors without report card access', async () => {
-    const { mockPolicy, service } = createReportCardContext()
-    mockPolicy.checkReportCardResultAccess = mock(async () => {
-      throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-    })
+    const { repositories, service } = await createReportCardContext()
 
     await service.assessmentsWorkflow.generateReportCardResult({
       id: 'rc1',
@@ -307,6 +287,8 @@ describe('SchoolService assessment workflows', () => {
       reportCardDefinitionId: 'def1',
     })
 
+    const school = (await repositories.schools.findById('sch1'))!
+    await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
     await expect(service.assessmentsWorkflow.writeHomeroomReportComment({
       id: 'rc1',
       teacherComment: 'Needs improvement',

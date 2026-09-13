@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { Activity } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
+import type { Activity } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
 
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school-life/activity.ts (PR3)
 export const activityConfig: EntityConfigFactory<Activity> = ({ repositories, atomicExecution }) => ({
   ...config({
     repository: repositories.activities,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'activities', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
-    
+    resource: 'activities',
+
     atomicExecution,
   }),
   gates: {

@@ -1,7 +1,9 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { Assessment } from '@edaya/core'
-import { AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus } from '@edaya/core'
+import { createSystemActorMetadata } from '@edaya/authorization'
+import { AssessmentKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import {
   assessmentDueSoonDeliverAfter,
   assessmentDueSoonIdempotencyKey,
@@ -138,24 +140,35 @@ describe('assessmentDueSoonTrigger resolver', () => {
     expect(gateway.enqueued).toHaveLength(0)
   })
 
-  test('cancels scheduled notification when assessment is completed', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const existing = assessment({ id: 'a1', dueAt, kind: AssessmentKind.Homework })
-    const completed = assessment({ id: 'a1', dueAt, completedAt: new Date('2026-06-18T00:00:00Z'), kind: AssessmentKind.Homework })
-
-    const input = await assessmentDueSoonTrigger.resolver(completed, existing, {
-      notificationGateway: gateway,
-      templateService: createTestTemplateService(),
-      actor,
-      repositories: {
-        classGroups: { findById: async () => ({ id: 'cg1', schoolId: 'school-1' }) },
-        schools: { findById: async () => ({ id: 'school-1', name: 'Test School' }) },
-        enrollments: { list: async () => [] },
-      } as any,
-    })
-
-    expect(input).toBeNull()
-    expect(gateway.cancelled).toEqual([])
+  test.each(['completed', 'quiz'])('cancels persisted notifications after %s even when the student has left', async (change) => {
+    const fixture = await createAuthorizationDatabase()
+    try {
+      await seedAuthorizationRelationships(fixture.db)
+      await fixture.repositories.messageDeliveries.save(new MessageDelivery({
+        id: 'original-provider-id',
+        schoolId: 'school-a',
+        sourceKey: assessmentDueSoonIdempotencyKey('a1'),
+        eventKey: 'assessment.due_soon',
+        subjectId: 'former-login',
+        recipientKind: MessageDeliveryRecipientKind.Student,
+        recipientId: 'student-a',
+        title: 'Reminder',
+        body: 'Homework due',
+      }))
+      await fixture.repositories.enrollments.delete('enrollment-a')
+      const gateway = new RecordingNotificationGateway()
+      const existing = assessment({ id: 'a1', classGroupId: 'class-a', dueAt, kind: AssessmentKind.Homework })
+      const updated = assessment({ id: 'a1', classGroupId: 'class-a', dueAt: change === 'quiz' ? undefined : dueAt, completedAt: change === 'completed' ? new Date('2026-06-18') : undefined, kind: change === 'quiz' ? AssessmentKind.Quiz : AssessmentKind.Homework })
+      const input = await assessmentDueSoonTrigger.resolver(updated, existing, {
+        notificationGateway: gateway,
+        templateService: new NotificationTemplateService(fixture.repositories),
+        actor: createSystemActorMetadata({ schoolId: 'school-a', systemId: 'processDueNotifications', requestId: 'test', reason: 'Test' }),
+        repositories: fixture.repositories,
+      })
+      expect(input).toBeNull()
+      expect(gateway.cancelled).toEqual(['original-provider-id'])
+    }
+    finally { await fixture.db.close() }
   })
 })
 
@@ -184,15 +197,7 @@ describe('withNotificationPostSaveHook', () => {
         {
           repository: {} as any,
           tenant: { resolve: async () => 'school-1' },
-          read: {
-            checkModule: async () => {},
-            checkAccess: async () => {},
-          },
-          write: {
-            checkModule: async () => {},
-            authorizeSave: async () => {},
-            authorizeDelete: async () => {},
-          },
+          resource: 'assessments',
           hooks: {
             postSave: async () => {
               existingPostSaveCalled = true

@@ -1,6 +1,6 @@
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { grantScopeSchema, grantScopesSchema, Permission } from "@edaya/core";
-import { AccessFacts, listPermissionCatalog, validateGrantTargets } from "@edaya/authorization";
+import { AccessFacts, listPermissionCatalog, renderGrantScopes } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -86,7 +86,7 @@ const scopeRenderRequestSchema = z.object({
 const scopeRenderResponseSchema = z.object({
   items: z.array(z.object({
     permission: z.nativeEnum(Permission),
-    scopes: z.array(z.object({ scope: grantScopeSchema, label: z.string() })),
+    scopes: z.array(z.object({ scope: grantScopeSchema, label: z.string(), missing: z.boolean() })),
   })),
 }).openapi("ScopeRenderResponse");
 
@@ -129,46 +129,12 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
   const body = c.req.valid("json");
   const service = c.get("schoolApp").forActor(interactiveActor);
   try {
-    await service.baseService.access.assertSchool(Permission.ACCESS_CONTROL_READ);
+    await service.baseService.access.staffPermissions.assertRead();
     const facts = new AccessFacts(interactiveActor, service.baseService.repositories);
-    const items = [];
-    for (const item of body.items) {
-      await validateGrantTargets(facts, { ...item, academicYearId: body.academicYearId });
-      const scopes = [];
-      for (const scope of item.scopes) {
-        let label: string;
-        switch (scope.kind) {
-          case "school": label = "School"; break;
-          case "all": label = `All ${scope.grain.replaceAll("_", " ")} resources`; break;
-          case "student": {
-            const student = await facts.one("students", scope.studentId);
-            label = `${student.firstName} ${student.lastName}`;
-            break;
-          }
-          case "class_group": label = (await facts.one("classGroups", scope.classGroupId)).name; break;
-          case "class_subject": {
-            const group = await facts.one("classGroups", scope.classGroupId);
-            const subject = scope.classSubjectId ? await facts.one("classSubjects", scope.classSubjectId) : undefined;
-            label = `${group.name} / ${subject ? (await facts.one("subjects", subject.subjectId)).name : "All subjects"}`;
-            break;
-          }
-          case "grade_level": label = (await facts.one("gradeLevels", scope.gradeLevelId)).name; break;
-          case "grade_level_subject": {
-            const grade = await facts.one("gradeLevels", scope.gradeLevelId);
-            const subject = scope.gradeLevelSubjectId ? await facts.one("gradeLevelSubjects", scope.gradeLevelSubjectId) : undefined;
-            label = `${grade.name} / ${subject ? (await facts.one("subjects", subject.subjectId)).name : "All subjects"}`;
-            break;
-          }
-          case "activity": {
-            const activity = scope.activityId ? (await facts.one("activities", scope.activityId)).name : "All activities";
-            label = scope.classGroupId ? `${(await facts.one("classGroups", scope.classGroupId)).name} / ${activity}` : activity;
-            break;
-          }
-        }
-        scopes.push({ scope, label });
-      }
-      items.push({ permission: item.permission, scopes });
-    }
+    const items = await Promise.all(body.items.map(async item => ({
+      permission: item.permission,
+      scopes: await renderGrantScopes(facts, { ...item, academicYearId: body.academicYearId }),
+    })));
     return c.json({ items }, HttpStatusCodes.OK);
   }
   catch (error) {

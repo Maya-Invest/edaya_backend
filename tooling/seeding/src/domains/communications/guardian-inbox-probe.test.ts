@@ -9,6 +9,7 @@ describe('seedAuthLinkedGuardianInboxProbes', () => {
   test('records unread deliveries using auth-linked guardian subject ids', async () => {
     const deliveries: MessageDeliverySeedRecord[] = []
     const communicationsPort: CommunicationsSeedPort = {
+      findRecipientSubjectId: async () => undefined,
       createAnnouncement: async () => {},
       addTarget: async () => {},
       publishAnnouncement: async () => {},

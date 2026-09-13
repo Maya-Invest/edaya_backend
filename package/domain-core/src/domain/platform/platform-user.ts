@@ -1,6 +1,7 @@
-import { z } from 'zod'
+import type { PlatformAction } from '../permissions/platform-actions'
 
-import { ALL_PLATFORM_PERMISSIONS, PlatformAction } from '../permissions/platform-actions'
+import { z } from 'zod'
+import { ALL_PLATFORM_PERMISSIONS } from '../permissions/platform-actions'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const platformUserSchema = z.object({

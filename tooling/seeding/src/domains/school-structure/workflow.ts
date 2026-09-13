@@ -41,7 +41,6 @@ export async function seedDevSchoolStructure(
   options: SeedDevSchoolStructureOptions,
   dataset: FixtureDataset,
 ): Promise<void> {
-  const seedSubjectId = (id: string) => `subject-${id}`
   const school = dataset.entities.school
   const academicYear = dataset.entities.academicYear
   const gradeLevels = dataset.entities.gradeLevels ?? []
@@ -128,20 +127,20 @@ export async function seedDevSchoolStructure(
       firstName: director.firstName,
       lastName: director.lastName,
       email: director.email ?? undefined,
-      subjectId: seedSubjectId(director.id),
       profileRole: director.profileRole ?? undefined,
       sendAccountInvitation: false,
     })
   }
 
   for (const member of staffMembers.slice(1)) {
+    if (await port.staffMemberExists(member.id))
+      continue
     await port.registerStaffMember({
       id: member.id,
       schoolId: dataset.schoolId,
       firstName: member.firstName,
       lastName: member.lastName,
       email: member.email ?? undefined,
-      subjectId: seedSubjectId(member.id),
       profileRole: member.profileRole ?? undefined,
       sendAccountInvitation: false,
     })

@@ -1,9 +1,5 @@
 import type { GrantScope, StaffPermissionAssignmentInput } from '@edaya/core'
-import { permissionScope, validatePermissionScopes, Permission } from '@edaya/core'
-
-/** Explicit school-owner authority; preset labels never participate in decisions. */
-export const ELEVATED_STAFF_PERMISSIONS: readonly Permission[] = Object.values(Permission)
-  .filter(permission => permissionScope(permission) !== 'platform')
+import { Permission, permissionScope, validatePermissionScopes } from '@edaya/core'
 
 export const COORDINATOR_PERMISSIONS: readonly Permission[] = [
   Permission.ACADEMIC_PROGRAM_UPDATE,
@@ -58,12 +54,11 @@ export const ACCOUNTANT_PERMISSIONS: readonly Permission[] = [
 ]
 
 /** Presets populate ordinary grants; a preset name is never stored as authority. */
-export function permissionRowsFromPreset(staffId: string, schoolId: string, academicYearId: string,
-  permissions: readonly Permission[], selections: Readonly<Partial<Record<Permission, readonly GrantScope[]>>> = {},
-): Omit<StaffPermissionAssignmentInput, 'id'>[] {
-  return [...new Set(permissions)].flatMap(permission => {
+export function permissionRowsFromPreset(staffId: string, schoolId: string, academicYearId: string, permissions: readonly Permission[], selections: Readonly<Partial<Record<Permission, readonly GrantScope[]>>> = {}): Omit<StaffPermissionAssignmentInput, 'id'>[] {
+  return [...new Set(permissions)].flatMap((permission) => {
     const scopes = selections[permission] ?? (permissionScope(permission) === undefined ? [{ kind: 'school' as const }] : undefined)
-    if (!scopes) return []
+    if (!scopes)
+      return []
     validatePermissionScopes(permission, scopes)
     return [{ staffId, schoolId, academicYearId, permission, scopes: [...scopes], status: 'active' as const }]
   })

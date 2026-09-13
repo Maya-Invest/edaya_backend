@@ -1,29 +1,25 @@
-import { Permission } from '@edaya/core';
-
-import type { Incident } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { AttachmentOwnerKind, BusinessRuleViolationError, IncidentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { dateTime } from '../../entity-config/helper-utils';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { Incident } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AttachmentOwnerKind, BusinessRuleViolationError, IncidentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/incident.ts (PR3)
 export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'incidents', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
-    
+    resource: 'incidents',
+
     gates: {
       preSave: validateIncidentSave,
       preDelete: validateIncidentDelete,
     },
     atomicExecution,
   })
-
-
 
 async function validateIncidentSave(
   entity: Incident,

@@ -1,4 +1,5 @@
 [test]
+preload = ["./tooling/test-support/preload.ts"]
 # PGlite WASM cold-start on GitHub Actions often exceeds Bun's 5s default.
 timeout = 30_000
 pathIgnorePatterns = [

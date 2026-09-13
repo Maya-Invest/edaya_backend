@@ -1,81 +1,24 @@
-import { Permission } from '@edaya/core';
-
-import type { LessonSession } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core';
-import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts';
-import { config } from '../../entity-config';
-import { classGroupLinkedTenant } from '../../entity-config/tenant';
+import type { LessonSession } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts'
+import { config } from '../../entity-config'
+import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/lesson-session.ts (PR3)
 export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.lessonSessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    authorization: { resource: 'lessonSessions', read: [Permission.QUERY_TIMETABLE_READ, Permission.TIMETABLE_UPDATE, Permission.TIMETABLE_CREATE, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: resolveLessonSessionWriteAction, delete: Permission.TIMETABLE_UPDATE },
-    
+    resource: 'lessonSessions',
+
     gates: {
       preSave: validateLessonSessionSave,
     },
     atomicExecution,
   })
-
-export function isLessonSessionLogbookOnlyUpdate(
-  entity: LessonSession,
-  existing: LessonSession,
-): boolean {
-  return entity.schoolId === existing.schoolId
-    && entity.classGroupId === existing.classGroupId
-    && entity.scheduleId === existing.scheduleId
-    && entity.timetableGenerated === existing.timetableGenerated
-    && entity.timetableTeacherIds.join('|') === existing.timetableTeacherIds.join('|')
-    && entity.classSubjectId === existing.classSubjectId
-    && entity.status === existing.status
-    && entity.isException === existing.isException
-    && entity.startsAt.getTime() === existing.startsAt.getTime()
-    && entity.endsAt.getTime() === existing.endsAt.getTime()
-    && entity.createdAt.getTime() === existing.createdAt.getTime()
-}
-
-export function isLessonSessionAttendanceCompletionUpdate(
-  entity: LessonSession,
-  existing: LessonSession,
-): boolean {
-  return entity.schoolId === existing.schoolId
-    && entity.classGroupId === existing.classGroupId
-    && entity.scheduleId === existing.scheduleId
-    && entity.timetableGenerated === existing.timetableGenerated
-    && entity.timetableTeacherIds.join('|') === existing.timetableTeacherIds.join('|')
-    && entity.classSubjectId === existing.classSubjectId
-    && entity.isException === existing.isException
-    && entity.startsAt.getTime() === existing.startsAt.getTime()
-    && entity.endsAt.getTime() === existing.endsAt.getTime()
-    && entity.displayLabel === existing.displayLabel
-    && entity.sessionNote === existing.sessionNote
-    && entity.createdAt.getTime() === existing.createdAt.getTime()
-    && existing.status === OccurrenceStatus.Pending
-    && entity.status === OccurrenceStatus.Completed
-}
-
-function resolveLessonSessionWriteAction(
-  entity: LessonSession,
-  existing: LessonSession | undefined,
-) {
-  if (!existing) {
-    return Permission.TIMETABLE_UPDATE
-  }
-  if (isLessonSessionLogbookOnlyUpdate(entity, existing)) {
-    return Permission.CLASS_LOGBOOK_UPDATE
-  }
-  if (isLessonSessionAttendanceCompletionUpdate(entity, existing)) {
-    return Permission.ATTENDANCE_RECORD
-  }
-  return Permission.TIMETABLE_UPDATE
-}
-
-
 
 export async function validateLessonSessionSave(
   lessonSession: LessonSession,

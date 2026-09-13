@@ -100,9 +100,9 @@ export const getPlatformMeHandler: AppRouteHandler<typeof getPlatformMeRoute> = 
 
   try {
     const user = await new PlatformPolicies(actor, c.var.schoolApp.repositories.platformUsers).currentUser();
-    return c.json({ kind: "platform" as const, actorId: user.id, subjectId: user.subjectId,
-      email: user.email, permissions: [...user.permissions], assuranceLevel: actor.assuranceLevel }, HttpStatusCodes.OK);
-  } catch (err) { return routeErrorResponse(c, err); }
+    return c.json({ kind: "platform" as const, actorId: user.id, subjectId: user.subjectId, email: user.email, permissions: [...user.permissions], assuranceLevel: actor.assuranceLevel }, HttpStatusCodes.OK);
+  }
+  catch (err) { return routeErrorResponse(c, err); }
 };
 
 export const listPlatformUsersHandler: AppRouteHandler<typeof listPlatformUsersRoute> = async (c) => {

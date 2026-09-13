@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import { mountGraphQLRoute } from "@/lib/graphql/mount";
 import type { AppBindings } from "@/http/types";
 import { ActorAssuranceLevel } from "@edaya/authorization";
-import type { Permission } from "@edaya/core";
 
 const mockActor = {
   kind: "staff" as const,
@@ -12,11 +11,6 @@ const mockActor = {
   subjectId: "admin-user",
   schoolId: "school-1",
   staffMemberId: "staff-1",
-  effectiveGrants: {
-    permissions: new Set<Permission>(),
-    scopeGrants: [],
-    isElevated: true,
-  },
   requestId: "request-id",
   authenticatedAt: new Date(),
   assuranceLevel: ActorAssuranceLevel.Strong,

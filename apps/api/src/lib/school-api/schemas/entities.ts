@@ -202,7 +202,6 @@ export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
   academicYearId: field.string(),
   permission: field.string(),
   status: field.string(),
-  sourceStaffAssignmentId: field.string(),
 });
 
 export const attachmentQuerySchema = createQueryOptionsSchema({

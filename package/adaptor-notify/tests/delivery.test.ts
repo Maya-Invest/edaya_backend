@@ -1,11 +1,32 @@
 import { AccountInvitationKind } from "@edaya/core";
 import { describe, expect, test } from "bun:test";
-import { createNotifyInvitationDeliveryPort } from "../src/invitation-delivery";
 import { createNotifyAuthEmailDeliveryPort } from "../src/auth-email-delivery";
 import { NotifySendError } from "../src/errors";
+import { createNotifyInvitationDeliveryPort } from "../src/invitation-delivery";
 import { createTestNotifyRuntime } from "./harness";
 
 describe("in-process invitation and auth delivery", () => {
+  test("does not acknowledge an invitation when no email channel can deliver", async () => {
+    const harness = await createTestNotifyRuntime();
+    try {
+      const port = createNotifyInvitationDeliveryPort(harness.runtime);
+      await expect(port.deliver({
+        invitationId: "inv_phone",
+        schoolId: "sch_1",
+        contactChannel: "phone",
+        contactValue: "+15145550123",
+        displayName: "Invitee",
+        actorKind: AccountInvitationKind.Staff,
+        inviteUrl: "https://app.test/invite/inv_phone",
+        expiresAt: new Date(),
+        emailSubject: "Invite",
+        emailBody: "Join",
+      })).rejects.toBeInstanceOf(NotifySendError);
+      expect(harness.sent).toHaveLength(0);
+    }
+    finally { await harness.close(); }
+  });
+
   test("sends auth OTP to the normalized address", async () => {
     const harness = await createTestNotifyRuntime();
     const port = createNotifyAuthEmailDeliveryPort(harness.runtime);

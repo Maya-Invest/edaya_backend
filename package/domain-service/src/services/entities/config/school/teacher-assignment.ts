@@ -1,20 +1,18 @@
-import { Permission } from '@edaya/core';
+import type { TeacherAssignment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 
-import type { TeacherAssignment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-
-import { BusinessRuleViolationError, TeacherAssignmentKind } from '@edaya/core';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import { BusinessRuleViolationError, TeacherAssignmentKind } from '@edaya/core'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/teacher-assignment.ts (PR3)
 export const teacherAssignmentConfig: EntityConfigFactory<TeacherAssignment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.teacherAssignments,
     tenant: teacherAssignmentTenant(),
-    authorization: { resource: 'teacherAssignments', read: [Permission.ACCESS_CONTROL_ASSIGN, Permission.SCHOOL_STRUCTURE_CONFIGURE], write: [Permission.ACCESS_CONTROL_ASSIGN] },
-    
+    resource: 'teacherAssignments',
+
     gates: {
       preSave: validateTeacherAssignmentSave,
     },

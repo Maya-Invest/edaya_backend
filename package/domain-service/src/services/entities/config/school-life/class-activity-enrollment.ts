@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { ClassActivityEnrollment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { classGroupLinkedTenant } from '../../entity-config/tenant';
+import type { ClassActivityEnrollment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school-life/class-activity-enrollment.ts (PR3)
 export const classActivityEnrollmentConfig: EntityConfigFactory<ClassActivityEnrollment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.classActivityEnrollments,
     tenant: classGroupLinkedTenant('classGroupId'),
-    authorization: { resource: 'classActivityEnrollments', read: [Permission.QUERY_TIMETABLE_READ, Permission.TIMETABLE_UPDATE, Permission.TIMETABLE_CREATE, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.TIMETABLE_UPDATE] },
-    
+    resource: 'classActivityEnrollments',
+
     gates: {
       preSave: validateClassActivityEnrollmentSave,
     },

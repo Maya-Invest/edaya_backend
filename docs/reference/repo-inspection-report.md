@@ -135,7 +135,7 @@ Keep special cases explicit through per-entity overrides rather than parallel ha
 
 ### Recommendation
 
-Keep `SchoolService` if it is the public domain API, but make command registration derive from metadata instead of requiring another manual list. A command registry could include method name, public API name, schema, service-only flag, and response schema.
+Keep `SchoolService` if it is the public domain API, but make command registration derive from metadata instead of requiring another manual list. A command registry could include method name, public API name, schema and response schema. Caller eligibility belongs in action-bound business policies rather than command-registry metadata.
 
 If `SchoolService` is not needed as a public facade, expose workflow namespaces and let the API command dispatcher call registered workflow handlers directly.
 

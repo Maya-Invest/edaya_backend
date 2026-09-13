@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isNovuSubscriberNotFoundError } from "../src/novu-subscriber-client";
+import { isNovuSubscriberNotFoundError } from "../src/errors";
 
 describe("isNovuSubscriberNotFoundError", () => {
   test("matches Novu subscriber delete 404 responses", () => {

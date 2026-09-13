@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, check, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const consortiums = pgTable('consortiums', {

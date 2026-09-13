@@ -1,10 +1,9 @@
-import type { AtomicExecutionPort } from '@edaya/core'
-import type { S2sAccessClass } from '@edaya/core'
+import type { AtomicExecutionPort, S2sAccessClass } from '@edaya/core'
 import type { PlatformActorMetadata } from '../model/actor'
+import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { randomUUID } from 'node:crypto'
 import { BusinessRuleViolationError, S2sClient } from '@edaya/core'
 import { PlatformPolicies } from '../access/platform-policies'
-import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import { encodeS2sApiKey, generateS2sApiKey } from '../s2s'
 
 export interface CreateS2sClientInput {
@@ -28,7 +27,8 @@ async function performCreateS2sClient(
   await new PlatformPolicies(actor, repositories.platformUsers).createClient()
   const repository = repositories.s2sClients
 
-  if (!await repositories.schools.findById(input.schoolId)) throw new BusinessRuleViolationError('SCHOOL_NOT_FOUND', 'School not found')
+  if (!await repositories.schools.findById(input.schoolId))
+    throw new BusinessRuleViolationError('SCHOOL_NOT_FOUND', 'School not found')
   const existing = await repository.findActiveBySchoolAndClientId(input.schoolId, input.clientId)
   if (existing) {
     throw new BusinessRuleViolationError(

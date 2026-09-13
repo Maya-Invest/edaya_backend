@@ -45,7 +45,7 @@ export function createInProcessAttendanceSeedPort(
         await service.baseService.entities.attendance.save(existing.copyWith({
           justificationStatus: AttendanceJustificationStatus.Pending,
           reason: existing.reason ?? fallbackReason,
-        }), { moduleChecked: true })
+        }))
       }),
   }
 }

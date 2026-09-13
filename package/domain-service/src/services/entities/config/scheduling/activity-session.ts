@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { ActivitySession } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, OccurrenceStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { classGroupLinkedTenant } from '../../entity-config/tenant';
+import type { ActivitySession } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, OccurrenceStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { classGroupLinkedTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/activity-session.ts (PR3)
 export const activitySessionConfig: EntityConfigFactory<ActivitySession> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.activitySessions,
     tenant: classGroupLinkedTenant('classGroupId'),
-    authorization: { resource: 'activitySessions', read: [Permission.QUERY_TIMETABLE_READ, Permission.TIMETABLE_UPDATE, Permission.TIMETABLE_CREATE, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.TIMETABLE_UPDATE] },
-    
+    resource: 'activitySessions',
+
     gates: {
       preSave: validateActivitySessionSave,
     },

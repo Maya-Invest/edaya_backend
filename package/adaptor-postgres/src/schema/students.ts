@@ -67,6 +67,14 @@ export const guardianStudentLinks = pgTable('guardian_student_links', {
   studentId: text('student_id').notNull(),
   relationship: text('relationship').notNull(),
   isPrimary: boolean('is_primary').notNull(),
+  isBillingContact: boolean('is_billing_contact').notNull().default(false),
+  legalGuardian: boolean('legal_guardian').notNull().default(false),
+  canPickup: boolean('can_pickup').notNull().default(false),
+  emergencyContactPriority: integer('emergency_contact_priority'),
+  receivesAcademicReports: boolean('receives_academic_reports').notNull().default(true),
+  receivesAttendanceAlerts: boolean('receives_attendance_alerts').notNull().default(true),
+  contactRestrictions: text('contact_restrictions'),
+  notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('guardian_student_links', table))
 
@@ -92,12 +100,14 @@ export const studentHealthProfiles = pgTable('student_health_profiles', {
   schoolId: text('school_id').notNull(),
   studentId: text('student_id').notNull(),
   bloodType: text('blood_type'),
-  allergies: jsonb('allergies').notNull(),
-  medicalConditions: jsonb('medical_conditions').notNull(),
+  allergies: jsonb('allergies'),
+  medicalConditions: jsonb('medical_conditions'),
   medications: text('medications'),
   clinicalNotes: text('clinical_notes'),
+  emergencyProtocols: text('emergency_protocols'),
   lastVisit: timestamp('last_visit', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('student_health_profiles', table))
 
 // 39. Student Disciplinary Action Table

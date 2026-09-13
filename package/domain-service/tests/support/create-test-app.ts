@@ -1,15 +1,9 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { AcademicPeriod, AcademicYear, AccountInvitation, AccountInvitationKind, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, BaseRepositoryInterface, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, Filter, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlatformUser, QueryOptions, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, S2sClient, Schedule, School, SchoolNotificationTemplates, ServiceApiKey, StaffAssignment, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
-import {
-  ActorAssuranceLevel,
-  createRepositoryAuthorizationPolicy,
-  createStaffActorMetadata,
-  DefaultAuthorizationRepository,
-} from '@edaya/authorization'
-import { AccountInvitationStatus, noOpNotificationGateway, StaffMember } from '@edaya/core'
-import { buildSchoolOverview, SchoolApplication } from '@edaya/service'
-import { effectiveGrantsForRoles } from './effective-grants'
+import type { FileStoragePort, Filter, NotificationGatewayPort, QueryOptions } from '@edaya/core'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { noOpNotificationGateway, School, StaffMember } from '@edaya/core'
+import { SchoolApplication } from '@edaya/service'
+import { acquireDatabase } from './database-pool'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'
 
@@ -42,6 +36,8 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
     },
   })
   const store = {
+    forAccess: (): never => { throw new Error('Authorization tests require the native repository fixture') },
+    assertAccess: async (): Promise<never> => { throw new Error('Authorization tests require the native repository fixture') },
     findById: async (id: string) => entries.get(id),
     findByIds: async (ids: readonly string[]) => ids.map(id => entries.get(id)).filter((entity): entity is T => entity !== undefined),
     findOne: async (options?: Filter<T>) => {
@@ -109,303 +105,70 @@ export function createStore<T extends EntityWithId>(participants: TransactionPar
   return store
 }
 
-function createAtomicExecution(participants: readonly TransactionParticipant[]) {
-  return {
-    execute: async <T>(operation: () => Promise<T>): Promise<T> => {
-      for (const participant of participants) {
-        participant.begin()
-      }
-      try {
-        const result = await operation()
-        for (const participant of participants) {
-          participant.commit()
-        }
-        return result
-      }
-      catch (error) {
-        for (const participant of participants) {
-          participant.rollback()
-        }
-        throw error
-      }
-    },
-  }
-}
+const failureResources = {
+  classSubjectMatterRepository: 'classSubjectMatters',
+  messageDeliveryRepository: 'messageDeliveries',
+  reportCardResultRepository: 'results',
+  lessonSessionRepository: 'lessonSessions',
+  activitySessionRepository: 'activitySessions',
+  studentClassEnrollmentRepository: 'enrollments',
+  studentFeeRepository: 'studentFees',
+} as const
+export type FailableRepository = keyof typeof failureResources
 
-export type FailableRepository
-  = | 'classSubjectMatterRepository'
-    | 'messageDeliveryRepository'
-    | 'reportCardResultRepository'
-    | 'lessonSessionRepository'
-    | 'activitySessionRepository'
-    | 'studentClassEnrollmentRepository'
-    | 'studentFeeRepository'
-
-export function createInMemoryTestApp(actor?: ActorMetadata) {
-  const transactionParticipants: TransactionParticipant[] = []
+/** Uses the production SQL compiler and transaction implementation; no test authorization evaluator. */
+export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort } = {}) {
+  const { repositories: nativeRepositories, atomic: atomicExecution } = await acquireDatabase()
   let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
   const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
     saveFailure = { repository, remainingAttempts: attempt }
   }
-  const saveWithFailure = async <T extends EntityWithId>(
-    repository: FailableRepository,
-    store: BaseRepositoryInterface<T>,
-    entity: T,
-  ): Promise<void> => {
-    if (saveFailure?.repository === repository) {
-      saveFailure.remainingAttempts -= 1
-      if (saveFailure.remainingAttempts === 0) {
-        saveFailure = undefined
-        throw new Error(`Simulated ${repository} save failure`)
-      }
-    }
-    await store.save(entity)
-  }
-
-  const schools = createStore<School>(transactionParticipants)
-  const academicYears = createStore<AcademicYear>(transactionParticipants)
-  const academicPeriods = createStore<AcademicPeriod>(transactionParticipants)
-  const periodDefinitions = createStore<PeriodDefinition>(transactionParticipants)
-  const gradeLevels = createStore<GradeLevel>(transactionParticipants)
-  const classGroups = createStore<ClassGroup>(transactionParticipants)
-  const students = createStore<Student>(transactionParticipants)
-  const enrollments = createStore<StudentClassEnrollment>(transactionParticipants)
-  const guardians = createStore<Guardian>(transactionParticipants)
-  const guardianLinks = createStore<GuardianStudentLink>(transactionParticipants)
-  const staffMembers = createStore<StaffMember>(transactionParticipants)
-  const staffAssignments = createStore<StaffAssignment>(transactionParticipants)
-  const teachers = createStore<Teacher>(transactionParticipants)
-  const teacherAssignments = createStore<TeacherAssignment>(transactionParticipants)
-  const teacherUnavailabilities = createStore<TeacherUnavailability>(transactionParticipants)
-  const serviceApiKeyStore = createStore<ServiceApiKey>(transactionParticipants)
-  const serviceApiKeys = {
-    ...serviceApiKeyStore,
-    findActiveByHash: async (keyHash: string, now: Date = new Date()) => {
-      const keys = await serviceApiKeyStore.list()
-      return keys.find(key => key.keyHash === keyHash && key.isActive(now))
-    },
-    countActiveElevatedServiceAccounts: async (schoolId: string) => {
-      const staff = await staffMembers.list({ schoolId, accountKind: 'service', serviceElevated: true, isActive: true })
-      return staff.length
-    },
-  }
-  const platformUserStore = createStore<PlatformUser>(transactionParticipants)
-  const platformUsers = {
-    ...platformUserStore,
-    findBySubjectId: async (subjectId: string) => {
-      const rows = await platformUserStore.list({ subjectId })
-      return rows[0]
-    },
-    findByEmail: async (email: string) => {
-      const rows = await platformUserStore.list({ email: email.trim().toLowerCase() })
-      return rows[0]
-    },
-  }
-  const s2sClientStore = createStore<S2sClient>(transactionParticipants)
-  const s2sClients = {
-    ...s2sClientStore,
-    findActiveByHash: async (keyHash: string, now: Date = new Date()) => {
-      const keys = await s2sClientStore.list()
-      return keys.find(key => key.keyHash === keyHash && key.isActive(now))
-    },
-    findActiveBySchoolAndClientId: async (schoolId: string, clientId: string, now: Date = new Date()) => {
-      const keys = await s2sClientStore.list({ schoolId, clientId })
-      return keys.find(key => key.isActive(now))
-    },
-  }
-  const accountInvitationStore = createStore<AccountInvitation>(transactionParticipants)
-  const schoolNotificationTemplates = createStore<SchoolNotificationTemplates>(transactionParticipants)
-  const accountInvitations = {
-    ...accountInvitationStore,
-    findByTokenHash: async (tokenHash: string) => {
-      const rows = await accountInvitationStore.list({ tokenHash })
-      return rows[0]
-    },
-    findPendingByTarget: async (schoolId: string, kind: AccountInvitationKind, targetId: string) => {
-      const rows = await accountInvitationStore.list({
-        schoolId,
-        kind,
-        targetId,
-        status: AccountInvitationStatus.Pending,
-      })
-      return rows[0]
-    },
-  }
-  const staffPermissionAssignments = createStore<StaffPermissionAssignment>(transactionParticipants)
-  const subjects = createStore<Subject>(transactionParticipants)
-  const subjectMatters = createStore<SubjectMatter>(transactionParticipants)
-  const gradeLevelSubjects = createStore<GradeLevelSubject>(transactionParticipants)
-  const gradeLevelSubjectMatters = createStore<GradeLevelSubjectMatter>(transactionParticipants)
-  const classSubjects = createStore<ClassSubject>(transactionParticipants)
-  const classSubjectMatters = createStore<ClassSubjectMatter>(transactionParticipants)
-  const classSubjectProgress = createStore<ClassSubjectProgress>(transactionParticipants)
-  const activities = createStore<Activity>(transactionParticipants)
-  const activityEnrollments = createStore<ActivityEnrollment>(transactionParticipants)
-  const classActivityEnrollments = createStore<ClassActivityEnrollment>(transactionParticipants)
-  const lessonSessions = createStore<LessonSession>(transactionParticipants)
-  const activitySessions = createStore<ActivitySession>(transactionParticipants)
-  const attendances = createStore<Attendance>(transactionParticipants)
-  const assessments = createStore<Assessment>(transactionParticipants)
-  const attendance = createStore<AttendanceRecord>(transactionParticipants)
-  const assessmentResults = createStore<AssessmentResult>(transactionParticipants)
-  const gradeScales = createStore<GradeScale>(transactionParticipants)
-  const definitions = createStore<ReportCardDefinition>(transactionParticipants)
-  const sections = createStore<ReportCardDefinitionSection>(transactionParticipants)
-  const results = createStore<ReportCardResult>(transactionParticipants)
-  const announcements = createStore<Announcement>(transactionParticipants)
-  const announcementTargets = createStore<AnnouncementTarget>(transactionParticipants)
-  const messageDeliveries = createStore<MessageDelivery>(transactionParticipants)
-  const fees = createStore<Fee>(transactionParticipants)
-  const studentFees = createStore<StudentFee>(transactionParticipants)
-  const payments = createStore<Payment>(transactionParticipants)
-  const schedules = createStore<Schedule>(transactionParticipants)
-  const calendarEvents = createStore<CalendarEvent>(transactionParticipants)
-
-  // Empty stores for unused entities to satisfy interfaces
-  const attachments = createStore<Attachment>(transactionParticipants)
-  const resources = createStore<Resource>(transactionParticipants)
-  const resourceAssignments = createStore<ResourceAssignment>(transactionParticipants)
-  const studentNotes = createStore<StudentNote>(transactionParticipants)
-  const studentHealthProfiles = createStore<StudentHealthProfile>(transactionParticipants)
-  const studentDisciplinaryActions = createStore<StudentDisciplinaryAction>(transactionParticipants)
-  const disciplinaryActions = createStore<DisciplinaryAction>(transactionParticipants)
-  const studentIncidentInvolvements = createStore<StudentIncidentInvolvement>(transactionParticipants)
-  const incidents = createStore<Incident>(transactionParticipants)
-
-  const schoolRepositories: SchoolRepositories = {
-    authorization: undefined as any,
-    // setup
-    schools: {
-      ...schools,
-      getOverdueFeeCount: async (schoolId: string) => {
-        const allStudents = await students.list({ schoolId })
-        const studentIds = new Set(allStudents.map(s => s.id))
-        const allFees = await studentFees.list()
-        return allFees.filter(f => studentIds.has(f.studentId) && f.status === 'overdue').length
+  function withSaveFailure<T extends object>(store: T, key: FailableRepository): T {
+    return new Proxy(store, {
+      get(target, property) {
+        const method = Reflect.get(target, property)
+        if (typeof method !== 'function')
+          return method
+        if (property === 'forAccess' || property === 'forSchool')
+          return (...args: unknown[]) => withSaveFailure(Reflect.apply(method, target, args), key)
+        return async (...args: unknown[]) => {
+          if (property === 'save' && saveFailure?.repository === key && --saveFailure.remainingAttempts === 0) {
+            saveFailure = undefined
+            throw new Error(`Simulated ${key} save failure`)
+          }
+          return Reflect.apply(method, target, args)
+        }
       },
-      getPublishedReportCardCount: async (schoolId: string) => {
-        const allStudents = await students.list({ schoolId })
-        const studentIds = new Set(allStudents.map(s => s.id))
-        const rcs = await results.list()
-        return rcs.filter(rc => studentIds.has(rc.studentId) && rc.status === 'published').length
-      },
-      getSchoolOverview: input => buildSchoolOverview(schoolRepositories, input),
-    },
-    academicYears,
-    academicPeriods,
-    periodDefinitions,
-    gradeLevels,
-    staffMembers,
-    staffAssignments,
-    teachers,
-    teacherAssignments,
-    teacherUnavailabilities,
-    serviceApiKeys,
-    platformUsers,
-    s2sClients,
-    accountInvitations,
-    cronJobSchedules: {
-      listDue: async () => [],
-      markDispatched: async () => {},
-    },
-    schoolNotificationTemplates,
-    staffPermissionAssignments,
-    attachments,
-    resources,
-    resourceAssignments,
-
-    // finances
-    fees,
-    studentFees: {
-      ...studentFees,
-      save: entity => saveWithFailure('studentFeeRepository', studentFees, entity),
-    },
-    payments,
-
-    // scheduling
-    schedules,
-    lessonSessions: {
-      ...lessonSessions,
-      save: entity => saveWithFailure('lessonSessionRepository', lessonSessions, entity),
-    },
-    activitySessions: {
-      ...activitySessions,
-      save: entity => saveWithFailure('activitySessionRepository', activitySessions, entity),
-    },
-    attendances: {
-      ...attendances,
-    },
-    attendance: {
-      ...attendance,
-    },
-    calendarEvents,
-
-    // academics
-    subjects,
-    subjectMatters,
-    gradeLevelSubjects,
-    gradeLevelSubjectMatters,
-    classGroups,
-    classSubjects,
-    classSubjectMatters: {
-      ...classSubjectMatters,
-      save: entity => saveWithFailure('classSubjectMatterRepository', classSubjectMatters, entity),
-    },
-    classSubjectProgress,
-    activities,
-    activityEnrollments,
-    classActivityEnrollments,
-
-    // assessments
-    assessments,
-    assessmentResults,
-    gradeScales,
-    definitions,
-    sections,
-    results: {
-      ...results,
-      save: entity => saveWithFailure('reportCardResultRepository', results, entity),
-    },
-
-    // students
-    students,
-    enrollments: {
-      ...enrollments,
-      save: entity => saveWithFailure('studentClassEnrollmentRepository', enrollments, entity),
-    },
-    guardians,
-    guardianLinks,
-    studentNotes,
-    studentHealthProfiles,
-    studentDisciplinaryActions,
-    disciplinaryActions,
-    studentIncidentInvolvements,
-    incidents,
-
-    // communications
-    announcements,
-    announcementTargets,
-    messageDeliveries: {
-      ...messageDeliveries,
-      save: entity => saveWithFailure('messageDeliveryRepository', messageDeliveries, entity),
-    },
-
+    })
   }
-
-  // @ts-expect-error - dynamic assignment of authorization repository
-  schoolRepositories.authorization = new DefaultAuthorizationRepository(schoolRepositories)
-
+  const schoolRepositories = new Proxy(nativeRepositories, {
+    get(target, property) {
+      const value = Reflect.get(target, property)
+      const failureKey = (Object.keys(failureResources) as FailableRepository[]).find(key => failureResources[key] === property)
+      return failureKey ? withSaveFailure(value, failureKey) : typeof value === 'function' ? value.bind(target) : value
+    },
+  })
+  const defaultActor = actor ?? createStaffActorMetadata({
+    subjectId: 'admin-user',
+    staffMemberId: 'admin',
+    schoolId: 'school',
+    requestId: 'service-test',
+    authenticatedAt: new Date(),
+    assuranceLevel: ActorAssuranceLevel.Strong,
+  })
+  if (defaultActor.kind === 'staff') {
+    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
+    await nativeRepositories.staffMembers.save(new StaffMember({ id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service' }) }))
+  }
+  const application = new SchoolApplication({
+    atomicExecution,
+    notificationGateway: options.notificationGateway ?? noOpNotificationGateway,
+    fileStorage: options.fileStorage ?? testFileStorage,
+    repositories: schoolRepositories,
+    accountInvitationsEnabled: false,
+  })
   const testRepositories = {
-    // Nested structure (implements SchoolRepositories)
-    // setup: schoolRepositories.setup,
-    // finance: schoolRepositories.finance,
-    // scheduling: schoolRepositories.scheduling,
-    // communications: schoolRepositories.communications,
-    // academics: schoolRepositories.academics,
-    // assessments: schoolRepositories.assessments,
-    // students: schoolRepositories.students,
 
-    // Flat structure (for backward compatibility in existing tests)
     schoolRepository: schoolRepositories.schools,
     schools: schoolRepositories.schools,
     students: schoolRepositories.students,
@@ -460,61 +223,12 @@ export function createInMemoryTestApp(actor?: ActorMetadata) {
     incidentRepository: schoolRepositories.incidents,
     schoolNotificationTemplates: schoolRepositories.schoolNotificationTemplates,
   }
-
-  const defaultActor = actor ?? createStaffActorMetadata({
-    subjectId: 'admin-user',
-    staffMemberId: 'admin',
-    schoolId: 'school',
-    effectiveGrants: effectiveGrantsForRoles(['admin']),
-    requestId: 'integration-test',
-    authenticatedAt: new Date('2026-09-01T00:00:00Z'),
-    assuranceLevel: ActorAssuranceLevel.Strong,
-  })
-
-  const application = new SchoolApplication({
-    atomicExecution: createAtomicExecution(transactionParticipants),
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: testFileStorage,
-    repositories: schoolRepositories,
-    authorizationPolicy: createRepositoryAuthorizationPolicy({
-      repositories: schoolRepositories,
-      staffAssignmentRepository: schoolRepositories.staffAssignments,
-      staffMemberRepository: schoolRepositories.staffMembers,
-      guardianRepository: schoolRepositories.guardians,
-      guardianStudentLinkRepository: schoolRepositories.guardianLinks,
-      studentRepository: schoolRepositories.students,
-    }),
-  })
-
-  if (defaultActor.kind === 'staff') {
-    void schoolRepositories.staffMembers.save(new StaffMember({
-      id: defaultActor.staffMemberId,
-      schoolId: defaultActor.schoolId,
-      firstName: 'Fixture',
-      lastName: 'Administrator',
-    }))
-  }
-
   return {
     app: application.forActor(defaultActor),
     repositories: testRepositories,
+    schoolRepositories,
     forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),
     failSaveOnAttempt,
+    atomicExecution,
   }
-}
-
-export interface IntegrationTestAdapter {
-  createApp: (actor?: ActorMetadata) => ReturnType<typeof createInMemoryTestApp>
-}
-
-let activeAdapter: IntegrationTestAdapter = {
-  createApp: actor => createInMemoryTestApp(actor),
-}
-
-export function setIntegrationTestAdapter(adapter: IntegrationTestAdapter) {
-  activeAdapter = adapter
-}
-
-export function createTestApp(actor?: ActorMetadata): ReturnType<typeof createInMemoryTestApp> {
-  return activeAdapter.createApp(actor)
 }

@@ -1,4 +1,3 @@
-import type { S2sClient } from '@edaya/core'
 import {
   ActorAssuranceLevel,
   createPlatformActorMetadata,
@@ -8,88 +7,59 @@ import {
   rotateS2sClientKey,
   S2S_API_KEY_PREFIX,
 } from '@edaya/authorization'
-import { ALL_PLATFORM_PERMISSIONS } from '@edaya/core'
-import { describe, expect, mock, test } from 'bun:test'
+import { ALL_PLATFORM_PERMISSIONS, PlatformUser } from '@edaya/core'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
 
-const now = new Date('2026-09-01T00:00:00Z')
-
-function platformActor() {
-  return createPlatformActorMetadata({
-    subjectId: 'subject-op',
-    actorId: 'platform-op',
-    requestId: 'test',
-    authenticatedAt: now,
-    assuranceLevel: ActorAssuranceLevel.Verified,
-    permissions: ALL_PLATFORM_PERMISSIONS,
-    email: 'op@edaya.test',
-  })
-}
-
-function createS2sRepository() {
-  const clients: S2sClient[] = []
-  return {
-    clients,
-    repository: {
-      findById: mock(async (id: string) => clients.find(client => client.id === id)),
-      findActiveByHash: mock(async (keyHash: string, at = new Date()) =>
-        clients.find(client => client.keyHash === keyHash && client.isActive(at))),
-      findActiveBySchoolAndClientId: mock(async (schoolId: string, clientId: string, at = new Date()) =>
-        clients.find(client => client.schoolId === schoolId && client.clientId === clientId && client.isActive(at))),
-      list: mock(async (filter?: { schoolId?: string }) =>
-        filter?.schoolId ? clients.filter(client => client.schoolId === filter.schoolId) : clients),
-      save: mock(async (client: S2sClient) => {
-        const index = clients.findIndex(entry => entry.id === client.id)
-        if (index >= 0) {
-          clients[index] = client
-        }
-        else {
-          clients.push(client)
-        }
-        return client
-      }),
-    },
-  }
-}
+let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+const actor = createPlatformActorMetadata({ subjectId: 'subject-op', actorId: 'platform-op', requestId: 'test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified, email: 'op@edaya.test' })
+beforeEach(async () => {
+  fixture = await createAuthorizationDatabase()
+  await fixture.repositories.platformUsers.save(new PlatformUser({ id: actor.actorId, subjectId: actor.subjectId, email: actor.email, permissions: [...ALL_PLATFORM_PERMISSIONS], isActive: true, createdBySubjectId: 'bootstrap' }))
+})
+afterEach(async () => {
+  await fixture.db.close()
+})
 
 describe('s2s client provision', () => {
   test('mints, lists, rotates, and revokes a per-school key', async () => {
-    const { repository } = createS2sRepository()
-    const created = await createS2sClient(repository as never, platformActor(), {
-      schoolId: 'school-1',
+    const { repositories: repository, atomic } = fixture
+    const created = await createS2sClient(repository, actor, {
+      schoolId: 'school-a',
       clientId: 'children-ai',
       accessClass: 'read',
-    })
+    }, atomic)
 
     expect(created.apiKey.startsWith(S2S_API_KEY_PREFIX)).toBe(true)
-    expect(created.client.schoolId).toBe('school-1')
+    expect(created.client.schoolId).toBe('school-a')
     expect(created.client.accessClass).toBe('read')
 
-    const listed = await listS2sClients(repository as never, platformActor(), 'school-1')
+    const listed = await listS2sClients(repository, actor, 'school-a')
     expect(listed).toHaveLength(1)
 
-    const rotated = await rotateS2sClientKey(repository as never, platformActor(), created.client.id)
+    const rotated = await rotateS2sClientKey(repository, actor, created.client.id, undefined, atomic)
     expect(rotated.apiKey).not.toBe(created.apiKey)
     expect(rotated.client.keyHash).not.toBe(created.client.keyHash)
 
-    const revoked = await revokeS2sClient(repository as never, platformActor(), created.client.id)
+    const revoked = await revokeS2sClient(repository, actor, created.client.id, atomic)
     expect(revoked.isActive()).toBe(false)
-    await expect(rotateS2sClientKey(repository as never, platformActor(), created.client.id))
+    await expect(rotateS2sClientKey(repository, actor, created.client.id, undefined, atomic))
       .rejects
       .toMatchObject({ code: 'S2S_CLIENT_NOT_FOUND' })
   })
 
   test('rejects a second active client with the same school and clientId', async () => {
-    const { repository } = createS2sRepository()
-    await createS2sClient(repository as never, platformActor(), {
-      schoolId: 'school-1',
+    const { repositories: repository, atomic } = fixture
+    await createS2sClient(repository, actor, {
+      schoolId: 'school-a',
       clientId: 'children-ai',
       accessClass: 'write',
       apiKey: `${S2S_API_KEY_PREFIX}fixed-s2s-key-16xx`,
-    })
-    await expect(createS2sClient(repository as never, platformActor(), {
-      schoolId: 'school-1',
+    }, atomic)
+    await expect(createS2sClient(repository, actor, {
+      schoolId: 'school-a',
       clientId: 'children-ai',
       accessClass: 'read',
-    })).rejects.toMatchObject({ code: 'S2S_CLIENT_ID_CONFLICT' })
+    }, atomic)).rejects.toMatchObject({ code: 'S2S_CLIENT_ID_CONFLICT' })
   })
 })

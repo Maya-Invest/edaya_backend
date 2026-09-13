@@ -1,43 +1,17 @@
 import type { SchoolNotificationTemplates } from '@edaya/core'
-import { createRepositoryAuthorizationPolicy } from '@edaya/authorization'
-import { noOpNotificationGateway } from '@edaya/core'
-import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { buildDefaultNotificationTemplateDocument } from '../../../src/capabilities/notifications/templates/defaults/manifest'
 import { mergeSchoolNotificationTemplateDocument } from '../../../src/capabilities/notifications/templates/merge-school-notification-templates'
 import { seedSchoolNotificationTemplates } from '../../../src/capabilities/notifications/templates/seed-school-notification-templates'
-import { createStore } from '../../support/create-test-app'
-import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
-import { testFileStorage } from '../../support/test-file-storage'
+import { createTestApp } from '../../support/create-test-app'
 
 describe('NotificationTemplatesServiceWorkflow', () => {
   test('updateSchoolNotificationTemplates patches one template key', async () => {
-    const store = createStore<SchoolNotificationTemplates>([])
-    const repositories = {
-      schoolNotificationTemplates: store,
-    } as any
-
-    await seedSchoolNotificationTemplates(repositories, 'sch1')
-
-    const actor = createElevatedTestStaffActor('sch1', 'admin')
-    const service = new SchoolService({
-      actor,
-      repositories,
-      authorizationPolicy: createRepositoryAuthorizationPolicy({
-        repositories,
-        staffAssignmentRepository: { findById: async () => undefined, list: async () => [] },
-        staffMemberRepository: { findById: async () => undefined, list: async () => [] },
-        guardianRepository: { findById: async () => undefined, list: async () => [] },
-        guardianStudentLinkRepository: { list: async () => [] },
-        studentRepository: { findById: async () => undefined, list: async () => [] },
-      } as any),
-      atomicExecution: { execute: operation => operation() },
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const { app: service, schoolRepositories: repositories } = await createTestApp()
+    await seedSchoolNotificationTemplates(repositories, 'school')
 
     const updated = await service.commands.updateSchoolNotificationTemplates({
-      schoolId: 'sch1',
+      schoolId: 'school',
       templates: {
         'incident.recorded': {
           in_app: {
@@ -53,31 +27,11 @@ describe('NotificationTemplatesServiceWorkflow', () => {
   })
 
   test('resetSchoolNotificationTemplates restores one key from defaults', async () => {
-    const store = createStore<SchoolNotificationTemplates>([])
-    const repositories = {
-      schoolNotificationTemplates: store,
-    } as any
-
-    await seedSchoolNotificationTemplates(repositories, 'sch1')
-    const actor = createElevatedTestStaffActor('sch1', 'admin')
-    const service = new SchoolService({
-      actor,
-      repositories,
-      authorizationPolicy: createRepositoryAuthorizationPolicy({
-        repositories,
-        staffAssignmentRepository: { findById: async () => undefined, list: async () => [] },
-        staffMemberRepository: { findById: async () => undefined, list: async () => [] },
-        guardianRepository: { findById: async () => undefined, list: async () => [] },
-        guardianStudentLinkRepository: { list: async () => [] },
-        studentRepository: { findById: async () => undefined, list: async () => [] },
-      } as any),
-      atomicExecution: { execute: operation => operation() },
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
+    const { app: service, schoolRepositories: repositories } = await createTestApp()
+    await seedSchoolNotificationTemplates(repositories, 'school')
 
     await service.commands.updateSchoolNotificationTemplates({
-      schoolId: 'sch1',
+      schoolId: 'school',
       templates: {
         'incident.recorded': {
           in_app: {
@@ -90,7 +44,7 @@ describe('NotificationTemplatesServiceWorkflow', () => {
 
     const defaults = await buildDefaultNotificationTemplateDocument()
     const reset = await service.commands.resetSchoolNotificationTemplates({
-      schoolId: 'sch1',
+      schoolId: 'school',
       templateKey: 'incident.recorded',
     }) as SchoolNotificationTemplates
 

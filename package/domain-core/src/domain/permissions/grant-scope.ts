@@ -1,5 +1,5 @@
+import type { Permission } from './permission'
 import { z } from 'zod'
-import { Permission } from './permission'
 import { permissionScope } from './permission-scopes'
 
 const identifier = z.string().trim().min(1)

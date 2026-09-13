@@ -71,7 +71,7 @@ describe('scanActivityReminders', () => {
 
     const result = await scanActivityReminders(context)
 
-    expect(result).toEqual({ processed: 0, skipped: 3 })
+    expect(result).toEqual({ processed: 0, skipped: 2 })
     expect(gateway.enqueued).toHaveLength(0)
   })
 })

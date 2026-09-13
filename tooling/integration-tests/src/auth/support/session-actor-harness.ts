@@ -1,4 +1,4 @@
-import type { ActorMetadata, EffectiveGrants, GuardianScope, StudentScope, TeacherActorScope } from '@edaya/authorization'
+import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MiddlewareHandler } from 'hono'
 import { randomUUID } from 'node:crypto'
@@ -16,7 +16,6 @@ import {
   parseBearerApiKey,
   parseBearerS2sKey,
   parseInteractiveActorKind,
-  resolveActorScope,
   resolveInteractiveActorIdentity,
   subjectHasSchoolInteractiveIdentity,
 } from '@edaya/authorization'
@@ -56,26 +55,22 @@ type ActorIdentity
     kind: 'staff'
     schoolId: string
     staffMemberId: string
-    effectiveGrants: EffectiveGrants
     accountKind?: 'human' | 'service'
   }
   | {
     kind: 'guardian'
     schoolId: string
     guardianId: string
-    guardianScope: GuardianScope
   }
   | {
     kind: 'student'
     schoolId: string
     studentId: string
-    studentScope: StudentScope
   }
   | {
     kind: 'teacher'
     schoolId: string
     teacherId: string
-    teacherScope: TeacherActorScope
   }
 
 function bootstrapEmailsFromEnv(env: { PLATFORM_BOOTSTRAP_EMAILS?: string } | undefined): string[] {
@@ -88,7 +83,6 @@ function bootstrapEmailsFromEnv(env: { PLATFORM_BOOTSTRAP_EMAILS?: string } | un
 async function resolveActorIdentity(
   repos: SchoolRepositories,
   subjectId: string,
-  academicYearId: string | undefined,
   resolution: {
     actorKind?: ReturnType<typeof parseInteractiveActorKind>
     schoolId?: string
@@ -107,35 +101,18 @@ async function resolveActorIdentity(
   }
 
   if (resolved.kind === 'staff') {
-    const effectiveGrants = await repos.authorization.resolveActorGrants({
-      actorId: resolved.actorId,
-      actorType: resolved.kind,
-      schoolId: resolved.schoolId,
-      ...(academicYearId ? { academicYearId } : {}),
-    })
-
     return {
       kind: 'staff',
       schoolId: resolved.schoolId,
       staffMemberId: resolved.actorId,
-      effectiveGrants,
     }
   }
-
-  const scope = await resolveActorScope({
-    actorKind: resolved.kind,
-    actorId: resolved.actorId,
-    schoolId: resolved.schoolId,
-    repositories: repos,
-    ...(academicYearId ? { academicYearId } : {}),
-  })
 
   if (resolved.kind === 'guardian') {
     return {
       kind: 'guardian',
       schoolId: resolved.schoolId,
       guardianId: resolved.actorId,
-      guardianScope: scope as GuardianScope,
     }
   }
 
@@ -144,7 +121,6 @@ async function resolveActorIdentity(
       kind: 'student',
       schoolId: resolved.schoolId,
       studentId: resolved.actorId,
-      studentScope: scope as StudentScope,
     }
   }
 
@@ -152,7 +128,6 @@ async function resolveActorIdentity(
     kind: 'teacher',
     schoolId: resolved.schoolId,
     teacherId: resolved.actorId,
-    teacherScope: scope as TeacherActorScope,
   }
 }
 
@@ -221,7 +196,6 @@ async function resolvePlatformActor(
     return createPlatformActorMetadata({
       ...context,
       actorId: existing.id,
-      permissions: existing.permissions,
       email: existing.email,
     })
   }
@@ -242,7 +216,6 @@ async function resolvePlatformActor(
   return createPlatformActorMetadata({
     ...context,
     actorId: bootstrapped.id,
-    permissions: bootstrapped.permissions,
     email: bootstrapped.email,
   })
 }
@@ -273,6 +246,7 @@ export function createSessionActorMiddleware(
       const interactiveContext = {
         subjectId: session.user.id,
         requestId,
+        ...(academicYearId ? { academicYearId } : {}),
         ...(session.session.id ? { sessionId: session.session.id } : {}),
         authenticatedAt: session.session.createdAt,
         assuranceLevel: session.session.assuranceLevel,
@@ -288,7 +262,6 @@ export function createSessionActorMiddleware(
       const identity = await resolveActorIdentity(
         repos,
         session.user.id,
-        academicYearId,
         {
           actorKind,
           schoolId: c.req.header('x-school-id')?.trim() || undefined,
@@ -303,7 +276,6 @@ export function createSessionActorMiddleware(
               ...interactiveContext,
               schoolId: identity.schoolId,
               staffMemberId: identity.staffMemberId,
-              effectiveGrants: identity.effectiveGrants,
             }))
             break
           case 'guardian':
@@ -311,7 +283,6 @@ export function createSessionActorMiddleware(
               ...interactiveContext,
               schoolId: identity.schoolId,
               guardianId: identity.guardianId,
-              guardianScope: identity.guardianScope,
             }))
             break
           case 'student':
@@ -319,7 +290,6 @@ export function createSessionActorMiddleware(
               ...interactiveContext,
               schoolId: identity.schoolId,
               studentId: identity.studentId,
-              studentScope: identity.studentScope,
             }))
             break
           case 'teacher':
@@ -327,7 +297,6 @@ export function createSessionActorMiddleware(
               ...interactiveContext,
               schoolId: identity.schoolId,
               teacherId: identity.teacherId,
-              teacherScope: identity.teacherScope,
             }))
             break
         }
@@ -354,7 +323,6 @@ export function createSessionActorMiddleware(
             schoolId: keyRecord.schoolId,
             requestId,
             clientId: keyRecord.clientId,
-            accessClass: keyRecord.accessClass,
           })
         : null)
       await next()
@@ -372,19 +340,13 @@ export function createSessionActorMiddleware(
         return
       }
 
-      const effectiveGrants = await repos.authorization.resolveActorGrants({
-        actorId: staffMember.id,
-        actorType: 'staff',
-        schoolId: staffMember.schoolId,
-        ...(academicYearId ? { academicYearId } : {}),
-      })
       c.set('actor', createServiceStaffActorMetadata({
         subjectId: `service:${staffMember.id}`,
         schoolId: staffMember.schoolId,
         requestId,
         authenticatedAt: new Date(),
         staffMemberId: staffMember.id,
-        effectiveGrants,
+        ...(academicYearId ? { academicYearId } : {}),
       }))
       await next()
       return

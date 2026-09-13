@@ -1,21 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { GuardianStudentLink } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { config } from '../../entity-config';
+import type { GuardianStudentLink } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { config } from '../../entity-config'
 
-import { directSchoolTenant } from '../../entity-config/tenant';
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/guardian-student-link.ts (PR3)
 export const guardianStudentLinkConfig: EntityConfigFactory<GuardianStudentLink> = ({ repositories, atomicExecution }) => {
-  
-
   return config({
     repository: repositories.guardianLinks,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'guardianLinks', read: [Permission.QUERY_GUARDIAN_STUDENTS_ADMIN_READ], write: [Permission.PARENT_UPDATE] },
-    
+    resource: 'guardianLinks',
+
     gates: {
       preSave: validateGuardianStudentLinkSave,
     },
@@ -35,6 +32,10 @@ export async function validateGuardianStudentLinkSave(
   if (!guardian || !student || guardian.schoolId !== link.schoolId || student.schoolId !== link.schoolId) {
     denyResourceAccess()
   }
+  const enrollments = await repositories.enrollments.list({ studentId: link.studentId })
+  const groups = await repositories.classGroups.findByIds(enrollments.map(enrollment => enrollment.classGroupId))
+  if (!groups.some(group => group.schoolId === link.schoolId))
+    denyResourceAccess()
   if (existing && (existing.guardianId !== link.guardianId || existing.studentId !== link.studentId)) {
     denyResourceAccess()
   }

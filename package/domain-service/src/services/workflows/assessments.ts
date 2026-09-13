@@ -1,14 +1,13 @@
-import { Permission } from '@edaya/core';
-import type { Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, GradeScale, GradeScaleInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, StudentClassEnrollment } from '@edaya/core';
-import type { BaseSchoolService } from '../base-school-service';
-import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { denyResourceAccess } from '@edaya/authorization';
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core';
-import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications';
+import type { Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, GradeScale, GradeScaleInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, StudentClassEnrollment } from '@edaya/core'
+import type { BaseSchoolService } from '../base-school-service'
+import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { denyResourceAccess } from '@edaya/authorization'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
+import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 
-import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog';
-import { BaseServiceWorkflow } from './base-service-workflow';
-import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, evaluateAggregationPublishReadiness, listAssessmentResultsForStudentAndPeriods, listPublishedPeriodIds, loadPriorReportCardResults, rootReportCardDefinitionSections } from './report-card-aggregation';
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import { BaseServiceWorkflow } from './base-service-workflow'
+import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, evaluateAggregationPublishReadiness, listAssessmentResultsForStudentAndPeriods, listPublishedPeriodIds, loadPriorReportCardResults, rootReportCardDefinitionSections } from './report-card-aggregation'
 
 export interface PublishReportCardResultInput {
   id: string
@@ -59,51 +58,65 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createGradeScale(input: CreateGradeScaleInput): Promise<GradeScale> {
-    const gradeScale = new GradeScaleEntity(input)
-    await this.baseService.entities.gradeScales.save(gradeScale)
-    return gradeScale
+    return this.baseService.atomicExecution.execute(async () => {
+      const gradeScale = new GradeScaleEntity(input)
+      await this.baseService.entities.gradeScales.save(gradeScale)
+      return gradeScale
+    })
   }
 
   async createReportCardDefinition(input: CreateReportCardDefinitionInput): Promise<ReportCardDefinition> {
-    const definition = new ReportCardDefinition(input)
-    await this.baseService.entities.definitions.save(definition)
-    return definition
+    return this.baseService.atomicExecution.execute(async () => {
+      const definition = new ReportCardDefinition(input)
+      await this.baseService.entities.definitions.save(definition)
+      return definition
+    })
   }
 
   async createReportCardDefinitionSection(input: CreateReportCardDefinitionSectionInput): Promise<ReportCardDefinitionSection> {
-    const section = new ReportCardDefinitionSectionEntity(input)
-    await this.baseService.entities.sections.save(section)
-    return section
+    return this.baseService.atomicExecution.execute(async () => {
+      const section = new ReportCardDefinitionSectionEntity(input)
+      await this.baseService.entities.sections.save(section)
+      return section
+    })
   }
 
   async createAssessment(input: CreateAssessmentInput): Promise<Assessment> {
-    const assessment = new AssessmentEntity(input)
-    await this.baseService.entities.assessments.save(assessment)
-    return assessment
+    return this.baseService.atomicExecution.execute(async () => {
+      const assessment = new AssessmentEntity(input)
+      await this.baseService.entities.assessments.save(assessment)
+      return assessment
+    })
   }
 
   async completeAssessment({ assessmentId, completedAt }: CompleteAssessmentInput): Promise<Assessment> {
-    const existing = await this.requireEntity(this.baseService.entities.assessments, assessmentId)
-    const assessment = new AssessmentEntity({ ...existing.data, completedAt: completedAt ?? new Date() })
-    await this.baseService.entities.assessments.save(assessment)
-    return assessment
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.assessments, assessmentId)
+      const assessment = new AssessmentEntity({ ...existing.data, completedAt: completedAt ?? new Date() })
+      await this.baseService.entities.assessments.save(assessment)
+      return assessment
+    })
   }
 
   async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
-    const result = new AssessmentResultEntity(input)
-    await this.baseService.entities.assessmentResults.save(result)
-    const student = await this.requireStudent(result.studentId)
-    const assessment = await this.requireEntity(this.baseService.entities.assessments, result.assessmentId)
-    await runWorkflowNotifications(this.baseService, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, {
-      result,
-      assessment,
-      student,
+    return this.baseService.atomicExecution.execute(async () => {
+      const result = new AssessmentResultEntity(input)
+      await this.baseService.entities.assessmentResults.save(result)
+      const student = await this.requireStudent(result.studentId)
+      const assessment = await this.requireEntity(this.baseService.entities.assessments, result.assessmentId)
+      await runWorkflowNotifications(this.baseService, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, {
+        result,
+        assessment,
+        student,
+      })
+      return result
     })
-    return result
   }
 
   async recordAssessmentResultCompliance(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
-    return this.recordAssessmentResult(input)
+    return this.baseService.atomicExecution.execute(async () => {
+      return this.recordAssessmentResult(input)
+    })
   }
 
   async listClassSubjectAssessmentResultsForPeriod({
@@ -121,73 +134,77 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async generateReportCardResult(input: GenerateReportCardResultInput): Promise<ReportCardResult> {
-    const student = await this.requireStudent(input.studentId)
-    this.checkActorSchool(student.schoolId)
-    
-    await this.baseService.access.assertResources(Permission.REPORT_CARD_GENERATE, 'students', [student.id], 'write')
-    await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
-    await this.requireReportCardNotPublished(input.studentId, input.periodId)
-    const reportCard = await this.buildReportCardResult(input)
-    await this.baseService.entities.results.save(reportCard)
-    return reportCard
+    return this.baseService.atomicExecution.execute(async () => {
+      const student = await this.requireStudent(input.studentId)
+      this.checkActorSchool(student.schoolId)
+
+      await this.baseService.access.reportCards.assertGenerate(student.id)
+      await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+      await this.requireReportCardNotPublished(input.studentId, input.periodId)
+      const reportCard = await this.buildReportCardResult(input)
+      await this.baseService.entities.results.save(reportCard)
+      return reportCard
+    })
   }
 
   async writeHomeroomReportComment(input: WriteHomeroomReportCommentInput): Promise<ReportCardResult> {
-    const existing = await this.requireEntity(this.baseService.entities.results, input.id)
-    const student = await this.requireStudent(existing.studentId)
-    this.checkActorSchool(student.schoolId)
-    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'students', [student.id], 'write')
-    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [existing.id], 'write')
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.results, input.id)
+      const student = await this.requireStudent(existing.studentId)
+      this.checkActorSchool(student.schoolId)
+      await this.baseService.access.reportCards.assertHomeroomComment({ studentId: student.id, resultId: existing.id })
 
-    const updated = new ReportCardResult({
-      id: existing.id,
-      reportCardDefinitionId: existing.reportCardDefinitionId,
-      studentId: existing.studentId,
-      classGroupId: existing.classGroupId,
-      periodId: existing.periodId,
-      sectionResults: [...(existing.sectionResults ?? [])],
-      attendanceSummary: existing.attendanceSummary,
-      assessmentResultCount: existing.assessmentResultCount,
-      overallAverage: existing.overallAverage,
-      rank: existing.rank,
-      classSize: existing.classSize,
-      passThreshold: existing.passThreshold,
-      teacherComment: input.teacherComment.trim(),
-      principalComment: existing.principalComment,
-      status: existing.status,
-      generatedAt: existing.generatedAt,
-      publishedAt: existing.publishedAt,
-      aggregation: existing.aggregation,
+      const updated = new ReportCardResult({
+        id: existing.id,
+        reportCardDefinitionId: existing.reportCardDefinitionId,
+        studentId: existing.studentId,
+        classGroupId: existing.classGroupId,
+        periodId: existing.periodId,
+        sectionResults: [...(existing.sectionResults ?? [])],
+        attendanceSummary: existing.attendanceSummary,
+        assessmentResultCount: existing.assessmentResultCount,
+        overallAverage: existing.overallAverage,
+        rank: existing.rank,
+        classSize: existing.classSize,
+        passThreshold: existing.passThreshold,
+        teacherComment: input.teacherComment.trim(),
+        principalComment: existing.principalComment,
+        status: existing.status,
+        generatedAt: existing.generatedAt,
+        publishedAt: existing.publishedAt,
+        aggregation: existing.aggregation,
+      })
+      await this.baseService.entities.results.save(updated)
+      return updated
     })
-    await this.baseService.entities.results.save(updated)
-    return updated
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
-    const student = await this.requireStudent(input.studentId)
-    this.checkActorSchool(student.schoolId)
-    
-    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'students', [student.id], 'write')
-    await this.baseService.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [input.id], 'write')
-    await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
     return this.baseService.atomicExecution.execute(async () => {
-      await this.requireReportCardNotPublished(input.studentId, input.periodId)
-      const generated = await this.buildReportCardResult(input)
-      await this.requireReportCardPublishReady({
-        studentId: input.studentId,
-        periodId: input.periodId,
-        aggregation: generated.aggregation,
+      const student = await this.requireStudent(input.studentId)
+      this.checkActorSchool(student.schoolId)
+
+      await this.baseService.access.reportCards.assertPublish(student.id)
+      await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+      return this.baseService.atomicExecution.execute(async () => {
+        await this.requireReportCardNotPublished(input.studentId, input.periodId)
+        const generated = await this.buildReportCardResult(input)
+        await this.requireReportCardPublishReady({
+          studentId: input.studentId,
+          periodId: input.periodId,
+          aggregation: generated.aggregation,
+        })
+        const published = generated.copyWith({
+          status: ReportCardResultStatus.Published,
+          publishedAt: input.publishedAt ?? new Date(),
+        })
+        await this.baseService.entities.results.save(published)
+        await runWorkflowNotifications(this.baseService, REPORT_CARD_PUBLISHED_EVENT_KEY, {
+          result: published,
+          student,
+        })
+        return published
       })
-      const published = generated.copyWith({
-        status: ReportCardResultStatus.Published,
-        publishedAt: input.publishedAt ?? new Date(),
-      })
-      await this.baseService.entities.results.save(published)
-      await runWorkflowNotifications(this.baseService, REPORT_CARD_PUBLISHED_EVENT_KEY, {
-        result: published,
-        student,
-      })
-      return published
     })
   }
 

@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { CalendarEvent } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, CalendarEventScopeKind } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { CalendarEvent } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, CalendarEventScopeKind } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/scheduling/calendar-event.ts (PR3)
 export const calendarEventConfig: EntityConfigFactory<CalendarEvent> = ({ repositories, atomicExecution }) => ({
   ...config({
     repository: repositories.calendarEvents,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'calendarEvents', read: [Permission.QUERY_CALENDAR_READ], write: [Permission.TIMETABLE_UPDATE] },
-    
+    resource: 'calendarEvents',
+
     atomicExecution,
   }),
   gates: {

@@ -5,6 +5,7 @@ export interface EmailSendInput {
   html: string;
   text?: string;
   idempotencyKey: string;
+  correlation?: { deliveryId: string; subjectId: string; schoolId: string };
 }
 
 export interface EmailTransportPort {

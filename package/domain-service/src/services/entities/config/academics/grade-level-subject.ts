@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { GradeLevelSubject } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import type { GradeLevelSubject } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/academics/grade-level-subject.ts (PR3)
 export const gradeLevelSubjectConfig: EntityConfigFactory<GradeLevelSubject> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.gradeLevelSubjects,
     tenant: gradeLevelSubjectTenant(),
-    authorization: { resource: 'gradeLevelSubjects', read: [Permission.QUERY_CLASS_CURRICULUM_READ], write: [Permission.ACADEMIC_PROGRAM_UPDATE] },
-    
+    resource: 'gradeLevelSubjects',
+
     gates: {
       preSave: validateGradeLevelSubjectSave,
       preDelete: validateGradeLevelSubjectDelete,

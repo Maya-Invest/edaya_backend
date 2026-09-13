@@ -4,8 +4,8 @@ import type {
   UpdateWorkflowDto,
   WorkflowResponseDto,
 } from "@novu/api/models/components";
-import { ResourceOriginEnum } from "@novu/api/models/components";
 import type { BootstrapWorkflowDefinition, BootstrapWorkflowStep } from "./types";
+import { ResourceOriginEnum } from "@novu/api/models/components";
 import {
   normalizeRemoteWorkflowFingerprint,
   normalizeWorkflowFingerprint,
@@ -19,25 +19,16 @@ export interface ApplyWorkflowsResult {
 
 function defaultWorkflowPreferences(): PreferencesRequestDto {
   return {
+    user: null,
     workflow: {
-      all: { enabled: true, readOnly: false },
+      all: { enabled: true, readOnly: true },
       channels: {
-        in_app: { enabled: true },
+        in_app: { enabled: false },
         email: { enabled: true },
         sms: { enabled: false },
-        push: { enabled: true },
+        push: { enabled: false },
         chat: { enabled: false },
       },
-    },
-  };
-}
-
-function mapExistingPreferences(preferences: WorkflowResponseDto["preferences"]): PreferencesRequestDto {
-  return {
-    user: preferences.user ?? null,
-    workflow: {
-      all: preferences.default.all,
-      channels: preferences.default.channels,
     },
   };
 }
@@ -126,7 +117,11 @@ export async function applyBootstrapWorkflows(
       })),
     });
 
-    if (remoteFingerprint === desiredFingerprint) {
+    const defaults = existing.preferences.default;
+    const { email } = defaults.channels;
+    const correctPreferences = !existing.preferences.user && defaults.all.enabled && defaults.all.readOnly
+      && email?.enabled && Object.entries(defaults.channels).every(([channel, preference]) => channel === "email" || !preference.enabled);
+    if (remoteFingerprint === desiredFingerprint && existing.active && correctPreferences) {
       result.unchanged.push(definition.workflowId);
       continue;
     }
@@ -136,9 +131,9 @@ export async function applyBootstrapWorkflows(
         name: definition.name,
         description: definition.description,
         tags: definition.tags,
-        active: existing.active,
+        active: true,
         steps: mergeStepsForUpdate(definition.steps, existing.steps),
-        preferences: mapExistingPreferences(existing.preferences),
+        preferences: defaultWorkflowPreferences(),
         origin: existing.origin ?? ResourceOriginEnum.NovuCloud,
       };
       await novu.workflows.update(updatePayload, existing.workflowId);

@@ -1,592 +1,265 @@
-import {
-  ActorAssuranceLevel,
-  AuthorizationError,
-  createGuardianActorMetadata,
-  createStaffActorMetadata,
-  createSystemActorMetadata,
-} from '@edaya/authorization'
-import { AnnouncementStatus, BusinessRuleViolationError, MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus, noOpNotificationGateway, RecordingNotificationGateway, AnnouncementTargetKind as TargetKind } from '@edaya/core'
+import type { SchoolScopedActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { Announcement, AnnouncementStatus, AnnouncementTarget, BusinessRuleViolationError, MessageDelivery, Permission, MessageDeliveryRecipientKind as Recipient, RecordingNotificationGateway, StaffPermissionAssignment, MessageDeliveryStatus as Status, AnnouncementTargetKind as Target } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
-import {
-  describe,
-  expect,
-  mock,
-  test,
-} from 'bun:test'
-import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY } from '../../../src/capabilities/notifications'
-import { portalScopeForGuardian } from '../../support/effective-grants'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, cancelNotificationDeliveries, deliverNotification } from '../../../src/capabilities/notifications'
 import { testFileStorage } from '../../support/test-file-storage'
-import {
-  actor,
-  createCommunicationsContext,
-} from './workflow-test-context'
 
-const deliveryContent = {
-  schoolId: 'sch1',
-  title: 'Announcement',
-  body: 'Content',
-}
+const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'communications-workflow', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
+const staff = createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
+const guardian = createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' })
+const student = createStudentActorMetadata({ ...identity, studentId: 'student-a' })
+const teacher = createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' })
 
-describe('SchoolService communications workflows', () => {
-  test('publishAnnouncement publishes only announcements with targets through managed service', async () => {
-    const { mockRepos, service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-    })
-
-    const result = await service.communicationsWorkflow.publishAnnouncement({
-      announcementId: 'ann1',
-      publishedAt: new Date('2026-05-02T00:00:00Z'),
-    })
-
-    expect(result.status).toBe(AnnouncementStatus.Published)
-    expect(result.publishedAt?.toISOString()).toBe('2026-05-02T00:00:00.000Z')
-    expect(mockRepos.announcements.save).toHaveBeenCalledWith(result)
+describe('communications workflows with production policies and transactions', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  let gateway: RecordingNotificationGateway
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+    await seedAuthorizationRelationships(fixture.db)
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'; UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\';')
+    gateway = new RecordingNotificationGateway()
+  })
+  afterEach(async () => {
+    await fixture.db.close()
   })
 
-  test('publishAnnouncement rejects announcements without targets', async () => {
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-      targets: [],
-    })
+  function service(actor: SchoolScopedActorMetadata = staff) {
+    return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage, accountInvitationsEnabled: false })
+  }
+  async function announcement(kind: Target = Target.School, targetId?: string, extra = {}) {
+    const record = new Announcement({ id: 'announcement', schoolId: 'school-a', title: 'News', content: 'School news', status: AnnouncementStatus.Draft, ...extra })
+    await fixture.repositories.announcements.save(record)
+    await fixture.repositories.announcementTargets.save(new AnnouncementTarget({ id: 'target', announcementId: record.id, targetKind: kind, targetId }))
+    return record
+  }
+  async function delivery(kind: Recipient = Recipient.Guardian, extra = {}) {
+    const record = new MessageDelivery({ id: `delivery-${kind}`, schoolId: 'school-a', subjectId: 'person-a', title: 'News', body: 'Private', recipientKind: kind, recipientId: `${kind}-a`, ...extra })
+    await fixture.repositories.messageDeliveries.save(record)
+    return record
+  }
 
-    await expect(service.communicationsWorkflow.publishAnnouncement({
-      announcementId: 'ann1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('publishing materializes a separate delivery for every selected profile, then reuses each on retry', async () => {
+    await announcement()
+    const workflow = service().communicationsWorkflow
+    const published = await workflow.publishAnnouncement({ announcementId: 'announcement' })
+    expect(published.isPublished).toBe(true)
+    const first = await fixture.repositories.messageDeliveries.list({ $orderBy: [{ field: 'recipientKind', direction: 'asc' }] })
+    expect(first.map(row => row.recipientKind)).toEqual([Recipient.Guardian, Recipient.Staff, Recipient.Student, Recipient.Teacher])
+    expect(new Set(first.map(row => row.id)).size).toBe(4)
+    expect(gateway.enqueued.map(message => message.idempotencyKey).sort()).toEqual(first.map(row => row.id).sort())
+    expect(gateway.enqueued[0]?.eventKey).toBe(ANNOUNCEMENT_PUBLISHED_EVENT_KEY)
+    await expect(workflow.materializeDeliveries({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
+    const retried = await service(createSystemActorMetadata({ schoolId: 'school-a', systemId: 'fixture-seed', requestId: 'retry', reason: 'Retry fixture deliveries' })).communicationsWorkflow.materializeDeliveries({ announcementId: 'announcement' })
+    expect(retried.map(row => row.id).sort()).toEqual(first.map(row => row.id).sort())
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(4)
   })
 
-  test('publishAnnouncement allows same-day expiresAt when publishing a draft', async () => {
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-      expiresAt: new Date('2026-05-02'),
-    })
-
-    const result = await service.communicationsWorkflow.publishAnnouncement({
-      announcementId: 'ann1',
-      publishedAt: new Date('2026-05-02T12:00:00Z'),
-    })
-
-    expect(result.status).toBe(AnnouncementStatus.Published)
-    expect(result.expiresAt?.toISOString().slice(0, 10)).toBe('2026-05-02')
+  test.each([
+    [Target.School, undefined, [Recipient.Guardian, Recipient.Staff, Recipient.Student, Recipient.Teacher]],
+    [Target.AllStaff, undefined, [Recipient.Staff]],
+    [Target.AllGuardians, undefined, [Recipient.Guardian]],
+    [Target.AllStudents, undefined, [Recipient.Student]],
+    [Target.StaffMember, 'staff-a', [Recipient.Staff]],
+    [Target.Guardian, 'guardian-a', [Recipient.Guardian]],
+    [Target.Student, 'student-a', [Recipient.Student]],
+    [Target.ClassGroup, 'class-a', [Recipient.Guardian, Recipient.Student, Recipient.Teacher]],
+    [Target.GradeLevel, 'level-a', [Recipient.Guardian, Recipient.Student, Recipient.Teacher]],
+  ] as const)('%s dispatch and portal visibility use the same audience', async (kind, targetId, expected) => {
+    await announcement(kind, targetId)
+    await service().communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })
+    expect((await fixture.repositories.messageDeliveries.list({ $orderBy: [{ field: 'recipientKind', direction: 'asc' }] })).map(row => row.recipientKind)).toEqual([...expected])
   })
 
-  test('publishAnnouncement can defer notification dispatch', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-      notificationGateway: gateway,
+  test('system notifications keep shared-login profile delivery identities distinct on retries', async () => {
+    const recipients = [{ kind: Recipient.Staff, id: 'staff-a', subjectId: 'person-a' }, { kind: Recipient.Guardian, id: 'guardian-a', subjectId: 'person-a' }]
+    const input = { schoolId: 'school-a', kind: 'event' as const, eventKey: 'test.notice', idempotencyKeyPrefix: 'notice', title: 'Notice', body: 'Content', recipients }
+    const deps = { repositories: fixture.repositories, notificationGateway: gateway }
+    await fixture.atomic.execute(() => deliverNotification(deps, input))
+    await fixture.atomic.execute(() => deliverNotification(deps, input))
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(2)
+    expect(new Set(gateway.enqueued.map(message => message.idempotencyKey)).size).toBe(2)
+    await expect(fixture.atomic.execute(() => deliverNotification(deps, { ...input, schoolId: 'school-b' }))).rejects.toBeInstanceOf(AuthorizationError)
+    expect(gateway.enqueued).toHaveLength(2)
+    await fixture.db.exec('UPDATE guardians SET has_access = false WHERE id = \'guardian-a\'')
+    await fixture.atomic.execute(() => deliverNotification(deps, { ...input, idempotencyKeyPrefix: 'after-revocation' }))
+    expect(gateway.enqueued).toHaveLength(3)
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(3)
+  })
+
+  test('retries and cancellation preserve persisted provider IDs, including revoked recipients', async () => {
+    const original = await delivery(Recipient.Guardian, {
+      id: 'delivery:test.notice:source:person-a',
+      eventKey: 'test.notice',
+      sourceKey: 'test.notice:source',
     })
+    const deps = { repositories: fixture.repositories, notificationGateway: gateway }
+    await fixture.atomic.execute(() => deliverNotification(deps, {
+      schoolId: 'school-a',
+      kind: 'event',
+      eventKey: 'test.notice',
+      idempotencyKeyPrefix: 'test.notice:source',
+      title: 'News',
+      body: 'Private',
+      recipients: [{ kind: Recipient.Guardian, id: 'guardian-a' }],
+    }))
+    expect(gateway.enqueued.map(row => row.idempotencyKey)).toEqual([original.id])
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(1)
+    await delivery(Recipient.Staff, { id: 'foreign-source', schoolId: 'school-b', recipientId: 'staff-b', subjectId: 'person-b', sourceKey: original.sourceKey, eventKey: original.eventKey })
+    await fixture.db.exec('UPDATE guardians SET has_access = false, subject_id = NULL WHERE id = \'guardian-a\'; DELETE FROM student_class_enrollments WHERE id = \'enrollment-a\'')
+    await cancelNotificationDeliveries(deps, 'school-a', original.sourceKey!)
+    expect(gateway.cancelled).toEqual([original.id])
+  })
 
-    const result = await service.communicationsWorkflow.publishAnnouncement({
-      announcementId: 'ann1',
-      publishedAt: new Date('2026-05-02T00:00:00Z'),
-    }, { deferNotifications: true })
+  test('announcement retry reuses the source/profile delivery and retains its provider history', async () => {
+    await announcement(Target.Guardian, 'guardian-a', { status: AnnouncementStatus.Published, publishedAt: new Date() })
+    const original = await delivery(Recipient.Guardian, { id: 'older-provider-id', announcementId: 'announcement', sourceKey: 'announcement', status: Status.Sent, sentAt: new Date('2026-01-01'), providerMessageId: 'provider-original' })
+    const workflow = service().communicationsWorkflow
+    await workflow.dispatchPublishedAnnouncementNotifications('announcement')
+    expect(gateway.enqueued.map(row => row.idempotencyKey)).toEqual([original.id])
+    expect((await fixture.repositories.messageDeliveries.findById(original.id))?.data).toEqual(original.data)
+    await service(guardian).communicationsWorkflow.markDeliveryRead({ deliveryId: original.id })
+    expect((await fixture.repositories.messageDeliveries.findById(original.id))?.sourceKey).toBe('announcement')
+  })
 
-    expect(result.status).toBe(AnnouncementStatus.Published)
+  test('deferred dispatch reloads current publication and actor authority', async () => {
+    const workflow = service().communicationsWorkflow
+    await announcement()
+    await workflow.publishAnnouncement({ announcementId: 'announcement' }, { deferNotifications: true })
+    await fixture.db.exec('UPDATE announcements SET status = \'draft\', published_at = NULL WHERE id = \'announcement\'')
+    await expect(workflow.dispatchPublishedAnnouncementNotifications('announcement')).rejects.toBeInstanceOf(BusinessRuleViolationError)
     expect(gateway.enqueued).toHaveLength(0)
-
-    await service.communicationsWorkflow.dispatchPublishedAnnouncementNotifications('ann1')
-
-    expect(gateway.enqueued.length).toBeGreaterThanOrEqual(2)
+    await fixture.db.exec('UPDATE announcements SET status = \'published\', published_at = now() WHERE id = \'announcement\'; UPDATE staff_members SET is_active = false WHERE id = \'staff-a\'')
+    await expect(workflow.dispatchPublishedAnnouncementNotifications('announcement')).rejects.toBeInstanceOf(AuthorizationError)
+    expect(gateway.enqueued).toHaveLength(0)
   })
 
-  test('publishAnnouncement enqueues one notification per materialized delivery', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-      notificationGateway: gateway,
-    })
-
-    await service.communicationsWorkflow.publishAnnouncement({
-      announcementId: 'ann1',
-      publishedAt: new Date('2026-05-02T00:00:00Z'),
-    })
-
-    expect(gateway.enqueued.length).toBeGreaterThanOrEqual(2)
-    expect(gateway.enqueued[0]).toMatchObject({
-      schoolId: 'sch1',
-      kind: 'ad_hoc',
-      eventKey: ANNOUNCEMENT_PUBLISHED_EVENT_KEY,
-      announcementId: 'ann1',
-    })
-    expect(gateway.enqueued.map(entry => entry.idempotencyKey)).toEqual(
-      expect.arrayContaining([
-        'delivery:ann1:subject:staff1',
-        'delivery:ann1:subject:stu1',
-      ]),
-    )
+  test('delivery writes cannot change their source or login even for the owner', async () => {
+    const original = await delivery(Recipient.Guardian, { sourceKey: 'test.notice:source', eventKey: 'test.notice' })
+    const entity = service().baseService.entities.messageDeliveries
+    for (const changes of [{ sourceKey: 'another-source' }, { eventKey: 'another-event' }, { subjectId: 'another-login' }]) {
+      await expect(entity.save(new MessageDelivery({ ...original.data, ...changes }))).rejects.toBeInstanceOf(AuthorizationError)
+    }
+    expect((await fixture.repositories.messageDeliveries.findById(original.id))?.data).toEqual(original.data)
   })
 
-  test('recordDelivery persists eligible recipients through managed service', async () => {
-    const { mockRepos, service } = createCommunicationsContext()
-
-    const result = await service.communicationsWorkflow.recordDelivery({
-      id: 'del1',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:stu1',
-      recipientKind: MessageDeliveryRecipientKind.Student,
-      recipientId: 'stu1',
-      status: MessageDeliveryStatus.Sent,
-      sentAt: new Date('2026-05-02T00:00:00Z'),
-    })
-
-    expect(result.id).toBe('del1')
-    expect(result.status).toBe(MessageDeliveryStatus.Sent)
-    expect(mockRepos.messageDeliveries.save).toHaveBeenCalledWith(result)
+  test('deferred dispatch preserves publication and sends only when explicitly dispatched', async () => {
+    await announcement()
+    const workflow = service().communicationsWorkflow
+    await workflow.publishAnnouncement({ announcementId: 'announcement' }, { deferNotifications: true })
+    expect(gateway.enqueued).toHaveLength(0)
+    await workflow.dispatchPublishedAnnouncementNotifications('announcement')
+    expect(gateway.enqueued).toHaveLength(4)
   })
 
-  test('recordDelivery rejects recipients outside announcement targets', async () => {
-    const { service } = createCommunicationsContext({
-      targets: [{ id: 'target-staff', announcementId: 'ann1', targetKind: TargetKind.StaffMember, targetId: 'staff1' }],
-    })
-
-    await expect(service.communicationsWorkflow.recordDelivery({
-      id: 'del1',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:stu1',
-      recipientKind: MessageDeliveryRecipientKind.Student,
-      recipientId: 'stu1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('unpublished, expired and targetless announcements cannot create deliveries', async () => {
+    await announcement()
+    const workflow = service().communicationsWorkflow
+    await expect(service(createSystemActorMetadata({ schoolId: 'school-a', systemId: 'fixture-seed', requestId: 'retry', reason: 'Verify publication invariant' })).communicationsWorkflow.materializeDeliveries({ announcementId: 'announcement' })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await expect(workflow.dispatchPublishedAnnouncementNotifications('announcement')).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await fixture.repositories.announcementTargets.delete('target')
+    await expect(workflow.publishAnnouncement({ announcementId: 'announcement' })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await announcement(Target.School, undefined, { expiresAt: new Date('2000-01-01') })
+    await workflow.publishAnnouncement({ announcementId: 'announcement', publishedAt: new Date('2000-01-01') })
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(0)
   })
 
-  test('recordDelivery rejects unpublished announcements and cross-school recipients', async () => {
-    const unpublishedContext = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-    })
-
-    await expect(unpublishedContext.service.communicationsWorkflow.recordDelivery({
-      id: 'del-unpublished',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:stu1',
-      recipientKind: MessageDeliveryRecipientKind.Student,
-      recipientId: 'stu1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    const crossSchoolContext = createCommunicationsContext()
-    ;(crossSchoolContext.mockRepos as any).students.findById = mock(async () => ({ id: 'stu1', schoolId: 'other-school' }))
-
-    await expect(crossSchoolContext.service.communicationsWorkflow.recordDelivery({
-      id: 'del-cross-school',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:stu1',
-      recipientKind: MessageDeliveryRecipientKind.Student,
-      recipientId: 'stu1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test('class-scoped sending checks every target and rolls back unauthorized publication', async () => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'send-class', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.COMMUNICATION_SEND, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await announcement(Target.ClassGroup, 'class-a')
+    const workflow = service().communicationsWorkflow
+    await fixture.repositories.announcementTargets.save(new AnnouncementTarget({ id: 'other-target', announcementId: 'announcement', targetKind: Target.ClassGroup, targetId: 'class-other' }))
+    await expect(workflow.publishAnnouncement({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
+    expect((await fixture.repositories.announcements.findById('announcement'))?.status).toBe(AnnouncementStatus.Draft)
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(0)
+    await fixture.repositories.announcementTargets.delete('other-target')
+    await workflow.publishAnnouncement({ announcementId: 'announcement' })
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(3)
+    await fixture.repositories.staffPermissionAssignments.delete('send-class')
+    await expect(workflow.materializeDeliveries({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(workflow.dispatchPublishedAnnouncementNotifications('announcement')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('recordDelivery matches guardians through class-group announcement targets', async () => {
-    const { service } = createCommunicationsContext({
-      targets: [{ id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' }],
-    })
-
-    const result = await service.communicationsWorkflow.recordDelivery({
-      id: 'del-guardian-class',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:gua1',
-      recipientKind: MessageDeliveryRecipientKind.Guardian,
-      recipientId: 'gua1',
-    })
-
-    expect(result.recipientKind).toBe(MessageDeliveryRecipientKind.Guardian)
-    expect(result.recipientId).toBe('gua1')
+  test('communication update authority cannot send, and send authority cannot edit message content', async () => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'update', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.COMMUNICATION_UPDATE, scopes: [{ kind: 'school' }] }))
+    const before = await announcement(Target.ClassGroup, 'class-a')
+    await expect(service().communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.staffPermissionAssignments.delete('update')
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'send', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.COMMUNICATION_SEND, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await expect(service().baseService.entities.announcements.save(new Announcement({ ...before.data, title: 'Changed', status: AnnouncementStatus.Published, publishedAt: new Date() }))).rejects.toBeInstanceOf(AuthorizationError)
+    expect((await fixture.repositories.announcements.findById('announcement'))?.title).toBe('News')
   })
 
-  test('materializeDeliveries expands targets, reuses existing deliveries, and saves missing deliveries', async () => {
-    const existing = new MessageDelivery({
-      id: 'existing-delivery',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:gua1',
-      recipientKind: MessageDeliveryRecipientKind.Guardian,
-      recipientId: 'gua1',
-    })
-    const { mockAtomic, mockRepos, service } = createCommunicationsContext({ existingDelivery: existing })
-
-    const result = await service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-      createdAt: new Date('2026-05-02T00:00:00Z'),
-    })
-
-    expect(result.map(delivery => delivery.id)).toEqual([
-      'existing-delivery',
-      'delivery:ann1:subject:staff1',
-      'delivery:ann1:subject:stu1',
-    ])
-    expect(mockAtomic.execute).toHaveBeenCalled()
-    expect(mockRepos.messageDeliveries.save).toHaveBeenCalledTimes(2)
-    expect(mockRepos.messageDeliveries.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'delivery:ann1:subject:staff1',
-    }))
-    expect(mockRepos.messageDeliveries.save).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'delivery:ann1:subject:stu1',
-    }))
+  test('owner publication rejects foreign targets and rolls back the existing draft', async () => {
+    await announcement(Target.ClassGroup, 'class-b')
+    await expect(service().communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
+    expect((await fixture.repositories.announcements.findById('announcement'))?.status).toBe(AnnouncementStatus.Draft)
+    expect(gateway.enqueued).toHaveLength(0)
   })
 
-  test('materializeDeliveries rejects unpublished announcements', async () => {
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-    })
-
-    await expect(service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('recording a delivery verifies the selected recipient, login, tenant and published audience', async () => {
+    await announcement(Target.Guardian, 'guardian-a', { status: AnnouncementStatus.Published, publishedAt: new Date() })
+    const input = { id: 'recorded', schoolId: 'school-a', title: 'News', body: 'Private', announcementId: 'announcement', subjectId: 'person-a', recipientKind: Recipient.Guardian, recipientId: 'guardian-a' }
+    await expect(service().communicationsWorkflow.recordDelivery(input)).rejects.toBeInstanceOf(AuthorizationError)
+    const workflow = service(createSystemActorMetadata({ schoolId: 'school-a', systemId: 'fixture-seed', requestId: 'record', reason: 'Import delivery history' })).communicationsWorkflow
+    await workflow.recordDelivery(input)
+    expect((await fixture.repositories.messageDeliveries.findById('recorded'))?.recipientId).toBe('guardian-a')
+    await expect(workflow.recordDelivery({ ...input, id: 'wrong-profile', recipientKind: Recipient.Student, recipientId: 'student-a' })).rejects.toThrow()
+    await expect(workflow.recordDelivery({ ...input, id: 'wrong-login', subjectId: 'another-login' })).rejects.toThrow()
+    await expect(workflow.recordDelivery({ ...input, id: 'foreign', recipientKind: Recipient.Student, recipientId: 'student-b' })).rejects.toThrow()
+    expect(await fixture.repositories.messageDeliveries.count()).toBe(1)
   })
 
-  test('materializeDeliveries expands every target kind and de-duplicates recipients', async () => {
-    const { mockRepos, service } = createCommunicationsContext({
-      targets: [
-        { id: 'target-school', announcementId: 'ann1', targetKind: TargetKind.School },
-        { id: 'target-staff-all', announcementId: 'ann1', targetKind: TargetKind.AllStaff },
-        { id: 'target-guardian-all', announcementId: 'ann1', targetKind: TargetKind.AllGuardians },
-        { id: 'target-student-all', announcementId: 'ann1', targetKind: TargetKind.AllStudents },
-        { id: 'target-staff', announcementId: 'ann1', targetKind: TargetKind.StaffMember, targetId: 'staff1' },
-        { id: 'target-guardian', announcementId: 'ann1', targetKind: TargetKind.Guardian, targetId: 'gua1' },
-        { id: 'target-student', announcementId: 'ann1', targetKind: TargetKind.Student, targetId: 'stu1' },
-        { id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' },
-        { id: 'target-grade', announcementId: 'ann1', targetKind: TargetKind.GradeLevel, targetId: 'grade1' },
-      ],
-    })
-
-    const result = await service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-      createdAt: new Date('2026-05-03T00:00:00Z'),
-    })
-
-    expect(result.map(delivery => `${delivery.recipientKind}:${delivery.recipientId}`)).toEqual([
-      'guardian:gua1',
-      'staff:staff1',
-      'student:stu1',
-    ])
-    expect(mockRepos.messageDeliveries.save).toHaveBeenCalledTimes(3)
+  test.each([staff, guardian, student, teacher])('$kind can mark only their selected profile delivery read', async (actor) => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    for (const kind of Object.values(Recipient)) await delivery(kind)
+    const workflow = service(actor).communicationsWorkflow
+    await workflow.markDeliveryRead({ deliveryId: `delivery-${actor.kind}` })
+    for (const kind of Object.values(Recipient).filter(kind => kind !== actor.kind))
+      await expect(workflow.markDeliveryRead({ deliveryId: `delivery-${kind}` })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await fixture.repositories.messageDeliveries.count({ status: Status.Read })).toBe(1)
+    await fixture.db.exec(`UPDATE message_deliveries SET subject_id = 'previous-login' WHERE id = 'delivery-${actor.kind}'`)
+    await expect(workflow.markDeliveryRead({ deliveryId: `delivery-${actor.kind}` })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('materializeDeliveries rejects cross-school targets and linked recipients', async () => {
-    const crossSchoolTarget = createCommunicationsContext({
-      targets: [{ id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' }],
-    })
-    ;(crossSchoolTarget.mockRepos as any).classGroups.findById = mock(async () => ({ id: 'cg1', schoolId: 'other-school', gradeLevelId: 'grade1' }))
-
-    await expect(crossSchoolTarget.service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
-
-    const crossSchoolLinkedGuardian = createCommunicationsContext({
-      targets: [{ id: 'target-class', announcementId: 'ann1', targetKind: TargetKind.ClassGroup, targetId: 'cg1' }],
-    })
-    ;(crossSchoolLinkedGuardian.mockRepos as any).guardians.findById = mock(async () => ({ id: 'gua1', schoolId: 'other-school' }))
-
-    await expect(crossSchoolLinkedGuardian.service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test('webhook authority is explicit even for no-op delivery transitions', async () => {
+    const existing = await delivery()
+    const webhook = createSystemActorMetadata({ systemId: 'notification-delivery-webhook', schoolId: 'school-a', requestId: 'event', reason: 'Delivery event' })
+    const workflow = service(webhook).communicationsWorkflow
+    await expect(workflow.applyDeliveryEvent({ deliveryId: 'missing', status: Status.Sent })).resolves.toBeUndefined()
+    const sent = await workflow.applyDeliveryEvent({ deliveryId: existing.id, status: Status.Sent, occurredAt: new Date('2026-05-01') })
+    expect(sent?.status).toBe(Status.Sent)
+    const read = await workflow.applyDeliveryEvent({ deliveryId: existing.id, status: Status.Read, occurredAt: new Date('2026-05-02') })
+    expect(read?.readAt?.toISOString()).toBe('2026-05-02T00:00:00.000Z')
+    await expect(service({ ...webhook, systemId: 'unknown-job' }).communicationsWorkflow.applyDeliveryEvent({ deliveryId: existing.id, status: Status.Read })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service({ ...webhook, schoolId: 'school-b' }).communicationsWorkflow.applyDeliveryEvent({ deliveryId: existing.id, status: Status.Read })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(workflow.markDeliveryRead({ deliveryId: existing.id })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('applyDeliveryEvent transitions pending deliveries to sent', async () => {
-    const { service } = createCommunicationsContext({
-      existingDelivery: new MessageDelivery({
-        id: 'delivery:ann1:subject:stu1',
-        ...deliveryContent,
-        announcementId: 'ann1',
-        subjectId: 'subject:stu1',
-        recipientKind: MessageDeliveryRecipientKind.Student,
-        recipientId: 'stu1',
-      }),
-    })
-
-    const result = await service.communicationsWorkflow.applyDeliveryEvent({
-      deliveryId: 'delivery:ann1:subject:stu1',
-      status: MessageDeliveryStatus.Sent,
-      providerMessageId: 'novu-msg-1',
-      occurredAt: new Date('2026-05-02T12:00:00Z'),
-    })
-
-    expect(result?.status).toBe(MessageDeliveryStatus.Sent)
-    expect(result?.providerMessageId).toBe('novu-msg-1')
+  test.each([staff, guardian])('$kind can update personal notification contacts without staff-management permissions or student links', async (actor) => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    await fixture.repositories.guardianLinks.delete('guardian-link')
+    const before = actor.kind === 'staff' ? (await fixture.repositories.staffMembers.findById(actor.actorId))! : (await fixture.repositories.guardians.findById(actor.actorId))!
+    const updated = await service(actor).communicationsWorkflow.updateNotificationContact({ notificationEmail: ' alerts@example.test ', notificationPhone: ' +22501020304 ' })
+    expect(updated.notificationEmail).toBe('alerts@example.test')
+    expect(updated.notificationPhone).toBe('+22501020304')
+    const { notificationEmail: _email, notificationPhone: _phone, ...rest } = updated.data
+    const { notificationEmail: _oldEmail, notificationPhone: _oldPhone, ...original } = before.data
+    expect(rest).toEqual(original)
   })
 
-  test('applyDeliveryEvent allows system actor without communication create permission', async () => {
-    const existingDelivery = new MessageDelivery({
-      id: 'delivery:ann1:subject:stu1',
-      ...deliveryContent,
-      announcementId: 'ann1',
-      subjectId: 'subject:stu1',
-      recipientKind: MessageDeliveryRecipientKind.Student,
-      recipientId: 'stu1',
-    })
-    const { mockAtomic, mockPolicy, mockRepos, savedDeliveries } = createCommunicationsContext({ existingDelivery })
-    const systemService = new SchoolService({
-      repositories: mockRepos,
-      authorizationPolicy: mockPolicy,
-      actor: createSystemActorMetadata({
-        systemId: 'notification-delivery-webhook',
-        schoolId: 'sch1',
-        requestId: 'req-delivery-webhook-1',
-        reason: 'test webhook',
-      }),
-      atomicExecution: mockAtomic,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
-
-    const result = await systemService.communicationsWorkflow.applyDeliveryEvent({
-      deliveryId: 'delivery:ann1:subject:stu1',
-      status: MessageDeliveryStatus.Sent,
-      occurredAt: new Date('2026-05-02T12:00:00Z'),
-    })
-
-    expect(result?.status).toBe(MessageDeliveryStatus.Sent)
-    expect(savedDeliveries.get('delivery:ann1:subject:stu1')?.status).toBe(MessageDeliveryStatus.Sent)
-  })
-
-  test('createAnnouncement and addTarget persist draft content and audience', async () => {
-    const { mockRepos, service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-    })
-
-    const announcement = await service.communicationsWorkflow.createAnnouncement({
-      id: 'ann-draft',
-      schoolId: 'sch1',
-      title: 'Draft notice',
-      content: 'Draft body',
-      createdBy: 'user1',
-      status: AnnouncementStatus.Draft,
-    })
-    const target = await service.communicationsWorkflow.addTarget({
-      id: 'target-draft',
-      announcementId: 'ann-draft',
-      targetKind: TargetKind.AllStudents,
-    })
-
-    expect(announcement.status).toBe(AnnouncementStatus.Draft)
-    expect(target.targetKind).toBe(TargetKind.AllStudents)
-    expect(mockRepos.announcements.save).toHaveBeenCalledWith(announcement)
-    expect(mockRepos.announcementTargets.save).toHaveBeenCalledWith(target)
-  })
-
-  test('recordDelivery without announcementId records ad-hoc deliveries', async () => {
-    const { service } = createCommunicationsContext()
-
-    const result = await service.communicationsWorkflow.recordDelivery({
-      id: 'del-adhoc',
-      schoolId: 'sch1',
-      title: 'Manual notice',
-      body: 'Manual body',
-      subjectId: 'subject:staff1',
-      recipientKind: MessageDeliveryRecipientKind.Staff,
-      recipientId: 'staff1',
-      status: MessageDeliveryStatus.Sent,
-      sentAt: new Date('2026-05-02T00:00:00Z'),
-    })
-
-    expect(result.eventKey).toBeUndefined()
-    expect(result.announcementId).toBeUndefined()
-  })
-
-  test('applyDeliveryEvent returns undefined for unknown deliveries and ignores invalid transitions', async () => {
-    const { savedDeliveries, service } = createCommunicationsContext({
-      existingDelivery: new MessageDelivery({
-        id: 'delivery:ann1:subject:stu1',
-        ...deliveryContent,
-        announcementId: 'ann1',
-        subjectId: 'subject:stu1',
-        recipientKind: MessageDeliveryRecipientKind.Student,
-        recipientId: 'stu1',
-        status: MessageDeliveryStatus.Sent,
-        sentAt: new Date('2026-05-02T00:00:00Z'),
-      }),
-    })
-
-    await expect(service.communicationsWorkflow.applyDeliveryEvent({
-      deliveryId: 'missing-delivery',
-      status: MessageDeliveryStatus.Read,
-    })).resolves.toBeUndefined()
-
-    const unchanged = await service.communicationsWorkflow.applyDeliveryEvent({
-      deliveryId: 'delivery:ann1:subject:stu1',
-      status: MessageDeliveryStatus.Sent,
-    })
-
-    expect(unchanged?.status).toBe(MessageDeliveryStatus.Sent)
-    expect(savedDeliveries.get('delivery:ann1:subject:stu1')?.status).toBe(MessageDeliveryStatus.Sent)
-  })
-
-  test('applyDeliveryEvent marks sent deliveries as read', async () => {
-    const { service } = createCommunicationsContext({
-      existingDelivery: new MessageDelivery({
-        id: 'delivery:ann1:subject:stu1',
-        ...deliveryContent,
-        announcementId: 'ann1',
-        subjectId: 'subject:stu1',
-        recipientKind: MessageDeliveryRecipientKind.Student,
-        recipientId: 'stu1',
-        status: MessageDeliveryStatus.Sent,
-        sentAt: new Date('2026-05-02T00:00:00Z'),
-      }),
-    })
-
-    const result = await service.communicationsWorkflow.applyDeliveryEvent({
-      deliveryId: 'delivery:ann1:subject:stu1',
-      status: MessageDeliveryStatus.Read,
-      occurredAt: new Date('2026-05-03T00:00:00Z'),
-    })
-
-    expect(result?.status).toBe(MessageDeliveryStatus.Read)
-    expect(result?.readAt?.toISOString()).toBe('2026-05-03T00:00:00.000Z')
-  })
-
-  test('markDeliveryRead allows the recipient actor to mark their delivery read', async () => {
-    const guardianActor = createGuardianActorMetadata({
-      guardianId: 'gua1',
-      subjectId: 'subject:gua1',
-      schoolId: 'sch1',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Strong,
-      guardianScope: portalScopeForGuardian(['stu1'], ['cg1']),
-    })
-    const { service } = createCommunicationsContext({
-      actorOverride: guardianActor,
-      existingDelivery: new MessageDelivery({
-        id: 'delivery:ann1:subject:gua1',
-        ...deliveryContent,
-        announcementId: 'ann1',
-        subjectId: 'subject:gua1',
-        recipientKind: MessageDeliveryRecipientKind.Guardian,
-        recipientId: 'gua1',
-        status: MessageDeliveryStatus.Sent,
-        sentAt: new Date('2026-05-02T00:00:00Z'),
-      }),
-    })
-
-    const result = await service.communicationsWorkflow.markDeliveryRead({
-      deliveryId: 'delivery:ann1:subject:gua1',
-      readAt: new Date('2026-05-03T00:00:00Z'),
-    })
-
-    expect(result.status).toBe(MessageDeliveryStatus.Read)
-  })
-
-  test('markDeliveryRead rejects actors that do not own the delivery subject', async () => {
-    const { service } = createCommunicationsContext({
-      existingDelivery: new MessageDelivery({
-        id: 'delivery:ann1:subject:gua1',
-        ...deliveryContent,
-        announcementId: 'ann1',
-        subjectId: 'subject:gua1',
-        recipientKind: MessageDeliveryRecipientKind.Guardian,
-        recipientId: 'gua1',
-        status: MessageDeliveryStatus.Sent,
-        sentAt: new Date('2026-05-02T00:00:00Z'),
-      }),
-    })
-
-    await expect(service.communicationsWorkflow.markDeliveryRead({
-      deliveryId: 'delivery:ann1:subject:gua1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('updateNotificationContact updates staff notification channels', async () => {
-    const staffActor = createStaffActorMetadata({
-      subjectId: 'subject:staff1',
-      staffMemberId: 'staff1',
-      schoolId: 'sch1',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Strong,
-      effectiveGrants: actor.effectiveGrants,
-    })
-    const gateway = new RecordingNotificationGateway()
-    const { service } = createCommunicationsContext({
-      actorOverride: staffActor,
-      notificationGateway: gateway,
-    })
-
-    const result = await service.communicationsWorkflow.updateNotificationContact({
-      notificationEmail: ' alerts@school.test ',
-      notificationPhone: ' +22501020304 ',
-    })
-
-    expect(result.notificationEmail).toBe('alerts@school.test')
-    expect(result.notificationPhone).toBe('+22501020304')
-    expect(gateway.upserted.length).toBeGreaterThan(0)
-  })
-
-  test('updateNotificationContact updates guardian notification channels', async () => {
-    const guardianActor = createGuardianActorMetadata({
-      guardianId: 'gua1',
-      subjectId: 'subject:gua1',
-      schoolId: 'sch1',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Strong,
-      guardianScope: portalScopeForGuardian(['stu1'], ['cg1']),
-    })
-    const { service } = createCommunicationsContext({ actorOverride: guardianActor })
-
-    const result = await service.communicationsWorkflow.updateNotificationContact({
-      notificationEmail: 'guardian@school.test',
-    })
-
-    expect(result.notificationEmail).toBe('guardian@school.test')
-  })
-
-  test('registerPushDevice and unregisterPushDevice delegate to the notification gateway', async () => {
-    const staffActor = createStaffActorMetadata({
-      subjectId: 'subject:staff1',
-      staffMemberId: 'staff1',
-      schoolId: 'sch1',
-      requestId: 'request',
-      authenticatedAt: new Date('2026-05-02T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Strong,
-      effectiveGrants: actor.effectiveGrants,
-    })
-    const gateway = new RecordingNotificationGateway()
-    const { service } = createCommunicationsContext({
-      actorOverride: staffActor,
-      notificationGateway: gateway,
-    })
-
-    await service.communicationsWorkflow.registerPushDevice({
-      token: ' device-token ',
-      provider: 'fcm',
-    })
-    await service.communicationsWorkflow.unregisterPushDevice({ provider: 'fcm' })
-
-    expect(gateway.registeredPushDevices).toEqual([{
-      subjectId: 'subject:staff1',
-      schoolId: 'sch1',
-      token: 'device-token',
-      provider: 'fcm',
-    }])
-    expect(gateway.unregisteredPushDevices).toEqual([{
-      subjectId: 'subject:staff1',
-      provider: 'fcm',
-    }])
-  })
-
-  test('dispatchPublishedAnnouncementNotifications rejects unpublished announcements', async () => {
-    const { service } = createCommunicationsContext({
-      announcementStatus: AnnouncementStatus.Draft,
-    })
-
-    await expect(service.communicationsWorkflow.dispatchPublishedAnnouncementNotifications('ann1'))
-      .rejects
-      .toBeInstanceOf(BusinessRuleViolationError)
-  })
-
-  test('materializeDeliveries skips recipients without linked subject ids', async () => {
-    const { mockRepos, service } = createCommunicationsContext({
-      targets: [{ id: 'target-staff', announcementId: 'ann1', targetKind: TargetKind.StaffMember, targetId: 'staff-no-subject' }],
-    })
-
-    const result = await service.communicationsWorkflow.materializeDeliveries({
-      announcementId: 'ann1',
-    })
-
-    expect(result).toEqual([])
-    expect(mockRepos.messageDeliveries.save).not.toHaveBeenCalled()
+  test('push devices use the current linked identity, and inactive profiles lose access', async () => {
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    const workflow = service(guardian).communicationsWorkflow
+    await workflow.registerPushDevice({ token: ' device-token ', provider: 'fcm' })
+    await workflow.unregisterPushDevice({ provider: 'fcm' })
+    expect(gateway.registeredPushDevices).toEqual([{ subjectId: 'person-a', schoolId: 'school-a', token: 'device-token', provider: 'fcm' }])
+    expect(gateway.unregisteredPushDevices).toEqual([{ subjectId: 'person-a', provider: 'fcm' }])
+    await fixture.db.exec('UPDATE guardians SET has_access = false WHERE id = \'guardian-a\'')
+    await expect(workflow.registerPushDevice({ token: 'device-token', provider: 'fcm' })).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

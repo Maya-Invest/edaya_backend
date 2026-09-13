@@ -1,21 +1,19 @@
-import { Permission } from '@edaya/core';
-
-import type { StudentClassEnrollment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { dateTime } from '../../entity-config/helper-utils';
-import { indirectTenant } from '../../entity-config/tenant';
+import type { StudentClassEnrollment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-class-enrollment.ts (PR3)
 export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.enrollments,
     tenant: studentLinkedTenant(),
-    authorization: { resource: 'enrollments', read: [Permission.QUERY_ENROLLMENT_HISTORY_READ, Permission.ENROLLMENT_READ, Permission.STUDENT_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE], write: [Permission.ENROLLMENT_CREATE] },
-    
+    resource: 'enrollments',
+
     gates: {
       preSave: validateEnrollmentSave,
       preDelete: validateEnrollmentDelete,

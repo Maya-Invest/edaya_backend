@@ -1,148 +1,38 @@
-import { createRepositoryAuthorizationPolicy } from '@edaya/authorization'
-import { MessageDelivery, MessageDeliveryStatus, noOpNotificationGateway, RecordingNotificationGateway } from '@edaya/core'
+import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorization'
+import { MessageDelivery, MessageDeliveryRecipientKind, MessageDeliveryStatus, noOpNotificationGateway, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
-import { describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { reconcilePendingDeliveries } from '../../src/capabilities/scheduling-jobs/jobs/reconcile-pending-deliveries'
 import { testFileStorage } from '../support/test-file-storage'
 
-describe('reconcilePendingDeliveries', () => {
-  test('applies provider status for pending deliveries', async () => {
-    const delivery = new MessageDelivery({
-      id: 'delivery:ann-1:sub-1',
-      schoolId: 'school-1',
-      announcementId: 'ann-1',
-      subjectId: 'sub-1',
-      title: 'Announcement',
-      body: 'Content',
-      status: MessageDeliveryStatus.Pending,
-    })
-
-    const gateway = new RecordingNotificationGateway()
-    gateway.setStatusLookup('delivery:ann-1:sub-1', {
-      status: 'sent',
-      providerMessageId: 'msg-novu-1',
-      occurredAt: new Date('2026-06-24T00:00:00.000Z'),
-    })
-
-    const repositories = {
-      schools: { list: mock(async () => [{ id: 'school-1' }]) },
-      announcements: {
-        list: mock(async () => [{ id: 'ann-1', schoolId: 'school-1' }]),
-        findById: mock(async () => ({ id: 'ann-1', schoolId: 'school-1' })),
-      },
-      messageDeliveries: {
-        list: mock(async (options?: { status?: string, schoolId?: string }) => (
-          options?.status === MessageDeliveryStatus.Pending ? [delivery] : []
-        )),
-        findById: mock(async (id: string) => (id === delivery.id ? delivery : undefined)),
-        save: mock(async (entity: MessageDelivery) => entity),
-      },
-      staffAssignments: {},
-      staffMembers: {},
-      guardians: {},
-      guardianLinks: {},
-      students: {},
-    } as any
-
-    const application = new SchoolApplication({
-      atomicExecution: { execute: async operation => operation() },
-      notificationGateway: gateway,
-      fileStorage: testFileStorage,
-      repositories,
-      authorizationPolicy: createRepositoryAuthorizationPolicy({
-        repositories,
-        staffAssignmentRepository: repositories.staffAssignments,
-        staffMemberRepository: repositories.staffMembers,
-        guardianRepository: repositories.guardians,
-        guardianStudentLinkRepository: repositories.guardianLinks,
-        studentRepository: repositories.students,
-      }),
-    })
-
-    const actor = {
-      kind: 'system' as const,
-      systemId: 'cron',
-      schoolId: 'school-1',
-      requestId: 'cron:test',
-      reason: 'test',
-    }
-
-    const result = await reconcilePendingDeliveries({
-      asOf: new Date('2026-06-24T00:05:00.000Z'),
-      actor,
-      service: application.forActor(actor),
-    })
-
-    expect(result).toEqual({ processed: 1, skipped: 0 })
-    expect(gateway.statusLookups).toEqual([[{
-      deliveryId: 'delivery:ann-1:sub-1',
-      subjectId: 'sub-1',
-    }]])
-    expect(repositories.messageDeliveries.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: MessageDeliveryStatus.Sent,
-        providerMessageId: 'msg-novu-1',
-      }),
-    )
+describe('delivery reconciliation uses its explicit job authority', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  const actor = createSystemActorMetadata({ systemId: 'reconcilePendingDeliveries', schoolId: 'school-a', requestId: 'reconcile', reason: 'Status reconciliation' })
+  const asOf = new Date('2026-06-24T00:05:00Z')
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+    for (const suffix of ['a', 'b']) await fixture.repositories.messageDeliveries.save(new MessageDelivery({ id: `delivery-${suffix}`, schoolId: `school-${suffix}`, subjectId: `person-${suffix}`, title: 'News', body: 'Private', recipientKind: MessageDeliveryRecipientKind.Staff, recipientId: `staff-${suffix}` }))
+  })
+  afterEach(async () => {
+    await fixture.db.close()
   })
 
-  test('skips deliveries when gateway has no lookup implementation', async () => {
-    const repositories = {
-      schools: { list: mock(async () => [{ id: 'school-1' }]) },
-      announcements: {
-        list: mock(async () => [{ id: 'ann-1', schoolId: 'school-1' }]),
-      },
-      messageDeliveries: {
-        list: mock(async (options?: { status?: string, schoolId?: string }) => (
-          options?.status === MessageDeliveryStatus.Pending
-            ? [new MessageDelivery({
-                id: 'delivery:ann-1:sub-1',
-                schoolId: 'school-1',
-                announcementId: 'ann-1',
-                subjectId: 'sub-1',
-                title: 'Announcement',
-                body: 'Content',
-                status: MessageDeliveryStatus.Pending,
-              })]
-            : []
-        )),
-      },
-      staffAssignments: {},
-      staffMembers: {},
-      guardians: {},
-      guardianLinks: {},
-      students: {},
-    } as any
+  test('reconciles only its school and rejects unrelated job identities', async () => {
+    const gateway = new RecordingNotificationGateway()
+    gateway.setStatusLookup('delivery-a', { status: 'sent', providerMessageId: 'provider-message', occurredAt: asOf })
+    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
+    expect(await reconcilePendingDeliveries({ asOf, actor, service: application.forActor(actor) })).toEqual({ processed: 1, skipped: 0 })
+    expect(gateway.statusLookups).toEqual([[{ deliveryId: 'delivery-a', subjectId: 'person-a' }]])
+    expect((await fixture.repositories.messageDeliveries.findById('delivery-a'))?.status).toBe(MessageDeliveryStatus.Sent)
+    expect((await fixture.repositories.messageDeliveries.findById('delivery-b'))?.status).toBe(MessageDeliveryStatus.Pending)
+    const unrelated = { ...actor, systemId: 'expireAccountInvitations' }
+    await expect(reconcilePendingDeliveries({ asOf, actor: unrelated, service: application.forActor(unrelated) })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(gateway.statusLookups).toHaveLength(1)
+  })
 
-    const application = new SchoolApplication({
-      atomicExecution: { execute: async operation => operation() },
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-      repositories,
-      authorizationPolicy: createRepositoryAuthorizationPolicy({
-        repositories,
-        staffAssignmentRepository: repositories.staffAssignments,
-        staffMemberRepository: repositories.staffMembers,
-        guardianRepository: repositories.guardians,
-        guardianStudentLinkRepository: repositories.guardianLinks,
-        studentRepository: repositories.students,
-      }),
-    })
-
-    const actor = {
-      kind: 'system' as const,
-      systemId: 'cron',
-      schoolId: 'school-1',
-      requestId: 'cron:test',
-      reason: 'test',
-    }
-
-    const result = await reconcilePendingDeliveries({
-      asOf: new Date('2026-06-24T00:05:00.000Z'),
-      actor,
-      service: application.forActor(actor),
-    })
-
-    expect(result).toEqual({ processed: 0, skipped: 1 })
+  test('counts only authorized pending deliveries when the provider has no status lookup', async () => {
+    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    expect(await reconcilePendingDeliveries({ asOf, actor, service: application.forActor(actor) })).toEqual({ processed: 0, skipped: 1 })
   })
 })

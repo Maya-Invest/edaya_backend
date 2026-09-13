@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -37,7 +37,6 @@ import {
   updateStudent,
   updateStudentNote,
 } from '../utils/core-service-helpers'
-import { effectiveGrantsForRoles } from '../utils/effective-grants'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('tenant boundary safeguards', () => {
@@ -46,7 +45,6 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-a-admin-user',
       staffMemberId: 'school-a-admin',
       schoolId: 'school-a',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'school-a-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -55,7 +53,6 @@ describeIntegration('tenant boundary safeguards', () => {
       subjectId: 'school-b-admin-user',
       staffMemberId: 'school-b-admin',
       schoolId: 'school-b',
-      effectiveGrants: effectiveGrantsForRoles(['admin']),
       requestId: 'school-b-setup',
       authenticatedAt: new Date('2026-09-01T00:00:00Z'),
       assuranceLevel: ActorAssuranceLevel.Strong,
@@ -65,7 +62,10 @@ describeIntegration('tenant boundary safeguards', () => {
       schoolId: 'school-b',
       firstName: 'School B',
       lastName: 'Administrator',
+      subjectId: 'school-b-admin-user',
     }))
+    await repositories.schoolRepository.save(new School({ id: 'school-a', name: 'School A', timeZone: 'UTC', ownerSubjectId: 'school-a-admin-user' }))
+    await repositories.schoolRepository.save(new School({ id: 'school-b', name: 'School B', timeZone: 'UTC', ownerSubjectId: 'school-b-admin-user' }))
     await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC' })
     await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC' })
     await app.setupWorkflow.createAcademicYear({

@@ -14,7 +14,7 @@ export function createInProcessAttachmentsSeedPort(
       await service.baseService.entities.attachments.save(new Attachment({
         ...record,
         createdAt: new Date(record.createdAt),
-      }), { moduleChecked: true })
+      }))
     }),
   }
 }

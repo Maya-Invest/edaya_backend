@@ -1,21 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { ClassGroup } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { ClassGroup } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/class-group.ts (PR3)
 export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, atomicExecution }) => {
-  
-
   return config({
     repository: repositories.classGroups,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'classGroups', read: [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_UPDATE, Permission.QUERY_CLASS_DIRECTORY_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE, Permission.GRADE_READ, Permission.CLASS_LOGBOOK_READ, Permission.ATTENDANCE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
-    
+    resource: 'classGroups',
+
     gates: {
       preSave: validateClassGroupSave,
       preDelete: validateClassGroupDelete,

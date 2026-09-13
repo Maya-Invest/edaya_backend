@@ -1,119 +1,24 @@
-import type { EffectiveGrants } from '@edaya/authorization'
 import type { BusinessRuleViolationError } from '@edaya/core'
-import type { SchoolRepositories } from '@edaya/service'
-import { ActorAssuranceLevel, AuthorizationError, createRepositoryAuthorizationPolicy, createStaffActorMetadata } from '@edaya/authorization'
-import { Guardian, noOpNotificationGateway, Permission, RecordingNotificationGateway, StaffMember, Student, StudentStatus } from '@edaya/core'
-import { SchoolService } from '@edaya/service'
-import { describe, expect, mock, test } from 'bun:test'
-import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
-import { testFileStorage } from '../../support/test-file-storage'
+import { AuthorizationError } from '@edaya/authorization'
+import { AcademicYear, Guardian, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, Student, StudentStatus } from '@edaya/core'
+import { describe, expect, test } from 'bun:test'
+import { createTestApp } from '../../support/create-test-app'
+import { createTestStaffActor } from '../../support/test-actor'
 
-function actorWithPermissions(permissions: readonly Permission[]) {
-  const effectiveGrants: EffectiveGrants = {
-    permissions: new Set(permissions),
-    scopeGrants: permissions.map(permission => ({
-      permission,
-      scopeType: 'school',
-      scopeEntityIds: ['sch1'],
-    })),
-    isElevated: false,
-  }
-
-  return createStaffActorMetadata({
-    subjectId: 'admin-subject',
-    staffMemberId: 'staff-admin',
-    schoolId: 'sch1',
-    requestId: 'req-1',
-    authenticatedAt: new Date('2026-01-01T00:00:00Z'),
-    assuranceLevel: ActorAssuranceLevel.Strong,
-    effectiveGrants,
-  })
-}
-
-function createAccessControlContext(
-  actor = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN]),
-  notificationGateway = noOpNotificationGateway,
-) {
-  const staffMember = new StaffMember({
-    id: 'st1',
-    schoolId: 'sch1',
-    firstName: 'Ada',
-    lastName: 'Lovelace',
-    email: 'ada@school.edu',
-    isActive: true,
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-  })
-
-  const guardian = new Guardian({
-    id: 'g1',
-    schoolId: 'sch1',
-    firstName: 'Grace',
-    lastName: 'Hopper',
-    email: 'grace@mail.com',
-    phone: '+33 6 00 00 00 00',
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-  })
-
-  const student = new Student({
-    id: 's1',
-    schoolId: 'sch1',
-    firstName: 'Alan',
-    lastName: 'Turing',
-    status: StudentStatus.Active,
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-  })
-
-  const mockRepos = {
-    schools: {
-      findById: mock(async (id: string) => id === 'sch1' ? { id: 'sch1', ownerSubjectId: undefined } : undefined),
-    },
-    staffMembers: {
-      findById: mock(async (id: string) => id === 'st1' ? staffMember : undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
-    },
-    guardians: {
-      findById: mock(async (id: string) => id === 'g1' ? guardian : undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
-    },
-    teachers: {
-      findById: mock(async () => undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
-    },
-    staffPermissionAssignments: {
-      findById: mock(async () => undefined),
-      save: mock(async (assignment: unknown) => assignment),
-    },
-    guardianLinks: {
-      list: mock(async () => []),
-    },
-    students: {
-      findById: mock(async (id: string) => id === 's1' ? student : undefined),
-      findOne: mock(async () => undefined),
-      save: mock(async () => {}),
-    },
-  } as unknown as SchoolRepositories
-
-  const mockPolicy = createRepositoryAuthorizationPolicy({ repositories: mockRepos })
-  const service = new SchoolService({
-    repositories: mockRepos,
-    authorizationPolicy: mockPolicy,
-    actor,
-    atomicExecution: {
-      execute: async operation => operation(),
-    },
-    notificationGateway,
-    fileStorage: testFileStorage,
-  })
-
-  return { mockRepos, service, staffMember, guardian, student, notificationGateway }
+async function createAccessControlContext(permissions: readonly Permission[] = [Permission.ACCESS_CONTROL_ASSIGN, Permission.ACCESS_CONTROL_READ], notificationGateway = noOpNotificationGateway) {
+  const fixture = await createTestApp(createTestStaffActor('sch1', 'staff-admin'), { notificationGateway })
+  const repositories = fixture.schoolRepositories
+  await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+  for (const permission of permissions) await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'sch1', academicYearId: 'ay1', staffId: 'staff-admin', permission, scopes: [{ kind: 'school' }] }))
+  await repositories.staffMembers.save(new StaffMember({ id: 'st1', schoolId: 'sch1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@school.edu' }))
+  await repositories.guardians.save(new Guardian({ id: 'g1', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper', email: 'grace@mail.com', phone: '+33 6 00 00 00 00' }))
+  await repositories.students.save(new Student({ id: 's1', schoolId: 'sch1', firstName: 'Alan', lastName: 'Turing', status: StudentStatus.Active }))
+  return { repositories, service: fixture.app }
 }
 
 describe('SchoolService access-control workflows', () => {
   test('linkActorSubject links a staff member when caller has ACCESS_CONTROL_ASSIGN', async () => {
-    const { mockRepos, service } = createAccessControlContext()
+    const { repositories, service } = await createAccessControlContext()
 
     const result = await service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
@@ -122,12 +27,12 @@ describe('SchoolService access-control workflows', () => {
 
     expect(result.kind).toBe('staff')
     expect(result.entity.subjectId).toBe('auth-user-1')
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('linkActorSubject rejects callers without ACCESS_CONTROL_ASSIGN', async () => {
-    const { service } = createAccessControlContext(
-      actorWithPermissions([Permission.ACCESS_CONTROL_READ]),
+    const { service } = await createAccessControlContext(
+      [Permission.ACCESS_CONTROL_READ],
     )
 
     await expect(service.accessControlWorkflow.linkActorSubject({
@@ -137,7 +42,7 @@ describe('SchoolService access-control workflows', () => {
   })
 
   test('linkActorSubject rejects ambiguous targets', async () => {
-    const { service } = createAccessControlContext()
+    const { service } = await createAccessControlContext()
 
     await expect(service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-1',
@@ -149,8 +54,8 @@ describe('SchoolService access-control workflows', () => {
   })
 
   test('linkActorSubject allows the same subject on staff when a guardian already uses it in the school', async () => {
-    const { mockRepos, service } = createAccessControlContext()
-    mockRepos.guardians.findOne = mock(async () => new Guardian({
+    const { repositories, service } = await createAccessControlContext()
+    await repositories.guardians.save(new Guardian({
       id: 'g-other',
       schoolId: 'sch1',
       firstName: 'Other',
@@ -166,12 +71,12 @@ describe('SchoolService access-control workflows', () => {
 
     expect(result.kind).toBe('staff')
     expect(result.entity.subjectId).toBe('auth-user-1')
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('linkActorSubject rejects duplicate staff subject ids in the same school', async () => {
-    const { mockRepos, service } = createAccessControlContext()
-    mockRepos.staffMembers.findOne = mock(async () => new StaffMember({
+    const { repositories, service } = await createAccessControlContext()
+    await repositories.staffMembers.save(new StaffMember({
       id: 'st-other',
       schoolId: 'sch1',
       firstName: 'Other',
@@ -189,30 +94,9 @@ describe('SchoolService access-control workflows', () => {
     } satisfies Partial<BusinessRuleViolationError>)
   })
 
-  test('linkActorSubject schedules provider subscriber sync for linked staff', async () => {
-    const gateway = new RecordingNotificationGateway()
-    const { service } = createAccessControlContext(undefined, gateway)
-
-    await service.accessControlWorkflow.linkActorSubject({
-      subjectId: 'auth-user-1',
-      staffMemberId: 'st1',
-    })
-
-    expect(gateway.upserted).toHaveLength(1)
-    expect(gateway.upserted[0]).toMatchObject({
-      schoolId: 'sch1',
-      recipient: {
-        kind: 'staff',
-        id: 'st1',
-        subjectId: 'auth-user-1',
-      },
-      email: 'ada@school.edu',
-    })
-  })
-
   test('linkActorSubject is idempotent when the same subject is already linked', async () => {
-    const { mockRepos, service } = createAccessControlContext()
-    mockRepos.staffMembers.findById = mock(async () => new StaffMember({
+    const { repositories, service } = await createAccessControlContext()
+    await repositories.staffMembers.save(new StaffMember({
       id: 'st1',
       schoolId: 'sch1',
       firstName: 'Ada',
@@ -228,12 +112,12 @@ describe('SchoolService access-control workflows', () => {
     })
 
     expect(result.entity.subjectId).toBe('auth-user-1')
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('linkActorSubject replaces an existing entity subject when relinking', async () => {
-    const { mockRepos, service } = createAccessControlContext()
-    mockRepos.staffMembers.findById = mock(async () => new StaffMember({
+    const { repositories, service } = await createAccessControlContext()
+    await repositories.staffMembers.save(new StaffMember({
       id: 'st1',
       schoolId: 'sch1',
       firstName: 'Ada',
@@ -249,12 +133,12 @@ describe('SchoolService access-control workflows', () => {
     })
 
     expect(result.entity.subjectId).toBe('auth-user-new')
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('unlinkActorSubject clears the auth subject from a linked staff member', async () => {
-    const { mockRepos, service } = createAccessControlContext()
-    mockRepos.staffMembers.findById = mock(async () => new StaffMember({
+    const { repositories, service } = await createAccessControlContext()
+    await repositories.staffMembers.save(new StaffMember({
       id: 'st1',
       schoolId: 'sch1',
       firstName: 'Ada',
@@ -269,11 +153,11 @@ describe('SchoolService access-control workflows', () => {
     })
 
     expect(result.entity.subjectId).toBeUndefined()
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('assignStaffPermission persists permission assignments for the school', async () => {
-    const { mockRepos, service } = createAccessControlContext()
+    const { repositories, service } = await createAccessControlContext()
 
     const assignment = await service.accessControlWorkflow.assignStaffPermission({
       id: 'spa1',
@@ -281,15 +165,15 @@ describe('SchoolService access-control workflows', () => {
       schoolId: 'sch1',
       academicYearId: 'ay1',
       permission: Permission.ACCESS_CONTROL_READ,
-      scopeIds: '',
+      scopes: [{ kind: 'school' }],
     })
 
     expect(assignment.permission).toBe(Permission.ACCESS_CONTROL_READ)
-    expect(mockRepos.staffPermissionAssignments.save).toHaveBeenCalled()
+    expect((await repositories.staffPermissionAssignments.findById('spa1'))?.data).toEqual(assignment.data)
   })
 
   test('relinkActorSubject delegates to linkActorSubject', async () => {
-    const { mockRepos, service } = createAccessControlContext()
+    const { repositories, service } = await createAccessControlContext()
 
     const result = await service.accessControlWorkflow.relinkActorSubject({
       subjectId: 'auth-user-1',
@@ -297,11 +181,11 @@ describe('SchoolService access-control workflows', () => {
     })
 
     expect(result.entity.subjectId).toBe('auth-user-1')
-    expect(mockRepos.staffMembers.save).toHaveBeenCalled()
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
   test('unlinkActorSubject rejects ambiguous targets', async () => {
-    const { service } = createAccessControlContext()
+    const { service } = await createAccessControlContext()
 
     await expect(service.accessControlWorkflow.unlinkActorSubject({
       staffMemberId: 'st1',
@@ -312,8 +196,7 @@ describe('SchoolService access-control workflows', () => {
   })
 
   test('linkActorSubject links a guardian when caller has ACCESS_CONTROL_ASSIGN', async () => {
-    const elevatedActor = createElevatedTestStaffActor('sch1', 'staff-admin')
-    const { mockRepos, service } = createAccessControlContext(elevatedActor)
+    const { repositories, service } = await createAccessControlContext()
 
     const result = await service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-guardian-1',
@@ -322,6 +205,6 @@ describe('SchoolService access-control workflows', () => {
 
     expect(result.kind).toBe('guardian')
     expect(result.entity.subjectId).toBe('auth-guardian-1')
-    expect(mockRepos.guardians.save).toHaveBeenCalled()
+    expect((await repositories.guardians.findById('g1'))?.subjectId).toBe('auth-guardian-1')
   })
 })

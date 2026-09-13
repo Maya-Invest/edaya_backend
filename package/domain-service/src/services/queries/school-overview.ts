@@ -1,3 +1,4 @@
+import type { OverviewRepositories } from '@edaya/authorization'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import {
   AttendanceJustificationStatus,
@@ -403,7 +404,7 @@ function buildClassRiskRows(args: {
 }
 
 export async function buildSchoolOverview(
-  repositories: SchoolRepositories,
+  repositories: OverviewRepositories,
   input: GetSchoolOverviewInput,
 ): Promise<SchoolOverview> {
   const referenceDate = input.referenceDate ?? new Date()

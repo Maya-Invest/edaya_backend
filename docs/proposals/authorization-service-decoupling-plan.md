@@ -1,10 +1,12 @@
 # Authorization and school-service decoupling plan
 
+> **Historical proposal — authorization guidance superseded.** The accepted design is the [clean implementation plan](../sprints/authorization-clean-implementation.md), with [one policy implementation](../../package/domain-authorization/src/README.md) and [one coordinated cutover](../architecture/authorization-cutover.md). The strategy port, parallel migration paths, operation dispatch and authorization caches discussed below are not implementation targets. Follow `@edaya/service` → `@edaya/authorization` → `@edaya/core`.
+
 > This document is the detailed execution plan for the authorization workstream in the broader [backend architecture improvement proposal](./backend-architecture-improvement-proposal.md).
 
 ## Status
 
-- **State:** proposed
+- **State:** historical; authorization work superseded by the clean implementation plan
 - **Scope:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, authorization persistence, and API composition
 - **Migration style:** incremental, behavior-preserving pull requests
 - **Target dependency rule:** `@edaya/service` must not import `@edaya/authorization`

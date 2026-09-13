@@ -1,13 +1,9 @@
-import type { ActorMetadata } from '@edaya/authorization'
-import type { SchoolRepositories } from '@edaya/service'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { PostgresSchoolRepositories, PostgresStore } from '@edaya/adaptor-postgres'
-import { ManagedEntityService } from '@edaya/service'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { pgTable, text } from 'drizzle-orm/pg-core'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
-import { directSchoolTenant } from '../../../../package/domain-service/src/services/entities/entity-config/tenant'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
@@ -17,16 +13,7 @@ const table = pgTable('rc_tenant_rows', { id: text('id').primaryKey(), schoolId:
 const handle = await createPostgresSchoolDatabase(url)
 const db = handle.db as NodePgDatabase
 const repository = new PostgresStore(handle.db, table, (row: { id: string, schoolId: string }) => row, row => row)
-const service = new ManagedEntityService({
-  actor: { kind: 'system', schoolId: 'school-a' } as ActorMetadata,
-  repositories: {} as SchoolRepositories,
-  config: {
-    repository,
-    tenant: directSchoolTenant(),
-    read: { checkModule: async () => {}, checkAccess: async () => {} },
-    write: { checkModule: async () => {}, authorizeSave: async () => {}, authorizeDelete: async () => {} },
-  },
-})
+const service = repository.forSchool('school-a')
 
 beforeAll(async () => {
   await new PostgresSchoolRepositories(db).init({ driver: 'node-postgres' })

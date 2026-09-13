@@ -11,10 +11,10 @@ export function createInProcessCurriculumSeedPort(
 
   return {
     saveSubject: record => withSeedPortError('curriculum.saveSubject', async () => {
-      await service.baseService.entities.subjects.save(new Subject(record), { moduleChecked: true })
+      await service.baseService.entities.subjects.save(new Subject(record))
     }),
     saveSubjectMatter: record => withSeedPortError('curriculum.saveSubjectMatter', async () => {
-      await service.baseService.entities.subjectMatters.save(new SubjectMatter(record), { moduleChecked: true })
+      await service.baseService.entities.subjectMatters.save(new SubjectMatter(record))
     }),
     offerSubjectToGradeLevel: record => withSeedPortError('curriculum.offerSubjectToGradeLevel', async () => {
       await service.academicsWorkflow.offerSubjectToGradeLevel(record)

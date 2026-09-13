@@ -1,149 +1,100 @@
-import type { AuthorizationPolicy } from '@edaya/authorization'
-import type { SchoolRepositories } from '@edaya/service'
-import { AuthorizationError } from '@edaya/authorization'
-import { noOpNotificationGateway } from '@edaya/core'
+import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, DayOfWeek, Fee, FeeStatus, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentFee } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
-import { describe, expect, mock, test } from 'bun:test'
-import { createElevatedTestStaffActor } from '../../support/elevated-test-actor'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { testFileStorage } from '../../support/test-file-storage'
 
-describe('SchoolService query operations', () => {
-  const mockRepos = {
-    schools: {
-      getOverdueFeeCount: mock(async () => 5),
-      getPublishedReportCardCount: mock(async () => 10),
-      getSchoolOverview: mock(async () => ({
-        schoolId: 'school1',
-        academicYearId: 'year1',
-        academicPeriodId: 'period1',
-        referenceDate: '2026-06-14',
-        kpis: {
-          studentCount: 100,
-          staffCount: 12,
-          overdueFeeCount: 5,
-          overdueFeeAmount: 5000,
-          publishedReportCardCount: 10,
-          unpublishedReportCardCount: 90,
-          attendanceRateToday: 95,
-          absencesToday: 2,
-          openIncidentCount: 1,
-          highSeverityIncidentCount: 0,
-          pendingJustificationCount: 3,
-          incompleteGradingClassCount: 2,
-        },
-        actionItems: [],
-        upcoming: [],
-      })),
-    },
-  } as unknown as SchoolRepositories
-
-  const mockPolicy = {
-  } as unknown as AuthorizationPolicy
-
-  const actor = createElevatedTestStaffActor('school1', 'staff-test')
-  const mockAtomic = { execute: mock(async (op: () => Promise<any>) => op()) }
-
-  const service = new SchoolService({
-    repositories: mockRepos,
-    authorizationPolicy: mockPolicy,
-    actor,
-    atomicExecution: mockAtomic,
-    notificationGateway: noOpNotificationGateway,
-    fileStorage: testFileStorage,
+describe('SchoolService aggregate and timetable queries', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  let service: SchoolService
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+    await seedAuthorizationRelationships(fixture.db)
+    service = new SchoolService({ actor: createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'query', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+  })
+  afterEach(async () => {
+    await fixture.db.close()
   })
 
-  test('getOverdueFeeCount checks permission and delegates to repo', async () => {
-    const result = await service.getOverdueFeeCount('school1')
-    expect(mockRepos.schools.getOverdueFeeCount).toHaveBeenCalledWith('school1')
-    expect(result).toBe(5)
+  test('fee aggregate uses the same student scope as lists and single records, with live revocation', async () => {
+    await fixture.repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', currency: 'XOF', defaultAmount: 100 }))
+    for (const id of ['student-a', 'student-other']) await fixture.repositories.studentFees.save(new StudentFee({ id, studentId: id, feeId: 'fee', academicYearId: 'year-a', currency: 'XOF', expectedAmount: 100, paidAmount: 0, status: FeeStatus.Overdue, dueDate: new Date('2026-01-01') }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'fee-reader', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERDUE_FEES_READ, scopes: [{ kind: 'student', studentId: 'student-a' }] }))
+    expect(await service.getOverdueFeeCount('school-a')).toBe(1)
+    await expect(service.getOverdueFeeCount('school-b')).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.staffPermissionAssignments.delete('fee-reader')
+    await expect(service.getOverdueFeeCount('school-a')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('getPublishedReportCardCount checks permission and delegates to repo', async () => {
-    const result = await service.getPublishedReportCardCount('school1')
-    expect(mockRepos.schools.getPublishedReportCardCount).toHaveBeenCalledWith('school1')
-    expect(result).toBe(10)
+  test('overview requires its own school action and rejects cross-school parameters', async () => {
+    const input = { schoolId: 'school-a', academicYearId: 'year-a', academicPeriodId: 'period-a', referenceDate: new Date('2026-05-01') }
+    await expect(service.getSchoolOverview(input)).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERVIEW_READ, scopes: [{ kind: 'school' }] }))
+    expect((await service.getSchoolOverview(input)).kpis.studentCount).toBe(2)
+    await expect(service.getSchoolOverview({ ...input, schoolId: 'school-b' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.getPublishedReportCardCount('school-a')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('aggregate queries reject cross-tenant school ids before repository access', async () => {
-    await expect(service.getOverdueFeeCount('other-school')).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(service.getSchoolOverview({
-      schoolId: 'other-school',
-      academicYearId: 'year1',
-      academicPeriodId: 'period1',
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test('overview and shell counts reject foreign years, periods and class ids before aggregation', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERVIEW_READ, scopes: [{ kind: 'school' }] }))
+    const input = { schoolId: 'school-a', academicYearId: 'year-a', academicPeriodId: 'period-a' }
+    await expect(service.getSchoolOverview({ ...input, academicYearId: 'year-b', academicPeriodId: 'period-b' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.getSchoolOverview({ ...input, academicPeriodId: 'period-b' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.getAppShellCounts({ schoolId: 'school-a', classGroupIds: ['class-a', 'class-b'] })).rejects.toBeInstanceOf(AuthorizationError)
+    const counts = await service.getAppShellCounts({ schoolId: 'school-a', classGroupIds: ['class-a'] })
+    expect(counts.studentCount).toBe(2)
+    expect(counts.activeEnrollmentCountsByClass).toEqual({ 'class-a': 1 })
   })
 
-  test('getSchoolOverview checks permission and delegates to repo', async () => {
-    const input = {
-      schoolId: 'school1',
-      academicYearId: 'year1',
-      academicPeriodId: 'period1',
-    }
-    const result = await service.getSchoolOverview(input)
-    expect(mockRepos.schools.getSchoolOverview).toHaveBeenCalledWith(input)
-    expect(result.kpis.studentCount).toBe(100)
-  })
-
-  test('getClassGroupTimetable checks access and builds timetable', async () => {
-    const mockClassGroups = {
-      findById: mock(async () => ({ id: 'cg1', schoolId: 'school1' })),
-    }
-    const mockLessonSessions = {
-      list: mock(async () => []),
-    }
-    const mockActivitySessions = {
-      list: mock(async () => []),
-    }
-    const mockAssessments = {
-      list: mock(async () => []),
-    }
-    const mockPolicyWithClassGroup = {
-      checkClassGroupAccess: mock(async () => {}),
-    } as unknown as AuthorizationPolicy
-
-    const timetableService = new SchoolService({
-      repositories: {
-        ...mockRepos,
-        classGroups: mockClassGroups,
-        lessonSessions: mockLessonSessions,
-        activitySessions: mockActivitySessions,
-        assessments: mockAssessments,
-      } as unknown as SchoolRepositories,
-      authorizationPolicy: mockPolicyWithClassGroup,
-      actor,
-      atomicExecution: mockAtomic,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
-
-    const input = {
-      classGroupId: 'cg1',
-      startDate: new Date('2026-05-01T00:00:00.000Z'),
-      endDate: new Date('2026-05-31T00:00:00.000Z'),
-    }
-    const result = await timetableService.getClassGroupTimetable(input)
-    expect(mockPolicyWithClassGroup.checkClassGroupAccess).toHaveBeenCalledWith(actor, ['cg1'])
-    expect(result.classGroupId).toBe('cg1')
+  test('timetable authorization covers the class and its events and rejects missing or unrelated classes', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    const input = { classGroupId: 'class-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-31') }
+    const result = await service.getClassGroupTimetable(input)
+    expect(result.classGroupId).toBe('class-a')
     expect(result.events).toEqual([])
+    for (const classGroupId of ['missing', 'class-other', 'class-b'])
+      await expect(service.getClassGroupTimetable({ ...input, classGroupId })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('getClassGroupTimetable rejects missing class groups', async () => {
-    const timetableService = new SchoolService({
-      repositories: {
-        ...mockRepos,
-        classGroups: { findById: mock(async () => undefined) },
-      } as unknown as SchoolRepositories,
-      authorizationPolicy: mockPolicy,
-      actor,
-      atomicExecution: mockAtomic,
-      notificationGateway: noOpNotificationGateway,
-      fileStorage: testFileStorage,
-    })
-
-    await expect(timetableService.getClassGroupTimetable({
-      classGroupId: 'missing',
-      startDate: new Date('2026-05-01T00:00:00.000Z'),
-      endDate: new Date('2026-05-31T00:00:00.000Z'),
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test.each(['staff', 'teacher', 'guardian', 'student'] as const)('%s availability scopes supporting reads before building cells', async (kind) => {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'space', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
+    const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'space', authenticatedAt: new Date() }
+    const actor = kind === 'teacher'
+      ? createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' })
+      : kind === 'guardian'
+        ? createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' })
+        : kind === 'student'
+          ? createStudentActorMetadata({ ...identity, studentId: 'student-a' })
+          : createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' })
+    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    await fixture.repositories.periodDefinitions.save(new PeriodDefinition({ id: 'monday', schoolId: 'school-a', academicYearId: 'year-a', label: 'Monday', dayOfWeek: DayOfWeek.Monday, order: 1, startTime: '08:00', endTime: '09:00' }))
+    for (const [id, scopeKind, scopeId, date] of [
+      ['other-class', CalendarEventScopeKind.ClassGroup, 'class-other', '2026-05-04'],
+      ['school-day', CalendarEventScopeKind.School, undefined, '2026-05-11'],
+      ['grade-day', CalendarEventScopeKind.GradeLevel, 'level-a', '2026-05-18'],
+      ['class-day', CalendarEventScopeKind.ClassGroup, 'class-a', '2026-05-25'],
+    ] as const) {
+      await fixture.repositories.calendarEvents.save(new CalendarEvent({ id, schoolId: 'school-a', academicYearId: 'year-a', title: id, scopeKind, scopeId, startDate: new Date(date), endDate: new Date(date), kind: CalendarEventKind.Holiday, isNonSchoolDay: true }))
+    }
+    const input = { classGroupId: 'class-a', academicYearId: 'year-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-31') }
+    const scoped = await service.baseService.access.timetable.spaceRepositories(input)
+    expect((await scoped.calendarEvents.list()).map(event => event.id).sort()).toEqual(['class-day', 'grade-day', 'school-day'])
+    expect(await scoped.calendarEvents.count()).toBe(3)
+    expect(await scoped.calendarEvents.findById('other-class')).toBeUndefined()
+    expect((await service.resolveTimetableSpace(input)).map(cell => cell.date)).toEqual(['2026-05-04'])
+    for (const classGroupId of ['missing', 'class-other', 'class-b'])
+      await expect(service.resolveTimetableSpace({ ...input, classGroupId })).rejects.toBeInstanceOf(AuthorizationError)
+    for (const academicYearId of ['year-old', 'year-b'])
+      await expect(service.resolveTimetableSpace({ ...input, academicYearId })).rejects.toBeInstanceOf(AuthorizationError)
+    const revoke = {
+      staff: 'DELETE FROM staff_permission_assignments WHERE id = \'space\'',
+      teacher: 'DELETE FROM teacher_assignments WHERE teacher_id = \'teacher-a\'',
+      guardian: 'DELETE FROM guardian_student_links WHERE guardian_id = \'guardian-a\'',
+      student: 'UPDATE students SET status = \'inactive\' WHERE id = \'student-a\'',
+    }[kind]
+    await fixture.db.exec(revoke)
+    await expect(service.resolveTimetableSpace(input)).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

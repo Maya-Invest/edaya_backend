@@ -15,7 +15,7 @@ export interface AppShellCounts {
 }
 
 export async function buildAppShellCounts(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'students' | 'guardians' | 'staffMembers' | 'enrollments'>,
   input: GetAppShellCountsInput,
 ): Promise<AppShellCounts> {
   const classGroupIds = [...new Set(input.classGroupIds ?? [])]

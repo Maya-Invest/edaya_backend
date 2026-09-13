@@ -1,6 +1,6 @@
 import type { CloudflareEmailBinding } from "./email/cloudflare";
 
-export type NotifyEmailTransportKind = "log" | "cloudflare" | "smtp";
+export type NotifyEmailTransportKind = "log" | "cloudflare" | "smtp" | "novu";
 
 export interface NotifyTransportEnv {
   EMAIL_TRANSPORT?: NotifyEmailTransportKind | string;

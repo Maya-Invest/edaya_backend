@@ -1,20 +1,18 @@
-import { Permission } from '@edaya/core';
-
-import type { ReportCardResult } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import type { ReportCardResult } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/assessments/report-card-result.ts (PR3)
 export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.results,
     tenant: reportCardResultTenant(),
-    authorization: { resource: 'results', read: [Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: [Permission.REPORT_CARD_PUBLISH] },
-    
+    resource: 'results',
+
     gates: {
       preSave: validateReportCardResultSave,
       preDelete: validateReportCardResultDelete,

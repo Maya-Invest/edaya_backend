@@ -3,7 +3,6 @@ export { seedMinimalSchool } from './seed-minimal-school'
 export {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
-  provisionSeedingServiceAccountInProcess,
   type ProvisionSeedingServiceAccountResult,
   SEEDING_SERVICE_ID,
 } from './service-account'

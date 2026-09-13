@@ -2,18 +2,20 @@
 
 Backend monorepo (`edaya_backend`): API (including scheduled cron), domain packages, adaptors, seeding, and integration tests.
 
-Web frontends live in the sibling **[edaya_web](../edaya_web)** repo. For UI work there, follow `edaya_web/AGENTS.md` and `edaya_web/docs/specs/`.
+Web frontends live in the sibling **[edaya_frontend](../edaya_frontend)** repo. For UI work there, follow `edaya_frontend/AGENTS.md` and `edaya_frontend/docs/specs/`.
 
 ## Architecture
 
-- **Ports and adapters** — domain types and ports in `@edaya/core`; authorization engine in `@edaya/authorization`; school orchestration (workflows, entity configs, notifications, cron) in `@edaya/service`; Postgres in `@edaya/adaptor-postgres`; central auth persistence and Better Auth in sibling `edaya_identity`; school JWT/directory access through `@maya-invest/edaya-identity-client`; in-process notification adapters in `@edaya/adaptor-notify` (Novu remains `@edaya/adaptor-novu` as env fallback); in-process document rendering in `@edaya/adaptor-docs`; migration CLI in `@edaya/db-migrate`; HTTP/runtime wiring in `apps/api`.
+- **Ports and adapters** — domain types and ports in `@edaya/core`; business access policies in `@edaya/authorization`; school orchestration (workflows, entity configs, notifications, cron) in `@edaya/service`; Postgres in `@edaya/adaptor-postgres`; central auth persistence and Better Auth in sibling `edaya_identity`; school JWT/directory access through `@maya-invest/edaya-identity-client`; in-process notification adapters in `@edaya/adaptor-notify` (Novu is an email transport in `@edaya/adaptor-novu`); in-process document rendering in `@edaya/adaptor-docs`; migration CLI in `@edaya/db-migrate`; HTTP/runtime wiring in `apps/api`.
 - **Domain dependency direction** — `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Production `src/` in core must not import `@edaya/authorization` or `@edaya/service`; authorization `src/` must not import `@edaya/service`. `Permission` and staff grant scope validation live in `@edaya/core`.
 - **Boundary rule** — `package/domain-core`, `package/domain-authorization`, `package/domain-service`, `package/adaptor-postgres`, and adaptor packages never depend on `apps/` or `tooling/`.
 - **Package READMEs** — describe **this** package’s folders only. The monorepo map lives in [README.md](README.md) and [docs/reference/integrations-restructure.md](docs/reference/integrations-restructure.md).
 
 ## Portal authorization
 
-Staff permission assignments, role presets, scope seeds, and grant resolution affect **portal actors** (teachers, guardians, students) as well as staff workspace users. A change that looks correct for staff webapp routes can still break mobile portal authorization. After permission or seed changes, verify portal actors per [edaya_web demo-accounts.md](../edaya_web/docs/reference/demo-accounts.md) — not only staff API tests.
+Actors identify the selected caller profile. Staff authority comes from typed manual grants and current staff assignments; teachers, guardians, and students use their current business relationships. A guardian request never inherits staff authority. Keep actions and their resource scopes together in policies, constrain reads before pagination/counts, and authorize all existing/proposed write targets inside the command transaction. Presets assign permissions; role names never decide runtime access.
+
+After permission, relationship, or seed changes, verify teacher and family portals as well as staff API routes. Follow the [authorization model](package/domain-authorization/src/README.md) and the sibling frontend's demo-account guidance.
 
 ## Key docs
 

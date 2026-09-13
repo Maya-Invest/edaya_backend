@@ -3,7 +3,7 @@ import type { NotifyRecipientRow } from "../store/types";
 export type NotifySendChannel = "email" | "push";
 
 export function resolveSendChannels(
-  recipient: NotifyRecipientRow | undefined,
+  recipient: Pick<NotifyRecipientRow, "email" | "allows_notifications" | "channel_email" | "channel_push"> | undefined,
   options: { emailOnly?: boolean } = {},
 ): NotifySendChannel[] {
   if (!recipient || recipient.allows_notifications === false) {

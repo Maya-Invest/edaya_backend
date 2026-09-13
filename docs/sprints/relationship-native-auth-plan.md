@@ -1,5 +1,7 @@
 # Relationship-Native Authorization — Sprint Plan
 
+> **Historical checkpoint, superseded.** This records the former relationship-scope/capability implementation. Current actors contain identity only; canonical permission actions and current relationships are evaluated by [business policies](../../package/domain-authorization/src/README.md). Follow the [clean implementation plan](authorization-clean-implementation.md).
+
 > **Status:** Fold F complete; enforcement unified via [authorization-operations-plan.md](./archive/authorization-operations-plan.md) (G0–G7 + G6b ✅)  
 > **Created:** 2026-07-05  
 > **Last updated:** 2026-07-07  

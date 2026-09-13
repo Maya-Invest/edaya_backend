@@ -30,6 +30,7 @@ export const messageDeliveryBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   announcementId: z.string().trim().min(1, 'announcementId must not be blank').optional(),
   eventKey: z.string().trim().min(1, 'eventKey must not be blank').optional(),
+  sourceKey: z.string().trim().min(1, 'sourceKey must not be blank').optional(),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
   title: z.string().trim().min(1, 'title must not be blank'),
   body: z.string().min(1, 'body must not be blank'),
@@ -45,6 +46,12 @@ export const messageDeliveryBaseSchema = z.object({
 })
 
 function refineMessageDelivery(data: any, ctx: z.RefinementCtx) {
+  if (data.sourceKey && (!data.recipientKind || !data.recipientId)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Sourced deliveries require a recipient profile' })
+  }
+  if (data.sourceKey && data.announcementId && data.sourceKey !== data.announcementId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Announcement delivery source must match its announcement' })
+  }
   if ((data.status === MessageDeliveryStatus.Sent || data.status === MessageDeliveryStatus.Read) && !data.sentAt) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -80,7 +87,7 @@ export const messageDeliveryCreateSchema = messageDeliveryBaseSchema.omit({ crea
 export const messageDeliveryUpdateSchema = messageDeliveryBaseSchema.partial().required({ id: true }).superRefine(refineMessageDelivery)
 
 /**
- * Tracks delivery state for one notification to one auth account (subjectId).
+ * Tracks delivery state for one notification to one selected profile and its linked login account.
  * Ad-hoc announcements link via `announcementId`; system events use `eventKey`.
  */
 export class MessageDelivery {
@@ -94,6 +101,7 @@ export class MessageDelivery {
   get schoolId() { return this.data.schoolId }
   get announcementId() { return this.data.announcementId }
   get eventKey() { return this.data.eventKey }
+  get sourceKey() { return this.data.sourceKey }
   get subjectId() { return this.data.subjectId }
   get title() { return this.data.title }
   get body() { return this.data.body }

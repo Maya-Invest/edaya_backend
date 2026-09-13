@@ -1,6 +1,5 @@
 export * from './adapters'
 export * from './capabilities/documents'
-export * from './capabilities/email'
 export * from './capabilities/files'
 export * from './capabilities/invitations'
 export * from './capabilities/notifications'

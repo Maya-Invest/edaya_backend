@@ -2,7 +2,7 @@ import { MessageDeliveryRecipientKind, noOpNotificationGateway, RecordingNotific
 import { describe, expect, test } from 'bun:test'
 
 describe('notification gateway adapters', () => {
-  test('noOpNotificationGateway resolves enqueue, cancel, and subscriber sync', async () => {
+  test('noOpNotificationGateway resolves enqueue and cancel', async () => {
     await expect(noOpNotificationGateway.enqueue({
       idempotencyKey: 'test:1',
       schoolId: 'school-1',
@@ -14,15 +14,6 @@ describe('notification gateway adapters', () => {
     })).resolves.toBeUndefined()
 
     await expect(noOpNotificationGateway.cancel('test:1')).resolves.toBeUndefined()
-    await expect(noOpNotificationGateway.upsertRecipient({
-      schoolId: 'school-1',
-      recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: 'g1', subjectId: 'auth-g1' },
-      preferences: {},
-    })).resolves.toBeUndefined()
-    await expect(noOpNotificationGateway.removeRecipient(
-      'school-1',
-      { kind: MessageDeliveryRecipientKind.Guardian, id: 'g1', subjectId: 'auth-g1' },
-    )).resolves.toBeUndefined()
   })
 
   test('RecordingNotificationGateway records enqueue and cancel', async () => {

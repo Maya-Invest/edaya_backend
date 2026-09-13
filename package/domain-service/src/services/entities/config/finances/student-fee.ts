@@ -1,37 +1,25 @@
-import { Permission } from '@edaya/core';
-import type { ActionSelection } from '@edaya/authorization';
-import type { StudentFee } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
+import type { StudentFee } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 
-import { BusinessRuleViolationError, FeeStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { dateTime } from '../../entity-config/helper-utils';
-import { indirectTenant } from '../../entity-config/tenant';
+import { BusinessRuleViolationError, FeeStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/finances/student-fee.ts (PR3)
 export const studentFeeConfig: EntityConfigFactory<StudentFee> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.studentFees,
     tenant: studentFeeTenant(),
-    authorization: { resource: 'studentFees', read: [Permission.PAYMENT_READ], write: studentFeeWriteAction, delete: Permission.PAYMENT_CANCEL },
-    
+    resource: 'studentFees',
+
     gates: {
       preSave: validateStudentFeeSave,
       preDelete: validateStudentFeeDelete,
     },
     atomicExecution,
   })
-
-function studentFeeWriteAction(
-  entity: StudentFee,
-  existing: StudentFee | undefined,
-): ActionSelection {
-  if (existing?.status !== FeeStatus.Cancelled && entity.status === FeeStatus.Cancelled) {
-    return Permission.PAYMENT_CANCEL
-  }
-  return Permission.PAYMENT_RECORD
-}
 
 function studentFeeTenant(): EntityTenantResolver<StudentFee> {
   return indirectTenant(async (entity, repositories) => {

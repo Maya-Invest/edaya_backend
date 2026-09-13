@@ -1,20 +1,18 @@
-import { Permission } from '@edaya/core';
-
-import type { StudentIncidentInvolvement } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError, StudentClassEnrollmentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import type { StudentIncidentInvolvement } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError, StudentClassEnrollmentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-incident-involvement.ts (PR3)
 export const studentIncidentInvolvementConfig: EntityConfigFactory<StudentIncidentInvolvement> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.studentIncidentInvolvements,
     tenant: incidentLinkedTenant(),
-    authorization: { resource: 'studentIncidentInvolvements', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
-    
+    resource: 'studentIncidentInvolvements',
+
     gates: {
       preSave: validateStudentIncidentInvolvementSave,
     },

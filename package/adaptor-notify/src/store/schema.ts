@@ -12,7 +12,11 @@ CREATE TABLE IF NOT EXISTS notify.recipients (
   channel_push BOOLEAN NOT NULL DEFAULT FALSE,
   recipient_kind TEXT,
   recipient_id TEXT,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT command_notification_destination CHECK (
+    ((tenant = 'platform' AND subject_id = 'auth:' || email AND recipient_id = email)
+      OR subject_id = 'invite:' || recipient_id) IS TRUE
+  )
 );
 
 CREATE TABLE IF NOT EXISTS notify.devices (

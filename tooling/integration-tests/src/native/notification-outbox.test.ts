@@ -33,7 +33,7 @@ const recipient = { kind: MessageDeliveryRecipientKind.Guardian, id: 'outbox-gua
 const intent = (id: string) => ({ idempotencyKey: id, schoolId: 'outbox-school', kind: 'event' as const, eventKey: 'test', title: 'Synthetic', body: 'Fixture only', recipients: [recipient] })
 beforeAll(async () => {
   await applyNotifySchemaOnDrizzle(handles[0]!.db)
-  await gateway.upsertRecipient({ schoolId: 'outbox-school', recipient, email: 'fixture@example.test', preferences: { channels: { email: true, push: true } } })
+  for (const runtime of runtimes) runtime.resolveSchoolRecipient = async () => ({ schoolId: 'outbox-school', recipient, email: 'fixture@example.test', preferences: { channels: { email: true, push: true } } })
   await gateway.registerPushDevice!({ schoolId: 'outbox-school', subjectId: recipient.subjectId, provider: 'fcm', token: 'synthetic-device' })
 })
 afterAll(async () => {

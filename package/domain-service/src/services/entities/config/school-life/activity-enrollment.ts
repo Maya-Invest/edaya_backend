@@ -1,19 +1,17 @@
-import { Permission } from '@edaya/core';
-
-import type { ActivityEnrollment } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { config } from '../../entity-config';
-import { indirectTenant } from '../../entity-config/tenant';
+import type { ActivityEnrollment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { config } from '../../entity-config'
+import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school-life/activity-enrollment.ts (PR3)
 export const activityEnrollmentConfig: EntityConfigFactory<ActivityEnrollment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.activityEnrollments,
     tenant: activityEnrollmentTenant(),
-    authorization: { resource: 'activityEnrollments', read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_CREATE] },
-    
+    resource: 'activityEnrollments',
+
     gates: {
       preSave: validateActivityEnrollmentSave,
     },

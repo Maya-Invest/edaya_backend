@@ -25,15 +25,16 @@ function buildSignedRequest(body: string): Request {
 describe("createNovuDeliveryWebhookAdapter", () => {
   const adapter = createNovuDeliveryWebhookAdapter({ webhookSecret: WEBHOOK_SECRET });
 
-  test("parseEvents maps message.delivered to sent using transactionId", async () => {
+  test("parseEvents maps message.delivered to sent using explicit delivery correlation", async () => {
     const body = JSON.stringify({
       type: "message.delivered",
       timestamp: "2026-06-23T12:00:00.000Z",
       data: {
         object: {
           _id: "novu-msg-1",
-          transactionId: "delivery:ann1:subject:stu1",
-          channel: "in_app",
+          transactionId: "delivery:ann1:subject:stu1:subject:stu1:email",
+          payload: { deliveryId: "delivery:ann1:subject:stu1", subjectId: "subject:stu1" },
+          channel: "email",
           subscriberId: "subject:stu1",
           updatedAt: "2026-06-23T12:00:01.000Z",
         },
@@ -46,7 +47,7 @@ describe("createNovuDeliveryWebhookAdapter", () => {
       deliveryId: "delivery:ann1:subject:stu1",
       status: "sent",
       providerMessageId: "novu-msg-1",
-      channel: "in_app",
+      channel: "email",
       failureReason: undefined,
       occurredAt: new Date("2026-06-23T12:00:00.000Z"),
       subjectId: "subject:stu1",
@@ -57,7 +58,9 @@ describe("createNovuDeliveryWebhookAdapter", () => {
     const body = JSON.stringify({
       type: "message.failed",
       data: {
-        transactionId: "delivery:ann1:subject:g1",
+        transactionId: "delivery:ann1:subject:g1:subject:g1:email",
+        payload: { deliveryId: "delivery:ann1:subject:g1", subjectId: "subject:g1" },
+        channel: "email",
         _id: "novu-msg-2",
         error: { message: "SMTP bounce" },
       },
@@ -76,7 +79,9 @@ describe("createNovuDeliveryWebhookAdapter", () => {
     const body = JSON.stringify({
       type: "message.sent",
       data: {
-        transactionId: "delivery:ann1:subject:g1",
+        transactionId: "delivery:ann1:subject:g1:subject:g1:email",
+        payload: { deliveryId: "delivery:ann1:subject:g1", subjectId: "subject:g1" },
+        channel: "email",
         _id: "novu-msg-3",
       },
     });
@@ -84,11 +89,23 @@ describe("createNovuDeliveryWebhookAdapter", () => {
     expect(await adapter.parseEvents(body)).toEqual([]);
   });
 
+  test.each([
+    { transactionId: "invitation:123:email" },
+    { transactionId: "delivery:person:email", payload: { deliveryId: "delivery" } },
+    { transactionId: "different:person:email", payload: { deliveryId: "delivery", subjectId: "person" } },
+    { transactionId: "delivery:person:email", payload: { deliveryId: "delivery", subjectId: "other" } },
+    { transactionId: "delivery:person:email", payload: { deliveryId: "delivery", subjectId: "person" }, channel: "push" },
+  ])("ignores unrelated or mismatched receipt correlation: %j", async (message) => {
+    expect(await adapter.parseEvents(JSON.stringify({ type: "message.delivered", data: { channel: "email", subscriberId: "person", ...message } }))).toEqual([]);
+  });
+
   test("verifyRequest accepts Svix-signed payloads", async () => {
     const body = JSON.stringify({
       type: "message.read",
       data: {
-        transactionId: "delivery:ann1:subject:g1",
+        transactionId: "delivery:ann1:subject:g1:subject:g1:email",
+        payload: { deliveryId: "delivery:ann1:subject:g1", subjectId: "subject:g1" },
+        channel: "email",
         _id: "novu-msg-4",
         subscriber: { subscriberId: "subject:g1" },
       },

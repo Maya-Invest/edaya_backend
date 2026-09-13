@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto'
  *     (or run `bun repo novu bootstrap apply`)
  *   - Optional: NOVU_WEBHOOK_SECRET for local webhook simulation
  */
-import { buildSignedNovuWebhookRequest, createNovuInvitationDeliveryPortFromSecretKey } from '@edaya/adaptor-novu'
+import { buildSignedNovuWebhookRequest, createNovuEmailTransportFromSecretKey } from '@edaya/adaptor-novu'
 import {
   executeCoreCommand,
   HttpSeedClient,
@@ -89,8 +89,9 @@ async function simulateWebhook(delivery: MessageDeliveryRow): Promise<void> {
     data: {
       object: {
         _id: `novu-sim-${randomUUID()}`,
-        transactionId: delivery.id,
-        channel: 'in_app',
+        transactionId: `${delivery.id}:${delivery.subjectId}:email`,
+        payload: { deliveryId: delivery.id, subjectId: delivery.subjectId },
+        channel: 'email',
         subscriberId: delivery.subjectId,
         updatedAt: new Date().toISOString(),
       },
@@ -108,35 +109,18 @@ async function simulateWebhook(delivery: MessageDeliveryRow): Promise<void> {
   log('Webhook simulated', `POST /webhooks/notification-delivery → ${JSON.stringify(body)}`)
 }
 
-async function smokeTransientInvitation(): Promise<string> {
-  log('Transient invite subscriber (account_invitation)')
-  const invitationId = `inv-smoke-${Date.now()}`
-  const subscriberId = `invite:${invitationId}`
-
-  const port = createNovuInvitationDeliveryPortFromSecretKey({
-    secretKey: process.env.NOVU_SECRET_KEY!,
-    serverURL: process.env.NOVU_API_URL,
+async function smokeEmailTransport(): Promise<string> {
+  const idempotencyKey = `email-smoke-${Date.now()}`
+  const transport = createNovuEmailTransportFromSecretKey({ secretKey: process.env.NOVU_SECRET_KEY!, serverURL: process.env.NOVU_API_URL })
+  await transport.send({
+    to: `novu-smoke+${Date.now()}@example.com`,
+    from: { email: 'noreply@edayaplus.com' },
+    subject: 'Novu email transport smoke',
+    html: '<p>Transactional email smoke fixture.</p>',
+    idempotencyKey,
   })
-
-  await port.deliver({
-    invitationId,
-    schoolId: SEED_SCHOOL_ID,
-    contactChannel: 'email',
-    contactValue: `novu-smoke+${Date.now()}@example.com`,
-    displayName: 'Novu Smoke Invitee',
-    actorKind: 'staff',
-    inviteUrl: `https://app.edaya.test/invite/smoke-${invitationId}`,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    emailSubject: 'Novu smoke test — account invitation',
-    emailBody: '<p>Transient invite smoke test from tooling/integration-tests/smoke/novu-e2e.ts — safe to ignore.</p>',
-  })
-
-  log('Transient subscriber created + triggered', `${subscriberId} → workflow account_invitation`)
-
-  await port.revoke(invitationId)
-  log('Transient subscriber deleted', subscriberId)
-
-  return invitationId
+  log('Email transport triggered', idempotencyKey)
+  return idempotencyKey
 }
 
 async function main() {
@@ -150,7 +134,7 @@ async function main() {
   log('Waiting for API')
   await waitForApi(baseUrl, { timeoutMs: 15_000 })
 
-  const inviteTransactionId = await smokeTransientInvitation()
+  const inviteTransactionId = await smokeEmailTransport()
 
   const client = new HttpSeedClient({
     baseUrl,
@@ -237,7 +221,7 @@ async function main() {
 
   console.log('\n── Novu dashboard (invite) ──')
   console.log(`1. Filter Activity by transactionId: ${inviteTransactionId}`)
-  console.log('2. Confirm workflow `account_invitation` fired to a transient invite:… subscriber')
+  console.log('2. Confirm workflow `transactional.email` fired to the explicit email override')
   console.log('3. Orphan cleanup: bun repo novu cleanup apply -- --transient-invites --yes')
 
   console.log('\n── Novu dashboard (announcement) ──')

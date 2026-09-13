@@ -1,4 +1,4 @@
-import type { Permission, ScopeGrantInput } from '@edaya/authorization'
+import type { GrantScope, Permission } from '@edaya/core'
 
 export interface StaffPermissionAssignmentSeedRecord {
   id: string
@@ -6,7 +6,7 @@ export interface StaffPermissionAssignmentSeedRecord {
   schoolId: string
   academicYearId: string
   permission: Permission
-  scopeIds: string
+  scopes: GrantScope[]
   status: 'active'
 }
 
@@ -39,6 +39,6 @@ export interface StaffRoleAssignmentPresetRecord {
   schoolId: string
   academicYearId: string
   roleId: string
-  scopeGrants?: readonly ScopeGrantInput[]
+  scopesByPermission?: Readonly<Partial<Record<Permission, readonly GrantScope[]>>>
   status: 'active'
 }

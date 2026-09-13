@@ -1,287 +1,136 @@
 import {
   ActorAssuranceLevel,
   AuthorizationError,
-  createStaffActorMetadata,
-  Permission,
-} from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
-import { describe, expect, mock, test } from 'bun:test'
-import {
   createServiceAccount,
+  createServiceStaffActorMetadata,
+  createStaffActorMetadata,
   listServiceAccounts,
   revokeServiceAccount,
   rotateServiceAccountKey,
   updateServiceAccount,
-} from '../../src/service-accounts/provision'
-import { effectiveGrantsForRoles } from '../support/effective-grants'
+} from '@edaya/authorization'
+import { Permission, StaffPermissionAssignment } from '@edaya/core'
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
+import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
 
-const now = new Date('2026-09-01T00:00:00Z')
-
-function adminActor() {
-  return createStaffActorMetadata({
-    subjectId: 'subject-admin',
-    staffMemberId: 'staff-admin',
-    schoolId: 'school-1',
-    requestId: 'test',
-    authenticatedAt: now,
-    assuranceLevel: ActorAssuranceLevel.Strong,
-    effectiveGrants: effectiveGrantsForRoles(['admin']),
+describe('service accounts with live grants and transactions', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  const actor = createStaffActorMetadata({ subjectId: 'person-a', staffMemberId: 'staff-a', schoolId: 'school-a', requestId: 'test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified })
+  const scopedGrant = { permission: Permission.GRADE_INPUT, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }] }
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
   })
-}
+  afterEach(async () => {
+    await fixture.db.close()
+  })
+  const create = (elevated = false) => createServiceAccount(fixture.repositories, actor, {
+    serviceId: 'reports',
+    displayName: 'Report Integration',
+    elevated,
+    ...(elevated ? {} : { permissionAssignments: [scopedGrant] }),
+  }, fixture.atomic)
 
-function createProvisionRepositories() {
-  const staffMembers: unknown[] = []
-  const serviceApiKeys: unknown[] = []
-  const staffPermissionAssignments: unknown[] = []
-
-  return {
-    repositories: {
-      staffMembers: {
-        findOne: mock(async (): Promise<{ id: string } | undefined> => undefined),
-        findById: mock(async (id: string) => (staffMembers as { id: string }[]).find(member => member.id === id)),
-        save: mock(async (member: unknown) => {
-          const typedMember = member as { id: string }
-          const index = (staffMembers as { id: string }[]).findIndex(entry => entry.id === typedMember.id)
-          if (index >= 0) {
-            staffMembers[index] = member
-          }
-          else {
-            staffMembers.push(member)
-          }
-          return member
-        }),
-        list: mock(async () => staffMembers),
-      },
-      serviceApiKeys: {
-        countActiveElevatedServiceAccounts: mock(async () => 0),
-        save: mock(async (key: unknown) => {
-          serviceApiKeys.push(key)
-          return key
-        }),
-        list: mock(async ({ staffMemberId }: { staffMemberId: string }) =>
-          (serviceApiKeys as { staffMemberId: string }[]).filter(key => key.staffMemberId === staffMemberId),
-        ),
-      },
-      staffPermissionAssignments: {
-        save: mock(async (assignment: unknown) => {
-          staffPermissionAssignments.push(assignment)
-          return assignment
-        }),
-        list: mock(async () => staffPermissionAssignments),
-        delete: mock(async () => {}),
-      },
-    },
-    staffMembers,
-    serviceApiKeys,
-    staffPermissionAssignments,
-  }
-}
-
-describe('createServiceAccount', () => {
-  test('creates delegated service account with permission assignments', async () => {
-    const { repositories } = createProvisionRepositories()
-    const result = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'seeding',
-      displayName: 'Seeding Integration',
-      permissionAssignments: [{
-        permission: Permission.GRADE_INPUT,
-        scopeIds: 'class-1',
-        academicYearId: 'year-1',
-      }],
-    })
-
-    expect(result.apiKey).toMatch(/^sk_/)
+  test('creates a service identity and only its typed manual grants', async () => {
+    const result = await create()
+    expect(result.apiKey).toMatch(/^sk_live_/)
     expect(result.staffMember.accountKind).toBe('service')
-    expect(result.staffMember.serviceId).toBe('seeding')
+    const grants = await fixture.repositories.staffPermissionAssignments.list({ staffId: result.staffMember.id })
+    expect(grants).toHaveLength(1)
+    expect(grants[0]?.scopes).toEqual(scopedGrant.scopes)
+    expect(grants[0]?.permission).toBe(Permission.GRADE_INPUT)
+    expect(await listServiceAccounts(fixture.repositories, actor)).toHaveLength(1)
   })
 
-  test('rejects non-elevated service account without permission assignments', async () => {
-    const { repositories } = createProvisionRepositories()
-    await expect(createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'empty',
-      displayName: 'Empty Service',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('requires grants for delegated accounts and enforces the single elevated-account limit', async () => {
+    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'empty', displayName: 'Empty' }, fixture.atomic))
+      .rejects
+      .toMatchObject({ code: 'SERVICE_ACCOUNT_GRANTS_REQUIRED' })
+    await create(true)
+    await expect(createServiceAccount(fixture.repositories, actor, { serviceId: 'second', displayName: 'Second', elevated: true }, fixture.atomic))
+      .rejects
+      .toMatchObject({ code: 'OWNER_SERVICE_ACCOUNT_LIMIT' })
   })
 
-  test('rejects duplicate active service id within school', async () => {
-    const { repositories } = createProvisionRepositories()
-    repositories.staffMembers.findOne = mock(async () => ({ id: 'existing' }))
-
-    await expect(createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'seeding',
-      displayName: 'Duplicate',
-      elevated: true,
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('rejects duplicate active service ids but allows reuse after revocation', async () => {
+    const first = await create()
+    await expect(create()).rejects.toMatchObject({ code: 'SERVICE_ACCOUNT_ID_CONFLICT' })
+    await revokeServiceAccount(fixture.repositories, actor, first.staffMember.id, fixture.atomic)
+    expect((await create()).staffMember.id).not.toBe(first.staffMember.id)
   })
 
-  test('allows creating a new account when only an inactive service id exists', async () => {
-    const { repositories } = createProvisionRepositories()
-    repositories.staffMembers.findOne = mock(async () => undefined)
-
-    const result = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'seeding',
-      displayName: 'Seeding Integration',
-      elevated: true,
-      apiKey: 'sk_live_dev_seeding_integration_key_01',
-    })
-
-    expect(result.staffMember.serviceId).toBe('seeding')
-    expect(result.apiKey).toBe('sk_live_dev_seeding_integration_key_01')
+  test('updates the display and replaces grants without keeping duplicate authority', async () => {
+    const { staffMember } = await create()
+    const next = { ...scopedGrant, permission: Permission.GRADE_READ }
+    const updated = await updateServiceAccount(fixture.repositories, actor, staffMember.id, {
+      displayName: 'New Name',
+      permissionAssignments: [next],
+    }, fixture.atomic)
+    expect(updated.fullName).toBe('New Name')
+    const grants = await fixture.repositories.staffPermissionAssignments.list({ staffId: staffMember.id })
+    expect(grants.map(grant => grant.permission)).toEqual([Permission.GRADE_READ])
+    await expect(updateServiceAccount(fixture.repositories, actor, staffMember.id, {}, fixture.atomic))
+      .rejects
+      .toMatchObject({ code: 'SERVICE_ACCOUNT_UPDATE_EMPTY' })
   })
 
-  test('rejects second elevated service account for the same school', async () => {
-    const { repositories } = createProvisionRepositories()
-    repositories.serviceApiKeys.countActiveElevatedServiceAccounts = mock(async () => 1)
-
-    await expect(createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'owner-2',
-      displayName: 'Owner Two',
-      elevated: true,
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-})
-
-describe('updateServiceAccount', () => {
-  test('updates display name for active service account', async () => {
-    const { repositories, staffMembers } = createProvisionRepositories()
-    const created = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'reports',
-      displayName: 'Reports',
-      elevated: true,
-    })
-    staffMembers.length = 0
-    staffMembers.push(created.staffMember)
-
-    const updated = await updateServiceAccount(
-      repositories as never,
-      adminActor(),
-      created.staffMember.id,
-      { displayName: 'Reports v2' },
-    )
-
-    expect(updated.firstName).toBe('Reports')
-    expect(updated.lastName).toBe('v2')
-  })
-
-  test('updates permission assignments for active service account', async () => {
-    const { repositories, staffMembers } = createProvisionRepositories()
-    const created = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'reports',
-      displayName: 'Reports',
-      elevated: true,
-    })
-    staffMembers.length = 0
-    staffMembers.push(created.staffMember)
-
-    await updateServiceAccount(
-      repositories as never,
-      adminActor(),
-      created.staffMember.id,
-      {
-        permissionAssignments: [{
-          permission: Permission.GRADE_INPUT,
-          scopeIds: 'class-1',
-          academicYearId: 'year-1',
-        }],
-      },
-    )
-  })
-
-  test('rejects empty update payload', async () => {
-    const { repositories } = createProvisionRepositories()
-    await expect(updateServiceAccount(
-      repositories as never,
-      adminActor(),
-      'missing',
-      {},
-    )).rejects.toBeInstanceOf(BusinessRuleViolationError)
-  })
-})
-
-describe('listServiceAccounts', () => {
-  test('lists service accounts for school', async () => {
-    const { repositories } = createProvisionRepositories()
-    await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'cron',
-      displayName: 'Cron',
-      elevated: true,
-    })
-
-    const accounts = await listServiceAccounts(repositories as never, adminActor())
-    expect(accounts).toHaveLength(1)
-  })
-})
-
-describe('revokeServiceAccount', () => {
-  test('deactivates service account and revokes active keys', async () => {
-    const { repositories, staffMembers } = createProvisionRepositories()
-    const created = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'mobile',
-      displayName: 'Mobile',
-      elevated: true,
-      apiKey: 'sk_live_test_mobile_key_123456789012345678901234',
-    })
-    staffMembers.length = 0
-    staffMembers.push(created.staffMember)
-
-    const revoked = await revokeServiceAccount(repositories as never, adminActor(), created.staffMember.id)
-    expect(revoked.isActive).toBe(false)
-  })
-})
-
-describe('rotateServiceAccountKey', () => {
-  test('revokes prior keys and returns a new api key', async () => {
-    const { repositories, staffMembers } = createProvisionRepositories()
-    const created = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'webhook',
-      displayName: 'Webhook',
-      elevated: true,
-      apiKey: 'sk_live_test_webhook_key_123456789012345678901234',
-    })
-    staffMembers.length = 0
-    staffMembers.push(created.staffMember)
-
-    const rotated = await rotateServiceAccountKey(repositories as never, adminActor(), created.staffMember.id)
-    expect(rotated.apiKey).toMatch(/^sk_/)
+  test('rotates and revokes keys while preserving the account identity', async () => {
+    const created = await create()
+    const rotated = await rotateServiceAccountKey(fixture.repositories, actor, created.staffMember.id, {}, fixture.atomic)
     expect(rotated.apiKey).not.toBe(created.apiKey)
+    const keys = await fixture.repositories.serviceApiKeys.list({ staffMemberId: created.staffMember.id })
+    expect(keys.filter(key => !key.revokedAt)).toHaveLength(1)
+    expect(keys.filter(key => key.revokedAt)).toHaveLength(1)
+    const revoked = await revokeServiceAccount(fixture.repositories, actor, created.staffMember.id, fixture.atomic)
+    expect(revoked.isActive).toBe(false)
+    expect((await fixture.repositories.serviceApiKeys.list({ staffMemberId: created.staffMember.id })).every(key => !!key.revokedAt)).toBe(true)
+    await expect(rotateServiceAccountKey(fixture.repositories, actor, created.staffMember.id, {}, fixture.atomic))
+      .rejects
+      .toMatchObject({ code: 'SERVICE_ACCOUNT_NOT_FOUND' })
   })
 
-  test('can rotate to a known profile api key', async () => {
-    const { repositories, staffMembers } = createProvisionRepositories()
-    const created = await createServiceAccount(repositories as never, adminActor(), {
-      serviceId: 'seeding',
-      displayName: 'Seeding',
-      elevated: true,
-      apiKey: 'sk_live_test_webhook_key_123456789012345678901234',
-    })
-    staffMembers.length = 0
-    staffMembers.push(created.staffMember)
-
-    const profileKey = 'sk_live_dev_edaya_ci_cocody_seeding_integration_key'
-    const rotated = await rotateServiceAccountKey(repositories as never, adminActor(), created.staffMember.id, {
-      apiKey: profileKey,
-    })
-    expect(rotated.apiKey).toBe(profileKey)
+  test('rolls back the account and grants when key persistence fails', async () => {
+    const save = spyOn(fixture.repositories.serviceApiKeys, 'save').mockRejectedValue(new Error('Key persistence failed'))
+    try {
+      await expect(create()).rejects.toThrow('Key persistence failed')
+    }
+    finally { save.mockRestore() }
+    expect(await fixture.repositories.staffMembers.count({ accountKind: 'service' })).toBe(0)
+    expect(await fixture.repositories.staffPermissionAssignments.count()).toBe(0)
   })
-})
 
-describe('createServiceAccount authorization', () => {
-  test('rejects creators without service account create permission', async () => {
-    const { repositories } = createProvisionRepositories()
-    const actor = createStaffActorMetadata({
-      subjectId: 'subject-teacher',
-      staffMemberId: 'staff-teacher',
-      schoolId: 'school-1',
-      requestId: 'test',
-      authenticatedAt: now,
-      assuranceLevel: ActorAssuranceLevel.Strong,
-      effectiveGrants: effectiveGrantsForRoles(['teacher']),
-    })
+  test('owner service accounts cannot manage other service accounts', async () => {
+    const created = await create(true)
+    const machine = createServiceStaffActorMetadata({ subjectId: 'service-person', staffMemberId: created.staffMember.id, schoolId: 'school-a', requestId: 'machine', authenticatedAt: new Date() })
+    await expect(createServiceAccount(fixture.repositories, machine, { serviceId: 'child', displayName: 'Child', elevated: true }, fixture.atomic))
+      .rejects
+      .toBeInstanceOf(AuthorizationError)
+  })
 
-    await expect(createServiceAccount(repositories as never, actor, {
-      serviceId: 'blocked',
-      displayName: 'Blocked',
-      elevated: true,
-    })).rejects.toBeInstanceOf(AuthorizationError)
+  test('an administrator cannot rotate into broader grants or manage elevated accounts', async () => {
+    const delegated = await create()
+    const elevated = await createServiceAccount(fixture.repositories, actor, { serviceId: 'owner', displayName: 'Owner', elevated: true }, fixture.atomic)
+    await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
+    for (const permission of [Permission.SERVICE_ACCOUNT_ROTATE_KEY, Permission.SERVICE_ACCOUNT_UPDATE, Permission.SERVICE_ACCOUNT_REVOKE]) {
+      await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+        id: permission,
+        schoolId: 'school-a',
+        staffId: 'staff-a',
+        academicYearId: 'year-a',
+        permission,
+        scopes: [{ kind: 'school' }],
+      }))
+    }
+    await expect(rotateServiceAccountKey(fixture.repositories, actor, delegated.staffMember.id, {}, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(rotateServiceAccountKey(fixture.repositories, actor, elevated.staffMember.id, {}, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(updateServiceAccount(fixture.repositories, actor, elevated.staffMember.id, { displayName: 'Changed' }, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(revokeServiceAccount(fixture.repositories, actor, elevated.staffMember.id, fixture.atomic)).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
+      id: 'delegation',
+      schoolId: 'school-a',
+      staffId: 'staff-a',
+      ...scopedGrant,
+    }))
+    expect((await rotateServiceAccountKey(fixture.repositories, actor, delegated.staffMember.id, {}, fixture.atomic)).apiKey).toMatch(/^sk_live_/)
   })
 })

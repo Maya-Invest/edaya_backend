@@ -1,11 +1,11 @@
-import type { NormalizedDeliveryEvent } from "@edaya/core";
-import { resolveEmailFrom, resolveEmailTransport } from "./email/resolve";
+import type { NormalizedDeliveryEvent, ResolveNotificationDispatchRecipient } from "@edaya/core";
 import type { EmailTransportPort } from "./email/port";
 import type { NotifyTransportEnv } from "./env";
 import type { FcmTransport } from "./push/fcm";
+import type { NotifySql } from "./store/types";
+import { resolveEmailFrom, resolveEmailTransport } from "./email/resolve";
 import { resolveFcmTransport } from "./push/fcm";
 import { createNotifySqlFromDrizzle } from "./store/sql";
-import type { NotifySql } from "./store/types";
 
 export interface NotifyRuntime {
   sql: NotifySql;
@@ -14,6 +14,7 @@ export interface NotifyRuntime {
   from: { email: string; name?: string };
   log: (message: string, extra?: Record<string, unknown>) => void;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
+  resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
 }
 
 export interface CreateNotifyRuntimeOptions {
@@ -21,6 +22,7 @@ export interface CreateNotifyRuntimeOptions {
   env: NotifyTransportEnv;
   log?: (message: string, extra?: Record<string, unknown>) => void;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
+  resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
   email?: EmailTransportPort;
   fcm?: FcmTransport;
 }
@@ -38,6 +40,7 @@ export function createNotifyRuntime(options: CreateNotifyRuntimeOptions): Notify
     from: resolveEmailFrom(options.env),
     log,
     onDeliveryEvent: options.onDeliveryEvent,
+    resolveSchoolRecipient: options.resolveSchoolRecipient,
   };
 }
 
@@ -47,6 +50,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
   env: NotifyTransportEnv;
   log?: CreateNotifyRuntimeOptions["log"];
   onDeliveryEvent?: CreateNotifyRuntimeOptions["onDeliveryEvent"];
+  resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
   email?: EmailTransportPort;
   fcm?: FcmTransport;
 }): NotifyRuntime {
@@ -55,6 +59,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
     env: options.env,
     log: options.log,
     onDeliveryEvent: options.onDeliveryEvent,
+    resolveSchoolRecipient: options.resolveSchoolRecipient,
     email: options.email,
     fcm: options.fcm,
   });

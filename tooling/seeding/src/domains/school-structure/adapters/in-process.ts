@@ -24,7 +24,7 @@ export function createInProcessSchoolStructureSeedPort(
       await service.setupWorkflow.registerSchool(record)
     }),
     saveGradeLevel: record => withSeedPortError('schoolStructure.saveGradeLevel', async () => {
-      await service.baseService.entities.gradeLevels.save(new GradeLevel(record), { moduleChecked: true })
+      await service.baseService.entities.gradeLevels.save(new GradeLevel(record))
     }),
     createAcademicYear: record => withSeedPortError('schoolStructure.createAcademicYear', async () => {
       await service.setupWorkflow.createAcademicYear({
@@ -47,7 +47,7 @@ export function createInProcessSchoolStructureSeedPort(
       await service.setupWorkflow.publishAcademicPeriod({ academicPeriodId })
     }),
     savePeriodDefinition: record => withSeedPortError('schoolStructure.savePeriodDefinition', async () => {
-      await service.baseService.entities.periodDefinitions.save(new PeriodDefinition(record), { moduleChecked: true })
+      await service.baseService.entities.periodDefinitions.save(new PeriodDefinition(record))
     }),
     staffMemberExists: staffId => withSeedPortError('schoolStructure.staffMemberExists', async () =>
       Boolean(await application.repositories.staffMembers.findById(staffId))),

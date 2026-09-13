@@ -1,57 +1,37 @@
-import type { ActorMetadata, AuthorizationRepositories, EffectiveGrants } from '@edaya/authorization'
-import { ActorAssuranceLevel, AuthorizationError, createRepositoryAuthorizationPolicy, createStaffActorMetadata } from '@edaya/authorization'
-import { noOpNotificationGateway, Permission } from '@edaya/core'
-import { staffPermissionAssignmentConfig } from '@edaya/service'
-import { describe, expect, test } from 'bun:test'
+import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { noOpFileStorage, noOpNotificationGateway, Permission, StaffPermissionAssignment } from '@edaya/core'
+import { SchoolApplication } from '@edaya/service'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase } from '../../../../adaptor-postgres/tests/support/authorization-database'
 
-function actorWithPermissions(permissions: readonly Permission[]): ActorMetadata {
-  const grants: EffectiveGrants = {
-    permissions: new Set(permissions),
-    scopeGrants: permissions.map(permission => ({
-      permission,
-      scopeType: 'school',
-      scopeEntityIds: ['school-1'],
-    })),
-    isElevated: false,
-  }
-
-  return createStaffActorMetadata({
-    subjectId: 'subject-staff',
-    staffMemberId: 'staff-1',
-    schoolId: 'school-1',
-    requestId: 'request-1',
-    authenticatedAt: new Date('2026-01-01T00:00:00Z'),
-    assuranceLevel: ActorAssuranceLevel.Strong,
-    effectiveGrants: grants,
+describe('permission administration actions', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  const actor = createStaffActorMetadata({ subjectId: 'person-a', staffMemberId: 'staff-a', schoolId: 'school-a', requestId: 'admin', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified })
+  beforeEach(async () => {
+    fixture = await createAuthorizationDatabase()
   })
-}
-
-function createConfigInput() {
-  const repositories = {
-    staffPermissionAssignments: {},
-  } as AuthorizationRepositories
-
-  return {
-    repositories,
-    policy: createRepositoryAuthorizationPolicy({ repositories }),
-    atomicExecution: {
-      execute: async <T>(operation: () => Promise<T>) => operation(),
-    },
-    notificationGateway: noOpNotificationGateway,
+  afterEach(async () => {
+    await fixture.db.close()
+  })
+  const grant = (permission: Permission) => new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'school' }] })
+  function service() {
+    return new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage }).forActor(actor).baseService.entities.staffPermissionAssignments
   }
-}
 
-describe('access-control entity permissions', () => {
-  test('staff permission assignments separate read from assign', async () => {
-    const config = staffPermissionAssignmentConfig({
-      ...createConfigInput(),
-      repositories: createConfigInput().repositories as never,
-    })
-    const reader = actorWithPermissions([Permission.ACCESS_CONTROL_READ])
-    const assigner = actorWithPermissions([Permission.ACCESS_CONTROL_ASSIGN])
+  test('reading grant administration does not allow assigning authority', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(grant(Permission.ACCESS_CONTROL_READ))
+    expect(await service().count()).toBe(1)
+    await expect(service().save(grant(Permission.STAFF_READ))).rejects.toThrow()
+    expect(await fixture.repositories.staffPermissionAssignments.count()).toBe(1)
+  })
 
-    expect(config.read.checkModule(reader)).toBeUndefined()
-    expect(() => config.write.checkModule(reader)).toThrow(AuthorizationError)
-    expect(config.write.checkModule(assigner)).toBeUndefined()
+  test('an assigner must also hold every delegated action and cannot use assignment authority to read grant administration', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(grant(Permission.ACCESS_CONTROL_ASSIGN))
+    await expect(service().list()).rejects.toThrow()
+    await expect(service().save(grant(Permission.STAFF_READ))).rejects.toThrow()
+    await fixture.repositories.staffPermissionAssignments.save(grant(Permission.STAFF_READ))
+    const delegated = new StaffPermissionAssignment({ ...grant(Permission.STAFF_READ).data, id: 'delegated', scopes: [{ kind: 'school' }] })
+    await service().save(delegated)
+    expect(await fixture.repositories.staffPermissionAssignments.findById('delegated')).toBeDefined()
   })
 })

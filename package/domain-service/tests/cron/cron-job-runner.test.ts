@@ -1,88 +1,30 @@
-import { createRepositoryAuthorizationPolicy } from '@edaya/authorization'
-import { AssessmentKind, RecordingNotificationGateway } from '@edaya/core'
+import { Assessment, AssessmentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
-import { describe, expect, mock, test } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
+import { buildNotificationDeliveryId } from '../../src/capabilities/notifications'
 import { runCronJobs } from '../../src/capabilities/scheduling-jobs/cron-job-runner'
 import { testFileStorage } from '../support/test-file-storage'
 
-describe('runCronJobs', () => {
-  test('processDueNotifications scans assessments and enqueues due-soon jobs per school', async () => {
+describe('scheduled notification runner with native scopes', () => {
+  let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
+  afterEach(async () => {
+    await fixture.db.close()
+  })
+  test('runs each school with the due-notification principal and produces correctly linked deliveries', async () => {
+    fixture = await createAuthorizationDatabase()
+    await seedAuthorizationRelationships(fixture.db)
+    await fixture.db.exec('UPDATE students SET subject_id = \'student-login\' WHERE id = \'student-a\'')
+    await fixture.repositories.assessments.save(new Assessment({ id: 'due', classGroupId: 'class-a', classSubjectId: 'math-a', periodId: 'period-a', title: 'Midterm', kind: AssessmentKind.Homework, maxScore: 20, coefficient: 1, dueAt: new Date('2026-06-20') }))
     const gateway = new RecordingNotificationGateway()
-    const asOf = new Date('2026-06-17T12:00:00.000Z')
-    const dueAt = new Date('2026-06-20T00:00:00.000Z')
-
-    const repositories = {
-      schools: {
-        list: mock(async () => [{ id: 'school-1' }]),
-        findById: mock(async () => ({ id: 'school-1', name: 'Test School' })),
-      },
-      assessments: {
-        list: mock(async () => [{
-          id: 'assessment-1',
-          classGroupId: 'cg1',
-          classSubjectId: 'cs1',
-          periodId: 'period1',
-          title: 'Midterm',
-          kind: AssessmentKind.Homework,
-          maxScore: 20,
-          coefficient: 1,
-          dueAt,
-          createdAt: new Date('2026-06-01T00:00:00.000Z'),
-        }]),
-      },
-      activities: {
-        list: mock(async () => []),
-      },
-      calendarEvents: {
-        list: mock(async () => []),
-      },
-      classGroups: {
-        findById: mock(async () => ({ id: 'cg1', schoolId: 'school-1', academicYearId: 'ay1' })),
-      },
-      enrollments: {
-        list: mock(async () => [{ studentId: 'student-1', classGroupId: 'cg1', status: 'active' }]),
-      },
-      staffAssignments: {},
-      staffMembers: {},
-      guardians: {},
-      guardianLinks: {},
-      students: {
-        findById: mock(async (id: string) => ({ id, schoolId: 'school-1', subjectId: `subject-${id}` })),
-      },
-      messageDeliveries: {
-        findById: mock(async () => undefined),
-        save: mock(async () => {}),
-      },
-    } as any
-
-    const application = new SchoolApplication({
-      atomicExecution: { execute: async operation => operation() },
-      notificationGateway: gateway,
-      fileStorage: testFileStorage,
-      repositories,
-      authorizationPolicy: createRepositoryAuthorizationPolicy({
-        repositories,
-        staffAssignmentRepository: repositories.staffAssignments,
-        staffMemberRepository: repositories.staffMembers,
-        guardianRepository: repositories.guardians,
-        guardianStudentLinkRepository: repositories.guardianLinks,
-        studentRepository: repositories.students,
-      }),
-    })
-
-    const summary = await runCronJobs(application, {
-      asOf,
-      jobKeys: ['processDueNotifications'],
-      requestIdPrefix: 'test-cron',
-    })
-
-    expect(summary.results).toHaveLength(1)
-    expect(summary.results[0]).toMatchObject({
-      schoolId: 'school-1',
-      jobKey: 'processDueNotifications',
-      result: { processed: 1, skipped: 0 },
-    })
+    const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
+    const summary = await runCronJobs(application, { asOf: new Date('2026-06-17T12:00:00Z'), jobKeys: ['processDueNotifications'] })
+    expect(summary.results.map(result => [result.schoolId, result.result.processed])).toEqual([['school-a', 1], ['school-b', 0]])
     expect(gateway.enqueued).toHaveLength(1)
-    expect(gateway.enqueued[0]?.idempotencyKey).toBe('delivery:assessment.due_soon:assessment-1:subject-student-1')
+    const id = buildNotificationDeliveryId('assessment.due_soon:due', 'student-login', { kind: MessageDeliveryRecipientKind.Student, id: 'student-a' })
+    expect(gateway.enqueued[0]?.idempotencyKey).toBe(id)
+    const delivery = await fixture.repositories.messageDeliveries.findById(id)
+    expect(delivery?.schoolId).toBe('school-a')
+    expect(delivery?.recipientId).toBe('student-a')
   })
 })

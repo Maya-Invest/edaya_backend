@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { resolveInteractiveActorIdentity } from '../../src/resolution/resolve-interactive-actor-identity'
+import { resolveInteractiveActorIdentity } from '../../src/access/identity'
 
 describe('resolveInteractiveActorIdentity', () => {
   test('resolves a single identity without X-Actor-Kind', async () => {

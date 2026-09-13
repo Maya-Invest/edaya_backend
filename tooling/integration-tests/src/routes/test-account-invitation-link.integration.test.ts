@@ -1,7 +1,7 @@
 import type { Hono } from 'hono'
 import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
-import { createBootstrapStaffActorMetadata } from '@edaya/authorization'
+import { createSchoolBootstrapActor } from '@edaya/authorization'
 import {
   MINIMAL_AUTH_FIXTURE_STAFF_EMAIL,
   MINIMAL_AUTH_FIXTURE_STAFF_ID,
@@ -24,10 +24,9 @@ async function registerUnlinkedStaff(
   application: ApiSchoolApplication,
   input: { id: string, email: string, firstName: string, lastName: string },
 ) {
-  const bootstrapActor = createBootstrapStaffActorMetadata({
+  const bootstrapActor = createSchoolBootstrapActor({
     schoolId: SEED_SCHOOL_ID,
     requestId: `register-${input.id}`,
-    staffMemberId: `register-${input.id}`,
   })
   const service = application.forActor(bootstrapActor)
   await service.setupWorkflow.registerStaffMember({

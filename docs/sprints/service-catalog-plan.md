@@ -1,5 +1,7 @@
 # Service Catalog & Student Accounting — Sprint Plan
 
+> **V1 implementation supersession (2026-09-13):** Use [Plan 03 — Service catalog and student accounting](v1/03-service-catalog-and-accounting.md) in the [seven-plan sequence](v1/00-common-requirements.md). The user approved account-funded allocations, including one payment funding multiple charges, immutable accounting entries, reversals/refunds/reconciliation, and coordinated web/mobile cutover. The 1:1 payment/allocation rules and delayed client cutover below are historical and must not govern v1 implementation. Reset only disposable finance data and its identified demo dependencies; preserve non-finance records. Deferred extensions below remain reference material.
+
 > **Status:** Phase 0 signed off — ready for Phase 1  
 > **Created:** 2026-06-29  
 > **Last updated:** 2026-06-29 (§14 implementation readiness review)  

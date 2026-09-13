@@ -165,21 +165,183 @@
                 "scopes": {
                   "type": "array",
                   "items": {
-                    "oneOf": [
+                    "anyOf": [
                       {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "school"
-                            ]
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "school"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "all"
+                                ]
+                              },
+                              "grain": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level",
+                                  "grade_level_subject",
+                                  "class_group",
+                                  "class_subject",
+                                  "activity",
+                                  "student"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "grain"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level"
+                                ]
+                              },
+                              "gradeLevelId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "gradeLevelId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "grade_level_subject"
+                                ]
+                              },
+                              "gradeLevelId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "gradeLevelSubjectId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "gradeLevelId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "class_group"
+                                ]
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "classGroupId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "class_subject"
+                                ]
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "classSubjectId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "classGroupId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "activity"
+                                ]
+                              },
+                              "activityId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "classGroupId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "student"
+                                ]
+                              },
+                              "studentId": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "studentId"
+                            ],
+                            "additionalProperties": false
                           }
-                        },
-                        "required": [
-                          "kind"
-                        ],
-                        "additionalProperties": false
+                        ]
                       },
                       {
                         "type": "object",
@@ -187,99 +349,12 @@
                           "kind": {
                             "type": "string",
                             "enum": [
-                              "all"
+                              "lesson_session"
                             ]
                           },
-                          "grain": {
-                            "type": "string",
-                            "enum": [
-                              "grade_level",
-                              "grade_level_subject",
-                              "class_group",
-                              "class_subject",
-                              "activity",
-                              "student"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "grain"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "grade_level"
-                            ]
-                          },
-                          "gradeLevelId": {
+                          "lessonSessionId": {
                             "type": "string",
                             "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "gradeLevelId"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "grade_level_subject"
-                            ]
-                          },
-                          "gradeLevelId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "gradeLevelSubjectId": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "gradeLevelId"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "class_group"
-                            ]
-                          },
-                          "classGroupId": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "classGroupId"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "type": "string",
-                            "enum": [
-                              "class_subject"
-                            ]
                           },
                           "classGroupId": {
                             "type": "string",
@@ -292,7 +367,9 @@
                         },
                         "required": [
                           "kind",
-                          "classGroupId"
+                          "lessonSessionId",
+                          "classGroupId",
+                          "classSubjectId"
                         ],
                         "additionalProperties": false
                       },
@@ -302,20 +379,27 @@
                           "kind": {
                             "type": "string",
                             "enum": [
-                              "activity"
+                              "activity_session"
                             ]
                           },
-                          "activityId": {
+                          "activitySessionId": {
                             "type": "string",
                             "minLength": 1
                           },
                           "classGroupId": {
                             "type": "string",
                             "minLength": 1
+                          },
+                          "activityId": {
+                            "type": "string",
+                            "minLength": 1
                           }
                         },
                         "required": [
-                          "kind"
+                          "kind",
+                          "activitySessionId",
+                          "classGroupId",
+                          "activityId"
                         ],
                         "additionalProperties": false
                       },
@@ -325,17 +409,31 @@
                           "kind": {
                             "type": "string",
                             "enum": [
-                              "student"
+                              "assessment"
                             ]
                           },
-                          "studentId": {
+                          "assessmentId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classGroupId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "classSubjectId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "lessonSessionId": {
                             "type": "string",
                             "minLength": 1
                           }
                         },
                         "required": [
                           "kind",
-                          "studentId"
+                          "assessmentId",
+                          "classGroupId",
+                          "classSubjectId"
                         ],
                         "additionalProperties": false
                       }
@@ -869,11 +967,15 @@
                       },
                       "label": {
                         "type": "string"
+                      },
+                      "missing": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
                       "scope",
-                      "label"
+                      "label",
+                      "missing"
                     ]
                   }
                 }
@@ -12437,6 +12539,10 @@
             "type": "string",
             "minLength": 1
           },
+          "sourceKey": {
+            "type": "string",
+            "minLength": 1
+          },
           "subjectId": {
             "type": "string",
             "minLength": 1
@@ -12516,6 +12622,10 @@
             "minLength": 1
           },
           "eventKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceKey": {
             "type": "string",
             "minLength": 1
           },

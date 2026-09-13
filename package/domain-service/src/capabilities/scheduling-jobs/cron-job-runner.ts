@@ -37,7 +37,7 @@ export async function runCronJobForSchool(
   },
 ): Promise<CronJobSchoolResult> {
   const actor = createSystemActorMetadata({
-    systemId: 'cron',
+    systemId: options.jobKey,
     schoolId: options.schoolId,
     requestId: options.requestId,
     reason: 'scheduled cron job',
@@ -48,7 +48,7 @@ export async function runCronJobForSchool(
     actor,
     service,
   }
-  const result = await CRON_JOB_HANDLERS[options.jobKey](context)
+  const result = await service.baseService.atomicExecution.execute(() => CRON_JOB_HANDLERS[options.jobKey](context))
 
   return {
     schoolId: options.schoolId,

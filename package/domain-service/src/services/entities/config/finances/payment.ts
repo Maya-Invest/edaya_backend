@@ -1,39 +1,24 @@
-import { Permission } from '@edaya/core';
-import type { ActionSelection } from '@edaya/authorization';
-import type { CoreEntityRepositories, Payment } from '@edaya/core';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { AttachmentOwnerKind, BusinessRuleViolationError, FeeStatus, PaymentStatus } from '@edaya/core';
-import { config } from '../../entity-config';
-import { dateTime } from '../../entity-config/helper-utils';
+import type { CoreEntityRepositories, Payment } from '@edaya/core'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { AttachmentOwnerKind, BusinessRuleViolationError, FeeStatus, PaymentStatus } from '@edaya/core'
+import { config } from '../../entity-config'
+import { dateTime } from '../../entity-config/helper-utils'
 
-import { indirectTenant } from '../../entity-config/tenant';
+import { indirectTenant } from '../../entity-config/tenant'
 // Extracted from domain/finances/payment.ts (PR3)
 export const paymentConfig: EntityConfigFactory<Payment> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.payments,
     tenant: paymentTenant(),
-    authorization: { resource: 'payments', read: [Permission.PAYMENT_READ], write: paymentWriteAction, delete: Permission.PAYMENT_CANCEL },
-    
+    resource: 'payments',
+
     gates: {
       preSave: validatePaymentSave,
       preDelete: validatePaymentDelete,
     },
     atomicExecution,
   })
-
-function paymentWriteAction(
-  entity: Payment,
-  existing: Payment | undefined,
-): ActionSelection {
-  if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
-    return Permission.PAYMENT_CANCEL
-  }
-  if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
-    return Permission.PAYMENT_REVERSE
-  }
-  return Permission.PAYMENT_RECORD
-}
 
 function paymentTenant(): EntityTenantResolver<Payment> {
   return indirectTenant(async (entity, repositories) => {

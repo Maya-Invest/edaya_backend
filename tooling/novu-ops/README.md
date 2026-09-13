@@ -1,30 +1,5 @@
-# @edaya/novu-ops
+# Novu operations
 
-Novu operational CLI for EDAYA: workflow bootstrap and subscriber cleanup.
+`bootstrap/` previews and applies the single immediate email workflow consumed by the Novu email transport. `cleanup/` previews and deletes explicitly selected provider subscriber records. `src/subscriber-cleanup.ts` implements cleanup selection and bounded deletion; tests use synthetic provider records.
 
-Runtime notification delivery lives in `@edaya/adaptor-novu` (`package/adaptor-novu`).
-
-## Bootstrap workflows
-
-Create or update Novu workflows from the declarative catalog in `bootstrap/catalog/`.
-
-```sh
-bun run bootstrap              # plan (dry run)
-bun run bootstrap:apply        # push to Novu
-bun run bootstrap:validate     # validate catalog only
-```
-
-From the monorepo root: `bun repo novu bootstrap`, `bun repo novu bootstrap apply`, `bun repo novu bootstrap validate`.
-
-See [bootstrap/README.md](./bootstrap/README.md).
-
-## Subscriber cleanup
-
-```sh
-bun run cleanup -- --transient-invites
-bun run cleanup:apply -- --transient-invites --yes
-```
-
-From the monorepo root: `bun repo novu cleanup`, `bun repo novu cleanup apply`.
-
-See [cleanup/README.md](./cleanup/README.md).
+School profiles and preferences are not synchronized with Novu. During authorization cutover, export provider history, stop old workflow executions and review subscriber IDs before cleanup. Keep unrelated applications' subscribers and workflows. These tools run outside request handling and never select an authorization model.

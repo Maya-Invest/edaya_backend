@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { parseInteractiveActorKind } from '../../src/resolution/interactive-actor-kind'
+import { parseInteractiveActorKind } from '../../src/access/interactive-actor-kind'
 
 describe('parseInteractiveActorKind', () => {
   test('parses known actor kinds case-insensitively', () => {

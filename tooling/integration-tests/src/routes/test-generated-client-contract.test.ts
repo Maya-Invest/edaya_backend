@@ -19,22 +19,14 @@ describeWithLightSchool('generated school client contract', (getContext) => {
     const schools = await client.entities.schools.list({ $limit: 1 })
     expect(schools.length).toBeGreaterThan(0)
 
-    const grants = await client.authorization.effectiveGrants() as {
-      kind: string
-      actorId: string
-      schoolId: string
-      assuranceLevel: string
-      effectiveGrants: {
-        permissions: string[]
-      }
-    }
+    const grants = await client.authorization.effectiveGrants()
     expect(grants).toMatchObject({
       kind: 'staff',
       actorId: MINIMAL_AUTH_FIXTURE_STAFF_ID,
       schoolId: staff?.schoolId,
       assuranceLevel: 'verified',
     })
-    expect(Array.isArray(grants.effectiveGrants.permissions)).toBe(true)
+    expect(grants).toHaveProperty('grants', expect.any(Array))
   })
 
   it('returns 401 from generated authorization routes without a session cookie', async () => {

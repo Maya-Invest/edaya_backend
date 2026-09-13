@@ -1,11 +1,11 @@
-import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config';
-import type { ServiceArgs } from '../service-args';
-import type { CoreEntityKey, CoreEntityMap } from './core-entity-map';
-import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry';
-import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service';
-import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, feeConfig, gradeLevelConfig, gradeLevelSubjectConfig, gradeLevelSubjectMatterConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentFeeConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config';
-import { ManagedEntityService } from '../entities/managed-entity-service';
-import { CORE_ENTITY_KEYS } from './core-entity-map';
+import type { EntityConfigFactory, EntityConfigFactoryInput } from '../entities/entity-config'
+import type { ServiceArgs } from '../service-args'
+import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
+import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
+import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
+import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, feeConfig, gradeLevelConfig, gradeLevelSubjectConfig, gradeLevelSubjectMatterConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentFeeConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config'
+import { ManagedEntityService } from '../entities/managed-entity-service'
+import { CORE_ENTITY_KEYS } from './core-entity-map'
 
 export type CoreEntityConfigFactoryMap = {
   readonly [Key in CoreEntityKey]: EntityConfigFactory<CoreEntityMap[Key]>

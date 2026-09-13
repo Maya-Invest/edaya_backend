@@ -2,7 +2,7 @@ import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/types";
 import { parseEnv } from "@/runtime";
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, type Permission, StaffMember } from "@edaya/core";
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, StaffMember } from "@edaya/core";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { hashInvitationToken } from "@edaya/service";
 import { createDirectoryClient, type IdentityClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
@@ -141,7 +141,6 @@ describe("invitation accept route", () => {
       authenticatedAt: new Date(),
       assuranceLevel: ActorAssuranceLevel.Standard,
       staffMemberId: "staff-other",
-      effectiveGrants: { permissions: new Set<Permission>(), scopeGrants: [], scopeIdsByPermission: {}, isElevated: false },
     });
     const { app } = createInvitationApp("accept-token-conflict", actor);
     const jwt = await tokenFor("staff@school.edu");

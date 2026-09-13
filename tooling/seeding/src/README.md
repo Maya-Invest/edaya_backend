@@ -49,6 +49,10 @@ Each folder under `domains/<name>/`:
 | Env / shared types / errors | `support/` |
 | Wipe or cleanup guard | `cleanup/` |
 
+## Identity and inbox records
+
+School seeding preserves staff profiles already created by bootstrap. It links provisioned central identities before publishing announcements; profiles without a login do not receive deliveries. Communication history and guardian probes locate the persisted source/profile delivery and apply delivery-event commands to it. They retain its ID and cannot reset an already-read message. HTTP and in-process ports use the same authorization policies and delivery uniqueness constraint.
+
 ## Dependency rules
 
 - **CLI / staging** — always HTTP (`domains/*/adapters/http.ts` + `transport/http/` + `runtime/`). Never construct a proxy `SeedApplication` in scripts.

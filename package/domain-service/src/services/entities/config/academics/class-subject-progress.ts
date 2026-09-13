@@ -1,21 +1,19 @@
-import { Permission } from '@edaya/core';
+import type { ClassSubjectProgress } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
 
-import type { ClassSubjectProgress } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-
-import { indirectTenant, resolveClassSubjectSchoolId } from '../../entity-config/tenant';
+import { indirectTenant, resolveClassSubjectSchoolId } from '../../entity-config/tenant'
 
 // Extracted from domain/academics/class-subject-progress.ts (PR3)
 export const classSubjectProgressConfig: EntityConfigFactory<ClassSubjectProgress> = ({ repositories, atomicExecution }) =>
   config({
     repository: repositories.classSubjectProgress,
     tenant: classSubjectProgressTenant(),
-    authorization: { resource: 'classSubjectProgress', read: [Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.GRADE_INPUT], write: (_entity, existing) => existing ? Permission.CLASS_LOGBOOK_UPDATE : Permission.CLASS_LOGBOOK_CREATE, delete: Permission.CLASS_LOGBOOK_UPDATE },
-    
+    resource: 'classSubjectProgress',
+
     gates: {
       preSave: validateClassSubjectProgressSave,
     },
@@ -28,8 +26,6 @@ function classSubjectProgressTenant(): EntityTenantResolver<ClassSubjectProgress
     return matter ? resolveClassSubjectSchoolId(repositories, matter.classSubjectId) : undefined
   })
 }
-
-
 
 export async function validateClassSubjectProgressSave(
   progress: ClassSubjectProgress,

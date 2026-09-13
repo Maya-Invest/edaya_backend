@@ -109,6 +109,7 @@ describe('school-structure seed port workflow', () => {
     expect(memory.publishedPeriodIds).toEqual((academicPeriods ?? []).map(period => period.id))
     expect(memory.periodDefinitions).toHaveLength(periodDefinitions?.length ?? 0)
     expect(memory.staff).toHaveLength(staffMembers?.length ?? 0)
+    expect(memory.staff.every(member => !('subjectId' in member))).toBe(true)
     expect(memory.staff.find(member => member.id === 'st5')?.profileRole).toBe('directeur')
     expect(memory.staff.find(member => member.id === 'st3')?.profileRole).toBe('deputy_director')
     expect(memory.staff.find(member => member.id === 'st7')?.profileRole).toBe('educateur')

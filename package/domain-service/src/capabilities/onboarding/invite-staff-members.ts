@@ -1,12 +1,11 @@
-import { Permission } from '@edaya/core';
-import type { ActorMetadata } from '@edaya/authorization';
-import type { OnboardingSchoolApplication } from './onboarding-application';
-import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles';
-import { randomUUID } from 'node:crypto';
-import { AuthorizationError, AuthorizationErrorCode, permissionRowsFromPreset } from '@edaya/authorization';
-import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from '@edaya/core';
-import { getStaffInvitePermissionPreset } from './default-access-roles';
-import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles';
+import type { ActorMetadata } from '@edaya/authorization'
+import type { OnboardingSchoolApplication } from './onboarding-application'
+import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
+import { randomUUID } from 'node:crypto'
+import { AuthorizationError, AuthorizationErrorCode, permissionRowsFromPreset } from '@edaya/authorization'
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { getStaffInvitePermissionPreset } from './default-access-roles'
+import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
 
 export interface InviteStaffMemberInput {
   email: string
@@ -104,7 +103,7 @@ async function assertCanManageOnboardingInvites(
     return
   }
 
-  await application.forActor(actor).baseService.access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
+  await application.forActor(actor).baseService.access.staffPermissions.assertAssign()
 }
 
 async function rejectOwnerEmailInvites(

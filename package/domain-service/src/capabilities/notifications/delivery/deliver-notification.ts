@@ -1,10 +1,11 @@
 import type { AnnouncementPriority, NotificationEnqueueInput, NotificationGatewayPort, NotificationKind, NotificationRecipient } from '@edaya/core'
 import type { SchoolRepositories } from '../../../ports/school-repositories'
+import { AccessPolicies, createSystemActorMetadata } from '@edaya/authorization'
 import { MessageDelivery } from '@edaya/core'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 
-export function buildNotificationDeliveryId(sourceKey: string, subjectId: string): string {
-  return `delivery:${sourceKey}:${subjectId}`
+export function buildNotificationDeliveryId(sourceKey: string, subjectId: string, recipient: Pick<NotificationRecipient, 'kind' | 'id'>): string {
+  return `delivery:${[sourceKey, subjectId, recipient.kind, recipient.id].map(encodeURIComponent).join(':')}`
 }
 
 export interface DeliverNotificationDeps {
@@ -34,28 +35,43 @@ export async function deliverNotification(
 ): Promise<void> {
   const now = new Date()
   for (const recipient of uniqueNotificationRecipients(input.recipients)) {
-    const subjectId = recipient.subjectId ?? await resolveRecipientSubjectId(deps.repositories, recipient)
-    if (!subjectId) {
+    const subjectId = await resolveRecipientSubjectId(deps.repositories, recipient)
+    if (!subjectId || (recipient.subjectId && recipient.subjectId !== subjectId)) {
       continue
     }
 
-    const deliveryId = buildNotificationDeliveryId(input.idempotencyKeyPrefix, subjectId)
-    const existing = await deps.repositories.messageDeliveries.findById(deliveryId)
-    if (!existing) {
-      await deps.repositories.messageDeliveries.save(new MessageDelivery({
-        id: deliveryId,
-        schoolId: input.schoolId,
-        announcementId: input.announcementId,
-        eventKey: input.announcementId ? undefined : input.eventKey,
-        subjectId,
-        recipientKind: recipient.kind,
-        recipientId: recipient.id,
-        title: input.title,
-        body: input.body,
-        createdAt: now,
-        updatedAt: now,
-      }))
-    }
+    const access = new AccessPolicies(createSystemActorMetadata({
+      systemId: 'notify-adapter',
+      schoolId: input.schoolId,
+      requestId: input.idempotencyKeyPrefix,
+      reason: input.eventKey,
+    }), deps.repositories)
+    const repository = deps.repositories.messageDeliveries.forAccess(await access.entity('messageDeliveries').readScope())
+    const existing = (await repository.list({
+      sourceKey: input.idempotencyKeyPrefix,
+      subjectId,
+      recipientKind: recipient.kind,
+      recipientId: recipient.id,
+      $limit: 1,
+    }))[0]
+    const deliveryId = existing?.id ?? buildNotificationDeliveryId(input.idempotencyKeyPrefix, subjectId, recipient)
+    const delivery = new MessageDelivery({
+      id: deliveryId,
+      schoolId: input.schoolId,
+      announcementId: input.announcementId,
+      eventKey: input.announcementId ? undefined : input.eventKey,
+      sourceKey: input.idempotencyKeyPrefix,
+      subjectId,
+      recipientKind: recipient.kind,
+      recipientId: recipient.id,
+      title: input.title,
+      body: input.body,
+      createdAt: now,
+      updatedAt: now,
+    })
+    const scope = await access.entity('messageDeliveries').assertSave(delivery, existing)
+    if (!existing)
+      await deps.repositories.messageDeliveries.forAccess(scope).save(delivery)
 
     await deps.notificationGateway.enqueue({
       idempotencyKey: deliveryId,
@@ -105,14 +121,17 @@ export async function deliverNotificationFromEnqueueInput(
 
 export async function cancelNotificationDeliveries(
   deps: DeliverNotificationDeps,
-  idempotencyKeyPrefix: string,
-  recipients: readonly NotificationRecipient[],
+  schoolId: string,
+  sourceKey: string,
 ): Promise<void> {
-  for (const recipient of uniqueNotificationRecipients(recipients)) {
-    const subjectId = recipient.subjectId ?? await resolveRecipientSubjectId(deps.repositories, recipient)
-    if (!subjectId) {
-      continue
-    }
-    await deps.notificationGateway.cancel(buildNotificationDeliveryId(idempotencyKeyPrefix, subjectId))
-  }
+  const access = new AccessPolicies(createSystemActorMetadata({
+    systemId: 'notify-adapter',
+    schoolId,
+    requestId: `cancel:${sourceKey}`,
+    reason: 'Cancel notification source',
+  }), deps.repositories)
+  const scope = await access.entity('messageDeliveries').readScope()
+  const deliveries = await deps.repositories.messageDeliveries.forAccess(scope).list({ sourceKey })
+  for (const delivery of deliveries)
+    await deps.notificationGateway.cancel(delivery.id)
 }

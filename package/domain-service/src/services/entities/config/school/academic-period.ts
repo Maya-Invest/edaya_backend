@@ -1,19 +1,18 @@
-import { Permission } from '@edaya/core';
-import type { AcademicPeriod } from '@edaya/core';
-import type { SchoolRepositories } from '../../../../ports/school-repositories';
-import type { EntityConfigFactory } from '../../entity-config';
-import { denyResourceAccess } from '@edaya/authorization';
-import { BusinessRuleViolationError } from '@edaya/core';
-import { config } from '../../entity-config';
-import { directSchoolTenant } from '../../entity-config/tenant';
+import type { AcademicPeriod } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { EntityConfigFactory } from '../../entity-config'
+import { denyResourceAccess } from '@edaya/authorization'
+import { BusinessRuleViolationError } from '@edaya/core'
+import { config } from '../../entity-config'
+import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/academic-period.ts (PR3)
 export const academicPeriodConfig: EntityConfigFactory<AcademicPeriod> = ({ repositories, atomicExecution }) => ({
   ...config({
     repository: repositories.academicPeriods,
     tenant: directSchoolTenant(),
-    authorization: { resource: 'academicPeriods', read: [Permission.QUERY_WORKSPACE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
-    
+    resource: 'academicPeriods',
+
     atomicExecution,
   }),
   gates: {
