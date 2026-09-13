@@ -1,5 +1,6 @@
 import type { HttpSeedClient } from '../transport/http/client'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
+import { resolveChildrenAiS2sApiKeyForSchool } from '@edaya/fixtures/meta/school-profiles'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { postEntityCount, postEntityList } from '../transport/http/core-entity'
 import { isServiceAccountApiKeyValid } from '../transport/http/verify-service-account'
@@ -177,6 +178,29 @@ export async function runHttpSeedDoctor(
       else {
         findings.push(finding('ok', 'service-account-ready', 'Seeding service account API key is valid.'))
       }
+    }
+  }
+
+  const childrenAiS2sKey = resolveChildrenAiS2sApiKeyForSchool(context.schoolId)
+  if (childrenAiS2sKey) {
+    const s2sProbe = await client.jsonRequest('/core/entities/students/list', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${childrenAiS2sKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ schoolId: context.schoolId }),
+    })
+    if (!s2sProbe.response.ok) {
+      findings.push(finding(
+        'warn',
+        'children-ai-s2s-missing',
+        'The children-ai S2S read key was rejected. Children AI cannot load school data in live mode.',
+        'Run `bun repo seed --scope s2s-clients` or `bun repo seed --scope doctor --repair`. Ensure PLATFORM_BOOTSTRAP_EMAILS includes the demo owner.',
+      ))
+    }
+    else {
+      findings.push(finding('ok', 'children-ai-s2s-ready', 'Children AI S2S read key is valid.'))
     }
   }
 

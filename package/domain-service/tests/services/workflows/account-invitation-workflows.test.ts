@@ -1,6 +1,6 @@
 import type { EffectiveGrants } from '@edaya/authorization'
 import type { Student, Teacher } from '@edaya/core'
-import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy, createStaffActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, createRepositoryAuthorizationPolicy, createStaffActorMetadata, createSystemActorMetadata } from '@edaya/authorization'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, Permission, RecordingInvitationDeliveryPort, RecordingNotificationGateway, School, SchoolNotificationTemplates, StaffMember } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
@@ -185,11 +185,32 @@ function createInvitationContext(options: {
     invitationDelivery,
     mockRepos,
     savedInvitations,
+    savedGuardians,
     savedStaff,
     savedSchools,
     service,
     staffMember,
   }
+}
+
+function createSystemInvitationService(
+  mockRepos: import('../../../src/ports').SchoolRepositories,
+  invitationDelivery: RecordingInvitationDeliveryPort,
+) {
+  return new SchoolService({
+    repositories: mockRepos,
+    authorizationPolicy: createRepositoryAuthorizationPolicy({ repositories: mockRepos }),
+    actor: createSystemActorMetadata({
+      schoolId: 'sch1',
+      systemId: 'account-invitation-public',
+      requestId: 'req-accept',
+      reason: 'public-invitation-accept',
+    }),
+    atomicExecution: { execute: <T>(operation: () => Promise<T>) => operation() },
+    notificationGateway: new RecordingNotificationGateway(),
+    fileStorage: testFileStorage,
+    invitationDelivery,
+  })
 }
 
 describe('AccountInvitationServiceWorkflow', () => {
@@ -403,6 +424,39 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(result.invitation.kind).toBe(AccountInvitationKind.Guardian)
     expect(savedInvitations[0]?.contactValue).toBe('grace@school.edu')
     expect(invitationDelivery.deliveries).toHaveLength(1)
+  })
+
+  test('acceptAccountInvitation links a guardian as a system actor', async () => {
+    const guardian = new Guardian({
+      id: 'gua1',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      email: 'grace@school.edu',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    })
+    const { invitationDelivery, mockRepos, savedGuardians, savedInvitations, service } = createInvitationContext({
+      guardians: [guardian],
+    })
+
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Guardian,
+      targetId: guardian.id,
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    const result = await createSystemInvitationService(mockRepos, invitationDelivery)
+      .accountInvitationWorkflow
+      .acceptAccountInvitation({
+        token,
+        subjectId: 'guardian-subject',
+        contactValue: 'grace@school.edu',
+      })
+
+    expect(result.kind).toBe('guardian')
+    expect(result.entity.subjectId).toBe('guardian-subject')
+    expect(savedGuardians[0]?.subjectId).toBe('guardian-subject')
+    expect(savedInvitations[0]?.status).toBe(AccountInvitationStatus.Accepted)
   })
 
   test('acceptAccountInvitation rejects a missing phone claim', async () => {

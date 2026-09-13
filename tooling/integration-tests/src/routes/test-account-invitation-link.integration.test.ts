@@ -17,7 +17,9 @@ import {
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
 const INVITEE_EMAIL = 'p.martin.invite-e2e@school.edu'
+const GUARDIAN_INVITEE_EMAIL = 'grace.invite-e2e@school.edu'
 const UNLINKED_STAFF_ID = 'st-invite-e2e'
+const UNLINKED_GUARDIAN_ID = 'gua-invite-e2e'
 const RESEND_STAFF_ID = 'st-invite-resend'
 
 async function registerUnlinkedStaff(
@@ -36,6 +38,26 @@ async function registerUnlinkedStaff(
     firstName: input.firstName,
     lastName: input.lastName,
     email: input.email,
+  })
+}
+
+async function registerUnlinkedGuardian(
+  application: ApiSchoolApplication,
+  input: { id: string, email: string, firstName: string, lastName: string },
+) {
+  const bootstrapActor = createBootstrapStaffActorMetadata({
+    schoolId: SEED_SCHOOL_ID,
+    requestId: `register-${input.id}`,
+    staffMemberId: `register-${input.id}`,
+  })
+  const service = application.forActor(bootstrapActor)
+  await service.studentWorkflow.registerGuardian({
+    id: input.id,
+    schoolId: SEED_SCHOOL_ID,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    email: input.email,
+    sendAccountInvitation: false,
   })
 }
 
@@ -144,6 +166,59 @@ describeWithLightSchool('account invitation public link flow', (getContext) => {
     const acceptedPreview = await previewInvitation(app, token)
     expect(acceptedPreview.status).toBe(200)
     expect(acceptedPreview.body.status).toBe('accepted')
+  })
+
+  it('accepts a guardian invitation with a signed-in identity', async () => {
+    const { app, runtime, application, authHeaders } = getContext()
+    await grantAccessControlAssign(application, MINIMAL_AUTH_FIXTURE_STAFF_ID)
+    await registerUnlinkedGuardian(application, {
+      id: UNLINKED_GUARDIAN_ID,
+      email: GUARDIAN_INVITEE_EMAIL,
+      firstName: 'Grace',
+      lastName: 'Hopper',
+    })
+
+    const sendResponse = await app.request(createAppRequest('/core/commands/send-account-invitation', {
+      method: 'POST',
+      headers: await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL),
+      body: JSON.stringify({
+        kind: 'guardian',
+        targetId: UNLINKED_GUARDIAN_ID,
+        contactChannel: 'email',
+        contactValue: GUARDIAN_INVITEE_EMAIL,
+      }),
+    }))
+    expect(sendResponse.status).toBe(200)
+    const { token } = await sendResponse.json() as { token: string }
+
+    await signUpAuthUser(runtime, {
+      email: GUARDIAN_INVITEE_EMAIL,
+      name: 'Grace Hopper',
+    })
+    const inviteeAccessToken = await signInWithBearerThroughApp(app, { email: GUARDIAN_INVITEE_EMAIL })
+
+    const acceptResponse = await app.request(createAppRequest(
+      `/public/invitations/${encodeURIComponent(token)}/accept`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${inviteeAccessToken}`,
+        },
+      },
+    ))
+
+    expect(acceptResponse.status).toBe(200)
+
+    const acceptBody = await acceptResponse.json() as {
+      kind: string
+      entity: { id: string, subjectId: string }
+    }
+    expect(acceptBody.kind).toBe('guardian')
+    expect(acceptBody.entity.id).toBe(UNLINKED_GUARDIAN_ID)
+    expect(acceptBody.entity.subjectId).toBeTruthy()
+
+    const linkedGuardian = await application.repositories.guardians.findById(UNLINKED_GUARDIAN_ID)
+    expect(linkedGuardian?.subjectId).toBe(acceptBody.entity.subjectId)
   })
 
   it('revokes the previous link when an invitation is resent', async () => {

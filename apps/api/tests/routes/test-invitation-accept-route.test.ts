@@ -133,7 +133,7 @@ describe("invitation accept route", () => {
     expect(response.status).toBe(401);
   });
 
-  it("returns 409 when the subject is linked to a different actor", async () => {
+  it("returns 409 when the subject is already linked to a different actor of the same kind", async () => {
     const actor = createStaffActorMetadata({
       schoolId: SEED_SCHOOL_ID,
       subjectId: "identity-user-1",
@@ -150,5 +150,42 @@ describe("invitation accept route", () => {
       headers: { authorization: `Bearer ${jwt}` },
     });
     expect(response.status).toBe(409);
+  });
+
+  it("accepts a guardian invitation when the subject is already linked as staff", async () => {
+    const invitationToken = "accept-token-staff-parent";
+    const invitation = new AccountInvitation({
+      id: "inv-guardian-staff",
+      schoolId: SEED_SCHOOL_ID,
+      kind: AccountInvitationKind.Guardian,
+      targetId: "guardian-new",
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: "staff@school.edu",
+      tokenHash: hashInvitationToken(invitationToken),
+      status: AccountInvitationStatus.Pending,
+      expiresAt: new Date("2026-12-31T00:00:00.000Z"),
+      createdByStaffId: "staff-admin",
+    });
+    const actor = createStaffActorMetadata({
+      schoolId: SEED_SCHOOL_ID,
+      subjectId: "identity-user-1",
+      requestId: "req-1",
+      authenticatedAt: new Date(),
+      assuranceLevel: ActorAssuranceLevel.Standard,
+      staffMemberId: "staff-other",
+      effectiveGrants: { permissions: new Set<Permission>(), scopeGrants: [], scopeIdsByPermission: {}, isElevated: false },
+    });
+    const { app, acceptAccountInvitation } = createInvitationApp(invitationToken, actor, invitation);
+    const response = await app.request(`/public/invitations/${invitationToken}/accept`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${await tokenFor("staff@school.edu")}` },
+    });
+
+    expect(response.status).toBe(200);
+    expect(acceptAccountInvitation).toHaveBeenCalledWith({
+      token: invitationToken,
+      subjectId: "identity-user-1",
+      contactValue: "staff@school.edu",
+    });
   });
 });

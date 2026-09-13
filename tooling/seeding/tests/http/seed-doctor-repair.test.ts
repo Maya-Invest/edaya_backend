@@ -14,6 +14,7 @@ describe('seed doctor repair', () => {
     expect(SEED_DOCTOR_REPAIR_CHAIN.map(step => step.scope)).toEqual([
       'auth:link',
       'service-account',
+      's2s-clients',
       'access',
       'profile-pictures',
     ])

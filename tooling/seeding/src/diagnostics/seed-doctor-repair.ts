@@ -3,7 +3,7 @@ import type { SeedDoctorFinding, SeedDoctorResult } from './seed-doctor'
 import { bootstrapHttpCoreSession } from '../bootstrap/session/http-core-session'
 import { runHttpSeedDoctor } from './seed-doctor'
 
-export type SeedDoctorRepairScope = 'auth:link' | 'access' | 'profile-pictures' | 'service-account'
+export type SeedDoctorRepairScope = 'auth:link' | 'access' | 'profile-pictures' | 'service-account' | 's2s-clients'
 
 export interface SeedDoctorRepairStep {
   scope: SeedDoctorRepairScope
@@ -20,6 +20,7 @@ export interface SeedDoctorRepairResult {
 export const SEED_DOCTOR_REPAIR_CHAIN: readonly SeedDoctorRepairStep[] = [
   { scope: 'auth:link', codes: ['staff-unlinked'] },
   { scope: 'service-account', codes: ['service-account-key-rejected', 'service-account-grants'] },
+  { scope: 's2s-clients', codes: ['children-ai-s2s-missing'] },
   { scope: 'access', codes: ['access-assignments-missing'] },
   { scope: 'profile-pictures', codes: ['profile-photos-missing'] },
 ]

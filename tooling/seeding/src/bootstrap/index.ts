@@ -9,6 +9,12 @@ export {
 } from './service-account'
 export { bootstrapHttpCoreSession } from './session/http-core-session'
 export {
+  CHILDREN_AI_S2S_CLIENT_ID,
+  logProvisionedChildrenAiS2sClient,
+  provisionChildrenAiS2sClientHttp,
+  type ProvisionChildrenAiS2sClientResult,
+} from './s2s-client'
+export {
   formatHttpBootstrapFailure,
   LOCAL_DEV_WIPE_AND_RESEED_HINT,
   throwHttpBootstrapFailure,

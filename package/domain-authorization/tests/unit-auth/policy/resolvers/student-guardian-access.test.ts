@@ -1,6 +1,7 @@
 import type { AuthorizationRepositories } from '@edaya/authorization'
 import {
   AuthorizationError,
+  createSystemActorMetadata,
   Permission,
 } from '@edaya/authorization'
 import { describe, expect, mock, test } from 'bun:test'
@@ -28,6 +29,19 @@ describe('checkStudentAccess', () => {
 })
 
 describe('checkGuardianAccess', () => {
+  test('allows system actor', async () => {
+    await checkGuardianAccess(
+      createSystemActorMetadata({
+        schoolId: 'school-1',
+        systemId: 'account-invitation-public',
+        requestId: 'test',
+        reason: 'public-invitation-accept',
+      }),
+      ['guardian-2'],
+      enrollmentRepos('class-1'),
+    )
+  })
+
   test('allows guardian self access', async () => {
     await checkGuardianAccess(
       AuthFixtures.guardian.linkedTo('student-1'),

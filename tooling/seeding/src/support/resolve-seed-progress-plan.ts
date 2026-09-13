@@ -41,6 +41,7 @@ export function resolveFreshBootstrapPhaseLabels(
     'Service account',
     ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
     'Access assignments',
+    'Children AI S2S',
   ]
 }
 
@@ -53,6 +54,7 @@ export function resolveAllSeedPhaseLabels(
     return [
       ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
       'Access assignments',
+      'Children AI S2S',
     ]
   }
 
@@ -60,6 +62,7 @@ export function resolveAllSeedPhaseLabels(
     'Auth accounts',
     ...resolveSchoolSeedPhaseLabels(skipProfilePhotos, skipAttachments),
     'Access assignments',
+    'Children AI S2S',
   ]
 }
 
@@ -86,6 +89,8 @@ export function resolveSeedPhaseLabels(
       return ['Profile photos']
     case 'service-account':
       return ['Service account']
+    case 's2s-clients':
+      return ['Children AI S2S']
     case 'validate':
       return ['Validation']
     case 'doctor':

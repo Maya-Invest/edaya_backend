@@ -15,7 +15,7 @@ describe('seed progress', () => {
     const phases = resolveFreshBootstrapPhaseLabels(false)
     expect(phases[0]).toBe('Auth accounts')
     expect(phases).toContain('Service account')
-    expect(phases.at(-1)).toBe('Access assignments')
+    expect(phases.at(-1)).toBe('Children AI S2S')
   })
 
   it('runs steps without throwing when disabled', async () => {

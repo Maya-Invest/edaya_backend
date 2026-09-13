@@ -1,6 +1,7 @@
 import type { AuthorizationRepositories } from '@edaya/authorization'
 import {
   AuthorizationError,
+  createSystemActorMetadata,
   Permission,
 } from '@edaya/authorization'
 import { AttachmentOwnerKind } from '@edaya/core'
@@ -16,6 +17,19 @@ async function expectForbidden(operation: Promise<void>): Promise<void> {
 }
 
 describe('checkTeacherAccess', () => {
+  test('allows system actor', async () => {
+    await checkTeacherAccess(
+      createSystemActorMetadata({
+        schoolId: 'school-1',
+        systemId: 'account-invitation-public',
+        requestId: 'test',
+        reason: 'public-invitation-accept',
+      }),
+      ['teacher-2'],
+      enrollmentRepos(),
+    )
+  })
+
   test('allows teacher self access without staff grants', async () => {
     const actor = AuthFixtures.teacher.unassigned()
     await checkTeacherAccess(actor, ['teacher-1'], enrollmentRepos())

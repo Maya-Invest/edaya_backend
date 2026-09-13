@@ -14,6 +14,7 @@ import { runAuthScope } from './scopes/auth'
 import { runDoctorScope } from './scopes/doctor'
 import { runDomainSeedScope } from './scopes/domain-seed'
 import { runServiceAccountScope } from './scopes/service-account'
+import { runS2sClientsScope } from './scopes/s2s-clients'
 import { runSmokeScope } from './scopes/smoke'
 import { runValidateScope } from './scopes/validate'
 
@@ -79,6 +80,8 @@ export async function runHttpDevSeeds(options: RunHttpDevSeedsOptions) {
         return await runSmokeScope(ctx)
       case 'service-account':
         return await runServiceAccountScope(ctx)
+      case 's2s-clients':
+        return await runS2sClientsScope(ctx)
       case 'all': {
         const freshBootstrap = await tryRunAllFreshBootstrap(ctx)
         if (freshBootstrap) {

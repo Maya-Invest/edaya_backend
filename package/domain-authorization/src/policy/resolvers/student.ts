@@ -33,6 +33,10 @@ export async function checkGuardianAccess(
     return
   }
 
+  if (actor.kind === 'system') {
+    return
+  }
+
   for (const guardianId of guardianIds) {
     const isSelf = actor.kind === 'guardian' && actor.actorId === guardianId
     if (isSelf) {

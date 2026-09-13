@@ -462,6 +462,7 @@ export const studentQuerySchema = createQueryOptionsSchema({
   lastName: field.string(),
   status: field.string(),
   matricule: field.string(),
+  subjectId: field.id(),
 });
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
@@ -479,6 +480,7 @@ export const guardianQuerySchema = createQueryOptionsSchema({
   lastName: field.string(),
   code: field.string(),
   email: field.string(),
+  subjectId: field.id(),
 });
 
 export const guardianLinkQuerySchema = createQueryOptionsSchema({

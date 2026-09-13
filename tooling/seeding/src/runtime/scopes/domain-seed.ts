@@ -10,6 +10,10 @@ import { logDevSeedResults, runDevSeeds } from '../../orchestration/run-dev-seed
 import { isSeedingServiceAccountApiKeyReady } from '../../transport/http/verify-service-account'
 import { createEmptyHttpSeedResults, maybeProvisionSeedingServiceAccount } from '../helpers'
 import { createHttpAccessSeedPort, createHttpDomainSeedPorts } from '../http-domain-ports'
+import {
+  logProvisionedChildrenAiS2sClient,
+  provisionChildrenAiS2sClientHttp,
+} from '../../bootstrap/s2s-client'
 
 export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<RunHttpDevSeedsResults> {
   const { auth, client, options, scope, serviceAccountApiKey, profileSeedingApiKey } = ctx
@@ -64,6 +68,10 @@ export async function runDomainSeedScope(ctx: HttpSeedRuntimeContext): Promise<R
 
   if (scope === 'all') {
     await maybeProvisionSeedingServiceAccount(options, serviceAccountApiKey)
+    const s2s = await provisionChildrenAiS2sClientHttp(client, {
+      schoolId: ctx.seedContext.schoolId,
+    })
+    logProvisionedChildrenAiS2sClient(s2s)
   }
 
   if (options.log) {

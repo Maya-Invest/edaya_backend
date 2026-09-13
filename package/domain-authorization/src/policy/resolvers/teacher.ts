@@ -13,6 +13,10 @@ export async function checkTeacherAccess(
     return
   }
 
+  if (actor.kind === 'system') {
+    return
+  }
+
   for (const teacherId of teacherIds) {
     const isSelf = actor.kind === 'teacher' && actor.actorId === teacherId
     if (isSelf) {

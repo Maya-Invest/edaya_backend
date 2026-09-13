@@ -7,7 +7,7 @@ import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner } from '../support/types'
 import type { HttpSeedClient } from '../transport/http/client'
 
-export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account' | 'validate' | 'doctor'
+export type HttpDevSeedScope = DevSeedScope | 'smoke' | 'service-account' | 's2s-clients' | 'validate' | 'doctor'
 
 export interface RunHttpDevSeedsOptions {
   client: HttpSeedClient

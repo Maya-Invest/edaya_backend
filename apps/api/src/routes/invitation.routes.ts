@@ -136,6 +136,14 @@ function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountI
   return false;
 }
 
+/** Same-kind duplicate only. Staff+guardian (and other cross-kind profiles) share one subject. */
+function actorConflictsWithInvitationTarget(actor: ActorMetadata, invitation: AccountInvitation): boolean {
+  if (actor.kind !== invitation.kind) {
+    return false;
+  }
+  return !actorMatchesInvitationTarget(actor, invitation);
+}
+
 function createInvitationSystemService(
   schoolApp: ApiSchoolApplication,
   schoolId: string,
@@ -203,10 +211,10 @@ export const acceptInvitationHandler: AppRouteHandler<typeof acceptInvitationRou
   }
 
   const actor = c.get("actor");
-  if (actor && !actorMatchesInvitationTarget(actor, invitation)) {
+  if (actor && actorConflictsWithInvitationTarget(actor, invitation)) {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
-      "This account is already linked to a school actor",
+      "This account is already linked to a school actor of the same kind",
     ));
   }
 
