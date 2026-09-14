@@ -25,8 +25,7 @@ export type ClientRouteNamespace
     | "serviceAccounts"
     | "platformUsers"
     | "s2sClients"
-    | "public"
-    | "webhooks";
+    | "public";
 
 export type EntityRouteAction
   = | "list"

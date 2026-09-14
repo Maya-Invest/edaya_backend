@@ -70,7 +70,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'enrollments',
   ],
   finance: ['fees', 'studentFees', 'students', 'payments'],
-  invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'schools'],
+  invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'schools', 'schoolNotificationTemplates'],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 
 export type WorkflowRepositoryScope = keyof typeof WORKFLOW_REPOSITORY_KEYS

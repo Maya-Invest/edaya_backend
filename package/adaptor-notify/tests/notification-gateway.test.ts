@@ -4,7 +4,10 @@ import { describe, expect, test } from "bun:test";
 import { drainPendingSchoolNotifications } from "../src/jobs/drain-jobs";
 import { createNotifyNotificationGateway } from "../src/notification-gateway";
 import { createNotifyRuntime } from "../src/runtime";
-import { createTestNotifyRuntime } from "./harness";
+import { createTestNotifyRuntime, unimplementedTestSms } from "./harness";
+
+const noopEmail = { send: async () => ({}) };
+const noopSms = unimplementedTestSms;
 
 function throwingSql(message: string): NotifySql {
   const fail = async () => {
@@ -23,7 +26,9 @@ describe("createNotifyNotificationGateway", () => {
     const gateway = createNotifyNotificationGateway({
       runtime: createNotifyRuntime({
         sql: throwingSql("down"),
-        env: { EMAIL_TRANSPORT: "log" },
+        env: {},
+        email: noopEmail,
+        sms: noopSms,
         log: () => {},
       }),
       onError: error => errors.push(error),
@@ -45,7 +50,9 @@ describe("createNotifyNotificationGateway", () => {
     const gateway = createNotifyNotificationGateway({
       runtime: createNotifyRuntime({
         sql: throwingSql("fcm"),
-        env: { EMAIL_TRANSPORT: "log" },
+        env: {},
+        email: noopEmail,
+        sms: noopSms,
         log: () => {},
       }),
     });
@@ -144,6 +151,36 @@ describe("createNotifyNotificationGateway", () => {
         body: "Hi",
       },
     }]);
+    await harness.close();
+  });
+
+  test("skips unimplemented SMS on school jobs without failing email", async () => {
+    const harness = await createTestNotifyRuntime({ sms: unimplementedTestSms });
+    const gateway = createNotifyNotificationGateway({ runtime: harness.runtime });
+    harness.runtime.resolveSchoolRecipient = async () => ({
+      schoolId: "sch_1",
+      recipient: { kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "sub_1" },
+      email: "g@school.edu",
+      phone: "+15145550123",
+      preferences: { allowsNotifications: true, channels: { email: true, sms: true } },
+    });
+    await gateway.enqueue({
+      idempotencyKey: "delivery-sms-skip",
+      schoolId: "sch_1",
+      kind: "event",
+      eventKey: "announcement.published",
+      title: "Hello",
+      body: "Hi",
+      smsBody: "Hi SMS",
+      enableEmail: true,
+      enablePush: false,
+      enableSms: true,
+      recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "sub_1" }],
+    });
+    await drainPendingSchoolNotifications(harness.runtime);
+    expect(harness.sent).toEqual([{ to: "g@school.edu", subject: "Hello" }]);
+    expect(harness.sentSms).toHaveLength(0);
+    expect(await harness.runtime.sql.query("SELECT status FROM notify.jobs")).toEqual([{ status: "sent" }]);
     await harness.close();
   });
 });

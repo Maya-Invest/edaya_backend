@@ -1,22 +1,15 @@
-export {
-  createNotifyAuthEmailDeliveryPort,
-  createNotifyAuthEmailDeliveryPortFromLoader,
-} from "./auth-email-delivery";
 export type { CloudflareEmailBinding } from "./email/cloudflare";
 export { createCloudflareEmailTransport } from "./email/cloudflare";
 export { createLogEmailTransport } from "./email/log";
 export type { EmailSendInput, EmailTransportPort } from "./email/port";
-export { resolveEmailFrom, resolveEmailTransport } from "./email/resolve";
 export type { NotifyEmailTransportKind, NotifyTransportEnv } from "./env";
-export { DEFAULT_EMAIL_FROM, parseNotifyFromAddress } from "./env";
+export { DEFAULT_EMAIL_FROM, parseNotifyFromAddress, resolveEmailFrom } from "./env";
 export { isNotifySendError, NotifySendError } from "./errors";
 export {
-  buildAuthRecipientId,
   buildInvitationRecipientId,
   buildNotifyChannelId,
   buildNotifyJobId,
   normalizeEmail,
-  NOTIFY_PLATFORM_TENANT,
 } from "./ids";
 export { createNotifyInvitationDeliveryPort } from "./invitation-delivery";
 export { drainPendingSchoolNotifications } from "./jobs/drain-jobs";
@@ -39,6 +32,8 @@ export {
   silentNotifyLog,
 } from "./runtime";
 export type { CreateNotifyRuntimeOptions, NotifyRuntime } from "./runtime";
+export { createLogSmsTransport } from "./sms/log";
+export { createUnimplementedSmsTransport } from "./sms/unimplemented";
 export {
   createNotifySqlFromDrizzle,
 } from "./store/sql";

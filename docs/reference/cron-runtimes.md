@@ -15,7 +15,6 @@ Uses the API `EnvSchema` (`apps/api/src/runtime/shared/env/schema.ts`).
 |----------|--------------------------|----------------------|
 | `RUNTIME` | `local` | `worker` |
 | `DATABASE_URL` | `pglite:.data/school` | Hyperdrive `connectionString` |
-| `NOVU_SECRET_KEY` | optional `.env` | Wrangler secret |
 | `CRON_JOB_KEYS` | optional comma-separated filter (bypasses schedule table) | N/A |
 
 Worker bindings (not env vars):

@@ -83,10 +83,6 @@ type ServiceAccountsClients<TSchemas extends Record<string, unknown>> = {
   rotateKey: (params: { id: string }) => Promise<SchemaName<TSchemas, 'RotateServiceAccountKeyResponse'>>
 }
 
-type WebhooksClients<TSchemas extends Record<string, unknown>> = {
-  notificationDelivery: () => Promise<SchemaName<TSchemas, 'NotificationDeliveryWebhookResponse'>>
-}
-
 export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   entities: EntityClients<TSchemas>
   commands: CommandClients<TSchemas>
@@ -98,7 +94,6 @@ export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   public: PublicClients<TSchemas>
   s2sClients: S2sClientsClients<TSchemas>
   serviceAccounts: ServiceAccountsClients<TSchemas>
-  webhooks: WebhooksClients<TSchemas>
 }
 
 export function createSchoolClient<TSchemas extends Record<string, unknown>>(
@@ -181,8 +176,5 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     revoke: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('service-accounts/{id}/revoke', params)),
     rotateKey: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('service-accounts/{id}/rotate-key', params)),
   } as ServiceAccountsClients<TSchemas>,
-    webhooks: {
-    notificationDelivery: () => transport.request('POST', resolveClientRoutePath('webhooks/notification-delivery', {}, 'root')),
-  } as WebhooksClients<TSchemas>,
   }
 }

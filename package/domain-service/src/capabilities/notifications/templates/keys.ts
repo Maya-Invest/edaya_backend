@@ -1,18 +1,12 @@
-/** Notification template keys — keep in sync with provider workflow/bootstrap catalogs. */
-export const NOTIFICATION_TEMPLATE_KEYS = [
-  'announcement.published',
-  'report_card.published',
-  'attendance.recorded',
-  'assessment.result_recorded',
-  'incident.recorded',
-  'assessment.due_soon',
-  'activity.reminder',
-  'calendar.event_reminder',
-  'account_invitation',
-] as const
+export {
+  ACCOUNT_INVITATION_TEMPLATE_KEY,
+  EVENT_NOTIFICATION_TEMPLATE_KEYS,
+  type EventNotificationTemplateKey,
+  NOTIFICATION_TEMPLATE_FIELDS,
+  NOTIFICATION_TEMPLATE_KEYS,
+  NOTIFICATION_TEMPLATE_SQL_COLUMNS,
+  type NotificationTemplateField,
+  type NotificationTemplateKey,
+} from '@edaya/core'
 
-export type NotificationTemplateKey = typeof NOTIFICATION_TEMPLATE_KEYS[number]
-
-export type NotificationChannel = 'email' | 'in_app'
-
-export const ACCOUNT_INVITATION_TEMPLATE_KEY = 'account_invitation' as const satisfies NotificationTemplateKey
+export type NotificationChannel = 'email' | 'in_app' | 'sms'

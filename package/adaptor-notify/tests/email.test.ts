@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { createLogEmailTransport } from "../src/email/log";
-import { resolveEmailTransport } from "../src/email/resolve";
+import { createLogSmsTransport } from "../src/sms/log";
+import { createUnimplementedSmsTransport } from "../src/sms/unimplemented";
 
-describe("email transports", () => {
-  test("log transport records a send", async () => {
+describe("email and sms transports", () => {
+  test("log email transport records a send", async () => {
     const calls: string[] = [];
     const transport = createLogEmailTransport(message => calls.push(message));
     const result = await transport.send({
@@ -17,7 +18,22 @@ describe("email transports", () => {
     expect(calls.length).toBe(1);
   });
 
-  test("smtp is a documented swap point that is not implemented yet", () => {
-    expect(() => resolveEmailTransport({ EMAIL_TRANSPORT: "smtp" }, () => {})).toThrow(/not implemented/);
+  test("log SMS transport records a send", async () => {
+    const calls: string[] = [];
+    const transport = createLogSmsTransport(message => calls.push(message));
+    const result = await transport.send({
+      to: "+15145550123",
+      body: "Hi",
+      idempotencyKey: "s1",
+    });
+    expect(transport.implemented).toBe(true);
+    expect(result.providerMessageId).toBe("log-sms:s1");
+    expect(calls.length).toBe(1);
+  });
+
+  test("unimplemented SMS transport refuses to send", async () => {
+    const transport = createUnimplementedSmsTransport();
+    expect(transport.implemented).toBe(false);
+    await expect(transport.send({ to: "+15145550123", body: "Hi", idempotencyKey: "s2" })).rejects.toThrow(/not implemented/);
   });
 });

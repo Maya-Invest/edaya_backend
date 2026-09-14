@@ -15,7 +15,7 @@ async function createDefaultTemplateService(): Promise<NotificationTemplateServi
     schoolNotificationTemplates: {
       findById: async () => new SchoolNotificationTemplates({
         schoolId: 'sch1',
-        templates,
+        ...templates,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),

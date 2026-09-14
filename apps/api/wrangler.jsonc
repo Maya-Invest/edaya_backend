@@ -24,7 +24,7 @@
   //
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
   // [env.*] bindings — HYPERDRIVE (school), IDENTITY (optional service binding), CRON_JOBS
-  // Secrets          — IDENTITY_DIRECTORY_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
+  // Secrets          — IDENTITY_DIRECTORY_SECRET,
   //                    FCM_SERVICE_ACCOUNT_JSON (in-process notify),
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
   // Bindings         — HYPERDRIVE, IDENTITY, CRON_JOBS, EMAIL, BROWSER
@@ -74,7 +74,6 @@
         "TRUSTED_ORIGINS": "https://staging.app.school.edayaplus.com,https://staging.admin.edayaplus.com",
         "WEBAPP_ORIGIN": "https://staging.app.school.edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "0",
-        "NOVU_API_URL": "https://api.novu.co",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
@@ -123,7 +122,6 @@
         "TRUSTED_ORIGINS": "https://app.school.edayaplus.com,https://admin.edayaplus.com",
         "WEBAPP_ORIGIN": "https://app.school.edayaplus.com",
         "GRANTS_CACHE_TTL_MS": "0",
-        "NOVU_API_URL": "https://api.novu.co",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",

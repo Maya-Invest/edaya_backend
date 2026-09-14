@@ -22,6 +22,10 @@ export interface DeliverNotificationInput {
   body: string
   emailSubject?: string
   emailBody?: string
+  smsBody?: string
+  enableEmail?: boolean
+  enablePush?: boolean
+  enableSms?: boolean
   recipients: readonly NotificationRecipient[]
   announcementId?: string
   priority?: AnnouncementPriority
@@ -83,6 +87,10 @@ export async function deliverNotification(
       body: input.body,
       emailSubject: input.emailSubject,
       emailBody: input.emailBody,
+      smsBody: input.smsBody,
+      enableEmail: input.enableEmail,
+      enablePush: input.enablePush,
+      enableSms: input.enableSms,
       recipients: [{
         kind: recipient.kind,
         id: recipient.id,
@@ -111,6 +119,10 @@ export async function deliverNotificationFromEnqueueInput(
     body: input.body,
     emailSubject: input.emailSubject,
     emailBody: input.emailBody,
+    smsBody: input.smsBody,
+    enableEmail: input.enableEmail,
+    enablePush: input.enablePush,
+    enableSms: input.enableSms,
     recipients: input.recipients,
     announcementId: input.announcementId,
     priority: input.priority,

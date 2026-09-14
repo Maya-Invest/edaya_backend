@@ -1,14 +1,13 @@
 import { AccountInvitationKind } from "@edaya/core";
 import { describe, expect, test } from "bun:test";
-import { createNotifyAuthEmailDeliveryPort } from "../src/auth-email-delivery";
 import { NotifySendError } from "../src/errors";
 import { drainPendingSchoolNotifications } from "../src/jobs/drain-jobs";
 import { createNotifyInvitationDeliveryPort } from "../src/invitation-delivery";
-import { createTestNotifyRuntime } from "./harness";
+import { createTestNotifyRuntime, unimplementedTestSms } from "./harness";
 
-describe("in-process invitation and auth delivery", () => {
-  test("does not acknowledge an invitation when no email channel can deliver", async () => {
-    const harness = await createTestNotifyRuntime();
+describe("in-process invitation delivery", () => {
+  test("rejects phone invitations when SMS transport is unimplemented", async () => {
+    const harness = await createTestNotifyRuntime({ sms: unimplementedTestSms });
     try {
       const port = createNotifyInvitationDeliveryPort(harness.runtime);
       await expect(port.deliver({
@@ -20,24 +19,40 @@ describe("in-process invitation and auth delivery", () => {
         actorKind: AccountInvitationKind.Staff,
         inviteUrl: "https://app.test/invite/inv_phone",
         expiresAt: new Date(),
-        emailSubject: "Invite",
-        emailBody: "Join",
+        smsBody: "Join Edaya",
       })).rejects.toBeInstanceOf(NotifySendError);
-      expect(harness.sent).toHaveLength(0);
+      expect(harness.sentSms).toHaveLength(0);
+      expect(await harness.runtime.sql.query("SELECT idempotency_key FROM notify.jobs")).toEqual([]);
     }
     finally { await harness.close(); }
   });
 
-  test("sends auth OTP to the normalized address", async () => {
+  test("sends invitation SMS through the log transport after drain", async () => {
     const harness = await createTestNotifyRuntime();
-    const port = createNotifyAuthEmailDeliveryPort(harness.runtime);
-    await port.sendOtp({ email: "Owner@School.edu", otp: "123456", type: "sign-in" });
-    expect(harness.sent[0]?.to).toBe("owner@school.edu");
-    expect(harness.sent[0]?.subject).toContain("sign-in");
-    const identity = await harness.runtime.sql.query("SELECT idempotency_key, delivery_id FROM notify.jobs");
-    expect(JSON.stringify(identity)).not.toContain("123456");
-    expect(JSON.stringify(identity)).not.toContain("owner@school.edu");
-    await harness.close();
+    try {
+      const port = createNotifyInvitationDeliveryPort(harness.runtime);
+      harness.runtime.resolveInvitationRecipient = async request => ({
+        ...request,
+        contactChannel: "phone",
+        contactValue: "+15145550123",
+      });
+      await port.deliver({
+        invitationId: "inv_sms",
+        schoolId: "sch_1",
+        contactChannel: "phone",
+        contactValue: "+15145550123",
+        displayName: "Invitee",
+        actorKind: AccountInvitationKind.Staff,
+        inviteUrl: "https://app.test/invite/inv_sms",
+        expiresAt: new Date(),
+        smsBody: "Join Edaya",
+      });
+      expect(harness.sentSms).toHaveLength(0);
+      await drainPendingSchoolNotifications(harness.runtime);
+      expect(harness.sent).toHaveLength(0);
+      expect(harness.sentSms).toEqual([{ to: "+15145550123", body: "Join Edaya" }]);
+    }
+    finally { await harness.close(); }
   });
 
   test("commits invitation intent before sending and retries a failed provider outside the caller", async () => {
@@ -54,7 +69,11 @@ describe("in-process invitation and auth delivery", () => {
       },
     });
     const port = createNotifyInvitationDeliveryPort(harness.runtime);
-    harness.runtime.resolveInvitationRecipient = async request => ({ ...request, email: "invitee@school.edu" });
+    harness.runtime.resolveInvitationRecipient = async request => ({
+      ...request,
+      contactChannel: "email",
+      contactValue: "invitee@school.edu",
+    });
     await port.deliver({
       invitationId: "inv_fail",
       schoolId: "sch_1",
@@ -100,7 +119,11 @@ test("invitation destinations and revocation remain in their school namespace", 
       });
     }
     expect(harness.sent).toHaveLength(0);
-    harness.runtime.resolveInvitationRecipient = async request => ({ ...request, email: `${request.schoolId}@example.test` });
+    harness.runtime.resolveInvitationRecipient = async request => ({
+      ...request,
+      contactChannel: "email",
+      contactValue: `${request.schoolId}@example.test`,
+    });
     await port.revoke("same-invitation", "a");
     expect(await harness.runtime.sql.query("SELECT tenant, email FROM notify.recipients")).toEqual([{ tenant: "b", email: "b@example.test" }]);
     await drainPendingSchoolNotifications(harness.runtime);
@@ -117,7 +140,12 @@ test("queued invitation dispatch fails closed without matching authoritative sch
       await port.deliver({ invitationId: mode, schoolId: "school", contactChannel: "email", contactValue: "invited@example.test", displayName: "Fixture", actorKind: AccountInvitationKind.Guardian, inviteUrl: "https://example.test/invite", expiresAt: new Date(Date.now() + 60000), emailSubject: "Invite", emailBody: "Synthetic" });
       harness.runtime.resolveInvitationRecipient = mode === "missing"
         ? undefined
-        : async request => ({ schoolId: mode === "school" ? "foreign" : request.schoolId, invitationId: mode === "invitation" ? "foreign" : request.invitationId, email: mode === "email" ? "other@example.test" : "invited@example.test" });
+        : async request => ({
+          schoolId: mode === "school" ? "foreign" : request.schoolId,
+          invitationId: mode === "invitation" ? "foreign" : request.invitationId,
+          contactChannel: "email",
+          contactValue: mode === "email" ? "other@example.test" : "invited@example.test",
+        });
       await drainPendingSchoolNotifications(harness.runtime);
       expect(await harness.runtime.sql.query("SELECT status FROM notify.jobs WHERE delivery_id = $1", [mode])).toEqual([{ status: mode === "missing" ? "failed" : "cancelled" }]);
     }

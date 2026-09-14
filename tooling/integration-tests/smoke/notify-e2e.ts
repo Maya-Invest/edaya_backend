@@ -5,7 +5,7 @@
  * Prerequisites:
  *   - bun repo dev
  *   - bun repo seed
- *   - apps/api/.env: RUNTIME=local without NOVU_SECRET_KEY (in-process notify)
+ *   - apps/api/.env: RUNTIME=local, EMAIL_TRANSPORT=log
  */
 import { loadDotenvFiles } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
 import {
@@ -71,10 +71,6 @@ async function listDeliveries(client: HttpSeedClient, annId: string): Promise<Me
 async function main() {
   console.log('In-process notify E2E smoke test')
   console.log(`API: ${baseUrl}`)
-
-  if (process.env.NOVU_SECRET_KEY?.trim()) {
-    fail('Unset NOVU_SECRET_KEY in apps/api/.env to exercise in-process notify')
-  }
 
   log('Waiting for API')
   await waitForApi(baseUrl, { timeoutMs: 15_000 })

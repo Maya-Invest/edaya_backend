@@ -21,7 +21,7 @@ describe('notification template render', () => {
     const templates = await buildDefaultNotificationTemplateDocument()
     await store.save(new SchoolNotificationTemplates({
       schoolId: 'school-1',
-      templates,
+      ...templates,
       createdAt: new Date(),
       updatedAt: new Date(),
     }))
@@ -42,20 +42,10 @@ describe('notification template render', () => {
     expect(rendered.body).toBe('Term 2 results for 6ème A are available.')
   })
 
-  test('renders account_invitation from platform defaults when school row is missing that key', async () => {
-    const full = await buildDefaultNotificationTemplateDocument()
-    const legacy = Object.fromEntries(
-      Object.entries(full).filter(([key]) => key !== 'account_invitation'),
-    ) as typeof full
-
+  test('renders account_invitation from platform defaults when the school row is missing', async () => {
     const service = new NotificationTemplateService({
       schoolNotificationTemplates: {
-        findById: async () => ({
-          schoolId: 'school-1',
-          templates: legacy,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as SchoolNotificationTemplates),
+        findById: async () => undefined,
       },
     } as any)
 
@@ -88,23 +78,27 @@ describe('seedSchoolNotificationTemplates', () => {
     const rows = await store.list()
     expect(rows).toHaveLength(1)
     expect(rows[0]?.schoolId).toBe('school-1')
-    expect(rows[0]?.templates['announcement.published'].email?.body).toContain('{{announcementBody}}')
+    expect(rows[0]?.announcementPublished.rich_message.body).toContain('{{announcementBody}}')
   })
 
-  test('backfills missing template keys on existing school rows', async () => {
+  test('keeps custom event copy when backfilling defaults', async () => {
     const defaults = await buildDefaultNotificationTemplateDocument()
-    const legacy = Object.fromEntries(
-      Object.entries(defaults).filter(([key]) => key !== 'account_invitation'),
-    ) as typeof defaults
+    const custom = {
+      ...defaults,
+      announcementPublished: {
+        ...defaults.announcementPublished,
+        rich_message: { subject: 'Custom', body: '<p>Custom {{announcementBody}}</p>' },
+      },
+    }
     const saved: SchoolNotificationTemplates[] = []
     const repositories = {
       schoolNotificationTemplates: {
-        findById: async () => ({
+        findById: async () => new SchoolNotificationTemplates({
           schoolId: 'school-1',
-          templates: legacy,
+          ...custom,
           createdAt: new Date('2026-01-01T00:00:00Z'),
           updatedAt: new Date('2026-01-01T00:00:00Z'),
-        } as SchoolNotificationTemplates),
+        }),
         save: async (entity: SchoolNotificationTemplates) => {
           saved.push(entity)
         },
@@ -113,7 +107,6 @@ describe('seedSchoolNotificationTemplates', () => {
 
     await seedSchoolNotificationTemplates(repositories, 'school-1')
 
-    expect(saved).toHaveLength(1)
-    expect(saved[0]?.templates.account_invitation.email?.body).toContain('{{inviteUrl}}')
+    expect(saved).toHaveLength(0)
   })
 })

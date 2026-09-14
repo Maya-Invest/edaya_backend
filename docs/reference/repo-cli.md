@@ -35,9 +35,8 @@ bun repo
 │   ├── openapi
 │   ├── boundaries
 │   └── test-naming
-├── smoke-test <staging|novu|notify|r2>
+├── smoke-test <staging|notify|r2>
 ├── openapi <export|generate>
-├── novu <bootstrap|cleanup> [plan|apply|validate]
 ├── deploy api <staging|production>
 ├── doctor
 └── verify [--full]
@@ -146,11 +145,10 @@ Live environment / provider checks (not Turbo tests).
 | Target | Description |
 |--------|-------------|
 | `staging` | Tier-1 HTTP vs deployed staging API |
-| `novu` | Novu outbound + webhook e2e (legacy fallback) |
 | `notify` | In-process notify announcement + delivery-event e2e against the school API |
 | `r2` | R2 credentials smoke |
 
-Ad-hoc: `bun repo smoke-test staging`, `bun repo smoke-test notify`, `bun repo smoke-test novu`, `bun repo smoke-test r2`.
+Ad-hoc: `bun repo smoke-test staging`, `bun repo smoke-test notify`, `bun repo smoke-test r2`.
 
 ### `bun repo deploy`
 
@@ -160,18 +158,6 @@ bun repo deploy api production
 ```
 
 Runs `wrangler deploy` from `apps/api/`.
-
-### `bun repo novu`
-
-```sh
-bun repo novu bootstrap              # plan (default)
-bun repo novu bootstrap apply
-bun repo novu bootstrap validate
-bun repo novu cleanup
-bun repo novu cleanup apply --yes
-```
-
-Implementation: `tooling/novu-ops/`. Smoke: use `bun repo smoke-test novu`.
 
 ### `bun repo openapi`
 

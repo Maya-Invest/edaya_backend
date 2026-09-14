@@ -55,10 +55,6 @@ import {
   onboardingRegisterSchoolRoute,
 } from "@/routes/onboarding.routes";
 import {
-  notificationDeliveryWebhookHandler,
-  notificationDeliveryWebhookRoute,
-} from "@/routes/notification-delivery-webhook.routes";
-import {
   acceptInvitationHandler,
   acceptInvitationRoute,
   invitationPreviewHandler,
@@ -128,7 +124,6 @@ router
   .openapi(createS2sClientRoute, createS2sClientHandler)
   .openapi(revokeS2sClientRoute, revokeS2sClientHandler)
   .openapi(rotateS2sClientKeyRoute, rotateS2sClientKeyHandler)
-  .openapi(notificationDeliveryWebhookRoute, notificationDeliveryWebhookHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler)
   .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)

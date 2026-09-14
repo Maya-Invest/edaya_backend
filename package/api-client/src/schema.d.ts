@@ -379,23 +379,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/webhooks/notification-delivery": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Notification delivery lifecycle webhook */
-        post: operations["webhooks.notificationDelivery"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/public/invitations/{token}": {
         parameters: {
             query?: never;
@@ -9981,10 +9964,6 @@ export interface components {
         RotateS2sClientKeyRequest: {
             apiKey?: string;
         };
-        NotificationDeliveryWebhookResponse: {
-            processed: number;
-            ignored: number;
-        };
         InvitationPreviewResponse: {
             /** @enum {string} */
             status: "pending" | "accepted" | "revoked" | "expired";
@@ -12348,21 +12327,181 @@ export interface components {
              */
             provider: "fcm" | "apns";
         };
-        SchoolNotificationTemplateDocument: {
-            [key: string]: unknown;
-        };
         SchoolNotificationTemplates: {
+            /** @default false */
+            invitationSmsEnabled: boolean;
+            announcementPublished: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            reportCardPublished: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            attendanceRecorded: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            assessmentResultRecorded: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            incidentRecorded: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            assessmentDueSoon: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            activityReminder: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            calendarEventReminder: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            accountInvitation: {
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
             schoolId: string;
-            templates: components["schemas"]["SchoolNotificationTemplateDocument"];
-            createdAt: string | null;
-            updatedAt: string | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
         };
         SchoolNotificationTemplateDocumentPatch: {
             [key: string]: unknown;
         };
         UpdateSchoolNotificationTemplatesCommand: {
             schoolId: string;
-            templates: components["schemas"]["SchoolNotificationTemplateDocumentPatch"];
+            invitationSmsEnabled?: boolean;
+            templates?: components["schemas"]["SchoolNotificationTemplateDocumentPatch"];
             expectedUpdatedAt?: string | null;
         };
         ResetSchoolNotificationTemplatesCommand: {
@@ -14537,48 +14676,6 @@ export interface operations {
             };
             /** @description Internal server error occurred */
             500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "webhooks.notificationDelivery": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Processed delivery events */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NotificationDeliveryWebhookResponse"];
-                };
-            };
-            /** @description Invalid webhook signature */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Webhook adapter not configured */
-            503: {
                 headers: {
                     [name: string]: unknown;
                 };

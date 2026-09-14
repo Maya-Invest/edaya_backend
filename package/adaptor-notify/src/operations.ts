@@ -1,6 +1,4 @@
 import type {
-  AuthOtpEmailInput,
-  AuthVerificationEmailInput,
   InvitationDeliveryInput,
   NotificationDeliveryStatusLookup,
   NotificationDeliveryStatusQuery,
@@ -8,17 +6,13 @@ import type {
   RegisterPushDeviceInput,
   UnregisterPushDeviceInput,
 } from "@edaya/core";
-import type { SendJobDependencies } from "./jobs/send-job";
 import type { NotifyRuntime } from "./runtime";
-import { formatOtpEmail, formatVerificationLinkEmail } from "./email/auth-copy";
 import { NotifySendError } from "./errors";
-import { buildAuthRecipientId, buildInvitationRecipientId, buildNotifyJobId, normalizeEmail, NOTIFY_PLATFORM_TENANT } from "./ids";
-import { sendJob } from "./jobs/send-job";
+import { buildInvitationRecipientId, buildNotifyJobId, normalizeEmail } from "./ids";
 import {
   cancelJob,
   deleteCommandRecipient,
   deleteDevice,
-  getJob,
   insertJobIfAbsent,
   lookupJobRecipients,
   upsertCommandRecipient,
@@ -26,25 +20,13 @@ import {
   upsertJobRecipient,
 } from "./store/queries";
 
-function sendDeps(runtime: NotifyRuntime): SendJobDependencies {
-  return {
-    sql: runtime.sql,
-    email: runtime.email,
-    fcm: runtime.fcm,
-    from: runtime.from,
-    log: runtime.log,
-    onDeliveryEvent: runtime.onDeliveryEvent,
-    resolveSchoolRecipient: runtime.resolveSchoolRecipient,
-    resolveInvitationRecipient: runtime.resolveInvitationRecipient,
-  };
-}
-
-async function sendAwaitedJob(runtime: NotifyRuntime, idempotencyKey: string, failureMessage: string): Promise<void> {
-  await sendJob(idempotencyKey, sendDeps(runtime));
-  const job = await getJob(runtime.sql, idempotencyKey);
-  if (job?.status !== "sent") {
-    throw new NotifySendError(job?.failure_reason ?? failureMessage);
-  }
+function schoolJobMetadata(input: NotificationEnqueueInput): string {
+  return JSON.stringify({
+    ...input.metadata,
+    enableEmail: String(input.enableEmail ?? true),
+    enablePush: String(input.enablePush ?? true),
+    enableSms: String(input.enableSms ?? false),
+  });
 }
 
 export async function enqueueSchoolNotification(
@@ -68,7 +50,8 @@ export async function enqueueSchoolNotification(
     body: input.body,
     email_subject: input.emailSubject ?? input.title,
     email_body: input.emailBody ?? input.body,
-    metadata: input.metadata ? JSON.stringify(input.metadata) : null,
+    sms_body: input.smsBody ?? null,
+    metadata: schoolJobMetadata(input),
   });
   if (!created) {
     return;
@@ -148,20 +131,26 @@ export async function deliverInvitation(
   runtime: NotifyRuntime,
   input: InvitationDeliveryInput,
 ): Promise<void> {
-  if (input.contactChannel !== "email")
+  if (input.contactChannel !== "email" && input.contactChannel !== "phone")
     throw new NotifySendError("INVITATION_CHANNEL_UNSUPPORTED");
+  if (input.contactChannel === "phone" && !runtime.sms.implemented)
+    throw new NotifySendError("SMS_TRANSPORT_UNIMPLEMENTED");
+
   const subjectId = buildInvitationRecipientId(input.invitationId);
   const jobId = buildNotifyJobId("invitation", input.schoolId, input.invitationId);
-  const email = input.contactChannel === "email" ? input.contactValue : undefined;
+  const email = input.contactChannel === "email" ? normalizeEmail(input.contactValue) : null;
+  const phone = input.contactChannel === "phone" ? input.contactValue : null;
   await upsertCommandRecipient(runtime.sql, {
     subject_id: subjectId,
     tenant: input.schoolId,
-    email: email ?? null,
+    email,
+    phone,
     display_name: input.displayName,
     locale: null,
     allows_notifications: true,
     channel_email: input.contactChannel === "email",
     channel_push: false,
+    channel_sms: input.contactChannel === "phone",
     recipient_kind: input.actorKind,
     recipient_id: input.invitationId,
   });
@@ -171,11 +160,15 @@ export async function deliverInvitation(
     job_kind: "invitation",
     delivery_id: input.invitationId,
     event_key: "account_invitation",
-    title: input.emailSubject,
-    body: input.emailBody,
-    email_subject: input.emailSubject,
-    email_body: input.emailBody,
-    metadata: JSON.stringify({ inviteUrl: input.inviteUrl }),
+    title: input.emailSubject ?? input.smsBody ?? "Invitation",
+    body: input.emailBody ?? input.smsBody ?? "",
+    email_subject: input.emailSubject ?? null,
+    email_body: input.emailBody ?? null,
+    sms_body: input.smsBody ?? null,
+    metadata: JSON.stringify({
+      inviteUrl: input.inviteUrl,
+      contactChannel: input.contactChannel,
+    }),
   });
   await upsertJobRecipient(runtime.sql, {
     idempotency_key: jobId,
@@ -192,89 +185,4 @@ export async function deliverInvitation(
 export async function revokeInvitation(runtime: NotifyRuntime, invitationId: string, schoolId: string): Promise<void> {
   await cancelJob(runtime.sql, buildNotifyJobId("invitation", schoolId, invitationId), schoolId);
   await deleteCommandRecipient(runtime.sql, buildInvitationRecipientId(invitationId), schoolId);
-}
-
-export async function sendAuthOtp(runtime: NotifyRuntime, input: AuthOtpEmailInput): Promise<void> {
-  const email = normalizeEmail(input.email);
-  const subjectId = buildAuthRecipientId(email);
-  const copy = formatOtpEmail(input);
-  await upsertCommandRecipient(runtime.sql, {
-    subject_id: subjectId,
-    tenant: NOTIFY_PLATFORM_TENANT,
-    email,
-    display_name: email,
-    locale: null,
-    allows_notifications: true,
-    channel_email: true,
-    channel_push: false,
-    recipient_kind: "staff",
-    recipient_id: email,
-  });
-  const deliveryId = crypto.randomUUID();
-  const idempotencyKey = buildNotifyJobId("auth_otp", NOTIFY_PLATFORM_TENANT, deliveryId);
-  await insertJobIfAbsent(runtime.sql, {
-    idempotency_key: idempotencyKey,
-    tenant: NOTIFY_PLATFORM_TENANT,
-    job_kind: "auth_otp",
-    delivery_id: deliveryId,
-    event_key: "auth.otp",
-    title: copy.subject,
-    body: copy.body,
-    email_subject: copy.subject,
-    email_body: copy.body,
-    metadata: JSON.stringify({ otpType: input.type }),
-  });
-  await upsertJobRecipient(runtime.sql, {
-    idempotency_key: idempotencyKey,
-    subject_id: subjectId,
-    channel: "queued",
-    status: "pending",
-    provider_message_id: null,
-    failure_reason: null,
-  });
-  await sendAwaitedJob(runtime, idempotencyKey, "auth otp send failed");
-}
-
-export async function sendAuthVerification(
-  runtime: NotifyRuntime,
-  input: AuthVerificationEmailInput,
-): Promise<void> {
-  const email = normalizeEmail(input.email);
-  const subjectId = buildAuthRecipientId(email);
-  const copy = formatVerificationLinkEmail(input);
-  await upsertCommandRecipient(runtime.sql, {
-    subject_id: subjectId,
-    tenant: NOTIFY_PLATFORM_TENANT,
-    email,
-    display_name: input.displayName ?? email,
-    locale: null,
-    allows_notifications: true,
-    channel_email: true,
-    channel_push: false,
-    recipient_kind: "staff",
-    recipient_id: email,
-  });
-  const deliveryId = crypto.randomUUID();
-  const idempotencyKey = buildNotifyJobId("auth_verification", NOTIFY_PLATFORM_TENANT, deliveryId);
-  await insertJobIfAbsent(runtime.sql, {
-    idempotency_key: idempotencyKey,
-    tenant: NOTIFY_PLATFORM_TENANT,
-    job_kind: "auth_verification",
-    delivery_id: deliveryId,
-    event_key: "auth.email_verification",
-    title: copy.subject,
-    body: copy.body,
-    email_subject: copy.subject,
-    email_body: copy.body,
-    metadata: JSON.stringify({ verifyUrl: input.url }),
-  });
-  await upsertJobRecipient(runtime.sql, {
-    idempotency_key: idempotencyKey,
-    subject_id: subjectId,
-    channel: "queued",
-    status: "pending",
-    provider_message_id: null,
-    failure_reason: null,
-  });
-  await sendAwaitedJob(runtime, idempotencyKey, "auth verification send failed");
 }

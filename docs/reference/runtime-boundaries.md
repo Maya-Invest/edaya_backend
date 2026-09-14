@@ -23,11 +23,11 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 | School DB | PGlite ephemeral (`pglite`) | PGlite persisted (`pglite:.data/school`) | Postgres (Hyperdrive binding or `DATABASE_URL`) |
 | Identity | fixture client | HTTP identity client | issuer JWKS + HTTP/service-binding directory |
 | File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files-server` | R2 (`@edaya/adaptor-r2`) |
-| Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
-| Invitation delivery | no-op | notify* or Novu* or no-op | notify* or Novu* or no-op |
+| Notifications | no-op | in-process notify (API injects log email + log SMS) | in-process notify (API injects Cloudflare email + unimplemented SMS) + FCM |
+| Invitation delivery | no-op | in-process notify | in-process notify |
 | Document rendering | not configured | stub or Gotenberg (`GOTENBERG_URL`) | Browser Run (`BROWSER`) or Gotenberg |
 
-\* **Notify / Novu** — `NOVU_SECRET_KEY` selects Novu (legacy fallback). Otherwise `RUNTIME=local` or `worker` uses in-process `@edaya/adaptor-notify`. When neither applies, notifications fall back to structured logging (or no-op in silent test mode). `in-memory` never calls notify or Novu.
+\* **Notify** — `RUNTIME=local` or `worker` uses in-process `@edaya/adaptor-notify`. Email and SMS transports are selected in `apps/api`, not inside notify. `in-memory` never calls notify.
 
 \* **Documents** — in-process `@edaya/adaptor-docs`. `in-memory` never calls Gotenberg or Browser Run. Worker prefers the `BROWSER` binding; without it (and without `GOTENBERG_URL`) rendering is not configured. Stub PDFs are local-only.
 
@@ -69,7 +69,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory Novu/notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
+`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
 
 ## Related packages
 
@@ -80,6 +80,5 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
 | `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files-server`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
-| `@edaya/adaptor-novu` | Notifications (Novu env fallback) |
 | `@edaya/adaptor-notify` | In-process email/push adapters on the school API |
 | `@edaya/adaptor-docs` | In-process PDF rendering (templates + inner PdfRenderer) |

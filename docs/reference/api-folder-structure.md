@@ -21,8 +21,7 @@ src/
 │   ├── invitation.routes.ts
 │   ├── file-storage.routes.ts
 │   ├── service-accounts.routes.ts
-│   ├── seed-auth.routes.ts
-│   └── notification-delivery-webhook.routes.ts
+│   └── seed-auth.routes.ts
 │
 ├── http/                      # App factory, CORS, DI, middleware, responses
 │   ├── bindings.ts            # AppBindings (used by http/ and runtime/)

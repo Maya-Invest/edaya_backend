@@ -22,6 +22,11 @@ export function resolveTeacherInvitationEmail(teacher: Teacher): string | undefi
   return normalizeInvitationEmail(teacher.notificationEmail ?? teacher.email)
 }
 
+export function normalizeInvitationPhone(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized?.startsWith('+') ? normalized : undefined
+}
+
 export function resolveInvitationContact(
   channel: AccountInvitationContactChannel,
   explicitValue: string | undefined,
@@ -30,8 +35,10 @@ export function resolveInvitationContact(
   teacher?: Teacher,
 ): string | undefined {
   if (channel === AccountInvitationContactChannel.Phone) {
-    const phone = explicitValue?.trim()
-    return phone && phone.length > 0 ? phone : undefined
+    return normalizeInvitationPhone(explicitValue)
+      ?? normalizeInvitationPhone(staff?.notificationPhone)
+      ?? normalizeInvitationPhone(guardian?.phone)
+      ?? normalizeInvitationPhone(teacher?.phone)
   }
 
   const explicitEmail = normalizeInvitationEmail(explicitValue)
@@ -48,6 +55,16 @@ export function resolveInvitationContact(
     return resolveTeacherInvitationEmail(teacher)
   }
   return undefined
+}
+
+export function resolveStudentInvitationContact(
+  channel: AccountInvitationContactChannel,
+  explicitValue: string | undefined,
+): string | undefined {
+  if (channel === AccountInvitationContactChannel.Phone) {
+    return normalizeInvitationPhone(explicitValue)
+  }
+  return normalizeInvitationEmail(explicitValue)
 }
 
 export function guardianHasEmailContact(guardian: Guardian): boolean {

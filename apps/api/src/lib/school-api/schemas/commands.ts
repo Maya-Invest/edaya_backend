@@ -815,7 +815,8 @@ export const unregisterPushDeviceCommandSchema = z.object({
 
 export const updateSchoolNotificationTemplatesCommandSchema = z.object({
   schoolId: field.id(),
-  templates: z.record(z.string(), z.unknown()).openapi("SchoolNotificationTemplateDocumentPatch", {
+  invitationSmsEnabled: z.boolean().optional(),
+  templates: z.record(z.string(), z.unknown()).optional().openapi("SchoolNotificationTemplateDocumentPatch", {
     type: "object",
     additionalProperties: true,
   }),

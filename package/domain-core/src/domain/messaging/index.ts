@@ -1,5 +1,7 @@
 export * from './announcement'
 export * from './announcement-target'
 export * from './message-delivery'
+export * from './notification-channel-catalog'
 export * from './notification-template-document-schema'
+export * from './notification-template-keys'
 export * from './school-notification-templates'

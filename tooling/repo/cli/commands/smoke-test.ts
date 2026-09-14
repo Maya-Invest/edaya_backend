@@ -8,8 +8,6 @@ export async function runSmokeTestCommand(
   switch (parsed.target) {
     case 'staging':
       return runBunScript(paths.smokeStaging)
-    case 'novu':
-      return runBunScript(paths.smokeNovu)
     case 'notify':
       return runBunScript(paths.smokeNotify)
     case 'r2':

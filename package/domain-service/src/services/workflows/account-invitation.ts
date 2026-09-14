@@ -7,9 +7,8 @@ import { denyResourceAccess } from '@edaya/authorization'
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, BusinessRuleViolationError, School as SchoolEntity } from '@edaya/core'
 import { ACCOUNT_INVITATION_TTL_MS } from '../../capabilities/invitations/constants'
 import { buildInvitationUrl, generateInvitationToken, hashInvitationToken } from '../../capabilities/invitations/invitation-token'
-import { normalizeInvitationEmail, resolveInvitationContact, resolveInviteeDisplayName, resolveStudentInvitationEmail } from '../../capabilities/invitations/resolve-invitation-contact'
-import { ACCOUNT_INVITATION_TEMPLATE_KEY } from '../../capabilities/notifications/templates/keys'
-import { renderInvitationEmailContent } from '../../capabilities/notifications/templates/render-enqueue-content'
+import { normalizeInvitationEmail, normalizeInvitationPhone, resolveInvitationContact, resolveInviteeDisplayName, resolveStudentInvitationContact } from '../../capabilities/invitations/resolve-invitation-contact'
+import { renderInvitationContent } from '../../capabilities/notifications/templates/render-enqueue-content'
 import { resolveSchoolName } from '../../capabilities/notifications/templates/resolve-school-name'
 import { linkSubjectToActor } from '../account-linking/link-subject-to-actor'
 
@@ -160,6 +159,18 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     const channel = input.contactChannel ?? AccountInvitationContactChannel.Email
     const { displayName, contactValue } = await this.resolveTargetContact(input, channel)
 
+    if (channel === AccountInvitationContactChannel.Phone) {
+      const templates = await this.repositories.schoolNotificationTemplates.findById(
+        this.baseService.actor.schoolId,
+      )
+      if (!templates?.invitationSmsEnabled) {
+        throw new BusinessRuleViolationError(
+          'INVITATION_SMS_DISABLED',
+          'SMS invitations are not enabled for this school',
+        )
+      }
+    }
+
     const pending = await this.repositories.accountInvitations.findPendingByTarget(
       this.baseService.actor.schoolId,
       input.kind,
@@ -194,11 +205,10 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
     const schoolName = await resolveSchoolName(this.repositories, invitation.schoolId)
     const inviteUrl = buildInvitationUrl(input.inviteBaseUrl, token)
-    const { emailSubject, emailBody } = await renderInvitationEmailContent(
+    const { emailSubject, emailBody, smsBody } = await renderInvitationContent(
       this.baseService.templateService,
       {
         schoolId: invitation.schoolId,
-        templateKey: ACCOUNT_INVITATION_TEMPLATE_KEY,
         variables: {
           schoolName,
           inviteeName: displayName,
@@ -218,8 +228,9 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
       actorKind: invitation.kind,
       inviteUrl,
       expiresAt: invitation.expiresAt,
-      emailSubject,
-      emailBody,
+      ...(channel === AccountInvitationContactChannel.Email
+        ? { emailSubject, emailBody }
+        : { smsBody }),
     })
 
     return { invitation, token }
@@ -248,7 +259,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     }
 
     const student = await this.requireUnlinkedStudent(input.targetId)
-    const contactValue = resolveStudentInvitationEmail(input.contactValue)
+    const contactValue = resolveStudentInvitationContact(channel, input.contactValue)
     return this.requireContact(contactValue, displayNameFor(student))
   }
 
@@ -471,9 +482,4 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
 function displayNameFor(entity: StaffMember | Guardian | Student | Teacher): string {
   return resolveInviteeDisplayName(entity)
-}
-
-function normalizeInvitationPhone(value: string | undefined): string | undefined {
-  const normalized = value?.trim()
-  return normalized?.startsWith('+') ? normalized : undefined
 }

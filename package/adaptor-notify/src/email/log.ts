@@ -1,4 +1,4 @@
-import type { EmailSendInput, EmailTransportPort } from "./port";
+import type { EmailSendInput, EmailTransportPort } from "@edaya/core";
 
 export function createLogEmailTransport(log: (message: string, extra?: Record<string, unknown>) => void): EmailTransportPort {
   return {

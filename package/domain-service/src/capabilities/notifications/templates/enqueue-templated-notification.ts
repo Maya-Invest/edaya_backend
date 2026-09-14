@@ -5,7 +5,7 @@ import { deliverNotificationFromEnqueueInput } from '../delivery/deliver-notific
 import { renderNotificationEnqueueContent } from './render-enqueue-content'
 
 export type EnqueueTemplatedNotificationInput
-  = Omit<NotificationEnqueueInput, 'title' | 'body' | 'emailSubject' | 'emailBody'>
+  = Omit<NotificationEnqueueInput, 'title' | 'body' | 'emailSubject' | 'emailBody' | 'smsBody' | 'enableEmail' | 'enablePush' | 'enableSms'>
     & {
       templateKey: NotificationTemplateKey
       variables: Record<string, string>

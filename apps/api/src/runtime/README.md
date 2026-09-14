@@ -33,7 +33,6 @@ runtime/
       document-renderer.ts
       invitation-delivery.ts
       notify-delivery-sink.ts
-      notification-delivery-webhook.ts
       identity-client.ts
       auth-contact-resolver.ts
       pino-logger.ts

@@ -26,11 +26,6 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     searchPath: 'apps/api/src',
   },
   {
-    label: 'api imports novu-ops tooling',
-    pattern: /from ["']@edaya\/novu-ops/,
-    searchPath: 'apps/api/src',
-  },
-  {
     label: 'core imports identity client',
     pattern: /from ["']@maya-invest\/edaya-identity-client/,
     searchPath: 'package/domain-core/src',
@@ -77,7 +72,7 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
       searchPath,
     }),
   ),
-  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-novu', 'package/adaptor-notify', 'package/adaptor-docs', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
+  ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-notify', 'package/adaptor-docs', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports identity client',
       pattern: /from ["']@maya-invest\/edaya-identity-client/,

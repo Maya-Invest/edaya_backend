@@ -8,7 +8,7 @@ export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
 const manualClientRoutes: Pick<
   ClientBindingsDocument,
-  "authorization" | "onboarding" | "files" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public" | "webhooks"
+  "authorization" | "onboarding" | "files" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public"
 > = {
   authorization: {
     effectiveGrants: {
@@ -188,14 +188,6 @@ const manualClientRoutes: Pick<
       pathParams: ["token"],
       basePath: "root",
       responseSchemaName: "AcceptInvitationResponse",
-    },
-  },
-  webhooks: {
-    notificationDelivery: {
-      method: "POST",
-      path: "webhooks/notification-delivery",
-      basePath: "root",
-      responseSchemaName: "NotificationDeliveryWebhookResponse",
     },
   },
 };

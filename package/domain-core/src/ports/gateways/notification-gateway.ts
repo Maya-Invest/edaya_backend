@@ -51,6 +51,12 @@ export interface NotificationEnqueueInput {
   emailSubject?: string
   /** Rendered email HTML body — defaults to `body` when omitted at the provider */
   emailBody?: string
+  /** Rendered SMS body from simple_message */
+  smsBody?: string
+  /** School template gates — adaptor fans out after AND with recipient prefs */
+  enableEmail?: boolean
+  enablePush?: boolean
+  enableSms?: boolean
   recipients: NotificationRecipient[]
   priority?: AnnouncementPriority
   deliverAfter?: Date
@@ -106,7 +112,7 @@ export interface UnregisterPushDeviceInput {
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
   cancel: (idempotencyKey: string, schoolId: string) => Promise<void>
-  /** Poll provider message status — used by reconcilePendingDeliveries cron when webhooks are unavailable */
+  /** Poll remaining pending deliveries — used by reconcilePendingDeliveries cron */
   lookupDeliveryStatuses?: (
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,
   ) => Promise<ReadonlyMap<string, NotificationDeliveryStatusLookup>>

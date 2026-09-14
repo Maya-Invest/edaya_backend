@@ -12,9 +12,19 @@ export async function resolveInvitationDispatchRecipient(
     denyResourceAccess()
   const scope = await base.access.invitations.dispatchScope()
   const invitation = await base.repositories.accountInvitations.forAccess(scope).findById(request.invitationId)
-  if (!invitation || invitation.status !== AccountInvitationStatus.Pending || invitation.expiresAt.getTime() <= Date.now()
-    || invitation.contactChannel !== AccountInvitationContactChannel.Email) {
+  if (!invitation || invitation.status !== AccountInvitationStatus.Pending || invitation.expiresAt.getTime() <= Date.now()) {
     return undefined
   }
-  return { schoolId: invitation.schoolId, invitationId: invitation.id, email: invitation.contactValue }
+  if (
+    invitation.contactChannel !== AccountInvitationContactChannel.Email
+    && invitation.contactChannel !== AccountInvitationContactChannel.Phone
+  ) {
+    return undefined
+  }
+  return {
+    schoolId: invitation.schoolId,
+    invitationId: invitation.id,
+    contactChannel: invitation.contactChannel,
+    contactValue: invitation.contactValue,
+  }
 }

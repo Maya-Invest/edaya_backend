@@ -41,10 +41,10 @@ On Worker, `prepareRuntimeBindings()` resolves `DATABASE_URL` from the Hyperdriv
 | Identity | Fixture client | HTTP identity client | HTTP/service-binding directory + issuer JWKS |
 | Migrations on startup | yes | yes (PGlite default) | no |
 | File storage | in-memory port | `@edaya/adaptor-local-fs` + `bun repo dev` | R2 (required) |
-| Notifications | no-op | notify* or Novu* or log/no-op | notify* or Novu* or no-op |
+| Notifications | no-op | in-process notify (log email + log SMS) | in-process notify (Cloudflare email + unimplemented SMS) + FCM |
 | Document rendering | not configured | stub or Gotenberg | Browser Run or Gotenberg |
 
-\*Notify is in-process `@edaya/adaptor-notify` unless `NOVU_SECRET_KEY` is set. Document rendering is in-process `@edaya/adaptor-docs`. See [runtime-boundaries.md](./runtime-boundaries.md).
+\*Notify is in-process `@edaya/adaptor-notify` with email/SMS injected by `apps/api`. Document rendering is in-process `@edaya/adaptor-docs`. See [runtime-boundaries.md](./runtime-boundaries.md).
 
 Bootstrap resolvers do not upgrade adaptors when unrelated vendor env vars are present.
 

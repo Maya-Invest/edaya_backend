@@ -3019,23 +3019,6 @@
           }
         }
       },
-      "NotificationDeliveryWebhookResponse": {
-        "type": "object",
-        "properties": {
-          "processed": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "ignored": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "processed",
-          "ignored"
-        ]
-      },
       "InvitationPreviewResponse": {
         "type": "object",
         "properties": {
@@ -12826,34 +12809,613 @@
           }
         }
       },
-      "SchoolNotificationTemplateDocument": {
-        "type": "object",
-        "additionalProperties": true
-      },
       "SchoolNotificationTemplates": {
         "type": "object",
         "properties": {
+          "invitationSmsEnabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "announcementPublished": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "reportCardPublished": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "attendanceRecorded": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "assessmentResultRecorded": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "incidentRecorded": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "assessmentDueSoon": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "activityReminder": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "calendarEventReminder": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "accountInvitation": {
+            "type": "object",
+            "properties": {
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "rich_message",
+              "simple_message"
+            ]
+          },
           "schoolId": {
             "type": "string",
             "minLength": 1
           },
-          "templates": {
-            "$ref": "#/components/schemas/SchoolNotificationTemplateDocument"
-          },
-          "createdAt": {
-            "type": "string",
-            "nullable": true
-          },
-          "updatedAt": {
-            "type": "string",
-            "nullable": true
-          }
+          "createdAt": {},
+          "updatedAt": {}
         },
         "required": [
-          "schoolId",
-          "templates",
-          "createdAt",
-          "updatedAt"
+          "announcementPublished",
+          "reportCardPublished",
+          "attendanceRecorded",
+          "assessmentResultRecorded",
+          "incidentRecorded",
+          "assessmentDueSoon",
+          "activityReminder",
+          "calendarEventReminder",
+          "accountInvitation",
+          "schoolId"
         ]
       },
       "SchoolNotificationTemplateDocumentPatch": {
@@ -12867,6 +13429,9 @@
             "type": "string",
             "minLength": 1
           },
+          "invitationSmsEnabled": {
+            "type": "boolean"
+          },
           "templates": {
             "$ref": "#/components/schemas/SchoolNotificationTemplateDocumentPatch"
           },
@@ -12876,8 +13441,7 @@
           }
         },
         "required": [
-          "schoolId",
-          "templates"
+          "schoolId"
         ]
       },
       "ResetSchoolNotificationTemplatesCommand": {
@@ -17625,74 +18189,6 @@
           },
           "500": {
             "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/webhooks/notification-delivery": {
-      "post": {
-        "tags": [
-          "Webhooks"
-        ],
-        "summary": "Notification delivery lifecycle webhook",
-        "operationId": "webhooks.notificationDelivery",
-        "x-edaya-kind": "webhooks",
-        "x-edaya-client-key": "notificationDelivery",
-        "x-edaya-client-path": "webhooks/notification-delivery",
-        "x-edaya-response-schema": "NotificationDeliveryWebhookResponse",
-        "x-edaya-base-path": "root",
-        "responses": {
-          "200": {
-            "description": "Processed delivery events",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationDeliveryWebhookResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid webhook signature",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Webhook adapter not configured",
             "content": {
               "application/json": {
                 "schema": {

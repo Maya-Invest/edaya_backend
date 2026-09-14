@@ -40,7 +40,7 @@ describe('build recipient profiles', () => {
       fallbackEmail: 'ada@school.edu',
       preferences: {
         allowsNotifications: true,
-        channels: { email: true, in_app: true },
+        channels: { email: true, sms: false, in_app: true },
       },
     })
   })
@@ -144,7 +144,7 @@ describe('build recipient profiles', () => {
       fallbackEmail: 'alan@school.edu',
       preferences: {
         allowsNotifications: true,
-        channels: { email: true, in_app: true },
+        channels: { email: true, sms: false, in_app: true },
       },
     })
   })

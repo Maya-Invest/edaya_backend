@@ -38,6 +38,7 @@ export function buildStaffRecipientProfile(staff: StaffMember): NotificationReci
       allowsNotifications: true,
       channels: {
         email: Boolean(staff.notificationEmail ?? fallbackEmail),
+        sms: Boolean(staff.notificationPhone),
         in_app: true,
       },
     },
@@ -130,6 +131,7 @@ export function buildTeacherRecipientProfile(teacher: Teacher): NotificationReci
       allowsNotifications: true,
       channels: {
         email: Boolean(teacher.notificationEmail ?? fallbackEmail),
+        sms: Boolean(teacher.notificationPhone),
         in_app: true,
       },
     },

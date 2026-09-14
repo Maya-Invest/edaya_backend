@@ -1,15 +1,15 @@
-import type { NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient } from "@edaya/core";
-import type { EmailTransportPort } from "./email/port";
+import type { EmailTransportPort, NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient, SmsTransportPort } from "@edaya/core";
 import type { NotifyTransportEnv } from "./env";
 import type { FcmTransport } from "./push/fcm";
 import type { NotifySql } from "./store/types";
-import { resolveEmailFrom, resolveEmailTransport } from "./email/resolve";
+import { resolveEmailFrom } from "./env";
 import { resolveFcmTransport } from "./push/fcm";
 import { createNotifySqlFromDrizzle } from "./store/sql";
 
 export interface NotifyRuntime {
   sql: NotifySql;
   email: EmailTransportPort;
+  sms: SmsTransportPort;
   fcm: FcmTransport;
   from: { email: string; name?: string };
   log: (message: string, extra?: Record<string, unknown>) => void;
@@ -21,11 +21,12 @@ export interface NotifyRuntime {
 export interface CreateNotifyRuntimeOptions {
   sql: NotifySql;
   env: NotifyTransportEnv;
+  email: EmailTransportPort;
+  sms: SmsTransportPort;
   log?: (message: string, extra?: Record<string, unknown>) => void;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
   resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
-  email?: EmailTransportPort;
   fcm?: FcmTransport;
 }
 
@@ -37,7 +38,8 @@ export function createNotifyRuntime(options: CreateNotifyRuntimeOptions): Notify
   const log = options.log ?? silentNotifyLog();
   return {
     sql: options.sql,
-    email: options.email ?? resolveEmailTransport(options.env, log),
+    email: options.email,
+    sms: options.sms,
     fcm: options.fcm ?? resolveFcmTransport(options.env.FCM_SERVICE_ACCOUNT_JSON, log),
     from: resolveEmailFrom(options.env),
     log,
@@ -51,21 +53,23 @@ export function createNotifyRuntimeFromDrizzle(options: {
   db: unknown;
   getExecutor?: () => unknown;
   env: NotifyTransportEnv;
+  email: EmailTransportPort;
+  sms: SmsTransportPort;
   log?: CreateNotifyRuntimeOptions["log"];
   onDeliveryEvent?: CreateNotifyRuntimeOptions["onDeliveryEvent"];
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
   resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
-  email?: EmailTransportPort;
   fcm?: FcmTransport;
 }): NotifyRuntime {
   return createNotifyRuntime({
     sql: createNotifySqlFromDrizzle(options.db, options.getExecutor),
     env: options.env,
+    email: options.email,
+    sms: options.sms,
     log: options.log,
     onDeliveryEvent: options.onDeliveryEvent,
     resolveSchoolRecipient: options.resolveSchoolRecipient,
     resolveInvitationRecipient: options.resolveInvitationRecipient,
-    email: options.email,
     fcm: options.fcm,
   });
 }

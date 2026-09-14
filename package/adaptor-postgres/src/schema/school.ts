@@ -1,3 +1,4 @@
+import type { EventNotificationTemplateEntry, InvitationNotificationTemplateEntry } from '@edaya/core'
 import { sql } from 'drizzle-orm'
 import { boolean, check, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
@@ -103,7 +104,16 @@ export const accountInvitations = pgTable('account_invitations', {
 
 export const schoolNotificationTemplates = pgTable('school_notification_templates', {
   id: text('school_id').primaryKey(),
-  templates: jsonb('templates').notNull(),
+  invitationSmsEnabled: boolean('invitation_sms_enabled').notNull().default(false),
+  announcementPublished: jsonb('announcement_published').$type<EventNotificationTemplateEntry>().notNull(),
+  reportCardPublished: jsonb('report_card_published').$type<EventNotificationTemplateEntry>().notNull(),
+  attendanceRecorded: jsonb('attendance_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  assessmentResultRecorded: jsonb('assessment_result_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  incidentRecorded: jsonb('incident_recorded').$type<EventNotificationTemplateEntry>().notNull(),
+  assessmentDueSoon: jsonb('assessment_due_soon').$type<EventNotificationTemplateEntry>().notNull(),
+  activityReminder: jsonb('activity_reminder').$type<EventNotificationTemplateEntry>().notNull(),
+  calendarEventReminder: jsonb('calendar_event_reminder').$type<EventNotificationTemplateEntry>().notNull(),
+  accountInvitation: jsonb('account_invitation').$type<InvitationNotificationTemplateEntry>().notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 })

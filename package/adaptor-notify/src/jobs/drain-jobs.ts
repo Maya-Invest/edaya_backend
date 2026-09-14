@@ -1,7 +1,7 @@
 import type { NotifyRuntime } from "../runtime";
 import { sendJob } from "./send-job";
 
-/** Poll durable school notification and invitation intent. Auth emails retain awaited delivery. */
+/** Poll durable school notification and invitation intent. */
 export async function drainPendingSchoolNotifications(runtime: NotifyRuntime, limit = 20): Promise<number> {
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
     throw new Error("Invalid notification batch limit");

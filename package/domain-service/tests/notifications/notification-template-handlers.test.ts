@@ -16,7 +16,7 @@ async function createContext() {
   await r.academicPeriods.save(new AcademicPeriod({ ...period.data, name: 'Term 2' }))
   const subject = (await r.subjects.findById('subject-math'))!
   await r.subjects.save(new Subject({ ...subject.data, name: 'Mathematics' }))
-  await r.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', templates: await buildDefaultNotificationTemplateDocument() }))
+  await r.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', ...await buildDefaultNotificationTemplateDocument() }))
   return { ...fixture, gateway }
 }
 
@@ -24,8 +24,15 @@ describe('templated notifications through authorized workflows', () => {
   test('incident notifications use a saved school template document', async () => {
     const { service, repositories, gateway } = await createContext()
     const templates = await buildDefaultNotificationTemplateDocument()
-    templates['incident.recorded'] = { email: { subject: 'Email: {{incidentTitle}}', body: '<p>Email body for {{incidentTitle}}</p>' }, in_app: { subject: 'In-app: {{incidentTitle}}', body: 'In-app body for {{incidentTitle}}' } }
-    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', templates }))
+    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({
+      schoolId: 'sch1',
+      ...templates,
+      incidentRecorded: {
+        ...templates.incidentRecorded,
+        base_message: { title: 'In-app: {{incidentTitle}}', body: 'In-app body for {{incidentTitle}}' },
+        rich_message: { subject: 'Email: {{incidentTitle}}', body: '<p>Email body for {{incidentTitle}}</p>' },
+      },
+    }))
     await service.behaviorWorkflow.recordIncident({ id: 'inc1', schoolId: 'sch1', title: 'Hall incident', description: 'Incident description', date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, classGroupId: 'cg1' })
     await service.behaviorWorkflow.addStudentInvolvement({ id: 'inv1', incidentId: 'inc1', studentId: 'stu1', role: IncidentInvolvementRole.Subject })
     expect(gateway.enqueued).toHaveLength(1)

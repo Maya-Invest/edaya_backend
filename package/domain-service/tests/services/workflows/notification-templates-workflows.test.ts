@@ -14,16 +14,16 @@ describe('NotificationTemplatesServiceWorkflow', () => {
       schoolId: 'school',
       templates: {
         'incident.recorded': {
-          in_app: {
-            subject: 'Custom incident',
+          base_message: {
+            title: 'Custom incident',
             body: 'Custom incident body',
           },
         },
       },
     }) as SchoolNotificationTemplates
 
-    expect(updated.templates['incident.recorded'].in_app?.subject).toBe('Custom incident')
-    expect(updated.templates['announcement.published'].email?.body).toContain('{{announcementBody}}')
+    expect(updated.incidentRecorded.base_message.title).toBe('Custom incident')
+    expect(updated.announcementPublished.rich_message.body).toContain('{{announcementBody}}')
   })
 
   test('resetSchoolNotificationTemplates restores one key from defaults', async () => {
@@ -34,8 +34,8 @@ describe('NotificationTemplatesServiceWorkflow', () => {
       schoolId: 'school',
       templates: {
         'incident.recorded': {
-          in_app: {
-            subject: 'Custom incident',
+          base_message: {
+            title: 'Custom incident',
             body: 'Custom incident body',
           },
         },
@@ -48,7 +48,7 @@ describe('NotificationTemplatesServiceWorkflow', () => {
       templateKey: 'incident.recorded',
     }) as SchoolNotificationTemplates
 
-    expect(reset.templates['incident.recorded']).toEqual(defaults['incident.recorded'])
+    expect(reset.incidentRecorded).toEqual(defaults.incidentRecorded)
   })
 })
 
@@ -57,13 +57,13 @@ describe('mergeSchoolNotificationTemplateDocument', () => {
     const defaults = await buildDefaultNotificationTemplateDocument()
     const merged = mergeSchoolNotificationTemplateDocument(defaults, {
       'assessment.due_soon': {
-        email: {
+        rich_message: {
           subject: 'Due soon: {{assessmentTitle}}',
         },
       },
     })
 
-    expect(merged['assessment.due_soon'].email?.subject).toBe('Due soon: {{assessmentTitle}}')
-    expect(merged['assessment.due_soon'].email?.body).toBe(defaults['assessment.due_soon'].email?.body)
+    expect(merged.assessmentDueSoon.rich_message.subject).toBe('Due soon: {{assessmentTitle}}')
+    expect(merged.assessmentDueSoon.rich_message.body).toBe(defaults.assessmentDueSoon.rich_message.body)
   })
 })

@@ -33,6 +33,7 @@ describe('workflow repository catalog', () => {
       'accountInvitations',
       'guardianLinks',
       'guardians',
+      'schoolNotificationTemplates',
       'schools',
       'staffMembers',
       'students',

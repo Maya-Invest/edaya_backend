@@ -1490,14 +1490,6 @@ export const clientBindings = {
         "responseSchemaName": "RotateS2sClientKeyResponse"
       }
     },
-    "webhooks": {
-      "notificationDelivery": {
-        "method": "POST",
-        "path": "webhooks/notification-delivery",
-        "responseSchemaName": "NotificationDeliveryWebhookResponse",
-        "basePath": "root"
-      }
-    },
     "public": {
       "previewInvitation": {
         "method": "GET",

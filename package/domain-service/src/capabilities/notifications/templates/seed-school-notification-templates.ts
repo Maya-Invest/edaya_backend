@@ -1,14 +1,7 @@
 import type { SchoolRepositories } from '../../../ports/school-repositories'
 import { SchoolNotificationTemplates } from '@edaya/core'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
-import { NOTIFICATION_TEMPLATE_KEYS } from './keys'
-import { mergeSchoolNotificationTemplateDocument } from './merge-school-notification-templates'
-
-function isMissingTemplateKeys(
-  templates: SchoolNotificationTemplates['templates'],
-): boolean {
-  return NOTIFICATION_TEMPLATE_KEYS.some(key => !(key in templates))
-}
+import { mergeNotificationTemplateCatalogs } from './merge-school-notification-templates'
 
 export async function seedSchoolNotificationTemplates(
   repositories: Pick<SchoolRepositories, 'schoolNotificationTemplates'>,
@@ -17,15 +10,14 @@ export async function seedSchoolNotificationTemplates(
   const defaults = await buildDefaultNotificationTemplateDocument()
   const existing = await repositories.schoolNotificationTemplates.findById(schoolId)
   if (existing) {
-    if (!isMissingTemplateKeys(existing.templates)) {
+    const merged = mergeNotificationTemplateCatalogs(defaults, existing.catalog)
+    if (JSON.stringify(merged) === JSON.stringify(existing.catalog)) {
       return
     }
 
     const now = new Date()
-    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({
-      schoolId,
-      templates: mergeSchoolNotificationTemplateDocument(defaults, existing.templates),
-      createdAt: existing.createdAt,
+    await repositories.schoolNotificationTemplates.save(existing.copyWith({
+      ...merged,
       updatedAt: now,
     }))
     return
@@ -34,7 +26,7 @@ export async function seedSchoolNotificationTemplates(
   const now = new Date()
   await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({
     schoolId,
-    templates: defaults,
+    ...defaults,
     createdAt: now,
     updatedAt: now,
   }))

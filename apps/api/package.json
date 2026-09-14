@@ -22,7 +22,6 @@
     "@edaya/adaptor-docs": "workspace:*",
     "@edaya/adaptor-local-fs": "workspace:*",
     "@edaya/adaptor-notify": "workspace:*",
-    "@edaya/adaptor-novu": "workspace:*",
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/adaptor-r2": "workspace:*",
     "@edaya/authorization": "workspace:*",

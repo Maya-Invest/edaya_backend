@@ -53,7 +53,11 @@ describe('AccountInvitationServiceWorkflow', () => {
     const sent = await service.accountInvitationWorkflow.sendAccountInvitation({ kind: AccountInvitationKind.Staff, targetId: 'st9', inviteBaseUrl: 'https://example.test/invite' })
     const dispatch = new SchoolService({ ...service.baseService, actor: createSystemActorMetadata({ schoolId: 'sch1', systemId: 'invitation-dispatch', requestId: 'dispatch', reason: 'Test' }) })
     const request = { schoolId: 'sch1', invitationId: sent.invitation.id }
-    expect(await resolveInvitationDispatchRecipient(dispatch.baseService, request)).toEqual({ ...request, email: sent.invitation.contactValue })
+    expect(await resolveInvitationDispatchRecipient(dispatch.baseService, request)).toEqual({
+      ...request,
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: sent.invitation.contactValue,
+    })
     await expect(resolveInvitationDispatchRecipient(dispatch.baseService, { ...request, schoolId: 'other' })).rejects.toThrow()
     for (const status of [AccountInvitationStatus.Accepted, AccountInvitationStatus.Revoked, AccountInvitationStatus.Expired]) {
       await repositories.accountInvitations.save(sent.invitation.copyWith({ status }))
@@ -84,14 +88,17 @@ describe('AccountInvitationServiceWorkflow', () => {
     const { service, invitationDelivery, repositories } = await createInvitationContext()
 
     const templates = await buildDefaultNotificationTemplateDocument()
-    templates.account_invitation = {
-      email: {
-        subject: 'Join {{schoolName}} — {{inviteeName}}',
-        body: '<p>Custom invite for {{inviteeName}} at {{schoolName}}</p>',
+    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({
+      schoolId: 'sch1',
+      ...templates,
+      accountInvitation: {
+        ...templates.accountInvitation,
+        rich_message: {
+          subject: 'Join {{schoolName}} — {{inviteeName}}',
+          body: '<p>Custom invite for {{inviteeName}} at {{schoolName}}</p>',
+        },
       },
-    }
-
-    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({ schoolId: 'sch1', templates }))
+    }))
 
     await service.accountInvitationWorkflow.sendAccountInvitation({
       kind: AccountInvitationKind.Staff,
@@ -220,7 +227,12 @@ describe('AccountInvitationServiceWorkflow', () => {
       lastName: 'Hopper',
       phone: '+2250102030405',
     })
-    const { service } = await createInvitationContext({ guardians: [guardian] })
+    const { service, repositories } = await createInvitationContext({ guardians: [guardian] })
+    await repositories.schoolNotificationTemplates.save(new SchoolNotificationTemplates({
+      schoolId: 'sch1',
+      ...await buildDefaultNotificationTemplateDocument(),
+      invitationSmsEnabled: true,
+    }))
     const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
       kind: AccountInvitationKind.Guardian,
       targetId: guardian.id,
@@ -233,6 +245,24 @@ describe('AccountInvitationServiceWorkflow', () => {
       token,
       subjectId: 'guardian-subject',
     })).rejects.toMatchObject({ code: 'INVITATION_PHONE_MISMATCH' })
+  })
+
+  test('sendAccountInvitation rejects phone invites when SMS invitations are off', async () => {
+    const guardian = new Guardian({
+      id: 'gua-sms-off',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      phone: '+2250102030405',
+    })
+    const { service } = await createInvitationContext({ guardians: [guardian] })
+    await expect(service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Guardian,
+      targetId: guardian.id,
+      contactChannel: AccountInvitationContactChannel.Phone,
+      contactValue: '+2250102030405',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })).rejects.toMatchObject({ code: 'INVITATION_SMS_DISABLED' })
   })
 
   test('getInvitationPreviewByToken returns a pending invitation', async () => {

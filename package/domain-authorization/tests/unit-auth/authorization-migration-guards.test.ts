@@ -95,7 +95,6 @@ describe('authorization migration guards', () => {
       ...(await readSourceUnder(coreRoot, ['src'])),
       ...(await readSourceUnder(join(authorizationRoot, '../adaptor-postgres'), ['src'])),
       ...(await readSourceUnder(join(authorizationRoot, '../adaptor-notify'), ['src'])),
-      ...(await readSourceUnder(join(authorizationRoot, '../adaptor-novu'), ['src'])),
       ...(await readSourceUnder(join(authorizationRoot, '../../apps/api'), ['src'])),
       ...(await readSourceUnder(join(authorizationRoot, '../../tooling/seeding'), ['src'])),
     ]

@@ -1,7 +1,6 @@
-import type { Filter, QueryOptions } from '@edaya/core'
-import type { SchoolNotificationTemplateDocument } from '@edaya/service'
+import type { Filter, QueryOptions, SchoolNotificationTemplateCatalog } from '@edaya/core'
 import { SchoolNotificationTemplates } from '@edaya/core'
-import { buildDefaultNotificationTemplateDocument, mergeSchoolNotificationTemplateDocument } from '@edaya/service'
+import { buildDefaultNotificationTemplateDocument, mergeNotificationTemplateCatalogs } from '@edaya/service'
 import * as schema from '../postgres-schema'
 import { PostgresStore } from '../postgres-store'
 
@@ -34,20 +33,48 @@ export function normalizeSchoolNotificationTemplatesQuery(
   return { ...normalized, $and: [...(normalized.$and ?? []), { id: schoolId }] }
 }
 
+function packTemplateRow(entity: SchoolNotificationTemplates): SchoolNotificationTemplatesRow {
+  return {
+    id: entity.schoolId,
+    invitationSmsEnabled: entity.invitationSmsEnabled,
+    announcementPublished: entity.announcementPublished,
+    reportCardPublished: entity.reportCardPublished,
+    attendanceRecorded: entity.attendanceRecorded,
+    assessmentResultRecorded: entity.assessmentResultRecorded,
+    incidentRecorded: entity.incidentRecorded,
+    assessmentDueSoon: entity.assessmentDueSoon,
+    activityReminder: entity.activityReminder,
+    calendarEventReminder: entity.calendarEventReminder,
+    accountInvitation: entity.accountInvitation,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
+  }
+}
+
+function storedCatalog(row: SchoolNotificationTemplatesRow): SchoolNotificationTemplateCatalog {
+  return {
+    invitationSmsEnabled: row.invitationSmsEnabled,
+    announcementPublished: row.announcementPublished,
+    reportCardPublished: row.reportCardPublished,
+    attendanceRecorded: row.attendanceRecorded,
+    assessmentResultRecorded: row.assessmentResultRecorded,
+    incidentRecorded: row.incidentRecorded,
+    assessmentDueSoon: row.assessmentDueSoon,
+    activityReminder: row.activityReminder,
+    calendarEventReminder: row.calendarEventReminder,
+    accountInvitation: row.accountInvitation,
+  }
+}
+
 export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates> {
   constructor(db: unknown) {
     super(
       db,
       schema.schoolNotificationTemplates,
-      (entity: SchoolNotificationTemplates) => ({
-        id: entity.schoolId,
-        templates: entity.templates as SchoolNotificationTemplateDocument,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      }),
+      (entity: SchoolNotificationTemplates) => packTemplateRow(entity),
       (row: SchoolNotificationTemplatesRow) => new SchoolNotificationTemplates({
         schoolId: row.id,
-        templates: row.templates as SchoolNotificationTemplateDocument,
+        ...storedCatalog(row),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),
@@ -72,19 +99,16 @@ export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<Scho
   }
 
   private withDefaults(entity: SchoolNotificationTemplates): Promise<SchoolNotificationTemplates> {
-    return this.toDomainRow({ id: entity.schoolId, templates: entity.templates, createdAt: entity.createdAt, updatedAt: entity.updatedAt })
+    return this.toDomainRow(packTemplateRow(entity))
   }
 
   private async toDomainRow(row: SchoolNotificationTemplatesRow): Promise<SchoolNotificationTemplates> {
     const defaults = await buildDefaultNotificationTemplateDocument()
-    const templates = mergeSchoolNotificationTemplateDocument(
-      defaults,
-      row.templates as SchoolNotificationTemplateDocument,
-    )
+    const catalog = mergeNotificationTemplateCatalogs(defaults, storedCatalog(row))
 
     return new SchoolNotificationTemplates({
       schoolId: row.id,
-      templates,
+      ...catalog,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     })

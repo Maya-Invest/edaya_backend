@@ -8,7 +8,6 @@ export type CompoundRepoCommand
     | 'smoke-test'
     | 'verify'
     | 'deploy'
-    | 'novu'
     | 'openapi'
 
 export type RepoCliCommand = RepoSpawnCommand | CompoundRepoCommand
@@ -27,7 +26,6 @@ const COMMANDS = new Set<RepoCliCommand>([
   'smoke-test',
   'verify',
   'deploy',
-  'novu',
   'openapi',
 ])
 
@@ -37,7 +35,6 @@ export const COMPOUND_COMMANDS = new Set<CompoundRepoCommand>([
   'smoke-test',
   'verify',
   'deploy',
-  'novu',
   'openapi',
 ])
 

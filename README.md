@@ -17,7 +17,6 @@ edaya_backend/
 │   ├── domain-authorization/             @edaya/authorization — grants, policy, operations
 │   ├── domain-service/                   @edaya/service — workflows, entity configs, notifications, cron
 │   ├── adaptor-postgres/                 @edaya/adaptor-postgres — school schema, repos, SQL
-│   ├── adaptor-novu/                     @edaya/adaptor-novu — Novu notification gateway (legacy fallback)
 │   ├── adaptor-notify/                   @edaya/adaptor-notify — in-process email/push adapters
 │   ├── adaptor-docs/                     @edaya/adaptor-docs — in-process PDF rendering
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
@@ -29,7 +28,6 @@ edaya_backend/
     ├── fixtures/                         @edaya/fixtures
     ├── seeding/                          @edaya/seeding
     ├── db-migrate/                       @edaya/db-migrate — school-schema CLI
-    ├── novu-ops/                         @edaya/novu-ops — Novu bootstrap + subscriber cleanup
     ├── local-files-server/               @edaya/local-files-server — local upload HTTP service
     ├── integration-tests/                @edaya/integration-tests (+ smoke/)
     └── api-dev-container/                scripts only (no package.json) — Apple Container API image
@@ -123,7 +121,6 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 | `@edaya/authorization` | `package/domain-authorization` | Grants, policy, operations, `AuthorizationRepositories` |
 | `@edaya/service` | `package/domain-service` | `SchoolService`, workflows, entity configs, notifications, cron |
 | `@edaya/adaptor-postgres` | `package/adaptor-postgres` | School Drizzle schema, SQL migrations, Postgres repository implementations |
-| `@edaya/adaptor-novu` | `package/adaptor-novu` | Novu Cloud `NotificationGatewayPort` adapter (legacy fallback) |
 | `@edaya/adaptor-notify` | `package/adaptor-notify` | In-process email/push adapters |
 | `@edaya/adaptor-docs` | `package/adaptor-docs` | In-process PDF rendering |
 | `@edaya/adaptor-r2` | `package/adaptor-r2` | Worker `FileStoragePort` adapter |
@@ -139,9 +136,8 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 | `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
 | `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (via `bun repo seed`) |
 | `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
-| `@edaya/novu-ops` | `tooling/novu-ops` | Novu workflow bootstrap + subscriber cleanup CLI |
 | `@edaya/local-files-server` | `tooling/local-files-server` | Local-dev file storage HTTP service |
-| `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, Novu smoke |
+| `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, notify smoke |
 
 `tooling/api-dev-container/` is a Docker/Apple Container helper (no workspace `package.json`). Invoke via `bun repo dev-container` / root `dev:container*` scripts.
 

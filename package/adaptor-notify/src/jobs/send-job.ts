@@ -1,5 +1,4 @@
-import type { NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient } from "@edaya/core";
-import type { EmailTransportPort } from "../email/port";
+import type { EmailTransportPort, NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient, SmsTransportPort } from "@edaya/core";
 import type { FcmTransport } from "../push/fcm";
 import type { NotifySql } from "../store/types";
 import { randomUUID } from "node:crypto";
@@ -10,11 +9,13 @@ import {
   listJobRecipients,
   upsertJobRecipient,
 } from "../store/queries";
+import type { NotifySendChannel } from "./route-channels";
 import { resolveSendChannels } from "./route-channels";
 
 export interface SendJobDependencies {
   sql: NotifySql;
   email: EmailTransportPort;
+  sms: SmsTransportPort;
   fcm: FcmTransport;
   from: { email: string; name?: string };
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
@@ -23,12 +24,45 @@ export interface SendJobDependencies {
   log: (message: string, extra?: Record<string, unknown>) => void;
 }
 
-function emailOnlyJob(jobKind: string): boolean {
-  return jobKind === "invitation" || jobKind === "auth_otp" || jobKind === "auth_verification";
-}
-
 function shouldReportDelivery(jobKind: string): boolean {
   return jobKind === "school";
+}
+
+function parseStringMetadata(raw: string | null): Record<string, string> | undefined {
+  let parsed: unknown;
+  try {
+    parsed = raw === null ? {} : JSON.parse(raw);
+  }
+  catch {
+    return undefined;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || Object.values(parsed).some(value => typeof value !== "string"))
+    return undefined;
+  return parsed as Record<string, string>;
+}
+
+function metadataFlag(metadata: Record<string, string>, key: string, fallback: boolean): boolean {
+  const value = metadata[key];
+  if (value === undefined)
+    return fallback;
+  return value === "true";
+}
+
+function metadataString(metadata: Record<string, string> | undefined, key: string): string | undefined {
+  return metadata?.[key];
+}
+
+function schoolCandidateChannels(metadata: Record<string, string> | undefined): NotifySendChannel[] {
+  if (!metadata)
+    return ["email", "push", "sms"];
+  const channels: NotifySendChannel[] = [];
+  if (metadataFlag(metadata, "enableEmail", true))
+    channels.push("email");
+  if (metadataFlag(metadata, "enablePush", true))
+    channels.push("push");
+  if (metadataFlag(metadata, "enableSms", false))
+    channels.push("sms");
+  return channels;
 }
 
 async function bounded<T>(request: Promise<T>): Promise<T> {
@@ -67,12 +101,15 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
   let anySent = false;
   let lastFailure: string | undefined;
   let lastProviderId: string | undefined;
+  const metadata = parseStringMetadata(job.metadata);
+  const candidateChannels: readonly NotifySendChannel[] = job.job_kind === "invitation"
+    ? [metadataString(metadata, "contactChannel") === "phone" ? "sms" : "email"]
+    : schoolCandidateChannels(metadata);
 
   for (const subjectId of subjectIds) {
     let subjectSent = recipientRows.some(row => row.subject_id === subjectId && row.status === "sent");
     anySent ||= subjectSent;
-    const channels = emailOnlyJob(job.job_kind) ? ["email"] as const : ["email", "push"] as const;
-    for (const channel of channels) {
+    for (const channel of candidateChannels) {
       if (recipientRows.some(row => row.subject_id === subjectId && row.channel === channel && row.status === "sent"))
         continue;
       const renewed = await deps.sql.query<{ idempotency_key: string }>(`
@@ -82,14 +119,14 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
       if (!renewed.length)
         return;
       try {
-        // School recipients have no provider contact snapshot. Auth and invitation
-        // jobs retain their explicit, command-owned destination addresses.
         const recipient = job.job_kind === "school"
-          ? await bounded(resolveSchoolRecipient(job, subjectId, deps))
+          ? (metadata
+              ? await bounded(resolveSchoolRecipient(job, subjectId, metadata, deps))
+              : undefined)
           : job.job_kind === "invitation"
             ? await bounded(resolveInvitationRecipient(job, subjectId, deps))
             : await getCommandRecipient(deps.sql, subjectId, job.tenant);
-        if (!resolveSendChannels(recipient, { emailOnly: emailOnlyJob(job.job_kind) }).includes(channel)) {
+        if (!resolveSendChannels(recipient, { channels: candidateChannels }).includes(channel)) {
           if (!await upsertJobRecipient(deps.sql, {
             idempotency_key: idempotencyKey,
             subject_id: subjectId,
@@ -183,6 +220,60 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             subjectId,
           });
         }
+        else if (channel === "sms") {
+          if (!deps.sms.implemented) {
+            if (!await upsertJobRecipient(deps.sql, {
+              idempotency_key: idempotencyKey,
+              subject_id: subjectId,
+              channel,
+              status: "cancelled",
+              provider_message_id: null,
+              failure_reason: "sms transport unimplemented",
+            }, leaseId)) {
+              return;
+            }
+            continue;
+          }
+          if (!recipient?.phone) {
+            if (!await upsertJobRecipient(deps.sql, {
+              idempotency_key: idempotencyKey,
+              subject_id: subjectId,
+              channel,
+              status: "cancelled",
+              provider_message_id: null,
+              failure_reason: "no phone number",
+            }, leaseId)) {
+              return;
+            }
+            continue;
+          }
+          const sent = await bounded(deps.sms.send({
+            to: recipient.phone,
+            body: job.sms_body ?? job.body,
+            idempotencyKey: buildNotifyChannelId(idempotencyKey, subjectId, "sms"),
+          }));
+          lastProviderId = sent.providerMessageId;
+          anySent = true;
+          subjectSent = true;
+          if (!await upsertJobRecipient(deps.sql, {
+            idempotency_key: idempotencyKey,
+            subject_id: subjectId,
+            channel: "sms",
+            status: "sent",
+            provider_message_id: sent.providerMessageId ?? null,
+            failure_reason: null,
+          }, leaseId)) {
+            return;
+          }
+          events.push({
+            deliveryId: job.delivery_id,
+            status: "sent",
+            providerMessageId: sent.providerMessageId,
+            channel: "sms",
+            occurredAt: new Date(),
+            subjectId,
+          });
+        }
       }
       catch {
         const failureReason = "NOTIFY_DELIVERY_FAILED";
@@ -237,30 +328,25 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
   }
 }
 
-async function resolveSchoolRecipient(job: import("../store/types").NotifyJobRow, subjectId: string, deps: SendJobDependencies): Promise<Parameters<typeof resolveSendChannels>[0]> {
+async function resolveSchoolRecipient(job: import("../store/types").NotifyJobRow, subjectId: string, metadata: Record<string, string>, deps: SendJobDependencies): Promise<Parameters<typeof resolveSendChannels>[0]> {
   if (!deps.resolveSchoolRecipient)
     throw new Error("School notification recipient resolver is required");
-  let metadata: unknown;
-  try {
-    metadata = job.metadata === null ? {} : JSON.parse(job.metadata);
-  }
-  catch { return undefined; }
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata) || Object.values(metadata).some(value => typeof value !== "string"))
-    return undefined;
   const profile = await deps.resolveSchoolRecipient({
     deliveryId: job.delivery_id,
     schoolId: job.tenant,
     subjectId,
     eventKey: job.event_key,
-    metadata: metadata as Record<string, string>,
+    metadata,
   });
   if (!profile || profile.schoolId !== job.tenant || profile.recipient.subjectId !== subjectId || !profile.recipient.id)
     return undefined;
   return {
     email: profile.email ?? null,
+    phone: profile.phone ?? null,
     allows_notifications: profile.preferences.allowsNotifications ?? true,
-    channel_email: profile.preferences.channels?.email ?? false,
-    channel_push: profile.preferences.channels?.push ?? false,
+    channel_email: metadataFlag(metadata, "enableEmail", true) && (profile.preferences.channels?.email ?? false),
+    channel_push: metadataFlag(metadata, "enablePush", true) && (profile.preferences.channels?.push ?? false),
+    channel_sms: metadataFlag(metadata, "enableSms", false) && (profile.preferences.channels?.sms ?? false),
   };
 }
 
@@ -271,7 +357,12 @@ async function resolveInvitationRecipient(job: import("../store/types").NotifyJo
   if (!current || current.schoolId !== job.tenant || current.invitationId !== job.delivery_id)
     return undefined;
   const recipient = await getCommandRecipient(deps.sql, subjectId, job.tenant);
-  if (!recipient?.email || normalizeEmail(recipient.email) !== normalizeEmail(current.email))
+  if (current.contactChannel === "phone") {
+    if (!recipient?.phone || recipient.phone !== current.contactValue)
+      return undefined;
+    return recipient;
+  }
+  if (!recipient?.email || normalizeEmail(recipient.email) !== normalizeEmail(current.contactValue))
     return undefined;
   return recipient;
 }

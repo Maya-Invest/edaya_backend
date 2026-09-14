@@ -63,7 +63,7 @@ bunx wrangler secret bulk secrets.staging.json --env staging
 bunx wrangler secret put IDENTITY_DIRECTORY_SECRET --env staging
 ```
 
-Use the directory secret shared with the staging identity Worker. Staging uses the **dev** Novu API key (same as local `.env`).
+Use the directory secret shared with the staging identity Worker.
 
 ---
 

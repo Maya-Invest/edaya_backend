@@ -1,5 +1,4 @@
-import { allowStagingNotification } from "@/staging-notifications";
-import { createNovuEmailTransportFromSecretKey } from "@edaya/adaptor-novu";
+import { allowStagingInvitation, allowStagingNotification } from "@/staging-notifications";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
@@ -14,6 +13,8 @@ import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createSchoolIdentityClient } from "@/runtime/shared/adapters/identity-client";
 import { applyInProcessNotifyDeliveryEvent } from "@/runtime/shared/adapters/notify-delivery-sink";
 import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";
+import { resolveEmailTransport } from "@/runtime/shared/adapters/email-transport";
+import { resolveSmsTransport } from "@/runtime/shared/adapters/sms-transport";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime, DatabaseHandle } from "@/runtime/types";
@@ -56,15 +57,15 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     const logger = options.env.LOG_LEVEL !== "silent"
       ? createAppLogger(options.env)
       : undefined;
-    if (options.env.EMAIL_TRANSPORT === "novu" && !options.env.NOVU_SECRET_KEY)
-      throw new Error("EMAIL_TRANSPORT=novu requires NOVU_SECRET_KEY");
+    const transportLog = logger
+      ? (message: string, extra?: Record<string, unknown>) => logger.info(extra ?? {}, message)
+      : () => {};
     notifyRuntime = createNotifyRuntimeFromDrizzle({
-      email: options.env.EMAIL_TRANSPORT === "novu"
-        ? createNovuEmailTransportFromSecretKey({ secretKey: options.env.NOVU_SECRET_KEY!, serverURL: options.env.NOVU_API_URL })
-        : undefined,
       db: handle.db,
       getExecutor: () => transactionContext.getStore() ?? handle.db,
       env: options.env,
+      email: resolveEmailTransport(options.env, transportLog),
+      sms: resolveSmsTransport(options.env, transportLog),
       log: logger
         ? (message, extra) => logger.info(extra ?? {}, message)
         : undefined,
@@ -80,7 +81,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
           throw new Error("Invitation resolver is not initialized");
         const actor = createSystemActorMetadata({ systemId: "invitation-dispatch", schoolId: request.schoolId, requestId: `invitation:${request.invitationId}`, reason: "Resolve current invitation delivery" });
         const recipient = await resolveInvitationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
-        return allowStagingNotification(options.env.API_ORIGIN, recipient?.email, options.env.STAGING_NOTIFICATION_EMAILS) ? recipient : undefined;
+        return allowStagingInvitation(options.env.API_ORIGIN, recipient, options.env.STAGING_NOTIFICATION_EMAILS) ? recipient : undefined;
       },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);

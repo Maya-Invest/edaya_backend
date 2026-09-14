@@ -198,7 +198,7 @@ Move boundary rules into either ESLint `no-restricted-imports` or a dependency g
 Rules worth encoding:
 
 - `package/domain-core` must not import apps, integrations, runtime, or adapters unless intentionally allowed.
-- `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-novu` must not import `package/integration-*`.
+- `package/domain-core`, `package/adaptor-postgres`, `package/generated-api-client`, and `package/adaptor-notify` must not import `package/integration-*`.
 - Runtime internals may only be imported by runtime files plus a short explicit allowlist.
 - API route modules should depend on `lib/school-api` and HTTP helpers, not runtime internals directly.
 - Webapp routes should go through query/data modules rather than raw generated client calls, except in tests or explicitly allowed integration points.

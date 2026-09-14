@@ -14,11 +14,13 @@ interface RecipientRecord {
   subject_id: unknown;
   tenant: unknown;
   email: unknown;
+  phone: unknown;
   display_name: unknown;
   locale: unknown;
   allows_notifications: unknown;
   channel_email: unknown;
   channel_push: unknown;
+  channel_sms: unknown;
   recipient_kind: unknown;
   recipient_id: unknown;
 }
@@ -28,11 +30,13 @@ function mapRecipient(row: RecipientRecord): NotifyRecipientRow {
     subject_id: String(row.subject_id),
     tenant: String(row.tenant),
     email: row.email == null ? null : String(row.email),
+    phone: row.phone == null ? null : String(row.phone),
     display_name: row.display_name == null ? null : String(row.display_name),
     locale: row.locale == null ? null : String(row.locale),
     allows_notifications: asBoolean(row.allows_notifications),
     channel_email: asBoolean(row.channel_email),
     channel_push: asBoolean(row.channel_push),
+    channel_sms: asBoolean(row.channel_sms),
     recipient_kind: row.recipient_kind == null ? null : String(row.recipient_kind),
     recipient_id: row.recipient_id == null ? null : String(row.recipient_id),
   };
@@ -44,16 +48,18 @@ export async function upsertCommandRecipient(
 ): Promise<void> {
   await sql.execute(
     `INSERT INTO notify.recipients (
-      subject_id, tenant, email, display_name, locale,
-      allows_notifications, channel_email, channel_push, recipient_kind, recipient_id, updated_at
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
+      subject_id, tenant, email, phone, display_name, locale,
+      allows_notifications, channel_email, channel_push, channel_sms, recipient_kind, recipient_id, updated_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
     ON CONFLICT (tenant, subject_id) DO UPDATE SET
       email = EXCLUDED.email,
+      phone = EXCLUDED.phone,
       display_name = EXCLUDED.display_name,
       locale = EXCLUDED.locale,
       allows_notifications = EXCLUDED.allows_notifications,
       channel_email = EXCLUDED.channel_email,
       channel_push = EXCLUDED.channel_push,
+      channel_sms = EXCLUDED.channel_sms,
       recipient_kind = EXCLUDED.recipient_kind,
       recipient_id = EXCLUDED.recipient_id,
       updated_at = NOW()`,
@@ -61,11 +67,13 @@ export async function upsertCommandRecipient(
       row.subject_id,
       row.tenant,
       row.email,
+      row.phone,
       row.display_name,
       row.locale,
       row.allows_notifications,
       row.channel_email,
       row.channel_push,
+      row.channel_sms,
       row.recipient_kind,
       row.recipient_id,
     ],
@@ -110,12 +118,12 @@ export async function listDevices(sql: NotifySql, subjectId: string, tenant: str
 
 export async function insertJobIfAbsent(
   sql: NotifySql,
-  job: Pick<NotifyJobRow, "delivery_id" | "idempotency_key" | "tenant" | "job_kind" | "event_key" | "title" | "body" | "email_subject" | "email_body" | "metadata">,
+  job: Pick<NotifyJobRow, "delivery_id" | "idempotency_key" | "tenant" | "job_kind" | "event_key" | "title" | "body" | "email_subject" | "email_body" | "sms_body" | "metadata">,
 ): Promise<{ created: boolean }> {
   const inserted = await sql.query<{ idempotency_key: string }>(
     `INSERT INTO notify.jobs (
-      idempotency_key, tenant, job_kind, event_key, title, body, email_subject, email_body, metadata, delivery_id, status
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')
+      idempotency_key, tenant, job_kind, event_key, title, body, email_subject, email_body, sms_body, metadata, delivery_id, status
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')
     ON CONFLICT (idempotency_key) DO NOTHING RETURNING idempotency_key`,
     [
       job.idempotency_key,
@@ -126,6 +134,7 @@ export async function insertJobIfAbsent(
       job.body,
       job.email_subject,
       job.email_body,
+      job.sms_body,
       job.metadata,
       job.delivery_id,
     ],

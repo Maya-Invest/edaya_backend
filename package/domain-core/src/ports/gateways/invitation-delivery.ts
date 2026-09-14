@@ -9,16 +9,16 @@ export interface InvitationDeliveryInput {
   actorKind: AccountInvitationKind
   inviteUrl: string
   expiresAt: Date
-  /** Rendered invitation email subject */
-  emailSubject: string
-  /** Rendered invitation email HTML body */
-  emailBody: string
+  emailSubject?: string
+  emailBody?: string
+  smsBody?: string
 }
 
 export type ResolveInvitationDispatchRecipient = (request: { schoolId: string, invitationId: string }) => Promise<{
   schoolId: string
   invitationId: string
-  email: string
+  contactChannel: 'email' | 'phone'
+  contactValue: string
 } | undefined>
 
 /** Persist invitation delivery intent with the business transaction; provider I/O occurs after commit. */

@@ -82,7 +82,7 @@ On push, `dorny/paths-filter` sets `deploy_api` from `apps/api/**`, `package/**`
 | `PRODUCTION_DATABASE_URL` | `migrate` on `production` channel |
 | `IDENTITY_CHECKOUT_TOKEN` | PAT (or GitHub App token) with read access to private `Maya-Invest/edaya_identity`. Required until `@maya-invest/edaya-identity-client` is published and the root `file:` override is removed. |
 
-Wrangler **worker secrets** (`IDENTITY_DIRECTORY_SECRET`, R2, Novu) are uploaded separately via `wrangler secret bulk` — not GitHub Actions secrets. See [deploy-staging.md](./deploy-staging.md).
+Wrangler **worker secrets** (`IDENTITY_DIRECTORY_SECRET`, R2, FCM) are uploaded separately via `wrangler secret bulk` — not GitHub Actions secrets. See [deploy-staging.md](./deploy-staging.md).
 
 Configured in [`deploy_push.yml`](../../.github/workflows/deploy_push.yml).
 
@@ -171,9 +171,9 @@ Deploy runs from GitHub Actions — not Cloudflare Workers Builds. See [`deploy_
 | `migrate` | School schema when enabled (before deploy) |
 | `deploy-api` | `wrangler deploy` for `@edaya/api` |
 
-**Smoke (manual):** API staging smoke (`bun repo smoke-test staging`) is not run in merge CI until staging seed is stable. Vendor smokes remain ad-hoc: `bun repo smoke-test novu`, `bun repo smoke-test r2`.
+**Smoke (manual):** API staging smoke (`bun repo smoke-test staging`) is not run in merge CI until staging seed is stable. Vendor smokes remain ad-hoc: `bun repo smoke-test notify`, `bun repo smoke-test r2`.
 
-**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`IDENTITY_DIRECTORY_SECRET`, R2, Novu, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
+**One-time repo secret:** `CLOUDFLARE_API_TOKEN` with Workers Scripts edit (+ routes if using custom domains). Wrangler reads it from the environment. Worker secrets (`IDENTITY_DIRECTORY_SECRET`, R2, FCM, etc.) stay in the Cloudflare dashboard — not GitHub Actions.
 
 Branch mapping:
 

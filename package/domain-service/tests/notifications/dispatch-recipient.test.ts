@@ -3,7 +3,6 @@ import { createSystemActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createNotifyNotificationGateway, createNotifyRuntimeFromDrizzle, drainPendingSchoolNotifications } from '../../../adaptor-notify/src'
-import { createNovuEmailTransport } from '../../../adaptor-novu/src'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { resolveNotificationDispatchRecipient } from '../../src/capabilities/notifications'
 import { BaseSchoolService } from '../../src/services/base-school-service'
@@ -52,18 +51,18 @@ describe('delayed notification dispatch uses current business facts', () => {
   }
   const resolve = (input: NotificationDispatchRequest) => resolveNotificationDispatchRecipient(base, input)
 
-  test.each([[true, false], [false, false], [true, true], [false, true]])('shared login keeps exact profile contact and preference (guardian: %s, Novu: %s)', async (guardianEnabled, useNovu) => {
+  test.each([true, false])('shared login keeps exact profile contact and preference (guardian: %s)', async (guardianEnabled) => {
     await fixture.db.exec('UPDATE announcement_targets SET target_kind = \'school\', target_id = NULL WHERE id = \'target\'')
     const inputs = [await request(guardian), await request(staff)]
     const sent: string[] = []
     const db = fixture.connection
-    const email = useNovu
-      ? createNovuEmailTransport({ trigger: async (request) => { sent.push(request.overrides.email.to[0]!) } })
-      : { send: async (input: { to: string }) => {
-          sent.push(input.to)
-          return {}
-        } }
-    const runtime = createNotifyRuntimeFromDrizzle({ db, env: { EMAIL_TRANSPORT: useNovu ? 'novu' : 'log' }, resolveSchoolRecipient: resolve, email })
+    const email = {
+      send: async (input: { to: string }) => {
+        sent.push(input.to)
+        return {}
+      },
+    }
+    const runtime = createNotifyRuntimeFromDrizzle({ db, env: {}, resolveSchoolRecipient: resolve, email, sms: { implemented: false, send: async () => ({}) } })
     const gateway = createNotifyNotificationGateway({ runtime })
     for (const input of inputs) await gateway.enqueue({ idempotencyKey: input.deliveryId, schoolId: input.schoolId, kind: 'event', eventKey: input.eventKey, title: 'Private', body: 'Details', recipients: [{ kind: input.deliveryId.endsWith('staff') ? staff : guardian, id: input.deliveryId.endsWith('staff') ? 'staff-a' : 'guardian-a', subjectId: input.subjectId }] })
     await fixture.db.exec('UPDATE guardians SET notification_email = \'new-guardian@example.test\' WHERE id = \'guardian-a\'')
@@ -158,13 +157,14 @@ describe('delayed notification dispatch uses current business facts', () => {
     let pushes = 0
     const runtime = createNotifyRuntimeFromDrizzle({
       db,
-      env: { EMAIL_TRANSPORT: 'log' },
+      env: {},
       resolveSchoolRecipient: resolve,
       email: { send: async () => {
         emails++
         await fixture.db.exec('DELETE FROM guardian_student_links WHERE id = \'guardian-link\'')
         return {}
       } },
+      sms: { implemented: false, send: async () => ({}) },
       fcm: { send: async () => {
         pushes++
         return {}

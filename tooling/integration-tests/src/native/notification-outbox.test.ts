@@ -22,6 +22,7 @@ const runtimes = handles.map(handle => createNotifyRuntimeFromDrizzle({
     emails++
     return { providerMessageId: 'synthetic-email' }
   } },
+  sms: { implemented: false, send: async () => ({}) },
   fcm: { send: async () => {
     pushes++
     if (failPush)
