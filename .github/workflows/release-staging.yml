@@ -123,8 +123,8 @@ jobs:
         working-directory: edaya_frontend
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
-          PUBLIC_AUTH_URL: https://staging.identity.edayaplus.com
-          PUBLIC_API_URL: https://staging.api.school.edayaplus.com
+          PUBLIC_AUTH_URL: https://staging.identity.api.edayaplus.com
+          PUBLIC_API_URL: https://staging.school.api.edayaplus.com
           PUBLIC_APP_ENV: staging
         run: |
           API_CLIENT_VERSION="0.0.0-staging.$(git -C ../edaya_backend rev-parse HEAD)" node .github/scripts/ci-use-published-api-client.mjs

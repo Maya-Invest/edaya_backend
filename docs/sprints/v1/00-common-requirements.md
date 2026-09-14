@@ -18,7 +18,7 @@ This is the index and common implementation contract for exactly seven sequentia
 | Order | Plan | Status | Exit outcome |
 |---|---|---|---|
 | 00 | [Common requirements](00-common-requirements.md) | done | Shared foundations are verified and consumable |
-| 01 | [Guardian pairing and invitations](01-guardian-pairing-and-invitations.md) | planned | A new guardian securely reaches the intended child |
+| 01 | [Guardian pairing and invitations](01-guardian-pairing-and-invitations.md) | on-going | A guardian opens the existing invitation link in the app and reaches the intended child |
 | 02 | [Student photos and branding](02-student-photos-and-branding.md) | planned | Portrait review and approved publication work |
 | 03 | [Service catalog and accounting](03-service-catalog-and-accounting.md) | planned | Account-based finance and all consumers agree |
 | 04 | [Official documents](04-official-documents.md) | planned | Every retained document is issuable and privately downloadable |
@@ -150,4 +150,4 @@ Completed evidence: [Plan 00 implementation evidence](evidence/00-implementation
 
 ## Handoff to Plan 01
 
-Supply the verified identity-only boundary, atomic command/replay and outbox APIs, narrow private-file policy extension points, shared fixtures and client regeneration procedure. This plan and the index row are `done`. The current implementation goal ends at Plan 00; [Plan 01](01-guardian-pairing-and-invitations.md) and Plans 02–06 remain planned.
+Supply the verified identity-only boundary, atomic command/replay and outbox APIs, narrow private-file policy extension points, shared fixtures and client regeneration procedure. This plan and the index row are `done`. [Plan 01](01-guardian-pairing-and-invitations.md) is `on-going` on the existing invitation deep-link slice; Plans 02–06 remain planned.

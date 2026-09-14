@@ -4,7 +4,7 @@ import { HttpAuthProvisioner } from './http-provisioner'
 
 test('staging only signs in pre-provisioned accounts and never calls local verification', async () => {
   const paths: string[] = []
-  const client = new HttpSeedClient({ baseUrl: 'https://staging.api.school.edayaplus.com', authUrl: 'https://staging.identity.edayaplus.com', fetch: async (input) => {
+  const client = new HttpSeedClient({ baseUrl: 'https://staging.school.api.edayaplus.com', authUrl: 'https://staging.identity.api.edayaplus.com', fetch: async (input) => {
     paths.push(new URL(String(input)).pathname)
     return Response.json({ user: { id: 'fixture-user' } })
   } })

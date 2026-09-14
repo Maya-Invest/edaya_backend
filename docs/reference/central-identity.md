@@ -6,9 +6,9 @@ School API authenticates **users** with a signed JWT from the `edaya_identity` s
 
 | Surface | Production | Staging | Local |
 |---|---|---|---|
-| Identity | `https://identity.edayaplus.com` | `https://staging.identity.edayaplus.com` | `http://localhost:9900` |
-| School API | `https://api.school.edayaplus.com` | `https://staging.api.school.edayaplus.com` | `http://localhost:9999` |
-| Staff webapp | `https://app.school.edayaplus.com` | `https://staging.app.school.edayaplus.com` | Vite |
+| Identity | `https://identity.api.edayaplus.com` | `https://staging.identity.api.edayaplus.com` | `http://localhost:9900` |
+| School API | `https://school.api.edayaplus.com` | `https://staging.school.api.edayaplus.com` | `http://localhost:9999` |
+| Staff webapp | `https://app.edayaplus.com` | `https://staging.app.edayaplus.com` | Vite |
 | Operator admin | `https://admin.edayaplus.com` | `https://staging.admin.edayaplus.com` | Vite |
 
 Auth cookies are host-only on the identity host. Web `credentials: 'include'` only to identity. School fetches use Bearer and omit cookies.

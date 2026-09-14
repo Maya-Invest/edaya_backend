@@ -2,7 +2,7 @@
 
 Isolated Cloudflare staging environment for validating deploys before production. See [staging-environment-plan.md](../sprints/staging-environment-plan.md) for goals and architecture.
 
-**Domains:** `staging.api.school.edayaplus.com` · `staging.app.school.edayaplus.com` · `staging.admin.edayaplus.com` · `staging.identity.edayaplus.com`
+**Domains:** `staging.school.api.edayaplus.com` · `staging.app.edayaplus.com` · `staging.admin.edayaplus.com` · `staging.identity.api.edayaplus.com`
 
 ---
 
@@ -46,12 +46,12 @@ Attach routes in Cloudflare for:
 
 | Host | Worker |
 |------|--------|
-| `staging.api.school.edayaplus.com` | `edaya-api-staging` |
-| `staging.identity.edayaplus.com` | `edaya-identity-staging` |
-| `staging.app.school.edayaplus.com` | `edaya-webapp-staging` |
+| `staging.school.api.edayaplus.com` | `edaya-api-staging` |
+| `staging.identity.api.edayaplus.com` | `edaya-identity-staging` |
+| `staging.app.edayaplus.com` | `edaya-webapp-staging` |
 | `staging.admin.edayaplus.com` | `edaya-webadmin-staging` |
 
-Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy.
+Routes are declared in `wrangler.jsonc`; DNS/custom domains are configured in the Cloudflare dashboard on first deploy. `*.edayaplus.com` does **not** cover `staging.app.edayaplus.com`, `staging.identity.api.edayaplus.com`, or `staging.school.api.edayaplus.com`.
 
 ### 4. Wrangler secrets (API staging)
 
@@ -132,9 +132,9 @@ Reads repo root `.env` when present, or env vars:
 
 | Variable | Default |
 |----------|---------|
-| `SEED_STAGING_API_URL` | `https://staging.api.school.edayaplus.com` |
-| `SEED_STAGING_AUTH_URL` | `https://staging.identity.edayaplus.com` |
-| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.school.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `https://staging.school.api.edayaplus.com` |
+| `SEED_STAGING_AUTH_URL` | `https://staging.identity.api.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | `https://staging.app.edayaplus.com` |
 | `SMOKE_STAFF_EMAIL` | dev fixture director email |
 | `SMOKE_STAFF_PASSWORD` | dev fixture password |
 

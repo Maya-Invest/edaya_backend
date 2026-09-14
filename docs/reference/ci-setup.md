@@ -61,7 +61,7 @@ On push to `staging` / `main` (or manual **Run workflow**):
 gate (path filter)
   → migrate (school schema)
   → publish-api-dev-image / publish-api-client (when API paths changed)
-  → deploy-api (Wrangler → staging.api.school or api.school.edayaplus.com)
+  → deploy-api (Wrangler → staging.school.api.edayaplus.com or school.api.edayaplus.com)
 ```
 
 Central Identity has its own repository pipeline, Worker, and database migration. Deploy identity before the school Worker when changing the JWT or directory contract.

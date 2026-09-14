@@ -10,8 +10,8 @@ const apps = ["guardian", "teacher"];
 const candidate = {
   repositories: Object.fromEntries(["backend", "identity", "frontend", "mobile"].map(name => [name, execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve(root, `edaya_${name}`), encoding: "utf8" }).trim()])),
   flutter: "3.44.8",
-  authUrl: "https://staging.identity.edayaplus.com",
-  apiUrl: "https://staging.api.school.edayaplus.com",
+  authUrl: "https://staging.identity.api.edayaplus.com",
+  apiUrl: "https://staging.school.api.edayaplus.com",
   firebase: Object.fromEntries(apps.map(app => [app, hash(resolve(mobile, `apps/${app}/android/app/google-services.json`))])),
 };
 if (process.argv[2] === "record") {

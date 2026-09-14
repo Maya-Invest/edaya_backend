@@ -7,6 +7,7 @@
   "main": "src/entries/worker.ts",
   "compatibility_date": "2026-03-24",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
   "rules": [
     {
       "type": "Text",
@@ -25,7 +26,8 @@
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
   // [env.*] bindings — HYPERDRIVE (school), IDENTITY (optional service binding), CRON_JOBS
   // Secrets          — IDENTITY_DIRECTORY_SECRET,
-  //                    FCM_SERVICE_ACCOUNT_JSON (in-process notify),
+  //                    FCM_SERVICE_ACCOUNT_JSON (stringified service-account JSON),
+  //                    STAGING_NOTIFICATION_EMAILS (optional allowlist; empty cancels staging school delivery),
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
   // Bindings         — HYPERDRIVE, IDENTITY, CRON_JOBS, EMAIL, BROWSER
   //                    (Browser Run Quick Actions; enable in the Cloudflare dashboard after deploy)
@@ -66,14 +68,13 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "API_ORIGIN": "https://staging.api.school.edayaplus.com",
+        "API_ORIGIN": "https://staging.school.api.edayaplus.com",
         "STAGING_MAINTENANCE": "false",
         "STAGING_PAUSE_JOBS": "false",
-        "IDENTITY_ISSUER": "https://staging.identity.edayaplus.com",
-        "IDENTITY_DIRECTORY_URL": "https://staging.identity.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://staging.app.school.edayaplus.com,https://staging.admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://staging.app.school.edayaplus.com",
-        "GRANTS_CACHE_TTL_MS": "0",
+        "IDENTITY_ISSUER": "https://staging.identity.api.edayaplus.com",
+        "IDENTITY_DIRECTORY_URL": "https://staging.identity.api.edayaplus.com",
+        "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
+        "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
@@ -83,13 +84,13 @@
       },
       "routes": [
         {
-          "pattern": "staging.api.school.edayaplus.com",
+          "pattern": "staging.school.api.edayaplus.com",
           "custom_domain": true
         }
       ],
       "triggers": {
         "crons": [
-          "*/5 * * * *"
+          "0 * * * *"
         ]
       },
       "queues": {
@@ -116,12 +117,11 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "API_ORIGIN": "https://api.school.edayaplus.com",
-        "IDENTITY_ISSUER": "https://identity.edayaplus.com",
-        "IDENTITY_DIRECTORY_URL": "https://identity.edayaplus.com",
-        "TRUSTED_ORIGINS": "https://app.school.edayaplus.com,https://admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://app.school.edayaplus.com",
-        "GRANTS_CACHE_TTL_MS": "0",
+        "API_ORIGIN": "https://school.api.edayaplus.com",
+        "IDENTITY_ISSUER": "https://identity.api.edayaplus.com",
+        "IDENTITY_DIRECTORY_URL": "https://identity.api.edayaplus.com",
+        "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
+        "WEBAPP_ORIGIN": "https://app.edayaplus.com",
         "EMAIL_TRANSPORT": "cloudflare",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
@@ -151,13 +151,13 @@
       },
       "routes": [
         {
-          "pattern": "api.school.edayaplus.com",
+          "pattern": "school.api.edayaplus.com",
           "custom_domain": true
         }
       ],
       "triggers": {
         "crons": [
-          "*/5 * * * *"
+          "0 * * * *"
         ]
       },
       "queues": {

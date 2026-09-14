@@ -42,9 +42,9 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # DOCS_RENDER_ON_PUBLISH=true
 
 # --- Optional ---
-# GRANTS_CACHE_TTL_MS=300000
-# WEBAPP_ORIGIN=https://staging.app.school.edayaplus.com
+# WEBAPP_ORIGIN=https://staging.app.edayaplus.com
 # ACCOUNT_INVITATIONS_ENABLED=true
+# STAGING_NOTIFICATION_EMAILS=
 
 # --- Not used in Wrangler / worker ---
 # PORT= / DATABASE_URL=pglite: / RUN_MIGRATIONS_ON_STARTUP= / LOCAL_FILES_* / CRON_JOB_KEYS=

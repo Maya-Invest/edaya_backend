@@ -11,7 +11,7 @@ const VALID_WRANGLER = `
   },
   "triggers": {
     "crons": [
-      "*/5 * * * *"
+      "0 * * * *"
     ]
   },
   "queues": {
@@ -138,30 +138,6 @@ describe('findRuntimeBoundaryViolations', () => {
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'school identity extract',
         message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in edaya_identity, not the school API',
-      }])
-    }
-    finally {
-      rmSync(root, { recursive: true, force: true })
-    }
-  })
-
-  test('reports per-job wrangler cron triggers', () => {
-    const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
-    try {
-      writeBaselineRepoFiles(root)
-      writeFile(root, 'apps/api/wrangler.jsonc', `
-        "compatibility_date": "2026-03-24",
-        "browser": { "binding": "BROWSER" },
-        "triggers": { "crons": ["0 2 * * *", "*/5 * * * *"] }
-        "queues": { "producers": [{ "binding": "CRON_JOBS", "queue": "edaya-cron-jobs" }] }
-      `)
-
-      expect(findRuntimeBoundaryViolations(root)).toEqual([{
-        label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers',
-      }, {
-        label: 'wrangler cron',
-        message: 'each wrangler triggers.crons must contain only "*/5 * * * *" (found: 0 2 * * *, */5 * * * *)',
       }])
     }
     finally {

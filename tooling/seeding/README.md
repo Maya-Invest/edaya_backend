@@ -37,9 +37,9 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 | `SEED_API_URL` | School API for `bun repo seed` | `http://localhost:9999` |
 | `SEED_AUTH_URL` | Central identity API for auth provisioning | `http://localhost:9900` |
 | `SEED_APP_ORIGIN` | Local identity `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.school.edayaplus.com` |
-| `SEED_STAGING_AUTH_URL` | Staging Central Identity API | `https://staging.identity.edayaplus.com` |
-| `SEED_STAGING_APP_ORIGIN` | Staging identity `Origin` header | `https://staging.app.school.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.school.api.edayaplus.com` |
+| `SEED_STAGING_AUTH_URL` | Staging Central Identity API | `https://staging.identity.api.edayaplus.com` |
+| `SEED_STAGING_APP_ORIGIN` | Staging identity `Origin` header | `https://staging.app.edayaplus.com` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 

@@ -57,8 +57,11 @@ describe('resolve-seed-env', () => {
   })
 
   it('detects staging API hostnames', () => {
+    expect(isStagingSeedApiUrl('https://staging.school.api.edayaplus.com')).toBe(true)
+    expect(isStagingSeedApiUrl('https://staging.api.school.edayaplus.com')).toBe(true)
     expect(isStagingSeedApiUrl('https://staging.api.edayaplus.com')).toBe(true)
     expect(isStagingSeedApiUrl('https://api-staging.example.com')).toBe(true)
+    expect(isStagingSeedApiUrl('https://school.api.edayaplus.com')).toBe(false)
     expect(isStagingSeedApiUrl('https://api.edayaplus.com')).toBe(false)
     expect(isStagingSeedApiUrl('http://localhost:9999')).toBe(false)
   })

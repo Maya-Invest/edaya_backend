@@ -1,106 +1,123 @@
-# Plan 01 — Guardian pairing codes and invitation acceptance
+# Plan 01 — Guardian invitation deep linking
 
 | Field | Value |
 |---|---|
-| Status | planned |
-| Created / updated | 2026-09-13 |
-| Target | Existing backend, identity integration, staff webapp and guardian/teacher mobile clients |
-| Owner | Assign when implementation starts |
+| Status | on-going |
+| Created / updated | 2026-09-13 / 2026-09-14 |
+| Target | Existing invitation URLs, identity native sign-up, staff webapp `/invite`, guardian Android/iOS |
+| Owner | Implementation started |
 | Common requirements / predecessor | [Plan 00](00-common-requirements.md), complete with evidence |
 | Next | [Plan 02 — Photos and branding](02-student-photos-and-branding.md) |
 
 ## Outcome and boundaries
 
-A staff member pre-authorizes one guardian–student relationship and hands the adult a single-use pairing code. The adult can authenticate and link the intended child without having received an email/SMS invitation or already possessing a school actor.
+A guardian who receives the **existing** `{WEBAPP_ORIGIN}/invite/{token}` mail/SMS link can open the guardian app (if installed), create or sign in to an account, confirm, and accept. If the app is missing, the web invite page remains the fallback: Get the app, then tap the **same** link again, or finish linking in the browser.
 
-Existing account invitations remain a distinct capability and gain reliable browser/mobile acceptance. Preserve the current identity service and school-owned guardian/subject model. Do not introduce the rewrite's `SchoolMembership` model or give guardians generic relationship-administration permission.
+This slice does **not** rewrite invitation minting, email/SMS copy, send/resend/revoke, or accept semantics. Contact matching, 7-day single-use tokens, and identity-only admission stay as they are. A 16-character typed pairing code (`GuardianPairingGrant`) is a later addition, not a prerequisite for deep links.
 
-One code represents one intended guardian–student link. Multiple guardians and siblings require separate grants. Never print a permanently reusable claim credential on a student ID card. The school handover verifies the intended adult; this v1 path has immediate confirmed redemption, not a second approval queue.
+Do not introduce the rewrite's `SchoolMembership` model or give guardians generic relationship-administration permission. A portal guardian does not gain staff-web workspace access by accepting an invitation.
+
+## Keep as-is
+
+- [sendAccountInvitation / resend / revoke / accept](../../../package/domain-service/src/services/workflows/account-invitation.ts)
+- Token: 32-byte base64url, SHA-256 `token_hash`, 7-day single-use, contact match
+- URL: `{WEBAPP_ORIGIN}/invite/{token}` from [buildInvitationUrl](../../../package/domain-service/src/capabilities/invitations/invitation-token.ts)
+- Public `GET /public/invitations/{token}` and `POST .../accept` via [admitIdentityOnlyEntry](../../../apps/api/src/lib/school-api/identity-only-entry.ts)
+- Staff send UI; family links still `linkGuardianToStudent`
 
 ## Entry prerequisites and source anchors
 
-- [ ] Verify Plan 00 is `done` and its identity-only admission, transaction/replay, audit/outbox and generated-client handoffs are available.
-- [ ] Inspect current account invitation and subject-link invariants, including disabled access and multi-profile callers.
-- [ ] Record the configured first-party link host, Android package/signing identities and iOS bundle/team identities from existing configuration. Do not invent a new deployment domain.
+- [x] Verify Plan 00 is `done` and its identity-only admission, transaction/replay, audit/outbox and generated-client handoffs are available.
+- [x] Inspect current account invitation and subject-link invariants, including disabled access and multi-profile callers.
+- [x] Record the configured first-party link hosts, Android package, and iOS bundle/team from existing configuration. Do not invent a new deployment domain or App Store numeric ID.
 
-Start with the [invitation workflow](../../../package/domain-service/src/services/workflows/account-invitation.ts), [subject linking](../../../package/domain-service/src/services/account-linking/link-subject-to-actor.ts), [public invitation routes](../../../apps/api/src/routes/invitation.routes.ts), [web acceptance page](../../../../edaya_frontend/apps/webapp/src/routes/invite/%5Btoken%5D/+page.svelte), and [guardian router](../../../../edaya_mobile/apps/guardian/lib/app/router.dart).
+Hosts: `https://app.edayaplus.com` and `https://staging.app.edayaplus.com` (legacy `app.school.edayaplus.com` and `staging.app.school.edayaplus.com` remain accepted so leftover invite URLs still open the app). Guardian package `com.softilab.edaya.guardian`, iOS team `ZZRPX6RMZ7`. Android SHA-256 fingerprints are the upload/`guardian` alias (same value as Play Store signing) plus the local debug cert. Do not invent fingerprints or commit keystore passwords.
+
+Start with the [invitation workflow](../../../package/domain-service/src/services/workflows/account-invitation.ts), [public invitation routes](../../../apps/api/src/routes/invitation.routes.ts), [web acceptance page](../../../../edaya_frontend/apps/webapp/src/routes/invite/%5Btoken%5D/+page.svelte), and [guardian router](../../../../edaya_mobile/apps/guardian/lib/app/router.dart).
 
 ## Public interfaces and lifecycle
 
 | Capability | Caller and input | Result / authority |
 |---|---|---|
-| `issueGuardianPairingCode` | Authorized staff; student, optional existing unbound guardian, staff-approved relationship | Grant metadata and one-time code display; authority scoped to the target student/link |
-| `revokeGuardianPairingCode` | Authorized staff; grant ID/version | Revoked unredeemed grant; cannot undo a completed relationship |
-| Pairing status query | Authorized staff; student/grant filters | Secret-free lifecycle, expiry and permitted redemption metadata |
-| Pairing confirmation | Authenticated identity; credential in POST body | Minimal school/child confirmation after proof; no unrestricted student search |
-| `redeemGuardianPairingCode` | Authenticated identity; credential and stable request identity | The intended linked guardian/child result; school and endpoints come from the grant |
-| Invitation preview/accept | Existing invitation credential in POST body | Existing invitation semantics with safe typed results for admitted actor kinds |
+| Association files | Unsigned HTTPS on `WEBAPP_ORIGIN` | iOS Universal Links and Android App Links for `/invite/*` only |
+| Invitation preview | Public GET `{token}` in path | Existing preview payload; guardian app accepts **guardian** kind only |
+| Invitation accept | Authenticated identity; existing POST accept | Existing invitation semantics; JWT email/phone must match the invitation |
+| Native sign-up | Guardian app → identity `/auth/edaya/native/sign-up/email` | Same bearer `renewalCredential` as native sign-in, or `requiresEmailVerification` without failing closed |
+| Pending invite | In-app store, TTL = invitation lifetime | Survives login, sign-up, email OTP, and process restart; cleared on success, expiry, cancel, unrelated logout |
 
-`GuardianPairingGrant` is command-owned and stores school/student references, optional guardian reference, allowed relationship, credential digest/generation, issuer, expiry, lifecycle, redeemed subject and result references. Lifecycle: `issued → redeemed | revoked | expired`.
-
-Use 16 cryptographically random unambiguous Base32 characters, grouped for manual entry, plus QR representation of the same credential. Default expiry is seven days. Normalize entry formatting consistently before purpose-bound digest lookup; a checksum, if added, does not replace random entropy. No raw secret appears in business storage, audit, outbox, metrics or generic replay records.
+Never auto-accept on open or preview. Bind confirmation to the currently authenticated account. Wrong-account switching returns to confirmation without consuming the invitation.
 
 ## Ordered implementation checklist
 
-### 01.1 — Grant model, authorization and staff operations
+### 01.1 — Association on the real app origin
 
-- [ ] Add grant domain/persistence, lookup indexes, lifecycle constraints and named command registration.
-- [ ] Require explicit staff issue/revoke authority scoped to the student and optional existing guardian. Validate every endpoint and allowed relationship in the transaction.
-- [ ] Implement single-display issuance and secret-free status history. Same-key issuance retry returns existing grant metadata without issuing another active grant; a lost display uses revoke/regenerate.
-- [ ] Regeneration replaces only the selected unredeemed grant generation. It cannot revoke another intended guardian's grant or a completed link.
-- [ ] Add expiry handling through the existing scheduler, with request-time expiry enforcement regardless of scheduler delay.
+- [x] Serve `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` from the webapp static origin for `/invite`.
+- [x] Set `Content-Type: application/json` and a short cache in [`_headers`](../../../../edaya_frontend/apps/webapp/static/_headers). Cloudflare SPA fallback must not swallow the files (static copies take precedence over `200.html`).
+- [x] iOS associated-domains entitlement for prod and staging (`applinks:app.edayaplus.com`, `applinks:staging.app.edayaplus.com`, plus leftover `applinks:app.school.edayaplus.com` / `applinks:staging.app.school.edayaplus.com`); `FlutterDeepLinkingEnabled`; `CODE_SIGN_ENTITLEMENTS` on Debug/Release/Profile.
+- [x] Android `autoVerify` VIEW/BROWSABLE intent filters for both hosts, `pathPrefix=/invite`, `flutter_deeplinking_enabled`.
+- [x] Fill `sha256_cert_fingerprints` from the upload key (`guardian` alias) and the local debug keystore. Passwords were not committed.
+- [x] Play Store signing SHA-256 is the same as the upload `guardian` alias (`C7:EF:EF:…:0D:52`). Do not duplicate it in `assetlinks.json`.
 
-### 01.2 — Atomic identity-bound redemption
+Do not add `localhost` to associated domains. Universal Links and App Links do not verify on localhost.
 
-- [ ] Authenticate using the existing identity service before the school-authority transaction; do not claim distributed atomicity with account signup.
-- [ ] Resolve and lock the credential-scoped grant. Validate lifecycle, expiry, active target student and allowed relationship.
-- [ ] Create/reuse the school guardian profile, bind the verified subject and create/reuse exactly the intended active relationship. Consume the grant with replay, audit and outbox facts atomically.
-- [ ] Reject another-subject profile bindings, disabled guardian access and conflicting relationships. Do not merge profiles by display name or unverified email/phone.
-- [ ] Keep the caller's unrelated existing staff/student/teacher profile from becoming either authority or a blanket reason to reject legitimate guardian pairing.
-- [ ] Grant no staff, primary, legal, pickup or financial privileges beyond explicit school authorization. A claimant cannot choose another student or expand relationship flags.
-- [ ] Ensure concurrent subjects have one winner and the winner can recover the same result after a lost response. A different subject cannot recover private result details.
-- [ ] A redeemed grant cannot restore an ended/removed link. Current linkage/access still governs replay disclosure and subsequent reads.
-- [ ] Add bounded attempt controls and safe failures for invalid/expired/revoked/used credentials, binding conflicts, disabled access and throttling. Unauthenticated failures disclose no child identity.
+### 01.2 — Guardian app handler, pending token, signup and accept
 
-### 01.3 — Invitation transport and pending intents
+- [x] Shared parser for first-party `{origin}/invite/{token}` (prod, staging, and local/emulator hosts for tests only).
+- [x] Bounded pending-token persistence (7-day TTL). Remember before login bounce; hydrate before session restore.
+- [x] Guardian `GoRouter` allows `/invite/:token` and `/login` while logged out; after auth, return to confirmation. Other kinds stay on web.
+- [x] Sign-up / sign-in / email-OTP in the guardian login UI. Pending token survives verification.
+- [x] Identity-only session when grants 401 and a pending invite exists (do not register push until the school session exists).
+- [x] Preview then explicit accept. Refresh grants, register push, load academic years and linked students, then open calendar.
+- [x] Wrong account: do not consume; sign out; re-save pending token; return to login/confirmation.
+- [x] Clear pending on success, expiry, revoke, not-found, wrong kind, and unrelated logout. Offer a way off a dead invite screen.
 
-- [ ] Add credential-body POST preview/acceptance interfaces and regenerate clients. Preserve invitation contact matching, single-use acceptance, resend invalidation and supported actor-result types.
-- [ ] Generate allowlisted first-party HTTPS links with fragment credentials for invitation and pairing intents. Keep their credential purposes and backend contracts separate.
-- [ ] Capture/remove browser fragments immediately; use bounded pending-intent persistence through login, signup, verification and process interruption. Clear on completion/cancellation/expiry and unrelated logout.
-- [ ] Bind final confirmation to the currently authenticated account; explicit wrong-account switching returns to confirmation. Never auto-consume a link during preview, GET, notification delivery or scanner access.
-- [ ] Disable third-party analytics on credential landing surfaces, apply no-store/no-referrer behavior and redact URLs/credentials from crash reporting.
-- [ ] Retain old path-token invitation links only for previously issued invitations until expiry; stop generating them and document their retirement condition.
+### 01.3 — Clients and web fallback
 
-### 01.4 — Staff, browser and mobile delivery
+- [x] Generate Dart `previewInvitation` / `acceptInvitation` from `client-bindings.json` (`basePath: root` → `/public/invitations/{token}`). Do not hand-edit generated output as the source of truth.
+- [x] Native HTTP GET preview may omit a bearer token. Accept still sends the identity JWT.
+- [x] Web `/invite` Get-the-app copy (Play Store package `com.softilab.edaya.guardian`; no invented Apple numeric ID — search App Store, then reopen the link).
+- [x] Guardian accept stays on the invite page (`guardianLinked`); do not dump a newly linked guardian into `/school/students`.
+- [x] Staff-web post-auth gate: linked guardians go to `/login` with the guardian portal banner, matching teachers.
 
-- [ ] Staff student family-access surface: issue, display/print code and QR, inspect status, revoke and regenerate through mutation modals.
-- [ ] Guardian zero-child and add-child surfaces: scan/enter, authenticate, confirm and refresh linked students/school context after success.
-- [ ] Support existing authenticated accounts, unbound guardian profiles, multiple children and multiple schools without duplicating profiles incorrectly.
-- [ ] Route invitation results to staff, guardian or teacher experiences as appropriate; a portal user does not gain staff-web workspace access by accepting an invitation.
-- [ ] Configure iOS associated domains/site-association and Android verified intent filters/assetlinks using actual release signing identities. Use one coordinated Flutter link handler.
-- [ ] Verify fragment preservation and pending-intent recovery through supported mail/browser/app journeys. When the app is absent, offer browser completion or installation followed by reopening/manual code entry; do not promise unimplemented deferred app-store continuation.
-- [ ] Reuse notification delivery for non-secret lifecycle notices; school handover/printing remains sufficient for code issuance.
+### 01.4 — Pairing codes (later, not this slice)
+
+- [ ] `GuardianPairingGrant` model, staff issue/revoke/regenerate, 16-character Crockford Base32, QR of the same credential.
+- [ ] Authenticated redeem that creates/reuses the intended guardian–student link without a delivered invitation.
+- [ ] Human-enterable code in mail/SMS and an in-app entry surface for phones that never see the mailbox.
+
+## Local testing (OS will not verify localhost)
+
+1. **App logic** — unit tests feed `https://staging.app.edayaplus.com/invite/{token}` into the parser, pending store, and router.
+2. **Android emulator/device** — debug APK still receives an explicit VIEW intent when Digital Asset Links are not verified:
+   `adb shell am start -W -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://staging.app.edayaplus.com/invite/TOKEN" com.softilab.edaya.guardian`
+   Point the app at local identity/API via `--dart-define`. The host need not be reachable.
+3. **iOS simulator** — `xcrun simctl openurl` usually opens Safari. Inject the URI in debug, or long-press in Notes on a team-signed device after staging AASA is deployed.
+4. **Real association** — deploy well-known files to staging, install a team-signed guardian build, tap a staging-issued invite in Mail/Notes.
+
+Will not claim: tap link → App Store → automatic resume. After install, tap the same mail link or finish on the web page.
 
 ## Fixtures and acceptance tests
 
-- [ ] Fixtures: two schools, two intended guardians, siblings, an authenticated subject with zero actors, an existing guardian, an unbound guardian, a disabled guardian and a dual-profile subject.
-- [ ] Lifecycle cases: issued/expired/revoked/redeemed codes; regenerated credentials invalidate only the intended generation.
-- [ ] Native concurrency: two subjects claim one code, same-subject retries with different request timing, rollback after profile/link writes, and unlink versus replay.
-- [ ] Negative access: substituted school/student/guardian, generic grant writes, disabled access, another account's binding and unauthenticated student enumeration.
-- [ ] Public API/client contracts: body credentials, minimal confirmation, all supported invitation actor types, legacy links and contact mismatches.
-- [ ] Real-device journeys: Android/iOS cold and warm start, signup/verification interruption, account switch, app restart, missing app, offline/uncertain response, and non-consuming previews.
-- [ ] Secret audit: logs, metrics, events, replay rows and notifications contain no raw code/token.
+- [x] Parser/router/pending-store unit tests; Dart public invitation paths; native sign-up client tests; web post-auth guardian gate; association file contents.
+- [x] Identity: native sign-up returns a renewal credential when verification is off; without a session it returns `requiresEmailVerification` instead of failing closed.
+- [ ] Widget/integration journeys: cold and warm start from `/invite/{token}`, signup/OTP interruption, already-authenticated accept, contact mismatch, missing-app browser landing.
+- [ ] Real-device Android/iOS Universal Link / App Link after fingerprints and staging deploy. Plan 06 owns store qualification.
+- [x] Invitation secrets stay out of association files, crash-report URLs, and pairing-grant storage (no pairing grant in this slice).
 
 ## Completion evidence and exit gate
 
-Evidence: not collected; implementation has not started. Follow [Plan 00 verification/evidence requirements](00-common-requirements.md#fixtures-and-verification), recording exact backend/client revisions, migrations, contract changes, fixture IDs, test commands and device/provider limitations.
+Evidence: automated association, identity native sign-up, Dart public methods, guardian handler/signup/accept, and web Get-the-app / portal gate are in source. Android fingerprints (Play/upload + debug) are recorded; real-device Universal Link / App Link after staging deploy is still open. Follow [Plan 00 verification/evidence requirements](00-common-requirements.md#fixtures-and-verification).
 
-- [ ] Staff can issue/revoke/regenerate and recover a lost code display.
-- [ ] A previously unlinked subject can securely link the intended child without a delivered invitation or existing school actor.
-- [ ] Concurrency, replay, contact matching, revoked access and multi-profile tests pass through public interfaces.
-- [ ] Browser fallback and real Android/iOS invitation/pairing paths pass; unsupported configurations are not counted as verified.
-- [ ] Update this plan and its index row to `done` only after evidence is complete.
+- [x] Existing invitation preview/accept still require authenticated contact match and remain single-use.
+- [x] Browser fallback tells a guardian to install the app and reopen the same link, and does not send them into the staff workspace.
+- [ ] Android App Links verify on staging/prod after well-known files are deployed (`assetlinks.json` already has Play/upload + debug fingerprints).
+- [ ] iOS Universal Links verify on a team-signed build against staging/prod AASA.
+- [ ] Update this plan and its index row to `done` only after device evidence is recorded.
 
 ## Handoff to Plan 02
 
-Provide verified linked-family and zero-child fixtures, the current relationship enforcement contract, supported incoming-intent routing, generated clients and non-secret notification navigation. [Plan 02](02-student-photos-and-branding.md) reuses these journeys without altering pairing semantics.
+Provide verified linked-family and zero-child fixtures, current relationship enforcement, incoming `/invite/{token}` routing, generated public invitation methods, and non-secret notification navigation. Pairing-code issuance remains deferred and must not block portrait review. [Plan 02](02-student-photos-and-branding.md) reuses these journeys without altering invitation accept semantics.
+
+## Out of scope
+
+Rewriting invitation minting/delivery, `GuardianPairingGrant`, deferred App Store continuation, Plan 02 photos, unrelated notification-template WIP.

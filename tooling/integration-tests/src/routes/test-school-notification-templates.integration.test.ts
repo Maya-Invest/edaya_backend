@@ -1,3 +1,4 @@
+import type { SchoolNotificationTemplatesData } from '@edaya/core'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
@@ -10,7 +11,7 @@ describeWithLightSchool('school notification templates HTTP', (getContext) => {
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const client = createInProcessSchoolClient(app, { headers: { authorization } })
 
-    const before = await client.entities.schoolNotificationTemplates.get(SEED_SCHOOL_ID)
+    const before = await client.entities.schoolNotificationTemplates.get(SEED_SCHOOL_ID) as SchoolNotificationTemplatesData
 
     expect(before).toMatchObject({
       schoolId: SEED_SCHOOL_ID,
@@ -44,7 +45,7 @@ describeWithLightSchool('school notification templates HTTP', (getContext) => {
           },
         },
       },
-    })
+    }) as SchoolNotificationTemplatesData
 
     expect(updated.invitationSmsEnabled).toBe(true)
     expect(updated.incidentRecorded).toMatchObject({
@@ -65,7 +66,7 @@ describeWithLightSchool('school notification templates HTTP', (getContext) => {
     })
     expect(updated.announcementPublished.base_message.title).toBe(before.announcementPublished.base_message.title)
 
-    const fetched = await client.entities.schoolNotificationTemplates.get(SEED_SCHOOL_ID)
+    const fetched = await client.entities.schoolNotificationTemplates.get(SEED_SCHOOL_ID) as SchoolNotificationTemplatesData
     expect(fetched.invitationSmsEnabled).toBe(true)
     expect(fetched.incidentRecorded.base_message.title).toBe('HTTP custom incident')
     expect(fetched.incidentRecorded.rich_message.body).toBe('<p>HTTP custom html</p>')
@@ -73,7 +74,7 @@ describeWithLightSchool('school notification templates HTTP', (getContext) => {
     const reset = await client.commands.resetSchoolNotificationTemplates({
       schoolId: SEED_SCHOOL_ID,
       templateKey: 'incident.recorded',
-    })
+    }) as SchoolNotificationTemplatesData
 
     expect(reset.incidentRecorded.base_message.title).toBe(originalIncidentTitle)
     expect(reset.invitationSmsEnabled).toBe(true)

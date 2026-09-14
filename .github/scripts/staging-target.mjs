@@ -9,9 +9,9 @@ export const staging = Object.freeze({
   queue: "edaya-cron-jobs-staging",
   bucket: "edaya-files-staging",
   urls: {
-    identity: "https://staging.identity.edayaplus.com",
-    api: "https://staging.api.school.edayaplus.com",
-    webapp: "https://staging.app.school.edayaplus.com",
+    identity: "https://staging.identity.api.edayaplus.com",
+    api: "https://staging.school.api.edayaplus.com",
+    webapp: "https://staging.app.edayaplus.com",
     webadmin: "https://staging.admin.edayaplus.com",
   },
 });
