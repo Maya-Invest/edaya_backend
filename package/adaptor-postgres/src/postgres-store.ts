@@ -9,6 +9,7 @@ import {
   chunkArray,
 } from './lib/bulk-upsert'
 import { buildWhereClause } from './lib/filter'
+import { withPrivateFileConstraintErrors } from './lib/private-file-errors'
 import { compileResourceAccess } from './lib/resource-access-scope'
 import { schoolScope } from './lib/school-scope'
 import { PostgresAtomicExecution, transactionContext } from './lib/transaction'
@@ -139,13 +140,13 @@ implements BaseRepositoryInterface<T> {
       await this.saveScopedRow(row)
       return
     }
-    await client
+    await withPrivateFileConstraintErrors(() => client
       .insert(this.table)
       .values(row)
       .onConflictDoUpdate({
         target: this.table.id,
         set: row,
-      })
+      }))
   }
 
   /** One statement checks proposed ownership and conflicting-row ownership. */
@@ -156,21 +157,21 @@ implements BaseRepositoryInterface<T> {
     const values = sql.join(keys.map(key => sql`${sql.param(row[key], columns[key])}`), sql`, `)
     const updates = sql.join(keys.filter(key => key !== 'id' && !immutable.includes(key))
       .map(key => sql`${sql.identifier(columns[key]!.name)} = excluded.${sql.identifier(columns[key]!.name)}`), sql`, `)
-    const result = await this.getClient().execute(sql`
+    const result = await withPrivateFileConstraintErrors(() => this.getClient().execute(sql`
       insert into ${this.table} (${fields}) select ${values}
       where ${this.accessScope ? compileResourceAccess(this.table, this.accessScope, row) : schoolScope(this.table, this.schoolId!, row)}
       on conflict (${sql.identifier(columns.id!.name)}) do update set ${updates}
       where ${this.accessScope ? compileResourceAccess(this.table, this.accessScope) : schoolScope(this.table, this.schoolId!)}
       returning ${this.table.id}
-    `)
+    `))
     if (result.rows.length !== 1)
       throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
   }
 
   async delete(id: string): Promise<void> {
-    await this.getClient()
+    await withPrivateFileConstraintErrors(() => this.getClient()
       .delete(this.table)
-      .where(this.scopedWhere(eq(this.table.id, id)))
+      .where(this.scopedWhere(eq(this.table.id, id))))
   }
 
   async batchSave(entities: T[]): Promise<string[]> {
@@ -193,13 +194,13 @@ implements BaseRepositoryInterface<T> {
     const conflictSet = buildConflictUpdateSet(this.table)
 
     for (const chunk of chunks) {
-      await client
+      await withPrivateFileConstraintErrors(() => client
         .insert(this.table)
         .values(chunk)
         .onConflictDoUpdate({
           target: this.table.id,
           set: conflictSet,
-        })
+        }))
     }
     return entities.map(e => e.id)
   }
@@ -208,8 +209,8 @@ implements BaseRepositoryInterface<T> {
     if (ids.length === 0) {
       return
     }
-    await this.getClient()
+    await withPrivateFileConstraintErrors(() => this.getClient()
       .delete(this.table)
-      .where(this.scopedWhere(inArray(this.table.id, [...ids])))
+      .where(this.scopedWhere(inArray(this.table.id, [...ids]))))
   }
 }

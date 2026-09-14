@@ -1,10 +1,10 @@
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
 import type { EmailTransportPort } from "../src/email/port";
 import type { FcmTransport } from "../src/push/fcm";
-import { createNotifyRuntimeFromDrizzle } from "../src/runtime";
-import { applyNotifySchemaOnDrizzle } from "../src/store/sql";
 import type { NotifyRuntime } from "../src/runtime";
+import { readFileSync } from "node:fs";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+import { createNotifyRuntimeFromDrizzle } from "../src/runtime";
 
 export interface TestNotifyHarness {
   runtime: NotifyRuntime;
@@ -19,7 +19,8 @@ export async function createTestNotifyRuntime(options: {
 } = {}): Promise<TestNotifyHarness> {
   const pglite = new PGlite();
   const db = drizzle(pglite);
-  await applyNotifySchemaOnDrizzle(db);
+  await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0013_notification_schema.sql", import.meta.url), "utf8"));
+  await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0016_notification_tenants.sql", import.meta.url), "utf8"));
   const sent: Array<{ to: string; subject: string }> = [];
   const pushes: Array<{ token: string; title: string; data: Record<string, string> }> = [];
   const runtime = createNotifyRuntimeFromDrizzle({

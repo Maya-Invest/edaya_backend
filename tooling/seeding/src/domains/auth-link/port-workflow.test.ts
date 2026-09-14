@@ -8,7 +8,7 @@ import {
 } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
-import { syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
+import { assignDevSchoolOwnerSubjectId, syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
 
 /* eslint-disable-next-line dot-notation -- process.env index signature */
 process.env['SEED_DATASET'] = 'demo'
@@ -118,6 +118,14 @@ function createMemoryPort(): {
 }
 
 describe('auth-link seed port workflow', () => {
+  test('owner initialization never asks an adapter to replace an existing owner', async () => {
+    const memory = createMemoryPort()
+    memory.state.ownerSubjectId = 'current-owner'
+    await expect(assignDevSchoolOwnerSubjectId(memory.port, 'replacement-owner')).rejects.toThrow('cannot replace the current school owner')
+    expect(memory.state.ownerSubjectId).toBe('current-owner')
+    await assignDevSchoolOwnerSubjectId(memory.port, 'current-owner')
+    expect(memory.state.ownerSubjectId).toBe('current-owner')
+  })
   test('registers, links, replaces stale subjects, assigns owner, and stays idempotent', async () => {
     const memory = createMemoryPort()
     const auth = createAuthProvisioner()

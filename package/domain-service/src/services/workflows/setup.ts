@@ -1,8 +1,10 @@
-import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole } from '@edaya/core'
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, Attachment, AttachmentStatus, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
+import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 
@@ -453,46 +455,11 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
-    return this.baseService.atomicExecution.execute(async () => {
-      await this.baseService.access.attachments.assertConfigure()
-      const attachment = new Attachment({
-        ...input,
-        status: input.storageKey ? AttachmentStatus.Ready : input.status,
-      })
-      if (attachment.storageKey) {
-        const stored = await this.baseService.fileStorage.headObject(attachment.storageKey)
-        if (!stored) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_OBJECT_NOT_FOUND',
-            'Uploaded object was not found in storage',
-          )
-        }
-        if (attachment.sizeBytes !== undefined && stored.sizeBytes !== attachment.sizeBytes) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_SIZE_MISMATCH',
-            'Uploaded object size does not match declared sizeBytes',
-          )
-        }
-        if (attachment.mimeType && stored.contentType && stored.contentType !== attachment.mimeType) {
-          throw new BusinessRuleViolationError(
-            'ATTACHMENT_MIME_TYPE_MISMATCH',
-            'Uploaded object content type does not match declared mimeType',
-          )
-        }
-      }
-      return this.saveConstructed(this.baseService.entities.attachments, attachment)
-    })
+    return completeAttachmentUpload(this.baseService, input)
   }
 
   async removeAttachment({ attachmentId, id }: RemoveAttachmentInput): Promise<void> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const existing = await this.requireEntity(this.baseService.entities.attachments, attachmentId ?? id ?? '')
-      await this.baseService.access.attachments.assertConfigure()
-      if (existing.storageKey) {
-        await this.baseService.fileStorage.deleteObject(existing.storageKey)
-      }
-      await this.baseService.entities.attachments.delete(existing.id)
-    })
+    return removeAttachment(this.baseService, attachmentId ?? id ?? '')
   }
 
   private async saveStaffAssignment(input: AssignStaffInput): Promise<StaffAssignment> {

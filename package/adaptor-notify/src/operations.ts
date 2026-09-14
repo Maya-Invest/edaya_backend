@@ -12,7 +12,7 @@ import type { SendJobDependencies } from "./jobs/send-job";
 import type { NotifyRuntime } from "./runtime";
 import { formatOtpEmail, formatVerificationLinkEmail } from "./email/auth-copy";
 import { NotifySendError } from "./errors";
-import { buildAuthRecipientId, buildInvitationRecipientId, normalizeEmail, NOTIFY_PLATFORM_TENANT } from "./ids";
+import { buildAuthRecipientId, buildInvitationRecipientId, buildNotifyJobId, normalizeEmail, NOTIFY_PLATFORM_TENANT } from "./ids";
 import { sendJob } from "./jobs/send-job";
 import {
   cancelJob,
@@ -35,6 +35,7 @@ function sendDeps(runtime: NotifyRuntime): SendJobDependencies {
     log: runtime.log,
     onDeliveryEvent: runtime.onDeliveryEvent,
     resolveSchoolRecipient: runtime.resolveSchoolRecipient,
+    resolveInvitationRecipient: runtime.resolveInvitationRecipient,
   };
 }
 
@@ -58,9 +59,10 @@ export async function enqueueSchoolNotification(
   }
 
   const { created } = await insertJobIfAbsent(runtime.sql, {
-    idempotency_key: input.idempotencyKey,
+    idempotency_key: buildNotifyJobId("school", input.schoolId, input.idempotencyKey),
     tenant: input.schoolId,
     job_kind: "school",
+    delivery_id: input.idempotencyKey,
     event_key: input.eventKey,
     title: input.title,
     body: input.body,
@@ -74,7 +76,7 @@ export async function enqueueSchoolNotification(
 
   for (const subjectId of subjectIds) {
     await upsertJobRecipient(runtime.sql, {
-      idempotency_key: input.idempotencyKey,
+      idempotency_key: buildNotifyJobId("school", input.schoolId, input.idempotencyKey),
       subject_id: subjectId,
       channel: "queued",
       status: "pending",
@@ -89,9 +91,9 @@ export async function enqueueSchoolNotification(
 export async function cancelSchoolNotification(
   runtime: NotifyRuntime,
   idempotencyKey: string,
-  schoolId?: string,
+  schoolId: string,
 ): Promise<void> {
-  await cancelJob(runtime.sql, idempotencyKey, schoolId);
+  await cancelJob(runtime.sql, buildNotifyJobId("school", schoolId, idempotencyKey), schoolId);
 }
 
 export async function registerSchoolPushDevice(
@@ -99,6 +101,7 @@ export async function registerSchoolPushDevice(
   input: RegisterPushDeviceInput,
 ): Promise<void> {
   await upsertDevice(runtime.sql, {
+    tenant: input.schoolId,
     subject_id: input.subjectId,
     provider: input.provider,
     token: input.token,
@@ -109,7 +112,7 @@ export async function unregisterSchoolPushDevice(
   runtime: NotifyRuntime,
   input: UnregisterPushDeviceInput,
 ): Promise<void> {
-  await deleteDevice(runtime.sql, input.subjectId, input.provider);
+  await deleteDevice(runtime.sql, input.subjectId, input.provider, input.schoolId);
 }
 
 export async function lookupSchoolDeliveryStatuses(
@@ -120,7 +123,7 @@ export async function lookupSchoolDeliveryStatuses(
   const rows = await lookupJobRecipients(runtime.sql, deliveries);
   for (const query of deliveries) {
     const matches = rows.filter(row =>
-      row.idempotency_key === query.deliveryId && row.subject_id === query.subjectId && row.channel !== "queued",
+      row.idempotency_key === buildNotifyJobId("school", query.schoolId, query.deliveryId) && row.subject_id === query.subjectId && row.channel !== "queued",
     );
     const sent = matches.find(row => row.status === "sent");
     const failed = matches.find(row => row.status === "failed");
@@ -145,7 +148,10 @@ export async function deliverInvitation(
   runtime: NotifyRuntime,
   input: InvitationDeliveryInput,
 ): Promise<void> {
+  if (input.contactChannel !== "email")
+    throw new NotifySendError("INVITATION_CHANNEL_UNSUPPORTED");
   const subjectId = buildInvitationRecipientId(input.invitationId);
+  const jobId = buildNotifyJobId("invitation", input.schoolId, input.invitationId);
   const email = input.contactChannel === "email" ? input.contactValue : undefined;
   await upsertCommandRecipient(runtime.sql, {
     subject_id: subjectId,
@@ -160,9 +166,10 @@ export async function deliverInvitation(
     recipient_id: input.invitationId,
   });
   await insertJobIfAbsent(runtime.sql, {
-    idempotency_key: input.invitationId,
+    idempotency_key: jobId,
     tenant: input.schoolId,
     job_kind: "invitation",
+    delivery_id: input.invitationId,
     event_key: "account_invitation",
     title: input.emailSubject,
     body: input.emailBody,
@@ -171,19 +178,20 @@ export async function deliverInvitation(
     metadata: JSON.stringify({ inviteUrl: input.inviteUrl }),
   });
   await upsertJobRecipient(runtime.sql, {
-    idempotency_key: input.invitationId,
+    idempotency_key: jobId,
     subject_id: subjectId,
     channel: "queued",
     status: "pending",
     provider_message_id: null,
     failure_reason: null,
   });
-  await sendAwaitedJob(runtime, input.invitationId, "invitation send failed");
+  // The invitation and durable intent commit together. The shared dispatcher
+  // resolves the current invitation before contacting the provider after commit.
 }
 
-export async function revokeInvitation(runtime: NotifyRuntime, invitationId: string): Promise<void> {
-  await cancelJob(runtime.sql, invitationId);
-  await deleteCommandRecipient(runtime.sql, buildInvitationRecipientId(invitationId));
+export async function revokeInvitation(runtime: NotifyRuntime, invitationId: string, schoolId: string): Promise<void> {
+  await cancelJob(runtime.sql, buildNotifyJobId("invitation", schoolId, invitationId), schoolId);
+  await deleteCommandRecipient(runtime.sql, buildInvitationRecipientId(invitationId), schoolId);
 }
 
 export async function sendAuthOtp(runtime: NotifyRuntime, input: AuthOtpEmailInput): Promise<void> {
@@ -202,11 +210,13 @@ export async function sendAuthOtp(runtime: NotifyRuntime, input: AuthOtpEmailInp
     recipient_kind: "staff",
     recipient_id: email,
   });
-  const idempotencyKey = `auth-otp:${email}:${input.otp}:${Date.now()}`;
+  const deliveryId = crypto.randomUUID();
+  const idempotencyKey = buildNotifyJobId("auth_otp", NOTIFY_PLATFORM_TENANT, deliveryId);
   await insertJobIfAbsent(runtime.sql, {
     idempotency_key: idempotencyKey,
     tenant: NOTIFY_PLATFORM_TENANT,
     job_kind: "auth_otp",
+    delivery_id: deliveryId,
     event_key: "auth.otp",
     title: copy.subject,
     body: copy.body,
@@ -244,11 +254,13 @@ export async function sendAuthVerification(
     recipient_kind: "staff",
     recipient_id: email,
   });
-  const idempotencyKey = `auth-verify:${email}:${Date.now()}`;
+  const deliveryId = crypto.randomUUID();
+  const idempotencyKey = buildNotifyJobId("auth_verification", NOTIFY_PLATFORM_TENANT, deliveryId);
   await insertJobIfAbsent(runtime.sql, {
     idempotency_key: idempotencyKey,
     tenant: NOTIFY_PLATFORM_TENANT,
     job_kind: "auth_verification",
+    delivery_id: deliveryId,
     event_key: "auth.email_verification",
     title: copy.subject,
     body: copy.body,

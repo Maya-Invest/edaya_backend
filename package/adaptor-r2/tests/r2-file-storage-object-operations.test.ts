@@ -26,6 +26,56 @@ describe("createR2FileStorage object operations", () => {
     mock.restore();
   });
 
+  it("reads private bytes by configured bucket/key and cancels oversized provider streams", async () => {
+    const cancel = mock(() => {});
+    const send = spyOn(S3Client.prototype, "send").mockImplementation(async (command) => {
+      expect(command).toBeInstanceOf(GetObjectCommand);
+      expect(command.input).toMatchObject({ Bucket: config.bucketName, Key: "school/private/asset" });
+      return {
+        Body: { transformToWebStream: () => new ReadableStream<Uint8Array>({
+          start(controller) { controller.enqueue(new Uint8Array([1, 2, 3])); },
+          cancel,
+        }) },
+        ContentLength: 1,
+        ContentType: "image/png",
+      };
+    });
+    const storage = createR2FileStorage(config);
+    await expect(storage.readObject("school/private/asset", { maxBytes: 2 })).rejects.toThrow("FILE_READ_LIMIT_EXCEEDED");
+    expect(cancel).toHaveBeenCalledTimes(1);
+    await expect(storage.readObject("school/private/asset", { maxBytes: 0 })).rejects.toThrow("FILE_READ_LIMIT_INVALID");
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads complete object metadata, conceals missing objects and redacts provider failures", async () => {
+    const send = spyOn(S3Client.prototype, "send").mockImplementation(async () => ({
+      Body: { transformToWebStream: () => new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2]));
+          controller.close();
+        },
+      }) },
+      ContentLength: 2,
+      ContentType: "image/png",
+      ETag: "etag",
+    }));
+    const storage = createR2FileStorage(config);
+    await expect(storage.readObject("asset", { maxBytes: 2 })).resolves.toEqual({
+      body: new Uint8Array([1, 2]),
+      sizeBytes: 2,
+      contentType: "image/png",
+      etag: "etag",
+    });
+    send.mockImplementation(async () => {
+      throw Object.assign(new Error("private-key"), { $metadata: { httpStatusCode: 404 } });
+    });
+    await expect(storage.readObject("missing", { maxBytes: 2 })).resolves.toBeNull();
+    send.mockImplementation(async () => {
+      throw new Error("private-key");
+    });
+    await expect(storage.readObject("asset", { maxBytes: 2 })).rejects.toThrow("FILE_READ_FAILED");
+  });
+
   it("uploads, heads, downloads, and deletes objects through the S3 client", async () => {
     const send = spyOn(S3Client.prototype, "send").mockImplementation(async (command) => {
       if (command instanceof PutObjectCommand) {

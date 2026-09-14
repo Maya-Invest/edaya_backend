@@ -1,5 +1,6 @@
 import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { createAttachmentUpload } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -14,7 +15,6 @@ import {
   saveAnnouncement,
   saveAnnouncementTarget,
   saveAssessment,
-  saveAttachment,
   saveCalendarEvent,
   saveClassSubject,
   saveFee,
@@ -313,14 +313,14 @@ describeIntegration('tenant boundary safeguards', () => {
       resourceId: 'resource-b',
       lessonSessionId: sessionB.id,
     })
-    await saveAttachment(schoolBApp, {
+    await repositories.attachmentRepository.save(new Attachment({
       id: 'attachment-b',
       schoolId: 'school-b',
       ownerKind: AttachmentOwnerKind.Student,
       ownerId: 'student-b',
       fileName: 'outside.pdf',
       fileUrl: 'https://files.example.test/outside.pdf',
-    })
+    }))
     await schoolBApp.baseService.entities.gradeScales.save(new GradeScale({
       id: 'gs-b',
       schoolId: 'school-b',
@@ -518,13 +518,13 @@ describeIntegration('tenant boundary safeguards', () => {
       studentId: 'student-b',
       isBillingContact: true,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
-    await expect(saveAttachment(app, {
-      id: 'foreign-attachment',
-      schoolId: 'school-a',
+    await expect(createAttachmentUpload(app.baseService, {
+      attachmentId: 'foreign-attachment',
       ownerKind: AttachmentOwnerKind.Student,
       ownerId: 'student-b',
       fileName: 'foreign.pdf',
-      fileUrl: 'https://files.example.test/foreign.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 64,
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
     for (const periodId of ['missing-term', 'term-b']) {

@@ -1,1 +1,5 @@
 export * from './atomic-execution'
+export * from './attachment-uploads'
+export * from './command-journal'
+export * from './durable-work'
+export * from './private-file-lifecycle'

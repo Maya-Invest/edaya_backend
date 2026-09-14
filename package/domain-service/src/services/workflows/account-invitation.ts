@@ -132,7 +132,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
 
       await this.assignPendingOwnerIfNeeded(invitation, input.subjectId)
 
-      await this.baseService.invitationDelivery.revoke(invitation.id)
+      await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
 
       await this.saveInvitation(invitation.copyWith({
         status: AccountInvitationStatus.Accepted,
@@ -340,7 +340,7 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async revokeInvitationDelivery(invitation: AccountInvitation): Promise<void> {
-    await this.baseService.invitationDelivery.revoke(invitation.id)
+    await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
   }
 
   private async assertPendingOwnerAssignable(

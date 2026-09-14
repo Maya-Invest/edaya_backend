@@ -37,7 +37,7 @@ describe("createNotifyNotificationGateway", () => {
       title: "t",
       body: "b",
       recipients: [{ kind: MessageDeliveryRecipientKind.Guardian, id: "g1", subjectId: "s1" }],
-    })).rejects.toThrow("down");
+    })).rejects.toThrow("NOTIFY_STORAGE_FAILED");
     expect(errors).toHaveLength(1);
   });
 
@@ -55,7 +55,7 @@ describe("createNotifyNotificationGateway", () => {
       schoolId: "sch",
       token: "tok",
       provider: "fcm",
-    })).rejects.toThrow("fcm");
+    })).rejects.toThrow("NOTIFY_STORAGE_FAILED");
   });
 
   test("enqueues and sends email when prefs allow", async () => {

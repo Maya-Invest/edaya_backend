@@ -1,7 +1,6 @@
 /* eslint-disable dot-notation -- TypeScript requires bracket access for index signatures */
 import process from 'node:process'
 import postgres from 'postgres'
-import { applyNotifySchema } from './lib/apply-notify-schema'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import { resetRemoteDatabase } from './lib/reset-remote-database'
 
@@ -38,5 +37,4 @@ if (process.env['RESET_DATA'] === 'true') {
   await resetRemoteDatabase(value)
 }
 await applySchoolMigrations(value)
-await applyNotifySchema(value)
 console.log('Staging school migration/reset complete')

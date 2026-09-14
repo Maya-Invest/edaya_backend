@@ -1,11 +1,13 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
-import type { AtomicExecutionPort, AuthContactResolverPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
+import type { AtomicExecutionPort, AuthContactResolverPort, CommandJournalPort, DurableWorkPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
 import type { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
 import type { SchoolRepositories } from '../ports/school-repositories'
 
 export interface ServiceArgs {
   actor: SchoolScopedActorMetadata
   atomicExecution: AtomicExecutionPort
+  commandJournal?: CommandJournalPort
+  durableWork?: DurableWorkPort
   repositories: SchoolRepositories
   notificationGateway: NotificationGatewayPort
   fileStorage: FileStoragePort

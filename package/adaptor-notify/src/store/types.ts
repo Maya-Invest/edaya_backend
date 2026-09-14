@@ -18,12 +18,16 @@ export interface NotifyRecipientRow {
 }
 
 export interface NotifyDeviceRow {
+  tenant: string;
   subject_id: string;
   provider: string;
   token: string;
 }
 
 export interface NotifyJobRow {
+  payload_version: number;
+  attempts: number;
+  delivery_id: string;
   idempotency_key: string;
   tenant: string;
   job_kind: string;

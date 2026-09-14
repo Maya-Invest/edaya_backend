@@ -146,6 +146,7 @@ export const attachments = pgTable('attachments', {
   schoolId: text('school_id').notNull(),
   ownerKind: text('owner_kind').notNull(),
   ownerId: text('owner_id').notNull(),
+  purpose: text('purpose').notNull().default('general'),
   fileName: text('file_name').notNull(),
   storageKey: text('storage_key'),
   fileUrl: text('file_url'),

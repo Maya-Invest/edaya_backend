@@ -1,6 +1,6 @@
 # Cron runtimes
 
-Scheduled jobs are defined in `@edaya/core` (`package/domain-core/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun repo dev`.
+Scheduled jobs are defined in `@edaya/service` (`package/domain-service/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun repo dev`.
 
 | Profile | Entry | Env source | Command |
 |---------|-------|------------|---------|
@@ -24,7 +24,7 @@ Worker bindings (not env vars):
 |---------|------|
 | `CRON_JOBS` | Queue producer (heartbeat) and consumer (`queue` handler) |
 
-Local cron uses the same PGlite school DB and `auth` schema as `bun repo dev`. Novu is optional (from `.env`). File storage uses `@edaya/adaptor-local-fs` when `LOCAL_FILES_*` is set in `.env`.
+Local cron uses the same PGlite school database as `bun repo dev`. Identity remains a separate service. Notification and storage adapters follow the existing runtime configuration.
 
 ## Local (one-shot against PGlite)
 
@@ -34,7 +34,7 @@ Requires a seeded local database (`bun repo dev` at least once, or `bun repo see
 bun --filter @edaya/api cron:local
 ```
 
-Runs one heartbeat tick: loads due rows from `cron_job_schedules`, dispatches each `(jobKey, schoolId)` **inline**, and advances `next_run_at`.
+Runs one heartbeat tick: commits school-bound occurrences and advances each due schedule atomically, then executes persisted work inline through the same claim/completion protocol as the Worker.
 
 Optional filter (bypasses the schedule table and runs handlers directly):
 
@@ -74,21 +74,28 @@ bun repo deploy api production # production
 
 ## Architecture
 
+```text
+heartbeat (scheduled) or cron-local
+  ├─ transaction + schedule lock
+  │    ├─ reload due schedule; create unique school/schedule/time occurrence
+  │    ├─ command receipt + audit + execution/dispatch outbox rows
+  │    └─ advance next_run_at; commit
+  └─ dispatch committed work by { jobId }
+       ├─ local: executeCronOccurrence
+       └─ worker: CRON_JOBS → queue consumer → executeCronOccurrence
+            ├─ claim lease; load stored school/job/version/current school
+            └─ transaction: run existing handler + guarded work completion
 ```
-heartbeat (scheduled) or cron-local main()
-  └─ build*ApiRuntime(env)
-       └─ tickCronSchedules()
-            ├─ CronJobSchedulePort.listDue(asOf)     // Postgres / PGlite
-            ├─ CronJobDispatcherPort.dispatch(...)   // inline (local) or CRON_JOBS queue (worker)
-            └─ markDispatched(next_run_at)
 
-queue consumer (worker only)
-  └─ runCronJobForSchool(app, { jobKey, schoolId })   // @edaya/core
-```
+Migration `0015_cron_occurrences` adds immutable occurrence authority; `0014_command_journal` supplies receipts, audit and durable work. Occurrences are unique by school, schedule and the scheduled time that was due. A delayed heartbeat coalesces missed schedule ticks into one occurrence, with the winning heartbeat's persisted `asOf` window. Request tracing does not change occurrence identity. Competing heartbeats re-read the schedule under its transaction lock.
+
+Only `{ jobId }` crosses the queue boundary. The consumer rejects legacy/full-authority payloads, acknowledges malformed/unknown/terminal references, and retries pending or transiently failed work with a 60-second queue delay. School/job/version authority comes from storage. Job effects and execution completion use one transaction; expiry or failure rolls both back. The three existing handlers use transactional school/notification persistence; future handlers must preserve that contract or implement their own durable external-effect protocol.
+
+Execution and transport each retain an eight-claim budget. Transport failures back off through the shared work adapter. After an accepted send, a later heartbeat can re-arm delivery if execution is still due and the last acceptance is at least 60 seconds old. It resends the same reference, preserves attempts and never resets a terminal budget. This also recovers a lost queue message. Worker queue retries are configured to 20 with a 60-second delay; these transport redeliveries do not bypass database claim/backoff rules. Missing `CRON_JOBS` fails closed in Worker mode. See [command execution](command-execution.md) for lease and failure semantics.
 
 Structured log events: `cron.tick`, `cron.dispatch`, `cron.execute`.
 
-Job catalog: `package/domain-core/src/capabilities/scheduling-jobs/cron-job-catalog.ts`. Add new jobs in core, register in `cron-job-runner.ts`, and insert a row into `cron_job_schedules`.
+Job catalog: `package/domain-service/src/capabilities/scheduling-jobs/cron-job-catalog.ts`. Add new jobs in service, register in `cron-job-runner.ts`, and insert a row into `cron_job_schedules`.
 
 ## Operations
 
@@ -118,6 +125,14 @@ SET next_run_at = NOW() + INTERVAL '5 minutes', updated_at = NOW()
 WHERE job_key = 'processDueNotifications';
 ```
 
-Handlers remain in code; the table only controls **when** jobs run.
+Handlers remain in code; the table only controls **when** jobs run. Disabling a schedule prevents new occurrences; it does not revoke already committed work.
+
+### Durable queue cutover and recovery
+
+Apply migrations before enabling the new producer/consumer. Pause the heartbeat and drain the old queue with the old matched worker before switching to the reference-only protocol. Old queue messages do not have authoritative occurrence records and are deliberately rejected by the new consumer. Keep the old deployment/data/queue snapshot together if rollback is necessary; do not replay legacy authority payloads into the new consumer.
+
+For diagnosis, inspect `command_outbox` by kind (`cron.dispatch` or `cron.execute`), resource ID, status, attempts and stable failure code. Read `cron_occurrences` to identify the school, handler and scheduled time. `dead` work is terminal and requires an operator to inspect the underlying cause and domain effects before any repair. There is no automatic budget reset or public generic replay endpoint. A dispatch failure after an uncertain queue acceptance may produce another message, but duplicate references cannot repeat committed execution effects. Provider-level notification duplicates after uncertain network delivery remain a separate limitation.
+
+Queue acknowledgement and delay behavior follows [Cloudflare Queues batching and retries](https://developers.cloudflare.com/queues/configuration/batching-retries/). Local/native tests verify database and adapter behavior; they do not qualify a deployed Cloudflare queue.
 
 See also: [cron-heartbeat-dispatcher-plan.md](../sprints/archive/cron-heartbeat-dispatcher-plan.md), [api-runtimes.md](./api-runtimes.md).

@@ -28,34 +28,39 @@ export function createNotifyNotificationGateway(
       try {
         await enqueueSchoolNotification(runtime, input);
       }
-      catch (error) {
-        onError?.(error, { operation: "enqueue", idempotencyKey: input.idempotencyKey });
+      catch {
+        const error = new Error("NOTIFY_STORAGE_FAILED");
+        onError?.(error, { operation: "enqueue", schoolId: input.schoolId, idempotencyKey: input.idempotencyKey });
         throw error;
       }
     },
-    cancel: async (idempotencyKey) => {
+    cancel: async (idempotencyKey, schoolId) => {
       try {
-        await cancelSchoolNotification(runtime, idempotencyKey);
+        await cancelSchoolNotification(runtime, idempotencyKey, schoolId);
       }
-      catch (error) {
-        onError?.(error, { operation: "cancel", idempotencyKey });
+      catch {
+        const error = new Error("NOTIFY_STORAGE_FAILED");
+        onError?.(error, { operation: "cancel", schoolId, idempotencyKey });
+        throw error;
       }
     },
     lookupDeliveryStatuses: async (deliveries) => {
       try {
         return await lookupSchoolDeliveryStatuses(runtime, deliveries);
       }
-      catch (error) {
-        onError?.(error, { operation: "lookupDeliveryStatuses", deliveries });
-        return new Map();
+      catch {
+        const error = new Error("NOTIFY_STORAGE_FAILED");
+        onError?.(error, { operation: "lookupDeliveryStatuses", count: deliveries.length });
+        throw error;
       }
     },
     registerPushDevice: async (input: RegisterPushDeviceInput) => {
       try {
         await registerSchoolPushDevice(runtime, input);
       }
-      catch (error) {
-        onError?.(error, { operation: "registerPushDevice", input });
+      catch {
+        const error = new Error("NOTIFY_STORAGE_FAILED");
+        onError?.(error, { operation: "registerPushDevice", schoolId: input.schoolId, subjectId: input.subjectId });
         throw error;
       }
     },
@@ -63,8 +68,10 @@ export function createNotifyNotificationGateway(
       try {
         await unregisterSchoolPushDevice(runtime, input);
       }
-      catch (error) {
-        onError?.(error, { operation: "unregisterPushDevice", input });
+      catch {
+        const error = new Error("NOTIFY_STORAGE_FAILED");
+        onError?.(error, { operation: "unregisterPushDevice", schoolId: input.schoolId, subjectId: input.subjectId });
+        throw error;
       }
     },
   };

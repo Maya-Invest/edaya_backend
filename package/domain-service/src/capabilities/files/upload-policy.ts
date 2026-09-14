@@ -6,13 +6,13 @@ const PDF_MAX_BYTES = 25 * 1024 * 1024
 const IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
+  'image/apng',
   'image/webp',
   'image/gif',
 ])
 
 const DOCUMENT_MIME_TYPES = new Set([
   'application/pdf',
-  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ])
 
@@ -55,7 +55,7 @@ export function assertUploadPolicyAllowed(input: {
   }
 
   const maxBytes = maxBytesForOwner(input.ownerKind)
-  if (input.sizeBytes <= 0 || input.sizeBytes > maxBytes) {
+  if (!Number.isSafeInteger(input.sizeBytes) || input.sizeBytes <= 0 || input.sizeBytes > maxBytes) {
     throw new BusinessRuleViolationError(
       'UPLOAD_SIZE_NOT_ALLOWED',
       `Upload size must be between 1 and ${maxBytes} bytes`,

@@ -121,7 +121,9 @@ function compileClause(table: PgTable, clause: ResourceAccessClause, schoolId: s
         return []
       return [and(sql`${value('ownerKind')} = ${kind}`, exists(owner, schoolId, and(sql`${getTableColumns(owner)['id']!} = ${value('ownerId')}`, compileClause(owner, { ...clause, attachmentOwners: undefined }, schoolId))!))!]
     })
-    return paths.length ? or(...paths)! : sql`false`
+    return paths.length && clause.attachmentPurposes?.length
+      ? and(or(...paths), or(...clause.attachmentPurposes.map(purpose => sql`${value('purpose')} = ${purpose}`)))!
+      : sql`false`
   }
   return and(
     getTableName(table) === 'calendar_events' && clause.calendarAncestors

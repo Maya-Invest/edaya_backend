@@ -79,6 +79,10 @@
     "./datasets/minimal": {
       "types": "./src/datasets/minimal/index.ts",
       "import": "./src/datasets/minimal/index.ts"
+    },
+    "./shared/attachment-assets": {
+      "types": "./src/shared/attachment-assets.ts",
+      "import": "./src/shared/attachment-assets.ts"
     }
   },
   "scripts": {

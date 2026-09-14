@@ -1,5 +1,6 @@
 import type { ActorMetadata } from "@edaya/authorization";
 import type { AppBindings } from "@/http/types";
+import { PostgresCommandJournal, PostgresDurableWork } from "@edaya/adaptor-postgres";
 import { ActorAssuranceLevel, createStaffActorMetadata } from "@edaya/authorization";
 import { noOpFileStorage, noOpNotificationGateway } from "@edaya/core";
 import { onTestFinished } from "bun:test";
@@ -13,7 +14,7 @@ import { createAuthorizationDatabase } from "../../../../package/adaptor-postgre
 export async function createNativePolicyApp(actor: ActorMetadata | null = createStaffActorMetadata({ schoolId: "school-a", staffMemberId: "staff-a", subjectId: "person-a", academicYearId: "year-a", requestId: "route-policy", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }), options: { graphql?: boolean } = {}) {
   const fixture = await createAuthorizationDatabase();
   onTestFinished(() => fixture.db.close());
-  const school = new ApiSchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage });
+  const school = new ApiSchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), durableWork: new PostgresDurableWork(fixture.connection), notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage });
   const env = parseEnv({ RUNTIME: "in-memory", NODE_ENV: "test", PORT: 9999, LOG_LEVEL: "silent", ENABLE_GRAPHQL: options.graphql ?? false, DATABASE_URL: "postgres://unused:unused@localhost/test" });
   const app = new Hono<AppBindings>();
   app.use(async (c, next) => {
@@ -25,5 +26,5 @@ export async function createNativePolicyApp(actor: ActorMetadata | null = create
   app.route("/", indexRouter);
   if (options.graphql)
     mountGraphQLRoute(app);
-  return { app, school, repositories: fixture.repositories };
+  return { app, school, db: fixture.db, repositories: fixture.repositories };
 }

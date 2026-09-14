@@ -16,10 +16,7 @@ export function createCloudflareQueueCronJobDispatcher(
       await queue.send(body);
       logger?.info({
         event: "cron.dispatch",
-        jobKey: body.jobKey,
-        schoolId: body.schoolId,
-        requestId: body.requestId,
-        asOf: body.asOf,
+        jobId: body.jobId,
       }, "cron job dispatched to queue");
     },
   };

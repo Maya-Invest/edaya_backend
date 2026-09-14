@@ -58,3 +58,10 @@ Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 - `apps/api` — consumes `@edaya/fixtures/onboarding` for onboarding routes
 
 See `tooling/seeding/README.md` for seed commands and `src/meta/entity-manifest.ts` for entity coverage.
+
+
+## Shared authorization scenario
+
+`createAuthorizationScenario()` from `@edaya/fixtures` returns fresh synthetic domain records and selected-profile actors for two schools. Stable `v1-*` identities include a school owner, staff with explicit student-detail grants, assigned/unassigned teachers, two siblings, an unrelated child, a foreign child, multiple guardians and a disabled guardian. The owner, assigned teacher, primary guardian and one student intentionally share an identity to test profile isolation. The second guardian links only to the first sibling.
+
+The factory performs no persistence, identity provisioning, provider calls or permission copying. Its records are separate from the existing demo datasets and are not automatically installed by the seed CLI. Integration harnesses may arrange a disposable database; mutation seed workflows consume the records through their admitted command paths. Every call returns independent records, so revocation scenarios can remove links/assignments, disable a guardian or expire a grant without contaminating another fixture. Feature tests extend the same graph rather than changing its baseline audiences.

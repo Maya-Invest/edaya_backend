@@ -1,8 +1,9 @@
-import type { NormalizedDeliveryEvent, ResolveNotificationDispatchRecipient } from "@edaya/core";
+import type { NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient } from "@edaya/core";
 import type { EmailTransportPort } from "../email/port";
 import type { FcmTransport } from "../push/fcm";
 import type { NotifySql } from "../store/types";
 import { randomUUID } from "node:crypto";
+import { buildNotifyChannelId, normalizeEmail } from "../ids";
 import {
   getCommandRecipient,
   listDevices,
@@ -17,6 +18,7 @@ export interface SendJobDependencies {
   fcm: FcmTransport;
   from: { email: string; name?: string };
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
+  resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
   log: (message: string, extra?: Record<string, unknown>) => void;
 }
@@ -42,13 +44,19 @@ async function bounded<T>(request: Promise<T>): Promise<T> {
 }
 
 export async function sendJob(idempotencyKey: string, deps: SendJobDependencies): Promise<void> {
+  await deps.sql.execute(`UPDATE notify.jobs SET status = 'dead', lease_id = NULL, lease_expires_at = NULL,
+    failure_reason = CASE WHEN payload_version <> 1 THEN 'NOTIFY_VERSION_UNSUPPORTED' ELSE 'NOTIFY_ATTEMPTS_EXHAUSTED' END,
+    updated_at = clock_timestamp()
+    WHERE idempotency_key = $1 AND status IN ('pending', 'failed', 'sending')
+      AND (lease_expires_at IS NULL OR lease_expires_at <= clock_timestamp())
+      AND (payload_version <> 1 OR attempts >= 5)`, [idempotencyKey]);
   const leaseId = randomUUID();
   const [job] = await deps.sql.query<import("../store/types").NotifyJobRow>(`
     UPDATE notify.jobs SET status = 'sending', lease_id = $2,
-      lease_expires_at = NOW() + INTERVAL '5 minutes', attempts = attempts + 1, updated_at = NOW()
+      lease_expires_at = clock_timestamp() + INTERVAL '5 minutes', attempts = attempts + 1, updated_at = clock_timestamp()
     WHERE idempotency_key = $1 AND status IN ('pending', 'failed', 'sending')
-      AND (lease_expires_at IS NULL OR lease_expires_at < NOW())
-      AND (next_attempt_at IS NULL OR next_attempt_at <= NOW()) AND attempts < 5
+      AND (lease_expires_at IS NULL OR lease_expires_at < clock_timestamp())
+      AND (next_attempt_at IS NULL OR next_attempt_at <= clock_timestamp()) AND attempts < 5 AND payload_version = 1
     RETURNING *`, [idempotencyKey, leaseId]);
   if (!job)
     return;
@@ -68,8 +76,8 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
       if (recipientRows.some(row => row.subject_id === subjectId && row.channel === channel && row.status === "sent"))
         continue;
       const renewed = await deps.sql.query<{ idempotency_key: string }>(`
-        UPDATE notify.jobs SET lease_expires_at = NOW() + INTERVAL '5 minutes'
-        WHERE idempotency_key = $1 AND lease_id = $2 AND status = 'sending'
+        UPDATE notify.jobs SET lease_expires_at = clock_timestamp() + INTERVAL '5 minutes'
+        WHERE idempotency_key = $1 AND lease_id = $2 AND status = 'sending' AND lease_expires_at > clock_timestamp()
         RETURNING idempotency_key`, [idempotencyKey, leaseId]);
       if (!renewed.length)
         return;
@@ -78,7 +86,9 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
         // jobs retain their explicit, command-owned destination addresses.
         const recipient = job.job_kind === "school"
           ? await bounded(resolveSchoolRecipient(job, subjectId, deps))
-          : await getCommandRecipient(deps.sql, subjectId);
+          : job.job_kind === "invitation"
+            ? await bounded(resolveInvitationRecipient(job, subjectId, deps))
+            : await getCommandRecipient(deps.sql, subjectId, job.tenant);
         if (!resolveSendChannels(recipient, { emailOnly: emailOnlyJob(job.job_kind) }).includes(channel)) {
           if (!await upsertJobRecipient(deps.sql, {
             idempotency_key: idempotencyKey,
@@ -95,12 +105,12 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
         if (channel === "email" && recipient?.email) {
           const sent = await bounded(deps.email.send({
             to: recipient.email,
-            correlation: job.job_kind === "school" ? { deliveryId: idempotencyKey, subjectId, schoolId: job.tenant } : undefined,
+            correlation: job.job_kind === "school" ? { deliveryId: job.delivery_id, subjectId, schoolId: job.tenant } : undefined,
             from: deps.from,
             subject: job.email_subject ?? job.title,
             html: job.email_body ?? job.body,
             text: job.body,
-            idempotencyKey: `${idempotencyKey}:${subjectId}:email`,
+            idempotencyKey: buildNotifyChannelId(idempotencyKey, subjectId, "email"),
           }));
           lastProviderId = sent.providerMessageId;
           anySent = true;
@@ -116,7 +126,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             return;
           }
           events.push({
-            deliveryId: idempotencyKey,
+            deliveryId: job.delivery_id,
             status: "sent",
             providerMessageId: sent.providerMessageId,
             channel: "email",
@@ -125,7 +135,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
           });
         }
         else if (channel === "push") {
-          const devices = await listDevices(deps.sql, subjectId);
+          const devices = await listDevices(deps.sql, subjectId, job.tenant);
           const fcm = devices.find(device => device.provider === "fcm");
           if (!fcm) {
             if (!await upsertJobRecipient(deps.sql, {
@@ -145,7 +155,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             title: job.title,
             body: job.body,
             data: {
-              deliveryId: idempotencyKey,
+              deliveryId: job.delivery_id,
               eventKey: job.event_key,
               title: job.title,
               body: job.body,
@@ -165,7 +175,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             return;
           }
           events.push({
-            deliveryId: idempotencyKey,
+            deliveryId: job.delivery_id,
             status: "sent",
             providerMessageId: sent.providerMessageId,
             channel: "push",
@@ -174,10 +184,10 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
           });
         }
       }
-      catch (error) {
-        const failureReason = error instanceof Error ? error.message : String(error);
+      catch {
+        const failureReason = "NOTIFY_DELIVERY_FAILED";
         lastFailure = failureReason;
-        deps.log("notify send failed", { idempotencyKey, subjectId, channel, err: failureReason });
+        deps.log("notify send failed", { idempotencyKey, subjectId, channel, code: failureReason });
         if (!await upsertJobRecipient(deps.sql, {
           idempotency_key: idempotencyKey,
           subject_id: subjectId,
@@ -189,7 +199,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
           return;
         }
         events.push({
-          deliveryId: idempotencyKey,
+          deliveryId: job.delivery_id,
           status: "failed",
           channel,
           failureReason,
@@ -199,25 +209,28 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
       }
     }
     if (!subjectSent && !lastFailure)
-      events.push({ deliveryId: idempotencyKey, subjectId, status: "cancelled", occurredAt: new Date(), failureReason: "recipient or channels no longer eligible" });
+      events.push({ deliveryId: job.delivery_id, subjectId, status: "cancelled", occurredAt: new Date(), failureReason: "recipient or channels no longer eligible" });
   }
 
   const failed = lastFailure !== undefined;
-  await deps.sql.execute(`UPDATE notify.jobs SET status = $3, provider_message_id = COALESCE($4, provider_message_id),
+  const completed = await deps.sql.query<{ idempotency_key: string }>(`UPDATE notify.jobs SET status = $3, provider_message_id = COALESCE($4, provider_message_id),
     failure_reason = $5, lease_id = NULL, lease_expires_at = NULL,
-    next_attempt_at = CASE WHEN $3 = 'failed' THEN NOW() + INTERVAL '1 minute' ELSE NULL END, updated_at = NOW()
-    WHERE idempotency_key = $1 AND lease_id = $2`, [idempotencyKey, leaseId, failed ? "failed" : anySent ? "sent" : "cancelled", lastProviderId ?? null, failed ? lastFailure ?? "no channels delivered" : null]);
+    next_attempt_at = CASE WHEN $3 = 'failed' THEN clock_timestamp() + INTERVAL '1 minute' ELSE NULL END, updated_at = clock_timestamp()
+    WHERE idempotency_key = $1 AND lease_id = $2 AND status = 'sending' AND lease_expires_at > clock_timestamp() RETURNING idempotency_key`, [idempotencyKey, leaseId, failed ? (Number(job.attempts) >= 5 ? "dead" : "failed") : anySent ? "sent" : "cancelled", lastProviderId ?? null, failed ? lastFailure ?? "no channels delivered" : null]);
+
+  if (!completed.length)
+    return;
 
   if (shouldReportDelivery(job.job_kind) && events.length > 0 && deps.onDeliveryEvent) {
     for (const event of events) {
       try {
         await deps.onDeliveryEvent(event);
       }
-      catch (error) {
+      catch {
         deps.log("notify delivery event failed", {
           idempotencyKey,
           deliveryId: event.deliveryId,
-          err: error instanceof Error ? error.message : String(error),
+          code: "NOTIFY_DELIVERY_EVENT_FAILED",
         });
       }
     }
@@ -235,7 +248,7 @@ async function resolveSchoolRecipient(job: import("../store/types").NotifyJobRow
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata) || Object.values(metadata).some(value => typeof value !== "string"))
     return undefined;
   const profile = await deps.resolveSchoolRecipient({
-    deliveryId: job.idempotency_key,
+    deliveryId: job.delivery_id,
     schoolId: job.tenant,
     subjectId,
     eventKey: job.event_key,
@@ -249,4 +262,16 @@ async function resolveSchoolRecipient(job: import("../store/types").NotifyJobRow
     channel_email: profile.preferences.channels?.email ?? false,
     channel_push: profile.preferences.channels?.push ?? false,
   };
+}
+
+async function resolveInvitationRecipient(job: import("../store/types").NotifyJobRow, subjectId: string, deps: SendJobDependencies): Promise<Parameters<typeof resolveSendChannels>[0]> {
+  if (!deps.resolveInvitationRecipient)
+    throw new Error("Invitation recipient resolver is required");
+  const current = await deps.resolveInvitationRecipient({ schoolId: job.tenant, invitationId: job.delivery_id });
+  if (!current || current.schoolId !== job.tenant || current.invitationId !== job.delivery_id)
+    return undefined;
+  const recipient = await getCommandRecipient(deps.sql, subjectId, job.tenant);
+  if (!recipient?.email || normalizeEmail(recipient.email) !== normalizeEmail(current.email))
+    return undefined;
+  return recipient;
 }

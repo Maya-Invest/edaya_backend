@@ -60,6 +60,7 @@ export async function reconcilePendingDeliveries(context: SchoolCronJobContext):
     const lookups = await gateway.lookupDeliveryStatuses(
       chunk.map(delivery => ({
         deliveryId: delivery.id,
+        schoolId: context.actor.schoolId,
         subjectId: delivery.subjectId,
       })),
     )

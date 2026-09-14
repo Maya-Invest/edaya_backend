@@ -1,6 +1,8 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { AttachmentsSeedPort } from './port'
+import { readFile } from 'node:fs/promises'
 import { AttachmentOwnerKind } from '@edaya/core'
+import { resolveAttachmentFixturePath } from '@edaya/fixtures/shared/attachment-assets'
 import { seedDateTime } from '../../support/seed-date'
 
 function shouldSeedAttachment(
@@ -25,6 +27,7 @@ export async function seedDevAttachments(
     shouldSeedAttachment(attachment, dataset))
 
   for (const attachment of attachments) {
+    const body = new Uint8Array(await readFile(resolveAttachmentFixturePath(attachment.mimeType!)))
     await port.saveAttachment({
       id: attachment.id,
       schoolId: attachment.schoolId,
@@ -33,7 +36,8 @@ export async function seedDevAttachments(
       fileName: attachment.fileName,
       fileUrl: attachment.fileUrl ?? '',
       mimeType: attachment.mimeType ?? undefined,
-      sizeBytes: attachment.sizeBytes ?? undefined,
+      sizeBytes: body.byteLength,
+      body,
       uploadedById: attachment.uploadedById ?? undefined,
       createdAt: seedDateTime(String(attachment.createdAt).slice(0, 10)),
     })

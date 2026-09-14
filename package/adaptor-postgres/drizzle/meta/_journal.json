@@ -92,6 +92,55 @@
       "when": 1789240219790,
       "tag": "0012_notification_contact_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789358400000,
+      "tag": "0013_notification_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789358400001,
+      "tag": "0014_command_journal",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789360200000,
+      "tag": "0015_cron_occurrences",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789362000000,
+      "tag": "0016_notification_tenants",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789363200000,
+      "tag": "0017_attachment_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789365000000,
+      "tag": "0018_private_file_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789378200000,
+      "tag": "0019_attachment_purposes",
+      "breakpoints": true
     }
   ]
 }

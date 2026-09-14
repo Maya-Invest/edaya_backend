@@ -1,4 +1,4 @@
-import type { BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
+import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
 import type { SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { DelegatedGrant } from './grant-administration'
@@ -28,6 +28,9 @@ const systemActions: Record<string, readonly Permission[]> = {
   'notification-delivery-webhook': [P.COMMUNICATION_UPDATE, P.COMMUNICATION_CREATE, P.QUERY_COMMUNICATIONS_READ],
   'notify-adapter': [P.COMMUNICATION_CREATE, P.COMMUNICATION_UPDATE, P.QUERY_COMMUNICATIONS_READ],
   'account-invitation-public': [P.ACCESS_CONTROL_READ, P.ACCESS_CONTROL_ASSIGN],
+  'invitation-dispatch': [P.ACCESS_CONTROL_READ],
+  'preparePrivateFileCleanup': [P.ATTACHMENT_CONFIGURE],
+  'private-file-cleanup': [P.ATTACHMENT_CONFIGURE],
   'processDueNotifications': [P.EXAM_CONFIG_READ, P.TIMETABLE_READ, P.QUERY_CALENDAR_READ],
   'reconcilePendingDeliveries': [P.QUERY_COMMUNICATIONS_READ, P.COMMUNICATION_UPDATE],
   'expireAccountInvitations': [P.ACCESS_CONTROL_READ, P.ACCESS_CONTROL_ASSIGN],
@@ -407,7 +410,18 @@ export class AccessPolicies {
   }
 
   readonly attachments = {
+    assertCleanup: async () => {
+      if (this.actor.kind !== 'system' || !['preparePrivateFileCleanup', 'private-file-cleanup'].includes(this.actor.systemId))
+        return denied('Private file cleanup requires its internal integration identity')
+      await this.assertSchool(P.ATTACHMENT_CONFIGURE)
+    },
     assertConfigure: () => this.assertSchool(P.ATTACHMENT_CONFIGURE),
+    assertRemove: async (attachment: Attachment) => {
+      await this.assertSchool(P.ATTACHMENT_CONFIGURE)
+      const scope = await this.scope(P.ATTACHMENT_CONFIGURE, 'attachments', 'write')
+      await this.repositories.attachments.forAccess(scope).assertAccess(attachment)
+      return scope
+    },
     assertRead: (id: string) => this.assertResources(P.ATTACHMENT_READ, 'attachments', [id], 'read'),
   }
 
@@ -476,6 +490,24 @@ export class AccessPolicies {
   }
 
   readonly identities = {
+    assertInitializeFixtureOwner: async (staffId: string, before: CoreEntityMap['schools'], after: CoreEntityMap['schools']) => {
+      if (this.actor.kind !== 'system' || this.actor.systemId !== 'fixture-seed'
+        || before.id !== after.id || before.pendingOwnerStaffId || !after.ownerSubjectId
+        || (before.ownerSubjectId && before.ownerSubjectId !== after.ownerSubjectId)) {
+        denied('Fixture initialization cannot replace an owner or pending invitation')
+      }
+      const { ownerSubjectId: _beforeOwner, ...beforeFields } = before.data
+      const { ownerSubjectId: _afterOwner, ...afterFields } = after.data
+      if (JSON.stringify(beforeFields) !== JSON.stringify(afterFields))
+        denied('Fixture owner initialization cannot change school settings')
+      const scope = await this.scope(P.ACCESS_CONTROL_ASSIGN, 'schools', 'write')
+      const staff = await new AccessFacts(this.actor, this.repositories).one('staffMembers', staffId)
+      if (staff.accountKind !== 'human' || !staff.isActive || staff.subjectId !== after.ownerSubjectId)
+        denied('Fixture owner must be an active linked human staff member')
+      await this.repositories.schools.forAccess(scope).assertAccess(before)
+      await this.repositories.schools.forAccess(scope).assertAccess(after)
+      return scope
+    },
     assertClaimOwner: async (invitation: CoreEntityMap['accountInvitations'], before: CoreEntityMap['schools'], after: CoreEntityMap['schools']) => {
       const scope = await this.scope(P.ACCESS_CONTROL_ASSIGN, 'schools', 'write')
       if (invitation.kind !== 'staff' || invitation.schoolId !== before.id || before.id !== after.id
@@ -509,6 +541,10 @@ export class AccessPolicies {
   }
 
   readonly invitations = {
+    dispatchScope: async () => {
+      await this.assertIntegrationCaller(['invitation-dispatch'])
+      return this.scope(P.ACCESS_CONTROL_READ, 'accountInvitations')
+    },
     assertAccept: async () => {
       await this.assertIntegrationCaller(['account-invitation-public', 'fixture-seed'])
       await this.assertSchool(P.ACCESS_CONTROL_ASSIGN)

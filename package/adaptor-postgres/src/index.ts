@@ -17,3 +17,5 @@ export { PostgresAtomicExecution, type PostgresTransactionalDb, transactionConte
 export * as schema from './postgres-schema'
 export { PostgresSchoolRepositories } from './postgres-school-repositories'
 export { PostgresStore } from './postgres-store'
+export { PostgresCommandJournal } from './stores/command-journal-store'
+export { DURABLE_WORK_MAX_ATTEMPTS, PostgresDurableWork } from './stores/durable-work-store'

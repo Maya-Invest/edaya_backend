@@ -2,7 +2,7 @@ import type { NotificationDispatchRequest } from '@edaya/core'
 import { createSystemActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { applyNotifySchemaOnDrizzle, createNotifyNotificationGateway, createNotifyRuntimeFromDrizzle, drainPendingSchoolNotifications } from '../../../adaptor-notify/src'
+import { createNotifyNotificationGateway, createNotifyRuntimeFromDrizzle, drainPendingSchoolNotifications } from '../../../adaptor-notify/src'
 import { createNovuEmailTransport } from '../../../adaptor-novu/src'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import { resolveNotificationDispatchRecipient } from '../../src/capabilities/notifications'
@@ -57,7 +57,6 @@ describe('delayed notification dispatch uses current business facts', () => {
     const inputs = [await request(guardian), await request(staff)]
     const sent: string[] = []
     const db = fixture.connection
-    await applyNotifySchemaOnDrizzle(db)
     const email = useNovu
       ? createNovuEmailTransport({ trigger: async (request) => { sent.push(request.overrides.email.to[0]!) } })
       : { send: async (input: { to: string }) => {
@@ -155,7 +154,6 @@ describe('delayed notification dispatch uses current business facts', () => {
   test('revoking access after email prevents push in the same dispatch', async () => {
     const input = await request()
     const db = fixture.connection
-    await applyNotifySchemaOnDrizzle(db)
     let emails = 0
     let pushes = 0
     const runtime = createNotifyRuntimeFromDrizzle({

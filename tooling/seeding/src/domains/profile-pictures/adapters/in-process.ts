@@ -2,7 +2,7 @@ import type { Attachment } from '@edaya/core'
 import type { SeedApplication } from '../../../support/types'
 import type { ProfilePicturesSeedPort, UploadProfilePhotoInput } from '../port'
 import { AttachmentStatus } from '@edaya/core'
-import { buildAttachmentContentUrl } from '@edaya/service'
+import { buildAttachmentContentUrl, createAttachmentUpload } from '@edaya/service'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -40,14 +40,19 @@ async function uploadProfilePhotoInProcess(
   service: ReturnType<typeof createInProcessSeedService>,
   input: UploadProfilePhotoInput,
 ): Promise<Attachment> {
-  const storageKey = [
-    input.schoolId,
-    'uploads',
-    input.ownerKind,
-    input.ownerId,
-    input.attachmentId,
-    input.fileName,
-  ].join('/')
+  const existing = await service.baseService.entities.attachments.findById(input.attachmentId)
+  if (existing && existing.status === AttachmentStatus.Ready && existing.schoolId === input.schoolId
+    && existing.ownerId === input.ownerId && existing.ownerKind === input.ownerKind) {
+    return existing
+  }
+  const { storageKey } = await createAttachmentUpload(service.baseService, {
+    attachmentId: input.attachmentId,
+    ownerKind: input.ownerKind,
+    ownerId: input.ownerId,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    sizeBytes: input.sizeBytes,
+  })
 
   await service.baseService.fileStorage.putObject({
     key: storageKey,

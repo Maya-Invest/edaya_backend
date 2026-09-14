@@ -1,10 +1,6 @@
-import type { CronJobKey } from '../../capabilities/scheduling-jobs/cron-job-catalog'
-
+/** Delivery transports carry only an opaque persisted work reference. */
 export interface CronJobDispatchMessage {
-  readonly jobKey: CronJobKey
-  readonly schoolId: string
-  readonly asOf: Date
-  readonly requestId: string
+  readonly jobId: string
 }
 
 export interface CronJobDispatcherPort {

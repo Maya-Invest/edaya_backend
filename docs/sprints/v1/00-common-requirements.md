@@ -2,10 +2,10 @@
 
 | Field | Value |
 |---|---|
-| Status | planned |
-| Created / updated | 2026-09-13 |
+| Status | done |
+| Created / updated | 2026-09-13 / 2026-09-14 |
 | Target | Existing `edaya_backend`, current staff webapp, guardian/teacher mobile apps, and existing identity service |
-| Owner | Assign when implementation starts |
+| Owner | Codex — implementation and automated verification |
 | Predecessor | None |
 | Next | [Plan 01 — Pairing and invitations](01-guardian-pairing-and-invitations.md) |
 
@@ -17,7 +17,7 @@ This is the index and common implementation contract for exactly seven sequentia
 
 | Order | Plan | Status | Exit outcome |
 |---|---|---|---|
-| 00 | [Common requirements](00-common-requirements.md) | planned | Shared foundations are verified and consumable |
+| 00 | [Common requirements](00-common-requirements.md) | done | Shared foundations are verified and consumable |
 | 01 | [Guardian pairing and invitations](01-guardian-pairing-and-invitations.md) | planned | A new guardian securely reaches the intended child |
 | 02 | [Student photos and branding](02-student-photos-and-branding.md) | planned | Portrait review and approved publication work |
 | 03 | [Service catalog and accounting](03-service-catalog-and-accounting.md) | planned | Account-based finance and all consumers agree |
@@ -61,53 +61,57 @@ Useful source anchors: [transaction port](../../../package/domain-core/src/ports
 
 ### 00.1 — Establish and reconcile the baseline
 
-- [ ] Record backend, identity, frontend and mobile revisions, dirty-tree state, generated-client versions and environment identity.
-- [ ] Map current authorization/RC items to verified, outstanding shared prerequisite, later feature ownership, or unrelated launch prerequisite. Give every outstanding requirement an owner and destination.
-- [ ] Run the relevant baseline checks and retain exact commands, outcomes and failure classifications. Preserve unrelated failures as explicit baseline findings.
-- [ ] Confirm the finance reset target is disposable and distinguish finance dependencies from records that must survive.
+- [x] Record backend, identity, frontend and mobile revisions, dirty-tree state, generated-client versions and environment identity.
+- [x] Map current authorization/RC items to verified, outstanding shared prerequisite, later feature ownership, or unrelated launch prerequisite. Give every outstanding requirement an owner and destination.
+- [x] Run the relevant baseline checks and retain exact commands, outcomes and failure classifications. Preserve unrelated failures as explicit baseline findings.
+- [x] Confirm the finance reset target is disposable and distinguish finance dependencies from records that must survive. See the [disposable target and preservation inventory](evidence/00-finance-reset-boundary.md); Plan 03 owns the finance-only cutover and preservation tests.
 
 ### 00.2 — Complete authorization enforcement
 
-- [ ] Finish current actor/action/resource caller coverage with explicit permissions and current relationship facts; keep guardian authority separate from staff authority.
-- [ ] Apply tenant and access predicates before single reads, lists, counts, pagination and aggregates. Preserve concealed not-found behavior for inaccessible resources.
-- [ ] Authorize every existing and proposed write endpoint inside its transaction, including mixed batches, file owners and relationship destinations.
-- [ ] Verify disabled guardian access, unlinking, assignment changes and expired grants invalidate subsequent access without copied permission rows or shared authorization caches.
-- [ ] Provide an authenticated identity-only entry boundary for operations preceding school-actor linkage. It may resolve only its admitted operation; Plan 01 supplies credential-scoped target resolution.
-- [ ] Finish affected existing web/mobile caller alignment and generated contract updates without creating staff fallback authority.
+- [x] Finish current actor/action/resource caller coverage with explicit permissions and current relationship facts; keep guardian authority separate from staff authority.
+- [x] Apply tenant and access predicates before single reads, lists, counts, pagination and aggregates. Preserve concealed not-found behavior for inaccessible resources.
+- [x] Authorize every existing and proposed write endpoint inside its transaction, including mixed batches, file owners and relationship destinations.
+- [x] Verify disabled guardian access, unlinking, assignment changes and expired grants invalidate subsequent access without copied permission rows or shared authorization caches.
+- [x] Provide an authenticated identity-only entry boundary for operations preceding school-actor linkage. It may resolve only its admitted operation; Plan 01 supplies credential-scoped target resolution.
+- [x] Finish affected existing web/mobile caller alignment and generated contract updates without creating staff fallback authority.
+
+Current enforcement evidence: [actor/resource and entry-point reconciliation](evidence/00-authorization-reconciliation.md), with the final checks recorded in [implementation evidence](evidence/00-implementation.md#file-command-journal-and-current-authorization-checkpoint). Client alignment and the completed exit are recorded in the [final acceptance matrix](evidence/00-exit.md).
 
 ### 00.3 — Complete reliable command execution
 
-- [ ] Extend existing transaction infrastructure with durable command receipts, normalized request digests, payload-minimal audit and outbox records.
-- [ ] Scope idempotency by school, command and caller identity; same accepted payload returns the original authorized result, changed payload conflicts, and another caller cannot read the replay result.
-- [ ] Ensure receipt claim/completion, business effects, required audit and outbox commit or roll back together using the same transaction client.
-- [ ] Keep provider delivery and other network effects outside business transactions; verify pool-size-one paths cannot borrow a second connection and deadlock.
-- [ ] Define an explicit secret-display result mode: generic replay stores non-secret result metadata only; individual capabilities define secure lost-display recovery.
-- [ ] Preserve domain-specific duplicate detection and lifecycle checks; idempotency alone is not duplicate-payment or single-use-credential enforcement.
+- [x] Extend existing transaction infrastructure with durable command receipts, normalized request digests, payload-minimal audit and outbox records.
+- [x] Scope idempotency by school, command and caller identity; same accepted payload returns the original authorized result, changed payload conflicts, and another caller cannot read the replay result.
+- [x] Ensure receipt claim/completion, business effects, required audit and outbox commit or roll back together using the same transaction client.
+- [x] Keep provider delivery and other network effects outside business transactions; verify pool-size-one paths cannot borrow a second connection and deadlock.
+- [x] Define an explicit secret-display result mode: generic replay stores non-secret result metadata only; individual capabilities define secure lost-display recovery.
+- [x] Preserve domain-specific duplicate detection and lifecycle checks; idempotency alone is not duplicate-payment or single-use-credential enforcement.
 
 ### 00.4 — Complete durable work and notifications
 
-- [ ] Reuse existing scheduler/notification adapters with migration-managed job/outbox persistence; remove runtime DDL from the affected paths.
-- [ ] Support atomic claiming, lease expiry, bounded retries, interruption recovery, versioned payloads and stable failure classification.
-- [ ] Persist recipient/channel completion independently; retry incomplete delivery without repeating completed channels unnecessarily.
-- [ ] Make recipient/device and occurrence identities school-aware. Jobs load authoritative school/resource state rather than accepting authority from mutable delivery payloads.
-- [ ] Expose the shared durable-work interface needed by document rendering and feature lifecycle jobs; register feature handlers only in their owning plans.
-- [ ] Preserve the selected notification provider configuration; this series does not itself require a provider migration.
+- [x] Reuse existing scheduler/notification adapters with migration-managed job/outbox persistence; remove runtime DDL from the affected paths.
+- [x] Support atomic claiming, lease expiry, bounded retries, interruption recovery, versioned payloads and stable failure classification.
+- [x] Persist recipient/channel completion independently; retry incomplete delivery without repeating completed channels unnecessarily.
+- [x] Make recipient/device and occurrence identities school-aware. Jobs load authoritative school/resource state rather than accepting authority from mutable delivery payloads.
+- [x] Expose the shared durable-work interface needed by document rendering and feature lifecycle jobs; register feature handlers only in their owning plans.
+- [x] Preserve the selected notification provider configuration; this series does not itself require a provider migration.
 
 ### 00.5 — Complete private-file foundations
 
-- [ ] Verify authorized upload intents, upload completion, content/size validation and owner/purpose integrity; clients cannot assert upload readiness or ownership freely.
-- [ ] Support purpose-specific restrictions narrower than general student attachment access, including list metadata and content downloads.
-- [ ] Provide authorized bounded-byte loading for document assets; do not make renderers fetch arbitrary URLs.
-- [ ] Use authenticated private delivery or bounded signed delivery, with current authorization before granting access. Do not log download credentials.
-- [ ] Implement safe abandoned-upload/orphan cleanup primitives that do not delete referenced artifacts; feature-specific retention is owned by Plans 02/04/05.
+- [x] Verify authorized upload intents, upload completion, content/size validation and owner/purpose integrity; clients cannot assert upload readiness or ownership freely.
+- [x] Support purpose-specific restrictions narrower than general student attachment access, including list metadata and content downloads.
+- [x] Provide authorized bounded-byte loading for document assets; do not make renderers fetch arbitrary URLs.
+- [x] Use authenticated private delivery or bounded signed delivery, with current authorization before granting access. Do not log download credentials.
+- [x] Implement safe abandoned-upload/orphan cleanup primitives that do not delete referenced artifacts; feature-specific retention is owned by Plans 02/04/05.
 
 ### 00.6 — Standardize client, fixture and evidence delivery
 
-- [ ] Preserve existing auth wrappers, renewal rules, generated TypeScript/Dart clients, localization and error conventions. Automatically retry mutations only when their contract supports safe replay.
-- [ ] Provide consistent loading, empty, error, conflict and retry presentation without widening client authority.
-- [ ] Establish shared two-school synthetic fixtures covering owner/scoped staff, assigned/unassigned teachers, guardians, students, multiple profiles, multiple guardians, siblings, unrelated children and revoked access.
-- [ ] Preserve declarative fixtures separately from seed orchestration; run mutation seeds through admitted command paths.
-- [ ] Document reusable verification commands and evidence requirements; give every later plan a concrete dependency handoff.
+- [x] Preserve existing auth wrappers, renewal rules, generated TypeScript/Dart clients, localization and error conventions. Automatically retry mutations only when their contract supports safe replay.
+- [x] Provide consistent loading, empty, error, conflict and retry presentation without widening client authority.
+- [x] Establish shared two-school synthetic fixtures covering owner/scoped staff, assigned/unassigned teachers, guardians, students, multiple profiles, multiple guardians, siblings, unrelated children and revoked access.
+- [x] Preserve declarative fixtures separately from seed orchestration; run mutation seeds through admitted command paths.
+- [x] Document reusable verification commands and evidence requirements; give every later plan a concrete dependency handoff.
+
+Current fixture and dependency contracts: [two-school scenario](evidence/00-shared-fixture-contract.md) and [handoff to Plans 01–06](evidence/00-dependency-handoff.md). Minimal guardian bootstrap and fixture owner assignment now use admitted policies and transactions; their rollback, selected-school and native concurrency checks pass. See [completed acceptance](evidence/00-exit.md).
 
 ## Shared interface contract
 
@@ -126,24 +130,24 @@ Do not add a generic business workflow engine, copy the rewrite's contract/gover
 
 ## Fixtures and verification
 
-- [ ] Unit/service tests: permission/resource decisions, normalized replay conflicts, secret-free audit and domain-independent durable-work behavior.
-- [ ] Persistence tests: scope-before-pagination/counts, atomic rollback and guarded writes, including same-school unrelated and foreign-school IDs.
-- [ ] Native PostgreSQL tests: competing receipt claims, lease recovery, current relationship access, rollback and pool-size-one behavior.
-- [ ] Public API tests: generic-write bypass attempts, private-file access, identity-only admission, stable errors and request-body limits.
-- [ ] Consumer tests: generated contract drift, existing auth wrappers, selected-profile behavior and baseline web/mobile journeys.
-- [ ] Notification tests: one failed channel retries while successful deliveries stay complete; no exactly-once network-delivery claim.
+- [x] Unit/service tests: permission/resource decisions, normalized replay conflicts, secret-free audit and domain-independent durable-work behavior.
+- [x] Persistence tests: scope-before-pagination/counts, atomic rollback and guarded writes, including same-school unrelated and foreign-school IDs.
+- [x] Native PostgreSQL tests: competing receipt claims, lease recovery, current relationship access, rollback and pool-size-one behavior.
+- [x] Public API tests: generic-write bypass attempts, private-file access, identity-only admission, stable errors and request-body limits.
+- [x] Consumer tests: generated contract drift, existing auth wrappers, selected-profile behavior and baseline web/mobile journeys.
+- [x] Notification tests: one failed channel retries while successful deliveries stay complete; no exactly-once network-delivery claim.
 
 Required command families for affected code: backend `bun run verify`, `bun run test:integration`, `bun run test:integration:native`, and `bun run test:integration:seed` when seeds change; identity/frontend `bun run verify`; the mobile repository's analysis, tests and generated-contract checks. Verify exact commands from each repository at execution time. Record device/provider evidence separately from unit/emulator evidence.
 
 ## Exit gate and evidence
 
-- [ ] Shared authorization, transactions, private files, jobs and notifications pass their required matrices.
-- [ ] Baseline checks pass for affected backend, identity, generated clients, web and mobile; unrelated launch prerequisites have explicit owners.
-- [ ] No future feature needs to recreate the shared mechanisms or weaken an existing permission boundary.
-- [ ] Record exact revisions, commands/results, migrations, fixtures, limitations and the completed dependency handoff.
+- [x] Shared authorization, transactions, private files, jobs and notifications pass their required matrices.
+- [x] Baseline checks pass for affected backend, identity, generated clients, web and mobile; unrelated launch prerequisites have explicit owners.
+- [x] No future feature needs to recreate the shared mechanisms or weaken an existing permission boundary.
+- [x] Record exact revisions, commands/results, migrations, fixtures, limitations and the completed dependency handoff.
 
-Evidence: not collected; implementation has not started. Existing source/RC evidence is reference material only. Add implementation evidence here as work is verified; do not mark any feature complete merely because these plan files exist.
+Completed evidence: [Plan 00 implementation evidence](evidence/00-implementation.md), [baseline requirement ownership](evidence/00-baseline-reconciliation.md) and [private-file interface and remaining lifecycle work](../../reference/private-file-foundations.md). All Plan 00 requirements and exit conditions are verified in the [final matrix](evidence/00-exit.md), including [command reconciliation](evidence/00-command-reconciliation.md) and [client acceptance](evidence/00-client-acceptance.md).
 
 ## Handoff to Plan 01
 
-Supply the verified identity-only boundary, atomic command/replay and outbox APIs, narrow private-file policy extension points, shared fixtures and client regeneration procedure. Set this plan and the index row to `done` only after the exit gate passes, then start [Plan 01](01-guardian-pairing-and-invitations.md).
+Supply the verified identity-only boundary, atomic command/replay and outbox APIs, narrow private-file policy extension points, shared fixtures and client regeneration procedure. This plan and the index row are `done`. The current implementation goal ends at Plan 00; [Plan 01](01-guardian-pairing-and-invitations.md) and Plans 02–06 remain planned.

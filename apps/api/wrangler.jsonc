@@ -104,7 +104,8 @@
           {
             "queue": "edaya-cron-jobs-staging",
             "max_batch_size": 10,
-            "max_retries": 3
+            "max_retries": 20,
+            "retry_delay": 60
           }
         ]
       }
@@ -172,7 +173,8 @@
           {
             "queue": "edaya-cron-jobs-prod",
             "max_batch_size": 10,
-            "max_retries": 3
+            "max_retries": 20,
+            "retry_delay": 60
           }
         ]
       }

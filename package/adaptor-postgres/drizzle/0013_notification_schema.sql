@@ -1,5 +1,7 @@
-export const NOTIFY_SCHEMA_SQL = `
+-- Notification persistence is owned by the school migration journal.
+-- IF NOT EXISTS adopts installations previously bootstrapped at runtime.
 CREATE SCHEMA IF NOT EXISTS notify;
+--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS notify.recipients (
   subject_id TEXT PRIMARY KEY,
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS notify.recipients (
       OR subject_id = 'invite:' || recipient_id) IS TRUE
   )
 );
+--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS notify.devices (
   subject_id TEXT NOT NULL,
@@ -26,6 +29,7 @@ CREATE TABLE IF NOT EXISTS notify.devices (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (subject_id, provider)
 );
+--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS notify.jobs (
   idempotency_key TEXT PRIMARY KEY,
@@ -47,6 +51,7 @@ CREATE TABLE IF NOT EXISTS notify.jobs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS notify.job_recipients (
   idempotency_key TEXT NOT NULL,
@@ -57,12 +62,14 @@ CREATE TABLE IF NOT EXISTS notify.job_recipients (
   failure_reason TEXT,
   PRIMARY KEY (idempotency_key, subject_id, channel)
 );
-`;
-
-export const NOTIFY_RELIABILITY_MIGRATION_SQL = `
+--> statement-breakpoint
 ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS lease_id TEXT;
+--> statement-breakpoint
 ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS lease_expires_at TIMESTAMPTZ;
+--> statement-breakpoint
 ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ;
+--> statement-breakpoint
 ALTER TABLE notify.jobs ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS notify_jobs_pending_idx ON notify.jobs (job_kind, status, next_attempt_at, created_at);
-`;
+--> statement-breakpoint

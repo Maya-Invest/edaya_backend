@@ -71,7 +71,7 @@ describe("createNovuDeliveryWebhookAdapter", () => {
     expect(events[0]).toMatchObject({
       deliveryId: "delivery:ann1:subject:g1",
       status: "failed",
-      failureReason: "SMTP bounce",
+      failureReason: "NOTIFY_PROVIDER_DELIVERY_FAILED",
     });
   });
 
@@ -124,4 +124,33 @@ describe("createNovuDeliveryWebhookAdapter", () => {
 
     await expect(adapter.verifyRequest(request, `${body} `)).resolves.toBe(false);
   });
+});
+
+test("accepts actual tenant-bound transport correlation and rejects school substitution", async () => {
+  const { buildNotifyChannelId, buildNotifyJobId } = await import("@edaya/adaptor-notify");
+  const { createNovuEmailTransport } = await import("../src/email-transport");
+  const requests: import("../src/email-transport").NovuEmailRequest[] = [];
+  const transport = createNovuEmailTransport({ trigger: async (request) => {
+    requests.push(request);
+  } });
+  const correlation = { schoolId: "school-a", deliveryId: "delivery:v2:opaque", subjectId: "login" };
+  await transport.send({
+    to: "synthetic@example.test",
+    from: { email: "sender@example.test" },
+    subject: "Synthetic",
+    html: "Fixture",
+    correlation,
+    idempotencyKey: buildNotifyChannelId(buildNotifyJobId("school", correlation.schoolId, correlation.deliveryId), correlation.subjectId, "email"),
+  });
+  const request = requests[0]!;
+  expect(request.transactionId).toHaveLength(64);
+  const adapter = createNovuDeliveryWebhookAdapter({ webhookSecret: WEBHOOK_SECRET });
+  const envelope = (payload: Record<string, unknown>, transactionId = request.transactionId) => JSON.stringify({
+    type: "message.delivered",
+    data: { channel: "email", transactionId, payload },
+  });
+  expect(await adapter.parseEvents(envelope(request.payload))).toMatchObject([{ deliveryId: correlation.deliveryId, subjectId: "login", status: "sent" }]);
+  expect(await adapter.parseEvents(envelope({ ...request.payload, schoolId: "school-b" }))).toEqual([]);
+  expect(await adapter.parseEvents(envelope({ ...request.payload, schoolId: undefined }))).toEqual([]);
+  expect(await adapter.parseEvents(envelope(request.payload, `${correlation.deliveryId}:${correlation.subjectId}:email`))).toEqual([]);
 });

@@ -5,7 +5,7 @@ Edaya spans multiple repositories:
 | Repo | Role |
 |------|------|
 | **edaya_backend** (this repo) | API, cron, domain packages, adaptors, `@maya-invest/edaya-api-client`, client codegen tooling |
-| **edaya_web** | SvelteKit webapp + webadmin, browser OpenAPI types |
+| **edaya_frontend** | SvelteKit webapp + webadmin, browser OpenAPI types |
 | **edaya_mobile** | Flutter app (consumes OpenAPI client bindings extension) |
 | **edaya_identity** | Better Auth Worker, identity database, JWT issuer/JWKS, directory API, `@maya-invest/edaya-identity-client` |
 
@@ -61,18 +61,19 @@ Every entity declares `publicOperations` with explicit `create`, `update`, `dele
 
 Regenerate both TypeScript and Dart clients when these policies change. TypeScript removes unavailable methods from the generated public type; both runtimes reject forbidden writes before sending a request. Use the named command for command-owned records. Client flags describe API availability, not the caller's authorization: backend tenant, permission and business-rule checks still apply to every exposed operation.
 
-## Pair PR with edaya_web
+## Pair PR with edaya_frontend
 
 After merging API changes here:
 
 1. Merge or sync the updated `@maya-invest/edaya-api-client` (file link or published package).
-2. In **edaya_web**: `bun install` (if using file link) and `bun run verify`.
+2. In **edaya_frontend**, refresh the installed file dependency and run verification. A Bun file dependency is a materialized package, so changing files in the sibling backend does not necessarily update the installed client. `bun install --frozen-lockfile --force` refreshes it without changing locked versions; inspect the installed bindings before claiming consumer coverage.
+3. External file-dependency changes can leave Turbo tasks cached. After a contract change, run `bunx --no-install turbo run quality --force`, then `build --force`, then `test --force`, in addition to repository hygiene. Retain fresh consumer results rather than presenting cached tests against an old client as contract evidence.
 
-Full consumer-side details: [edaya_web/docs/reference/cross-repo-workflow.md](../../edaya_web/docs/reference/cross-repo-workflow.md).
+Full consumer-side details: [edaya_frontend/docs/reference/cross-repo-workflow.md](../../../edaya_frontend/docs/reference/cross-repo-workflow.md).
 
 ## CI independence
 
-Each repo runs `bun run verify` against its own code. **edaya_web** CI checks out **edaya_backend** for the API-client file link. **edaya_backend** CI checks out **edaya_identity** as a sibling for the identity-client file link, then exports and checks generated artifacts from the in-repo school API.
+Each repo runs `bun run verify` against its own code. **edaya_frontend** CI checks out **edaya_backend** for the API-client file link. **edaya_backend** CI checks out **edaya_identity** as a sibling for the identity-client file link, then exports and checks generated artifacts from the in-repo school API.
 
 ## Hand-written client runtime
 

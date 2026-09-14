@@ -73,7 +73,7 @@ const apiEntityDecorations = {
   staffAssignments: decoration("staff-assignments", "Staff Assignments", entitySchemas.staffAssignmentQuerySchema, entitySchemas.staffAssignmentResponseSchema, StaffAssignment, PUBLIC_CRUD),
   accountInvitations: decoration("account-invitations", "Account Invitations", entitySchemas.accountInvitationQuerySchema, entitySchemas.accountInvitationResponseSchema, AccountInvitation, COMMAND_ONLY),
   staffPermissionAssignments: decoration("staff-permission-assignments", "Staff Permission Assignments", entitySchemas.staffPermissionAssignmentQuerySchema, entitySchemas.staffPermissionAssignmentResponseSchema, StaffPermissionAssignment, PUBLIC_CRUD),
-  attachments: decoration("attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment, PUBLIC_CRUD),
+  attachments: decoration("attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment, COMMAND_ONLY),
   resources: decoration("resources", "Resources", entitySchemas.resourceQuerySchema, entitySchemas.resourceResponseSchema, Resource, PUBLIC_CRUD),
   resourceAssignments: decoration("resource-assignments", "Resource Assignments", entitySchemas.resourceAssignmentQuerySchema, entitySchemas.resourceAssignmentResponseSchema, ResourceAssignment, PUBLIC_CRUD),
   fees: decoration("fees", "Fees", entitySchemas.feeQuerySchema, entitySchemas.feeResponseSchema, Fee, PUBLIC_CRUD),

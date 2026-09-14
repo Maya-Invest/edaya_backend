@@ -21,7 +21,7 @@ describe('scheduled notification runner with native scopes', () => {
     const summary = await runCronJobs(application, { asOf: new Date('2026-06-17T12:00:00Z'), jobKeys: ['processDueNotifications'] })
     expect(summary.results.map(result => [result.schoolId, result.result.processed])).toEqual([['school-a', 1], ['school-b', 0]])
     expect(gateway.enqueued).toHaveLength(1)
-    const id = buildNotificationDeliveryId('assessment.due_soon:due', 'student-login', { kind: MessageDeliveryRecipientKind.Student, id: 'student-a' })
+    const id = buildNotificationDeliveryId('school-a', 'assessment.due_soon:due', 'student-login', { kind: MessageDeliveryRecipientKind.Student, id: 'student-a' })
     expect(gateway.enqueued[0]?.idempotencyKey).toBe(id)
     const delivery = await fixture.repositories.messageDeliveries.findById(id)
     expect(delivery?.schoolId).toBe('school-a')

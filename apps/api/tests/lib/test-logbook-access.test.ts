@@ -27,6 +27,7 @@ describe("logbook export uses native authorization scopes", () => {
       atomicExecution: fixture.atomic,
       notificationGateway: noOpNotificationGateway,
       fileStorage: {
+        readObject: unused,
         deleteObject: unused,
         headObject: unused,
         createPresignedUpload: unused,

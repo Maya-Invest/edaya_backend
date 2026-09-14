@@ -2,6 +2,12 @@ import { sql } from 'drizzle-orm'
 
 /** Tables cleared in dependency-safe order (children before parents where practical). */
 export const CLEAR_TABLE_ORDER = [
+  'private_file_references',
+  'attachment_uploads',
+  'cron_occurrences',
+  'command_outbox',
+  'command_audit',
+  'command_receipts',
   'cron_job_schedules',
   'staff_permission_assignments',
   'service_api_keys',
@@ -54,6 +60,7 @@ export const CLEAR_TABLE_ORDER = [
   'academic_periods',
   'academic_years',
   'attachments',
+  'private_file_objects',
   'resources',
   'schools',
   'consortiums',

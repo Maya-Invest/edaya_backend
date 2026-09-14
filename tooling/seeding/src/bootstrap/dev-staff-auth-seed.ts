@@ -2,6 +2,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { AuthProvisioner } from '../support/types'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { splitDisplayName } from '@edaya/fixtures/shared/people'
+import { SeedPortError } from '../support/seed-port-error'
 
 export interface DevStaffAuthSyncResult {
   linkedStaff: number
@@ -15,7 +16,7 @@ export interface DevStaffAuthSyncOptions {
   linkGuardians?: boolean
 }
 
-/** Dev-only: assign school owner without owner-transfer service gate (bootstrap / seeding). */
+/** Initialize the selected fixture owner through the adapter's admitted ownership operation. */
 export async function assignDevSchoolOwnerSubjectId(
   port: AuthLinkSeedPort,
   ownerSubjectId: string,
@@ -26,6 +27,8 @@ export async function assignDevSchoolOwnerSubjectId(
   if (!currentSchool || currentSchool.ownerSubjectId === ownerSubjectId) {
     return
   }
+  if (currentSchool.ownerSubjectId)
+    throw new SeedPortError('setSchoolOwnerSubjectId', { detail: 'Fixture initialization cannot replace the current school owner' })
 
   await port.setSchoolOwnerSubjectId(currentSchool.id, ownerSubjectId)
 }

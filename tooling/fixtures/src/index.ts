@@ -29,3 +29,4 @@ export {
   resolveDevSeedDatasetId,
 } from './meta/resolve-dev-seed-context'
 export type { DevSeedContext, DevSeedDatasetId } from './meta/resolve-dev-seed-context'
+export { createAuthorizationScenario } from './shared/authorization-scenario'

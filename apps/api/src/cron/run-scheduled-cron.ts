@@ -1,9 +1,9 @@
 import type { LoggerPort } from "@edaya/core";
 import type { CronHeartbeatSummary, CronJobDispatcherPort, CronJobKey } from "@edaya/service";
-import { computeNextRunAt, createInlineCronJobDispatcher, runCronJobs, tickCronSchedules } from "@edaya/service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-dispatcher";
 import type { ApiRuntime } from "@/runtime/types";
+import { computeNextRunAt, createInlineCronJobDispatcher, dispatchPrivateFileCleanup, runCronJobs, tickCronSchedules } from "@edaya/service";
+import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-dispatcher";
 
 export interface RunScheduledCronOptions {
   asOf: Date;
@@ -34,20 +34,18 @@ export async function runCronHeartbeat(
   const dispatcher = options.dispatcher ?? createInlineCronJobDispatcher(application);
 
   const summary = await tickCronSchedules({
-    schedules: application.repositories.cronJobSchedules,
+    application,
     dispatcher,
-    listSchoolIds: async () => (await application.repositories.schools.list()).map(school => school.id),
     computeNextRunAt,
   }, options);
 
+  await dispatchPrivateFileCleanup(application);
   logger?.info({
     event: "cron.tick",
     asOf: options.asOf.toISOString(),
     dispatchCount: summary.dispatches.length,
     dispatches: summary.dispatches.map(dispatch => ({
-      jobKey: dispatch.jobKey,
-      schoolId: dispatch.schoolId,
-      requestId: dispatch.requestId,
+      jobId: dispatch.jobId,
     })),
   }, "cron heartbeat tick completed");
 
@@ -72,9 +70,11 @@ export async function runScheduledCronWithRuntime(
   options: RunScheduledCronOptions,
 ) {
   const application = await runtime.getSchoolApplication();
-  return runCronJobs(application, {
+  const summary = await runCronJobs(application, {
     asOf: options.asOf,
     jobKeys: options.jobKeys,
     requestIdPrefix: options.requestIdPrefix,
   });
+  await dispatchPrivateFileCleanup(application);
+  return summary;
 }

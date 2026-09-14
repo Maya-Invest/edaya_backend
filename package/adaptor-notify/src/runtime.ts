@@ -1,4 +1,4 @@
-import type { NormalizedDeliveryEvent, ResolveNotificationDispatchRecipient } from "@edaya/core";
+import type { NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient } from "@edaya/core";
 import type { EmailTransportPort } from "./email/port";
 import type { NotifyTransportEnv } from "./env";
 import type { FcmTransport } from "./push/fcm";
@@ -15,6 +15,7 @@ export interface NotifyRuntime {
   log: (message: string, extra?: Record<string, unknown>) => void;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
+  resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
 }
 
 export interface CreateNotifyRuntimeOptions {
@@ -23,6 +24,7 @@ export interface CreateNotifyRuntimeOptions {
   log?: (message: string, extra?: Record<string, unknown>) => void;
   onDeliveryEvent?: (event: NormalizedDeliveryEvent) => Promise<void>;
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
+  resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
   email?: EmailTransportPort;
   fcm?: FcmTransport;
 }
@@ -41,6 +43,7 @@ export function createNotifyRuntime(options: CreateNotifyRuntimeOptions): Notify
     log,
     onDeliveryEvent: options.onDeliveryEvent,
     resolveSchoolRecipient: options.resolveSchoolRecipient,
+    resolveInvitationRecipient: options.resolveInvitationRecipient,
   };
 }
 
@@ -51,6 +54,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
   log?: CreateNotifyRuntimeOptions["log"];
   onDeliveryEvent?: CreateNotifyRuntimeOptions["onDeliveryEvent"];
   resolveSchoolRecipient?: ResolveNotificationDispatchRecipient;
+  resolveInvitationRecipient?: ResolveInvitationDispatchRecipient;
   email?: EmailTransportPort;
   fcm?: FcmTransport;
 }): NotifyRuntime {
@@ -60,6 +64,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
     log: options.log,
     onDeliveryEvent: options.onDeliveryEvent,
     resolveSchoolRecipient: options.resolveSchoolRecipient,
+    resolveInvitationRecipient: options.resolveInvitationRecipient,
     email: options.email,
     fcm: options.fcm,
   });

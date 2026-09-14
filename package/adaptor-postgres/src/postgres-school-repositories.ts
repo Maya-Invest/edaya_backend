@@ -5,15 +5,19 @@ import type { PostgresStore } from './postgres-store'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
+import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
+import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
 import { PostgresS2sClientStore } from './stores/s2s-client-store'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
+  public readonly privateFiles: PostgresPrivateFileLifecycleStore
+  public readonly attachmentUploads: PostgresAttachmentUploadStore
   public readonly schoolsStore: PostgresStore<School>
   public readonly academicYears: PostgresStore<AcademicYear>
   public readonly academicPeriods: PostgresStore<AcademicPeriod>
@@ -76,6 +80,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly schools: SchoolRepositories['schools']
 
   constructor(private readonly db: any) {
+    this.privateFiles = new PostgresPrivateFileLifecycleStore(db)
+    this.attachmentUploads = new PostgresAttachmentUploadStore(db)
     const stores = createEntityStores(db)
     // consortiums store remains registered in createEntityStores for schema init / legacy rows
     this.schoolsStore = stores.schoolsStore

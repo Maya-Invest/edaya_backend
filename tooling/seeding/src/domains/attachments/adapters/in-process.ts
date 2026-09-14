@@ -1,20 +1,16 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AttachmentsSeedPort } from '../port'
-import { Attachment } from '@edaya/core'
-import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
+import { createInProcessProfilePicturesSeedPort } from '../../profile-pictures/adapters/in-process'
 
 export function createInProcessAttachmentsSeedPort(
   application: SeedApplication,
 ): AttachmentsSeedPort {
-  const service = createInProcessSeedService(application, 'dev-attachments-seed')
+  const uploads = createInProcessProfilePicturesSeedPort({ application, apiBaseUrl: 'http://localhost:9999' })
 
   return {
     saveAttachment: record => withSeedPortError('attachments.saveAttachment', async () => {
-      await service.baseService.entities.attachments.save(new Attachment({
-        ...record,
-        createdAt: new Date(record.createdAt),
-      }))
+      await uploads.uploadProfilePhoto({ ...record, attachmentId: record.id, mimeType: record.mimeType!, sizeBytes: record.body.byteLength })
     }),
   }
 }

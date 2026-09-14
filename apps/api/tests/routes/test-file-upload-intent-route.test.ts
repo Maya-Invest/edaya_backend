@@ -1,3 +1,4 @@
+import { PostgresCommandJournal } from "@edaya/adaptor-postgres";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
 import { parseEnv } from "@/runtime";
@@ -29,11 +30,13 @@ describe("file upload intent with current authorization", () => {
     const school = new ApiSchoolApplication({
       repositories: fixture.repositories,
       atomicExecution: fixture.atomic,
+      commandJournal: new PostgresCommandJournal(),
       notificationGateway: noOpNotificationGateway,
       fileStorage: {
         putObject: unused,
         deleteObject: unused,
         headObject: unused,
+        readObject: unused,
         createPresignedDownload: unused,
         createPresignedUpload: async ({ key }) => {
           requests += 1;
@@ -76,6 +79,15 @@ describe("file upload intent with current authorization", () => {
 
   test("requires an authenticated actor before requesting storage credentials", async () => {
     expect((await upload(application(false))).status).toBe(401);
+    expect(requests).toBe(0);
+  });
+  test("rejects caller-selected purpose before issuing any storage capability", async () => {
+    const response = await application().request("/core/files/upload-intents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ownerKind: AttachmentOwnerKind.Staff, ownerId: "staff-a", fileName: "private.pdf", mimeType: "application/pdf", sizeBytes: 100, purpose: "fixture.private" }),
+    });
+    expect(response.status).toBe(422);
     expect(requests).toBe(0);
   });
 });

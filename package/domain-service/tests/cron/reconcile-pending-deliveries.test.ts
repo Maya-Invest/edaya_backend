@@ -20,10 +20,10 @@ describe('delivery reconciliation uses its explicit job authority', () => {
 
   test('reconciles only its school and rejects unrelated job identities', async () => {
     const gateway = new RecordingNotificationGateway()
-    gateway.setStatusLookup('delivery-a', { status: 'sent', providerMessageId: 'provider-message', occurredAt: asOf })
+    gateway.setStatusLookup('school-a', 'delivery-a', { status: 'sent', providerMessageId: 'provider-message', occurredAt: asOf })
     const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: gateway, fileStorage: testFileStorage })
     expect(await reconcilePendingDeliveries({ asOf, actor, service: application.forActor(actor) })).toEqual({ processed: 1, skipped: 0 })
-    expect(gateway.statusLookups).toEqual([[{ deliveryId: 'delivery-a', subjectId: 'person-a' }]])
+    expect(gateway.statusLookups).toEqual([[{ schoolId: 'school-a', deliveryId: 'delivery-a', subjectId: 'person-a' }]])
     expect((await fixture.repositories.messageDeliveries.findById('delivery-a'))?.status).toBe(MessageDeliveryStatus.Sent)
     expect((await fixture.repositories.messageDeliveries.findById('delivery-b'))?.status).toBe(MessageDeliveryStatus.Pending)
     const unrelated = { ...actor, systemId: 'expireAccountInvitations' }

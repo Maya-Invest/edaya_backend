@@ -1,8 +1,7 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
-import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { AttachmentsSeedPort } from '../port'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand } from '../../../transport/http/core-entity'
+import { createHttpProfilePicturesSeedPort } from '../../profile-pictures/adapters/http'
 
 export interface CreateHttpAttachmentsSeedPortOptions {
   client: HttpSeedClient
@@ -12,15 +11,11 @@ export interface CreateHttpAttachmentsSeedPortOptions {
 export function createHttpAttachmentsSeedPort(
   options: CreateHttpAttachmentsSeedPortOptions,
 ): AttachmentsSeedPort {
-  const requestOptions: CoreHttpRequestOptions = {
-    client: options.client,
-    serviceAccountApiKey: options.serviceAccountApiKey,
-    requestId: 'http-attachments-seed',
-  }
+  const uploads = createHttpProfilePicturesSeedPort(options)
 
   return {
     saveAttachment: record => withSeedPortError('attachments.saveAttachment', async () => {
-      await postCoreCommand(requestOptions, 'registerAttachment', record)
+      await uploads.uploadProfilePhoto({ ...record, attachmentId: record.id, mimeType: record.mimeType!, sizeBytes: record.body.byteLength })
     }),
   }
 }

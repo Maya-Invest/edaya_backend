@@ -3,7 +3,6 @@
 import type { MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
 import { createInterface } from 'node:readline/promises'
-import { applyNotifySchema } from './lib/apply-notify-schema'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import { assertRemoteResetAllowed } from './lib/assert-remote-reset-allowed'
 import { resetRemoteDatabase } from './lib/reset-remote-database'
@@ -62,7 +61,6 @@ await resetRemoteDatabase(resolved.databaseUrl)
 
 console.log('\n> Applying school schema migrations')
 await applySchoolMigrations(resolved.databaseUrl)
-await applyNotifySchema(resolved.databaseUrl)
 
 console.log(`\n${resolved.label} database reset complete.`)
 if (target === 'staging') {

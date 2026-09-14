@@ -130,7 +130,11 @@ export async function renderClassLogbookDocument(
     fileName,
   ].join("/");
 
-  await assertExport();
+  const protectObject = () => service.baseService.atomicExecution.execute(async () => {
+    await assertExport();
+    await service.baseService.repositories.privateFiles.reserve({ schoolId: school.id, storageKey, protectedUntil: new Date(Date.now() + 75 * 60 * 1000) });
+  });
+  await protectObject();
   await service.baseService.fileStorage.putObject({
     key: storageKey,
     body: bytes,
@@ -143,12 +147,13 @@ export async function renderClassLogbookDocument(
     },
   });
 
-  await assertExport();
+  await protectObject();
   const presigned = await service.baseService.fileStorage.createPresignedDownload(
     storageKey,
     { fileName, expiresInSeconds: 15 * 60 },
   );
 
+  await protectObject();
   return {
     fileName,
     contentType: "application/pdf",

@@ -16,6 +16,15 @@ export interface HeadObjectResult {
   etag?: string
 }
 
+export interface ReadObjectResult extends HeadObjectResult {
+  body: Uint8Array
+}
+
+export interface ReadObjectOptions {
+  /** Required per-object bound, at most the shared storage read ceiling. */
+  maxBytes: number
+}
+
 export interface PresignedUpload {
   key: string
   uploadUrl: string
@@ -49,6 +58,8 @@ export interface FileStoragePort {
   putObject: (input: PutObjectInput) => Promise<PutObjectResult>
   deleteObject: (key: string) => Promise<void>
   headObject: (key: string) => Promise<HeadObjectResult | null>
+  /** Read a complete private object by stored key; never truncate or fetch arbitrary URLs. */
+  readObject: (key: string, options: ReadObjectOptions) => Promise<ReadObjectResult | null>
   createPresignedUpload: (input: CreatePresignedUploadInput) => Promise<PresignedUpload>
   createPresignedDownload: (key: string, options?: CreatePresignedDownloadOptions) => Promise<PresignedDownload>
 }

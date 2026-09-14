@@ -52,6 +52,14 @@ if (integrationEnv) {
       expect(head?.sizeBytes).toBe(testBody.byteLength);
       expect(head?.contentType).toBe(testContentType);
 
+      const privateObject = await storage.readObject(testKey, { maxBytes: testBody.byteLength });
+      expect(privateObject?.body).toEqual(testBody);
+      expect(privateObject?.sizeBytes).toBe(testBody.byteLength);
+      expect(privateObject?.contentType).toBe(testContentType);
+      await expect(storage.readObject(testKey, { maxBytes: testBody.byteLength - 1 }))
+        .rejects
+        .toThrow("FILE_READ_LIMIT_EXCEEDED");
+
       const presignedUpload = await storage.createPresignedUpload({
         key: `${testKey}-presign`,
         contentType: testContentType,

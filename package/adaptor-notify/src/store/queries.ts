@@ -47,8 +47,7 @@ export async function upsertCommandRecipient(
       subject_id, tenant, email, display_name, locale,
       allows_notifications, channel_email, channel_push, recipient_kind, recipient_id, updated_at
     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
-    ON CONFLICT (subject_id) DO UPDATE SET
-      tenant = EXCLUDED.tenant,
+    ON CONFLICT (tenant, subject_id) DO UPDATE SET
       email = EXCLUDED.email,
       display_name = EXCLUDED.display_name,
       locale = EXCLUDED.locale,
@@ -73,22 +72,17 @@ export async function upsertCommandRecipient(
   );
 }
 
-export async function getCommandRecipient(sql: NotifySql, subjectId: string): Promise<NotifyRecipientRow | undefined> {
+export async function getCommandRecipient(sql: NotifySql, subjectId: string, tenant: string): Promise<NotifyRecipientRow | undefined> {
   const rows = await sql.query<RecipientRecord>(
-    "SELECT * FROM notify.recipients WHERE subject_id = $1",
-    [subjectId],
+    "SELECT * FROM notify.recipients WHERE subject_id = $1 AND tenant = $2",
+    [subjectId, tenant],
   );
   const row = rows[0];
   return row ? mapRecipient(row) : undefined;
 }
 
-export async function deleteCommandRecipient(sql: NotifySql, subjectId: string, tenant?: string): Promise<void> {
-  await sql.execute("DELETE FROM notify.devices WHERE subject_id = $1", [subjectId]);
-  if (tenant) {
-    await sql.execute("DELETE FROM notify.recipients WHERE subject_id = $1 AND tenant = $2", [subjectId, tenant]);
-    return;
-  }
-  await sql.execute("DELETE FROM notify.recipients WHERE subject_id = $1", [subjectId]);
+export async function deleteCommandRecipient(sql: NotifySql, subjectId: string, tenant: string): Promise<void> {
+  await sql.execute("DELETE FROM notify.recipients WHERE subject_id = $1 AND tenant = $2", [subjectId, tenant]);
 }
 
 export async function upsertDevice(
@@ -96,32 +90,32 @@ export async function upsertDevice(
   row: NotifyDeviceRow,
 ): Promise<void> {
   await sql.execute(
-    `INSERT INTO notify.devices (subject_id, provider, token, updated_at)
-     VALUES ($1,$2,$3,NOW())
-     ON CONFLICT (subject_id, provider) DO UPDATE SET token = EXCLUDED.token, updated_at = NOW()`,
-    [row.subject_id, row.provider, row.token],
+    `INSERT INTO notify.devices (subject_id, provider, token, tenant, updated_at)
+     VALUES ($1,$2,$3,$4,NOW())
+     ON CONFLICT (tenant, subject_id, provider) DO UPDATE SET token = EXCLUDED.token, updated_at = NOW()`,
+    [row.subject_id, row.provider, row.token, row.tenant],
   );
 }
 
-export async function deleteDevice(sql: NotifySql, subjectId: string, provider: string): Promise<void> {
-  await sql.execute("DELETE FROM notify.devices WHERE subject_id = $1 AND provider = $2", [subjectId, provider]);
+export async function deleteDevice(sql: NotifySql, subjectId: string, provider: string, tenant: string): Promise<void> {
+  await sql.execute("DELETE FROM notify.devices WHERE subject_id = $1 AND provider = $2 AND tenant = $3", [subjectId, provider, tenant]);
 }
 
-export async function listDevices(sql: NotifySql, subjectId: string): Promise<NotifyDeviceRow[]> {
+export async function listDevices(sql: NotifySql, subjectId: string, tenant: string): Promise<NotifyDeviceRow[]> {
   return sql.query<NotifyDeviceRow>(
-    "SELECT subject_id, provider, token FROM notify.devices WHERE subject_id = $1",
-    [subjectId],
+    "SELECT tenant, subject_id, provider, token FROM notify.devices WHERE subject_id = $1 AND tenant = $2",
+    [subjectId, tenant],
   );
 }
 
 export async function insertJobIfAbsent(
   sql: NotifySql,
-  job: Pick<NotifyJobRow, "idempotency_key" | "tenant" | "job_kind" | "event_key" | "title" | "body" | "email_subject" | "email_body" | "metadata">,
+  job: Pick<NotifyJobRow, "delivery_id" | "idempotency_key" | "tenant" | "job_kind" | "event_key" | "title" | "body" | "email_subject" | "email_body" | "metadata">,
 ): Promise<{ created: boolean }> {
   const inserted = await sql.query<{ idempotency_key: string }>(
     `INSERT INTO notify.jobs (
-      idempotency_key, tenant, job_kind, event_key, title, body, email_subject, email_body, metadata, status
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')
+      idempotency_key, tenant, job_kind, event_key, title, body, email_subject, email_body, metadata, delivery_id, status
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')
     ON CONFLICT (idempotency_key) DO NOTHING RETURNING idempotency_key`,
     [
       job.idempotency_key,
@@ -133,6 +127,7 @@ export async function insertJobIfAbsent(
       job.email_subject,
       job.email_body,
       job.metadata,
+      job.delivery_id,
     ],
   );
   return { created: inserted.length === 1 };
@@ -160,18 +155,12 @@ export async function updateJobStatus(
 }
 
 export async function cancelJob(sql: NotifySql, idempotencyKey: string, tenant?: string): Promise<boolean> {
-  const job = await getJob(sql, idempotencyKey);
-  if (!job) {
-    return false;
-  }
-  if (tenant && job.tenant !== tenant) {
-    return false;
-  }
-  if (job.status !== "pending") {
-    return job.status === "cancelled";
-  }
-  await updateJobStatus(sql, idempotencyKey, "cancelled");
-  return true;
+  const rows = await sql.query<{ idempotency_key: string }>(`
+    UPDATE notify.jobs SET status = 'cancelled', lease_id = NULL, lease_expires_at = NULL,
+      next_attempt_at = NULL, updated_at = clock_timestamp()
+    WHERE idempotency_key = $1 AND ($2::text IS NULL OR tenant = $2)
+      AND status IN ('pending', 'failed', 'sending', 'cancelled') RETURNING idempotency_key`, [idempotencyKey, tenant ?? null]);
+  return rows.length === 1;
 }
 
 export async function upsertJobRecipient(
@@ -182,7 +171,7 @@ export async function upsertJobRecipient(
   const written = await sql.query<{ idempotency_key: string }>(
     `INSERT INTO notify.job_recipients (idempotency_key, subject_id, channel, status, provider_message_id, failure_reason)
      SELECT $1,$2,$3,$4,$5,$6 WHERE $7::text IS NULL OR EXISTS (
-       SELECT 1 FROM notify.jobs WHERE idempotency_key = $1 AND lease_id = $7 AND status = 'sending'
+       SELECT 1 FROM notify.jobs WHERE idempotency_key = $1 AND lease_id = $7 AND status = 'sending' AND lease_expires_at > clock_timestamp()
      )
      ON CONFLICT (idempotency_key, subject_id, channel) DO UPDATE SET
        status = EXCLUDED.status,
@@ -205,7 +194,7 @@ export async function listJobRecipients(
 
 export async function lookupJobRecipients(
   sql: NotifySql,
-  keys: ReadonlyArray<{ deliveryId: string; subjectId: string }>,
+  keys: ReadonlyArray<{ deliveryId: string; subjectId: string; schoolId: string }>,
 ): Promise<NotifyJobRecipientRow[]> {
   if (keys.length === 0) {
     return [];
@@ -213,8 +202,8 @@ export async function lookupJobRecipients(
   const results: NotifyJobRecipientRow[] = [];
   for (const key of keys) {
     const rows = await sql.query<NotifyJobRecipientRow>(
-      "SELECT * FROM notify.job_recipients WHERE idempotency_key = $1 AND subject_id = $2",
-      [key.deliveryId, key.subjectId],
+      "SELECT recipient.* FROM notify.job_recipients recipient JOIN notify.jobs job USING (idempotency_key) WHERE job.delivery_id = $1 AND recipient.subject_id = $2 AND job.tenant = $3 AND job.job_kind = 'school'",
+      [key.deliveryId, key.subjectId, key.schoolId],
     );
     results.push(...rows);
   }

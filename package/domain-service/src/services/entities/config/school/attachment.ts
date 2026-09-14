@@ -14,7 +14,9 @@ export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories
     resource: 'attachments',
 
     gates: {
-      preSave: validateAttachmentSave,
+      preSave: async () => {
+        throw new BusinessRuleViolationError('ATTACHMENT_COMMAND_REQUIRED', 'Attachments require an admitted upload completion or document command')
+      },
     },
     atomicExecution,
   })
@@ -22,9 +24,11 @@ export const attachmentConfig: EntityConfigFactory<Attachment> = ({ repositories
 
 export async function validateAttachmentSave(
   attachment: Attachment,
-  _existing: Attachment | undefined,
+  existing: Attachment | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (existing && (existing.purpose !== attachment.purpose || existing.ownerKind !== attachment.ownerKind || existing.ownerId !== attachment.ownerId))
+    throw new BusinessRuleViolationError('ATTACHMENT_OWNER_PURPOSE_IMMUTABLE', 'Attachment owner and purpose cannot be changed')
   const context = await resolveAttachmentOwnerContext(attachment.ownerKind, attachment.ownerId, repositories)
   if (context.schoolId !== attachment.schoolId) {
     denyResourceAccess()

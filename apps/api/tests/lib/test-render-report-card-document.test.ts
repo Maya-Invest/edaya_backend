@@ -1,11 +1,12 @@
 import type { SchoolScopedActorMetadata } from "@edaya/authorization";
 import type { DocumentRendererPort, StaffPermissionAssignmentInput } from "@edaya/core";
+import { transactionContext } from "@edaya/adaptor-postgres";
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata } from "@edaya/authorization";
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, GradeScale, noOpFileStorage, noOpNotificationGateway, Permission, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, StaffPermissionAssignment } from "@edaya/core";
 import { SchoolService } from "@edaya/service";
 import { describe, expect, mock, onTestFinished, test } from "bun:test";
-import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
 import { renderReportCardDocument } from "@/lib/documents/render-report-card-document";
+import { createAuthorizationDatabase, seedAuthorizationRelationships } from "../../../../package/adaptor-postgres/tests/support/authorization-database";
 
 const identity = { schoolId: "school-a", subjectId: "person-a", academicYearId: "year-a", requestId: "report-document", authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified };
 const staff = createStaffActorMetadata({ ...identity, staffMemberId: "staff-a" });
@@ -31,8 +32,14 @@ async function fixture(actor: SchoolScopedActorMetadata = staff) {
     sectionResults: [new ReportCardResultSection({ sectionId: "math", sectionKind: ReportCardDefinitionSectionKind.Subject, name: "Math", average: 12, weight: 1, classSubjectId: "math-a" })],
   });
   await repositories.results.save(result);
-  const putObject = mock(async () => ({ sizeBytes: 4096 }));
-  const render = mock(async (_input: Parameters<DocumentRendererPort["render"]>[0]) => ({ bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" }));
+  const putObject = mock(async () => {
+    expect(transactionContext.getStore()).toBeUndefined();
+    return { sizeBytes: 4096 };
+  });
+  const render = mock(async (_input: Parameters<DocumentRendererPort["render"]>[0]) => {
+    expect(transactionContext.getStore()).toBeUndefined();
+    return { bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" };
+  });
   const service = new SchoolService({ actor, repositories, atomicExecution: atomic, notificationGateway: noOpNotificationGateway, fileStorage: { ...noOpFileStorage, putObject } });
   const grant = async (extra: Partial<StaffPermissionAssignmentInput> = {}) => repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "grant", schoolId: "school-a", staffId: "staff-a", academicYearId: "year-a", permission: Permission.REPORT_CARD_PUBLISH, scopes: [{ kind: "school" }], ...extra }));
   const generate = () => renderReportCardDocument(service, { resultId: "report", renderer: { render }, locale: "en" });
@@ -109,7 +116,7 @@ describe("report document publication policy", () => {
     await f.grant();
     await f.attachment(100);
     f.render.mockRejectedValueOnce(new Error("Renderer unavailable"));
-    await expect(f.generate()).rejects.toThrow("Renderer unavailable");
+    await expect(f.generate()).rejects.toThrow("REPORT_DOCUMENT_RENDER_UNAVAILABLE");
     expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Ready);
     expect(f.putObject).not.toHaveBeenCalled();
     await f.generate();
@@ -126,6 +133,75 @@ describe("report document publication policy", () => {
     await expect(f.generate()).rejects.toThrow();
     expect(f.putObject).not.toHaveBeenCalled();
     expect(await f.repositories.attachments.list()).toEqual([]);
+  });
+
+  test("revocation while storing cannot publish or mark a stub failed", async () => {
+    const f = await fixture();
+    await f.grant();
+    await f.attachment(100);
+    f.putObject.mockImplementationOnce(async () => {
+      expect(transactionContext.getStore()).toBeUndefined();
+      await f.repositories.staffPermissionAssignments.delete("grant");
+      return { sizeBytes: 4096 };
+    });
+    await expect(f.generate()).rejects.toThrow();
+    expect((await f.repositories.attachments.list()).map(value => [value.id, value.status])).toEqual([["existing", AttachmentStatus.Ready]]);
+  });
+
+  for (const during of ["render", "storage"] as const) {
+    for (const update of [
+      "UPDATE report_card_results SET overall_average = 13 WHERE id = 'report'",
+      "UPDATE students SET first_name = 'Changed' WHERE id = 'student-a'",
+      "UPDATE teacher_assignments SET status = 'ended' WHERE id = 'teaching'",
+      "UPDATE schools SET name = 'Changed' WHERE id = 'school-a'",
+    ]) {
+      test(`rejects source changes during ${during}: ${update}`, async () => {
+        const f = await fixture();
+        await f.grant();
+        await f.attachment(100);
+        if (during === "render") {
+          f.render.mockImplementationOnce(async () => {
+            await f.db.exec(update);
+            return { bytes: new Uint8Array(4096), sha256: "abc123", renderId: "render-1", contentType: "application/pdf" };
+          });
+        }
+        else {
+          f.putObject.mockImplementationOnce(async () => {
+            await f.db.exec(update);
+            return { sizeBytes: 4096 };
+          });
+        }
+        await expect(f.generate()).rejects.toMatchObject({ code: "REPORT_DOCUMENT_SOURCE_CHANGED" });
+        expect((await f.repositories.attachments.list()).map(value => [value.id, value.status])).toEqual([["existing", AttachmentStatus.Ready]]);
+        if (during === "render") {
+          expect(f.putObject).not.toHaveBeenCalled();
+        }
+        await expect(f.generate()).resolves.toHaveProperty("attachmentId");
+        expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Failed);
+      });
+    }
+  }
+
+  test("unpublication while storing invalidates completion", async () => {
+    const f = await fixture();
+    await f.grant();
+    f.putObject.mockImplementationOnce(async () => {
+      await f.db.exec("UPDATE academic_periods SET is_published = false WHERE id = 'period-a'");
+      return { sizeBytes: 4096 };
+    });
+    await expect(f.generate()).rejects.toMatchObject({ code: "REPORT_DOCUMENT_UNPUBLISHED" });
+    expect(await f.repositories.attachments.list()).toEqual([]);
+  });
+
+  test("storage failure preserves the previous stub for a later successful retry", async () => {
+    const f = await fixture();
+    await f.grant();
+    await f.attachment(100);
+    f.putObject.mockRejectedValueOnce(new Error("Storage unavailable"));
+    await expect(f.generate()).rejects.toThrow("REPORT_DOCUMENT_STORAGE_UNAVAILABLE");
+    expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Ready);
+    await expect(f.generate()).resolves.toHaveProperty("attachmentId");
+    expect((await f.repositories.attachments.findById("existing"))?.status).toBe(AttachmentStatus.Failed);
   });
 
   test("empty published shells do not render", async () => {

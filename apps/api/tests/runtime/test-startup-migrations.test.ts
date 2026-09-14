@@ -50,7 +50,8 @@ describe("runStartupMigrations", () => {
 
       expect(publicTables.rows[0]?.count).toBeGreaterThan(50);
       expect(authTables.rows[0]?.count).toBe(0);
-      expect(notifyTables.rows[0]?.count).toBe(4);
+      // Includes the inaccessible legacy device quarantine from tenant migration.
+      expect(notifyTables.rows[0]?.count).toBe(5);
       expect(schoolJournal.rows[0]?.count).toBe(schoolMigrationCount());
     }
     finally {

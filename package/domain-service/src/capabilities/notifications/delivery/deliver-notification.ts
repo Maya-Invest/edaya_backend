@@ -4,8 +4,8 @@ import { AccessPolicies, createSystemActorMetadata } from '@edaya/authorization'
 import { MessageDelivery } from '@edaya/core'
 import { resolveRecipientSubjectId, uniqueNotificationRecipients } from './recipient-utils'
 
-export function buildNotificationDeliveryId(sourceKey: string, subjectId: string, recipient: Pick<NotificationRecipient, 'kind' | 'id'>): string {
-  return `delivery:${[sourceKey, subjectId, recipient.kind, recipient.id].map(encodeURIComponent).join(':')}`
+export function buildNotificationDeliveryId(schoolId: string, sourceKey: string, subjectId: string, recipient: Pick<NotificationRecipient, 'kind' | 'id'>): string {
+  return `delivery:v2:${[schoolId, sourceKey, subjectId, recipient.kind, recipient.id].map(encodeURIComponent).join(':')}`
 }
 
 export interface DeliverNotificationDeps {
@@ -54,7 +54,7 @@ export async function deliverNotification(
       recipientId: recipient.id,
       $limit: 1,
     }))[0]
-    const deliveryId = existing?.id ?? buildNotificationDeliveryId(input.idempotencyKeyPrefix, subjectId, recipient)
+    const deliveryId = existing?.id ?? buildNotificationDeliveryId(input.schoolId, input.idempotencyKeyPrefix, subjectId, recipient)
     const delivery = new MessageDelivery({
       id: deliveryId,
       schoolId: input.schoolId,
@@ -133,5 +133,5 @@ export async function cancelNotificationDeliveries(
   const scope = await access.entity('messageDeliveries').readScope()
   const deliveries = await deps.repositories.messageDeliveries.forAccess(scope).list({ sourceKey })
   for (const delivery of deliveries)
-    await deps.notificationGateway.cancel(delivery.id)
+    await deps.notificationGateway.cancel(delivery.id, schoolId)
 }

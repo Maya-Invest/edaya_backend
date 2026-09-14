@@ -11,6 +11,9 @@ const jobs = [
   { id: 'notify-adapter', actions: [P.COMMUNICATION_CREATE, P.COMMUNICATION_UPDATE, P.QUERY_COMMUNICATIONS_READ] },
   { id: 'notification-delivery-webhook', actions: [P.COMMUNICATION_CREATE, P.COMMUNICATION_UPDATE, P.QUERY_COMMUNICATIONS_READ] },
   { id: 'account-invitation-public', actions: [P.ACCESS_CONTROL_READ, P.ACCESS_CONTROL_ASSIGN] },
+  { id: 'invitation-dispatch', actions: [P.ACCESS_CONTROL_READ] },
+  { id: 'preparePrivateFileCleanup', actions: [P.ATTACHMENT_CONFIGURE] },
+  { id: 'private-file-cleanup', actions: [P.ATTACHMENT_CONFIGURE] },
   { id: 'school-bootstrap', actions: [P.PLATFORM_REGISTER_SCHOOL, P.SCHOOL_STRUCTURE_CONFIGURE, P.SCHOOL_LIFECYCLE_MANAGE, P.ACCESS_CONTROL_ASSIGN, P.STAFF_CREATE, P.QUERY_WORKSPACE_READ] },
   { id: 'unknown-job', actions: [] },
 ]

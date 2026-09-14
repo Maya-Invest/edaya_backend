@@ -3,6 +3,7 @@ import type { FileStoragePort, Filter, NotificationGatewayPort, QueryOptions } f
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
+import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
 import { acquireDatabase } from './database-pool'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'
@@ -162,6 +163,7 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
   }
   const application = new SchoolApplication({
     atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
     notificationGateway: options.notificationGateway ?? noOpNotificationGateway,
     fileStorage: options.fileStorage ?? testFileStorage,
     repositories: schoolRepositories,

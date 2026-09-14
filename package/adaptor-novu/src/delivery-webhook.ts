@@ -1,3 +1,4 @@
+import { buildNotifyChannelId, buildNotifyJobId } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent, NotificationDeliveryWebhookAdapter } from "@edaya/core";
 import crypto from "node:crypto";
 import { Webhook } from "svix";
@@ -64,14 +65,6 @@ function extractMessageObject(data: unknown): Record<string, unknown> | undefine
   return readRecord(readRecordField(record, "object")) ?? record;
 }
 
-function extractFailureReason(message: Record<string, unknown>): string | undefined {
-  const error = readRecordField(message, "error");
-  return readStringField(message, "failureReason")
-    ?? readStringField(message, "reason")
-    ?? readStringField(error ?? {}, "message")
-    ?? readStringField(error ?? {}, "error");
-}
-
 function extractOccurredAt(
   envelope: NovuWebhookEnvelope,
   message: Record<string, unknown>,
@@ -105,7 +98,15 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
   const deliveryId = readStringField(payload, "deliveryId");
   const subjectId = readStringField(payload, "subjectId");
   const transactionId = readStringField(message, "transactionId");
-  if (!deliveryId || !subjectId || transactionId !== `${deliveryId}:${subjectId}:email` || readStringField(message, "channel") !== "email")
+  const schoolId = readStringField(payload, "schoolId");
+  if (!deliveryId || !subjectId || readStringField(message, "channel") !== "email")
+    return [];
+  const version = readStringField(payload, "notificationCorrelationVersion");
+  const currentCorrelation = version === "2" && schoolId && transactionId === buildNotifyChannelId(buildNotifyJobId("school", schoolId, deliveryId), subjectId, "email");
+  // Signed late receipts retain their pre-cutover protocol and immutable IDs.
+  // An explicitly versioned receipt must never fall back to that protocol.
+  const legacyCorrelation = !("notificationCorrelationVersion" in payload) && transactionId === `${deliveryId}:${subjectId}:email`;
+  if (!currentCorrelation && !legacyCorrelation)
     return [];
 
   return [{
@@ -115,7 +116,7 @@ function parseEnvelope(rawBody: string): NormalizedDeliveryEvent[] {
       ?? readStringField(message, "id")
       ?? readStringField(message, "messageId"),
     channel: readStringField(message, "channel"),
-    failureReason: status === "failed" ? extractFailureReason(message) : undefined,
+    failureReason: status === "failed" ? "NOTIFY_PROVIDER_DELIVERY_FAILED" : undefined,
     occurredAt: extractOccurredAt(envelope, message),
     subjectId,
   }];

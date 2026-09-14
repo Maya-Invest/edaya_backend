@@ -1,16 +1,17 @@
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
-import { PostgresAtomicExecution, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
+import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
+import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
+import type { Environment } from "@/runtime/shared/env/schema";
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import type { SQL } from "drizzle-orm";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
 import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
+import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
-import type { Environment } from "@/runtime/shared/env/schema";
-import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
-import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -51,6 +52,8 @@ export async function buildSchoolApplication(
 
   return new ApiSchoolApplication({
     atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
+    durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
     notificationGateway,
     fileStorage,
     invitationDelivery,

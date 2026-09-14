@@ -1,7 +1,7 @@
 import { allowStagingNotification } from "@/staging-notifications";
 import { createNovuEmailTransportFromSecretKey } from "@edaya/adaptor-novu";
 import { createSystemActorMetadata } from "@edaya/authorization";
-import { resolveNotificationDispatchRecipient } from "@edaya/service";
+import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import {
@@ -74,6 +74,13 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         const actor = createSystemActorMetadata({ systemId: "notify-adapter", schoolId: request.schoolId, requestId: `notify:${request.deliveryId}`, reason: "Resolve current notification recipient" });
         const profile = await resolveNotificationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
         return allowStagingNotification(options.env.API_ORIGIN, profile?.email, options.env.STAGING_NOTIFICATION_EMAILS) ? profile : undefined;
+      },
+      resolveInvitationRecipient: async (request) => {
+        if (!schoolApp)
+          throw new Error("Invitation resolver is not initialized");
+        const actor = createSystemActorMetadata({ systemId: "invitation-dispatch", schoolId: request.schoolId, requestId: `invitation:${request.invitationId}`, reason: "Resolve current invitation delivery" });
+        const recipient = await resolveInvitationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
+        return allowStagingNotification(options.env.API_ORIGIN, recipient?.email, options.env.STAGING_NOTIFICATION_EMAILS) ? recipient : undefined;
       },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);

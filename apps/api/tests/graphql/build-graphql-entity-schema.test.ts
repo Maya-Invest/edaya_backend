@@ -19,6 +19,12 @@ describe("buildGraphQLSchema", () => {
     expect(mutationFields.deleteStudent).toBeUndefined();
     expect(mutationFields.deletePayment).toBeUndefined();
     expect(mutationFields.batchDeletePayment).toBeUndefined();
+    expect(mutationFields.saveAttachment).toBeUndefined();
+    expect(mutationFields.deleteAttachment).toBeUndefined();
+    expect(mutationFields.batchSaveAttachment).toBeUndefined();
+    expect(mutationFields.batchDeleteAttachment).toBeUndefined();
+    expect(queryFields.attachmentById).toBeDefined();
+    expect(mutationFields.registerAttachment).toBeDefined();
     expect(mutationFields.saveClassSubject).toBeUndefined();
     expect(mutationFields.batchSaveClassSubject).toBeUndefined();
     expect(mutationFields.deleteClassSubject).toBeDefined();

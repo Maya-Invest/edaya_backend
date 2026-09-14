@@ -84,8 +84,8 @@ const DELIVERY_STATUS_RANK: Record<MessageDeliveryStatus, number> = {
   [DeliveryStatus.Read]: 3,
 }
 
-function buildDeliveryId(announcementId: string, subjectId: string, recipientKind: MessageDeliveryRecipientKind, recipientId: string): string {
-  return buildNotificationDeliveryId(announcementId, subjectId, { kind: recipientKind, id: recipientId })
+function buildDeliveryId(schoolId: string, announcementId: string, subjectId: string, recipientKind: MessageDeliveryRecipientKind, recipientId: string): string {
+  return buildNotificationDeliveryId(schoolId, announcementId, subjectId, { kind: recipientKind, id: recipientId })
 }
 
 function canTransitionDeliveryStatus(
@@ -257,7 +257,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
     const deliveries: MessageDelivery[] = []
     for (const recipient of recipients) {
       const { subjectId } = recipient
-      const deliveryId = buildDeliveryId(current.id, subjectId, recipient.recipientKind, recipient.recipientId)
+      const deliveryId = buildDeliveryId(current.schoolId, current.id, subjectId, recipient.recipientKind, recipient.recipientId)
       const existing = (await this.repositories.messageDeliveries.list({
         schoolId: current.schoolId,
         sourceKey: current.id,
@@ -497,6 +497,7 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
 
       await gateway.unregisterPushDevice({
+        schoolId: actor.schoolId,
         subjectId: actor.subjectId,
         provider: input.provider,
       })

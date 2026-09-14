@@ -92,3 +92,12 @@ src/
 Seeding API keys come from `@edaya/fixtures` school profiles (`seedingApiKey`). No `.env` secret required for local dev.
 
 See [src/README.md](src/README.md) and [seed-contract.md](seed-contract.md).
+
+
+## Admitted bootstrap mutations
+
+Minimal school bootstrap calls the existing school, staff and guardian commands in one selected-school transaction. It disables invitation delivery and leaves no partial school/staff state when guardian creation fails. Another existing school does not suppress the selected fixture. A completed selected-school bootstrap is safe to repeat.
+
+The in-process auth-link adapter uses its resolved dataset school and scoped entity reads. Initial owner assignment calls the service's internal fixture-owner capability; it cannot replace an existing owner, override a pending owner invitation or change unrelated school settings. The shared workflow refuses owner replacement before either the HTTP or in-process adapter is invoked. HTTP keeps its existing authenticated ownership command and does not gain a fixture-only public endpoint. Existing ownership changes must use the normal ownership flow.
+
+Direct application-repository uses remaining in seed domains are read-only fixture diagnostics or state lookups; mutation paths use admitted managed entities or named commands. The fixture owner operation adds an atomic reference-only receipt/audit. It requires the runtime's transactional command journal, supplied by normal API composition.

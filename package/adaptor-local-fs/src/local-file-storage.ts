@@ -13,6 +13,7 @@ import {
 } from "./tokens";
 import type { LocalFileStorageConfig } from "./types";
 import { DEFAULT_DOWNLOAD_TTL_SECONDS, DEFAULT_UPLOAD_TTL_SECONDS } from "./types";
+import { assertStorageReadLimit, FileStorageReadError, readBoundedStorageBody } from "@edaya/core";
 
 async function readBody(body: PutObjectInput["body"]): Promise<Uint8Array> {
   if (body instanceof Uint8Array) {
@@ -65,6 +66,32 @@ export function createLocalFileStorage(config: LocalFileStorageConfig): FileStor
   const baseUrl = trimTrailingSlash(config.baseUrl);
 
   return {
+    async readObject(key, { maxBytes }) {
+      assertStorageReadLimit(maxBytes);
+      try {
+        const response = await fetch(`${baseUrl}/internal/objects/content?key=${encodeURIComponent(key)}&maxBytes=${maxBytes}`, {
+          headers: internalHeaders(config.secret),
+          redirect: "error",
+        });
+        if (response.status === 404) {
+          await response.body?.cancel();
+          return null;
+        }
+        if (!response.ok || !response.body) {
+          await response.body?.cancel();
+          throw new FileStorageReadError(response.status === 413 ? "FILE_READ_LIMIT_EXCEEDED" : "FILE_READ_FAILED");
+        }
+        const length = response.headers.get("content-length");
+        const body = await readBoundedStorageBody(response.body, maxBytes, length === null ? undefined : Number(length));
+        return { body, sizeBytes: body.byteLength, contentType: response.headers.get("content-type") ?? undefined };
+      }
+      catch (error) {
+        if (error instanceof FileStorageReadError) {
+          throw error;
+        }
+        throw new FileStorageReadError("FILE_READ_FAILED");
+      }
+    },
     async putObject(input: PutObjectInput): Promise<PutObjectResult> {
       const body = await readBody(input.body);
       const response = await fetch(`${baseUrl}/internal/objects`, {
@@ -109,6 +136,7 @@ export function createLocalFileStorage(config: LocalFileStorageConfig): FileStor
       const payload = buildUploadTokenPayload({
         key: input.key,
         contentType: input.contentType,
+        sizeBytes: input.sizeBytes,
         expiresInSeconds,
       });
       const token = createLocalFileToken(config.secret, payload);

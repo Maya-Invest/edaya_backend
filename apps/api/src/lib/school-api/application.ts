@@ -1,6 +1,6 @@
-import type { AtomicExecutionPort, FileStoragePort } from "@edaya/core";
-import type { SchoolRepositories, SchoolService } from "@edaya/service";
 import type { ActorMetadata } from "@edaya/authorization";
+import type { AtomicExecutionPort, DurableWorkPort, FileStoragePort } from "@edaya/core";
+import type { CommandExecution, SchoolRepositories, SchoolService } from "@edaya/service";
 import { SchoolApplication as CoreSchoolApplication } from "@edaya/service";
 
 type CoreSchoolApplicationArgs = ConstructorParameters<typeof CoreSchoolApplication>[0];
@@ -18,6 +18,14 @@ export class ApiSchoolApplication {
 
   get atomicExecution(): AtomicExecutionPort {
     return this.application.atomicExecution;
+  }
+
+  get commandExecution(): CommandExecution {
+    return this.application.commandExecution;
+  }
+
+  get durableWork(): DurableWorkPort {
+    return this.application.durableWork;
   }
 
   get fileStorage(): FileStoragePort {

@@ -1,14 +1,13 @@
-import { createNativePolicyApp } from "../support/native-policy-app";
-import { describe, expect, mock, spyOn, test } from "bun:test";
 import type { LoggerPort } from "@edaya/core";
-import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ApiRuntime } from "@/runtime/types";
+import { describe, expect, mock, spyOn, test } from "bun:test";
 import {
   parseCronJobKeysFilter,
   runCronHeartbeat,
   runCronHeartbeatWithRuntime,
   runScheduledCronWithRuntime,
 } from "@/cron/run-scheduled-cron";
+import { createNativePolicyApp } from "../support/native-policy-app";
 
 describe("parseCronJobKeysFilter", () => {
   test("returns undefined when unset or empty", () => {
@@ -29,18 +28,10 @@ describe("parseCronJobKeysFilter", () => {
 describe("runCronHeartbeat", () => {
   test("dispatches due schedules for every school and logs the tick summary", async () => {
     const dispatch = mock(async () => undefined);
-    const markDispatched = mock(async () => undefined);
-    const listDue = mock(async () => [{
-      id: "sched-1",
-      jobKey: "processDueNotifications" as const,
-      cronExpression: "*/5 * * * *",
-    }]);
-    const application = {
-      repositories: {
-        cronJobSchedules: { listDue, markDispatched },
-        schools: { list: async () => [{ id: "school-1" }, { id: "school-2" }] },
-      },
-    } as unknown as ApiSchoolApplication;
+    const { school: application, db } = await createNativePolicyApp();
+    await db.exec(`DELETE FROM cron_job_schedules;
+      INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
+      VALUES ('sched-1', 'processDueNotifications', '*/5 * * * *', true, '2026-07-07T12:00:00Z', now(), now())`);
     const info = mock(() => undefined);
     const logger = { info } as unknown as LoggerPort;
     const asOf = new Date("2026-07-07T12:00:00.000Z");
@@ -52,9 +43,9 @@ describe("runCronHeartbeat", () => {
     }, logger);
 
     expect(summary.dispatches).toHaveLength(2);
-    expect(summary.dispatches[0]?.schoolId).toBe("school-1");
+    expect(summary.dispatches[0]?.jobId).toStartWith("cron-execute:");
     expect(dispatch).toHaveBeenCalledTimes(2);
-    expect(markDispatched).toHaveBeenCalledTimes(1);
+
     expect(info).toHaveBeenCalledWith(
       expect.objectContaining({
         event: "cron.tick",
@@ -67,15 +58,8 @@ describe("runCronHeartbeat", () => {
 
 describe("runCronHeartbeatWithRuntime", () => {
   test("loads the school application from runtime and forwards the dispatcher", async () => {
-    const application = {
-      repositories: {
-        cronJobSchedules: {
-          listDue: async () => [],
-          markDispatched: async () => undefined,
-        },
-        schools: { list: async () => [] },
-      },
-    } as unknown as ApiSchoolApplication;
+    const { school: application, db } = await createNativePolicyApp();
+    await db.exec("DELETE FROM cron_job_schedules");
     const runtime = {
       env: { RUNTIME: "local" },
       getSchoolApplication: mock(async () => application),

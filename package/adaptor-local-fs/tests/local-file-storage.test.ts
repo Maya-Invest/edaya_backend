@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { createLocalFileStorage } from "../src/local-file-storage";
@@ -11,6 +11,7 @@ describe("local file tokens", () => {
   it("signs and verifies upload tokens", () => {
     const payload = {
       op: "upload" as const,
+      sizeBytes: 3,
       key: "school-1/uploads/staff/staff-1/att-1/photo.jpg",
       contentType: "image/jpeg",
       exp: Math.floor(Date.now() / 1000) + 60,
@@ -26,6 +27,24 @@ describe("createLocalFileObjectStore", () => {
     const objectPath = resolveObjectPath(rootDir, "school-1/uploads/staff/staff-1/att-1/photo.jpg");
     expect(objectPath.startsWith(`${resolve(rootDir)}${sep}`)).toBe(true);
     rmSync(rootDir, { recursive: true, force: true });
+  });
+
+  it("retries missing objects but reports filesystem deletion failures", async () => {
+    const rootDir = mkdtempSync(join(tmpdir(), "edaya-local-fs-delete-"));
+    const store = createLocalFileObjectStore({ rootDir });
+    try {
+      await store.putObject({ key: "object.pdf", body: new Uint8Array([1]), contentType: "application/pdf" });
+      await store.deleteObject("object.pdf");
+      await store.deleteObject("object.pdf");
+      expect(await store.headObject("object.pdf")).toBeNull();
+      mkdirSync(store.resolvePath("directory.pdf"));
+      await expect(store.deleteObject("directory.pdf")).rejects.toThrow("LOCAL_FILE_DELETE_FAILED");
+      rmSync(store.resolvePath("directory.pdf"), { recursive: true });
+      await expect(store.deleteObject("directory.pdf")).resolves.toBeUndefined();
+    }
+    finally {
+      rmSync(rootDir, { recursive: true, force: true });
+    }
   });
 
   it("rejects path traversal keys", async () => {
@@ -103,6 +122,37 @@ describe("createLocalFileStorageApp", () => {
     const head = await storage.headObject(key);
     expect(head?.sizeBytes).toBe(4);
     expect(head?.contentType).toBe("application/pdf");
+  });
+
+  it("rejects signed uploads with a different actual byte count without storing an object", async () => {
+    const storage = createLocalFileStorage({ baseUrl, rootDir, secret });
+    for (const size of [2, 4]) {
+      const key = `bounded-upload-${size}`;
+      const upload = await storage.createPresignedUpload({ key, contentType: "image/jpeg", sizeBytes: 3 });
+      const response = await fetch(upload.uploadUrl, { method: "PUT", headers: upload.headers, body: new Uint8Array(size) });
+      expect(response.status).toBe(size > 3 ? 413 : 400);
+      expect(await storage.headObject(key)).toBeNull();
+    }
+  });
+
+  it("loads complete private objects with a required enforced byte bound", async () => {
+    const storage = createLocalFileStorage({ baseUrl, rootDir, secret });
+    await storage.putObject({ key: "bounded-asset", body: new Uint8Array([1, 2, 3]), contentType: "image/png" });
+    await expect(storage.readObject("bounded-asset", { maxBytes: 3 })).resolves.toEqual({
+      body: new Uint8Array([1, 2, 3]),
+      sizeBytes: 3,
+      contentType: "image/png",
+    });
+    await expect(storage.readObject("bounded-asset", { maxBytes: 2 })).rejects.toThrow("FILE_READ_LIMIT_EXCEEDED");
+    await expect(storage.readObject("missing-asset", { maxBytes: 3 })).resolves.toBeNull();
+    await expect(storage.readObject("missing-asset", { maxBytes: 0 })).rejects.toThrow("FILE_READ_LIMIT_INVALID");
+    await expect(fetch(`${baseUrl}/internal/objects/content?key=bounded-asset&maxBytes=3`)).resolves.toMatchObject({ status: 401 });
+    await expect(fetch(`${baseUrl}/internal/objects/content?key=bounded-asset`, {
+      headers: { authorization: `Bearer ${secret}` },
+    })).resolves.toMatchObject({ status: 400 });
+    await expect(fetch(`${baseUrl}/internal/objects/content?key=../escape&maxBytes=3`, {
+      headers: { authorization: `Bearer ${secret}` },
+    })).resolves.toMatchObject({ status: 500 });
   });
 
   it("returns health status", async () => {

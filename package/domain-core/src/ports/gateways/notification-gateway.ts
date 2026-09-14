@@ -79,6 +79,7 @@ export interface NotificationDeliveryStatusLookup {
 }
 
 export interface NotificationDeliveryStatusQuery {
+  schoolId: string
   deliveryId: string
   subjectId: string
 }
@@ -93,6 +94,7 @@ export interface RegisterPushDeviceInput {
 }
 
 export interface UnregisterPushDeviceInput {
+  schoolId: string
   subjectId: string
   provider: PushDeviceProvider
 }
@@ -103,7 +105,7 @@ export interface UnregisterPushDeviceInput {
  */
 export interface NotificationGatewayPort {
   enqueue: (input: NotificationEnqueueInput) => Promise<void>
-  cancel: (idempotencyKey: string) => Promise<void>
+  cancel: (idempotencyKey: string, schoolId: string) => Promise<void>
   /** Poll provider message status — used by reconcilePendingDeliveries cron when webhooks are unavailable */
   lookupDeliveryStatuses?: (
     deliveries: ReadonlyArray<NotificationDeliveryStatusQuery>,

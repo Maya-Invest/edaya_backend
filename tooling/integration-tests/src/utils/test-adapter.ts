@@ -1,5 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { SchoolRepositories } from '@edaya/service'
+import { PostgresCommandJournal } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
@@ -71,6 +72,7 @@ export function buildSchoolApplication(opts: {
 }) {
   return new SchoolApplication({
     atomicExecution: opts.atomicExecution,
+    commandJournal: new PostgresCommandJournal(),
     repositories: opts.repositories,
     notificationGateway: noOpNotificationGateway,
     fileStorage: noOpFileStorage,

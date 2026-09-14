@@ -122,14 +122,15 @@ describe("core entity and command routes", () => {
     expect(mockSave).not.toHaveBeenCalled();
   });
 
-  it("does not dispatch generic finance or enrollment writes even for an elevated actor", async () => {
+  it("does not dispatch generic attachment, finance or enrollment writes even for an elevated actor", async () => {
     const write = mock().mockResolvedValue(undefined);
     const app = setupTestApp({ baseService: { entities: {
+      attachments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
       payments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
       studentFees: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
       enrollments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
     } } });
-    for (const entity of ["payments", "student-fees", "enrollments"]) {
+    for (const entity of ["attachments", "payments", "student-fees", "enrollments"]) {
       for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
         const response = await app.request(`/core/entities/${entity}/${action}`, {
           method: "POST",

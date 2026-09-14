@@ -13,10 +13,13 @@ export { isNotifySendError, NotifySendError } from "./errors";
 export {
   buildAuthRecipientId,
   buildInvitationRecipientId,
+  buildNotifyChannelId,
+  buildNotifyJobId,
   normalizeEmail,
   NOTIFY_PLATFORM_TENANT,
 } from "./ids";
 export { createNotifyInvitationDeliveryPort } from "./invitation-delivery";
+export { drainPendingSchoolNotifications } from "./jobs/drain-jobs";
 export { resolveSendChannels } from "./jobs/route-channels";
 export { sendJob } from "./jobs/send-job";
 export type { SendJobDependencies } from "./jobs/send-job";
@@ -36,12 +39,10 @@ export {
   silentNotifyLog,
 } from "./runtime";
 export type { CreateNotifyRuntimeOptions, NotifyRuntime } from "./runtime";
-export { NOTIFY_SCHEMA_SQL } from "./store/schema";
 export {
-  applyNotifySchema,
-  applyNotifySchemaOnDrizzle,
   createNotifySqlFromDrizzle,
 } from "./store/sql";
+
 export type {
   NotifyDeviceRow,
   NotifyJobRecipientRow,
@@ -49,5 +50,3 @@ export type {
   NotifyRecipientRow,
   NotifySql,
 } from "./store/types";
-
-export { drainPendingSchoolNotifications } from "./jobs/drain-jobs";

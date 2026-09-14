@@ -24,7 +24,7 @@ export async function expireAccountInvitations(context: SchoolCronJobContext): P
       const expired = current.copyWith({ status: AccountInvitationStatus.Expired })
       const scope = await service.baseService.access.invitations.assertSave(expired, current)
       await service.baseService.repositories.accountInvitations.forAccess(scope).save(expired)
-      await service.baseService.invitationDelivery.revoke(current.id)
+      await service.baseService.invitationDelivery.revoke(current.id, current.schoolId)
       return true
     })
     if (expired)

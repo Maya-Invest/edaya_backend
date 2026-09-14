@@ -36,7 +36,7 @@ describe('authorization policies against native repository scopes', () => {
       repositories,
       atomicExecution: new PostgresAtomicExecution(drizzle(db)),
       notificationGateway: noOpNotificationGateway,
-      fileStorage: { putObject: unexpected, deleteObject: unexpected, headObject: unexpected, createPresignedUpload: unexpected, createPresignedDownload: unexpected },
+      fileStorage: { putObject: unexpected, deleteObject: unexpected, headObject: unexpected, readObject: unexpected, createPresignedUpload: unexpected, createPresignedDownload: unexpected },
       accountInvitationsEnabled: false,
     })
   }

@@ -33,6 +33,7 @@ export function createNovuEmailTransport(client: NovuEmailClient): EmailTranspor
           emailSubject: input.subject,
           emailBody: input.html,
           ...input.correlation,
+          notificationCorrelationVersion: "2",
         },
       }, input.idempotencyKey);
       return { providerMessageId: input.idempotencyKey };

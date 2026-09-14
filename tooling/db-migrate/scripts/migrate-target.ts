@@ -3,7 +3,6 @@
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
 import type { MigrationScope, MigrationTarget } from './lib/resolve-migration-target'
 import process from 'node:process'
-import { applyNotifySchema } from './lib/apply-notify-schema'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import {
 
@@ -41,6 +40,5 @@ if (target === 'production') {
 }
 
 await applySchoolMigrations(resolved.databaseUrl)
-await applyNotifySchema(resolved.databaseUrl)
 
 console.log('\nMigrations applied.')

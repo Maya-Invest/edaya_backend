@@ -6,6 +6,7 @@ import type { ServiceArgs } from './service-args'
 import { createAccessPolicies } from '@edaya/authorization'
 import { noOpInvitationDeliveryPort } from '@edaya/core'
 import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
+import { CommandExecution } from './commands/command-execution'
 import { createCoreEntityServices } from './runtime/core-entity-catalog'
 
 export class BaseSchoolService {
@@ -21,12 +22,20 @@ export class BaseSchoolService {
   readonly inviteBaseUrl?: string
   readonly accountInvitationsEnabled: boolean
   readonly entities: CoreEntityServices
+  private readonly journal: ServiceArgs['commandJournal']
+
+  get commandExecution(): CommandExecution {
+    if (!this.journal)
+      throw new Error('Reliable commands require a transactional command journal')
+    return new CommandExecution(this.atomicExecution, this.journal)
+  }
 
   constructor(args: ServiceArgs) {
     this.actor = args.actor
     this.repositories = args.repositories
     this.access = createAccessPolicies({ actor: args.actor, repositories: args.repositories })
     this.atomicExecution = args.atomicExecution
+    this.journal = args.commandJournal
     this.notificationGateway = args.notificationGateway
     this.fileStorage = args.fileStorage
     this.invitationDelivery = args.invitationDelivery ?? noOpInvitationDeliveryPort

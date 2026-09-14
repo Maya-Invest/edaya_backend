@@ -20,7 +20,7 @@ describe('invitation expiry uses tenant-bound job policies', () => {
     const actor = createSystemActorMetadata({ systemId: 'expireAccountInvitations', schoolId: 'school-a', requestId: 'expiry', reason: 'Expire invitations' })
     const asOf = new Date('2026-01-02')
     expect(await expireAccountInvitations({ actor, asOf, service: application.forActor(actor) })).toEqual({ processed: 1, skipped: 1 })
-    expect(revoke).toHaveBeenCalledWith('expired')
+    expect(revoke).toHaveBeenCalledWith('expired', 'school-a')
     expect(revoke).toHaveBeenCalledTimes(1)
     expect((await fixture.repositories.accountInvitations.findById('expired'))?.status).toBe(AccountInvitationStatus.Expired)
     expect((await fixture.repositories.accountInvitations.findById('foreign'))?.status).toBe(AccountInvitationStatus.Pending)

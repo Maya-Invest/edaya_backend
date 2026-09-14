@@ -4,7 +4,7 @@ import type { ProfilePicturesSeedPort } from '../port'
 import { AttachmentStatus } from '@edaya/core'
 import { buildAttachmentContentUrl } from '@edaya/service'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntityList } from '../../../transport/http/core-entity'
 
 export interface CreateHttpProfilePicturesSeedPortOptions {
   client: HttpSeedClient
@@ -37,6 +37,11 @@ export function createHttpProfilePicturesSeedPort(
 
   return {
     uploadProfilePhoto: input => withSeedPortError('profilePictures.uploadProfilePhoto', async () => {
+      const existing = await postEntityList(requestOptions, 'attachments', { id: input.attachmentId, $limit: 1 }) as { id: string, schoolId: string, ownerId: string, ownerKind: string, status: string }[]
+      if (existing[0]?.status === AttachmentStatus.Ready && existing[0].schoolId === input.schoolId
+        && existing[0].ownerId === input.ownerId && existing[0].ownerKind === input.ownerKind) {
+        return { attachmentId: existing[0].id, photoUrl: buildAttachmentContentUrl(options.client.origin, existing[0].id) }
+      }
       const { response, body } = await options.client.jsonRequest<UploadIntentResponse>(
         '/core/files/upload-intents',
         {

@@ -5,13 +5,14 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student } from '@edaya/core'
+import { AcademicPeriodType, AcademicYear, ActivityCategory, Attachment, AttachmentOwnerKind, AttachmentStatus, AttendanceMode, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DayOfWeek, GradeLevel, Resource, ResourceKind, School, StaffMember, Student } from '@edaya/core'
 import {
   describe,
   expect,
   mock,
   test,
 } from 'bun:test'
+import { createAttachmentUpload } from '../../../src/capabilities/files/attachment-uploads'
 import { createTestApp } from '../../support/create-test-app'
 import { createPlatformRegisterTestActor, createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
@@ -388,66 +389,37 @@ describe('SchoolService setup workflows', () => {
     expect(Boolean(await resourceAssignments.findById('ra-1'))).toBe(false)
   })
 
-  test('registerAttachment validates storage metadata before saving', async () => {
-    const headObject = mock(async () => ({
-      sizeBytes: 1024,
-      contentType: 'application/pdf',
-    }))
-    const fileStorage: FileStoragePort = {
-      ...testFileStorage,
-      headObject,
-      deleteObject: mock(async () => {}),
-    }
+  test('registerAttachment completes only its persisted upload and preserves accepted bytes', async () => {
+    const fileStorage = createInMemoryFileStorage()
     const { attachments, service } = await createContext({ fileStorage })
-
-    const attachment = await service.setupWorkflow.registerAttachment({
-      id: 'att-1',
-      schoolId: 'sch1',
-      ownerKind: AttachmentOwnerKind.Student,
-      ownerId: 'stu1',
-      fileName: 'report.pdf',
-      storageKey: 'uploads/report.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 1024,
-      status: AttachmentStatus.PendingUpload,
-    })
-
+    const body = new TextEncoder().encode('%PDF-1.7\nFixture content\n%%EOF')
+    const input = { attachmentId: 'att-1', ownerKind: AttachmentOwnerKind.Student, ownerId: 'stu1', fileName: 'report.pdf', mimeType: 'application/pdf', sizeBytes: body.byteLength }
+    const intent = await createAttachmentUpload(service.baseService, input)
+    await fileStorage.putObject({ key: intent.storageKey, body, contentType: input.mimeType })
+    const command = { id: intent.attachmentId, schoolId: 'sch1', ...input, storageKey: intent.storageKey }
+    const attachment = await service.setupWorkflow.registerAttachment(command)
     expect(attachment.status).toBe(AttachmentStatus.Ready)
-    expect((await attachments.findById('att-1'))).toBeDefined()
-    expect(headObject).toHaveBeenCalledWith('uploads/report.pdf')
+    expect(attachment.storageKey).not.toBe(intent.storageKey)
+    expect(attachment.checksum).toHaveLength(64)
+    expect((await attachments.findById('att-1'))?.storageKey).toBe(attachment.storageKey)
+    await fileStorage.putObject({ key: intent.storageKey, body: new Uint8Array([0]), contentType: input.mimeType })
+    expect((await service.setupWorkflow.registerAttachment(command)).storageKey).toBe(attachment.storageKey)
+    expect((await fileStorage.readObject(attachment.storageKey!, { maxBytes: body.byteLength }))?.body).toEqual(body)
   })
 
-  test('registerAttachment rejects missing storage objects and metadata mismatches', async () => {
-    const { service: missingObjectService } = await createContext()
-    await expect(missingObjectService.setupWorkflow.registerAttachment({
-      id: 'att-missing',
-      schoolId: 'sch1',
-      ownerKind: AttachmentOwnerKind.Student,
-      ownerId: 'stu1',
-      fileName: 'report.pdf',
-      storageKey: 'uploads/missing.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 1024,
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
-
-    const mismatchedStorage: FileStoragePort = {
-      ...testFileStorage,
-      headObject: mock(async () => ({ sizeBytes: 512, contentType: 'application/pdf' })),
-    }
-    const { service: mismatchService } = await createContext({ fileStorage: mismatchedStorage })
-    await expect(mismatchService.setupWorkflow.registerAttachment({
-      id: 'att-size',
-      schoolId: 'sch1',
-      ownerKind: AttachmentOwnerKind.Student,
-      ownerId: 'stu1',
-      fileName: 'report.pdf',
-      storageKey: 'uploads/report.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 1024,
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+  test('registerAttachment rejects unattested keys and mismatched upload content', async () => {
+    const fileStorage = createInMemoryFileStorage()
+    const { service } = await createContext({ fileStorage })
+    const input = { attachmentId: 'att-invalid', ownerKind: AttachmentOwnerKind.Student, ownerId: 'stu1', fileName: 'report.pdf', mimeType: 'application/pdf', sizeBytes: 8 }
+    await expect(service.setupWorkflow.registerAttachment({ ...input, id: input.attachmentId, schoolId: 'sch1', storageKey: 'unattested' })).rejects.toBeInstanceOf(AuthorizationError)
+    const intent = await createAttachmentUpload(service.baseService, input)
+    const command = { ...input, id: input.attachmentId, schoolId: 'sch1', storageKey: intent.storageKey }
+    await expect(service.setupWorkflow.registerAttachment(command)).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    await fileStorage.putObject({ key: intent.storageKey, body: new TextEncoder().encode('<script>'), contentType: input.mimeType })
+    await expect(service.setupWorkflow.registerAttachment(command)).rejects.toMatchObject({ code: 'ATTACHMENT_CONTENT_INVALID' })
   })
 
-  test('removeAttachment deletes storage objects when present', async () => {
+  test('removeAttachment persists cleanup eligibility without deleting storage inside SQL', async () => {
     const deleteObject = mock(async () => {})
     const fileStorage: FileStoragePort = {
       ...testFileStorage,
@@ -466,7 +438,8 @@ describe('SchoolService setup workflows', () => {
 
     await service.setupWorkflow.removeAttachment({ attachmentId: 'att-remove' })
 
-    expect(deleteObject).toHaveBeenCalledWith('uploads/report.pdf')
+    expect(deleteObject).not.toHaveBeenCalled()
+    expect((await service.baseService.repositories.privateFiles.listDue('sch1', 10)).map(value => value.storageKey)).toEqual(['uploads/report.pdf'])
     expect(Boolean(await attachments.findById('att-remove'))).toBe(false)
   })
 })

@@ -7,8 +7,8 @@ export function createNotifyInvitationDeliveryPort(runtime: NotifyRuntime): Invi
     deliver: async (input: InvitationDeliveryInput) => {
       await deliverInvitation(runtime, input);
     },
-    revoke: async (invitationId: string) => {
-      await revokeInvitation(runtime, invitationId);
+    revoke: async (invitationId: string, schoolId: string) => {
+      await revokeInvitation(runtime, invitationId, schoolId);
     },
   };
 }

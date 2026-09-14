@@ -2,14 +2,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
 import { expect, test } from 'bun:test'
-import { NOTIFY_SCHEMA_SQL } from '../../adaptor-notify/src/store/schema'
 import { migrationDirectory } from './support/authorization-database'
 
 const migration = readFileSync(resolve(migrationDirectory, '0012_notification_contact_authority.sql'), 'utf8')
 async function fixture(run: (db: PGlite) => Promise<void>) {
   const db = new PGlite()
   try {
-    await db.exec(NOTIFY_SCHEMA_SQL)
+    await db.exec(readFileSync(new URL('./fixtures/legacy-notify.sql', import.meta.url), 'utf8'))
     await db.exec(`ALTER TABLE notify.recipients DROP CONSTRAINT command_notification_destination;
       INSERT INTO notify.recipients (subject_id, tenant, email, recipient_id) VALUES
         ('school-person', 'school', 'old@example.test', 'guardian'),
