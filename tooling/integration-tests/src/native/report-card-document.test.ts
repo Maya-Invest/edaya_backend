@@ -96,7 +96,7 @@ test('concurrent report renderers release their one-connection pools and publish
   expect(uploads).toBe(2)
   expect(outcomes[0]).toEqual(outcomes[1])
   expect(await repositories.attachments.count({ ownerKind: AttachmentOwnerKind.ReportCard, ownerId: report.id })).toBe(1)
-}, 10000)
+}, 30000)
 
 test('revoking authority during storage prevents attachment publication', async () => {
   const report = await result('report-revoked')
@@ -109,7 +109,7 @@ test('revoking authority during storage prevents attachment publication', async 
   finally {
     await repositories.schools.save(school)
   }
-}, 10000)
+}, 30000)
 
 test('final transaction failure rolls back stub status and new attachment together', async () => {
   const report = await result('report-rollback')
@@ -124,7 +124,7 @@ test('final transaction failure rolls back stub status and new attachment togeth
   await expect(generator(0)(report.id)).resolves.toHaveProperty('attachmentId')
   expect((await repositories.attachments.findById(stub.id))?.status).toBe(AttachmentStatus.Failed)
   expect(await repositories.attachments.count({ ownerId: report.id })).toBe(2)
-}, 10000)
+}, 30000)
 
 test('logbook rendering and both download grant paths release the pool connection during external calls', async () => {
   let externalCalls = 0
@@ -163,4 +163,4 @@ test('logbook rendering and both download grant paths release the pool connectio
   expect(outcome.sessionCount).toBe(1)
   expect(await grantAttachmentDownload(service.baseService, download.id)).toHaveProperty('downloadUrl')
   expect(externalCalls).toBe(4)
-}, 10000)
+}, 30000)

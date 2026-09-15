@@ -45,12 +45,14 @@ export const COORDINATOR_PERMISSIONS: readonly Permission[] = [
 
 export const ACCOUNTANT_PERMISSIONS: readonly Permission[] = [
   Permission.PAYMENT_RECORD,
+  Permission.PAYMENT_ALLOCATE,
   Permission.PAYMENT_READ,
   Permission.FINANCIAL_CONFIG_READ,
   Permission.FINANCIAL_CONFIG_CONFIGURE,
   Permission.FINANCIAL_CONFIG_UPDATE,
   Permission.PAYMENT_CANCEL,
   Permission.PAYMENT_REVERSE,
+  Permission.FINANCIAL_REPORT_READ,
 ]
 
 /** Presets populate ordinary grants; a preset name is never stored as authority. */

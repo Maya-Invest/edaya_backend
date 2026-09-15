@@ -288,17 +288,19 @@ describeIntegration('tenant boundary safeguards', () => {
       defaultAmount: 10000,
       currency: 'XAF',
     })
-    const studentFeeB = await schoolBApp.financeWorkflow.assignFeeToStudent({
+    await schoolBApp.financeWorkflow.enrollStudentInService({
       id: 'student-fee-b',
       studentId: 'student-b',
-      feeId: 'fee-b',
+      catalogServiceId: 'fee-b',
     })
     await schoolBApp.financeWorkflow.recordPayment({
       id: 'payment-b',
-      studentFeeId: studentFeeB.id,
+      studentId: 'student-b',
+      academicYearId: 'year-b',
       amount: 1000,
       paymentDate: new Date('2026-09-01T00:00:00Z'),
       method: PaymentMethod.Cash,
+      allocation: { mode: 'fifo' },
     })
     await schoolBApp.baseService.entities.resources.save(
       new Resource({
@@ -481,7 +483,7 @@ describeIntegration('tenant boundary safeguards', () => {
       })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }
     for (const paymentId of ['missing-payment', 'payment-b']) {
-      await expect(app.financeWorkflow.cancelPayment({ paymentId }))
+      await expect(app.financeWorkflow.reversePayment({ paymentId }))
         .rejects
         .toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     }

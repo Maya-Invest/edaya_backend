@@ -22,7 +22,7 @@ import {
   demoCiMessageDeliveries,
 } from './domains/communications'
 import { demoCiDisciplinaryActions, demoCiStudentDisciplinaryActions } from './domains/discipline'
-import { demoCiFees, demoCiPayments, demoCiStudentFees } from './domains/finance'
+import { demoCiCatalogServices, demoCiPayments, demoCiStudentServiceEnrollments } from './domains/finance'
 import { demoCiIncidents, demoCiStudentIncidentInvolvements } from './domains/incidents'
 import {
   demoCiGradeScales,
@@ -88,8 +88,8 @@ export const demoCiDataset = {
     activities: demoCiActivities,
     activityEnrollments: demoCiActivityEnrollments,
     classActivityEnrollments: demoCiClassActivityEnrollments,
-    fees: demoCiFees,
-    studentFees: demoCiStudentFees,
+    catalogServices: demoCiCatalogServices,
+    studentServiceEnrollments: demoCiStudentServiceEnrollments,
     payments: demoCiPayments,
     announcements: demoCiAnnouncements,
     announcementTargets: demoCiAnnouncementTargets,

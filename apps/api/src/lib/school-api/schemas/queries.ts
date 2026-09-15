@@ -162,3 +162,222 @@ export const schoolOverviewResponseSchema = z.object({
   areaHealth: dashboardAreaHealthSchema,
   classRiskRows: z.array(dashboardClassRiskRowSchema),
 }).openapi("SchoolOverviewResponse");
+
+const moneyAmountSchema = z.object({
+  amount: z.number().int(),
+  currency: z.string().min(1),
+});
+
+export const getStudentFinanceSummaryQuerySchema = z.object({
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+}).openapi("GetStudentFinanceSummaryQuery");
+
+export const studentFinanceSummaryResponseSchema = z.object({
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  accountId: z.string().min(1).optional(),
+  currency: z.string().min(1),
+  available: moneyAmountSchema,
+  outstanding: moneyAmountSchema,
+  overdue: moneyAmountSchema,
+}).openapi("StudentFinanceSummaryResponse");
+
+export const getAccountStatementQuerySchema = z.object({
+  accountId: z.string().min(1),
+}).openapi("GetAccountStatementQuery");
+
+export const accountStatementResponseSchema = z.object({
+  accountId: z.string().min(1),
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  currency: z.string().min(1),
+  projectedAvailable: z.number().int().nonnegative(),
+  entrySum: z.number().int(),
+  entries: z.array(z.object({
+    id: z.string().min(1),
+    direction: z.string().min(1),
+    amount: z.number().int(),
+    sourceKind: z.string().min(1),
+    sourceId: z.string().min(1),
+    effectiveAt: z.string(),
+    recordedAt: z.string(),
+    resultingAvailableBalance: z.number().int().nonnegative(),
+  })),
+  payments: z.array(z.object({
+    id: z.string().min(1),
+    kind: z.string().min(1),
+    amount: z.number().int(),
+    status: z.string().min(1),
+    paymentDate: z.string(),
+    method: z.string().min(1),
+    reference: z.string().optional(),
+  })),
+  allocations: z.array(z.object({
+    id: z.string().min(1),
+    chargeId: z.string().min(1),
+    amount: z.number().int(),
+    kind: z.string().min(1),
+  })),
+  charges: z.array(z.object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    remainingObligation: z.number().int().nonnegative(),
+    status: z.string().min(1),
+  })),
+}).openapi("AccountStatementResponse");
+
+export const getSchoolFinanceAgingQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+}).openapi("GetSchoolFinanceAgingQuery");
+
+export const schoolFinanceAgingResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+  currency: z.string().min(1),
+  overdueCount: z.number().int().nonnegative(),
+  overdueAmount: z.number().int().nonnegative(),
+  outstandingAmount: z.number().int().nonnegative(),
+  charges: z.array(z.object({
+    chargeId: z.string().min(1),
+    studentId: z.string().min(1),
+    label: z.string().min(1),
+    overdueAmount: z.number().int().nonnegative(),
+    remainingAmount: z.number().int().nonnegative(),
+    dueDate: z.string().optional(),
+  })),
+}).openapi("SchoolFinanceAgingResponse");
+
+export const getFinanceReconciliationQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+}).openapi("GetFinanceReconciliationQuery");
+
+export const financeReconciliationResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+  balanced: z.boolean(),
+  accounts: z.array(z.object({
+    accountId: z.string().min(1),
+    studentId: z.string().min(1),
+    projectedAvailable: z.number().int(),
+    entrySum: z.number().int(),
+    difference: z.number().int(),
+  })),
+  charges: z.array(z.object({
+    chargeId: z.string().min(1),
+    studentId: z.string().min(1),
+    projectedAllocated: z.number().int(),
+    settlement: z.number().int(),
+    difference: z.number().int(),
+  })),
+}).openapi("FinanceReconciliationResponse");
+
+export const previewAccountAllocationQuerySchema = z.object({
+  accountId: z.string().min(1),
+  allocation: z.object({
+    mode: z.enum(["account_only", "fifo", "targeted"]),
+    targets: z.array(z.object({
+      chargeId: z.string().min(1),
+      amount: z.number().positive(),
+    })).optional(),
+  }),
+}).openapi("PreviewAccountAllocationQuery");
+
+export const allocationPreviewQueryResponseSchema = z.object({
+  accountId: z.string().min(1),
+  availableBefore: z.number().int().nonnegative(),
+  availableAfter: z.number().int().nonnegative(),
+  allocations: z.array(z.object({
+    chargeId: z.string().min(1),
+    amount: z.number().positive(),
+    label: z.string().min(1),
+  })),
+}).openapi("AllocationPreviewQueryResponse");
+
+export const getRelatedFamilyFinanceOverviewQuerySchema = z.object({
+  academicYearId: z.string().min(1),
+}).openapi("GetRelatedFamilyFinanceOverviewQuery");
+
+export const relatedFamilyFinanceOverviewResponseSchema = z.object({
+  academicYearId: z.string().min(1),
+  students: z.array(studentFinanceSummaryResponseSchema),
+}).openapi("RelatedFamilyFinanceOverviewResponse");
+
+export const getStudentAccountStatementQuerySchema = z.object({
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  currency: z.string().min(1).optional(),
+}).openapi("GetStudentAccountStatementQuery");
+
+export const studentAccountStatementResponseSchema = accountStatementResponseSchema.nullable().openapi("StudentAccountStatementResponse");
+
+export const listOpenDueChargesQuerySchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+}).openapi("ListOpenDueChargesQuery");
+
+export const openDueChargesResponseSchema = z.object({
+  schoolId: z.string().min(1),
+  academicYearId: z.string().min(1).optional(),
+  charges: z.array(z.object({
+    chargeId: z.string().min(1),
+    studentId: z.string().min(1),
+    label: z.string().min(1),
+    remainingAmount: z.number().int().nonnegative(),
+    overdueAmount: z.number().int().nonnegative(),
+    dueDate: z.string().optional(),
+    status: z.string().min(1),
+  })),
+}).openapi("OpenDueChargesResponse");
+
+export const getPaymentSettlementHistoryQuerySchema = z.object({
+  accountId: z.string().min(1),
+}).openapi("GetPaymentSettlementHistoryQuery");
+
+export const paymentSettlementHistoryResponseSchema = z.object({
+  accountId: z.string().min(1),
+  studentId: z.string().min(1),
+  academicYearId: z.string().min(1),
+  currency: z.string().min(1),
+  payments: z.array(z.object({
+    id: z.string().min(1),
+    kind: z.string().min(1),
+    amount: z.number().int(),
+    status: z.string().min(1),
+    paymentDate: z.string(),
+    method: z.string().min(1),
+    reference: z.string().optional(),
+    reversesPaymentId: z.string().optional(),
+    reversedByPaymentId: z.string().optional(),
+  })),
+  allocations: z.array(z.object({
+    id: z.string().min(1),
+    chargeId: z.string().min(1),
+    amount: z.number().int(),
+    kind: z.string().min(1),
+    causedByPaymentId: z.string().optional(),
+    reversesAllocationId: z.string().optional(),
+    recordedAt: z.string(),
+  })),
+}).openapi("PaymentSettlementHistoryResponse");
+
+export const reconcileStudentYearAccountQuerySchema = z.object({
+  accountId: z.string().min(1),
+}).openapi("ReconcileStudentYearAccountQuery");
+
+export const studentYearAccountReconciliationResponseSchema = z.object({
+  accountId: z.string().min(1),
+  studentId: z.string().min(1),
+  projectedAvailable: z.number().int(),
+  entrySum: z.number().int(),
+  difference: z.number().int(),
+  balanced: z.boolean(),
+  charges: z.array(z.object({
+    chargeId: z.string().min(1),
+    projectedAllocated: z.number().int(),
+    settlement: z.number().int(),
+    difference: z.number().int(),
+  })),
+}).openapi("StudentYearAccountReconciliationResponse");

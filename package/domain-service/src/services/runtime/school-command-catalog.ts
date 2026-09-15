@@ -115,6 +115,20 @@ export type SchoolCommandKey
     | 'cancelPayment'
     | 'adjustStudentFee'
     | 'cancelStudentFee'
+    | 'createCatalogService'
+    | 'updateCatalogService'
+    | 'activateCatalogService'
+    | 'archiveCatalogService'
+    | 'enrollStudentInService'
+    | 'enrollStudentsInService'
+    | 'cancelServiceEnrollment'
+    | 'materializeOneTimeCharge'
+    | 'adjustStudentCharge'
+    | 'waiveStudentCharge'
+    | 'cancelStudentCharge'
+    | 'allocateAccountBalance'
+    | 'reverseAllocation'
+    | 'refundAvailableBalance'
     | 'createProfilePhotoUpload'
     | 'completeProfilePhotoUpload'
     | 'submitStudentPhoto'
@@ -249,6 +263,20 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'cancelPayment',
   'adjustStudentFee',
   'cancelStudentFee',
+  'createCatalogService',
+  'updateCatalogService',
+  'activateCatalogService',
+  'archiveCatalogService',
+  'enrollStudentInService',
+  'enrollStudentsInService',
+  'cancelServiceEnrollment',
+  'materializeOneTimeCharge',
+  'adjustStudentCharge',
+  'waiveStudentCharge',
+  'cancelStudentCharge',
+  'allocateAccountBalance',
+  'reverseAllocation',
+  'refundAvailableBalance',
   'createProfilePhotoUpload',
   'completeProfilePhotoUpload',
   'submitStudentPhoto',

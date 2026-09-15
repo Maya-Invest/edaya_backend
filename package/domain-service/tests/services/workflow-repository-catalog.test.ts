@@ -6,7 +6,7 @@ describe('workflow repository catalog', () => {
   test('documents repository keys for workflows with narrow direct repository usage', () => {
     expect(WORKFLOW_REPOSITORY_KEYS.setup.length).toBeLessThan(4)
     expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBeLessThanOrEqual(5)
-    expect(WORKFLOW_REPOSITORY_KEYS.finance.length).toBeLessThanOrEqual(4)
+    expect(WORKFLOW_REPOSITORY_KEYS.finance.length).toBe(10)
     expect(WORKFLOW_REPOSITORY_KEYS.invitations.length).toBeGreaterThan(4)
   })
 

@@ -173,10 +173,6 @@ function countReportCardSections(dataset: FixtureDataset): number {
     .reduce((total, definition) => total + definition.sections.length, 0)
 }
 
-function countStudentFees(dataset: FixtureDataset): number {
-  return countArray(dataset.entities.studentFees)
-}
-
 function countCalendarEvents(dataset: FixtureDataset): number {
   return countArray(dataset.extensions?.calendarEvents)
 }
@@ -259,8 +255,8 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'attendance': countAttendanceRecords(dataset),
     'student-health-profiles': countArray(entities.studentHealthProfiles),
     'student-notes': countArray(entities.studentNotes),
-    'fees': countArray(entities.fees),
-    'student-fees': countStudentFees(dataset),
+    'catalog-services': countArray(entities.catalogServices),
+    'student-service-enrollments': countArray(entities.studentServiceEnrollments),
     'payments': countArray(entities.payments),
     'grade-scales': countArray(entities.gradeScales),
     'definitions': countArray(dataset.extensions?.reportCardDefinitionFixtures),

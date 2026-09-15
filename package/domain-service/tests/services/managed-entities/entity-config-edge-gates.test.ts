@@ -1,6 +1,6 @@
 import type { SchoolRepositories } from '@edaya/service'
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, Announcement, AnnouncementTarget, AttachmentOwnerKind, BusinessRuleViolationError, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ClassGroup, DayOfWeek, FeeStatus, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentFee, StudentHealthProfile, StudentNote, StudentNoteVisibility, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
+import { AcademicYear, Announcement, AnnouncementTarget, AttachmentOwnerKind, BusinessRuleViolationError, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ChargeStatus, ClassGroup, DayOfWeek, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentHealthProfile, StudentNote, StudentNoteVisibility, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
 import { validateAttachmentSave, validateCalendarEventSave, validateClassGroupSave, validateLessonSessionSave, validateScheduleSave, validateStaffAssignmentSave, validateStudentSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
@@ -23,12 +23,13 @@ function repositories(overrides: Partial<SchoolRepositories> = {}): SchoolReposi
     },
     guardians: { findById: mock(async () => ({ id: 'guardian-1', schoolId: 'school' })) },
     incidents: { findById: mock(async () => ({ id: 'incident-1', schoolId: 'school' })) },
-    payments: { findById: mock(async () => ({ id: 'payment-1', studentFeeId: 'student-fee-1' })) },
+    payments: { findById: mock(async () => ({ id: 'payment-1', accountId: 'account-1' })) },
     results: { findById: mock(async () => ({ id: 'report-card-1', studentId: 'student-1' })) },
     lessonSessions: { findById: mock(async () => ({ id: 'session-1', classGroupId: 'class-1', classSubjectId: 'subject-1', schoolId: 'school' })) },
     staffMembers: { findById: mock(async () => ({ id: 'staff-1', schoolId: 'school' })) },
     studentDisciplinaryActions: { findById: mock(async () => ({ id: 'action-1', studentId: 'student-1' })) },
-    studentFees: { findById: mock(async () => ({ id: 'student-fee-1', studentId: 'student-1' })) },
+    studentYearAccounts: { findById: mock(async () => ({ id: 'account-1', studentId: 'student-1', schoolId: 'school' })) },
+    studentCharges: { findById: mock(async () => ({ id: 'student-fee-1', studentId: 'student-1' })) },
     studentHealthProfiles: {
       findById: mock(async () => ({ id: 'health-1', schoolId: 'school', studentId: 'student-1' })),
       list: mock(async () => []),
@@ -79,7 +80,7 @@ describe('entity config edge gates', () => {
       .rejects
       .toBeInstanceOf(AuthorizationError)
     await expect(validateAttachmentSave(attachment(AttachmentOwnerKind.Payment, 'payment-1'), undefined, repositories({
-      studentFees: { findById: mock(async () => undefined) } as any,
+      studentYearAccounts: { findById: mock(async () => undefined) } as any,
     })))
       .rejects
       .toBeInstanceOf(AuthorizationError)
@@ -225,15 +226,17 @@ describe('entity config edge gates', () => {
     })
     await store.academicYearRepository.save(year)
     await store.studentRepository.save(student)
-    await store.studentFeeRepository.save(new StudentFee({
+    await store.studentChargeRepository.save(new StudentCharge({
       id: 'student-fee-1',
+      schoolId: student.schoolId,
       studentId: student.id,
-      feeId: 'fee-1',
+      enrollmentId: 'enr-1',
+      label: 'Tuition',
       expectedAmount: 100,
-      paidAmount: 0,
+      allocatedAmount: 0,
       academicYearId: year.id,
       currency: 'USD',
-      status: FeeStatus.Pending,
+      status: ChargeStatus.Pending,
     }))
 
     await expect(app.baseService.entities.students.delete(student.id)).rejects.toBeInstanceOf(BusinessRuleViolationError)

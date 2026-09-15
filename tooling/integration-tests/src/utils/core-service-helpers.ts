@@ -1,8 +1,8 @@
 import type { Permission } from '@edaya/authorization'
-import type { AttendanceJustificationStatus, StudentFee } from '@edaya/core'
+import type { AttendanceJustificationStatus } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
 import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, buildStudentFeeSummary, CalendarEvent, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Fee, FeeStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -414,53 +414,57 @@ export async function saveCalendarEvent(app: SchoolService, input: ArgsOf<typeof
   return event
 }
 
-export async function saveFee(app: SchoolService, input: ArgsOf<typeof Fee>): Promise<Fee> {
-  const fee = new Fee(input)
-  await app.baseService.entities.fees.save(fee)
-  return fee
+export async function saveFee(app: SchoolService, input: {
+  id: string
+  schoolId: string
+  academicYearId: string
+  name: string
+  defaultAmount: number
+  currency: string
+}) {
+  return app.financeWorkflow.createCatalogService({
+    id: input.id,
+    academicYearId: input.academicYearId,
+    name: input.name,
+    defaultPrice: input.defaultAmount,
+    currency: input.currency,
+    billingTerms: { kind: 'one_time', installments: [] },
+    status: CatalogServiceStatus.Active,
+  })
+}
+
+export async function assignCatalogService(app: SchoolService, input: {
+  id: string
+  studentId: string
+  catalogServiceId: string
+}) {
+  return app.financeWorkflow.enrollStudentInService(input)
 }
 
 export async function adjustStudentFee(app: SchoolService, input: {
   studentFeeId: string
   adjustmentAmount: number
   reason: string
-}): Promise<StudentFee> {
-  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
-  if (!existing) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-  const studentFee = existing.copyWith({
+}) {
+  return app.financeWorkflow.adjustStudentCharge({
+    chargeId: input.studentFeeId,
     adjustmentAmount: input.adjustmentAmount,
-    adjustmentReason: input.reason,
-    adjustedById: resolveAuditActorId(app.baseService.actor),
-    adjustedAt: new Date(),
-    updatedAt: new Date(),
+    reason: input.reason,
   })
-  await app.baseService.entities.studentFees.save(studentFee)
-  return studentFee
 }
 
 export async function cancelStudentFee(app: SchoolService, input: {
   studentFeeId: string
   reason: string
-}): Promise<StudentFee> {
-  const existing = await app.baseService.entities.studentFees.findById(input.studentFeeId)
-  if (!existing) {
-    throw new AuthorizationError(AuthorizationErrorCode.Forbidden)
-  }
-  const studentFee = existing.copyWith({
-    status: FeeStatus.Cancelled,
-    cancellationReason: input.reason,
-    cancelledById: resolveAuditActorId(app.baseService.actor),
-    cancelledAt: new Date(),
-    updatedAt: new Date(),
+}) {
+  return app.financeWorkflow.cancelStudentCharge({
+    chargeId: input.studentFeeId,
+    reason: input.reason,
   })
-  await app.baseService.entities.studentFees.save(studentFee)
-  return studentFee
 }
 
-export async function buildFeeSummary(app: SchoolService, studentId: string) {
-  return buildStudentFeeSummary(await app.baseService.entities.studentFees.list({ studentId }))
+export async function buildFeeSummary(app: SchoolService, studentId: string, academicYearId: string) {
+  return app.getStudentFinanceSummary({ studentId, academicYearId })
 }
 
 export async function saveResourceAssignment(app: SchoolService, input: ArgsOf<typeof ResourceAssignment>): Promise<ResourceAssignment> {

@@ -3,7 +3,7 @@ import type { ServiceArgs } from '../service-args'
 import type { CoreEntityKey, CoreEntityMap } from './core-entity-map'
 import { withNotificationPostSaveHook } from '../../capabilities/notifications/notification-trigger-registry'
 import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
-import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, feeConfig, gradeLevelConfig, gradeLevelSubjectConfig, gradeLevelSubjectMatterConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentFeeConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, studentPhotoSubmissionConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config'
+import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, catalogServiceConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, gradeLevelConfig, gradeLevelSubjectConfig, gradeLevelSubjectMatterConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, studentChargeConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, studentPhotoSubmissionConfig, studentServiceEnrollmentConfig, studentYearAccountConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config'
 import { ManagedEntityService } from '../entities/managed-entity-service'
 import { CORE_ENTITY_KEYS } from './core-entity-map'
 
@@ -31,8 +31,10 @@ export const CORE_ENTITY_CONFIG_FACTORIES: CoreEntityConfigFactoryMap = {
   attachments: attachmentConfig,
   resources: resourceConfig,
   resourceAssignments: resourceAssignmentConfig,
-  fees: feeConfig,
-  studentFees: studentFeeConfig,
+  catalogServices: catalogServiceConfig,
+  studentServiceEnrollments: studentServiceEnrollmentConfig,
+  studentCharges: studentChargeConfig,
+  studentYearAccounts: studentYearAccountConfig,
   payments: paymentConfig,
   schedules: scheduleConfig,
   lessonSessions: lessonSessionConfig,

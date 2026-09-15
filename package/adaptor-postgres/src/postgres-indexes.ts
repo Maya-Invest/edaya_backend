@@ -50,19 +50,63 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [index('resources_school_id_idx').on(col(table, 'schoolId'))]
     case 'resource_assignments':
       return [index('resource_assignments_resource_id_idx').on(col(table, 'resourceId'))]
-    case 'fees':
+    case 'catalog_services':
       return [
-        index('fees_school_id_idx').on(col(table, 'schoolId')),
-        index('fees_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('catalog_services_school_id_idx').on(col(table, 'schoolId')),
+        index('catalog_services_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('catalog_services_school_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
       ]
-    case 'student_fees':
+    case 'student_service_enrollments':
       return [
-        index('student_fees_student_id_idx').on(col(table, 'studentId')),
-        index('student_fees_fee_id_idx').on(col(table, 'feeId')),
-        index('student_fees_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('student_service_enrollments_school_id_idx').on(col(table, 'schoolId')),
+        index('student_service_enrollments_student_id_idx').on(col(table, 'studentId')),
+        index('student_service_enrollments_catalog_service_id_idx').on(col(table, 'catalogServiceId')),
+        uniqueIndex('student_service_enrollments_active_uidx')
+          .on(col(table, 'studentId'), col(table, 'catalogServiceId'), col(table, 'academicYearId'))
+          .where(sql`${col(table, 'status')} = 'active'`),
+      ]
+    case 'student_charges':
+      return [
+        index('student_charges_school_id_idx').on(col(table, 'schoolId')),
+        index('student_charges_student_id_idx').on(col(table, 'studentId')),
+        uniqueIndex('student_charges_enrollment_uidx').on(col(table, 'enrollmentId')),
+        index('student_charges_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('student_charges_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+      ]
+    case 'student_year_accounts':
+      return [
+        index('student_year_accounts_school_id_idx').on(col(table, 'schoolId')),
+        index('student_year_accounts_student_id_idx').on(col(table, 'studentId')),
+        uniqueIndex('student_year_accounts_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'studentId'),
+          col(table, 'academicYearId'),
+          col(table, 'currency'),
+        ),
       ]
     case 'payments':
-      return [index('payments_student_fee_id_idx').on(col(table, 'studentFeeId'))]
+      return [
+        index('payments_school_id_idx').on(col(table, 'schoolId')),
+        index('payments_account_id_idx').on(col(table, 'accountId')),
+        uniqueIndex('payments_reference_uidx')
+          .on(col(table, 'schoolId'), col(table, 'academicYearId'), col(table, 'reference'))
+          .where(sql`${col(table, 'reference')} is not null`),
+      ]
+    case 'allocations':
+      return [
+        index('allocations_school_id_idx').on(col(table, 'schoolId')),
+        index('allocations_account_id_idx').on(col(table, 'accountId')),
+        index('allocations_charge_id_idx').on(col(table, 'chargeId')),
+        uniqueIndex('allocations_reverse_uidx')
+          .on(col(table, 'reversesAllocationId'))
+          .where(sql`${col(table, 'kind')} = 'reverse'`),
+      ]
+    case 'student_account_entries':
+      return [
+        index('student_account_entries_school_id_idx').on(col(table, 'schoolId')),
+        index('student_account_entries_account_id_idx').on(col(table, 'accountId')),
+        index('student_account_entries_recorded_at_idx').on(col(table, 'accountId'), col(table, 'recordedAt')),
+      ]
     case 'schedules':
       return [
         index('schedules_class_group_id_idx').on(col(table, 'classGroupId')),

@@ -38,7 +38,7 @@ const systemActions: Record<string, readonly Permission[]> = {
   'school-bootstrap': [P.PLATFORM_REGISTER_SCHOOL, P.SCHOOL_STRUCTURE_CONFIGURE, P.SCHOOL_LIFECYCLE_MANAGE, P.ACCESS_CONTROL_ASSIGN, P.STAFF_CREATE, P.QUERY_WORKSPACE_READ],
 }
 
-export const OVERVIEW_RESOURCES = ['students', 'guardians', 'staffMembers', 'studentFees', 'results', 'incidents', 'attendance', 'assessments', 'assessmentResults', 'enrollments', 'calendarEvents', 'classGroups', 'payments', 'studentDisciplinaryActions', 'activities', 'academicPeriods'] as const
+export const OVERVIEW_RESOURCES = ['students', 'guardians', 'staffMembers', 'studentCharges', 'results', 'incidents', 'attendance', 'assessments', 'assessmentResults', 'enrollments', 'calendarEvents', 'classGroups', 'payments', 'studentDisciplinaryActions', 'activities', 'academicPeriods'] as const
 export type OverviewRepositories = Pick<AuthorizationRepositories, typeof OVERVIEW_RESOURCES[number]>
 
 export class AccessPolicies {

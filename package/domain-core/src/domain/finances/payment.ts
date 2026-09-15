@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 import { Money } from '../../domain/value-objects/money'
-
 import { parseDomain, zodDate } from '../shared/utils'
 
 export enum PaymentMethod {
@@ -15,13 +14,20 @@ export enum PaymentMethod {
 export enum PaymentStatus {
   Recorded = 'recorded',
   Reversed = 'reversed',
-  Cancelled = 'cancelled',
+}
+
+export enum PaymentKind {
+  Receipt = 'receipt',
+  Disbursement = 'disbursement',
 }
 
 export const paymentBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
-  studentFeeId: z.string().trim().min(1, 'studentFeeId must not be blank'),
-  amount: z.number().int().nonnegative('amount must be a non-negative integer'),
+  schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  accountId: z.string().trim().min(1, 'accountId must not be blank'),
+  academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
+  kind: z.nativeEnum(PaymentKind).default(PaymentKind.Receipt),
+  amount: z.number().int().positive('amount must be a strictly positive integer'),
   currency: z.string().trim().min(1, 'currency must not be blank'),
   paymentDate: zodDate(),
   method: z.nativeEnum(PaymentMethod),
@@ -29,10 +35,10 @@ export const paymentBaseSchema = z.object({
   reference: z.string().trim().min(1, 'reference must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   recordedById: z.string().trim().min(1, 'recordedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  reversesPaymentId: z.string().trim().min(1, 'reversesPaymentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  reversedByPaymentId: z.string().trim().min(1, 'reversedByPaymentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   reversedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   reversedById: z.string().trim().min(1, 'reversedById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  cancelledAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
-  cancelledById: z.string().trim().min(1, 'cancelledById must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -43,16 +49,17 @@ function refinePayment(data: any, ctx: z.RefinementCtx) {
       message: 'reversedAt and reversedById are required for reversed payments',
     })
   }
-  if (data.status === PaymentStatus.Cancelled && (!data.cancelledAt || !data.cancelledById)) {
+  if (data.status === PaymentStatus.Recorded && (data.reversedAt || data.reversedById || data.reversedByPaymentId)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'cancelledAt and cancelledById are required for cancelled payments',
+      message: 'recorded payments must not define reversal audit fields',
     })
   }
-  if (data.status === PaymentStatus.Recorded && (data.reversedAt || data.reversedById || data.cancelledAt || data.cancelledById)) {
+  if (data.kind === PaymentKind.Disbursement && data.reversesPaymentId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'recorded payments must not define reversal or cancellation audit fields',
+      message: 'disbursements must not reverse a receipt; use a receipt reversal',
+      path: ['reversesPaymentId'],
     })
   }
 }
@@ -65,11 +72,17 @@ export type PaymentData = Omit<z.infer<typeof paymentSchema>, 'amount' | 'curren
 export type PaymentInput = z.input<typeof paymentSchema>
 
 export const paymentCreateSchema = paymentBaseSchema.omit({ createdAt: true }).superRefine(refinePayment)
-export const paymentUpdateSchema = paymentBaseSchema.partial().required({ id: true }).superRefine(refinePayment)
+export const paymentUpdateSchema = paymentBaseSchema.partial().required({ id: true }).superRefine((data, ctx) => {
+  if (data.status === PaymentStatus.Reversed && data.reversedAt !== undefined && data.reversedById !== undefined && data.reversedByPaymentId !== undefined) {
+    if (!data.reversedAt || !data.reversedById || !data.reversedByPaymentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'reversedAt, reversedById, and reversedByPaymentId are required for reversed payments',
+      })
+    }
+  }
+})
 
-/**
- * Represents a single financial transaction made towards a StudentFee.
- */
 export class Payment {
   readonly data: PaymentData
 
@@ -77,7 +90,10 @@ export class Payment {
     const validated = parseDomain(paymentSchema, args)
     this.data = {
       id: validated.id,
-      studentFeeId: validated.studentFeeId,
+      schoolId: validated.schoolId,
+      accountId: validated.accountId,
+      academicYearId: validated.academicYearId,
+      kind: validated.kind,
       amount: new Money({ amount: validated.amount, currency: validated.currency }),
       paymentDate: validated.paymentDate,
       method: validated.method,
@@ -85,16 +101,19 @@ export class Payment {
       reference: validated.reference,
       notes: validated.notes,
       recordedById: validated.recordedById,
+      reversesPaymentId: validated.reversesPaymentId,
+      reversedByPaymentId: validated.reversedByPaymentId,
       reversedAt: validated.reversedAt,
       reversedById: validated.reversedById,
-      cancelledAt: validated.cancelledAt,
-      cancelledById: validated.cancelledById,
       createdAt: validated.createdAt,
     }
   }
 
   get id() { return this.data.id }
-  get studentFeeId() { return this.data.studentFeeId }
+  get schoolId() { return this.data.schoolId }
+  get accountId() { return this.data.accountId }
+  get academicYearId() { return this.data.academicYearId }
+  get kind() { return this.data.kind }
   get amount() { return this.data.amount }
   get paymentDate() { return this.data.paymentDate }
   get method() { return this.data.method }
@@ -102,9 +121,37 @@ export class Payment {
   get reference() { return this.data.reference }
   get notes() { return this.data.notes }
   get recordedById() { return this.data.recordedById }
+  get reversesPaymentId() { return this.data.reversesPaymentId }
+  get reversedByPaymentId() { return this.data.reversedByPaymentId }
   get reversedAt() { return this.data.reversedAt }
   get reversedById() { return this.data.reversedById }
-  get cancelledAt() { return this.data.cancelledAt }
-  get cancelledById() { return this.data.cancelledById }
   get createdAt() { return this.data.createdAt }
+
+  get isReceipt() {
+    return this.kind === PaymentKind.Receipt
+  }
+
+  copyWith(changes: Partial<PaymentInput>): Payment {
+    return new Payment({
+      id: this.id,
+      schoolId: this.schoolId,
+      accountId: this.accountId,
+      academicYearId: this.academicYearId,
+      kind: this.kind,
+      amount: this.amount.amount,
+      currency: this.amount.currency,
+      paymentDate: this.paymentDate,
+      method: this.method,
+      status: this.status,
+      reference: this.reference,
+      notes: this.notes,
+      recordedById: this.recordedById,
+      reversesPaymentId: this.reversesPaymentId,
+      reversedByPaymentId: this.reversedByPaymentId,
+      reversedAt: this.reversedAt,
+      reversedById: this.reversedById,
+      createdAt: this.createdAt,
+      ...changes,
+    })
+  }
 }

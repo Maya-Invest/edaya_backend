@@ -1,5 +1,5 @@
 import { AccessPolicies, createGuardianActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Attachment, AttachmentOwnerKind, AttendanceSummary, Fee, FeeStatus, GradeScale, Payment, PaymentMethod, Permission, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, StudentFee, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
+import { Attachment, AttachmentOwnerKind, AttendanceSummary, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, GradeScale, Payment, PaymentKind, PaymentMethod, Permission, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, StudentCharge, StudentServiceEnrollment, StudentYearAccount, studentYearAccountId, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 
@@ -20,10 +20,65 @@ describe('portal actions use current relationships and publication', () => {
 
   async function finance() {
     for (const [id, studentId] of [['linked', 'student-a'], ['unlinked', 'student-other'], ['unused', undefined]] as const) {
-      await fixture.repositories.fees.save(new Fee({ id, schoolId: 'school-a', academicYearId: 'year-a', name: id, defaultAmount: 1000, currency: 'XOF' }))
+      await fixture.repositories.catalogServices.save(new CatalogService({
+        id,
+        schoolId: 'school-a',
+        academicYearId: 'year-a',
+        name: id,
+        defaultPrice: 1000,
+        currency: 'XOF',
+        billingTerms: { kind: 'one_time', installments: [] },
+        status: CatalogServiceStatus.Active,
+      }))
       if (studentId) {
-        await fixture.repositories.studentFees.save(new StudentFee({ id: `fee-${id}`, feeId: id, studentId, academicYearId: 'year-a', expectedAmount: 1000, paidAmount: 100, currency: 'XOF', status: FeeStatus.Partial }))
-        await fixture.repositories.payments.save(new Payment({ id: `payment-${id}`, studentFeeId: `fee-${id}`, amount: 100, currency: 'XOF', method: PaymentMethod.Cash, paymentDate: new Date() }))
+        const accountId = studentYearAccountId('school-a', studentId, 'year-a', 'XOF')
+        await fixture.repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
+          id: `enr-${id}`,
+          schoolId: 'school-a',
+          studentId,
+          catalogServiceId: id,
+          academicYearId: 'year-a',
+          acceptedTerms: {
+            catalogServiceId: id,
+            name: id,
+            category: CatalogServiceCategory.Tuition,
+            currency: 'XOF',
+            price: 1000,
+            billingKind: 'one_time',
+            billingTerms: { kind: 'one_time', installments: [] },
+          },
+        }))
+        await fixture.repositories.studentCharges.save(new StudentCharge({
+          id: `enr-${id}`,
+          schoolId: 'school-a',
+          studentId,
+          enrollmentId: `enr-${id}`,
+          academicYearId: 'year-a',
+          label: id,
+          expectedAmount: 1000,
+          allocatedAmount: 100,
+          currency: 'XOF',
+          status: ChargeStatus.Partial,
+        }))
+        await fixture.repositories.studentYearAccounts.save(new StudentYearAccount({
+          id: accountId,
+          schoolId: 'school-a',
+          studentId,
+          academicYearId: 'year-a',
+          currency: 'XOF',
+          availableBalance: 0,
+        }))
+        await fixture.repositories.payments.save(new Payment({
+          id: `payment-${id}`,
+          schoolId: 'school-a',
+          accountId,
+          academicYearId: 'year-a',
+          kind: PaymentKind.Receipt,
+          amount: 100,
+          currency: 'XOF',
+          method: PaymentMethod.Cash,
+          paymentDate: new Date(),
+        }))
       }
     }
   }
@@ -31,12 +86,14 @@ describe('portal actions use current relationships and publication', () => {
   test.each([guardian, student])('$kind finance reads constrain catalog, balances, payments, pagination and counts to linked students', async (actor) => {
     await finance()
     const access = new AccessPolicies(actor, fixture.repositories)
-    for (const resource of ['fees', 'studentFees', 'payments'] as const) {
+    for (const resource of ['catalogServices', 'studentCharges', 'payments'] as const) {
       const repository = fixture.repositories[resource].forAccess(await access.entity(resource).readScope())
-      expect((await repository.list()).map(row => row.id)).toEqual([resource === 'fees' ? 'linked' : resource === 'studentFees' ? 'fee-linked' : 'payment-linked'])
+      const expectedId = resource === 'catalogServices' ? 'linked' : resource === 'studentCharges' ? 'enr-linked' : 'payment-linked'
+      const deniedId = resource === 'catalogServices' ? 'unlinked' : resource === 'studentCharges' ? 'enr-unlinked' : 'payment-unlinked'
+      expect((await repository.list()).map(row => row.id)).toEqual([expectedId])
       expect(await repository.count()).toBe(1)
       expect(await repository.list({ $offset: 1, $limit: 1 })).toEqual([])
-      expect(await repository.findById(resource === 'fees' ? 'unlinked' : resource === 'studentFees' ? 'fee-unlinked' : 'payment-unlinked')).toBeUndefined()
+      expect(await repository.findById(deniedId)).toBeUndefined()
     }
     await expect(access.assertSchool(Permission.PAYMENT_RECORD)).rejects.toThrow()
     if (actor.kind === 'guardian') {
@@ -130,6 +187,6 @@ describe('portal actions use current relationships and publication', () => {
       expect(await fixture.repositories.teacherAssignments.forAccess(await access.entity('teacherAssignments').readScope()).count()).toBe(1)
       expect((await fixture.repositories.teachers.forAccess(await access.entity('teachers').readScope()).list()).map(row => row.id)).toEqual(['teacher-a'])
     }
-    await expect(access.entity('fees').readScope()).rejects.toThrow()
+    await expect(access.entity('catalogServices').readScope()).rejects.toThrow()
   })
 })

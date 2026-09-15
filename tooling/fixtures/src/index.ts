@@ -7,14 +7,19 @@ export { demoSchoolOwnerStaffId } from './datasets/demo/people'
 export { integrationDataset } from './datasets/integration'
 export { minimalDataset } from './datasets/minimal'
 export type {
+  FixtureAllocationPlan,
   FixtureAnnouncementMaterializePlan,
   FixtureAttendanceSession,
   FixtureCalendarEvent,
+  FixtureCatalogBillingTerms,
+  FixtureCatalogInstallment,
+  FixtureCatalogService,
   FixtureDailyAttendanceDay,
   FixtureDataset,
   FixtureDatasetEntities,
   FixtureDatasetExtensions,
   FixtureDatasetPurpose,
+  FixturePayment,
   FixtureReportCardDefinition,
   FixtureReportCardGradeScale,
   FixtureReportCardResult,
@@ -22,6 +27,7 @@ export type {
   FixtureReportCardSubjectMark,
   FixtureSchedulingSessionProgressAnchor,
   FixtureSchedulingSlot,
+  FixtureStudentServiceEnrollment,
 } from './datasets/types'
 export {
   resolveActiveSeedSchoolId,

@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, feeSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
-  schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentFeeSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectMatterSchema, subjectSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
+  schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectMatterSchema, subjectSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
 
@@ -684,85 +684,145 @@ export const resolveIncidentWithOutcomesCommandSchema = z.object({
   sanctions: z.array(resolveIncidentSanctionCommandSchema).optional(),
 }).openapi("ResolveIncidentWithOutcomesCommand");
 
-const feeInstallmentTemplateCommandSchema = namedObjectSchema("FeeInstallmentTemplateCommandValue", {
+const retiredFinanceCommandSchema = z.object({
+  id: field.id().optional(),
+}).passthrough();
+
+export const createFeeCommandSchema = retiredFinanceCommandSchema.openapi("CreateFeeCommand");
+export const assignFeeToStudentCommandSchema = retiredFinanceCommandSchema.openapi("AssignFeeToStudentCommand");
+export const cancelPaymentCommandSchema = retiredFinanceCommandSchema.openapi("CancelPaymentCommand");
+export const adjustStudentFeeCommandSchema = retiredFinanceCommandSchema.openapi("AdjustStudentFeeCommand");
+export const cancelStudentFeeCommandSchema = retiredFinanceCommandSchema.openapi("CancelStudentFeeCommand");
+
+const catalogInstallmentTemplateCommandSchema = namedObjectSchema("CatalogInstallmentTemplateCommandValue", {
   label: field.text(),
   percentage: field.positiveNumber(),
   dueDate: field.nullableDate(),
 });
 
-export const createFeeCommandSchema = objectFromSchema(feeSchema)
-  .extend({
-    installments: z.array(feeInstallmentTemplateCommandSchema).optional(),
-  })
-  .openapi("CreateFeeCommand");
+const oneTimeBillingTermsCommandSchema = namedObjectSchema("OneTimeBillingTermsCommandValue", {
+  kind: z.literal("one_time"),
+  installments: z.array(catalogInstallmentTemplateCommandSchema).optional(),
+  singleDueDate: field.nullableDate(),
+});
 
-export const assignFeeToStudentCommandSchema = objectFromSchema(studentFeeSchema)
-  .omit({
-    academicYearId: true,
-    adjustmentAmount: true,
-    adjustmentReason: true,
-    adjustedById: true,
-    adjustedAt: true,
-    paidAmount: true,
-    currency: true,
-    status: true,
-    cancellationReason: true,
-    cancelledById: true,
-    cancelledAt: true,
-    installments: true,
-    updatedAt: true,
-  })
-  .extend({
-    expectedAmount: field.optionalNumber(),
-    dueDate: field.optionalDate(),
-    referenceDate: field.optionalDate(),
-  })
-  .openapi("AssignFeeToStudentCommand");
+export const createCatalogServiceCommandSchema = z.object({
+  id: field.id(),
+  academicYearId: field.id(),
+  name: field.text(),
+  description: optionalText(),
+  category: optionalText(),
+  enrollmentMode: optionalText(),
+  defaultPrice: field.positiveNumber(),
+  currency: field.text(),
+  billingTerms: oneTimeBillingTermsCommandSchema,
+  status: optionalText(),
+}).openapi("CreateCatalogServiceCommand");
 
-export const recordPaymentCommandSchema = objectFromSchema(paymentSchema)
-  .omit({
-    currency: true,
-    status: true,
-    recordedById: true,
-    reversedAt: true,
-    reversedById: true,
-    cancelledAt: true,
-    cancelledById: true,
-  })
-  .extend({
-    referenceDate: field.optionalDate(),
-  })
-  .openapi("RecordPaymentCommand");
+export const updateCatalogServiceCommandSchema = z.object({
+  id: field.id(),
+  name: optionalText(),
+  description: z.string().nullable().optional(),
+  category: optionalText(),
+  enrollmentMode: optionalText(),
+  defaultPrice: field.optionalNumber(),
+  billingTerms: oneTimeBillingTermsCommandSchema.optional(),
+}).openapi("UpdateCatalogServiceCommand");
+
+export const catalogServiceIdCommandSchema = z.object({
+  id: field.id(),
+}).openapi("CatalogServiceIdCommand");
+
+export const enrollStudentInServiceCommandSchema = z.object({
+  id: field.id(),
+  studentId: field.id(),
+  catalogServiceId: field.id(),
+  priceOverride: field.optionalNumber(),
+  dueDate: field.optionalDate(),
+}).openapi("EnrollStudentInServiceCommand");
+
+export const enrollStudentsInServiceCommandSchema = z.object({
+  id: field.id(),
+  catalogServiceId: field.id(),
+  studentIds: z.array(field.id()).min(1).max(100),
+  priceOverride: field.optionalNumber(),
+  dueDate: field.optionalDate(),
+}).openapi("EnrollStudentsInServiceCommand");
+
+export const cancelServiceEnrollmentCommandSchema = z.object({
+  enrollmentId: field.id(),
+  reason: field.text(),
+}).openapi("CancelServiceEnrollmentCommand");
+
+export const materializeOneTimeChargeCommandSchema = z.object({
+  enrollmentId: field.id(),
+}).openapi("MaterializeOneTimeChargeCommand");
+
+export const adjustStudentChargeCommandSchema = z.object({
+  chargeId: field.id(),
+  adjustmentAmount: field.positiveNumber(),
+  reason: field.text(),
+}).openapi("AdjustStudentChargeCommand");
+
+export const waiveStudentChargeCommandSchema = z.object({
+  chargeId: field.id(),
+  reason: field.text(),
+  waiverAmount: field.optionalNumber(),
+}).openapi("WaiveStudentChargeCommand");
+
+export const cancelStudentChargeCommandSchema = z.object({
+  chargeId: field.id(),
+  reason: field.text(),
+}).openapi("CancelStudentChargeCommand");
+
+const allocationTargetCommandSchema = namedObjectSchema("AllocationTargetCommandValue", {
+  chargeId: field.id(),
+  amount: field.positiveNumber(),
+});
+
+export const allocationPlanCommandSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("account_only") }),
+  z.object({ mode: z.literal("fifo") }),
+  z.object({ mode: z.literal("targeted"), targets: z.array(allocationTargetCommandSchema).min(1) }),
+]).openapi("AllocationPlanCommand");
+
+export const recordPaymentCommandSchema = z.object({
+  id: field.id(),
+  accountId: field.id().optional(),
+  studentId: field.id().optional(),
+  academicYearId: field.id().optional(),
+  amount: field.positiveNumber(),
+  paymentDate: field.date(),
+  method: field.enumValue(PaymentMethod),
+  reference: optionalText(),
+  notes: optionalText(),
+  allocation: allocationPlanCommandSchema.optional(),
+}).openapi("RecordPaymentCommand");
 
 export const reversePaymentCommandSchema = z.object({
   paymentId: field.id(),
-  reversedAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-  referenceDate: field.optionalDate(),
+  reverseAllocationIds: z.array(field.id()).optional(),
 }).openapi("ReversePaymentCommand");
 
-export const cancelPaymentCommandSchema = z.object({
-  paymentId: field.id(),
-  cancelledAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-  referenceDate: field.optionalDate(),
-}).openapi("CancelPaymentCommand");
+export const allocateAccountBalanceCommandSchema = z.object({
+  id: field.id(),
+  accountId: field.id(),
+  allocation: allocationPlanCommandSchema,
+}).openapi("AllocateAccountBalanceCommand");
 
-export const adjustStudentFeeCommandSchema = z.object({
-  studentFeeId: field.id(),
-  adjustmentAmount: field.positiveNumber(),
-  reason: field.text(),
-  adjustedAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-  referenceDate: field.optionalDate(),
-}).openapi("AdjustStudentFeeCommand");
+export const reverseAllocationCommandSchema = z.object({
+  allocationId: field.id(),
+}).openapi("ReverseAllocationCommand");
 
-export const cancelStudentFeeCommandSchema = z.object({
-  studentFeeId: field.id(),
-  reason: field.text(),
-  cancelledAt: field.optionalDate(),
-  updatedAt: field.optionalDate(),
-}).openapi("CancelStudentFeeCommand");
+export const refundAvailableBalanceCommandSchema = z.object({
+  id: field.id(),
+  accountId: field.id(),
+  amount: field.positiveNumber(),
+  paymentDate: field.date(),
+  method: field.enumValue(PaymentMethod),
+  reference: optionalText(),
+  notes: optionalText(),
+}).openapi("RefundAvailableBalanceCommand");
 
 export const createProfilePhotoUploadCommandSchema = z.object({
   ownerKind: z.nativeEnum(AttachmentOwnerKind),

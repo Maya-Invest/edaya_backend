@@ -109,11 +109,11 @@ async function resolveAttachmentOwnerContext(
       if (!payment) {
         denyResourceAccess()
       }
-      const studentFee = await repositories.studentFees.findById(payment.studentFeeId)
-      if (!studentFee) {
+      const account = await repositories.studentYearAccounts.findById(payment.accountId)
+      if (!account) {
         denyResourceAccess()
       }
-      return resolveStudentOwner(studentFee.studentId, repositories)
+      return resolveStudentOwner(account.studentId, repositories)
     }
     case AttachmentOwnerKind.Other:
       throw new BusinessRuleViolationError('UNSUPPORTED_ATTACHMENT_OWNER', 'Attachment owner kind other is not supported by the selected public contract')

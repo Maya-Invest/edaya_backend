@@ -4,6 +4,8 @@
 
 > **V1 feature-sequence amendment (2026-09-13):** The approved [seven-plan sequence](v1/00-common-requirements.md) now governs the five added features and their release rehearsal. [Plan 03](v1/03-service-catalog-and-accounting.md) supersedes this document's finance-model freeze and “no new finance ledger” instruction; the existing backend and identity architecture remain the target. [Plan 00](v1/00-common-requirements.md) reconciles shared prerequisites with current authorization work, and [Plan 06](v1/06-final-release-rehearsal.md) owns final coordinated qualification. Other RC launch requirements remain in force and are not silently deferred by this amendment.
 
+> **Partner OAuth cancelled (2026-09-15):** WP5 parent-authorized external applications and WP6 consent/connected-app client screens are out of v1. EDAYA does not act as an OAuth authorization server. First-party email/password, email OTP, and identity JWTs remain.
+
 Date: 8 September 2026. Updated: 10 September 2026. Status: implementation in progress; not code-complete or RC-qualified.
 
 ## Implementation progress — 10 September 2026
@@ -40,19 +42,19 @@ Latest local validation: **the school-scoping slice is complete and verified: fu
 - [x] Implement hashed five-minute access tokens, seven-day renewal, native login proof, cookie sanitization, origin checks, quotas and logout.
 - [ ] Complete production cookie-topology checks and the full authentication lifecycle test matrix.
 
-### WP5 — Parent-authorized external applications · In progress
+### WP5 — Parent-authorized external applications · Cancelled / out of v1
 
-- [x] Implement the pinned OAuth provider/schema, transactional grant binding, selected children/scopes, fourteen-scope registry, live guardian checks and operator client registry tooling.
-- [x] Expose first-party connected-app listing/revocation with ownership checks and OpenAPI contracts.
-- [x] Verify PKCE, consent denial, code/refresh replay, revocation, signed minimal identity and absolute expiry against native PostgreSQL.
-- [ ] Implement restricted read DTOs/routes for all fourteen scopes, hosted consent and management UI, public discovery/login continuation, and the partner example. **External protocol components are not publicly mounted yet.**
+- [x] ~~Implement the pinned OAuth provider/schema, transactional grant binding, selected children/scopes, fourteen-scope registry, live guardian checks and operator client registry tooling.~~ Removed 2026-09-15.
+- [x] ~~Expose first-party connected-app listing/revocation with ownership checks and OpenAPI contracts.~~ Removed 2026-09-15.
+- [x] ~~Verify PKCE, consent denial, code/refresh replay, revocation, signed minimal identity and absolute expiry against native PostgreSQL.~~ Removed 2026-09-15.
+- Partner OAuth is not a v1 launch requirement. Do not remount `/auth/oauth2/*`, connected-apps, or school integration stubs.
 
 ### WP6 — Web, mobile and client migration · In progress
 
 - [x] Implement web memory-only Bearer transport/private images and mobile secure renewal storage/Bearer transport/private images; preceding web/mobile verification passed.
 - [x] Migrate the seed client to Bearer, preserve tokens across temporary account provisioning and remove automatic write retries; full seed integration passed.
 - [x] Align web/mobile clients with explicit operation policies; remove invoice hard deletion, block class cleanup with enrollment history/inherited curriculum, and preserve shared curriculum records.
-- [ ] Finish consent/connected-app client screens, cross-tab/context clearing, complete OpenAPI security and final coordinated qualification.
+- [x] Consent/connected-app client screens cancelled with WP5 (2026-09-15). Remaining first-party OpenAPI security and coordinated qualification stay with WP7 / Plan 06.
 
 ### WP7 — Cleanup and maintenance readiness · In progress
 
@@ -67,14 +69,14 @@ Latest local validation: **the school-scoping slice is complete and verified: fu
 
 ## Assignment
 
-Harden the existing `edaya_backend` for release, migrate first-party business API calls to Bearer authentication, and deliver trusted external applications' read access through parent consent. Complete the corresponding web and mobile changes. Preserve existing working school workflows and the current finance model. Borrow the newer backend's useful implementation patterns without adopting its rewrite or governance process.
+Harden the existing `edaya_backend` for release and migrate first-party business API calls to Bearer authentication. Complete the corresponding web and mobile changes. Preserve existing working school workflows and the current finance model. Borrow the newer backend's useful implementation patterns without adopting its rewrite or governance process.
 
 Work in these repositories:
 
 | Repository | Scope |
 |---|---|
 | `/Users/atoumbre/SoftiLab/maya_invest/edaya_backend` | API, domains, adapters, migrations, generated contracts, tests, deployment tooling, operations documentation |
-| `/Users/atoumbre/SoftiLab/maya_invest/edaya_frontend` | Existing web authentication and API consumers; separate parent consent/connected-app pages |
+| `/Users/atoumbre/SoftiLab/maya_invest/edaya_frontend` | Existing web authentication and API consumers |
 | `/Users/atoumbre/SoftiLab/maya_invest/edaya_mobile` | Shared auth/HTTP packages and guardian/teacher apps |
 | `/Users/atoumbre/SoftiLab/maya_invest/edaya_backend_new` | Read-only architectural reference; preserve its existing uncommitted work |
 
@@ -239,13 +241,15 @@ Resolve the two template failures by confirming HTML rendering/escaping expectat
 
 Implement the first-party contracts above and the focused auth upgrade. Keep all provider objects, raw session credentials, and token persistence inside the auth adapter/composition. Share a provider-independent authenticated-subject type with domain code.
 
-Add explicit endpoint admission rules for browser login/renewal, native login/renewal, first-party business tokens, service accounts, and OAuth tokens. The existing implementation treats every Bearer token as a service key and rejects a session combined with Bearer; replace that behavior deliberately. Limit the service parser to the established key format.
+Add explicit endpoint admission rules for browser login/renewal, native login/renewal, first-party business tokens, and service accounts. The existing implementation treats every Bearer token as a service key and rejects a session combined with Bearer; replace that behavior deliberately. Limit the service parser to the established key format.
 
 Return consistent 401/403 errors and a `WWW-Authenticate` Bearer challenge on protected-resource authentication failures. Never put credentials in URLs or logs. Configure exact CORS allowlists per surface, including preflight, required school/profile/idempotency headers, and safe exposed response headers. Keep browser root-token headers unexposed and absent from browser responses, not merely hidden by CORS. Test auth and CORS middleware ordering.
 
 **Exit tests:** cookie-only business access denied in cutover mode; first-party and service tokens resolve correctly; malformed/expired/revoked Bearer never falls back; ambient cookie cannot alter bearer identity; signed native renewal credential cannot call business routes; raw unsigned provider token rejected; browser JS cannot retrieve renewal material from login/get-session/native switches; logout invalidates outstanding access; cross-origin exchange/CSRF rejected; OTP/invitations/account selection still work.
 
 ### WP5 — Deliver the full external parent-consent slice
+
+**Cancelled / out of v1 (2026-09-15).** Do not implement this slice. The following historical instructions are retained for context only.
 
 **Backend:** implement the OAuth/registry/grant contracts and all fourteen scope mappings above. Add `GET /auth/edaya/connected-apps` and `POST /auth/edaya/connected-apps/:grantId/revoke` for first-party authenticated users, with ownership checks and immediate durable revocation. Business access tokens authorize these Edaya management endpoints; external tokens do not. Use provider endpoints for protocol authorization/consent, augmented server-side with Edaya's selected-school/child grant binding.
 

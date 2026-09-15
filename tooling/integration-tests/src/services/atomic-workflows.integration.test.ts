@@ -1,5 +1,5 @@
 import { AuthorizationErrorCode } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, DayOfWeek, FeeStatus, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, ChargeStatus, DayOfWeek, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, studentYearAccountId, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -101,55 +101,61 @@ describeIntegration('atomic workflow safeguards', () => {
       defaultAmount: 90000,
       currency: 'XAF',
     })
-    const studentFee = await app.financeWorkflow.assignFeeToStudent({
+    const enrollment = await app.financeWorkflow.enrollStudentInService({
       id: 'student-tuition',
       studentId: 'student',
-      feeId: 'tuition',
-      referenceDate: new Date('2026-09-01T00:00:00Z'),
+      catalogServiceId: 'tuition',
     })
     failSaveOnAttempt('studentFeeRepository')
     await expect(app.financeWorkflow.recordPayment({
       id: 'payment',
-      studentFeeId: studentFee.id,
+      studentId: 'student',
+      academicYearId: 'year',
       amount: 30000,
       paymentDate: new Date('2026-09-01T00:00:00Z'),
       method: PaymentMethod.Cash,
-      referenceDate: new Date('2026-09-01T00:00:00Z'),
+      allocation: { mode: 'fifo' },
     })).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect(await repositories.paymentRepository.findById('payment')).toBeUndefined()
-    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.paidAmount.amount).toBe(0)
+    expect((await repositories.studentFeeRepository.findById(enrollment.id))?.allocatedAmount.amount).toBe(0)
     await app.financeWorkflow.recordPayment({
       id: 'payment',
-      studentFeeId: studentFee.id,
+      studentId: 'student',
+      academicYearId: 'year',
       amount: 30000,
       paymentDate: new Date('2026-09-01T00:00:00Z'),
       method: PaymentMethod.Cash,
+      allocation: { mode: 'fifo' },
     })
+    const accountId = studentYearAccountId('school', 'student', 'year', 'XAF')
+    const history = await app.financeWorkflow.getPaymentSettlementHistory({ accountId })
+    const allocationIds = history.allocations
+      .filter(allocation => allocation.causedByPaymentId === 'payment' && allocation.kind === 'settle')
+      .map(allocation => allocation.id)
     failSaveOnAttempt('studentFeeRepository')
     await expect(
-      app.financeWorkflow.reversePayment({ paymentId: 'payment' }),
+      app.financeWorkflow.reversePayment({ paymentId: 'payment', reverseAllocationIds: allocationIds }),
     ).rejects.toThrow('Simulated studentFeeRepository save failure')
     expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
-    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.paidAmount.amount).toBe(30000)
-    failSaveOnAttempt('studentFeeRepository')
-    await expect(app.financeWorkflow.cancelPayment({ paymentId: 'payment' }))
-      .rejects
-      .toThrow('Simulated studentFeeRepository save failure')
+    expect((await repositories.studentFeeRepository.findById(enrollment.id))?.allocatedAmount.amount).toBe(30000)
+    expect(() => app.financeWorkflow.cancelPayment()).toThrow(/FINANCE_MODEL_REPLACED|fee model has been replaced/)
     expect((await repositories.paymentRepository.findById('payment'))?.status).toBe(PaymentStatus.Recorded)
     failSaveOnAttempt('studentFeeRepository')
     await expect(adjustStudentFee(app, {
-      studentFeeId: studentFee.id,
+      studentFeeId: enrollment.id,
       adjustmentAmount: 10000,
       reason: 'Adjustment',
     })).rejects.toThrow('Simulated studentFeeRepository save failure')
-    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.adjustmentAmount.amount).toBe(0)
-    await app.financeWorkflow.cancelPayment({ paymentId: 'payment' })
+    expect((await repositories.studentFeeRepository.findById(enrollment.id))?.adjustmentAmount.amount).toBe(0)
+    const remainingAllocationIds = (await app.financeWorkflow.getPaymentSettlementHistory({ accountId })).allocations.filter(allocation => allocation.causedByPaymentId === 'payment' && allocation.kind === 'settle').map(allocation => allocation.id)
+    for (const allocationId of remainingAllocationIds)
+      await app.financeWorkflow.reverseAllocation({ allocationId })
     failSaveOnAttempt('studentFeeRepository')
     await expect(cancelStudentFee(app, {
-      studentFeeId: studentFee.id,
+      studentFeeId: enrollment.id,
       reason: 'Cancellation',
     })).rejects.toThrow('Simulated studentFeeRepository save failure')
-    expect((await repositories.studentFeeRepository.findById(studentFee.id))?.status).not.toBe(FeeStatus.Cancelled)
+    expect((await repositories.studentFeeRepository.findById(enrollment.id))?.status).not.toBe(ChargeStatus.Cancelled)
   })
 
   it('rolls back report-card publication when the published result cannot be saved', async () => {

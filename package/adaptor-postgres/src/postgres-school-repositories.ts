@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -8,6 +8,7 @@ import { PostgresAccountInvitationStore } from './stores/account-invitation-stor
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
+import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
 import { PostgresS2sClientStore } from './stores/s2s-client-store'
@@ -38,9 +39,13 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly attachments: PostgresStore<Attachment>
   public readonly resources: PostgresStore<Resource>
   public readonly resourceAssignments: PostgresStore<ResourceAssignment>
-  public readonly fees: PostgresStore<Fee>
-  public readonly studentFees: PostgresStore<StudentFee>
+  public readonly catalogServices: PostgresStore<CatalogService>
+  public readonly studentServiceEnrollments: PostgresStore<StudentServiceEnrollment>
+  public readonly studentCharges: PostgresStore<StudentCharge>
+  public readonly studentYearAccounts: PostgresStore<StudentYearAccount>
   public readonly payments: PostgresStore<Payment>
+  public readonly allocations: PostgresStore<Allocation>
+  public readonly studentAccountEntries: PostgresStore<StudentAccountEntry>
   public readonly schedules: PostgresStore<Schedule>
   public readonly attendances: PostgresStore<Attendance>
   public readonly lessonSessions: PostgresStore<LessonSession>
@@ -104,9 +109,14 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.attachments = stores.attachments
     this.resources = stores.resources
     this.resourceAssignments = stores.resourceAssignments
-    this.fees = stores.fees
-    this.studentFees = stores.studentFees
+    this.catalogServices = stores.catalogServices
+    this.studentServiceEnrollments = stores.studentServiceEnrollments
+    this.studentCharges = stores.studentCharges
+    this.studentYearAccounts = stores.studentYearAccounts
     this.payments = stores.payments
+    const ledger = createFinanceLedgerStores(db)
+    this.allocations = ledger.allocations
+    this.studentAccountEntries = ledger.studentAccountEntries
     this.schedules = stores.schedules
     this.attendances = stores.attendances
     this.lessonSessions = stores.lessonSessions

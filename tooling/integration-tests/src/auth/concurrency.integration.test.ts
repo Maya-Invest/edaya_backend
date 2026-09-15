@@ -126,10 +126,10 @@ async function createConcurrencyFixture() {
     defaultAmount: 90000,
     currency: 'XAF',
   })
-  const studentFee = await app.financeWorkflow.assignFeeToStudent({
+  const enrollment = await app.financeWorkflow.enrollStudentInService({
     id: 'student-fee',
     studentId: 'student',
-    feeId: 'tuition',
+    catalogServiceId: 'tuition',
   })
 
   await app.accessControlWorkflow.linkActorSubject({ staffMemberId: 'teacher', subjectId: 'teacher-user' })
@@ -137,12 +137,12 @@ async function createConcurrencyFixture() {
   await app.accessControlWorkflow.linkActorSubject({ guardianId: 'guardian', subjectId: 'guardian-user' })
   await app.accessControlWorkflow.linkActorSubject({ studentId: 'student', subjectId: 'student-user' })
 
-  return { app, repositories, schoolRepositories, forActor, session, studentFee }
+  return { app, repositories, schoolRepositories, forActor, session, enrollment }
 }
 
 describeIntegration('Shared-repository multi-actor concurrency safeguards', () => {
   it('correctly isolates attributions and validates permissions for overlapping concurrent operations', async () => {
-    const { repositories, forActor, session, studentFee } = await createConcurrencyFixture()
+    const { repositories, forActor, session } = await createConcurrencyFixture()
 
     // Instantiate concurrent actor-bound facades
     const teacherApp = forActor(createStaffActorMetadata({
@@ -201,13 +201,15 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
       })),
       label('accountant payment', accountantApp.financeWorkflow.recordPayment({
         id: 'concurrent-payment',
-        studentFeeId: studentFee.id,
+        studentId: 'student',
+        academicYearId: 'year',
         amount: 5000,
         paymentDate: new Date(),
         method: PaymentMethod.Cash,
+        allocation: { mode: 'account_only' },
       })),
       label('student attendance list', studentApp.baseService.entities.attendance.list({ studentId: 'student' })),
-      label('guardian fee summary', buildFeeSummary(guardianApp, 'student')),
+      label('guardian fee summary', buildFeeSummary(guardianApp, 'student', 'year')),
     ])
 
     // Verify attributions are perfectly isolated to their respective actors
@@ -215,11 +217,11 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
     expect(paymentRecord.recordedById).toBe('accountant')
 
     // Verify results are accurate and not mixed or leaked
-    expect(feeSummaryResult.totalExpected.amount).toBe(90000)
+    expect(feeSummaryResult.outstanding.amount).toBe(90000)
 
     // Verify repository persisted states
     const attendanceRepoRecords = await repositories.attendanceRepository.list({ lessonSessionId: session.id })
-    const paymentRepoRecords = await repositories.paymentRepository.list({ studentFeeId: studentFee.id })
+    const paymentRepoRecords = await repositories.paymentRepository.list({ academicYearId: 'year' })
 
     expect(attendanceRepoRecords).toHaveLength(1)
     expect(attendanceRepoRecords[0]?.createdBy).toBe('teacher')

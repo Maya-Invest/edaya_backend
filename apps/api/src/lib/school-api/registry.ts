@@ -2,7 +2,7 @@ import type { PublicEntityOperations } from "./public-operations";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -19,7 +19,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -76,8 +76,10 @@ const apiEntityDecorations = {
   attachments: decoration("attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment, COMMAND_ONLY),
   resources: decoration("resources", "Resources", entitySchemas.resourceQuerySchema, entitySchemas.resourceResponseSchema, Resource, PUBLIC_CRUD),
   resourceAssignments: decoration("resource-assignments", "Resource Assignments", entitySchemas.resourceAssignmentQuerySchema, entitySchemas.resourceAssignmentResponseSchema, ResourceAssignment, PUBLIC_CRUD),
-  fees: decoration("fees", "Fees", entitySchemas.feeQuerySchema, entitySchemas.feeResponseSchema, Fee, PUBLIC_CRUD),
-  studentFees: decoration("student-fees", "Student Fees", entitySchemas.studentFeeQuerySchema, entitySchemas.studentFeeResponseSchema, StudentFee, COMMAND_ONLY),
+  catalogServices: decoration("catalog-services", "Catalog Services", entitySchemas.catalogServiceQuerySchema, entitySchemas.catalogServiceResponseSchema, CatalogService, COMMAND_ONLY),
+  studentServiceEnrollments: decoration("student-service-enrollments", "Student Service Enrollments", entitySchemas.studentServiceEnrollmentQuerySchema, entitySchemas.studentServiceEnrollmentResponseSchema, StudentServiceEnrollment, COMMAND_ONLY),
+  studentCharges: decoration("student-charges", "Student Charges", entitySchemas.studentChargeQuerySchema, entitySchemas.studentChargeResponseSchema, StudentCharge, COMMAND_ONLY),
+  studentYearAccounts: decoration("student-year-accounts", "Student Year Accounts", entitySchemas.studentYearAccountQuerySchema, entitySchemas.studentYearAccountResponseSchema, StudentYearAccount, COMMAND_ONLY),
   payments: decoration("payments", "Payments", entitySchemas.paymentQuerySchema, entitySchemas.paymentResponseSchema, Payment, COMMAND_ONLY),
   schedules: decoration("schedules", "Schedules", entitySchemas.scheduleQuerySchema, entitySchemas.scheduleResponseSchema, Schedule, PUBLIC_CRUD),
   attendances: decoration("attendances", "Attendances", entitySchemas.attendancesQuerySchema, entitySchemas.attendanceOccurrenceResponseSchema, Attendance, PUBLIC_CRUD),
@@ -230,6 +232,20 @@ export const coreCommands = [
   command("cancel-payment", "cancelPayment", commandSchemas.cancelPaymentCommandSchema),
   command("adjust-student-fee", "adjustStudentFee", commandSchemas.adjustStudentFeeCommandSchema),
   command("cancel-student-fee", "cancelStudentFee", commandSchemas.cancelStudentFeeCommandSchema),
+  command("create-catalog-service", "createCatalogService", commandSchemas.createCatalogServiceCommandSchema),
+  command("update-catalog-service", "updateCatalogService", commandSchemas.updateCatalogServiceCommandSchema),
+  command("activate-catalog-service", "activateCatalogService", commandSchemas.catalogServiceIdCommandSchema),
+  command("archive-catalog-service", "archiveCatalogService", commandSchemas.catalogServiceIdCommandSchema),
+  command("enroll-student-in-service", "enrollStudentInService", commandSchemas.enrollStudentInServiceCommandSchema),
+  command("enroll-students-in-service", "enrollStudentsInService", commandSchemas.enrollStudentsInServiceCommandSchema),
+  command("cancel-service-enrollment", "cancelServiceEnrollment", commandSchemas.cancelServiceEnrollmentCommandSchema),
+  command("materialize-one-time-charge", "materializeOneTimeCharge", commandSchemas.materializeOneTimeChargeCommandSchema),
+  command("adjust-student-charge", "adjustStudentCharge", commandSchemas.adjustStudentChargeCommandSchema),
+  command("waive-student-charge", "waiveStudentCharge", commandSchemas.waiveStudentChargeCommandSchema),
+  command("cancel-student-charge", "cancelStudentCharge", commandSchemas.cancelStudentChargeCommandSchema),
+  command("allocate-account-balance", "allocateAccountBalance", commandSchemas.allocateAccountBalanceCommandSchema),
+  command("reverse-allocation", "reverseAllocation", commandSchemas.reverseAllocationCommandSchema),
+  command("refund-available-balance", "refundAvailableBalance", commandSchemas.refundAvailableBalanceCommandSchema),
   command("create-profile-photo-upload", "createProfilePhotoUpload", commandSchemas.createProfilePhotoUploadCommandSchema),
   command("complete-profile-photo-upload", "completeProfilePhotoUpload", commandSchemas.completeProfilePhotoUploadCommandSchema),
   command("submit-student-photo", "submitStudentPhoto", commandSchemas.submitStudentPhotoCommandSchema),
@@ -308,6 +324,83 @@ export const coreQueries = [
     methodName: "resolveTimetableSpace",
     requestSchema: querySchemas.resolveTimetableSpaceQuerySchema,
     responseSchema: querySchemas.resolvedTimetableSpaceResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-student-finance-summary",
+    methodName: "getStudentFinanceSummary",
+    requestSchema: querySchemas.getStudentFinanceSummaryQuerySchema,
+    responseSchema: querySchemas.studentFinanceSummaryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-account-statement",
+    methodName: "getAccountStatement",
+    requestSchema: querySchemas.getAccountStatementQuerySchema,
+    responseSchema: querySchemas.accountStatementResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-school-finance-aging",
+    methodName: "getSchoolFinanceAging",
+    requestSchema: querySchemas.getSchoolFinanceAgingQuerySchema,
+    responseSchema: querySchemas.schoolFinanceAgingResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-finance-reconciliation",
+    methodName: "getFinanceReconciliation",
+    requestSchema: querySchemas.getFinanceReconciliationQuerySchema,
+    responseSchema: querySchemas.financeReconciliationResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "preview-account-allocation",
+    methodName: "previewAccountAllocation",
+    requestSchema: querySchemas.previewAccountAllocationQuerySchema,
+    responseSchema: querySchemas.allocationPreviewQueryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-related-family-finance-overview",
+    methodName: "getRelatedFamilyFinanceOverview",
+    requestSchema: querySchemas.getRelatedFamilyFinanceOverviewQuerySchema,
+    responseSchema: querySchemas.relatedFamilyFinanceOverviewResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-student-account-statement",
+    methodName: "getStudentAccountStatement",
+    requestSchema: querySchemas.getStudentAccountStatementQuerySchema,
+    responseSchema: querySchemas.studentAccountStatementResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-open-due-charges",
+    methodName: "listOpenDueCharges",
+    requestSchema: querySchemas.listOpenDueChargesQuerySchema,
+    responseSchema: querySchemas.openDueChargesResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-payment-settlement-history",
+    methodName: "getPaymentSettlementHistory",
+    requestSchema: querySchemas.getPaymentSettlementHistoryQuerySchema,
+    responseSchema: querySchemas.paymentSettlementHistoryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "reconcile-student-year-account",
+    methodName: "reconcileStudentYearAccount",
+    requestSchema: querySchemas.reconcileStudentYearAccountQuerySchema,
+    responseSchema: querySchemas.studentYearAccountReconciliationResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "reconcile-school-finance",
+    methodName: "reconcileSchoolFinance",
+    requestSchema: querySchemas.getFinanceReconciliationQuerySchema,
+    responseSchema: querySchemas.financeReconciliationResponseSchema,
     responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];

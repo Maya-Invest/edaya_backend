@@ -2163,6 +2163,244 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/create-catalog-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** create-catalog-service */
+        post: operations["commands.createCatalogService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/update-catalog-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** update-catalog-service */
+        post: operations["commands.updateCatalogService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/activate-catalog-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** activate-catalog-service */
+        post: operations["commands.activateCatalogService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/archive-catalog-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** archive-catalog-service */
+        post: operations["commands.archiveCatalogService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/enroll-student-in-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** enroll-student-in-service */
+        post: operations["commands.enrollStudentInService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/enroll-students-in-service": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** enroll-students-in-service */
+        post: operations["commands.enrollStudentsInService"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/cancel-service-enrollment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** cancel-service-enrollment */
+        post: operations["commands.cancelServiceEnrollment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/materialize-one-time-charge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** materialize-one-time-charge */
+        post: operations["commands.materializeOneTimeCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/adjust-student-charge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** adjust-student-charge */
+        post: operations["commands.adjustStudentCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/waive-student-charge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** waive-student-charge */
+        post: operations["commands.waiveStudentCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/cancel-student-charge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** cancel-student-charge */
+        post: operations["commands.cancelStudentCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/allocate-account-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** allocate-account-balance */
+        post: operations["commands.allocateAccountBalance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/reverse-allocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** reverse-allocation */
+        post: operations["commands.reverseAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/refund-available-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** refund-available-balance */
+        post: operations["commands.refundAvailableBalance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-profile-photo-upload": {
         parameters: {
             query?: never;
@@ -2854,6 +3092,193 @@ export interface paths {
         put?: never;
         /** resolve-timetable-space */
         post: operations["queries.resolveTimetableSpace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-student-finance-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-student-finance-summary */
+        post: operations["queries.getStudentFinanceSummary"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-account-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-account-statement */
+        post: operations["queries.getAccountStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-school-finance-aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-school-finance-aging */
+        post: operations["queries.getSchoolFinanceAging"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-finance-reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-finance-reconciliation */
+        post: operations["queries.getFinanceReconciliation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/preview-account-allocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** preview-account-allocation */
+        post: operations["queries.previewAccountAllocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-related-family-finance-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-related-family-finance-overview */
+        post: operations["queries.getRelatedFamilyFinanceOverview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-student-account-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-student-account-statement */
+        post: operations["queries.getStudentAccountStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-open-due-charges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-open-due-charges */
+        post: operations["queries.listOpenDueCharges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-payment-settlement-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-payment-settlement-history */
+        post: operations["queries.getPaymentSettlementHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/reconcile-student-year-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** reconcile-student-year-account */
+        post: operations["queries.reconcileStudentYearAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/reconcile-school-finance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** reconcile-school-finance */
+        post: operations["queries.reconcileSchoolFinance"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4764,7 +5189,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/list": {
+    "/core/entities/catalog-services/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -4773,15 +5198,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** List Fees */
-        post: operations["entities.fees.list"];
+        /** List Catalog Services */
+        post: operations["entities.catalogServices.list"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/one": {
+    "/core/entities/catalog-services/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -4790,15 +5215,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Find one Fees */
-        post: operations["entities.fees.one"];
+        /** Find one Catalog Services */
+        post: operations["entities.catalogServices.one"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/count": {
+    "/core/entities/catalog-services/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -4807,23 +5232,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Count Fees */
-        post: operations["entities.fees.count"];
+        /** Count Catalog Services */
+        post: operations["entities.catalogServices.count"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/{id}": {
+    "/core/entities/catalog-services/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Fees */
-        get: operations["entities.fees.get"];
+        /** Get Catalog Services */
+        get: operations["entities.catalogServices.get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4832,7 +5257,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/save": {
+    "/core/entities/student-service-enrollments/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -4841,15 +5266,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Save Fees */
-        post: operations["entities.fees.save"];
+        /** List Student Service Enrollments */
+        post: operations["entities.studentServiceEnrollments.list"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/delete": {
+    "/core/entities/student-service-enrollments/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -4858,15 +5283,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Delete Fees */
-        post: operations["entities.fees.delete"];
+        /** Find one Student Service Enrollments */
+        post: operations["entities.studentServiceEnrollments.one"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/batch-save": {
+    "/core/entities/student-service-enrollments/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -4875,15 +5300,32 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Batch save Fees */
-        post: operations["entities.fees.batchSave"];
+        /** Count Student Service Enrollments */
+        post: operations["entities.studentServiceEnrollments.count"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/fees/batch-delete": {
+    "/core/entities/student-service-enrollments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student Service Enrollments */
+        get: operations["entities.studentServiceEnrollments.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-charges/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -4892,15 +5334,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Batch delete Fees */
-        post: operations["entities.fees.batchDelete"];
+        /** List Student Charges */
+        post: operations["entities.studentCharges.list"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/student-fees/list": {
+    "/core/entities/student-charges/one": {
         parameters: {
             query?: never;
             header?: never;
@@ -4909,15 +5351,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** List Student Fees */
-        post: operations["entities.studentFees.list"];
+        /** Find one Student Charges */
+        post: operations["entities.studentCharges.one"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/student-fees/one": {
+    "/core/entities/student-charges/count": {
         parameters: {
             query?: never;
             header?: never;
@@ -4926,15 +5368,32 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Find one Student Fees */
-        post: operations["entities.studentFees.one"];
+        /** Count Student Charges */
+        post: operations["entities.studentCharges.count"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/student-fees/count": {
+    "/core/entities/student-charges/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student Charges */
+        get: operations["entities.studentCharges.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-year-accounts/list": {
         parameters: {
             query?: never;
             header?: never;
@@ -4943,23 +5402,57 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Count Student Fees */
-        post: operations["entities.studentFees.count"];
+        /** List Student Year Accounts */
+        post: operations["entities.studentYearAccounts.list"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/entities/student-fees/{id}": {
+    "/core/entities/student-year-accounts/one": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Student Fees */
-        get: operations["entities.studentFees.get"];
+        get?: never;
+        put?: never;
+        /** Find one Student Year Accounts */
+        post: operations["entities.studentYearAccounts.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-year-accounts/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Student Year Accounts */
+        post: operations["entities.studentYearAccounts.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-year-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student Year Accounts */
+        get: operations["entities.studentYearAccounts.get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9639,7 +10132,7 @@ export interface components {
             assuranceLevel: "standard" | "verified" | "strong" | "service";
             grants: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: (({
                     /** @enum {string} */
                     kind: "school";
@@ -9706,7 +10199,7 @@ export interface components {
         };
         PermissionCatalogEntry: {
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             /** @enum {string} */
             scope?: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student" | "platform";
         };
@@ -9720,7 +10213,7 @@ export interface components {
         ScopeRenderResponse: {
             items: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: {
                     scope: {
                         /** @enum {string} */
@@ -9767,7 +10260,7 @@ export interface components {
             academicYearId: string;
             items: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: ({
                     /** @enum {string} */
                     kind: "school";
@@ -10049,7 +10542,7 @@ export interface components {
         };
         ServiceAccountPermissionAssignmentRequest: {
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -10800,7 +11293,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classGroupId?: string | null;
             classSubjectId?: string | null;
             lessonSessionId?: string | null;
@@ -10814,7 +11307,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classGroupId: string;
             createdAt?: unknown;
         };
@@ -10824,7 +11317,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classSubjectId: string;
             createdAt?: unknown;
         };
@@ -10834,7 +11327,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             lessonSessionId: string;
             createdAt?: unknown;
         };
@@ -10844,7 +11337,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -10897,7 +11390,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -11942,65 +12435,256 @@ export interface components {
             involvedStudents: components["schemas"]["ResolveIncidentInvolvementCommandValue"][];
             sanctions?: components["schemas"]["ResolveIncidentSanctionCommandValue"][];
         };
-        Fee: {
+        RetiredFinanceCommandResponse: {
+            code: string;
+            message: string;
+        };
+        CreateFeeCommand: {
+            id?: string;
+        };
+        AssignFeeToStudentCommand: {
+            id?: string;
+        };
+        Payment: {
+            id: string;
+            schoolId: string;
+            accountId: string;
+            academicYearId: string;
+            /**
+             * @default receipt
+             * @enum {string}
+             */
+            kind: "receipt" | "disbursement";
+            amount: number;
+            currency: string;
+            paymentDate: unknown;
+            /** @enum {string} */
+            method: "cash" | "card" | "bank_transfer" | "mobile_money" | "other";
+            /**
+             * @default recorded
+             * @enum {string}
+             */
+            status: "recorded" | "reversed";
+            reference?: string | null;
+            notes?: string | null;
+            recordedById?: string | null;
+            reversesPaymentId?: string | null;
+            reversedByPaymentId?: string | null;
+            reversedAt?: unknown;
+            reversedById?: string | null;
+            createdAt?: unknown;
+        };
+        AllocationTargetCommandValue: {
+            chargeId: string;
+            amount: number;
+        };
+        AllocationPlanCommand: {
+            /** @enum {string} */
+            mode: "account_only";
+        } | {
+            /** @enum {string} */
+            mode: "fifo";
+        } | {
+            /** @enum {string} */
+            mode: "targeted";
+            targets: components["schemas"]["AllocationTargetCommandValue"][];
+        };
+        RecordPaymentCommand: {
+            id: string;
+            accountId?: string;
+            studentId?: string;
+            academicYearId?: string;
+            amount: number;
+            paymentDate: string | null;
+            /** @enum {string} */
+            method: "cash" | "card" | "bank_transfer" | "mobile_money" | "other";
+            reference?: string;
+            notes?: string;
+            allocation?: components["schemas"]["AllocationPlanCommand"];
+        };
+        ReversePaymentCommand: {
+            paymentId: string;
+            reverseAllocationIds?: string[];
+        };
+        CancelPaymentCommand: {
+            id?: string;
+        };
+        AdjustStudentFeeCommand: {
+            id?: string;
+        };
+        CancelStudentFeeCommand: {
+            id?: string;
+        };
+        CatalogService: {
             id: string;
             schoolId: string;
             academicYearId: string;
             name: string;
+            description?: string | null;
             /**
              * @default tuition
              * @enum {string}
              */
-            category: "tuition" | "uniform" | "transport" | "other";
-            description?: string | null;
-            defaultAmount: number;
+            category: "tuition" | "transport" | "meals" | "activities" | "materials" | "other";
+            /**
+             * @default mandatory
+             * @enum {string}
+             */
+            enrollmentMode: "mandatory" | "opt_in";
+            /**
+             * @default one_time
+             * @enum {string}
+             */
+            billingKind: "one_time";
+            defaultPrice: number;
             currency: string;
-            /** @default [] */
-            installments: {
-                label: string;
-                percentage: number;
-                dueDate?: unknown;
-            }[];
+            billingTerms: {
+                /** @enum {string} */
+                kind: "one_time";
+                /** @default [] */
+                installments: {
+                    label: string;
+                    percentage: number;
+                    dueDate?: unknown;
+                }[];
+                singleDueDate?: unknown;
+            };
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "active" | "archived";
             createdAt?: unknown;
+            updatedAt?: unknown;
         };
-        FeeInstallmentTemplateCommandValue: {
+        CatalogInstallmentTemplateCommandValue: {
             label: string;
             percentage: number;
             dueDate?: string | null;
         };
-        CreateFeeCommand: {
+        OneTimeBillingTermsCommandValue: {
+            /** @enum {string} */
+            kind: "one_time";
+            installments?: components["schemas"]["CatalogInstallmentTemplateCommandValue"][];
+            singleDueDate?: string | null;
+        };
+        CreateCatalogServiceCommand: {
             id: string;
-            schoolId: string;
             academicYearId: string;
             name: string;
+            description?: string;
+            category?: string;
+            enrollmentMode?: string;
+            defaultPrice: number;
+            currency: string;
+            billingTerms: components["schemas"]["OneTimeBillingTermsCommandValue"];
+            status?: string;
+        };
+        UpdateCatalogServiceCommand: {
+            id: string;
+            name?: string;
+            description?: string | null;
+            category?: string;
+            enrollmentMode?: string;
+            defaultPrice?: number;
+            billingTerms?: components["schemas"]["OneTimeBillingTermsCommandValue"];
+        };
+        CatalogServiceIdCommand: {
+            id: string;
+        };
+        StudentServiceEnrollment: {
+            id: string;
+            schoolId: string;
+            studentId: string;
+            catalogServiceId: string;
+            academicYearId: string;
             /**
-             * @default tuition
+             * @default active
              * @enum {string}
              */
-            category: "tuition" | "uniform" | "transport" | "other";
-            description?: string | null;
-            defaultAmount: number;
-            currency: string;
-            installments?: components["schemas"]["FeeInstallmentTemplateCommandValue"][];
+            status: "active" | "cancelled";
+            /**
+             * @default staff
+             * @enum {string}
+             */
+            source: "staff";
+            acceptedTerms: {
+                catalogServiceId: string;
+                name: string;
+                /** @enum {string} */
+                category: "tuition" | "transport" | "meals" | "activities" | "materials" | "other";
+                currency: string;
+                price: number;
+                /** @enum {string} */
+                billingKind: "one_time";
+                billingTerms: {
+                    /** @enum {string} */
+                    kind: "one_time";
+                    /** @default [] */
+                    installments: {
+                        label: string;
+                        percentage: number;
+                        dueDate?: unknown;
+                    }[];
+                    singleDueDate?: unknown;
+                };
+                /** @default [] */
+                installmentTemplates: {
+                    label: string;
+                    percentage: number;
+                    dueDate?: unknown;
+                }[];
+            };
+            enrolledAt?: unknown;
+            cancelledAt?: unknown;
+            cancellationReason?: string | null;
+            cancelledById?: string | null;
             createdAt?: unknown;
+            updatedAt?: unknown;
         };
-        StudentFee: {
+        EnrollStudentInServiceCommand: {
             id: string;
             studentId: string;
-            feeId: string;
+            catalogServiceId: string;
+            priceOverride?: number;
+            dueDate?: string | null;
+        };
+        StudentServiceEnrollmentCommandListResponse: components["schemas"]["StudentServiceEnrollment"][];
+        EnrollStudentsInServiceCommand: {
+            id: string;
+            catalogServiceId: string;
+            studentIds: string[];
+            priceOverride?: number;
+            dueDate?: string | null;
+        };
+        CancelServiceEnrollmentCommand: {
+            enrollmentId: string;
+            reason: string;
+        };
+        StudentCharge: {
+            id: string;
+            schoolId: string;
+            studentId: string;
+            enrollmentId: string;
             academicYearId: string;
+            label: string;
             expectedAmount: number;
             /** @default 0 */
-            paidAmount: number;
+            allocatedAmount: number;
             /** @default 0 */
             adjustmentAmount: number;
             adjustmentReason?: string | null;
             adjustedById?: string | null;
             adjustedAt?: unknown;
+            /** @default 0 */
+            waiverAmount: number;
+            waiverReason?: string | null;
+            waivedById?: string | null;
+            waivedAt?: unknown;
             currency: string;
             dueDate?: unknown;
             /** @enum {string} */
-            status: "pending" | "partial" | "paid" | "overdue" | "cancelled";
+            status: "pending" | "partial" | "paid" | "overdue" | "cancelled" | "waived";
             cancellationReason?: string | null;
             cancelledById?: string | null;
             cancelledAt?: unknown;
@@ -12014,74 +12698,57 @@ export interface components {
             createdAt?: unknown;
             updatedAt?: unknown;
         };
-        AssignFeeToStudentCommand: {
-            id: string;
-            studentId: string;
-            feeId: string;
-            expectedAmount?: number;
-            dueDate?: string | null;
-            createdAt?: unknown;
-            referenceDate?: string | null;
+        MaterializeOneTimeChargeCommand: {
+            enrollmentId: string;
         };
-        Payment: {
-            id: string;
-            studentFeeId: string;
-            amount: number;
-            currency: string;
-            paymentDate: unknown;
-            /** @enum {string} */
-            method: "cash" | "card" | "bank_transfer" | "mobile_money" | "other";
-            /**
-             * @default recorded
-             * @enum {string}
-             */
-            status: "recorded" | "reversed" | "cancelled";
-            reference?: string | null;
-            notes?: string | null;
-            recordedById?: string | null;
-            reversedAt?: unknown;
-            reversedById?: string | null;
-            cancelledAt?: unknown;
-            cancelledById?: string | null;
-            createdAt?: unknown;
-        };
-        RecordPaymentCommand: {
-            id: string;
-            studentFeeId: string;
-            amount: number;
-            paymentDate: unknown;
-            /** @enum {string} */
-            method: "cash" | "card" | "bank_transfer" | "mobile_money" | "other";
-            reference?: string | null;
-            notes?: string | null;
-            createdAt?: unknown;
-            referenceDate?: string | null;
-        };
-        ReversePaymentCommand: {
-            paymentId: string;
-            reversedAt?: string | null;
-            updatedAt?: string | null;
-            referenceDate?: string | null;
-        };
-        CancelPaymentCommand: {
-            paymentId: string;
-            cancelledAt?: string | null;
-            updatedAt?: string | null;
-            referenceDate?: string | null;
-        };
-        AdjustStudentFeeCommand: {
-            studentFeeId: string;
+        AdjustStudentChargeCommand: {
+            chargeId: string;
             adjustmentAmount: number;
             reason: string;
-            adjustedAt?: string | null;
-            updatedAt?: string | null;
-            referenceDate?: string | null;
         };
-        CancelStudentFeeCommand: {
-            studentFeeId: string;
+        WaiveStudentChargeCommand: {
+            chargeId: string;
             reason: string;
-            cancelledAt?: string | null;
-            updatedAt?: string | null;
+            waiverAmount?: number;
+        };
+        CancelStudentChargeCommand: {
+            chargeId: string;
+            reason: string;
+        };
+        AllocationPreviewResponse: {
+            accountId: string;
+            availableBefore: number;
+            availableAfter: number;
+            allocations: {
+                chargeId: string;
+                amount: number;
+                label: string;
+            }[];
+        };
+        AllocateAccountBalanceCommand: {
+            id: string;
+            accountId: string;
+            allocation: components["schemas"]["AllocationPlanCommand"];
+        };
+        AllocationResponse: {
+            id: string;
+            accountId: string;
+            chargeId: string;
+            amount: number;
+            kind: string;
+        };
+        ReverseAllocationCommand: {
+            allocationId: string;
+        };
+        RefundAvailableBalanceCommand: {
+            id: string;
+            accountId: string;
+            amount: number;
+            paymentDate: string | null;
+            /** @enum {string} */
+            method: "cash" | "card" | "bank_transfer" | "mobile_money" | "other";
+            reference?: string;
+            notes?: string;
         };
         CreateProfilePhotoUploadResponse: {
             attachmentId: string;
@@ -13013,6 +13680,248 @@ export interface components {
             /** Format: date */
             endDate: string;
         };
+        StudentFinanceSummaryResponse: {
+            studentId: string;
+            academicYearId: string;
+            accountId?: string;
+            currency: string;
+            available: {
+                amount: number;
+                currency: string;
+            };
+            outstanding: {
+                amount: number;
+                currency: string;
+            };
+            overdue: {
+                amount: number;
+                currency: string;
+            };
+        };
+        GetStudentFinanceSummaryQuery: {
+            studentId: string;
+            academicYearId: string;
+        };
+        AccountStatementResponse: {
+            accountId: string;
+            studentId: string;
+            academicYearId: string;
+            currency: string;
+            projectedAvailable: number;
+            entrySum: number;
+            entries: {
+                id: string;
+                direction: string;
+                amount: number;
+                sourceKind: string;
+                sourceId: string;
+                effectiveAt: string;
+                recordedAt: string;
+                resultingAvailableBalance: number;
+            }[];
+            payments: {
+                id: string;
+                kind: string;
+                amount: number;
+                status: string;
+                paymentDate: string;
+                method: string;
+                reference?: string;
+            }[];
+            allocations: {
+                id: string;
+                chargeId: string;
+                amount: number;
+                kind: string;
+            }[];
+            charges: {
+                id: string;
+                label: string;
+                remainingObligation: number;
+                status: string;
+            }[];
+        };
+        GetAccountStatementQuery: {
+            accountId: string;
+        };
+        SchoolFinanceAgingResponse: {
+            schoolId: string;
+            academicYearId?: string;
+            currency: string;
+            overdueCount: number;
+            overdueAmount: number;
+            outstandingAmount: number;
+            charges: {
+                chargeId: string;
+                studentId: string;
+                label: string;
+                overdueAmount: number;
+                remainingAmount: number;
+                dueDate?: string;
+            }[];
+        };
+        GetSchoolFinanceAgingQuery: {
+            schoolId: string;
+            academicYearId?: string;
+        };
+        FinanceReconciliationResponse: {
+            schoolId: string;
+            academicYearId?: string;
+            balanced: boolean;
+            accounts: {
+                accountId: string;
+                studentId: string;
+                projectedAvailable: number;
+                entrySum: number;
+                difference: number;
+            }[];
+            charges: {
+                chargeId: string;
+                studentId: string;
+                projectedAllocated: number;
+                settlement: number;
+                difference: number;
+            }[];
+        };
+        GetFinanceReconciliationQuery: {
+            schoolId: string;
+            academicYearId?: string;
+        };
+        AllocationPreviewQueryResponse: {
+            accountId: string;
+            availableBefore: number;
+            availableAfter: number;
+            allocations: {
+                chargeId: string;
+                amount: number;
+                label: string;
+            }[];
+        };
+        PreviewAccountAllocationQuery: {
+            accountId: string;
+            allocation: {
+                /** @enum {string} */
+                mode: "account_only" | "fifo" | "targeted";
+                targets?: {
+                    chargeId: string;
+                    amount: number;
+                }[];
+            };
+        };
+        RelatedFamilyFinanceOverviewResponse: {
+            academicYearId: string;
+            students: components["schemas"]["StudentFinanceSummaryResponse"][];
+        };
+        GetRelatedFamilyFinanceOverviewQuery: {
+            academicYearId: string;
+        };
+        StudentAccountStatementResponse: {
+            accountId: string;
+            studentId: string;
+            academicYearId: string;
+            currency: string;
+            projectedAvailable: number;
+            entrySum: number;
+            entries: {
+                id: string;
+                direction: string;
+                amount: number;
+                sourceKind: string;
+                sourceId: string;
+                effectiveAt: string;
+                recordedAt: string;
+                resultingAvailableBalance: number;
+            }[];
+            payments: {
+                id: string;
+                kind: string;
+                amount: number;
+                status: string;
+                paymentDate: string;
+                method: string;
+                reference?: string;
+            }[];
+            allocations: {
+                id: string;
+                chargeId: string;
+                amount: number;
+                kind: string;
+            }[];
+            charges: {
+                id: string;
+                label: string;
+                remainingObligation: number;
+                status: string;
+            }[];
+        } | null;
+        GetStudentAccountStatementQuery: {
+            studentId: string;
+            academicYearId: string;
+            currency?: string;
+        };
+        OpenDueChargesResponse: {
+            schoolId: string;
+            academicYearId?: string;
+            charges: {
+                chargeId: string;
+                studentId: string;
+                label: string;
+                remainingAmount: number;
+                overdueAmount: number;
+                dueDate?: string;
+                status: string;
+            }[];
+        };
+        ListOpenDueChargesQuery: {
+            schoolId: string;
+            academicYearId?: string;
+        };
+        PaymentSettlementHistoryResponse: {
+            accountId: string;
+            studentId: string;
+            academicYearId: string;
+            currency: string;
+            payments: {
+                id: string;
+                kind: string;
+                amount: number;
+                status: string;
+                paymentDate: string;
+                method: string;
+                reference?: string;
+                reversesPaymentId?: string;
+                reversedByPaymentId?: string;
+            }[];
+            allocations: {
+                id: string;
+                chargeId: string;
+                amount: number;
+                kind: string;
+                causedByPaymentId?: string;
+                reversesAllocationId?: string;
+                recordedAt: string;
+            }[];
+        };
+        GetPaymentSettlementHistoryQuery: {
+            accountId: string;
+        };
+        StudentYearAccountReconciliationResponse: {
+            accountId: string;
+            studentId: string;
+            projectedAvailable: number;
+            entrySum: number;
+            difference: number;
+            balanced: boolean;
+            charges: {
+                chargeId: string;
+                projectedAllocated: number;
+                settlement: number;
+                difference: number;
+            }[];
+        };
+        ReconcileStudentYearAccountQuery: {
+            accountId: string;
+        };
         Filter_1: Record<string, never>;
         CoreEntityDelete: {
             id: string;
@@ -13113,20 +14022,30 @@ export interface components {
             entities: components["schemas"]["ResourceAssignment"][];
         };
         Filter_16: Record<string, never>;
-        FeesBatchSave: {
-            entities: components["schemas"]["Fee"][];
-        };
         Filter_17: Record<string, never>;
         Filter_18: Record<string, never>;
+        StudentYearAccount: {
+            id: string;
+            schoolId: string;
+            studentId: string;
+            academicYearId: string;
+            currency: string;
+            /** @default 0 */
+            availableBalance: number;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
         Filter_19: Record<string, never>;
+        Filter_20: Record<string, never>;
+        Filter_21: Record<string, never>;
         SchedulesBatchSave: {
             entities: components["schemas"]["Schedule"][];
         };
-        Filter_20: Record<string, never>;
+        Filter_22: Record<string, never>;
         LessonSessionsBatchSave: {
             entities: components["schemas"]["LessonSession"][];
         };
-        Filter_21: Record<string, never>;
+        Filter_23: Record<string, never>;
         ActivitySessionsBatchSave: {
             entities: components["schemas"]["ActivitySession"][];
         };
@@ -13139,59 +14058,59 @@ export interface components {
             displayLabel: string;
             createdAt?: unknown;
         };
-        Filter_22: Record<string, never>;
+        Filter_24: Record<string, never>;
         AttendancesBatchSave: {
             entities: components["schemas"]["AttendanceOccurrence"][];
         };
-        Filter_23: Record<string, never>;
+        Filter_25: Record<string, never>;
         CalendarEventsBatchSave: {
             entities: components["schemas"]["CalendarEvent"][];
         };
-        Filter_24: Record<string, never>;
+        Filter_26: Record<string, never>;
         AttendanceRecordsBatchSave: {
             entities: components["schemas"]["Attendance"][];
         };
-        Filter_25: Record<string, never>;
+        Filter_27: Record<string, never>;
         AnnouncementsBatchSave: {
             entities: components["schemas"]["Announcement"][];
         };
-        Filter_26: Record<string, never>;
+        Filter_28: Record<string, never>;
         AnnouncementTargetsBatchSave: {
             entities: components["schemas"]["AnnouncementTarget"][];
         };
-        Filter_27: Record<string, never>;
+        Filter_29: Record<string, never>;
         MessageDeliveriesBatchSave: {
             entities: components["schemas"]["MessageDelivery"][];
         };
-        Filter_28: Record<string, never>;
-        Filter_29: Record<string, never>;
+        Filter_30: Record<string, never>;
+        Filter_31: Record<string, never>;
         SubjectsBatchSave: {
             entities: components["schemas"]["Subject"][];
         };
-        Filter_30: Record<string, never>;
+        Filter_32: Record<string, never>;
         SubjectMattersBatchSave: {
             entities: components["schemas"]["SubjectMatter"][];
         };
+        Filter_35: Record<string, never>;
+        Filter_36: Record<string, never>;
         Filter_33: Record<string, never>;
-        Filter_34: Record<string, never>;
-        Filter_31: Record<string, never>;
         ClassGroupsBatchSave: {
             entities: components["schemas"]["ClassGroup"][];
         };
-        Filter_32: Record<string, never>;
-        Filter_35: Record<string, never>;
+        Filter_34: Record<string, never>;
+        Filter_37: Record<string, never>;
         ClassSubjectMattersBatchSave: {
             entities: components["schemas"]["ClassSubjectMatter"][];
         };
-        Filter_36: Record<string, never>;
+        Filter_38: Record<string, never>;
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
-        Filter_37: Record<string, never>;
+        Filter_39: Record<string, never>;
         ActivitiesBatchSave: {
             entities: components["schemas"]["Activity"][];
         };
-        Filter_38: Record<string, never>;
+        Filter_40: Record<string, never>;
         ActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ActivityEnrollment"][];
         };
@@ -13201,60 +14120,60 @@ export interface components {
             classGroupId: string;
             createdAt?: unknown;
         };
-        Filter_39: Record<string, never>;
+        Filter_41: Record<string, never>;
         ClassActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ClassActivityEnrollment"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_42: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_41: Record<string, never>;
-        Filter_42: Record<string, never>;
+        Filter_43: Record<string, never>;
+        Filter_44: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_45: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_46: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_45: Record<string, never>;
-        Filter_46: Record<string, never>;
         Filter_47: Record<string, never>;
         Filter_48: Record<string, never>;
+        Filter_49: Record<string, never>;
+        Filter_50: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_49: Record<string, never>;
+        Filter_51: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_51: Record<string, never>;
+        Filter_53: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_50: Record<string, never>;
         Filter_52: Record<string, never>;
+        Filter_54: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_53: Record<string, never>;
+        Filter_55: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
-        Filter_54: Record<string, never>;
+        Filter_56: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_55: Record<string, never>;
+        Filter_57: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_56: Record<string, never>;
+        Filter_58: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };
@@ -21863,7 +22782,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Fee"];
+                    "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -21941,7 +22860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"];
+                    "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -22175,7 +23094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Payment"];
+                    "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -22253,7 +23172,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"];
+                    "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -22331,7 +23250,1099 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"];
+                    "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.createCatalogService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description create-catalog-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateCatalogServiceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed create-catalog-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogService"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.updateCatalogService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description update-catalog-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateCatalogServiceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed update-catalog-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogService"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.activateCatalogService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description activate-catalog-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CatalogServiceIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed activate-catalog-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogService"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.archiveCatalogService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description archive-catalog-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CatalogServiceIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed archive-catalog-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogService"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.enrollStudentInService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description enroll-student-in-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["EnrollStudentInServiceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed enroll-student-in-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentServiceEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.enrollStudentsInService": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description enroll-students-in-service payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["EnrollStudentsInServiceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed enroll-students-in-service */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentServiceEnrollmentCommandListResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.cancelServiceEnrollment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description cancel-service-enrollment payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelServiceEnrollmentCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed cancel-service-enrollment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentServiceEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.materializeOneTimeCharge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description materialize-one-time-charge payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MaterializeOneTimeChargeCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed materialize-one-time-charge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.adjustStudentCharge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description adjust-student-charge payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AdjustStudentChargeCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed adjust-student-charge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.waiveStudentCharge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description waive-student-charge payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WaiveStudentChargeCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed waive-student-charge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.cancelStudentCharge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description cancel-student-charge payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelStudentChargeCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed cancel-student-charge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.allocateAccountBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description allocate-account-balance payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AllocateAccountBalanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed allocate-account-balance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationPreviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.reverseAllocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description reverse-allocation payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReverseAllocationCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed reverse-allocation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.refundAvailableBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description refund-available-balance payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RefundAvailableBalanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed refund-available-balance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
                 };
             };
             /** @description Invalid request payload */
@@ -25530,6 +27541,864 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResolvedTimetableSpaceResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getStudentFinanceSummary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-student-finance-summary payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetStudentFinanceSummaryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-student-finance-summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentFinanceSummaryResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getAccountStatement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-account-statement payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetAccountStatementQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-account-statement */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountStatementResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getSchoolFinanceAging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-school-finance-aging payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetSchoolFinanceAgingQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-school-finance-aging */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolFinanceAgingResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFinanceReconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-finance-reconciliation payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinanceReconciliationQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-finance-reconciliation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceReconciliationResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.previewAccountAllocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description preview-account-allocation payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PreviewAccountAllocationQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved preview-account-allocation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationPreviewQueryResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getRelatedFamilyFinanceOverview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-related-family-finance-overview payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetRelatedFamilyFinanceOverviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-related-family-finance-overview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelatedFamilyFinanceOverviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getStudentAccountStatement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-student-account-statement payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetStudentAccountStatementQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-student-account-statement */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentAccountStatementResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listOpenDueCharges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-open-due-charges payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListOpenDueChargesQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-open-due-charges */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenDueChargesResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getPaymentSettlementHistory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-payment-settlement-history payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetPaymentSettlementHistoryQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-payment-settlement-history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettlementHistoryResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.reconcileStudentYearAccount": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description reconcile-student-year-account payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReconcileStudentYearAccountQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved reconcile-student-year-account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentYearAccountReconciliationResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.reconcileSchoolFinance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description reconcile-school-finance payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinanceReconciliationQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved reconcile-school-finance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceReconciliationResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -35362,14 +38231,14 @@ export interface operations {
             };
         };
     };
-    "entities.fees.list": {
+    "entities.catalogServices.list": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Fees query */
+        /** @description Catalog Services query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_16"] & {
@@ -35384,13 +38253,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Listed Fees */
+            /** @description Listed Catalog Services */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Fee"][];
+                    "application/json": components["schemas"]["CatalogService"][];
                 };
             };
             /** @description Invalid request payload */
@@ -35448,14 +38317,14 @@ export interface operations {
             };
         };
     };
-    "entities.fees.one": {
+    "entities.catalogServices.one": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Fees query */
+        /** @description Catalog Services query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_16"] & {
@@ -35470,13 +38339,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Found Fees */
+            /** @description Found Catalog Services */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Fee"];
+                    "application/json": components["schemas"]["CatalogService"];
                 };
             };
             /** @description Invalid request payload */
@@ -35512,7 +38381,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Fees not found */
+            /** @description Catalog Services not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -35545,14 +38414,14 @@ export interface operations {
             };
         };
     };
-    "entities.fees.count": {
+    "entities.catalogServices.count": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Fees query */
+        /** @description Catalog Services query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_16"] & {
@@ -35567,7 +38436,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Counted Fees */
+            /** @description Counted Catalog Services */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -35633,7 +38502,7 @@ export interface operations {
             };
         };
     };
-    "entities.fees.get": {
+    "entities.catalogServices.get": {
         parameters: {
             query?: never;
             header?: never;
@@ -35644,13 +38513,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Fetched Fees */
+            /** @description Fetched Catalog Services */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Fee"];
+                    "application/json": components["schemas"]["CatalogService"];
                 };
             };
             /** @description Invalid request payload */
@@ -35686,7 +38555,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Fees not found */
+            /** @description Catalog Services not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -35719,354 +38588,14 @@ export interface operations {
             };
         };
     };
-    "entities.fees.save": {
+    "entities.studentServiceEnrollments.list": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Fees entity */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Fee"];
-            };
-        };
-        responses: {
-            /** @description Saved Fees */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Fee"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.fees.delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Fees delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityDelete"];
-            };
-        };
-        responses: {
-            /** @description Deleted Fees */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.fees.batchSave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Fees batch save request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["FeesBatchSave"];
-            };
-        };
-        responses: {
-            /** @description Batch saved Fees */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.fees.batchDelete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Fees batch delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityBatchDelete"];
-            };
-        };
-        responses: {
-            /** @description Batch deleted Fees */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.studentFees.list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Student Fees query */
+        /** @description Student Service Enrollments query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_17"] & {
@@ -36081,13 +38610,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Listed Student Fees */
+            /** @description Listed Student Service Enrollments */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"][];
+                    "application/json": components["schemas"]["StudentServiceEnrollment"][];
                 };
             };
             /** @description Invalid request payload */
@@ -36145,14 +38674,14 @@ export interface operations {
             };
         };
     };
-    "entities.studentFees.one": {
+    "entities.studentServiceEnrollments.one": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Student Fees query */
+        /** @description Student Service Enrollments query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_17"] & {
@@ -36167,13 +38696,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Found Student Fees */
+            /** @description Found Student Service Enrollments */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"];
+                    "application/json": components["schemas"]["StudentServiceEnrollment"];
                 };
             };
             /** @description Invalid request payload */
@@ -36209,7 +38738,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description Student Fees not found */
+            /** @description Student Service Enrollments not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -36242,14 +38771,14 @@ export interface operations {
             };
         };
     };
-    "entities.studentFees.count": {
+    "entities.studentServiceEnrollments.count": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Student Fees query */
+        /** @description Student Service Enrollments query */
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["Filter_17"] & {
@@ -36264,7 +38793,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Counted Student Fees */
+            /** @description Counted Student Service Enrollments */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -36330,7 +38859,7 @@ export interface operations {
             };
         };
     };
-    "entities.studentFees.get": {
+    "entities.studentServiceEnrollments.get": {
         parameters: {
             query?: never;
             header?: never;
@@ -36341,13 +38870,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Fetched Student Fees */
+            /** @description Fetched Student Service Enrollments */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StudentFee"];
+                    "application/json": components["schemas"]["StudentServiceEnrollment"];
                 };
             };
             /** @description Invalid request payload */
@@ -36383,7 +38912,721 @@ export interface operations {
                     };
                 };
             };
-            /** @description Student Fees not found */
+            /** @description Student Service Enrollments not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentCharges.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Charges query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_18"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Student Charges */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentCharges.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Charges query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_18"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Student Charges */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Charges not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentCharges.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Charges query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_18"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Student Charges */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentCharges.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Student Charges */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCharge"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Charges not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentYearAccounts.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Year Accounts query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_19"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Student Year Accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentYearAccount"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentYearAccounts.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Year Accounts query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_19"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Student Year Accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentYearAccount"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Year Accounts not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentYearAccounts.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Year Accounts query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_19"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Student Year Accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentYearAccounts.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Student Year Accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentYearAccount"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Year Accounts not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -36426,7 +39669,7 @@ export interface operations {
         /** @description Payments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_18"] & {
+                "application/json": components["schemas"]["Filter_20"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -36512,7 +39755,7 @@ export interface operations {
         /** @description Payments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_18"] & {
+                "application/json": components["schemas"]["Filter_20"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -36609,7 +39852,7 @@ export interface operations {
         /** @description Payments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_18"] & {
+                "application/json": components["schemas"]["Filter_20"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -36783,7 +40026,7 @@ export interface operations {
         /** @description Schedules query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_19"] & {
+                "application/json": components["schemas"]["Filter_21"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -36869,7 +40112,7 @@ export interface operations {
         /** @description Schedules query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_19"] & {
+                "application/json": components["schemas"]["Filter_21"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -36966,7 +40209,7 @@ export interface operations {
         /** @description Schedules query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_19"] & {
+                "application/json": components["schemas"]["Filter_21"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -37480,7 +40723,7 @@ export interface operations {
         /** @description Lesson Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_20"] & {
+                "application/json": components["schemas"]["Filter_22"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -37566,7 +40809,7 @@ export interface operations {
         /** @description Lesson Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_20"] & {
+                "application/json": components["schemas"]["Filter_22"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -37663,7 +40906,7 @@ export interface operations {
         /** @description Lesson Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_20"] & {
+                "application/json": components["schemas"]["Filter_22"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -38177,7 +41420,7 @@ export interface operations {
         /** @description Activity Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_21"] & {
+                "application/json": components["schemas"]["Filter_23"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -38263,7 +41506,7 @@ export interface operations {
         /** @description Activity Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_21"] & {
+                "application/json": components["schemas"]["Filter_23"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -38360,7 +41603,7 @@ export interface operations {
         /** @description Activity Sessions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_21"] & {
+                "application/json": components["schemas"]["Filter_23"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -38874,7 +42117,7 @@ export interface operations {
         /** @description Attendances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_22"] & {
+                "application/json": components["schemas"]["Filter_24"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -38960,7 +42203,7 @@ export interface operations {
         /** @description Attendances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_22"] & {
+                "application/json": components["schemas"]["Filter_24"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -39057,7 +42300,7 @@ export interface operations {
         /** @description Attendances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_22"] & {
+                "application/json": components["schemas"]["Filter_24"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -39571,7 +42814,7 @@ export interface operations {
         /** @description Calendar Events query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_23"] & {
+                "application/json": components["schemas"]["Filter_25"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -39657,7 +42900,7 @@ export interface operations {
         /** @description Calendar Events query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_23"] & {
+                "application/json": components["schemas"]["Filter_25"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -39754,7 +42997,7 @@ export interface operations {
         /** @description Calendar Events query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_23"] & {
+                "application/json": components["schemas"]["Filter_25"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -40268,7 +43511,7 @@ export interface operations {
         /** @description Attendance Records query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_24"] & {
+                "application/json": components["schemas"]["Filter_26"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -40354,7 +43597,7 @@ export interface operations {
         /** @description Attendance Records query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_24"] & {
+                "application/json": components["schemas"]["Filter_26"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -40451,7 +43694,7 @@ export interface operations {
         /** @description Attendance Records query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_24"] & {
+                "application/json": components["schemas"]["Filter_26"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -40965,7 +44208,7 @@ export interface operations {
         /** @description Announcements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_25"] & {
+                "application/json": components["schemas"]["Filter_27"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -41051,7 +44294,7 @@ export interface operations {
         /** @description Announcements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_25"] & {
+                "application/json": components["schemas"]["Filter_27"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -41148,7 +44391,7 @@ export interface operations {
         /** @description Announcements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_25"] & {
+                "application/json": components["schemas"]["Filter_27"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -41662,7 +44905,7 @@ export interface operations {
         /** @description Announcement Targets query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_26"] & {
+                "application/json": components["schemas"]["Filter_28"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -41748,7 +44991,7 @@ export interface operations {
         /** @description Announcement Targets query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_26"] & {
+                "application/json": components["schemas"]["Filter_28"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -41845,7 +45088,7 @@ export interface operations {
         /** @description Announcement Targets query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_26"] & {
+                "application/json": components["schemas"]["Filter_28"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -42359,7 +45602,7 @@ export interface operations {
         /** @description Message Deliveries query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_27"] & {
+                "application/json": components["schemas"]["Filter_29"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -42445,7 +45688,7 @@ export interface operations {
         /** @description Message Deliveries query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_27"] & {
+                "application/json": components["schemas"]["Filter_29"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -42542,7 +45785,7 @@ export interface operations {
         /** @description Message Deliveries query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_27"] & {
+                "application/json": components["schemas"]["Filter_29"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43056,7 +46299,7 @@ export interface operations {
         /** @description School Notification Templates query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_28"] & {
+                "application/json": components["schemas"]["Filter_30"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43142,7 +46385,7 @@ export interface operations {
         /** @description School Notification Templates query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_28"] & {
+                "application/json": components["schemas"]["Filter_30"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43239,7 +46482,7 @@ export interface operations {
         /** @description School Notification Templates query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_28"] & {
+                "application/json": components["schemas"]["Filter_30"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43413,7 +46656,7 @@ export interface operations {
         /** @description Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_29"] & {
+                "application/json": components["schemas"]["Filter_31"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43499,7 +46742,7 @@ export interface operations {
         /** @description Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_29"] & {
+                "application/json": components["schemas"]["Filter_31"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -43596,7 +46839,7 @@ export interface operations {
         /** @description Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_29"] & {
+                "application/json": components["schemas"]["Filter_31"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44110,7 +47353,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_30"] & {
+                "application/json": components["schemas"]["Filter_32"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44196,7 +47439,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_30"] & {
+                "application/json": components["schemas"]["Filter_32"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44293,7 +47536,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_30"] & {
+                "application/json": components["schemas"]["Filter_32"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44807,7 +48050,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_33"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44893,7 +48136,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_33"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -44990,7 +48233,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_33"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45164,7 +48407,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45250,7 +48493,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45347,7 +48590,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45521,7 +48764,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_31"] & {
+                "application/json": components["schemas"]["Filter_33"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45607,7 +48850,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_31"] & {
+                "application/json": components["schemas"]["Filter_33"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -45704,7 +48947,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_31"] & {
+                "application/json": components["schemas"]["Filter_33"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46218,7 +49461,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_32"] & {
+                "application/json": components["schemas"]["Filter_34"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46304,7 +49547,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_32"] & {
+                "application/json": components["schemas"]["Filter_34"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46401,7 +49644,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_32"] & {
+                "application/json": components["schemas"]["Filter_34"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46735,7 +49978,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46821,7 +50064,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -46918,7 +50161,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47432,7 +50675,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47518,7 +50761,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -47615,7 +50858,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48129,7 +51372,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48215,7 +51458,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48312,7 +51555,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48826,7 +52069,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -48912,7 +52155,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49009,7 +52252,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49523,7 +52766,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49609,7 +52852,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -49706,7 +52949,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50220,7 +53463,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50306,7 +53549,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50403,7 +53646,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50917,7 +54160,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51003,7 +54246,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51100,7 +54343,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51274,7 +54517,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51360,7 +54603,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51457,7 +54700,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -51971,7 +55214,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52057,7 +55300,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52154,7 +55397,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52668,7 +55911,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52754,7 +55997,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -52851,7 +56094,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53365,7 +56608,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53451,7 +56694,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53548,7 +56791,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53722,7 +56965,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53808,7 +57051,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53905,7 +57148,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54079,7 +57322,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54165,7 +57408,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54262,7 +57505,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54436,7 +57679,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54522,7 +57765,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54619,7 +57862,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55133,7 +58376,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55219,7 +58462,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55316,7 +58559,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55830,7 +59073,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55916,7 +59159,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56013,7 +59256,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56527,7 +59770,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56613,7 +59856,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56710,7 +59953,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56884,7 +60127,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56970,7 +60213,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57067,7 +60310,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57581,7 +60824,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57667,7 +60910,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57764,7 +61007,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58278,7 +61521,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58364,7 +61607,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58461,7 +61704,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58975,7 +62218,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59061,7 +62304,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59158,7 +62401,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59672,7 +62915,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59758,7 +63001,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59855,7 +63098,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */

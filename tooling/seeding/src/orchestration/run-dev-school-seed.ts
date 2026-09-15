@@ -73,8 +73,8 @@ export type DevSchoolSeedResult
       subjects: number
       classSubjects: number
       periodDefinitions: number
-      fees: number
-      studentFees: number
+      catalogServices: number
+      studentServiceEnrollments: number
       payments: number
       classSubjectMatters: number
       resources: number
@@ -315,8 +315,8 @@ export async function runDevSchoolSeed(
     subjects: entities.subjects?.length ?? 0,
     classSubjects: entities.classSubjects?.length ?? 0,
     periodDefinitions: entities.periodDefinitions?.length ?? 0,
-    fees: financeCounts.fees,
-    studentFees: financeCounts.studentFees,
+    catalogServices: financeCounts.catalogServices,
+    studentServiceEnrollments: financeCounts.studentServiceEnrollments,
     payments: financeCounts.payments,
     classSubjectMatters: curriculumPlan.gradeLevelSubjectMatters.length,
     resources: fixtureCounts.resources ?? 0,

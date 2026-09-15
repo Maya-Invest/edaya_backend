@@ -1,4 +1,4 @@
-import type { AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, FeeInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentFeeInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
+import type { AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, CatalogEnrollmentMode, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'minimal' | 'integration' | 'demo' | 'demo-ci' | 'bulk'
 
@@ -105,6 +105,76 @@ export interface FixtureAnnouncementMaterializePlan {
   announcementId: string
 }
 
+export interface FixtureCatalogInstallment {
+  label: string
+  percentage: number
+  dueDate?: string
+}
+
+export interface FixtureCatalogBillingTerms {
+  kind: 'one_time'
+  installments: readonly FixtureCatalogInstallment[]
+  singleDueDate?: string
+}
+
+/** Seed-oriented catalog offering. Charges are materialized from enrollments, not stored here. */
+export interface FixtureCatalogService {
+  id: string
+  academicYearId: string
+  name: string
+  description?: string
+  category?: CatalogServiceCategory
+  enrollmentMode?: CatalogEnrollmentMode
+  defaultPrice: number
+  currency: string
+  billingTerms: FixtureCatalogBillingTerms
+  status?: CatalogServiceStatus
+}
+
+export interface FixtureStudentServiceEnrollment {
+  id: string
+  studentId: string
+  catalogServiceId: string
+  priceOverride?: number
+  dueDate?: string
+  waive?: {
+    reason: string
+    waiverAmount?: number
+  }
+  cancelCharge?: {
+    reason: string
+  }
+}
+
+export type FixtureAllocationPlan
+  = { mode: 'account_only' }
+    | { mode: 'fifo' }
+    | { mode: 'targeted', targets: readonly { chargeId: string, amount: number }[] }
+
+/** Seed-oriented receipt. Not a raw Payment entity (no studentFeeId / accountId required). */
+export interface FixturePayment {
+  id: string
+  studentId?: string
+  academicYearId?: string
+  accountId?: string
+  amount: number
+  paymentDate: string
+  method: PaymentMethod
+  reference?: string
+  notes?: string
+  allocation?: FixtureAllocationPlan
+  reverseCausedAllocations?: boolean | { chargeIds: readonly string[] }
+  reversePayment?: boolean
+  refund?: {
+    id: string
+    amount: number
+    paymentDate: string
+    method: PaymentMethod
+    reference?: string
+    notes?: string
+  }
+}
+
 export interface FixtureDatasetExtensions {
   assessmentResultScores?: Record<string, Partial<Record<string, number>>>
   attendanceSessions?: {
@@ -153,9 +223,9 @@ export interface FixtureDatasetEntities {
   activities?: readonly ActivityInput[]
   activityEnrollments?: readonly ActivityEnrollmentInput[]
   classActivityEnrollments?: readonly ClassActivityEnrollmentInput[]
-  fees?: readonly FeeInput[]
-  studentFees?: readonly StudentFeeInput[]
-  payments?: readonly PaymentInput[]
+  catalogServices?: readonly FixtureCatalogService[]
+  studentServiceEnrollments?: readonly FixtureStudentServiceEnrollment[]
+  payments?: readonly FixturePayment[]
   announcements?: readonly AnnouncementInput[]
   announcementTargets?: readonly AnnouncementTargetInput[]
   messageDeliveries?: readonly MessageDeliveryInput[]

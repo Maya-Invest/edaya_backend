@@ -11,6 +11,7 @@ export const PERMISSION_ASSURANCE: Partial<Record<Permission, ActorAssuranceLeve
   [Permission.FINANCIAL_CONFIG_UPDATE]: ActorAssuranceLevel.Verified,
   [Permission.PAYMENT_CANCEL]: ActorAssuranceLevel.Verified,
   [Permission.PAYMENT_RECORD]: ActorAssuranceLevel.Verified,
+  [Permission.PAYMENT_ALLOCATE]: ActorAssuranceLevel.Verified,
   [Permission.PAYMENT_REVERSE]: ActorAssuranceLevel.Verified,
   [Permission.REPORT_CARD_PUBLISH]: ActorAssuranceLevel.Verified,
   [Permission.STUDENT_UPDATE]: ActorAssuranceLevel.Verified,

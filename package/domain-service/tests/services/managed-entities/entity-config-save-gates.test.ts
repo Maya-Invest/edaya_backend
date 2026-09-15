@@ -3,7 +3,8 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectProgress, DisciplinaryAction, EnrollmentEndReason, Fee, FeeStatus, GradeLevel, GradeLevelSubject, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentFee, StudentIncidentInvolvement, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, CatalogService, CatalogServiceStatus, ChargeStatus, ClassGroup, ClassSubject, ClassSubjectProgress, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeLevelSubject, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { validateStudentChargeSave } from '@edaya/service'
 import {
   describe,
   expect,
@@ -519,40 +520,41 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('student fee preSave rejects invalid adjustments and paid cancellation', async () => {
-    const { app, repositories } = await createAcademicTestApp()
-    await repositories.feeRepository.save(new Fee({ id: 'fee-1', schoolId: 'school', academicYearId: 'year-1', name: 'Tuition', defaultAmount: 1000, currency: 'XAF' }))
+  test('student charge preSave rejects invalid adjustments and paid cancellation', async () => {
+    const { repositories, schoolRepositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    const studentFee = new StudentFee({
+    const charge = new StudentCharge({
       id: 'student-fee-1',
+      schoolId: 'school',
       studentId: 'student-1',
-      feeId: 'fee-1',
+      enrollmentId: 'enr-1',
       academicYearId: 'year-1',
+      label: 'Tuition',
       expectedAmount: 100,
-      paidAmount: 80,
+      allocatedAmount: 80,
       currency: 'XAF',
-      status: FeeStatus.Partial,
+      status: ChargeStatus.Partial,
     })
-    await repositories.studentFeeRepository.save(studentFee)
+    await repositories.studentChargeRepository.save(charge)
 
-    await expect(app.baseService.entities.studentFees.save(studentFee.copyWith({
+    await expect(validateStudentChargeSave(charge.copyWith({
       adjustmentAmount: 30,
       adjustmentReason: 'Discount',
       adjustedById: 'staff-1',
       adjustedAt: new Date('2026-05-01T00:00:00Z'),
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }), charge, schoolRepositories)).rejects.toBeInstanceOf(BusinessRuleViolationError)
 
-    await expect(app.baseService.entities.studentFees.save(studentFee.copyWith({
-      status: FeeStatus.Cancelled,
+    await expect(validateStudentChargeSave(charge.copyWith({
+      status: ChargeStatus.Cancelled,
       cancellationReason: 'Cancelled',
       cancelledById: 'staff-1',
       cancelledAt: new Date('2026-05-01T00:00:00Z'),
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }), charge, schoolRepositories)).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
   test('incident preSave rejects invalid scope and non-open resolution', async () => {
@@ -830,7 +832,7 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('fee preSave rejects academic years outside the fee school', async () => {
+  test('catalog service preSave rejects academic years outside the school', async () => {
     const { app, repositories } = await createAcademicTestApp()
     await repositories.schoolRepository.save(new School({
       id: 'school',
@@ -845,59 +847,54 @@ describe('Entity config save gates', () => {
       endDate: new Date('2026-12-31T00:00:00Z'),
     }))
 
-    await expect(app.baseService.entities.fees.save(new Fee({
+    await expect(app.baseService.entities.catalogServices.save(new CatalogService({
       id: 'fee-1',
       schoolId: 'school',
       academicYearId: 'year-other',
       name: 'Tuition',
-      defaultAmount: 1000,
+      defaultPrice: 1000,
       currency: 'USD',
+      billingTerms: { kind: 'one_time', installments: [] },
+      status: CatalogServiceStatus.Draft,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('payment preSave rejects cancelled student fees and terminal payment transitions', async () => {
+  test('payment preSave rejects missing accounts and terminal payment transitions', async () => {
     const { app, repositories } = await createAcademicTestApp()
-    await repositories.feeRepository.save(new Fee({ id: 'fee-1', schoolId: 'school', academicYearId: 'year-1', name: 'Tuition', defaultAmount: 1000, currency: 'USD' }))
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
       schoolId: 'school',
       firstName: 'Ada',
       lastName: 'Lovelace',
     }))
-    await repositories.studentFeeRepository.save(new StudentFee({
-      id: 'student-fee-cancelled',
-      studentId: 'student-1',
-      feeId: 'fee-1',
-      academicYearId: 'year-1',
-      expectedAmount: 1000,
-      currency: 'USD',
-      status: FeeStatus.Cancelled,
-      cancellationReason: 'waived',
-      cancelledById: 'staff-1',
-      cancelledAt: new Date('2026-02-01T00:00:00Z'),
-    }))
+    const accountId = studentYearAccountId('school', 'student-1', 'year-1', 'USD')
 
     await expect(app.baseService.entities.payments.save(new Payment({
       id: 'payment-new',
-      studentFeeId: 'student-fee-cancelled',
+      schoolId: 'school',
+      accountId,
+      academicYearId: 'year-1',
+      kind: PaymentKind.Receipt,
       amount: 100,
       currency: 'USD',
       paymentDate: new Date('2026-02-01T00:00:00Z'),
       method: PaymentMethod.Cash,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }))).rejects.toBeInstanceOf(AuthorizationError)
 
-    await repositories.studentFeeRepository.save(new StudentFee({
-      id: 'student-fee-active',
+    await repositories.studentYearAccountRepository.save(new StudentYearAccount({
+      id: accountId,
+      schoolId: 'school',
       studentId: 'student-1',
-      feeId: 'fee-1',
       academicYearId: 'year-1',
-      expectedAmount: 1000,
       currency: 'USD',
-      status: FeeStatus.Pending,
+      availableBalance: 100,
     }))
     const reversed = new Payment({
       id: 'payment-reversed',
-      studentFeeId: 'student-fee-active',
+      schoolId: 'school',
+      accountId,
+      academicYearId: 'year-1',
+      kind: PaymentKind.Receipt,
       amount: 100,
       currency: 'USD',
       paymentDate: new Date('2026-02-01T00:00:00Z'),
@@ -908,17 +905,8 @@ describe('Entity config save gates', () => {
     })
     await repositories.paymentRepository.save(reversed)
 
-    await expect(app.baseService.entities.payments.save(new Payment({
-      id: reversed.id,
-      studentFeeId: reversed.studentFeeId,
-      amount: reversed.amount.amount,
-      currency: reversed.amount.currency,
-      paymentDate: reversed.paymentDate,
-      method: reversed.method,
-      status: PaymentStatus.Cancelled,
-      cancelledAt: new Date('2026-02-03T00:00:00Z'),
-      cancelledById: 'staff-1',
-      createdAt: reversed.createdAt,
+    await expect(app.baseService.entities.payments.save(reversed.copyWith({
+      reversedByPaymentId: 'other-payment',
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 

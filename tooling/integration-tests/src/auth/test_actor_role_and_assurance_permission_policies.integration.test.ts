@@ -211,7 +211,7 @@ describeIntegration('Actor Role and Assurance Permission Policies', () => {
       assuranceLevel: ActorAssuranceLevel.Verified,
     }))
 
-    // Accountants can create fees
+    // Accountants can create catalog services
     const fee = await saveFee(accountantApp, {
       id: 'tuition-fee',
       schoolId: 'school',

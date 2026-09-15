@@ -13,6 +13,7 @@ import {
   attachmentResponseSchema,
   attendanceResponseSchema,
   calendarEventResponseSchema,
+  catalogServiceResponseSchema,
   classGroupResponseSchema,
   classSubjectMatterResponseSchema,
   classSubjectProgressResponseSchema,
@@ -20,7 +21,6 @@ import {
   definitionResponseSchema,
   disciplinaryActionResponseSchema,
   enrollmentResponseSchema,
-  feeResponseSchema,
   gradeLevelResponseSchema,
   gradeLevelSubjectMatterResponseSchema,
   gradeLevelSubjectResponseSchema,
@@ -42,13 +42,14 @@ import {
   staffAssignmentResponseSchema,
   staffMemberResponseSchema,
   staffPermissionAssignmentResponseSchema,
+  studentChargeResponseSchema,
   studentDisciplinaryActionResponseSchema,
-  studentFeeResponseSchema,
   studentHealthProfileResponseSchema,
   studentIncidentInvolvementResponseSchema,
   studentNoteResponseSchema,
   studentPhotoSubmissionResponseSchema,
   studentResponseSchema,
+  studentServiceEnrollmentResponseSchema,
   subjectMatterResponseSchema,
   subjectResponseSchema,
   teacherResponseSchema,
@@ -73,8 +74,23 @@ export const materializedOccurrenceCommandListResponseSchema = z.array(
   materializedOccurrenceCommandResponseSchema,
 ).openapi("MaterializedOccurrenceCommandListResponse");
 export const attendanceCommandListResponseSchema = z.array(attendanceResponseSchema).openapi("AttendanceCommandListResponse");
-export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
 export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
+export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
+export const studentServiceEnrollmentCommandListResponseSchema = z.array(studentServiceEnrollmentResponseSchema).openapi("StudentServiceEnrollmentCommandListResponse");
+export const allocationPreviewResponseSchema = z.object({
+  accountId: z.string().min(1),
+  availableBefore: z.number().int().nonnegative(),
+  availableAfter: z.number().int().nonnegative(),
+  allocations: z.array(z.object({
+    chargeId: z.string().min(1),
+    amount: z.number().positive(),
+    label: z.string().min(1),
+  })),
+}).openapi("AllocationPreviewResponse");
+export const retiredFinanceCommandResponseSchema = z.object({
+  code: z.string().min(1),
+  message: z.string().min(1),
+}).openapi("RetiredFinanceCommandResponse");
 
 const timetablePlacementSchema = z.object({
   classSubjectId: z.string().min(1),
@@ -291,13 +307,33 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   updateStudentDisciplinaryActionStatus: studentDisciplinaryActionResponseSchema,
   resolveIncident: incidentResponseSchema,
   resolveIncidentWithOutcomes: resolveIncidentWithOutcomesResponseSchema,
-  createFee: feeResponseSchema,
-  assignFeeToStudent: studentFeeResponseSchema,
+  createFee: retiredFinanceCommandResponseSchema,
+  assignFeeToStudent: retiredFinanceCommandResponseSchema,
   recordPayment: paymentResponseSchema,
   reversePayment: paymentResponseSchema,
-  cancelPayment: paymentResponseSchema,
-  adjustStudentFee: studentFeeResponseSchema,
-  cancelStudentFee: studentFeeResponseSchema,
+  cancelPayment: retiredFinanceCommandResponseSchema,
+  adjustStudentFee: retiredFinanceCommandResponseSchema,
+  cancelStudentFee: retiredFinanceCommandResponseSchema,
+  createCatalogService: catalogServiceResponseSchema,
+  updateCatalogService: catalogServiceResponseSchema,
+  activateCatalogService: catalogServiceResponseSchema,
+  archiveCatalogService: catalogServiceResponseSchema,
+  enrollStudentInService: studentServiceEnrollmentResponseSchema,
+  enrollStudentsInService: studentServiceEnrollmentCommandListResponseSchema,
+  cancelServiceEnrollment: studentServiceEnrollmentResponseSchema,
+  materializeOneTimeCharge: studentChargeResponseSchema,
+  adjustStudentCharge: studentChargeResponseSchema,
+  waiveStudentCharge: studentChargeResponseSchema,
+  cancelStudentCharge: studentChargeResponseSchema,
+  allocateAccountBalance: allocationPreviewResponseSchema,
+  reverseAllocation: z.object({
+    id: z.string().min(1),
+    accountId: z.string().min(1),
+    chargeId: z.string().min(1),
+    amount: z.number(),
+    kind: z.string().min(1),
+  }).openapi("AllocationResponse"),
+  refundAvailableBalance: paymentResponseSchema,
   createProfilePhotoUpload: z.object({
     attachmentId: z.string(),
     storageKey: z.string(),

@@ -69,7 +69,149 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
       }));
     }
 
+    if (queryConfig.methodName === "getStudentFinanceSummary") {
+      const summary = await service.getStudentFinanceSummary({
+        studentId: payload.studentId as string,
+        academicYearId: payload.academicYearId as string,
+      });
+      return {
+        studentId: summary.studentId,
+        academicYearId: summary.academicYearId,
+        accountId: summary.accountId,
+        currency: summary.currency,
+        available: { amount: summary.available.amount, currency: summary.available.currency },
+        outstanding: { amount: summary.outstanding.amount, currency: summary.outstanding.currency },
+        overdue: { amount: summary.overdue.amount, currency: summary.overdue.currency },
+      };
+    }
+
+    if (queryConfig.methodName === "getAccountStatement") {
+      const statement = await service.getAccountStatement({ accountId: payload.accountId as string });
+      return serializeGraphqlAccountStatement(statement);
+    }
+
+    if (queryConfig.methodName === "getSchoolFinanceAging") {
+      return service.getSchoolFinanceAging({
+        schoolId: payload.schoolId as string,
+        academicYearId: payload.academicYearId as string | undefined,
+      });
+    }
+
+    if (queryConfig.methodName === "getFinanceReconciliation") {
+      return service.getFinanceReconciliation({
+        schoolId: payload.schoolId as string,
+        academicYearId: payload.academicYearId as string | undefined,
+      });
+    }
+
+    if (queryConfig.methodName === "previewAccountAllocation") {
+      const allocation = payload.allocation as { mode: "account_only" | "fifo" | "targeted"; targets?: { chargeId: string; amount: number }[] };
+      return service.previewAccountAllocation({
+        accountId: payload.accountId as string,
+        allocation: allocation.mode === "targeted"
+          ? { mode: "targeted", targets: allocation.targets ?? [] }
+          : { mode: allocation.mode },
+      });
+    }
+
+    if (queryConfig.methodName === "getRelatedFamilyFinanceOverview") {
+      const overview = await service.getRelatedFamilyFinanceOverview({
+        academicYearId: payload.academicYearId as string,
+      });
+      return {
+        academicYearId: overview.academicYearId,
+        students: overview.students.map(summary => ({
+          studentId: summary.studentId,
+          academicYearId: summary.academicYearId,
+          accountId: summary.accountId,
+          currency: summary.currency,
+          available: { amount: summary.available.amount, currency: summary.available.currency },
+          outstanding: { amount: summary.outstanding.amount, currency: summary.outstanding.currency },
+          overdue: { amount: summary.overdue.amount, currency: summary.overdue.currency },
+        })),
+      };
+    }
+
+    if (queryConfig.methodName === "getStudentAccountStatement") {
+      const statement = await service.getStudentAccountStatement({
+        studentId: payload.studentId as string,
+        academicYearId: payload.academicYearId as string,
+        currency: payload.currency as string | undefined,
+      });
+      if (!statement)
+        return null;
+      return serializeGraphqlAccountStatement(statement);
+    }
+
+    if (queryConfig.methodName === "listOpenDueCharges") {
+      return service.listOpenDueCharges({
+        schoolId: payload.schoolId as string,
+        academicYearId: payload.academicYearId as string | undefined,
+      });
+    }
+
+    if (queryConfig.methodName === "getPaymentSettlementHistory") {
+      return service.getPaymentSettlementHistory({
+        accountId: payload.accountId as string,
+      });
+    }
+
+    if (queryConfig.methodName === "reconcileStudentYearAccount") {
+      return service.reconcileStudentYearAccount({
+        accountId: payload.accountId as string,
+      });
+    }
+
+    if (queryConfig.methodName === "reconcileSchoolFinance") {
+      return service.reconcileSchoolFinance({
+        schoolId: payload.schoolId as string,
+        academicYearId: payload.academicYearId as string | undefined,
+      });
+    }
+
     const count = await service[queryConfig.methodName](payload.schoolId as string);
     return { count };
   });
+}
+
+function serializeGraphqlAccountStatement(statement: Awaited<ReturnType<import("@edaya/service").SchoolService["getAccountStatement"]>>) {
+  return {
+    accountId: statement.account.id,
+    studentId: statement.account.studentId,
+    academicYearId: statement.account.academicYearId,
+    currency: statement.account.currency,
+    projectedAvailable: statement.projectedAvailable,
+    entrySum: statement.entrySum,
+    entries: statement.entries.map(entry => ({
+      id: entry.id,
+      direction: entry.direction,
+      amount: entry.amount.amount,
+      sourceKind: entry.sourceKind,
+      sourceId: entry.sourceId,
+      effectiveAt: entry.effectiveAt.toISOString(),
+      recordedAt: entry.recordedAt.toISOString(),
+      resultingAvailableBalance: entry.resultingAvailableBalance.amount,
+    })),
+    payments: statement.payments.map(payment => ({
+      id: payment.id,
+      kind: payment.kind,
+      amount: payment.amount.amount,
+      status: payment.status,
+      paymentDate: payment.paymentDate.toISOString(),
+      method: payment.method,
+      reference: payment.reference,
+    })),
+    allocations: statement.allocations.map(allocation => ({
+      id: allocation.id,
+      chargeId: allocation.chargeId,
+      amount: allocation.amount.amount,
+      kind: allocation.kind,
+    })),
+    charges: statement.charges.map(charge => ({
+      id: charge.id,
+      label: charge.label,
+      remainingObligation: charge.remainingObligation.amount,
+      status: charge.status,
+    })),
+  };
 }

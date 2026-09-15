@@ -1,5 +1,5 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, DayOfWeek, Fee, FeeStatus, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentFee } from '@edaya/core'
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
@@ -18,8 +18,53 @@ describe('SchoolService aggregate and timetable queries', () => {
   })
 
   test('fee aggregate uses the same student scope as lists and single records, with live revocation', async () => {
-    await fixture.repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', currency: 'XOF', defaultAmount: 100 }))
-    for (const id of ['student-a', 'student-other']) await fixture.repositories.studentFees.save(new StudentFee({ id, studentId: id, feeId: 'fee', academicYearId: 'year-a', currency: 'XOF', expectedAmount: 100, paidAmount: 0, status: FeeStatus.Overdue, dueDate: new Date('2026-01-01') }))
+    await fixture.repositories.catalogServices.save(new CatalogService({
+      id: 'fee',
+      schoolId: 'school-a',
+      academicYearId: 'year-a',
+      name: 'Tuition',
+      currency: 'XOF',
+      defaultPrice: 100,
+      billingTerms: { kind: 'one_time', installments: [] },
+      status: CatalogServiceStatus.Active,
+    }))
+    for (const id of ['student-a', 'student-other']) {
+      await fixture.repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
+        id: `enr-${id}`,
+        schoolId: 'school-a',
+        studentId: id,
+        catalogServiceId: 'fee',
+        academicYearId: 'year-a',
+        acceptedTerms: {
+          catalogServiceId: 'fee',
+          name: 'Tuition',
+          category: CatalogServiceCategory.Tuition,
+          currency: 'XOF',
+          price: 100,
+          billingKind: 'one_time',
+          billingTerms: { kind: 'one_time', installments: [] },
+        },
+      }))
+      await fixture.repositories.studentCharges.save(new StudentCharge({
+        id,
+        schoolId: 'school-a',
+        studentId: id,
+        enrollmentId: `enr-${id}`,
+        academicYearId: 'year-a',
+        label: 'Tuition',
+        currency: 'XOF',
+        expectedAmount: 100,
+        allocatedAmount: 0,
+        status: ChargeStatus.Overdue,
+        dueDate: new Date('2026-01-01'),
+        installments: [{
+          id: `${id}-due`,
+          label: 'Tuition',
+          expectedAmount: 100,
+          dueDate: new Date('2026-01-01'),
+        }],
+      }))
+    }
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'fee-reader', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERDUE_FEES_READ, scopes: [{ kind: 'student', studentId: 'student-a' }] }))
     expect(await service.getOverdueFeeCount('school-a')).toBe(1)
     await expect(service.getOverdueFeeCount('school-b')).rejects.toBeInstanceOf(AuthorizationError)

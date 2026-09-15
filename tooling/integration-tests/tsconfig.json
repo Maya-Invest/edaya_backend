@@ -12,6 +12,8 @@
   },
   "include": [
     "src/**/*",
+    "../db-migrate/scripts/lib/assert-finance-reset-target.ts",
+    "../db-migrate/scripts/lib/reset-finance-tables.ts",
     "../../apps/api/src/**/*",
     "../../apps/api/tests/**/*"
   ],

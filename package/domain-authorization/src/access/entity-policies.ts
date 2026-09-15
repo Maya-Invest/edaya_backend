@@ -1,6 +1,6 @@
-import type { AttendanceRecord, CoreEntityKey, CoreEntityMap, LessonSession, Payment, StudentFee } from '@edaya/core'
+import type { AttendanceRecord, CoreEntityKey, CoreEntityMap, LessonSession, Payment, StudentCharge, StudentServiceEnrollment } from '@edaya/core'
 import type { AccessPolicies, ActionSelection } from './access-policies'
-import { AttendanceJustificationStatus, FeeStatus, OccurrenceStatus, PaymentStatus, Permission } from '@edaya/core'
+import { AttendanceJustificationStatus, ChargeStatus, OccurrenceStatus, PaymentStatus, Permission, ServiceEnrollmentStatus } from '@edaya/core'
 
 import { assertCurriculumPlacements } from './curriculum-placements'
 import { denied } from './facts'
@@ -27,9 +27,11 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
   sections: { read: [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: Permission.REPORT_CARD_CONFIGURE },
   definitions: { read: [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_CONFIGURE], write: Permission.REPORT_CARD_CONFIGURE },
   results: { read: [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ], write: (entity, existing) => entity.status === 'published' || existing?.status === 'published' ? Permission.REPORT_CARD_PUBLISH : [Permission.REPORT_CARD_GENERATE, Permission.REPORT_CARD_PUBLISH], delete: Permission.REPORT_CARD_CONFIGURE },
-  fees: { read: [Permission.FINANCIAL_CONFIG_READ, Permission.PAYMENT_READ], write: (_entity, existing) => existing ? Permission.FINANCIAL_CONFIG_UPDATE : Permission.FINANCIAL_CONFIG_CONFIGURE, delete: Permission.FINANCIAL_CONFIG_CONFIGURE },
+  catalogServices: { read: [Permission.FINANCIAL_CONFIG_READ, Permission.PAYMENT_READ], write: (_entity, existing) => existing ? Permission.FINANCIAL_CONFIG_UPDATE : Permission.FINANCIAL_CONFIG_CONFIGURE, delete: Permission.FINANCIAL_CONFIG_CONFIGURE },
+  studentServiceEnrollments: { read: [Permission.PAYMENT_READ, Permission.FINANCIAL_CONFIG_READ], write: studentEnrollmentWriteAction, delete: Permission.PAYMENT_CANCEL },
+  studentCharges: { read: [Permission.PAYMENT_READ], write: studentChargeWriteAction, delete: Permission.PAYMENT_CANCEL },
+  studentYearAccounts: { read: [Permission.PAYMENT_READ], write: [Permission.PAYMENT_RECORD, Permission.PAYMENT_ALLOCATE, Permission.PAYMENT_REVERSE] },
   payments: { read: [Permission.PAYMENT_READ], write: paymentWriteAction, delete: Permission.PAYMENT_CANCEL },
-  studentFees: { read: [Permission.PAYMENT_READ], write: studentFeeWriteAction, delete: Permission.PAYMENT_CANCEL },
   announcementTargets: { read: [Permission.COMMUNICATION_READ, Permission.QUERY_COMMUNICATIONS_READ], write: (_entity, existing) => existing ? Permission.COMMUNICATION_UPDATE : Permission.COMMUNICATION_CREATE, delete: Permission.COMMUNICATION_DELETE },
   announcements: { read: [Permission.COMMUNICATION_READ, Permission.QUERY_COMMUNICATIONS_READ], write: (entity, existing) => existing && !existing.isPublished && entity.isPublished ? Permission.COMMUNICATION_SEND : existing ? Permission.COMMUNICATION_UPDATE : Permission.COMMUNICATION_CREATE, delete: Permission.COMMUNICATION_DELETE },
   messageDeliveries: { read: [Permission.COMMUNICATION_READ, Permission.QUERY_COMMUNICATIONS_READ], write: (_entity, existing) => existing ? Permission.COMMUNICATION_UPDATE : Permission.COMMUNICATION_CREATE, delete: Permission.COMMUNICATION_DELETE },
@@ -91,10 +93,10 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
       if (!before || paymentDetails(after) !== paymentDetails(before))
         await this.access.assertSave(Permission.PAYMENT_RECORD, this.resource, entity, existing)
     }
-    if (this.resource === 'studentFees' && action === Permission.PAYMENT_CANCEL) {
-      const after = entity as StudentFee
-      const before = existing as StudentFee | undefined
-      if (!before || studentFeeDetails(after) !== studentFeeDetails(before))
+    if (this.resource === 'studentCharges' && action === Permission.PAYMENT_CANCEL) {
+      const after = entity as StudentCharge
+      const before = existing as StudentCharge | undefined
+      if (!before || studentChargeDetails(after) !== studentChargeDetails(before))
         await this.access.assertSave(Permission.PAYMENT_RECORD, this.resource, entity, existing)
     }
     return this.access.assertSave(action, this.resource, entity, existing)
@@ -128,12 +130,12 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
 }
 
 function paymentDetails(payment: Payment): string {
-  const { status: _status, reversedAt: _reversedAt, reversedById: _reversedById, cancelledAt: _cancelledAt, cancelledById: _cancelledById, ...details } = payment.data
+  const { status: _status, reversedAt: _reversedAt, reversedById: _reversedById, reversedByPaymentId: _reversedByPaymentId, ...details } = payment.data
   return JSON.stringify(details)
 }
 
-function studentFeeDetails(fee: StudentFee): string {
-  const { status: _status, cancellationReason: _reason, cancelledAt: _cancelledAt, cancelledById: _cancelledById, ...details } = fee.data
+function studentChargeDetails(charge: StudentCharge): string {
+  const { status: _status, cancellationReason: _reason, cancelledAt: _cancelledAt, cancelledById: _cancelledById, ...details } = charge.data
   return JSON.stringify(details)
 }
 
@@ -209,20 +211,27 @@ function paymentWriteAction(
   entity: Payment,
   existing: Payment | undefined,
 ): ActionSelection {
-  if (entity.status === PaymentStatus.Cancelled && existing?.status !== PaymentStatus.Cancelled) {
-    return Permission.PAYMENT_CANCEL
-  }
   if (entity.status === PaymentStatus.Reversed && existing?.status !== PaymentStatus.Reversed) {
     return Permission.PAYMENT_REVERSE
   }
   return Permission.PAYMENT_RECORD
 }
 
-function studentFeeWriteAction(
-  entity: StudentFee,
-  existing: StudentFee | undefined,
+function studentChargeWriteAction(
+  entity: StudentCharge,
+  existing: StudentCharge | undefined,
 ): ActionSelection {
-  if (existing?.status !== FeeStatus.Cancelled && entity.status === FeeStatus.Cancelled) {
+  if (existing?.status !== ChargeStatus.Cancelled && entity.status === ChargeStatus.Cancelled) {
+    return Permission.PAYMENT_CANCEL
+  }
+  return Permission.PAYMENT_RECORD
+}
+
+function studentEnrollmentWriteAction(
+  entity: StudentServiceEnrollment,
+  existing: StudentServiceEnrollment | undefined,
+): ActionSelection {
+  if (existing?.status !== ServiceEnrollmentStatus.Cancelled && entity.status === ServiceEnrollmentStatus.Cancelled) {
     return Permission.PAYMENT_CANCEL
   }
   return Permission.PAYMENT_RECORD

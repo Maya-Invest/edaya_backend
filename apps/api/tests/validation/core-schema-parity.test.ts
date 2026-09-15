@@ -97,8 +97,8 @@ describe("API command schemas cover core create required fields", () => {
 
   test("recordPaymentCommand", () => {
     assertCommandCoversCoreCreate(recordPaymentCommandSchema, paymentCreateSchema, {
-      // Currency/status/audit fields resolved from student fee or actor context.
-      allowedOmissions: ["currency", "status", "recordedById", "reversedAt", "reversedById", "cancelledAt", "cancelledById"],
+      // School/account identity, currency, and audit fields come from actor context or account resolution.
+      allowedOmissions: ["schoolId", "accountId", "academicYearId", "kind", "currency", "status", "recordedById", "reversedAt", "reversedById", "reversesPaymentId", "reversedByPaymentId"],
     });
   });
 });

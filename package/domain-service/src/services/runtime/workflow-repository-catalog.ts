@@ -71,7 +71,18 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'students',
     'enrollments',
   ],
-  finance: ['fees', 'studentFees', 'students', 'payments'],
+  finance: [
+    'catalogServices',
+    'studentServiceEnrollments',
+    'studentCharges',
+    'studentYearAccounts',
+    'students',
+    'payments',
+    'allocations',
+    'studentAccountEntries',
+    'academicYears',
+    'guardianLinks',
+  ],
   invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'schools', 'schoolNotificationTemplates'],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 

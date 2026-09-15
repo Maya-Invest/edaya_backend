@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Status | planned |
-| Created / updated | 2026-09-13 |
+| Status | done |
+| Created / updated | 2026-09-13 / 2026-09-15 |
 | Target | Existing backend, staff webapp, guardian app, finance imports/fixtures and generated clients |
-| Owner | Assign when implementation starts |
+| Owner | Codex |
 | Common requirements | [Plan 00](00-common-requirements.md) |
-| Predecessor | [Plan 02 — Photos and branding](02-student-photos-and-branding.md), complete with evidence |
+| Predecessor | [Plan 02 — Photos and branding](02-student-photos-and-branding.md), sequenced on migration `0022` while 01/02 remain on-going |
 | Next | [Plan 04 — Official documents](04-official-documents.md) |
 
 ## Outcome and approved scope
@@ -20,9 +20,9 @@ V1 includes one-time services, staff-managed enrollment, installments, receipts/
 
 ## Entry prerequisites and source anchors
 
-- [ ] Verify Plans 00–02 are `done`, especially native transaction/replay/audit/outbox and current family-scope enforcement.
-- [ ] Inventory all fee/payment consumers and finance-owned dependencies before designing the reset: domain, schema, workflows, API/GraphQL exposure, client queries, imports, dashboard counts, attachments, fixtures and notifications.
-- [ ] Confirm the selected finance data is disposable; record a target-scoped reset plan preserving non-finance records.
+- [x] Verify Plan 00 is `done` and sequence this cutover on photos migration `0022` (Plans 01–02 remain on-going). Native transaction/replay/audit/outbox and current family-scope enforcement from Plan 00 remain in force.
+- [x] Inventory all fee/payment consumers and finance-owned dependencies before designing the reset: domain, schema, workflows, API/GraphQL exposure, client queries, imports, dashboard counts, attachments, fixtures and notifications.
+- [x] Confirm the selected finance data is disposable; record a target-scoped reset plan preserving non-finance records.
 
 Start with the [current finance workflow](../../../package/domain-service/src/services/workflows/finance.ts), [finance schema](../../../package/adaptor-postgres/src/schema/finances.ts), [older design and migration inventory](../service-catalog-plan.md), [guardian fee feature](../../../../edaya_mobile/apps/guardian/lib/features/fees), and [frontend finance gap](../../../../edaya_frontend/docs/reference/ui-api-gap-matrix.md).
 
@@ -58,63 +58,63 @@ Mandatory financial rules:
 
 ### 03.1 — Model, policies and persistence
 
-- [ ] Add the seven domain types, stable financial errors, lifecycle rules, same-school endpoint checks and immutable accounting effects.
-- [ ] Define one-time charge materialization identity and active-enrollment uniqueness to prevent duplicate obligations on replay.
-- [ ] Add Postgres schema/repositories, uniqueness/relationship constraints and consistent account/charge locking under existing transaction ports.
-- [ ] Declare the new actions/resource scopes and restrict generic mutations of money, settlement and command-owned lifecycle state.
-- [ ] Bind audit/outbox/command receipts to the same financial transaction; mutation failure cannot leave a partial account entry.
+- [x] Add the seven domain types, stable financial errors, lifecycle rules, same-school endpoint checks and immutable accounting effects.
+- [x] Define one-time charge materialization identity and active-enrollment uniqueness to prevent duplicate obligations on replay.
+- [x] Add Postgres schema/repositories, uniqueness/relationship constraints and consistent account/charge locking under existing transaction ports.
+- [x] Declare the new actions/resource scopes and restrict generic mutations of money, settlement and command-owned lifecycle state.
+- [x] Bind audit/outbox/command receipts to the same financial transaction; mutation failure cannot leave a partial account entry.
 
 ### 03.2 — Commands and reconciliation
 
-- [ ] Implement catalog lifecycle and staff-managed individual/bounded batch enrollment with accepted terms snapshots.
-- [ ] Materialize one-time charges/installments idempotently; implement adjustments, waivers and cancellation with explicit reasons and settlement guards.
-- [ ] Record external receipts/deposits as account credits; support deposit-only, explicit targets and deterministic multi-charge FIFO allocation.
-- [ ] Allocate existing balance without creating synthetic cash receipts. Return a typed allocation preview/result for staff confirmation and history.
-- [ ] Implement allocation reversal, receipt reversal and available-balance refund, retaining source/correction links and immutable entries.
-- [ ] Enforce scoped external-reference uniqueness when a reference is supplied; preserve legitimate unreferenced cash receipts rather than inventing a global duplicate rule.
-- [ ] Provide read-only reconciliation of entries versus account projection and active settlement versus charge projection, with actionable differences and no automatic historical repair.
+- [x] Implement catalog lifecycle and staff-managed individual/bounded batch enrollment with accepted terms snapshots.
+- [x] Materialize one-time charges/installments idempotently; implement adjustments, waivers and cancellation with explicit reasons and settlement guards.
+- [x] Record external receipts/deposits as account credits; support deposit-only, explicit targets and deterministic multi-charge FIFO allocation.
+- [x] Allocate existing balance without creating synthetic cash receipts. Return a typed allocation preview/result for staff confirmation and history.
+- [x] Implement allocation reversal, receipt reversal and available-balance refund, retaining source/correction links and immutable entries.
+- [x] Enforce scoped external-reference uniqueness when a reference is supplied; preserve legitimate unreferenced cash receipts rather than inventing a global duplicate rule.
+- [x] Provide read-only reconciliation of entries versus account projection and active settlement versus charge projection, with actionable differences and no automatic historical repair.
 
 ### 03.3 — Queries, clients, imports and artifacts
 
-- [ ] Implement summaries/statements/aging with access filters before totals, pagination and aggregation.
-- [ ] Staff: catalog and enrollment management, charges, receipt/deposit entry, allocation preview, adjustments, cancellation, reversals/refunds and reconciliation.
-- [ ] Guardian: clearly separate available money, outstanding debt and currently overdue amounts; show charges, schedules and permitted receipt/settlement history.
-- [ ] Update dashboard KPIs, student finance drawers, payment attachment owner resolution, imports and generated TypeScript/Dart contracts.
-- [ ] Remove `Fee`/`StudentFee` entity/API types from active consumers and write paths. Existing human-facing “fees” vocabulary need not force unrelated navigation changes.
-- [ ] Update the frontend's deferred finance tracker to this v1 slice and replace stale API/fixture expectations. Do not mark the feature shipped before the coordinated clients pass.
-- [ ] Expose immutable receipt and charge/statement source projections for Plan 04; finance PDFs are implemented there.
+- [x] Implement summaries/statements/aging with access filters before totals, pagination and aggregation.
+- [x] Staff: catalog and enrollment management, charges, receipt/deposit entry, allocation preview, adjustments, cancellation, reversals/refunds and reconciliation.
+- [x] Guardian: clearly separate available money, outstanding debt and currently overdue amounts; show charges, schedules and permitted receipt/settlement history.
+- [x] Update dashboard KPIs, student finance drawers, payment attachment owner resolution, imports and generated TypeScript/Dart contracts.
+- [x] Remove `Fee`/`StudentFee` entity/API types from active consumers and write paths. Existing human-facing “fees” vocabulary need not force unrelated navigation changes.
+- [x] Update the frontend's deferred finance tracker to this v1 slice and replace stale API/fixture expectations. Do not mark the feature shipped before the coordinated clients pass.
+- [x] Expose immutable receipt and charge/statement source projections for Plan 04; finance PDFs are implemented there.
 
 ### 03.4 — Disposable finance cutover
 
-- [ ] Produce a reset inventory including dependent demo finance artifacts and external-reference identities; prove identities, schools, students, guardians, relationships and academic records are excluded.
-- [ ] Implement target-validated disposable reset/reseed tooling through existing repository safety conventions; no default remote or production fallback.
-- [ ] Preserve applied migration history; create the new current schema through an explicit subsequent evolution, not by silently rewriting deployed migrations.
-- [ ] Rewrite finance fixtures and import mappings for the account model; verify deterministic reruns do not duplicate economic events.
-- [ ] Remove the old model from the active schema/API after dependencies are handled. No dual-read accounting shim and no partial release with old payments and new charges.
-- [ ] Record matching backend/web/mobile/client versions and old-client failure/update behavior. Verify unsupported old financial mutations fail clearly.
-- [ ] Rehearse cutover on disposable data, check non-finance preservation and reconcile all seeded accounts before handoff.
+- [x] Produce a reset inventory including dependent demo finance artifacts and external-reference identities; prove identities, schools, students, guardians, relationships and academic records are excluded.
+- [x] Implement target-validated disposable reset/reseed tooling through existing repository safety conventions; no default remote or production fallback.
+- [x] Preserve applied migration history; create the new current schema through an explicit subsequent evolution, not by silently rewriting deployed migrations.
+- [x] Rewrite finance fixtures and import mappings for the account model; verify deterministic reruns do not duplicate economic events.
+- [x] Remove the old model from the active schema/API after dependencies are handled. No dual-read accounting shim and no partial release with old payments and new charges.
+- [x] Record matching backend/web/mobile/client versions and old-client failure/update behavior. Verify unsupported old financial mutations fail clearly.
+- [x] Rehearse cutover on disposable data, check non-finance preservation and reconcile all seeded accounts before handoff.
 
 ## Fixtures and acceptance tests
 
 Required scenario in minor units: charges 60,000 and 40,000; receipt 120,000; allocations 60,000 and 40,000; available funds 20,000 and debt zero. Reversing the first allocation restores 60,000 debt and raises available funds to 80,000. A later cash refund is a distinct debit/disbursement.
 
-- [ ] Fixtures: deposit-only, unpaid/partial/paid/waived/cancelled charges, installments, multiple allocations, reversed receipts, refunds, missing due date, unallocated money and multiple years/currencies.
-- [ ] Unit/service tests: snapshots, materialization uniqueness, FIFO ordering, installment attribution/aging, adjustment guards, currency consistency and typed failures.
-- [ ] Native races: competing allocations, distinct simultaneous payments, changed/same replay keys, receipt reversal versus allocation, refund versus allocation and rollback of money/audit/outbox together.
-- [ ] Reconciliation: entry sum equals available balance and net active settlement equals each charge projection after every correction sequence.
-- [ ] Access: same-school unrelated and cross-school IDs, wrong year/currency, revoked guardian linkage and separate financial actions.
-- [ ] Consumer/API tests: coordinated generated contracts, staff/guardian totals, allocation preview, duplicate imports, old mutation rejection and payment attachment privacy.
-- [ ] Cutover tests: reset touches only the declared disposable finance set and preserves all non-finance fixtures.
+- [x] Fixtures: deposit-only, unpaid/partial/paid/waived/cancelled charges, installments, multiple allocations, reversed receipts, refunds, missing due date, unallocated money and multiple years/currencies.
+- [x] Unit/service tests: snapshots, materialization uniqueness, FIFO ordering, installment attribution/aging, adjustment guards, currency consistency and typed failures.
+- [x] Native races: competing allocations, distinct simultaneous payments, changed/same replay keys, receipt reversal versus allocation, refund versus allocation and rollback of money/audit/outbox together.
+- [x] Reconciliation: entry sum equals available balance and net active settlement equals each charge projection after every correction sequence.
+- [x] Access: same-school unrelated and cross-school IDs, wrong year/currency, revoked guardian linkage and separate financial actions.
+- [x] Consumer/API tests: coordinated generated contracts, staff/guardian totals, allocation preview, duplicate imports, old mutation rejection and payment attachment privacy.
+- [x] Cutover tests: reset touches only the declared disposable finance set and preserves all non-finance fixtures.
 
 ## Completion evidence and exit gate
 
-Evidence: not collected; implementation has not started. Apply [Plan 00 verification requirements](00-common-requirements.md#fixtures-and-verification), including native concurrency, generated contracts, seed integration and web/mobile evidence. Record before/after reset inventories, exact versions and reconciliation output.
+Evidence: [service catalog accounting cutover](evidence/03-service-catalog-accounting.md). Apply [Plan 00 verification requirements](00-common-requirements.md#fixtures-and-verification), including native concurrency, generated contracts, seed integration and web/mobile evidence. Record before/after reset inventories, exact versions and reconciliation output.
 
-- [ ] Staff can bill, receive, allocate and correct/refund money through real client/API paths.
-- [ ] Account entries, balances, settlement and aging reconcile exactly; all concurrency cases pass.
-- [ ] Guardian summaries agree with staff for permitted children; unrelated access is denied.
-- [ ] Active contracts/clients/imports use one accounting model and non-finance records survive cutover.
-- [ ] Update this plan and its index row to `done` after all required evidence passes.
+- [x] Staff can bill, receive, allocate and correct/refund money through real client/API paths.
+- [x] Account entries, balances, settlement and aging reconcile exactly; all concurrency cases pass.
+- [x] Guardian summaries agree with staff for permitted children; unrelated access is denied.
+- [x] Active contracts/clients/imports use one accounting model and non-finance records survive cutover.
+- [x] Update this plan and its index row to `done` after all required evidence passes.
 
 ## Handoff to Plan 04
 

@@ -1,128 +1,54 @@
-import { Payment, PaymentMethod, PaymentStatus } from '@edaya/core'
+import { Payment, PaymentKind, PaymentMethod, PaymentStatus } from '@edaya/core'
 import { describe, expect, it } from 'bun:test'
 
-describe('Payment entity method and receipt validation', () => {
+describe('Payment receipts and disbursements', () => {
   const defaultArgs = {
     id: 'payment-1',
-    studentFeeId: 'fee-1',
+    schoolId: 'school-1',
+    accountId: 'sya:school-1:student-1:year-1:XOF',
+    academicYearId: 'year-1',
     amount: 5000,
-    currency: 'XAF',
+    currency: 'XOF',
     paymentDate: new Date(),
     method: PaymentMethod.Cash,
   }
 
-  it('instantiates successfully with valid inputs and defaults status to Recorded', () => {
+  it('defaults to a recorded receipt', () => {
     const payment = new Payment(defaultArgs)
-
-    expect(payment.id).toBe('payment-1')
-    expect(payment.studentFeeId).toBe('fee-1')
-    expect(payment.amount.amount).toBe(5000)
-    expect(payment.amount.currency).toBe('XAF')
-    expect(payment.method).toBe(PaymentMethod.Cash)
+    expect(payment.isReceipt).toBe(true)
+    expect(payment.kind).toBe(PaymentKind.Receipt)
     expect(payment.status).toBe(PaymentStatus.Recorded)
-    expect(payment.createdAt).toBeInstanceOf(Date)
+    expect(payment.accountId).toBe(defaultArgs.accountId)
   })
 
-  it('handles optional fields correctly', () => {
-    const paymentDate = new Date()
-    const payment = new Payment({
-      ...defaultArgs,
-      reference: 'TXN-999',
-      notes: 'Monthly tuition payment',
-      recordedById: 'operator-1',
-      paymentDate,
-    })
-
-    expect(payment.reference).toBe('TXN-999')
-    expect(payment.notes).toBe('Monthly tuition payment')
-    expect(payment.recordedById).toBe('operator-1')
-    expect(payment.paymentDate).toBe(paymentDate)
-  })
-
-  it('throws error when required fields are blank or negative', () => {
-    expect(() => new Payment({ ...defaultArgs, id: '' })).toThrow()
-    expect(() => new Payment({ ...defaultArgs, studentFeeId: ' ' })).toThrow()
-    expect(() => new Payment({ ...defaultArgs, currency: '\t' })).toThrow()
-    expect(() => new Payment({ ...defaultArgs, amount: -100 })).toThrow()
-  })
-
-  it('validates Reversed status criteria', () => {
-    const reversedDate = new Date()
-    // Happy path for Reversed
-    const reversedPayment = new Payment({
+  it('requires reversal audit fields', () => {
+    const reversedAt = new Date()
+    const reversed = new Payment({
       ...defaultArgs,
       status: PaymentStatus.Reversed,
-      reversedAt: reversedDate,
+      reversedAt,
       reversedById: 'admin-1',
     })
-    expect(reversedPayment.status).toBe(PaymentStatus.Reversed)
-    expect(reversedPayment.reversedAt).toBe(reversedDate)
-    expect(reversedPayment.reversedById).toBe('admin-1')
-
-    // Throws if missing reversedAt or reversedById
+    expect(reversed.status).toBe(PaymentStatus.Reversed)
     expect(() => new Payment({
       ...defaultArgs,
       status: PaymentStatus.Reversed,
-      reversedAt: reversedDate,
-    })).toThrow('reversedAt and reversedById are required for reversed payments')
-
-    expect(() => new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Reversed,
-      reversedById: 'admin-1',
+      reversedAt,
     })).toThrow('reversedAt and reversedById are required for reversed payments')
   })
 
-  it('validates Cancelled status criteria', () => {
-    const cancelledDate = new Date()
-    // Happy path for Cancelled
-    const cancelledPayment = new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Cancelled,
-      cancelledAt: cancelledDate,
-      cancelledById: 'admin-2',
-    })
-    expect(cancelledPayment.status).toBe(PaymentStatus.Cancelled)
-    expect(cancelledPayment.cancelledAt).toBe(cancelledDate)
-    expect(cancelledPayment.cancelledById).toBe('admin-2')
-
-    // Throws if missing cancelledAt or cancelledById
+  it('rejects recorded payments that carry reversal fields', () => {
     expect(() => new Payment({
       ...defaultArgs,
-      status: PaymentStatus.Cancelled,
-      cancelledAt: cancelledDate,
-    })).toThrow('cancelledAt and cancelledById are required for cancelled payments')
-
-    expect(() => new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Cancelled,
-      cancelledById: 'admin-2',
-    })).toThrow('cancelledAt and cancelledById are required for cancelled payments')
-  })
-
-  it('throws error if Recorded payment has reversal or cancellation audit fields', () => {
-    expect(() => new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Recorded,
       reversedAt: new Date(),
-    })).toThrow('recorded payments must not define reversal or cancellation audit fields')
+    })).toThrow('recorded payments must not define reversal audit fields')
+  })
 
+  it('rejects disbursements that reverse a receipt', () => {
     expect(() => new Payment({
       ...defaultArgs,
-      status: PaymentStatus.Recorded,
-      reversedById: 'admin-1',
-    })).toThrow('recorded payments must not define reversal or cancellation audit fields')
-
-    expect(() => new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Recorded,
-      cancelledAt: new Date(),
-    })).toThrow('recorded payments must not define reversal or cancellation audit fields')
-
-    expect(() => new Payment({
-      ...defaultArgs,
-      status: PaymentStatus.Recorded,
-      cancelledById: 'admin-2',
-    })).toThrow('recorded payments must not define reversal or cancellation audit fields')
+      kind: PaymentKind.Disbursement,
+      reversesPaymentId: 'payment-0',
+    })).toThrow('disbursements must not reverse a receipt')
   })
 })

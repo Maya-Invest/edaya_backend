@@ -13,13 +13,13 @@ import type {
   Attendance,
   AttendanceRecord,
   CalendarEvent,
+  CatalogService,
   ClassActivityEnrollment,
   ClassGroup,
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
-  Fee,
   GradeLevel,
   GradeLevelSubject,
   GradeLevelSubjectMatter,
@@ -43,13 +43,15 @@ import type {
   StaffMember,
   StaffPermissionAssignment,
   Student,
+  StudentCharge,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
-  StudentFee,
   StudentHealthProfile,
   StudentIncidentInvolvement,
   StudentNote,
   StudentPhotoSubmission,
+  StudentServiceEnrollment,
+  StudentYearAccount,
   Subject,
   SubjectMatter,
   Teacher,
@@ -73,8 +75,10 @@ export interface CoreEntityMap {
   attachments: Attachment
   resources: Resource
   resourceAssignments: ResourceAssignment
-  fees: Fee
-  studentFees: StudentFee
+  catalogServices: CatalogService
+  studentServiceEnrollments: StudentServiceEnrollment
+  studentCharges: StudentCharge
+  studentYearAccounts: StudentYearAccount
   payments: Payment
   schedules: Schedule
   lessonSessions: LessonSession
@@ -144,8 +148,10 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'attachments',
   'resources',
   'resourceAssignments',
-  'fees',
-  'studentFees',
+  'catalogServices',
+  'studentServiceEnrollments',
+  'studentCharges',
+  'studentYearAccounts',
   'payments',
   'schedules',
   'lessonSessions',

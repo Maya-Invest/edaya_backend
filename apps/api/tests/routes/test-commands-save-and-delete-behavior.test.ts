@@ -127,10 +127,10 @@ describe("core entity and command routes", () => {
     const app = setupTestApp({ baseService: { entities: {
       attachments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
       payments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
-      studentFees: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
+      studentCharges: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
       enrollments: mockEntityService({ save: write, delete: write, batchSave: write, batchDelete: write }),
     } } });
-    for (const entity of ["attachments", "payments", "student-fees", "enrollments"]) {
+    for (const entity of ["attachments", "payments", "student-charges", "enrollments"]) {
       for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
         const response = await app.request(`/core/entities/${entity}/${action}`, {
           method: "POST",

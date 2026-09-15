@@ -39,7 +39,9 @@ async function validateStudentDelete(
     guardianLinks,
     notes,
     healthProfiles,
-    studentFees,
+    studentCharges,
+    studentServiceEnrollments,
+    studentYearAccounts,
     attendance,
     assessmentResults,
     reportCards,
@@ -51,7 +53,9 @@ async function validateStudentDelete(
     repositories.guardianLinks.list({ studentId: student.id }),
     repositories.studentNotes.list({ studentId: student.id }),
     repositories.studentHealthProfiles.list({ studentId: student.id }),
-    repositories.studentFees.list({ studentId: student.id }),
+    repositories.studentCharges.list({ studentId: student.id }),
+    repositories.studentServiceEnrollments.list({ studentId: student.id }),
+    repositories.studentYearAccounts.list({ studentId: student.id }),
     repositories.attendance.list({ studentId: student.id }),
     repositories.assessmentResults.list({ studentId: student.id }),
     repositories.results.list({ studentId: student.id }),
@@ -64,7 +68,9 @@ async function validateStudentDelete(
     || guardianLinks.length > 0
     || notes.length > 0
     || healthProfiles.length > 0
-    || studentFees.length > 0
+    || studentCharges.length > 0
+    || studentServiceEnrollments.length > 0
+    || studentYearAccounts.length > 0
     || attendance.length > 0
     || assessmentResults.length > 0
     || reportCards.length > 0

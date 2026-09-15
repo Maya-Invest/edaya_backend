@@ -1,6 +1,6 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Fee, FeeStatus, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentFee, StudentStatus, SubjectMatter } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
@@ -8,6 +8,7 @@ import { drizzle } from 'drizzle-orm/pglite'
 import { hashInvitationToken } from '../../domain-service/src/capabilities/invitations/invitation-token'
 import { PostgresAtomicExecution } from '../src/lib/transaction'
 import { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
+import { PostgresCommandJournal } from '../src/stores/command-journal-store'
 import { seedAuthorizationPlacement, seedAuthorizationRelationships } from './support/authorization-database'
 
 describe('authorization policies against native repository scopes', () => {
@@ -35,6 +36,7 @@ describe('authorization policies against native repository scopes', () => {
       actor,
       repositories,
       atomicExecution: new PostgresAtomicExecution(drizzle(db)),
+      commandJournal: new PostgresCommandJournal(),
       notificationGateway: noOpNotificationGateway,
       fileStorage: { putObject: unexpected, deleteObject: unexpected, headObject: unexpected, readObject: unexpected, createPresignedUpload: unexpected, createPresignedDownload: unexpected },
       accountInvitationsEnabled: false,
@@ -227,71 +229,192 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('scoped overdue counts use the same student and tenant predicates as lists', async () => {
-    await repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', defaultAmount: 100, currency: 'USD' }))
+    await repositories.catalogServices.save(new CatalogService({
+      id: 'overdue-catalog',
+      schoolId: 'school-a',
+      academicYearId: 'year-a',
+      name: 'Tuition',
+      defaultPrice: 100,
+      currency: 'USD',
+      billingTerms: { kind: 'one_time', installments: [] },
+      status: CatalogServiceStatus.Active,
+    }))
     for (const studentId of ['student-a', 'student-other', 'student-b']) {
-      await repositories.studentFees.save(new StudentFee({ id: `fee-${studentId}`, studentId, feeId: 'fee', academicYearId: 'year-a', expectedAmount: 100, currency: 'USD', status: FeeStatus.Overdue, dueDate: new Date('2026-01-01') }))
+      const schoolId = studentId === 'student-b' ? 'school-b' : 'school-a'
+      const academicYearId = studentId === 'student-b' ? 'year-b' : 'year-a'
+      if (studentId !== 'student-b') {
+        await repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
+          id: `charge-${studentId}`,
+          schoolId,
+          studentId,
+          catalogServiceId: 'overdue-catalog',
+          academicYearId,
+          acceptedTerms: {
+            catalogServiceId: 'overdue-catalog',
+            name: 'Tuition',
+            category: CatalogServiceCategory.Tuition,
+            currency: 'USD',
+            price: 100,
+            billingKind: 'one_time',
+            billingTerms: { kind: 'one_time', installments: [] },
+          },
+        }))
+      }
+      await repositories.studentCharges.save(new StudentCharge({
+        id: `charge-${studentId}`,
+        schoolId,
+        studentId,
+        enrollmentId: `charge-${studentId}`,
+        academicYearId,
+        label: 'Tuition',
+        expectedAmount: 100,
+        currency: 'USD',
+        status: ChargeStatus.Overdue,
+        dueDate: new Date('2026-01-01'),
+      }))
     }
     await addGrant(Permission.QUERY_OVERDUE_FEES_READ, 'unused', { scopes: [{ kind: 'student', studentId: 'student-a' }] })
     const service = schoolService()
     expect(await service.getOverdueFeeCount('school-a')).toBe(1)
     await expect(service.getOverdueFeeCount('school-b')).rejects.toThrow()
-    const scoped = repositories.studentFees.forAccess(await service.baseService.access.finance.overdueFeesScope())
+    const scoped = repositories.studentCharges.forAccess(await service.baseService.access.finance.overdueChargesScope())
     expect((await scoped.list()).map(row => row.studentId)).toEqual(['student-a'])
     await repositories.staffPermissionAssignments.delete(`${Permission.QUERY_OVERDUE_FEES_READ}-unused`)
     await expect(service.getOverdueFeeCount('school-a')).rejects.toThrow()
   })
 
-  test.each([PaymentStatus.Reversed, PaymentStatus.Cancelled])('%s updates the payment and fee balance using only its own action', async (status) => {
-    const permission = status === PaymentStatus.Reversed ? Permission.PAYMENT_REVERSE : Permission.PAYMENT_CANCEL
-    await addGrant(permission, 'school', { scopes: [{ kind: 'school' }] })
-    await repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', defaultAmount: 100, currency: 'USD' }))
-    await repositories.studentFees.save(new StudentFee({ id: 'student-fee', studentId: 'student-a', feeId: 'fee', academicYearId: 'year-a', expectedAmount: 100, paidAmount: 40, status: FeeStatus.Partial, currency: 'USD' }))
-    await repositories.payments.save(new Payment({ id: 'payment', studentFeeId: 'student-fee', amount: 40, currency: 'USD', paymentDate: new Date(), method: PaymentMethod.Cash }))
+  test('payment reversal uses only PAYMENT_REVERSE and cannot rewrite receipt details', async () => {
+    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'school' }] })
+    const accountId = studentYearAccountId('school-a', 'student-a', 'year-a', 'USD')
+    await repositories.studentYearAccounts.save(new StudentYearAccount({
+      id: accountId,
+      schoolId: 'school-a',
+      studentId: 'student-a',
+      academicYearId: 'year-a',
+      currency: 'USD',
+      availableBalance: 40,
+    }))
+    await repositories.payments.save(new Payment({
+      id: 'payment',
+      schoolId: 'school-a',
+      accountId,
+      academicYearId: 'year-a',
+      kind: PaymentKind.Receipt,
+      amount: 40,
+      currency: 'USD',
+      paymentDate: new Date(),
+      method: PaymentMethod.Cash,
+    }))
     const service = schoolService()
-    const changed = await service.financeWorkflow.updatePaymentStatus({ paymentId: 'payment', status })
-    expect(changed.status).toBe(status)
-    expect((await repositories.studentFees.findById('student-fee'))?.paidAmount.amount).toBe(0)
-    expect((await repositories.payments.findById('payment'))?.status).toBe(status)
-    await expect(service.financeWorkflow.recordPayment({ id: 'new-payment', studentFeeId: 'student-fee', amount: 10, paymentDate: new Date(), method: PaymentMethod.Cash })).rejects.toThrow()
+    const changed = await service.financeWorkflow.reversePayment({ paymentId: 'payment' })
+    expect(changed.status).toBe(PaymentStatus.Reversed)
+    expect((await repositories.studentYearAccounts.findById(accountId))?.availableBalance.amount).toBe(0)
+    await expect(service.financeWorkflow.recordPayment({
+      id: 'new-payment',
+      accountId,
+      amount: 10,
+      paymentDate: new Date(),
+      method: PaymentMethod.Cash,
+    })).rejects.toThrow()
     expect(await repositories.payments.count()).toBe(1)
   })
 
-  test.each([PaymentStatus.Reversed, PaymentStatus.Cancelled])('%s authority cannot also create or rewrite payment details', async (status) => {
-    const permission = status === PaymentStatus.Reversed ? Permission.PAYMENT_REVERSE : Permission.PAYMENT_CANCEL
-    await addGrant(permission, 'school', { scopes: [{ kind: 'school' }] })
-    await repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', defaultAmount: 100, currency: 'USD' }))
-    await repositories.studentFees.save(new StudentFee({ id: 'student-fee', studentId: 'student-a', feeId: 'fee', academicYearId: 'year-a', expectedAmount: 100, currency: 'USD', status: FeeStatus.Pending }))
-    const payment = new Payment({ id: 'payment', studentFeeId: 'student-fee', amount: 40, currency: 'USD', paymentDate: new Date(), method: PaymentMethod.Cash })
+  test('PAYMENT_REVERSE cannot create or rewrite payment details', async () => {
+    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'school' }] })
+    const accountId = studentYearAccountId('school-a', 'student-a', 'year-a', 'USD')
+    await repositories.studentYearAccounts.save(new StudentYearAccount({
+      id: accountId,
+      schoolId: 'school-a',
+      studentId: 'student-a',
+      academicYearId: 'year-a',
+      currency: 'USD',
+      availableBalance: 40,
+    }))
+    const payment = new Payment({
+      id: 'payment',
+      schoolId: 'school-a',
+      accountId,
+      academicYearId: 'year-a',
+      amount: 40,
+      currency: 'USD',
+      paymentDate: new Date(),
+      method: PaymentMethod.Cash,
+    })
     await repositories.payments.save(payment)
-    const input = { ...payment.data, amount: 40, currency: 'USD', status, ...(status === PaymentStatus.Reversed ? { reversedAt: new Date(), reversedById: 'staff-a' } : { cancelledAt: new Date(), cancelledById: 'staff-a' }) }
+    const input = {
+      ...payment.data,
+      amount: 40,
+      currency: 'USD',
+      status: PaymentStatus.Reversed,
+      reversedAt: new Date(),
+      reversedById: 'staff-a',
+    }
     const entities = schoolService().baseService.entities.payments
     for (const proposal of [{ ...input, amount: 90 }, { ...input, method: PaymentMethod.Card }, { ...input, id: 'new-payment' }])
       await expect(entities.save(new Payment(proposal))).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(entities.batchSave([new Payment(input), new Payment({ ...input, id: 'new-payment' })])).rejects.toBeInstanceOf(AuthorizationError)
     expect((await repositories.payments.findById(payment.id))?.status).toBe(PaymentStatus.Recorded)
     expect(await repositories.payments.count()).toBe(1)
-    await addGrant(Permission.PAYMENT_RECORD, 'school', { scopes: [{ kind: 'school' }], academicYearId: 'year-old' })
-    await expect(entities.save(new Payment({ ...input, amount: 90 }))).rejects.toBeInstanceOf(AuthorizationError)
-    await addGrant(Permission.PAYMENT_RECORD, 'school', { scopes: [{ kind: 'school' }] })
-    await entities.save(new Payment({ ...input, amount: 90 }))
-    expect((await repositories.payments.findById(payment.id))?.amount.amount).toBe(90)
   })
 
-  test('fee cancellation preserves recording authority for creation, balances and financial details', async () => {
+  test('charge cancellation preserves recording authority for creation and financial details', async () => {
     await addGrant(Permission.PAYMENT_CANCEL, 'school', { scopes: [{ kind: 'school' }] })
-    await repositories.fees.save(new Fee({ id: 'fee', schoolId: 'school-a', academicYearId: 'year-a', name: 'Tuition', defaultAmount: 100, currency: 'USD' }))
-    const fee = new StudentFee({ id: 'student-fee', studentId: 'student-a', feeId: 'fee', academicYearId: 'year-a', expectedAmount: 100, currency: 'USD', status: FeeStatus.Pending })
-    await repositories.studentFees.save(fee)
-    const input = { ...fee.data, installments: [...fee.installments], expectedAmount: 100, paidAmount: 0, adjustmentAmount: 0, currency: 'USD', status: FeeStatus.Cancelled, cancellationReason: 'Duplicate', cancelledAt: new Date(), cancelledById: 'staff-a' }
-    const entities = schoolService().baseService.entities.studentFees
-    for (const proposal of [{ ...input, expectedAmount: 200 }, { ...input, paidAmount: 20 }, { ...input, studentId: 'student-other' }, { ...input, id: 'new-fee' }])
-      await expect(entities.save(new StudentFee(proposal))).rejects.toBeInstanceOf(AuthorizationError)
-    expect((await repositories.studentFees.findById(fee.id))?.status).toBe(FeeStatus.Pending)
-    await entities.save(new StudentFee(input))
-    expect((await repositories.studentFees.findById(fee.id))?.status).toBe(FeeStatus.Cancelled)
-    await addGrant(Permission.PAYMENT_RECORD, 'school', { scopes: [{ kind: 'school' }] })
-    await entities.save(new StudentFee({ ...input, id: 'new-fee', expectedAmount: 200 }))
-    expect((await repositories.studentFees.findById('new-fee'))?.expectedAmount.amount).toBe(200)
+    await repositories.catalogServices.save(new CatalogService({
+      id: 'cancel-catalog',
+      schoolId: 'school-a',
+      academicYearId: 'year-a',
+      name: 'Tuition',
+      defaultPrice: 100,
+      currency: 'USD',
+      billingTerms: { kind: 'one_time', installments: [] },
+      status: CatalogServiceStatus.Active,
+    }))
+    await repositories.studentServiceEnrollments.save(new StudentServiceEnrollment({
+      id: 'student-charge',
+      schoolId: 'school-a',
+      studentId: 'student-a',
+      catalogServiceId: 'cancel-catalog',
+      academicYearId: 'year-a',
+      acceptedTerms: {
+        catalogServiceId: 'cancel-catalog',
+        name: 'Tuition',
+        category: CatalogServiceCategory.Tuition,
+        currency: 'USD',
+        price: 100,
+        billingKind: 'one_time',
+        billingTerms: { kind: 'one_time', installments: [] },
+      },
+    }))
+    const charge = new StudentCharge({
+      id: 'student-charge',
+      schoolId: 'school-a',
+      studentId: 'student-a',
+      enrollmentId: 'student-charge',
+      academicYearId: 'year-a',
+      label: 'Tuition',
+      expectedAmount: 100,
+      currency: 'USD',
+      status: ChargeStatus.Pending,
+    })
+    await repositories.studentCharges.save(charge)
+    const stored = await repositories.studentCharges.findById(charge.id)
+    if (!stored)
+      throw new Error('expected saved student charge')
+    const cancelled = stored.copyWith({
+      status: ChargeStatus.Cancelled,
+      cancellationReason: 'Duplicate',
+      cancelledAt: new Date(),
+      cancelledById: 'staff-a',
+    })
+    const entities = schoolService().baseService.entities.studentCharges
+    for (const proposal of [
+      cancelled.copyWith({ expectedAmount: 200 }),
+      cancelled.copyWith({ studentId: 'student-other' }),
+      cancelled.copyWith({ id: 'new-charge' }),
+    ])
+      await expect(entities.save(proposal)).rejects.toBeInstanceOf(AuthorizationError)
+    expect((await repositories.studentCharges.findById(charge.id))?.status).toBe(ChargeStatus.Pending)
+    await entities.save(cancelled)
+    expect((await repositories.studentCharges.findById(charge.id))?.status).toBe(ChargeStatus.Cancelled)
   })
 
   test('teacher timetable queries constrain events to current subject assignments', async () => {

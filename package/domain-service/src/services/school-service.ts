@@ -5,7 +5,7 @@ import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries
 import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
-import { FeeStatus, ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
+import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 
@@ -73,8 +73,55 @@ export class SchoolService {
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
-    const scope = await this.baseService.access.finance.overdueFeesScope()
-    return this.baseService.repositories.studentFees.forAccess(scope).count({ status: FeeStatus.Overdue })
+    return this.financeWorkflow.countOverdueCharges()
+  }
+
+  getStudentFinanceSummary(input: { studentId: string, academicYearId: string }) {
+    return this.financeWorkflow.getStudentFinanceSummary(input)
+  }
+
+  getAccountStatement(input: { accountId: string }) {
+    return this.financeWorkflow.getAccountStatement(input)
+  }
+
+  getSchoolFinanceAging(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.getSchoolFinanceAging(input)
+  }
+
+  getFinanceReconciliation(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.getFinanceReconciliation(input)
+  }
+
+  previewAccountAllocation(input: { accountId: string, allocation: import('./workflows/finance').AllocationPlan }) {
+    return this.financeWorkflow.previewAccountAllocation(input)
+  }
+
+  getRelatedFamilyFinanceOverview(input: { academicYearId: string }) {
+    return this.financeWorkflow.getRelatedFamilyFinanceOverview(input)
+  }
+
+  getStudentAccountStatement(input: { studentId: string, academicYearId: string, currency?: string }) {
+    return this.financeWorkflow.getStudentAccountStatement(input)
+  }
+
+  listOpenDueCharges(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.listOpenDueCharges(input)
+  }
+
+  getPaymentSettlementHistory(input: { accountId: string }) {
+    return this.financeWorkflow.getPaymentSettlementHistory(input)
+  }
+
+  reconcileStudentYearAccount(input: { accountId: string }) {
+    return this.financeWorkflow.reconcileStudentYearAccount(input)
+  }
+
+  reconcileSchoolFinance(input: { schoolId: string, academicYearId?: string }) {
+    this.checkActorSchool(input.schoolId)
+    return this.financeWorkflow.reconcileSchoolFinance(input)
   }
 
   async getPublishedReportCardCount(schoolId: string): Promise<number> {

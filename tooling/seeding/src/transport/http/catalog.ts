@@ -2,6 +2,7 @@ import { clientBindings } from '@maya-invest/edaya-api-client'
 
 export type SeedEntityKey = keyof typeof clientBindings.entities
 export type SeedCommandKey = keyof typeof clientBindings.commands
+export type SeedQueryKey = keyof typeof clientBindings.queries
 
 export function isSeedEntityKey(value: string): value is SeedEntityKey {
   return Object.hasOwn(clientBindings.entities, value)

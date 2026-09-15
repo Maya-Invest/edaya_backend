@@ -23,8 +23,10 @@ const tables: Record<CoreEntityKey, PgTable> = {
   attachments: s.attachments,
   resources: s.resources,
   resourceAssignments: s.resourceAssignments,
-  fees: s.fees,
-  studentFees: s.studentFees,
+  catalogServices: s.catalogServices,
+  studentServiceEnrollments: s.studentServiceEnrollments,
+  studentCharges: s.studentCharges,
+  studentYearAccounts: s.studentYearAccounts,
   payments: s.payments,
   schedules: s.schedules,
   lessonSessions: s.lessonSessions,
@@ -67,7 +69,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
 }
 
 const parents: Record<string, readonly [string, PgTable][]> = {
-  payments: [['studentFeeId', s.studentFees]],
+  payments: [['accountId', s.studentYearAccounts]],
   assessment_results: [['assessmentId', s.assessments]],
   report_card_definition_sections: [['reportCardDefinitionId', s.reportCardDefinitions]],
   class_subject_matters: [['classSubjectId', s.classSubjects]],
@@ -274,8 +276,8 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
       const classId = name === 'class_groups' ? value('id') : value('classGroupId')
       return exists(s.studentClassEnrollments, schoolId, and(sql`${s.studentClassEnrollments.classGroupId} = ${classId}`, target.studentId ? eq(s.studentClassEnrollments.studentId, target.studentId) : sql`true`, activeEnrollment(year))!)
     }
-    if (name === 'fees')
-      return exists(s.studentFees, schoolId, and(sql`${s.studentFees.feeId} = ${value('id')}`, target.studentId ? eq(s.studentFees.studentId, target.studentId) : sql`true`)!)
+    if (name === 'catalog_services')
+      return exists(s.studentServiceEnrollments, schoolId, and(sql`${s.studentServiceEnrollments.catalogServiceId} = ${value('id')}`, target.studentId ? eq(s.studentServiceEnrollments.studentId, target.studentId) : sql`true`)!)
     if (name === 'activities')
       return exists(s.activityEnrollments, schoolId, and(sql`${s.activityEnrollments.activityId} = ${value('id')}`, target.studentId ? eq(s.activityEnrollments.studentId, target.studentId) : sql`true`, eq(s.activityEnrollments.status, ActivityEnrollmentStatus.Approved))!)
   }
@@ -353,8 +355,8 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
     const foreign = name === 'subjects' ? s.classSubjects.subjectId : name === 'grade_level_subjects' ? s.classSubjects.gradeLevelSubjectId : s.classGroups.gradeLevelId
     return exists(relation, schoolId, and(sql`${foreign} = ${value('id')}`, targetPredicate(relation, target, schoolId, year, seen))!)
   }
-  if (name === 'fees')
-    return exists(s.studentFees, schoolId, and(sql`${s.studentFees.feeId} = ${value('id')}`, targetPredicate(s.studentFees, target, schoolId, year, seen))!)
+  if (name === 'catalog_services')
+    return exists(s.studentServiceEnrollments, schoolId, and(sql`${s.studentServiceEnrollments.catalogServiceId} = ${value('id')}`, targetPredicate(s.studentServiceEnrollments, target, schoolId, year, seen))!)
   const paths = (parents[name] ?? []).map(([field, parent]) => via(field, parent))
   return paths.length ? or(...paths)! : sql`false`
 }

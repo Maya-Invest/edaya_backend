@@ -3,9 +3,10 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 import {
   AttendanceJustificationStatus,
   AttendanceStatus,
-  FeeStatus,
+  ChargeStatus,
   IncidentKind,
   IncidentStatus,
+  PaymentKind,
   PaymentStatus,
   ReportCardResultStatus,
   StudentClassEnrollmentStatus,
@@ -128,10 +129,10 @@ const HIGH_SEVERITY_INCIDENT_KINDS = new Set<IncidentKind>([
   IncidentKind.Emergency,
 ])
 
-const BALANCE_FEE_STATUSES = new Set<FeeStatus>([
-  FeeStatus.Pending,
-  FeeStatus.Partial,
-  FeeStatus.Overdue,
+const BALANCE_CHARGE_STATUSES = new Set<ChargeStatus>([
+  ChargeStatus.Pending,
+  ChargeStatus.Partial,
+  ChargeStatus.Overdue,
 ])
 
 function toDateKey(date: Date): string {
@@ -261,7 +262,7 @@ function buildActionItems(kpis: SchoolOverviewKpis, pendingStudentPhotoCount = 0
 
 function buildUpcoming(args: {
   calendarEvents: Awaited<ReturnType<SchoolRepositories['calendarEvents']['list']>>
-  schoolFees: Awaited<ReturnType<SchoolRepositories['studentFees']['list']>>
+  schoolCharges: Awaited<ReturnType<SchoolRepositories['studentCharges']['list']>>
   periodAssessments: Awaited<ReturnType<SchoolRepositories['assessments']['list']>>
   academicPeriod: Awaited<ReturnType<SchoolRepositories['academicPeriods']['findById']>>
   refKey: string
@@ -283,20 +284,20 @@ function buildUpcoming(args: {
     })
   }
 
-  for (const fee of args.schoolFees) {
-    if (!fee.dueDate || fee.status === FeeStatus.Cancelled || fee.status === FeeStatus.Paid) {
+  for (const charge of args.schoolCharges) {
+    if (!charge.dueDate || charge.status === ChargeStatus.Cancelled || charge.status === ChargeStatus.Paid || charge.status === ChargeStatus.Waived) {
       continue
     }
-    const dueKey = toDateKey(fee.dueDate)
+    const dueKey = toDateKey(charge.dueDate)
     if (dueKey < args.refKey || dueKey > args.weekEndKey) {
       continue
     }
     items.push({
-      id: fee.id,
+      id: charge.id,
       date: dueKey,
-      title: fee.status === FeeStatus.Overdue ? 'Fee payment overdue' : 'Fee payment due',
+      title: charge.status === ChargeStatus.Overdue ? 'Fee payment overdue' : 'Fee payment due',
       kind: 'fee_due',
-      highlight: fee.status === FeeStatus.Overdue,
+      highlight: charge.status === ChargeStatus.Overdue,
     })
   }
 
@@ -426,7 +427,7 @@ export async function buildSchoolOverview(
   const [
     students,
     staffMembers,
-    studentFees,
+    studentCharges,
     reportCardResults,
     incidents,
     attendanceRecords,
@@ -442,7 +443,7 @@ export async function buildSchoolOverview(
   ] = await Promise.all([
     repositories.students.list({ schoolId: input.schoolId }),
     repositories.staffMembers.list({ schoolId: input.schoolId }),
-    repositories.studentFees.list(),
+    repositories.studentCharges.list(),
     repositories.results.list(),
     repositories.incidents.list({ schoolId: input.schoolId }),
     repositories.attendance.list(),
@@ -461,9 +462,9 @@ export async function buildSchoolOverview(
   ])
 
   const studentIds = new Set(students.map(student => student.id))
-  const schoolFees = studentFees.filter(fee => studentIds.has(fee.studentId))
-  const overdueFees = schoolFees.filter(fee => fee.status === FeeStatus.Overdue)
-  const overdueFeeAmount = overdueFees.reduce((sum, fee) => sum + fee.balanceDue.amount, 0)
+  const schoolCharges = studentCharges.filter(charge => studentIds.has(charge.studentId))
+  const overdueCharges = schoolCharges.filter(charge => charge.status === ChargeStatus.Overdue)
+  const overdueFeeAmount = overdueCharges.reduce((sum, charge) => sum + charge.remainingObligation.amount, 0)
 
   const activeEnrollments = enrollments.filter(enrollment =>
     studentIds.has(enrollment.studentId)
@@ -570,23 +571,22 @@ export async function buildSchoolOverview(
   )
 
   const overdueFeesByStudent = new Map<string, number>()
-  for (const fee of overdueFees) {
+  for (const charge of overdueCharges) {
     overdueFeesByStudent.set(
-      fee.studentId,
-      (overdueFeesByStudent.get(fee.studentId) ?? 0) + 1,
+      charge.studentId,
+      (overdueFeesByStudent.get(charge.studentId) ?? 0) + 1,
     )
   }
 
   const studentsWithBalance = new Set(
-    schoolFees
-      .filter(fee => BALANCE_FEE_STATUSES.has(fee.status) && fee.balanceDue.amount > 0)
-      .map(fee => fee.studentId),
+    schoolCharges
+      .filter(charge => BALANCE_CHARGE_STATUSES.has(charge.status) && charge.remainingObligation.amount > 0)
+      .map(charge => charge.studentId),
   ).size
 
-  const schoolFeeIds = new Set(schoolFees.map(fee => fee.id))
   const recentPayments = payments.filter(payment =>
     payment.status === PaymentStatus.Recorded
-    && schoolFeeIds.has(payment.studentFeeId)
+    && payment.kind === PaymentKind.Receipt
     && payment.paymentDate >= recentPaymentStart
     && payment.paymentDate <= referenceDate,
   )
@@ -607,7 +607,7 @@ export async function buildSchoolOverview(
   const kpis: SchoolOverviewKpis = {
     studentCount,
     staffCount: staffMembers.length,
-    overdueFeeCount: overdueFees.length,
+    overdueFeeCount: overdueCharges.length,
     overdueFeeAmount,
     publishedReportCardCount,
     unpublishedReportCardCount,
@@ -657,7 +657,7 @@ export async function buildSchoolOverview(
     actionItems: buildActionItems(kpis, extras.pendingStudentPhotoCount ?? 0),
     upcoming: buildUpcoming({
       calendarEvents,
-      schoolFees,
+      schoolCharges,
       periodAssessments,
       academicPeriod,
       refKey,

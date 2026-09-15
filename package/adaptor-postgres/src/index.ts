@@ -13,6 +13,13 @@ export {
   MIGRATIONS_SCHEMA,
   SCHOOL_MIGRATIONS_TABLE,
 } from './lib/migration-meta'
+export {
+  assertFinanceResetTarget,
+  DISPOSABLE_FINANCE_TABLES,
+  FINANCE_RESET_ALLOWED_TABLES,
+  LEGACY_FINANCE_TABLES,
+  resetDisposableFinanceRecords,
+} from './lib/reset-finance'
 export { PostgresAtomicExecution, type PostgresTransactionalDb, transactionContext } from './lib/transaction'
 export * as schema from './postgres-schema'
 export { PostgresSchoolRepositories } from './postgres-school-repositories'

@@ -88,6 +88,89 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           })), HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getStudentFinanceSummary") {
+          const summary = await service.getStudentFinanceSummary({
+            studentId: payload.studentId as string,
+            academicYearId: payload.academicYearId as string,
+          });
+          return c.json(serializeFinanceSummary(summary), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getAccountStatement") {
+          return c.json(serializeAccountStatement(await service.getAccountStatement({
+            accountId: payload.accountId as string,
+          })), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getSchoolFinanceAging") {
+          return c.json(await service.getSchoolFinanceAging({
+            schoolId: payload.schoolId as string,
+            academicYearId: payload.academicYearId as string | undefined,
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getFinanceReconciliation") {
+          return c.json(await service.getFinanceReconciliation({
+            schoolId: payload.schoolId as string,
+            academicYearId: payload.academicYearId as string | undefined,
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "previewAccountAllocation") {
+          const allocation = payload.allocation as { mode: "account_only" | "fifo" | "targeted"; targets?: { chargeId: string; amount: number }[] };
+          return c.json(await service.previewAccountAllocation({
+            accountId: payload.accountId as string,
+            allocation: allocation.mode === "targeted"
+              ? { mode: "targeted", targets: allocation.targets ?? [] }
+              : { mode: allocation.mode },
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getRelatedFamilyFinanceOverview") {
+          const overview = await service.getRelatedFamilyFinanceOverview({
+            academicYearId: payload.academicYearId as string,
+          });
+          return c.json({
+            academicYearId: overview.academicYearId,
+            students: overview.students.map(serializeFinanceSummary),
+          }, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getStudentAccountStatement") {
+          const statement = await service.getStudentAccountStatement({
+            studentId: payload.studentId as string,
+            academicYearId: payload.academicYearId as string,
+            currency: payload.currency as string | undefined,
+          });
+          return c.json(statement ? serializeAccountStatement(statement) : null, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "listOpenDueCharges") {
+          return c.json(await service.listOpenDueCharges({
+            schoolId: payload.schoolId as string,
+            academicYearId: payload.academicYearId as string | undefined,
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getPaymentSettlementHistory") {
+          return c.json(await service.getPaymentSettlementHistory({
+            accountId: payload.accountId as string,
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "reconcileStudentYearAccount") {
+          return c.json(await service.reconcileStudentYearAccount({
+            accountId: payload.accountId as string,
+          }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "reconcileSchoolFinance") {
+          return c.json(await service.reconcileSchoolFinance({
+            schoolId: payload.schoolId as string,
+            academicYearId: payload.academicYearId as string | undefined,
+          }), HttpStatusCodes.OK);
+        }
+
         const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }
@@ -109,6 +192,60 @@ function serializeClassGroupTimetable(timetable: ClassGroupTimetable) {
       ...event,
       startsAt: event.startsAt.toISOString(),
       endsAt: event.endsAt.toISOString(),
+    })),
+  };
+}
+
+function serializeFinanceSummary(summary: Awaited<ReturnType<import("@edaya/service").SchoolService["getStudentFinanceSummary"]>>) {
+  return {
+    studentId: summary.studentId,
+    academicYearId: summary.academicYearId,
+    accountId: summary.accountId,
+    currency: summary.currency,
+    available: { amount: summary.available.amount, currency: summary.available.currency },
+    outstanding: { amount: summary.outstanding.amount, currency: summary.outstanding.currency },
+    overdue: { amount: summary.overdue.amount, currency: summary.overdue.currency },
+  };
+}
+
+function serializeAccountStatement(statement: Awaited<ReturnType<import("@edaya/service").SchoolService["getAccountStatement"]>>) {
+  return {
+    accountId: statement.account.id,
+    studentId: statement.account.studentId,
+    academicYearId: statement.account.academicYearId,
+    currency: statement.account.currency,
+    projectedAvailable: statement.projectedAvailable,
+    entrySum: statement.entrySum,
+    entries: statement.entries.map(entry => ({
+      id: entry.id,
+      direction: entry.direction,
+      amount: entry.amount.amount,
+      sourceKind: entry.sourceKind,
+      sourceId: entry.sourceId,
+      effectiveAt: entry.effectiveAt.toISOString(),
+      recordedAt: entry.recordedAt.toISOString(),
+      resultingAvailableBalance: entry.resultingAvailableBalance.amount,
+    })),
+    payments: statement.payments.map(payment => ({
+      id: payment.id,
+      kind: payment.kind,
+      amount: payment.amount.amount,
+      status: payment.status,
+      paymentDate: payment.paymentDate.toISOString(),
+      method: payment.method,
+      reference: payment.reference,
+    })),
+    allocations: statement.allocations.map(allocation => ({
+      id: allocation.id,
+      chargeId: allocation.chargeId,
+      amount: allocation.amount.amount,
+      kind: allocation.kind,
+    })),
+    charges: statement.charges.map(charge => ({
+      id: charge.id,
+      label: charge.label,
+      remainingObligation: charge.remainingObligation.amount,
+      status: charge.status,
     })),
   };
 }

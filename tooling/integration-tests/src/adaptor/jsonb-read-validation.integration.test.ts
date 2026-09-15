@@ -1,6 +1,6 @@
 import { PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { Permission } from '@edaya/authorization'
-import { DomainValidationError, Fee, FeeCategory, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { CatalogService, CatalogServiceStatus, DomainValidationError, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
@@ -22,24 +22,25 @@ describe('[Postgres PGlite] JSONB read validation', () => {
     await pglite.close()
   })
 
-  test('Fee rejects corrupt installments JSON on read', async () => {
-    await repos.fees.save(new Fee({
+  test('CatalogService rejects corrupt billing terms JSON on read', async () => {
+    await repos.catalogServices.save(new CatalogService({
       id: 'fee-corrupt-1',
       schoolId: 'school',
       academicYearId: 'year-1',
       name: 'Tuition',
-      defaultAmount: 100_000,
+      defaultPrice: 100_000,
       currency: 'XAF',
-      category: FeeCategory.Tuition,
+      billingTerms: { kind: 'one_time', installments: [] },
+      status: CatalogServiceStatus.Draft,
     }))
 
     await db.execute(sql`
-      UPDATE fees
-      SET installments = ${JSON.stringify([{ label: '', percentage: 100 }])}::jsonb
+      UPDATE catalog_services
+      SET billing_terms = ${JSON.stringify({ kind: 'one_time', installments: [{ label: '', percentage: 100 }] })}::jsonb
       WHERE id = 'fee-corrupt-1'
     `)
 
-    await expect(repos.fees.findById('fee-corrupt-1')).rejects.toBeInstanceOf(DomainValidationError)
+    await expect(repos.catalogServices.findById('fee-corrupt-1')).rejects.toBeInstanceOf(DomainValidationError)
   })
 
   test('StaffPermissionAssignment rejects invalid permission on read', async () => {

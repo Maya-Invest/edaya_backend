@@ -198,22 +198,48 @@ export const clientBindings = {
           "batchDelete": true
         }
       },
-      "fees": {
-        "publicName": "fees",
-        "schemaName": "Fee",
-        "allowDirectSave": true,
+      "catalogServices": {
+        "publicName": "catalog-services",
+        "schemaName": "CatalogService",
+        "allowDirectSave": false,
         "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         }
       },
-      "studentFees": {
-        "publicName": "student-fees",
-        "schemaName": "StudentFee",
+      "studentServiceEnrollments": {
+        "publicName": "student-service-enrollments",
+        "schemaName": "StudentServiceEnrollment",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
+      "studentCharges": {
+        "publicName": "student-charges",
+        "schemaName": "StudentCharge",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
+      "studentYearAccounts": {
+        "publicName": "student-year-accounts",
+        "schemaName": "StudentYearAccount",
         "allowDirectSave": false,
         "publicOperations": {
           "create": false,
@@ -1136,12 +1162,12 @@ export const clientBindings = {
       "createFee": {
         "publicName": "create-fee",
         "requestSchemaName": "CreateFeeCommand",
-        "responseSchemaName": "Fee"
+        "responseSchemaName": "RetiredFinanceCommandResponse"
       },
       "assignFeeToStudent": {
         "publicName": "assign-fee-to-student",
         "requestSchemaName": "AssignFeeToStudentCommand",
-        "responseSchemaName": "StudentFee"
+        "responseSchemaName": "RetiredFinanceCommandResponse"
       },
       "recordPayment": {
         "publicName": "record-payment",
@@ -1156,17 +1182,87 @@ export const clientBindings = {
       "cancelPayment": {
         "publicName": "cancel-payment",
         "requestSchemaName": "CancelPaymentCommand",
-        "responseSchemaName": "Payment"
+        "responseSchemaName": "RetiredFinanceCommandResponse"
       },
       "adjustStudentFee": {
         "publicName": "adjust-student-fee",
         "requestSchemaName": "AdjustStudentFeeCommand",
-        "responseSchemaName": "StudentFee"
+        "responseSchemaName": "RetiredFinanceCommandResponse"
       },
       "cancelStudentFee": {
         "publicName": "cancel-student-fee",
         "requestSchemaName": "CancelStudentFeeCommand",
-        "responseSchemaName": "StudentFee"
+        "responseSchemaName": "RetiredFinanceCommandResponse"
+      },
+      "createCatalogService": {
+        "publicName": "create-catalog-service",
+        "requestSchemaName": "CreateCatalogServiceCommand",
+        "responseSchemaName": "CatalogService"
+      },
+      "updateCatalogService": {
+        "publicName": "update-catalog-service",
+        "requestSchemaName": "UpdateCatalogServiceCommand",
+        "responseSchemaName": "CatalogService"
+      },
+      "activateCatalogService": {
+        "publicName": "activate-catalog-service",
+        "requestSchemaName": "CatalogServiceIdCommand",
+        "responseSchemaName": "CatalogService"
+      },
+      "archiveCatalogService": {
+        "publicName": "archive-catalog-service",
+        "requestSchemaName": "CatalogServiceIdCommand",
+        "responseSchemaName": "CatalogService"
+      },
+      "enrollStudentInService": {
+        "publicName": "enroll-student-in-service",
+        "requestSchemaName": "EnrollStudentInServiceCommand",
+        "responseSchemaName": "StudentServiceEnrollment"
+      },
+      "enrollStudentsInService": {
+        "publicName": "enroll-students-in-service",
+        "requestSchemaName": "EnrollStudentsInServiceCommand",
+        "responseSchemaName": "StudentServiceEnrollmentCommandListResponse"
+      },
+      "cancelServiceEnrollment": {
+        "publicName": "cancel-service-enrollment",
+        "requestSchemaName": "CancelServiceEnrollmentCommand",
+        "responseSchemaName": "StudentServiceEnrollment"
+      },
+      "materializeOneTimeCharge": {
+        "publicName": "materialize-one-time-charge",
+        "requestSchemaName": "MaterializeOneTimeChargeCommand",
+        "responseSchemaName": "StudentCharge"
+      },
+      "adjustStudentCharge": {
+        "publicName": "adjust-student-charge",
+        "requestSchemaName": "AdjustStudentChargeCommand",
+        "responseSchemaName": "StudentCharge"
+      },
+      "waiveStudentCharge": {
+        "publicName": "waive-student-charge",
+        "requestSchemaName": "WaiveStudentChargeCommand",
+        "responseSchemaName": "StudentCharge"
+      },
+      "cancelStudentCharge": {
+        "publicName": "cancel-student-charge",
+        "requestSchemaName": "CancelStudentChargeCommand",
+        "responseSchemaName": "StudentCharge"
+      },
+      "allocateAccountBalance": {
+        "publicName": "allocate-account-balance",
+        "requestSchemaName": "AllocateAccountBalanceCommand",
+        "responseSchemaName": "AllocationPreviewResponse"
+      },
+      "reverseAllocation": {
+        "publicName": "reverse-allocation",
+        "requestSchemaName": "ReverseAllocationCommand",
+        "responseSchemaName": "AllocationResponse"
+      },
+      "refundAvailableBalance": {
+        "publicName": "refund-available-balance",
+        "requestSchemaName": "RefundAvailableBalanceCommand",
+        "responseSchemaName": "Payment"
       },
       "createProfilePhotoUpload": {
         "publicName": "create-profile-photo-upload",
@@ -1374,6 +1470,61 @@ export const clientBindings = {
         "publicName": "resolve-timetable-space",
         "requestSchemaName": "ResolveTimetableSpaceQuery",
         "responseSchemaName": "ResolvedTimetableSpaceResponse"
+      },
+      "getStudentFinanceSummary": {
+        "publicName": "get-student-finance-summary",
+        "requestSchemaName": "GetStudentFinanceSummaryQuery",
+        "responseSchemaName": "StudentFinanceSummaryResponse"
+      },
+      "getAccountStatement": {
+        "publicName": "get-account-statement",
+        "requestSchemaName": "GetAccountStatementQuery",
+        "responseSchemaName": "AccountStatementResponse"
+      },
+      "getSchoolFinanceAging": {
+        "publicName": "get-school-finance-aging",
+        "requestSchemaName": "GetSchoolFinanceAgingQuery",
+        "responseSchemaName": "SchoolFinanceAgingResponse"
+      },
+      "getFinanceReconciliation": {
+        "publicName": "get-finance-reconciliation",
+        "requestSchemaName": "GetFinanceReconciliationQuery",
+        "responseSchemaName": "FinanceReconciliationResponse"
+      },
+      "previewAccountAllocation": {
+        "publicName": "preview-account-allocation",
+        "requestSchemaName": "PreviewAccountAllocationQuery",
+        "responseSchemaName": "AllocationPreviewQueryResponse"
+      },
+      "getRelatedFamilyFinanceOverview": {
+        "publicName": "get-related-family-finance-overview",
+        "requestSchemaName": "GetRelatedFamilyFinanceOverviewQuery",
+        "responseSchemaName": "RelatedFamilyFinanceOverviewResponse"
+      },
+      "getStudentAccountStatement": {
+        "publicName": "get-student-account-statement",
+        "requestSchemaName": "GetStudentAccountStatementQuery",
+        "responseSchemaName": "StudentAccountStatementResponse"
+      },
+      "listOpenDueCharges": {
+        "publicName": "list-open-due-charges",
+        "requestSchemaName": "ListOpenDueChargesQuery",
+        "responseSchemaName": "OpenDueChargesResponse"
+      },
+      "getPaymentSettlementHistory": {
+        "publicName": "get-payment-settlement-history",
+        "requestSchemaName": "GetPaymentSettlementHistoryQuery",
+        "responseSchemaName": "PaymentSettlementHistoryResponse"
+      },
+      "reconcileStudentYearAccount": {
+        "publicName": "reconcile-student-year-account",
+        "requestSchemaName": "ReconcileStudentYearAccountQuery",
+        "responseSchemaName": "StudentYearAccountReconciliationResponse"
+      },
+      "reconcileSchoolFinance": {
+        "publicName": "reconcile-school-finance",
+        "requestSchemaName": "GetFinanceReconciliationQuery",
+        "responseSchemaName": "FinanceReconciliationResponse"
       }
     },
     "authorization": {

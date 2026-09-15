@@ -18,7 +18,7 @@ import {
   demoMessageDeliveries,
 } from './domains/communications'
 import { demoDisciplinaryActions, demoStudentDisciplinaryActions } from './domains/discipline'
-import { demoFees, demoPayments, demoStudentFees } from './domains/finance'
+import { demoCatalogServices, demoPayments, demoStudentServiceEnrollments } from './domains/finance'
 import { demoIncidents, demoStudentIncidentInvolvements } from './domains/incidents'
 import {
   demoGradeScales,
@@ -92,8 +92,8 @@ export const demoDataset = {
     activityEnrollments: demoActivityEnrollments,
     resources: demoResources,
     schedules: demoSchedules,
-    fees: demoFees,
-    studentFees: demoStudentFees,
+    catalogServices: demoCatalogServices,
+    studentServiceEnrollments: demoStudentServiceEnrollments,
     payments: demoPayments,
     announcements: demoAnnouncements,
     announcementTargets: demoAnnouncementTargets,

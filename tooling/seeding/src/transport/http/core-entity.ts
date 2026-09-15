@@ -1,4 +1,4 @@
-import type { SeedCommandKey, SeedEntityKey } from './catalog'
+import type { SeedCommandKey, SeedEntityKey, SeedQueryKey } from './catalog'
 import type { HttpSeedClient } from './client'
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { createSeedSchoolClient } from './school-client'
@@ -76,6 +76,23 @@ export async function postCoreCommand(
   }
   catch (error) {
     throw formatCoreError(`Core command failed for ${methodName}`, error)
+  }
+}
+
+export async function postCoreQuery(
+  options: CoreHttpRequestOptions,
+  methodName: SeedQueryKey,
+  payload: unknown,
+): Promise<unknown> {
+  const serializedPayload = payload && typeof payload === 'object'
+    ? serializePlainObject(payload as Record<string, unknown>)
+    : payload
+
+  try {
+    return await schoolClient(options).queries[methodName](serializedPayload)
+  }
+  catch (error) {
+    throw formatCoreError(`Core query failed for ${methodName}`, error)
   }
 }
 
