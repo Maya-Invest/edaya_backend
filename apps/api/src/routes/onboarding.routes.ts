@@ -508,7 +508,21 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         allowPublicSchoolRegistration,
       },
     );
-    return c.json(result, HttpStatusCodes.OK);
+    const { structure, ...rest } = result;
+    return c.json({
+      ...rest,
+      structure: structure
+        ? {
+            gradeLevelCount: structure.gradeLevelCount,
+            classGroupCount: structure.classGroupCount,
+            subjectCount: structure.subjectCount,
+            classSubjectCount: structure.classSubjectCount,
+            gradeScaleCount: structure.gradeScaleCount,
+            reportCardDefinitionCount: structure.reportCardDefinitionCount,
+            reportCardSectionCount: structure.reportCardSectionCount,
+          }
+        : null,
+    }, HttpStatusCodes.OK);
   }
   catch (err) {
     if (
