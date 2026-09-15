@@ -169,6 +169,13 @@
       "when": 1789385400000,
       "tag": "0023_service_catalog_accounting",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789387200000,
+      "tag": "0024_official_documents",
+      "breakpoints": true
     }
   ]
 }

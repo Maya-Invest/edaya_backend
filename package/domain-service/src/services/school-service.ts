@@ -18,6 +18,7 @@ import { AccountInvitationServiceWorkflow } from './workflows/account-invitation
 import { AssessmentsServiceWorkflow } from './workflows/assessments'
 import { BehaviorServiceWorkflow } from './workflows/behavior'
 import { CommunicationsServiceWorkflow } from './workflows/communications'
+import { DocumentsServiceWorkflow } from './workflows/documents'
 import { FinanceServiceWorkflow } from './workflows/finance'
 import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates'
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
@@ -39,6 +40,7 @@ export class SchoolService {
   readonly accessControlWorkflow: AccessControlServiceWorkflow
   readonly accountInvitationWorkflow: AccountInvitationServiceWorkflow
   readonly notificationTemplatesWorkflow: NotificationTemplatesServiceWorkflow
+  readonly documentsWorkflow: DocumentsServiceWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -55,6 +57,7 @@ export class SchoolService {
     this.accessControlWorkflow = new AccessControlServiceWorkflow(this.baseService)
     this.accountInvitationWorkflow = new AccountInvitationServiceWorkflow(this.baseService)
     this.notificationTemplatesWorkflow = new NotificationTemplatesServiceWorkflow(this.baseService)
+    this.documentsWorkflow = new DocumentsServiceWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
@@ -68,6 +71,7 @@ export class SchoolService {
       communications: this.communicationsWorkflow,
       behavior: this.behaviorWorkflow,
       finance: this.financeWorkflow,
+      documents: this.documentsWorkflow,
     })
   }
 
@@ -113,6 +117,26 @@ export class SchoolService {
 
   getPaymentSettlementHistory(input: { accountId: string }) {
     return this.financeWorkflow.getPaymentSettlementHistory(input)
+  }
+
+  listDocumentTemplates() {
+    return this.documentsWorkflow.listDocumentTemplates()
+  }
+
+  listDocumentIssuances(input: Parameters<DocumentsServiceWorkflow['listDocumentIssuances']>[0]) {
+    return this.documentsWorkflow.listDocumentIssuances(input)
+  }
+
+  getDocumentIssuance(input: { id: string }) {
+    return this.documentsWorkflow.getDocumentIssuance(input)
+  }
+
+  grantDocumentDownload(input: { id: string }) {
+    return this.documentsWorkflow.grantDocumentDownload(input)
+  }
+
+  grantDocumentBundleDownload(input: Parameters<DocumentsServiceWorkflow['grantDocumentBundleDownload']>[0]) {
+    return this.documentsWorkflow.grantDocumentBundleDownload(input)
   }
 
   reconcileStudentYearAccount(input: { accountId: string }) {

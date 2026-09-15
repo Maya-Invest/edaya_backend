@@ -19,6 +19,7 @@ export type {
   FixtureDatasetEntities,
   FixtureDatasetExtensions,
   FixtureDatasetPurpose,
+  FixtureDocumentIssuance,
   FixturePayment,
   FixtureReportCardDefinition,
   FixtureReportCardGradeScale,

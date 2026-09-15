@@ -127,6 +127,7 @@
                     "PAYMENT_EXPORT",
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
+                    "DOCUMENT_VOID",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -571,6 +572,7 @@
               "PAYMENT_EXPORT",
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
+              "DOCUMENT_VOID",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -750,6 +752,7 @@
                     "PAYMENT_EXPORT",
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
+                    "DOCUMENT_VOID",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -1095,6 +1098,7 @@
                     "PAYMENT_EXPORT",
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
+                    "DOCUMENT_VOID",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -1430,6 +1434,56 @@
             "minimum": 0,
             "exclusiveMinimum": true,
             "default": 1
+          },
+          "postalAddress": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "schoolCode": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuingName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "logoAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "crestAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "stampAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "signatureAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuanceAssetVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
           },
           "createdAt": {}
         },
@@ -2473,6 +2527,7 @@
               "PAYMENT_EXPORT",
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
+              "DOCUMENT_VOID",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -3263,6 +3318,8 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "school",
+              "document_issuance",
               "other"
             ]
           },
@@ -3416,6 +3473,56 @@
             "exclusiveMinimum": true,
             "default": 1
           },
+          "postalAddress": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "schoolCode": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuingName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "logoAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "crestAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "stampAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "signatureAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuanceAssetVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "createdAt": {}
         },
         "required": [
@@ -3521,6 +3628,56 @@
             "minimum": 0,
             "exclusiveMinimum": true,
             "default": 1
+          },
+          "postalAddress": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "schoolCode": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuingName": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "logoAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "crestAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "stampAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "signatureAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "issuanceAssetVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
           },
           "schoolId": {
             "type": "string",
@@ -5546,6 +5703,7 @@
                 "PAYMENT_EXPORT",
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
+                "DOCUMENT_VOID",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -5728,6 +5886,7 @@
                 "PAYMENT_EXPORT",
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
+                "DOCUMENT_VOID",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -5890,6 +6049,7 @@
                 "PAYMENT_EXPORT",
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
+                "DOCUMENT_VOID",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -6052,6 +6212,7 @@
                 "PAYMENT_EXPORT",
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
+                "DOCUMENT_VOID",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -6212,6 +6373,7 @@
               "PAYMENT_EXPORT",
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
+              "DOCUMENT_VOID",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -6564,6 +6726,7 @@
               "PAYMENT_EXPORT",
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
+              "DOCUMENT_VOID",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -6940,6 +7103,8 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "school",
+              "document_issuance",
               "other"
             ]
           },
@@ -7032,6 +7197,8 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "school",
+              "document_issuance",
               "other"
             ]
           },
@@ -9954,43 +10121,109 @@
           "periodId"
         ]
       },
-      "RenderClassLogbookResponse": {
+      "DocumentIssuanceProjectionResponse": {
         "type": "object",
         "properties": {
-          "fileName": {
+          "id": {
             "type": "string",
             "minLength": 1
           },
-          "contentType": {
+          "templateKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
             "type": "string",
             "enum": [
-              "application/pdf"
+              "fr",
+              "en"
             ]
           },
-          "downloadUrl": {
+          "academicYearId": {
             "type": "string",
             "minLength": 1
           },
-          "expiresAt": {
+          "sourceType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "number": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifactAttachmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "failureCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "replacesIssuanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "replacedByIssuanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "voidedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "subjectCount": {
-            "type": "integer",
-            "minimum": 0
+          "voidReason": {
+            "type": "string",
+            "minLength": 1
           },
-          "sessionCount": {
-            "type": "integer",
-            "minimum": 0
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "familyDownload": {
+            "type": "boolean"
           }
         },
         "required": [
-          "fileName",
-          "contentType",
-          "downloadUrl",
-          "expiresAt",
-          "subjectCount",
-          "sessionCount"
+          "id",
+          "templateKey",
+          "templateVersion",
+          "title",
+          "locale",
+          "academicYearId",
+          "sourceType",
+          "sourceId",
+          "sourceVersion",
+          "status",
+          "createdAt",
+          "familyDownload"
         ]
       },
       "RenderClassLogbookCommand": {
@@ -10014,10 +10247,587 @@
               "fr",
               "en"
             ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
           "classGroupId"
+        ]
+      },
+      "RequestDocumentIssuanceCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "enum": [
+              "report-card.v1",
+              "logbook.v1",
+              "schooling-certificate.v1",
+              "enrollment-record.v1",
+              "student-id-card.v1",
+              "invoice.v1",
+              "receipt.v1",
+              "settlement-quittance.v1",
+              "account-statement.v1",
+              "payment-reminder.v1",
+              "withdrawal-certificate.v1",
+              "annual-transcript.v1",
+              "convocation.v1",
+              "class-timetable.v1",
+              "teacher-timetable.v1",
+              "class-roster.v1",
+              "attendance-sheet.v1",
+              "incident-report.v1"
+            ]
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "staffFields": {
+            "type": "object",
+            "properties": {
+              "recipient": {
+                "type": "string",
+                "minLength": 1
+              },
+              "date": {
+                "type": "string",
+                "minLength": 1
+              },
+              "location": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "required": [
+          "requestId",
+          "templateKey",
+          "sourceId"
+        ]
+      },
+      "DocumentIssuanceBatchResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requestId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "requested",
+                    "denied"
+                  ]
+                },
+                "issuanceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "failureCode": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "sourceId",
+                "requestId",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "RequestDocumentIssuanceBatchCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "enum": [
+              "report-card.v1",
+              "logbook.v1",
+              "schooling-certificate.v1",
+              "enrollment-record.v1",
+              "student-id-card.v1",
+              "invoice.v1",
+              "receipt.v1",
+              "settlement-quittance.v1",
+              "account-statement.v1",
+              "payment-reminder.v1",
+              "withdrawal-certificate.v1",
+              "annual-transcript.v1",
+              "convocation.v1",
+              "class-timetable.v1",
+              "teacher-timetable.v1",
+              "class-roster.v1",
+              "attendance-sheet.v1",
+              "incident-report.v1"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requestId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "studentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classGroupId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "teacherId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "academicPeriodId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classSubjectId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "staffFields": {
+                  "type": "object",
+                  "properties": {
+                    "recipient": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "date": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "required": [
+                "sourceId",
+                "requestId"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "requestId",
+          "templateKey",
+          "items"
+        ]
+      },
+      "RetryDocumentIssuanceCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issuanceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "issuanceId"
+        ]
+      },
+      "CorrectDocumentIssuanceCommand": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RequestDocumentIssuanceCommand"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "issuanceId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "issuanceId"
+            ]
+          }
+        ]
+      },
+      "VoidDocumentIssuanceCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issuanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "issuanceId",
+          "reason"
+        ]
+      },
+      "PreviewDocumentCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "enum": [
+              "report-card.v1",
+              "logbook.v1",
+              "schooling-certificate.v1",
+              "enrollment-record.v1",
+              "student-id-card.v1",
+              "invoice.v1",
+              "receipt.v1",
+              "settlement-quittance.v1",
+              "account-statement.v1",
+              "payment-reminder.v1",
+              "withdrawal-certificate.v1",
+              "annual-transcript.v1",
+              "convocation.v1",
+              "class-timetable.v1",
+              "teacher-timetable.v1",
+              "class-roster.v1",
+              "attendance-sheet.v1",
+              "incident-report.v1"
+            ]
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "staffFields": {
+            "type": "object",
+            "properties": {
+              "recipient": {
+                "type": "string",
+                "minLength": 1
+              },
+              "date": {
+                "type": "string",
+                "minLength": 1
+              },
+              "location": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "required": [
+          "requestId",
+          "templateKey",
+          "sourceId"
+        ]
+      },
+      "CreateSchoolIssuanceAssetUploadResponse": {
+        "type": "object",
+        "properties": {
+          "attachmentId": {
+            "type": "string"
+          },
+          "storageKey": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending_upload"
+            ]
+          }
+        },
+        "required": [
+          "attachmentId",
+          "storageKey",
+          "uploadUrl",
+          "expiresAt",
+          "status"
+        ]
+      },
+      "CreateSchoolIssuanceAssetUploadCommand": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "school.logo",
+              "school.crest",
+              "school.stamp",
+              "school.signature"
+            ]
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "attachmentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "purpose",
+          "fileName",
+          "mimeType",
+          "sizeBytes"
+        ]
+      },
+      "CompleteSchoolIssuanceAssetUploadCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownerKind": {
+            "type": "string",
+            "enum": [
+              "student_health_profile",
+              "incident",
+              "student",
+              "guardian",
+              "report_card",
+              "payment",
+              "attendance_record",
+              "assessment_result",
+              "student_enrollment",
+              "applied_disciplinary_action",
+              "staff",
+              "school",
+              "document_issuance",
+              "other"
+            ]
+          },
+          "ownerId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "school.logo",
+              "school.crest",
+              "school.stamp",
+              "school.signature"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "storageKey": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending_upload",
+              "ready",
+              "failed"
+            ],
+            "default": "ready"
+          },
+          "checksum": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "mimeType": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "ownerKind",
+          "ownerId",
+          "purpose",
+          "fileName"
         ]
       },
       "Incident": {
@@ -11858,6 +12668,8 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "school",
+              "document_issuance",
               "other"
             ]
           },
@@ -11914,6 +12726,8 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "school",
+              "document_issuance",
               "other"
             ]
           },
@@ -16471,6 +17285,309 @@
           "accountId"
         ]
       },
+      "DocumentTemplateCatalogEntry": {
+        "type": "object",
+        "properties": {
+          "templateKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "fr",
+                "en"
+              ]
+            }
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "pdf"
+            ]
+          },
+          "sourceType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "numberingKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "familyDownload": {
+            "type": "boolean"
+          },
+          "teacherOperational": {
+            "type": "boolean"
+          },
+          "titles": {
+            "type": "object",
+            "properties": {
+              "fr": {
+                "type": "string",
+                "minLength": 1
+              },
+              "en": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "fr",
+              "en"
+            ]
+          }
+        },
+        "required": [
+          "templateKey",
+          "templateVersion",
+          "locales",
+          "format",
+          "sourceType",
+          "numberingKind",
+          "familyDownload",
+          "teacherOperational",
+          "titles"
+        ]
+      },
+      "DocumentTemplateCatalogResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DocumentTemplateCatalogEntry"
+        }
+      },
+      "ListDocumentTemplatesQuery": {
+        "type": "object",
+        "properties": {}
+      },
+      "DocumentIssuanceProjection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "number": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifactAttachmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "failureCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "replacesIssuanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "replacedByIssuanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "voidReason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "familyDownload": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "templateKey",
+          "templateVersion",
+          "title",
+          "locale",
+          "academicYearId",
+          "sourceType",
+          "sourceId",
+          "sourceVersion",
+          "status",
+          "createdAt",
+          "familyDownload"
+        ]
+      },
+      "DocumentIssuanceListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/DocumentIssuanceProjection"
+        }
+      },
+      "ListDocumentIssuancesQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "GetDocumentIssuanceQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "DocumentDownloadGrantResponse": {
+        "type": "object",
+        "properties": {
+          "downloadUrl": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issuanceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "downloadUrl",
+          "expiresAt",
+          "fileName",
+          "issuanceId"
+        ]
+      },
+      "GrantDocumentDownloadQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "DocumentDownloadBundleResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentDownloadGrantResponse"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "GrantDocumentBundleDownloadQuery": {
+        "type": "object",
+        "properties": {
+          "issuanceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "issuanceIds"
+        ]
+      },
       "Filter_1": {
         "type": "object"
       },
@@ -17539,6 +18656,269 @@
         "required": [
           "entities"
         ]
+      },
+      "DocumentIssuance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateKey": {
+            "type": "string",
+            "enum": [
+              "report-card.v1",
+              "logbook.v1",
+              "schooling-certificate.v1",
+              "enrollment-record.v1",
+              "student-id-card.v1",
+              "invoice.v1",
+              "receipt.v1",
+              "settlement-quittance.v1",
+              "account-statement.v1",
+              "payment-reminder.v1",
+              "withdrawal-certificate.v1",
+              "annual-transcript.v1",
+              "convocation.v1",
+              "class-timetable.v1",
+              "teacher-timetable.v1",
+              "class-roster.v1",
+              "attendance-sheet.v1",
+              "incident-report.v1"
+            ]
+          },
+          "templateVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "report_card_result",
+              "class_logbook",
+              "enrollment",
+              "student",
+              "payment",
+              "charge",
+              "student_year_account",
+              "incident",
+              "class_group",
+              "teacher",
+              "attendance_day",
+              "attendance_session",
+              "convocation"
+            ]
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "snapshot": {
+            "type": "object",
+            "properties": {
+              "facts": {
+                "type": "object",
+                "additionalProperties": {
+                  "nullable": true
+                }
+              },
+              "sourceVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "locale": {
+                "type": "string",
+                "enum": [
+                  "fr",
+                  "en"
+                ]
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "currency": {
+                "type": "string",
+                "minLength": 1
+              },
+              "portraitAttachmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "logoAttachmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "crestAttachmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "stampAttachmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "signatureAttachmentId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "issuanceAssetVersion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "staffFields": {
+                "type": "object",
+                "properties": {
+                  "recipient": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "date": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "location": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "required": [
+              "facts",
+              "sourceVersion",
+              "locale",
+              "timeZone"
+            ]
+          },
+          "issuerActorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "staff",
+              "family",
+              "teacher"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "number": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "rendering",
+              "ready",
+              "failed",
+              "superseded",
+              "voided",
+              "preview"
+            ],
+            "default": "requested"
+          },
+          "artifactAttachmentId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "artifactSha256": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "artifactSize": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "replacesIssuanceId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "replacedByIssuanceId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "voidedAt": {
+            "nullable": true
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "failureCode": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {},
+          "updatedAt": {
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "templateKey",
+          "templateVersion",
+          "locale",
+          "academicYearId",
+          "sourceType",
+          "sourceId",
+          "sourceVersion",
+          "snapshot",
+          "issuerActorId",
+          "audience",
+          "requestId"
+        ]
+      },
+      "Filter_59": {
+        "type": "object"
       }
     },
     "parameters": {}
@@ -31235,7 +32615,7 @@
         "x-edaya-command-key": "renderClassLogbook",
         "x-edaya-command-public-name": "render-class-logbook",
         "x-edaya-request-schema": "RenderClassLogbookCommand",
-        "x-edaya-response-schema": "RenderClassLogbookResponse",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
         "requestBody": {
           "description": "render-class-logbook payload",
           "content": {
@@ -31252,7 +32632,1047 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RenderClassLogbookResponse"
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/request-document-issuance": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "request-document-issuance",
+        "operationId": "commands.requestDocumentIssuance",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "requestDocumentIssuance",
+        "x-edaya-command-public-name": "request-document-issuance",
+        "x-edaya-request-schema": "RequestDocumentIssuanceCommand",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
+        "requestBody": {
+          "description": "request-document-issuance payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestDocumentIssuanceCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed request-document-issuance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/request-document-issuance-batch": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "request-document-issuance-batch",
+        "operationId": "commands.requestDocumentIssuanceBatch",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "requestDocumentIssuanceBatch",
+        "x-edaya-command-public-name": "request-document-issuance-batch",
+        "x-edaya-request-schema": "RequestDocumentIssuanceBatchCommand",
+        "x-edaya-response-schema": "DocumentIssuanceBatchResponse",
+        "requestBody": {
+          "description": "request-document-issuance-batch payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestDocumentIssuanceBatchCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed request-document-issuance-batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceBatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/retry-document-issuance": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "retry-document-issuance",
+        "operationId": "commands.retryDocumentIssuance",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "retryDocumentIssuance",
+        "x-edaya-command-public-name": "retry-document-issuance",
+        "x-edaya-request-schema": "RetryDocumentIssuanceCommand",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
+        "requestBody": {
+          "description": "retry-document-issuance payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryDocumentIssuanceCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed retry-document-issuance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/correct-document-issuance": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "correct-document-issuance",
+        "operationId": "commands.correctDocumentIssuance",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "correctDocumentIssuance",
+        "x-edaya-command-public-name": "correct-document-issuance",
+        "x-edaya-request-schema": "CorrectDocumentIssuanceCommand",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
+        "requestBody": {
+          "description": "correct-document-issuance payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectDocumentIssuanceCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed correct-document-issuance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/void-document-issuance": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "void-document-issuance",
+        "operationId": "commands.voidDocumentIssuance",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "voidDocumentIssuance",
+        "x-edaya-command-public-name": "void-document-issuance",
+        "x-edaya-request-schema": "VoidDocumentIssuanceCommand",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
+        "requestBody": {
+          "description": "void-document-issuance payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidDocumentIssuanceCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed void-document-issuance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/preview-document": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "preview-document",
+        "operationId": "commands.previewDocument",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "previewDocument",
+        "x-edaya-command-public-name": "preview-document",
+        "x-edaya-request-schema": "PreviewDocumentCommand",
+        "x-edaya-response-schema": "DocumentIssuanceProjectionResponse",
+        "requestBody": {
+          "description": "preview-document payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewDocumentCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed preview-document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/create-school-issuance-asset-upload": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "create-school-issuance-asset-upload",
+        "operationId": "commands.createSchoolIssuanceAssetUpload",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "createSchoolIssuanceAssetUpload",
+        "x-edaya-command-public-name": "create-school-issuance-asset-upload",
+        "x-edaya-request-schema": "CreateSchoolIssuanceAssetUploadCommand",
+        "x-edaya-response-schema": "CreateSchoolIssuanceAssetUploadResponse",
+        "requestBody": {
+          "description": "create-school-issuance-asset-upload payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolIssuanceAssetUploadCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed create-school-issuance-asset-upload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSchoolIssuanceAssetUploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/complete-school-issuance-asset-upload": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "complete-school-issuance-asset-upload",
+        "operationId": "commands.completeSchoolIssuanceAssetUpload",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "completeSchoolIssuanceAssetUpload",
+        "x-edaya-command-public-name": "complete-school-issuance-asset-upload",
+        "x-edaya-request-schema": "CompleteSchoolIssuanceAssetUploadCommand",
+        "x-edaya-response-schema": "Attachment",
+        "requestBody": {
+          "description": "complete-school-issuance-asset-upload payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteSchoolIssuanceAssetUploadCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed complete-school-issuance-asset-upload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attachment"
                 }
               }
             }
@@ -41653,6 +44073,656 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FinanceReconciliationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-document-templates": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-document-templates",
+        "operationId": "queries.listDocumentTemplates",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listDocumentTemplates",
+        "x-edaya-query-public-name": "list-document-templates",
+        "x-edaya-request-schema": "ListDocumentTemplatesQuery",
+        "x-edaya-response-schema": "DocumentTemplateCatalogResponse",
+        "requestBody": {
+          "description": "list-document-templates payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListDocumentTemplatesQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-document-templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTemplateCatalogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-document-issuances": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-document-issuances",
+        "operationId": "queries.listDocumentIssuances",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listDocumentIssuances",
+        "x-edaya-query-public-name": "list-document-issuances",
+        "x-edaya-request-schema": "ListDocumentIssuancesQuery",
+        "x-edaya-response-schema": "DocumentIssuanceListResponse",
+        "requestBody": {
+          "description": "list-document-issuances payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListDocumentIssuancesQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-document-issuances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-document-issuance": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-document-issuance",
+        "operationId": "queries.getDocumentIssuance",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getDocumentIssuance",
+        "x-edaya-query-public-name": "get-document-issuance",
+        "x-edaya-request-schema": "GetDocumentIssuanceQuery",
+        "x-edaya-response-schema": "DocumentIssuanceProjection",
+        "requestBody": {
+          "description": "get-document-issuance payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDocumentIssuanceQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-document-issuance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuanceProjection"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/grant-document-download": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "grant-document-download",
+        "operationId": "queries.grantDocumentDownload",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "grantDocumentDownload",
+        "x-edaya-query-public-name": "grant-document-download",
+        "x-edaya-request-schema": "GrantDocumentDownloadQuery",
+        "x-edaya-response-schema": "DocumentDownloadGrantResponse",
+        "requestBody": {
+          "description": "grant-document-download payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantDocumentDownloadQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved grant-document-download",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDownloadGrantResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/grant-document-bundle-download": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "grant-document-bundle-download",
+        "operationId": "queries.grantDocumentBundleDownload",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "grantDocumentBundleDownload",
+        "x-edaya-query-public-name": "grant-document-bundle-download",
+        "x-edaya-request-schema": "GrantDocumentBundleDownloadQuery",
+        "x-edaya-response-schema": "DocumentDownloadBundleResponse",
+        "requestBody": {
+          "description": "grant-document-bundle-download payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantDocumentBundleDownloadQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved grant-document-bundle-download",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDownloadBundleResponse"
                 }
               }
             }
@@ -105969,6 +109039,693 @@
           },
           "403": {
             "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/document-issuances/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Document Issuances",
+        "operationId": "entities.documentIssuances.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "documentIssuances",
+        "x-edaya-entity-public-name": "document-issuances",
+        "x-edaya-response-schema": "DocumentIssuance",
+        "x-edaya-allow-direct-save": false,
+        "x-edaya-public-operations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        },
+        "requestBody": {
+          "description": "Document Issuances query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_59"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Document Issuances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentIssuance"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/document-issuances/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Document Issuances",
+        "operationId": "entities.documentIssuances.one",
+        "requestBody": {
+          "description": "Document Issuances query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_59"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Document Issuances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document Issuances not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/document-issuances/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Document Issuances",
+        "operationId": "entities.documentIssuances.count",
+        "requestBody": {
+          "description": "Document Issuances query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_59"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Document Issuances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/document-issuances/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Document Issuances",
+        "operationId": "entities.documentIssuances.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Document Issuances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIssuance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Document Issuances not found",
             "content": {
               "application/json": {
                 "schema": {

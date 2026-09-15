@@ -299,6 +299,29 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
           col(table, 'status'),
         ),
       ]
+    case 'document_issuances':
+      return [
+        index('document_issuances_school_id_idx').on(col(table, 'schoolId')),
+        index('document_issuances_student_id_idx').on(col(table, 'studentId')),
+        index('document_issuances_class_group_id_idx').on(col(table, 'classGroupId')),
+        index('document_issuances_source_idx').on(col(table, 'schoolId'), col(table, 'templateKey'), col(table, 'sourceId')),
+        index('document_issuances_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        uniqueIndex('document_issuances_request_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'templateKey'),
+          col(table, 'sourceId'),
+          col(table, 'requestId'),
+        ),
+      ]
+    case 'document_number_series':
+      return [
+        index('document_number_series_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('document_number_series_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'documentKind'),
+          col(table, 'academicYearId'),
+        ),
+      ]
     default:
       return []
   }

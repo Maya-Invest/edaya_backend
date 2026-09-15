@@ -171,6 +171,37 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           }), HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "listDocumentTemplates") {
+          return c.json(await service.listDocumentTemplates() as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "listDocumentIssuances") {
+          return c.json(await service.listDocumentIssuances({
+            studentId: payload.studentId as string | undefined,
+            academicYearId: payload.academicYearId as string | undefined,
+            classGroupId: payload.classGroupId as string | undefined,
+            templateKey: payload.templateKey as never,
+            sourceId: payload.sourceId as string | undefined,
+            status: payload.status as never,
+          }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getDocumentIssuance") {
+          return c.json(await service.getDocumentIssuance({ id: payload.id as string }), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "grantDocumentDownload") {
+          const grant = await service.grantDocumentDownload({ id: payload.id as string });
+          return c.json(serializeDocumentDownload(grant), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "grantDocumentBundleDownload") {
+          const bundle = await service.grantDocumentBundleDownload({
+            issuanceIds: payload.issuanceIds as string[],
+          });
+          return c.json({ items: bundle.items.map(serializeDocumentDownload) }, HttpStatusCodes.OK);
+        }
+
         const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }
@@ -183,6 +214,15 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
   });
 
   return pairs;
+}
+
+function serializeDocumentDownload(grant: Awaited<ReturnType<import("@edaya/service").SchoolService["grantDocumentDownload"]>>) {
+  return {
+    downloadUrl: grant.downloadUrl,
+    expiresAt: grant.expiresAt instanceof Date ? grant.expiresAt.toISOString() : grant.expiresAt,
+    fileName: grant.fileName,
+    issuanceId: grant.issuanceId,
+  };
 }
 
 function serializeClassGroupTimetable(timetable: ClassGroupTimetable) {

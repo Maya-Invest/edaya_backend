@@ -4,6 +4,7 @@ import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorizat
 import { noOpNotificationGateway, School, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { PostgresCommandJournal } from '../../../adaptor-postgres/src/stores/command-journal-store'
+import { PostgresDurableWork } from '../../../adaptor-postgres/src/stores/durable-work-store'
 import { acquireDatabase } from './database-pool'
 import { matchesFilter } from './filter-matcher'
 import { testFileStorage } from './test-file-storage'
@@ -118,8 +119,8 @@ const failureResources = {
 export type FailableRepository = keyof typeof failureResources
 
 /** Uses the production SQL compiler and transaction implementation; no test authorization evaluator. */
-export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort } = {}) {
-  const { repositories: nativeRepositories, atomic: atomicExecution, db } = await acquireDatabase()
+export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort, documentRenderer?: import('@edaya/core').DocumentRendererPort } = {}) {
+  const { repositories: nativeRepositories, atomic: atomicExecution, db, connection } = await acquireDatabase()
   let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
   const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
     saveFailure = { repository, remainingAttempts: attempt }
@@ -161,9 +162,12 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
     await nativeRepositories.staffMembers.save(new StaffMember({ id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service' }) }))
   }
+  const durableWork = new PostgresDurableWork(connection)
   const application = new SchoolApplication({
     atomicExecution,
     commandJournal: new PostgresCommandJournal(),
+    durableWork,
+    documentRenderer: options.documentRenderer,
     notificationGateway: options.notificationGateway ?? noOpNotificationGateway,
     fileStorage: options.fileStorage ?? testFileStorage,
     repositories: schoolRepositories,
@@ -234,6 +238,8 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
   }
   return {
     app: application.forActor(defaultActor),
+    application,
+    durableWork,
     repositories: testRepositories,
     schoolRepositories,
     forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),

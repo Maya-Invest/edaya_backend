@@ -9,6 +9,7 @@ import { s2sMayExercise } from '../s2s/access-class'
 import { CommunicationsAccessPolicy, DELIVERY_WRITER_SYSTEM_IDS } from './communications-policies'
 import { assertCurriculumPlacements } from './curriculum-placements'
 import { DisciplineAccessPolicy } from './discipline-policies'
+import { DocumentAccessPolicy } from './document-policies'
 import { EntityAccessPolicy } from './entity-policies'
 import { AccessFacts, denied } from './facts'
 import { FinanceAccessPolicy } from './finance-policies'
@@ -34,6 +35,7 @@ const systemActions: Record<string, readonly Permission[]> = {
   'processDueNotifications': [P.EXAM_CONFIG_READ, P.TIMETABLE_READ, P.QUERY_CALENDAR_READ],
   'reconcilePendingDeliveries': [P.QUERY_COMMUNICATIONS_READ, P.COMMUNICATION_UPDATE],
   'expireAccountInvitations': [P.ACCESS_CONTROL_READ, P.ACCESS_CONTROL_ASSIGN],
+  'document-render': [P.ATTACHMENT_CONFIGURE, P.ATTACHMENT_READ, P.DOCUMENT_VOID, P.REPORT_CARD_PUBLISH, P.CLASS_LOGBOOK_READ, P.PAYMENT_READ, P.FINANCIAL_REPORT_READ, P.ENROLLMENT_READ, P.QUERY_ENROLLMENT_HISTORY_READ, P.QUERY_STUDENT_DETAIL_READ, P.QUERY_TIMETABLE_READ, P.ATTENDANCE_READ, P.DISCIPLINE_READ, P.QUERY_CLASS_DIRECTORY_READ, P.REPORT_CARD_READ, P.QUERY_REPORT_CARD_DETAIL_READ],
   'fixture-seed': [...SCHOOL_OWNER_ACTIONS, P.PLATFORM_REGISTER_SCHOOL],
   'school-bootstrap': [P.PLATFORM_REGISTER_SCHOOL, P.SCHOOL_STRUCTURE_CONFIGURE, P.SCHOOL_LIFECYCLE_MANAGE, P.ACCESS_CONTROL_ASSIGN, P.STAFF_CREATE, P.QUERY_WORKSPACE_READ],
 }
@@ -621,6 +623,7 @@ export class AccessPolicies {
 
   readonly logbooks = new LogbookAccessPolicy(this)
   readonly reportCards = new ReportCardAccessPolicy(this)
+  readonly documents = new DocumentAccessPolicy(this)
 }
 
 export function createAccessPolicies(args: { actor: SchoolScopedActorMetadata, repositories: AuthorizationRepositories }): AccessPolicies {

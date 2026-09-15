@@ -25,6 +25,10 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'assessmentResults',
     'assessments',
     'classGroups',
+    'documentIssuances',
+    'documentNumberSeries',
+    'attachments',
+    'schools',
   ],
   student: [
     'enrollments',
@@ -84,6 +88,33 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'guardianLinks',
   ],
   invitations: ['accountInvitations', 'staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'schools', 'schoolNotificationTemplates'],
+  documents: [
+    'documentIssuances',
+    'documentNumberSeries',
+    'schools',
+    'academicYears',
+    'academicPeriods',
+    'students',
+    'enrollments',
+    'classGroups',
+    'results',
+    'attachments',
+    'payments',
+    'studentCharges',
+    'studentYearAccounts',
+    'allocations',
+    'studentAccountEntries',
+    'incidents',
+    'lessonSessions',
+    'schedules',
+    'attendance',
+    'teachers',
+    'teacherAssignments',
+    'classSubjects',
+    'subjects',
+    'guardians',
+    'guardianLinks',
+  ],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 
 export type WorkflowRepositoryScope = keyof typeof WORKFLOW_REPOSITORY_KEYS
@@ -122,3 +153,5 @@ export type CommunicationsWorkflowRepositories = WorkflowRepositoryDeps<'communi
 export type BehaviorWorkflowRepositories = WorkflowRepositoryDeps<'behavior'>
 
 export type FinanceWorkflowRepositories = WorkflowRepositoryDeps<'finance'>
+
+export type DocumentsWorkflowRepositories = WorkflowRepositoryDeps<'documents'>

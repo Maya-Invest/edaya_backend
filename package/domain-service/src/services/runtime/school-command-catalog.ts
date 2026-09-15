@@ -56,6 +56,14 @@ export type SchoolCommandKey
     | 'writeHomeroomReportComment'
     | 'publishReportCardResult'
     | 'renderClassLogbook'
+    | 'requestDocumentIssuance'
+    | 'requestDocumentIssuanceBatch'
+    | 'retryDocumentIssuance'
+    | 'correctDocumentIssuance'
+    | 'voidDocumentIssuance'
+    | 'previewDocument'
+    | 'createSchoolIssuanceAssetUpload'
+    | 'completeSchoolIssuanceAssetUpload'
     | 'registerStudent'
     | 'enrollStudent'
     | 'linkGuardianToStudent'
@@ -204,6 +212,14 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'writeHomeroomReportComment',
   'publishReportCardResult',
   'renderClassLogbook',
+  'requestDocumentIssuance',
+  'requestDocumentIssuanceBatch',
+  'retryDocumentIssuance',
+  'correctDocumentIssuance',
+  'voidDocumentIssuance',
+  'previewDocument',
+  'createSchoolIssuanceAssetUpload',
+  'completeSchoolIssuanceAssetUpload',
   'registerStudent',
   'enrollStudent',
   'linkGuardianToStudent',

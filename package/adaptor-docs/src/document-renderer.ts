@@ -5,7 +5,6 @@ import { renderDocument } from "./services/render-document";
 
 export interface CreateDocumentRendererOptions {
   readonly pdfRenderer: PdfRenderer;
-  readonly fetchImpl?: typeof fetch;
 }
 
 export function createDocumentRenderer(options: CreateDocumentRendererOptions): DocumentRendererPort {
@@ -18,7 +17,6 @@ export function createDocumentRenderer(options: CreateDocumentRendererOptions): 
         options: input.options,
       }, {
         pdfRenderer: options.pdfRenderer,
-        ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
       });
 
       if (result.kind === "failure") {

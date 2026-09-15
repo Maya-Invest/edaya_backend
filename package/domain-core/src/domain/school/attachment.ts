@@ -24,6 +24,8 @@ export enum AttachmentOwnerKind {
   StudentClassEnrollment = 'student_enrollment',
   StudentDisciplinaryAction = 'applied_disciplinary_action',
   Staff = 'staff',
+  School = 'school',
+  DocumentIssuance = 'document_issuance',
   Other = 'other',
 }
 

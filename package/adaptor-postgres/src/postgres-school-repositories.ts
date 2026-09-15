@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -8,6 +8,7 @@ import { PostgresAccountInvitationStore } from './stores/account-invitation-stor
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
+import { createDocumentNumberSeriesStore } from './stores/entity-stores-documents'
 import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
@@ -83,6 +84,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly disciplinaryActions: PostgresStore<DisciplinaryAction>
   public readonly studentIncidentInvolvements: PostgresStore<StudentIncidentInvolvement>
   public readonly incidents: PostgresStore<Incident>
+  public readonly documentIssuances: PostgresStore<DocumentIssuance>
+  public readonly documentNumberSeries: PostgresStore<DocumentNumberSeries>
   public readonly schools: SchoolRepositories['schools']
 
   constructor(private readonly db: any) {
@@ -154,6 +157,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.disciplinaryActions = stores.disciplinaryActions
     this.studentIncidentInvolvements = stores.studentIncidentInvolvements
     this.incidents = stores.incidents
+    this.documentIssuances = stores.documentIssuances
+    this.documentNumberSeries = createDocumentNumberSeriesStore(db)
 
     this.staffPermissionAssignments = new PostgresStaffPermissionAssignmentStore(db)
 

@@ -18,6 +18,7 @@ import {
   demoMessageDeliveries,
 } from './domains/communications'
 import { demoDisciplinaryActions, demoStudentDisciplinaryActions } from './domains/discipline'
+import { demoDocumentIssuances } from './domains/documents'
 import { demoCatalogServices, demoPayments, demoStudentServiceEnrollments } from './domains/finance'
 import { demoIncidents, demoStudentIncidentInvolvements } from './domains/incidents'
 import {
@@ -123,5 +124,6 @@ export const demoDataset = {
     announcementMaterializePlans: demoAnnouncementMaterializePlans,
     classSubjectStaffAssignments: demoClassSubjectStaffAssignments,
     classResourceAssignments: demoClassResourceAssignments,
+    documentIssuances: demoDocumentIssuances,
   },
 } satisfies FixtureDataset<'demo'>

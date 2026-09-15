@@ -4,7 +4,7 @@ import { createDocumentRenderer } from "../src/document-renderer";
 import { DocumentRenderError } from "../src/errors";
 import { createStubPdfRenderer } from "../src/adapters/stub-pdf-renderer";
 import { renderDocument } from "../src/services/render-document";
-import { getTemplateDefinition } from "../src/templates/registry";
+import { getTemplateDefinition, listTemplateDefinitions } from "../src/templates/registry";
 import { DOCUMENT_RENDERING_FAILURES } from "../src/types";
 import { EXAMPLE_LOGBOOK_RENDER_REQUEST, EXAMPLE_RENDER_REQUEST } from "./examples";
 import { createRecordingPdfRenderer } from "./recording-renderer";
@@ -85,22 +85,42 @@ describe("renderDocument", () => {
     expect(html).toContain("--brand: #1f4b7a");
   });
 
+  test("compiles every group B-E template from a closed payload", () => {
+    const payload = {
+      studentName: "Yao Christelle",
+      schoolName: "LYCEE MAMIE ADJOUA",
+      schoolYear: "2025-2026",
+      classLabel: "6ème A",
+      documentTitle: "Document officiel",
+      paragraphs: [{ text: "Document officiel." }],
+      fields: [{ label: "Classe", value: "6ème A" }],
+      columns: ["Libellé", "Montant"],
+      rows: [{ cells: ["Scolarité", "60 000 XOF"] }],
+    };
+    const skipped = new Set(["report-card.v1", "logbook.v1"]);
+    for (const template of listTemplateDefinitions()) {
+      if (skipped.has(template.key)) {
+        continue;
+      }
+      expect(template.validatePayload(payload)).toBeNull();
+      const html = template.compileHtml("fr", payload);
+      expect(html).toContain("Yao Christelle");
+      expect(html).toContain("LYCEE MAMIE ADJOUA");
+    }
+  });
+
   test("overlays signature images onto PDF", async () => {
     const result = await renderDocument({
       ...EXAMPLE_RENDER_REQUEST,
       options: {
         signatures: [{
           slot: "principal",
-          imageUrl: "https://signatures.example/principal.png",
+          imageBytes: new Uint8Array(TINY_PNG),
           position: { page: "last", x: 400, y: 80, width: 120 },
         }],
       },
     }, {
       pdfRenderer: createStubPdfRenderer(),
-      fetchImpl: (async () => new Response(TINY_PNG, {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      })) as unknown as typeof fetch,
     });
 
     expect(result.kind).toBe("success");

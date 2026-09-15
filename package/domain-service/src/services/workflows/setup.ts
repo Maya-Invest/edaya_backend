@@ -136,6 +136,16 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         timetableGenerationMode: changes.timetableGenerationMode ?? existing.timetableGenerationMode,
         timetableMinPeriodSpan: changes.timetableMinPeriodSpan ?? existing.timetableMinPeriodSpan,
         timetableMaxPeriodSpan: changes.timetableMaxPeriodSpan ?? existing.timetableMaxPeriodSpan,
+        postalAddress: changes.postalAddress === undefined ? existing.postalAddress : changes.postalAddress,
+        phone: changes.phone === undefined ? existing.phone : changes.phone,
+        email: changes.email === undefined ? existing.email : changes.email,
+        schoolCode: changes.schoolCode === undefined ? existing.schoolCode : changes.schoolCode,
+        issuingName: changes.issuingName === undefined ? existing.issuingName : changes.issuingName,
+        logoAttachmentId: existing.logoAttachmentId,
+        crestAttachmentId: existing.crestAttachmentId,
+        stampAttachmentId: existing.stampAttachmentId,
+        signatureAttachmentId: existing.signatureAttachmentId,
+        issuanceAssetVersion: existing.issuanceAssetVersion,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.schools.save(school)

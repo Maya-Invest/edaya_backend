@@ -43,6 +43,7 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'catalog-services': 'catalogServices',
   'student-service-enrollments': 'studentServiceEnrollments',
   'payments': 'payments',
+  'document-issuances': 'documentIssuances',
   'grade-scales': 'gradeScales',
   'definitions': 'definitions',
   'sections': 'sections',

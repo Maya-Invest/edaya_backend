@@ -87,6 +87,7 @@ const teacherResources = new Set<CoreEntityKey>([
   'studentIncidentInvolvements',
   'studentDisciplinaryActions',
   'attachments',
+  'documentIssuances',
 ])
 const familyResources = new Set<CoreEntityKey>([
   ...classResources,
@@ -106,6 +107,7 @@ const familyResources = new Set<CoreEntityKey>([
   'attachments',
   'activityEnrollments',
   'studentPhotoSubmissions',
+  'documentIssuances',
 ])
 
 /** An admitted read with no current relationships returns an empty SQL result. */

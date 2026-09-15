@@ -22,6 +22,7 @@ import {
   demoCiMessageDeliveries,
 } from './domains/communications'
 import { demoCiDisciplinaryActions, demoCiStudentDisciplinaryActions } from './domains/discipline'
+import { demoCiDocumentIssuances } from './domains/documents'
 import { demoCiCatalogServices, demoCiPayments, demoCiStudentServiceEnrollments } from './domains/finance'
 import { demoCiIncidents, demoCiStudentIncidentInvolvements } from './domains/incidents'
 import {
@@ -118,5 +119,6 @@ export const demoCiDataset = {
     reportCardDefinitionFixtures: demoCiReportCardDefinitionFixtures,
     reportCardResults: demoCiReportCardResults,
     announcementMaterializePlans: demoCiAnnouncementMaterializePlans,
+    documentIssuances: demoCiDocumentIssuances,
   },
 } satisfies FixtureDataset<'demo-ci'>

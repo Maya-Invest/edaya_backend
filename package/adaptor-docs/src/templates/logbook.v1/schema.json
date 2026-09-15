@@ -72,6 +72,9 @@
         "sessionCount": { "type": "number" },
         "subjectCount": { "type": "number" }
       }
-    }
+    },
+    "watermark": { "type": "boolean" },
+    "stampUrl": { "type": "string", "minLength": 1 },
+    "signatureUrl": { "type": "string", "minLength": 1 }
   }
 }

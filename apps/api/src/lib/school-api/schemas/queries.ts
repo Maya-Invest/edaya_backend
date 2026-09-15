@@ -381,3 +381,80 @@ export const studentYearAccountReconciliationResponseSchema = z.object({
     difference: z.number().int(),
   })),
 }).openapi("StudentYearAccountReconciliationResponse");
+
+export const listDocumentTemplatesQuerySchema = z.object({}).openapi("ListDocumentTemplatesQuery");
+
+export const documentTemplateCatalogEntryResponseSchema = z.object({
+  templateKey: z.string().min(1),
+  templateVersion: z.string().min(1),
+  locales: z.array(z.enum(["fr", "en"])),
+  format: z.literal("pdf"),
+  sourceType: z.string().min(1),
+  numberingKind: z.string().nullable(),
+  familyDownload: z.boolean(),
+  teacherOperational: z.boolean(),
+  titles: z.object({
+    fr: z.string().min(1),
+    en: z.string().min(1),
+  }),
+}).openapi("DocumentTemplateCatalogEntry");
+
+export const documentTemplateCatalogResponseSchema = z.array(documentTemplateCatalogEntryResponseSchema).openapi("DocumentTemplateCatalogResponse");
+
+export const documentIssuanceProjectionQueryResponseSchema = z.object({
+  id: z.string().min(1),
+  templateKey: z.string().min(1),
+  templateVersion: z.string().min(1),
+  title: z.string().min(1),
+  locale: z.enum(["fr", "en"]),
+  academicYearId: z.string().min(1),
+  sourceType: z.string().min(1),
+  sourceId: z.string().min(1),
+  sourceVersion: z.string().min(1),
+  studentId: z.string().min(1).optional(),
+  classGroupId: z.string().min(1).optional(),
+  number: z.string().min(1).optional(),
+  status: z.string().min(1),
+  artifactAttachmentId: z.string().min(1).optional(),
+  failureCode: z.string().min(1).optional(),
+  replacesIssuanceId: z.string().min(1).optional(),
+  replacedByIssuanceId: z.string().min(1).optional(),
+  voidedAt: z.string().datetime().optional(),
+  voidReason: z.string().min(1).optional(),
+  createdAt: z.string().datetime(),
+  familyDownload: z.boolean(),
+}).openapi("DocumentIssuanceProjection");
+
+export const listDocumentIssuancesQuerySchema = z.object({
+  studentId: z.string().min(1).optional(),
+  academicYearId: z.string().min(1).optional(),
+  classGroupId: z.string().min(1).optional(),
+  templateKey: z.string().min(1).optional(),
+  sourceId: z.string().min(1).optional(),
+  status: z.string().min(1).optional(),
+}).openapi("ListDocumentIssuancesQuery");
+
+export const documentIssuanceListResponseSchema = z.array(documentIssuanceProjectionQueryResponseSchema).openapi("DocumentIssuanceListResponse");
+
+export const getDocumentIssuanceQuerySchema = z.object({
+  id: z.string().min(1),
+}).openapi("GetDocumentIssuanceQuery");
+
+export const grantDocumentDownloadQuerySchema = z.object({
+  id: z.string().min(1),
+}).openapi("GrantDocumentDownloadQuery");
+
+export const documentDownloadGrantResponseSchema = z.object({
+  downloadUrl: z.string().min(1),
+  expiresAt: z.string().datetime(),
+  fileName: z.string().min(1),
+  issuanceId: z.string().min(1),
+}).openapi("DocumentDownloadGrantResponse");
+
+export const grantDocumentBundleDownloadQuerySchema = z.object({
+  issuanceIds: z.array(z.string().min(1)).min(1).max(50),
+}).openapi("GrantDocumentBundleDownloadQuery");
+
+export const documentDownloadBundleResponseSchema = z.object({
+  items: z.array(documentDownloadGrantResponseSchema),
+}).openapi("DocumentDownloadBundleResponse");

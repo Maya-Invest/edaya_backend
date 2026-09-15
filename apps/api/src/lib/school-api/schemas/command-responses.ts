@@ -146,6 +146,40 @@ export const renderClassLogbookResponseSchema = z.object({
   sessionCount: z.number().int().nonnegative(),
 }).openapi("RenderClassLogbookResponse");
 
+export const documentIssuanceProjectionResponseSchema = z.object({
+  id: z.string().min(1),
+  templateKey: z.string().min(1),
+  templateVersion: z.string().min(1),
+  title: z.string().min(1),
+  locale: z.enum(["fr", "en"]),
+  academicYearId: z.string().min(1),
+  sourceType: z.string().min(1),
+  sourceId: z.string().min(1),
+  sourceVersion: z.string().min(1),
+  studentId: z.string().min(1).optional(),
+  classGroupId: z.string().min(1).optional(),
+  number: z.string().min(1).optional(),
+  status: z.string().min(1),
+  artifactAttachmentId: z.string().min(1).optional(),
+  failureCode: z.string().min(1).optional(),
+  replacesIssuanceId: z.string().min(1).optional(),
+  replacedByIssuanceId: z.string().min(1).optional(),
+  voidedAt: z.string().datetime().optional(),
+  voidReason: z.string().min(1).optional(),
+  createdAt: z.string().datetime(),
+  familyDownload: z.boolean(),
+}).openapi("DocumentIssuanceProjectionResponse");
+
+export const documentIssuanceBatchResponseSchema = z.object({
+  items: z.array(z.object({
+    sourceId: z.string().min(1),
+    requestId: z.string().min(1),
+    status: z.enum(["requested", "denied"]),
+    issuanceId: z.string().min(1).optional(),
+    failureCode: z.string().min(1).optional(),
+  })),
+}).openapi("DocumentIssuanceBatchResponse");
+
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   registerSchool: schoolResponseSchema,
@@ -300,7 +334,22 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   generateReportCardResult: resultResponseSchema,
   writeHomeroomReportComment: resultResponseSchema,
   publishReportCardResult: resultResponseSchema,
-  renderClassLogbook: renderClassLogbookResponseSchema,
+  renderClassLogbook: documentIssuanceProjectionResponseSchema,
+  requestDocumentIssuance: documentIssuanceProjectionResponseSchema,
+  requestDocumentIssuanceBatch: documentIssuanceBatchResponseSchema,
+  retryDocumentIssuance: documentIssuanceProjectionResponseSchema,
+  correctDocumentIssuance: documentIssuanceProjectionResponseSchema,
+  voidDocumentIssuance: documentIssuanceProjectionResponseSchema,
+  previewDocument: documentIssuanceProjectionResponseSchema,
+  createSchoolIssuanceAssetUpload: z.object({
+    attachmentId: z.string(),
+    storageKey: z.string(),
+    uploadUrl: z.string().url(),
+    expiresAt: z.coerce.date(),
+    headers: z.record(z.string()).optional(),
+    status: z.literal("pending_upload"),
+  }).openapi("CreateSchoolIssuanceAssetUploadResponse"),
+  completeSchoolIssuanceAssetUpload: attachmentResponseSchema,
   recordIncident: incidentResponseSchema,
   addStudentInvolvement: studentIncidentInvolvementResponseSchema,
   applyDisciplinaryAction: studentDisciplinaryActionResponseSchema,

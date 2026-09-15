@@ -66,6 +66,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
   disciplinaryActions: s.disciplinaryActions,
   studentIncidentInvolvements: s.studentIncidentInvolvements,
   incidents: s.incidents,
+  documentIssuances: s.documentIssuances,
 }
 
 const parents: Record<string, readonly [string, PgTable][]> = {
@@ -104,6 +105,8 @@ const attachmentOwners: Partial<Record<AttachmentOwnerKind, PgTable>> = {
   [AttachmentOwnerKind.AssessmentResult]: s.assessmentResults,
   [AttachmentOwnerKind.ReportCard]: s.reportCardResults,
   [AttachmentOwnerKind.Payment]: s.payments,
+  [AttachmentOwnerKind.School]: s.schools,
+  [AttachmentOwnerKind.DocumentIssuance]: s.documentIssuances,
 }
 
 /** SQL compilation of policy constraints. No permission decisions are made here. */

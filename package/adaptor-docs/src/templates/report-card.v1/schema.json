@@ -119,6 +119,9 @@
       }
     },
     "motto": { "type": "string" },
-    "notice": { "type": "string" }
+    "notice": { "type": "string" },
+    "watermark": { "type": "boolean" },
+    "stampUrl": { "type": "string", "minLength": 1 },
+    "signatureUrl": { "type": "string", "minLength": 1 }
   }
 }

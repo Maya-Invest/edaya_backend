@@ -1,4 +1,22 @@
-export type DocumentTemplateKey = "report-card.v1" | "logbook.v1";
+export type DocumentTemplateKey
+  = | "report-card.v1"
+    | "logbook.v1"
+    | "schooling-certificate.v1"
+    | "enrollment-record.v1"
+    | "student-id-card.v1"
+    | "invoice.v1"
+    | "receipt.v1"
+    | "settlement-quittance.v1"
+    | "account-statement.v1"
+    | "payment-reminder.v1"
+    | "withdrawal-certificate.v1"
+    | "annual-transcript.v1"
+    | "convocation.v1"
+    | "class-timetable.v1"
+    | "teacher-timetable.v1"
+    | "class-roster.v1"
+    | "attendance-sheet.v1"
+    | "incident-report.v1";
 export type RenderFormat = "pdf";
 export type PaperSize = "A4" | "Letter";
 export type PageOrientation = "portrait" | "landscape";
@@ -21,7 +39,7 @@ export interface SignaturePosition {
 
 export interface SignatureSlot {
   readonly slot: string;
-  readonly imageUrl: string;
+  readonly imageBytes: Uint8Array;
   readonly position: SignaturePosition;
 }
 

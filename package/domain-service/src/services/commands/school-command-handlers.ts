@@ -60,6 +60,14 @@ import type {
   UpdateNotificationContactInput,
 } from '../workflows/communications'
 import type {
+  CorrectDocumentIssuanceInput,
+  DocumentsServiceWorkflow,
+  RequestDocumentIssuanceBatchInput,
+  RequestDocumentIssuanceInput,
+  RetryDocumentIssuanceInput,
+  VoidDocumentIssuanceInput,
+} from '../workflows/documents'
+import type {
   AdjustStudentChargeInput,
   AllocateAccountBalanceInput,
   CancelServiceEnrollmentInput,
@@ -166,6 +174,7 @@ export interface SchoolWorkflowHandlers {
   readonly behavior: BehaviorServiceWorkflow
   readonly finance: FinanceServiceWorkflow
   readonly notificationTemplates: NotificationTemplatesServiceWorkflow
+  readonly documents: DocumentsServiceWorkflow
 }
 
 export type SchoolCommandHandlerMap = {
@@ -234,9 +243,22 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     generateReportCardResult: payload => workflows.assessments.generateReportCardResult(payload as GenerateReportCardResultInput),
     writeHomeroomReportComment: payload => workflows.assessments.writeHomeroomReportComment(payload as WriteHomeroomReportCommentInput),
     publishReportCardResult: payload => workflows.assessments.publishReportCardResult(payload as PublishReportCardResultInput),
-    renderClassLogbook: async () => {
-      throw new Error('renderClassLogbook must be handled by apps/api executeSchoolCommand')
-    },
+    renderClassLogbook: payload => workflows.documents.requestDocumentIssuance({
+      requestId: (payload as { requestId?: string }).requestId ?? `logbook:${(payload as RequestDocumentIssuanceInput).sourceId ?? (payload as { classGroupId: string }).classGroupId}:${(payload as { academicPeriodId?: string }).academicPeriodId ?? ''}:${(payload as { classSubjectId?: string }).classSubjectId ?? ''}`,
+      templateKey: 'logbook.v1',
+      sourceId: (payload as { classGroupId: string }).classGroupId,
+      academicPeriodId: (payload as { academicPeriodId?: string }).academicPeriodId,
+      classSubjectId: (payload as { classSubjectId?: string }).classSubjectId,
+      locale: (payload as { locale?: 'fr' | 'en' }).locale,
+    }),
+    requestDocumentIssuance: payload => workflows.documents.requestDocumentIssuance(payload as RequestDocumentIssuanceInput),
+    requestDocumentIssuanceBatch: payload => workflows.documents.requestDocumentIssuanceBatch(payload as RequestDocumentIssuanceBatchInput),
+    retryDocumentIssuance: payload => workflows.documents.retryDocumentIssuance(payload as RetryDocumentIssuanceInput),
+    correctDocumentIssuance: payload => workflows.documents.correctDocumentIssuance(payload as CorrectDocumentIssuanceInput),
+    voidDocumentIssuance: payload => workflows.documents.voidDocumentIssuance(payload as VoidDocumentIssuanceInput),
+    previewDocument: payload => workflows.documents.previewDocument(payload as RequestDocumentIssuanceInput),
+    createSchoolIssuanceAssetUpload: payload => workflows.documents.createSchoolIssuanceAssetUpload(payload as Parameters<DocumentsServiceWorkflow['createSchoolIssuanceAssetUpload']>[0]),
+    completeSchoolIssuanceAssetUpload: payload => workflows.documents.completeSchoolIssuanceAssetUpload(payload as Parameters<DocumentsServiceWorkflow['completeSchoolIssuanceAssetUpload']>[0]),
     // student
     registerStudent: payload => workflows.student.registerStudent(payload as RegisterStudentInput),
     enrollStudent: payload => workflows.student.enrollStudent(payload as EnrollStudentInput),

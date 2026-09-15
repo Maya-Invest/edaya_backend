@@ -20,6 +20,7 @@ import type {
   ClassSubjectMatter,
   ClassSubjectProgress,
   DisciplinaryAction,
+  DocumentIssuance,
   GradeLevel,
   GradeLevelSubject,
   GradeLevelSubjectMatter,
@@ -118,6 +119,7 @@ export interface CoreEntityMap {
   disciplinaryActions: DisciplinaryAction
   studentIncidentInvolvements: StudentIncidentInvolvement
   incidents: Incident
+  documentIssuances: DocumentIssuance
 }
 
 export type CoreEntityKey = keyof CoreEntityMap
@@ -191,4 +193,5 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'disciplinaryActions',
   'studentIncidentInvolvements',
   'incidents',
+  'documentIssuances',
 ] as const)

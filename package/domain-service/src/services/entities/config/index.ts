@@ -11,6 +11,7 @@ export { assessmentResultConfig, validateAssessmentResultSave } from './assessme
 export { reportCardDefinitionConfig } from './assessments/report-card-definition'
 export { reportCardDefinitionSectionConfig } from './assessments/report-card-definition-section'
 export { reportCardResultConfig } from './assessments/report-card-result'
+export { documentIssuanceConfig } from './documents/document-issuance'
 export { catalogServiceConfig, validateCatalogServiceDelete, validateCatalogServiceSave } from './finances/catalog-service'
 export { paymentConfig, validatePaymentDelete, validatePaymentSave } from './finances/payment'
 export { studentChargeConfig, validateStudentChargeSave } from './finances/student-charge'

@@ -7,6 +7,7 @@ import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, P
 import type { SQL } from "drizzle-orm";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
+import { resolveDocumentRenderer } from "@/runtime/shared/adapters/document-renderer";
 import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
 import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
@@ -54,6 +55,7 @@ export async function buildSchoolApplication(
     atomicExecution,
     commandJournal: new PostgresCommandJournal(),
     durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
+    documentRenderer: resolveDocumentRenderer(options.env, logger),
     notificationGateway,
     fileStorage,
     invitationDelivery,

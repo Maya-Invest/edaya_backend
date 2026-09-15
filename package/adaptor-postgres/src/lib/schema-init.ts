@@ -18,6 +18,8 @@ export const CLEAR_TABLE_ORDER = [
   'student_incident_involvements',
   'student_disciplinary_actions',
   'student_notes',
+  'document_issuances',
+  'document_number_series',
   'student_photo_submissions',
   'student_health_profiles',
   'guardian_student_links',

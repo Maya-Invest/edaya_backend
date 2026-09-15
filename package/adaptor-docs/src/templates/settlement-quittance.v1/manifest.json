@@ -1,0 +1,15 @@
+{
+  "key": "settlement-quittance.v1",
+  "formats": [
+    "pdf"
+  ],
+  "locales": [
+    "fr",
+    "en"
+  ],
+  "version": "1.0.0",
+  "title": {
+    "fr": "Quittance de solde",
+    "en": "Settlement quittance"
+  }
+}

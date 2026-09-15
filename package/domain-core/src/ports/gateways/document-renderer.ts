@@ -1,4 +1,6 @@
-export type DocumentTemplateKey = 'report-card.v1' | 'logbook.v1'
+import type { DocumentTemplateKey } from '../../domain/documents/document-template-key'
+
+export type { DocumentTemplateKey }
 export type DocumentLocale = 'fr' | 'en'
 export type DocumentPaperSize = 'A4' | 'Letter'
 export type DocumentPageOrientation = 'portrait' | 'landscape'
@@ -12,7 +14,7 @@ export interface DocumentSignaturePosition {
 
 export interface DocumentSignatureSlot {
   slot: string
-  imageUrl: string
+  imageBytes: Uint8Array
   position: DocumentSignaturePosition
 }
 

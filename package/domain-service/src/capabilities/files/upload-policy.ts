@@ -21,9 +21,11 @@ function allowedMimeTypesForOwner(ownerKind: AttachmentOwnerKind): ReadonlySet<s
     case AttachmentOwnerKind.Student:
     case AttachmentOwnerKind.Guardian:
     case AttachmentOwnerKind.Staff:
+    case AttachmentOwnerKind.School:
       return new Set([...IMAGE_MIME_TYPES, ...DOCUMENT_MIME_TYPES])
     case AttachmentOwnerKind.ReportCard:
     case AttachmentOwnerKind.Incident:
+    case AttachmentOwnerKind.DocumentIssuance:
     case AttachmentOwnerKind.StudentDisciplinaryAction:
       return new Set(['application/pdf', ...IMAGE_MIME_TYPES])
     default:
@@ -35,6 +37,7 @@ function maxBytesForOwner(ownerKind: AttachmentOwnerKind): number {
   switch (ownerKind) {
     case AttachmentOwnerKind.ReportCard:
     case AttachmentOwnerKind.Incident:
+    case AttachmentOwnerKind.DocumentIssuance:
       return PDF_MAX_BYTES
     default:
       return DEFAULT_MAX_BYTES

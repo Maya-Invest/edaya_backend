@@ -14,6 +14,18 @@ export * from './school-application'
 export * from './school-service'
 export * from './service-args'
 export type { PublishAnnouncementInput } from './workflows/communications'
+export type {
+  BatchIssuanceItemResult,
+  CorrectDocumentIssuanceInput,
+  DocumentDownloadGrant,
+  GrantDocumentBundleInput,
+  ListDocumentIssuancesInput,
+  RequestDocumentIssuanceBatchInput,
+  RequestDocumentIssuanceInput,
+  RetryDocumentIssuanceInput,
+  VoidDocumentIssuanceInput,
+} from './workflows/documents'
+export { DocumentsServiceWorkflow } from './workflows/documents'
 export * from './workflows/finance'
 export { assertNoClassGroupScheduleConflict, assertNoSessionConflict } from './workflows/schedule-conflicts'
 export * from './workflows/teacher-unavailability'

@@ -7,6 +7,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
+import type { DocumentsSeedPort } from '../domains/documents/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
@@ -33,6 +34,7 @@ import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/adapters/i
 import { createInProcessCommunicationsSeedPort } from '../domains/communications/adapters/in-process'
 import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapters/in-process'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
+import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
@@ -84,6 +86,8 @@ export interface RunDevSeedsOptions {
   reportCardsPort?: ReportCardsSeedPort
   /** Explicit finance adapter; defaults to the in-process application adapter. */
   financePort?: FinanceSeedPort
+  /** Explicit official-documents adapter; defaults to the in-process application adapter. */
+  documentsPort?: DocumentsSeedPort
   /** Explicit extracurricular-activities adapter; defaults to the in-process application adapter. */
   activitiesPort?: ActivitiesSeedPort
   /** Explicit calendar/incident adapter; defaults to the in-process application adapter. */
@@ -165,6 +169,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessReportCardsSeedPort(requireApplication('reportCardsPort'))
   const financePort = options.financePort
     ?? createInProcessFinanceSeedPort(requireApplication('financePort'))
+  const documentsPort = options.documentsPort
+    ?? createInProcessDocumentsSeedPort(requireApplication('documentsPort'))
   const activitiesPort = options.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireApplication('activitiesPort'))
   const schoolLifePort = options.schoolLifePort
@@ -213,6 +219,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
+      documentsPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -257,6 +264,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       assessmentsPort,
       reportCardsPort,
       financePort,
+      documentsPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,

@@ -2,7 +2,7 @@ import type { PublicEntityOperations } from "./public-operations";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -19,7 +19,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -122,6 +122,7 @@ const apiEntityDecorations = {
   disciplinaryActions: decoration("disciplinary-actions", "Disciplinary Actions", entitySchemas.disciplinaryActionQuerySchema, entitySchemas.disciplinaryActionResponseSchema, DisciplinaryAction, PUBLIC_CRUD),
   studentIncidentInvolvements: decoration("student-incident-involvements", "Student Incident Involvements", entitySchemas.studentIncidentInvolvementQuerySchema, entitySchemas.studentIncidentInvolvementResponseSchema, StudentIncidentInvolvement, PUBLIC_CRUD),
   incidents: decoration("incidents", "Incidents", entitySchemas.incidentQuerySchema, entitySchemas.incidentResponseSchema, Incident, PUBLIC_CRUD),
+  documentIssuances: decoration("document-issuances", "Document Issuances", entitySchemas.documentIssuanceQuerySchema, entitySchemas.documentIssuanceResponseSchema, DocumentIssuance, COMMAND_ONLY),
 } satisfies Record<CoreEntityKey, ApiEntityDecoration>;
 
 function buildCoreEntityConfig<Key extends CoreEntityKey>(
@@ -218,6 +219,14 @@ export const coreCommands = [
   command("write-homeroom-report-comment", "writeHomeroomReportComment", commandSchemas.writeHomeroomReportCommentCommandSchema),
   command("publish-report-card-result", "publishReportCardResult", commandSchemas.publishReportCardResultCommandSchema),
   command("render-class-logbook", "renderClassLogbook", commandSchemas.renderClassLogbookCommandSchema),
+  command("request-document-issuance", "requestDocumentIssuance", commandSchemas.requestDocumentIssuanceCommandSchema),
+  command("request-document-issuance-batch", "requestDocumentIssuanceBatch", commandSchemas.requestDocumentIssuanceBatchCommandSchema),
+  command("retry-document-issuance", "retryDocumentIssuance", commandSchemas.retryDocumentIssuanceCommandSchema),
+  command("correct-document-issuance", "correctDocumentIssuance", commandSchemas.correctDocumentIssuanceCommandSchema),
+  command("void-document-issuance", "voidDocumentIssuance", commandSchemas.voidDocumentIssuanceCommandSchema),
+  command("preview-document", "previewDocument", commandSchemas.previewDocumentCommandSchema),
+  command("create-school-issuance-asset-upload", "createSchoolIssuanceAssetUpload", commandSchemas.createSchoolIssuanceAssetUploadCommandSchema),
+  command("complete-school-issuance-asset-upload", "completeSchoolIssuanceAssetUpload", commandSchemas.completeSchoolIssuanceAssetUploadCommandSchema),
   command("record-incident", "recordIncident", commandSchemas.recordIncidentCommandSchema),
   command("add-student-involvement", "addStudentInvolvement", commandSchemas.addStudentInvolvementCommandSchema),
   command("configure-disciplinary-action", "configureDisciplinaryAction", commandSchemas.disciplinaryActionConfigCommandSchema),
@@ -401,6 +410,41 @@ export const coreQueries = [
     methodName: "reconcileSchoolFinance",
     requestSchema: querySchemas.getFinanceReconciliationQuerySchema,
     responseSchema: querySchemas.financeReconciliationResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-document-templates",
+    methodName: "listDocumentTemplates",
+    requestSchema: querySchemas.listDocumentTemplatesQuerySchema,
+    responseSchema: querySchemas.documentTemplateCatalogResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-document-issuances",
+    methodName: "listDocumentIssuances",
+    requestSchema: querySchemas.listDocumentIssuancesQuerySchema,
+    responseSchema: querySchemas.documentIssuanceListResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-document-issuance",
+    methodName: "getDocumentIssuance",
+    requestSchema: querySchemas.getDocumentIssuanceQuerySchema,
+    responseSchema: querySchemas.documentIssuanceProjectionQueryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "grant-document-download",
+    methodName: "grantDocumentDownload",
+    requestSchema: querySchemas.grantDocumentDownloadQuerySchema,
+    responseSchema: querySchemas.documentDownloadGrantResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "grant-document-bundle-download",
+    methodName: "grantDocumentBundleDownload",
+    requestSchema: querySchemas.grantDocumentBundleDownloadQuerySchema,
+    responseSchema: querySchemas.documentDownloadBundleResponseSchema,
     responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];

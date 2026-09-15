@@ -2,11 +2,15 @@ import type { Assessment, AssessmentInput, AssessmentResult, AssessmentResultInp
 import type { BaseSchoolService } from '../base-school-service'
 import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
+import { DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-document-render'
+import { documentNumberLockKey } from '../../capabilities/documents/persist-requested-issuance'
 import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 
+import { schoolCommandScope } from '../commands/school-command-scope'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { DocumentsServiceWorkflow } from './documents'
 import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, evaluateAggregationPublishReadiness, listAssessmentResultsForStudentAndPeriods, listPublishedPeriodIds, loadPriorReportCardResults, rootReportCardDefinitionSections } from './report-card-aggregation'
 
 export interface PublishReportCardResultInput {
@@ -180,13 +184,23 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async publishReportCardResult(input: PublishReportCardResultInput): Promise<ReportCardResult> {
-    return this.baseService.atomicExecution.execute(async () => {
-      const student = await this.requireStudent(input.studentId)
-      this.checkActorSchool(student.schoolId)
-
-      await this.baseService.access.reportCards.assertPublish(student.id)
-      await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
-      return this.baseService.atomicExecution.execute(async () => {
+    const student = await this.requireStudent(input.studentId)
+    this.checkActorSchool(student.schoolId)
+    const period = await this.requirePeriod(input.periodId)
+    let issuanceId: string | undefined
+    return this.baseService.commandExecution.execute({
+      scope: await schoolCommandScope(this.baseService.actor, 'publishReportCardResult', input.id),
+      input,
+      resultMode: 'ordinary',
+      lockKeys: [
+        `report-card-publish:${input.id}`,
+        documentNumberLockKey(this.baseService.actor.schoolId, 'bulletin', period.academicYearId),
+      ],
+      authorize: async () => {
+        await this.baseService.access.reportCards.assertPublish(student.id)
+        await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
+      },
+      execute: async () => {
         await this.requireReportCardNotPublished(input.studentId, input.periodId)
         const generated = await this.buildReportCardResult(input)
         await this.requireReportCardPublishReady({
@@ -203,8 +217,33 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           result: published,
           student,
         })
+        try {
+          const issuance = await new DocumentsServiceWorkflow(this.baseService).enqueueBulletinForPublishedResult({
+            resultId: published.id,
+            studentId: published.studentId,
+          })
+          issuanceId = issuance.id
+        }
+        catch (error) {
+          if (error instanceof BusinessRuleViolationError && error.code === DOCUMENT_FAILURES.SOURCE_MISSING)
+            return published
+          if (error instanceof Error && /no section results/i.test(error.message))
+            return published
+          throw error
+        }
         return published
-      })
+      },
+      replay: async () => {
+        const existing = await this.repositories.results.findById(input.id)
+        if (!existing)
+          denyResourceAccess()
+        return existing
+      },
+      persistResult: result => ({ id: result.id }),
+      audit: result => [{ event: 'publishReportCardResult', resourceType: 'results', resourceId: result.id }],
+      outbox: () => issuanceId
+        ? [{ id: issuanceId, kind: DOCUMENT_RENDER_KIND, version: 1, resourceType: 'document-issuance', resourceId: issuanceId }]
+        : [],
     })
   }
 

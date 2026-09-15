@@ -88,19 +88,14 @@ describe("executeSchoolCommand", () => {
     )).resolves.toEqual({ id: "year-1" });
   });
 
-  test("schedules docs render after publishReportCardResult when enabled", async () => {
+  test("does not use waitUntil issuance for publishReportCardResult", async () => {
     const scheduleBackgroundTask = spyOn(
       scheduleBackgroundTaskModule,
       "scheduleBackgroundTask",
     ).mockImplementation(() => undefined);
     const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
     const actor = createTestStaffActor();
-    const { context } = createCommandContext({
-      actor,
-      env: {
-        DOCS_RENDER_ON_PUBLISH: true,
-      },
-    });
+    const { context } = createCommandContext({ actor });
     const service = {
       commands: { publishReportCardResult },
     } as never;
@@ -112,75 +107,20 @@ describe("executeSchoolCommand", () => {
       { resultId: "rc-1" },
     )).resolves.toEqual({ id: "rc-1" });
 
-    expect(scheduleBackgroundTask).toHaveBeenCalledTimes(1);
-  });
-
-  test("does not schedule docs render when DOCS_RENDER_ON_PUBLISH is off", async () => {
-    const scheduleBackgroundTask = spyOn(
-      scheduleBackgroundTaskModule,
-      "scheduleBackgroundTask",
-    ).mockImplementation(() => undefined);
-    const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
-    const actor = createTestStaffActor();
-    const { context } = createCommandContext({
-      actor,
-      env: {
-        DOCS_RENDER_ON_PUBLISH: false,
-      },
-    });
-    const service = {
-      commands: { publishReportCardResult },
-    } as never;
-
-    await executeSchoolCommand(
-      context,
-      service,
-      "publishReportCardResult",
-      { resultId: "rc-1" },
-    );
-
     expect(scheduleBackgroundTask).not.toHaveBeenCalled();
+    expect(publishReportCardResult).toHaveBeenCalled();
   });
 
-  test("does not schedule docs render on worker without BROWSER", async () => {
-    const scheduleBackgroundTask = spyOn(
-      scheduleBackgroundTaskModule,
-      "scheduleBackgroundTask",
-    ).mockImplementation(() => undefined);
-    const publishReportCardResult = mock(async () => ({ id: "rc-1" }));
-    const actor = createTestStaffActor();
-    const { context } = createCommandContext({
-      actor,
-      env: {
-        RUNTIME: "worker",
-        DOCS_RENDER_ON_PUBLISH: true,
-      },
-    });
-    const service = {
-      commands: { publishReportCardResult },
-    } as never;
-
-    await executeSchoolCommand(
-      context,
-      service,
-      "publishReportCardResult",
-      { resultId: "rc-1" },
-    );
-
-    expect(scheduleBackgroundTask).not.toHaveBeenCalled();
-  });
-
-  test("renderClassLogbook throws when document rendering is not configured", async () => {
-    const { context } = createCommandContext({
-      env: { RUNTIME: "worker" },
-    });
-    const service = { commands: {} } as never;
+  test("renderClassLogbook requests issuance through the command registry", async () => {
+    const renderClassLogbook = mock(async () => ({ id: "iss-1", status: "requested" }));
+    const { context } = createCommandContext({});
+    const service = { commands: { renderClassLogbook } } as never;
 
     await expect(executeSchoolCommand(
       context,
       service,
       "renderClassLogbook",
       { classGroupId: "cg-1" },
-    )).rejects.toMatchObject({ code: "DOCS_NOT_CONFIGURED" });
+    )).resolves.toEqual({ id: "iss-1", status: "requested" });
   });
 });

@@ -4,7 +4,26 @@ import { fileURLToPath } from "node:url";
 import Handlebars from "handlebars";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const templateKeys = ["report-card.v1", "logbook.v1"] as const;
+const templateKeys = [
+  "report-card.v1",
+  "logbook.v1",
+  "schooling-certificate.v1",
+  "enrollment-record.v1",
+  "student-id-card.v1",
+  "invoice.v1",
+  "receipt.v1",
+  "settlement-quittance.v1",
+  "account-statement.v1",
+  "payment-reminder.v1",
+  "withdrawal-certificate.v1",
+  "annual-transcript.v1",
+  "convocation.v1",
+  "class-timetable.v1",
+  "teacher-timetable.v1",
+  "class-roster.v1",
+  "attendance-sheet.v1",
+  "incident-report.v1",
+] as const;
 
 for (const key of templateKeys) {
   const templateDir = join(root, "src/templates", key);

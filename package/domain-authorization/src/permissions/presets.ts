@@ -21,6 +21,7 @@ export const COORDINATOR_PERMISSIONS: readonly Permission[] = [
   Permission.GRADE_INPUT,
   Permission.GRADE_READ,
   Permission.REPORT_CARD_PUBLISH,
+  Permission.DOCUMENT_VOID,
   Permission.ENROLLMENT_CREATE,
   Permission.PARENT_UPDATE,
   Permission.STUDENT_UPDATE,

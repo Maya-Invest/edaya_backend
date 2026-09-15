@@ -2,8 +2,24 @@ import Ajv from "ajv";
 import type { RenderFormat, TemplateCatalogEntry } from "../types";
 import { compileTemplateHtml } from "./compile-html";
 import type { TemplateAssets } from "./load-assets";
+import { ACCOUNT_STATEMENT_V1_ASSETS } from "./account-statement.v1/assets";
+import { ANNUAL_TRANSCRIPT_V1_ASSETS } from "./annual-transcript.v1/assets";
+import { ATTENDANCE_SHEET_V1_ASSETS } from "./attendance-sheet.v1/assets";
+import { CLASS_ROSTER_V1_ASSETS } from "./class-roster.v1/assets";
+import { CLASS_TIMETABLE_V1_ASSETS } from "./class-timetable.v1/assets";
+import { CONVOCATION_V1_ASSETS } from "./convocation.v1/assets";
+import { ENROLLMENT_RECORD_V1_ASSETS } from "./enrollment-record.v1/assets";
+import { INCIDENT_REPORT_V1_ASSETS } from "./incident-report.v1/assets";
+import { INVOICE_V1_ASSETS } from "./invoice.v1/assets";
 import { LOGBOOK_V1_ASSETS } from "./logbook.v1/assets";
+import { PAYMENT_REMINDER_V1_ASSETS } from "./payment-reminder.v1/assets";
+import { RECEIPT_V1_ASSETS } from "./receipt.v1/assets";
 import { REPORT_CARD_V1_ASSETS } from "./report-card.v1/assets";
+import { SCHOOLING_CERTIFICATE_V1_ASSETS } from "./schooling-certificate.v1/assets";
+import { SETTLEMENT_QUITTANCE_V1_ASSETS } from "./settlement-quittance.v1/assets";
+import { STUDENT_ID_CARD_V1_ASSETS } from "./student-id-card.v1/assets";
+import { TEACHER_TIMETABLE_V1_ASSETS } from "./teacher-timetable.v1/assets";
+import { WITHDRAWAL_CERTIFICATE_V1_ASSETS } from "./withdrawal-certificate.v1/assets";
 
 export interface TemplateDefinition {
   readonly key: string;
@@ -51,10 +67,26 @@ function createTemplateDefinition(assets: TemplateAssets): TemplateDefinition {
   };
 }
 
-const REPORT_CARD_V1 = createTemplateDefinition(REPORT_CARD_V1_ASSETS);
-const LOGBOOK_V1 = createTemplateDefinition(LOGBOOK_V1_ASSETS);
-
-const TEMPLATES: readonly TemplateDefinition[] = [REPORT_CARD_V1, LOGBOOK_V1];
+const TEMPLATES: readonly TemplateDefinition[] = [
+  createTemplateDefinition(REPORT_CARD_V1_ASSETS),
+  createTemplateDefinition(LOGBOOK_V1_ASSETS),
+  createTemplateDefinition(SCHOOLING_CERTIFICATE_V1_ASSETS),
+  createTemplateDefinition(ENROLLMENT_RECORD_V1_ASSETS),
+  createTemplateDefinition(STUDENT_ID_CARD_V1_ASSETS),
+  createTemplateDefinition(INVOICE_V1_ASSETS),
+  createTemplateDefinition(RECEIPT_V1_ASSETS),
+  createTemplateDefinition(SETTLEMENT_QUITTANCE_V1_ASSETS),
+  createTemplateDefinition(ACCOUNT_STATEMENT_V1_ASSETS),
+  createTemplateDefinition(PAYMENT_REMINDER_V1_ASSETS),
+  createTemplateDefinition(WITHDRAWAL_CERTIFICATE_V1_ASSETS),
+  createTemplateDefinition(ANNUAL_TRANSCRIPT_V1_ASSETS),
+  createTemplateDefinition(CONVOCATION_V1_ASSETS),
+  createTemplateDefinition(CLASS_TIMETABLE_V1_ASSETS),
+  createTemplateDefinition(TEACHER_TIMETABLE_V1_ASSETS),
+  createTemplateDefinition(CLASS_ROSTER_V1_ASSETS),
+  createTemplateDefinition(ATTENDANCE_SHEET_V1_ASSETS),
+  createTemplateDefinition(INCIDENT_REPORT_V1_ASSETS),
+];
 
 export function listTemplateDefinitions(): readonly TemplateDefinition[] {
   return TEMPLATES;

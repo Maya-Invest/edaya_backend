@@ -195,6 +195,26 @@ export interface FixtureDatasetExtensions {
   classResourceAssignments?: readonly ResourceAssignmentInput[]
   /** When true, schedules may still be created but lesson sessions are not materialized (timetable generation QA). */
   skipLessonSessionSeeding?: boolean
+  documentIssuances?: readonly FixtureDocumentIssuance[]
+}
+
+export interface FixtureDocumentIssuance {
+  id: string
+  requestId: string
+  templateKey: string
+  sourceId: string
+  studentId?: string
+  classGroupId?: string
+  academicYearId: string
+  locale?: 'fr' | 'en'
+  status: 'ready' | 'failed'
+  failureCode?: string
+  staffFields?: {
+    recipient?: string
+    date?: string
+    location?: string
+    reason?: string
+  }
 }
 
 export interface FixtureDatasetEntities {

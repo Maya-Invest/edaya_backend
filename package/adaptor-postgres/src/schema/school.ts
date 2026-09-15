@@ -34,6 +34,16 @@ export const schools = pgTable('schools', {
   timetableGenerationMode: text('timetable_generation_mode').notNull().default('weekly'),
   timetableMinPeriodSpan: integer('timetable_min_period_span').notNull().default(1),
   timetableMaxPeriodSpan: integer('timetable_max_period_span').notNull().default(1),
+  postalAddress: text('postal_address'),
+  phone: text('phone'),
+  email: text('email'),
+  schoolCode: text('school_code'),
+  issuingName: text('issuing_name'),
+  logoAttachmentId: text('logo_attachment_id'),
+  crestAttachmentId: text('crest_attachment_id'),
+  stampAttachmentId: text('stamp_attachment_id'),
+  signatureAttachmentId: text('signature_attachment_id'),
+  issuanceAssetVersion: integer('issuance_asset_version').notNull().default(0),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

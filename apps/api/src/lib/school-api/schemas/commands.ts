@@ -1,6 +1,67 @@
 import { z } from "@hono/zod-openapi";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
-  schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectMatterSchema, subjectSchema } from "@edaya/core";
+import {
+  academicPeriodSchema,
+  academicYearSchema,
+  AccountInvitationContactChannel,
+  AccountInvitationKind,
+  activityEnrollmentSchema,
+  activitySchema,
+  announcementSchema,
+  announcementTargetSchema,
+  assessmentResultSchema,
+  assessmentSchema,
+  AttachmentOwnerKind,
+  attachmentPurposeSchema,
+  attachmentSchema,
+  AttendanceJustificationStatus,
+  attendanceRecordSchema,
+  AttendanceStatus,
+  calendarEventSchema,
+  classGroupSchema,
+  classSubjectMatterSchema,
+  classSubjectProgressSchema,
+  classSubjectSchema,
+  gradeScaleRangeSchema as coreGradeScaleRangeSchema,
+  DeadlineComplianceStatus,
+  disciplinaryActionSchema,
+  DOCUMENT_TEMPLATE_KEYS,
+  EnrollmentEndReason,
+  gradeLevelSchema,
+  gradeLevelSubjectMatterSchema,
+  gradeLevelSubjectSchema,
+  gradeScaleSchema,
+  guardianContactMethodSchema,
+  guardianSchema,
+  guardianStudentLinkSchema,
+  IncidentInvolvementRole,
+  incidentSchema,
+  messageDeliverySchema,
+  PaymentMethod,
+  periodDefinitionSchema,
+  ProgressionDecision,
+  reportCardDefinitionSchema,
+  reportCardDefinitionSectionSchema,
+  reportCardResultSchema,
+  resourceAssignmentSchema,
+  resourceSchema,
+  scheduleSchema,
+  SCHOOL_ISSUANCE_ASSET_PURPOSES,
+  schoolSchema,
+  SchoolType,
+  staffAssignmentSchema,
+  staffMemberSchema,
+  staffPermissionAssignmentSchema,
+  studentClassEnrollmentSchema,
+  studentDisciplinaryActionSchema,
+  StudentDisciplinaryActionStatus,
+  studentHealthProfileSchema,
+  studentIncidentInvolvementSchema,
+  studentNoteSchema,
+  studentSchema,
+  StudentStatus,
+  subjectMatterSchema,
+  subjectSchema,
+} from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
 
@@ -621,7 +682,77 @@ export const renderClassLogbookCommandSchema = z.object({
   academicPeriodId: field.id().optional(),
   classSubjectId: field.id().optional(),
   locale: z.enum(["fr", "en"]).optional(),
+  requestId: field.id().optional(),
 }).openapi("RenderClassLogbookCommand");
+
+const documentStaffFieldsSchema = z.object({
+  recipient: z.string().min(1).optional(),
+  date: z.string().min(1).optional(),
+  location: z.string().min(1).optional(),
+  reason: z.string().min(1).optional(),
+}).optional();
+
+export const requestDocumentIssuanceCommandSchema = z.object({
+  id: field.id().optional(),
+  requestId: field.id(),
+  templateKey: z.enum(DOCUMENT_TEMPLATE_KEYS),
+  sourceId: field.id(),
+  locale: z.enum(["fr", "en"]).optional(),
+  academicYearId: field.id().optional(),
+  academicPeriodId: field.id().optional(),
+  classSubjectId: field.id().optional(),
+  studentId: field.id().optional(),
+  classGroupId: field.id().optional(),
+  teacherId: field.id().optional(),
+  staffFields: documentStaffFieldsSchema,
+}).openapi("RequestDocumentIssuanceCommand");
+
+export const requestDocumentIssuanceBatchCommandSchema = z.object({
+  requestId: field.id(),
+  templateKey: z.enum(DOCUMENT_TEMPLATE_KEYS),
+  locale: z.enum(["fr", "en"]).optional(),
+  academicYearId: field.id().optional(),
+  items: z.array(z.object({
+    sourceId: field.id(),
+    requestId: field.id(),
+    studentId: field.id().optional(),
+    classGroupId: field.id().optional(),
+    teacherId: field.id().optional(),
+    academicPeriodId: field.id().optional(),
+    classSubjectId: field.id().optional(),
+    staffFields: documentStaffFieldsSchema,
+  })).min(1).max(50),
+}).openapi("RequestDocumentIssuanceBatchCommand");
+
+export const retryDocumentIssuanceCommandSchema = z.object({
+  requestId: field.id(),
+  issuanceId: field.id(),
+}).openapi("RetryDocumentIssuanceCommand");
+
+export const correctDocumentIssuanceCommandSchema = requestDocumentIssuanceCommandSchema.extend({
+  issuanceId: field.id(),
+}).openapi("CorrectDocumentIssuanceCommand");
+
+export const voidDocumentIssuanceCommandSchema = z.object({
+  requestId: field.id(),
+  issuanceId: field.id(),
+  reason: field.text(),
+}).openapi("VoidDocumentIssuanceCommand");
+
+export const previewDocumentCommandSchema = requestDocumentIssuanceCommandSchema.openapi("PreviewDocumentCommand");
+
+export const createSchoolIssuanceAssetUploadCommandSchema = z.object({
+  purpose: z.enum(SCHOOL_ISSUANCE_ASSET_PURPOSES),
+  fileName: field.string(),
+  mimeType: field.string(),
+  sizeBytes: field.positiveNumber(),
+  attachmentId: field.id().optional(),
+}).openapi("CreateSchoolIssuanceAssetUploadCommand");
+
+export const completeSchoolIssuanceAssetUploadCommandSchema = objectFromSchema(attachmentSchema)
+  .extend({ purpose: z.enum(SCHOOL_ISSUANCE_ASSET_PURPOSES) })
+  .omit({ uploadedById: true })
+  .openapi("CompleteSchoolIssuanceAssetUploadCommand");
 
 export const recordIncidentCommandSchema = objectFromSchema(incidentSchema)
   .omit({

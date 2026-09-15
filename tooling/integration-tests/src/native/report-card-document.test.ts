@@ -1,15 +1,16 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
-import { PostgresAtomicExecution, PostgresSchoolRepositories, transactionContext } from '@edaya/adaptor-postgres'
+import type { SQL } from 'drizzle-orm'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, transactionContext } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicYear, Attachment, AttachmentOwnerKind, AttachmentStatus, ClassGroup, ClassSubject, GradeLevel, GradeScale, LessonSession, noOpFileStorage, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
-import { grantAttachmentDownload, renderReportCardDocument, SchoolApplication } from '@edaya/service'
+import { AcademicPeriod, AcademicYear, Attachment, AttachmentOwnerKind, AttachmentStatus, ClassGroup, ClassSubject, DocumentIssuanceStatus, GradeLevel, GradeScale, LessonSession, noOpFileStorage, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { dispatchDocumentRender, grantAttachmentDownload, renderReportCardDocument, SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { renderClassLogbookDocument } from '@/lib/documents/render-logbook-document'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
 
 const url = process.env.EDAYA_NATIVE_TEST_URL
 if (!url || new URL(url).hostname !== '127.0.0.1')
   throw new Error('Use the disposable native test runner')
+interface Executor { execute: (query: SQL) => Promise<unknown> }
 const handles = await Promise.all([createPostgresSchoolDatabase(url), createPostgresSchoolDatabase(url)])
 const stores = handles.map(handle => new PostgresSchoolRepositories(handle.db))
 const repositories = stores[0]!
@@ -126,7 +127,7 @@ test('final transaction failure rolls back stub status and new attachment togeth
   expect(await repositories.attachments.count({ ownerId: report.id })).toBe(2)
 }, 30000)
 
-test('logbook rendering and both download grant paths release the pool connection during external calls', async () => {
+test('logbook issuance render and download grants release the pool connection during external calls', async () => {
   let externalCalls = 0
   const outsideTransaction = async () => {
     expect(transactionContext.getStore()).toBeUndefined()
@@ -136,9 +137,17 @@ test('logbook rendering and both download grant paths release the pool connectio
   await repositories.lessonSessions.save(new LessonSession({ id: 'report-logbook-session', schoolId: school.id, classGroupId: 'report-class', classSubjectId: 'report-math-class', displayLabel: 'Synthetic math', sessionNote: 'Synthetic lesson', startsAt: new Date('2026-05-01T08:00:00Z'), endsAt: new Date('2026-05-01T09:00:00Z') }))
   const download = new Attachment({ id: 'report-download-fixture', schoolId: school.id, ownerKind: AttachmentOwnerKind.Staff, ownerId: actor.staffMemberId, fileName: 'download.pdf', storageKey: 'report-school/download.pdf', mimeType: 'application/pdf' })
   await repositories.attachments.save(download)
-  const service = new SchoolApplication({
+  const app = new SchoolApplication({
     repositories,
     atomicExecution: new PostgresAtomicExecution(handles[0]!.db as PostgresTransactionalDb),
+    commandJournal: new PostgresCommandJournal(),
+    durableWork: new PostgresDurableWork(handles[0]!.db as Executor),
+    documentRenderer: {
+      async render() {
+        await outsideTransaction()
+        return rendered
+      },
+    },
     notificationGateway: noOpNotificationGateway,
     fileStorage: {
       ...noOpFileStorage,
@@ -151,16 +160,17 @@ test('logbook rendering and both download grant paths release the pool connectio
         return { downloadUrl: 'https://files.invalid/synthetic.pdf', expiresAt: new Date(Date.now() + 900000) }
       },
     },
-  }).forActor(actor)
-  const outcome = await renderClassLogbookDocument(service, {
-    classGroupId: 'report-class',
-    academicPeriodId: 'report-period',
-    renderer: { async render() {
-      await outsideTransaction()
-      return rendered
-    } },
   })
-  expect(outcome.sessionCount).toBe(1)
+  const service = app.forActor(actor)
+  const issuance = await service.documentsWorkflow.requestDocumentIssuance({
+    requestId: 'native-logbook',
+    templateKey: 'logbook.v1',
+    sourceId: 'report-class',
+    academicPeriodId: 'report-period',
+  })
+  await dispatchDocumentRender(app)
+  expect((await repositories.documentIssuances.findById(issuance.id))?.status).toBe(DocumentIssuanceStatus.Ready)
+  expect(await service.documentsWorkflow.grantDocumentDownload({ id: issuance.id })).toHaveProperty('downloadUrl')
   expect(await grantAttachmentDownload(service.baseService, download.id)).toHaveProperty('downloadUrl')
   expect(externalCalls).toBe(4)
 }, 30000)

@@ -74,7 +74,7 @@ describe("core route registry contracts", () => {
 
   it("omits unavailable generic writes while retaining named commands", () => {
     const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
-    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations"]) {
+    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations", "document-issuances"]) {
       for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
         expect(paths.has(`/core/entities/${name}/${action}`)).toBe(false);
       }
@@ -131,6 +131,7 @@ describe("core route registry contracts", () => {
       "payments",
       "assessmentResults",
       "results",
+      "documentIssuances",
     ]));
   });
 

@@ -6,6 +6,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
+import type { DocumentsSeedPort } from '../domains/documents/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
@@ -37,6 +38,8 @@ import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapter
 import { seedDevCurriculum } from '../domains/curriculum/workflow'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
 import { seedDevDiscipline } from '../domains/discipline/workflow'
+import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
+import { seedDevDocuments } from '../domains/documents/workflow'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { seedDevFinance } from '../domains/finance/workflow'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
@@ -76,6 +79,7 @@ export type DevSchoolSeedResult
       catalogServices: number
       studentServiceEnrollments: number
       payments: number
+      documentIssuances: number
       classSubjectMatters: number
       resources: number
       schedules: number
@@ -119,6 +123,7 @@ export interface RunDevSchoolSeedOptions {
   schoolLifePort?: SchoolLifeSeedPort
   studentSupportPort?: StudentSupportSeedPort
   disciplinePort?: DisciplineSeedPort
+  documentsPort?: DocumentsSeedPort
   communicationsPort?: CommunicationsSeedPort
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
@@ -169,6 +174,8 @@ export async function runDevSchoolSeed(
     ?? createInProcessReportCardsSeedPort(requireSeedApplication(application, 'reportCardsPort'))
   const financePort = options?.financePort
     ?? createInProcessFinanceSeedPort(requireSeedApplication(application, 'financePort'))
+  const documentsPort = options?.documentsPort
+    ?? createInProcessDocumentsSeedPort(requireSeedApplication(application, 'documentsPort'))
   const activitiesPort = options?.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireSeedApplication(application, 'activitiesPort'))
   const schoolLifePort = options?.schoolLifePort
@@ -259,6 +266,8 @@ export async function runDevSchoolSeed(
     seedDevReportCards(reportCardsPort, seedDataset))
   const financeCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevFinance(financePort, seedDataset))
+  const documentCounts = await runSchoolSeedStep(options?.progress, async () =>
+    seedDevDocuments(documentsPort, seedDataset))
 
   if (options?.auth) {
     await syncDevStaffAuthAndOwner(
@@ -318,6 +327,7 @@ export async function runDevSchoolSeed(
     catalogServices: financeCounts.catalogServices,
     studentServiceEnrollments: financeCounts.studentServiceEnrollments,
     payments: financeCounts.payments,
+    documentIssuances: documentCounts.documentIssuances,
     classSubjectMatters: curriculumPlan.gradeLevelSubjectMatters.length,
     resources: fixtureCounts.resources ?? 0,
     schedules: fixtureCounts.schedules ?? 0,

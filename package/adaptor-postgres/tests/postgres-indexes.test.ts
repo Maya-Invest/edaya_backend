@@ -62,6 +62,8 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'disciplinary_actions', columns: { schoolId: 'school_id' }, minIndexes: 1 },
   { tableName: 'student_incident_involvements', columns: { studentId: 'student_id', incidentId: 'incident_id' }, minIndexes: 2 },
   { tableName: 'incidents', columns: { schoolId: 'school_id', classGroupId: 'class_group_id' }, minIndexes: 2 },
+  { tableName: 'document_issuances', columns: { schoolId: 'school_id', studentId: 'student_id', classGroupId: 'class_group_id', templateKey: 'template_key', sourceId: 'source_id', status: 'status', requestId: 'request_id' }, minIndexes: 6 },
+  { tableName: 'document_number_series', columns: { schoolId: 'school_id', documentKind: 'document_kind', academicYearId: 'academic_year_id' }, minIndexes: 2 },
 ]
 
 describe('definePerformanceIndexes', () => {

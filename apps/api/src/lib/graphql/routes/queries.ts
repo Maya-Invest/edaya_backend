@@ -1,10 +1,8 @@
-import {
-
-  GraphQLNonNull,
-} from "graphql";
+import { GraphQLNonNull } from "graphql";
 import type { GraphQLFieldConfigMap } from "graphql";
 import type { Context } from "hono";
 import { coreQueries } from "@/lib/school-api/registry";
+import { unwrapShape } from "@/lib/school-api/schemas/helpers";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import type { AppBindings } from "@/http/types";
 import { createCoreQueryResolver } from "@/lib/graphql/routes/query-resolvers";
@@ -33,14 +31,19 @@ export function appendGraphQLCoreQueryFields(
           queryConfig.responseSchema,
           getOpenApiSchemaName(queryConfig.responseSchema),
         );
+    const hasInputFields = Object.keys(unwrapShape(queryConfig.requestSchema)).length > 0;
 
     queryFields[queryConfig.methodName] = {
       type: new GraphQLNonNull(outputType),
-      args: {
-        input: {
-          type: new GraphQLNonNull(resolveGraphQLInputType(typeRegistry, queryConfig.requestSchema, inputTypeName)),
-        },
-      },
+      ...(hasInputFields
+        ? {
+            args: {
+              input: {
+                type: new GraphQLNonNull(resolveGraphQLInputType(typeRegistry, queryConfig.requestSchema, inputTypeName)),
+              },
+            },
+          }
+        : {}),
       resolve: createCoreQueryResolver(queryConfig),
     };
   }

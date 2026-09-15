@@ -18,7 +18,6 @@ function createRenderId(): string {
 
 export interface RenderDocumentDependencies {
   readonly pdfRenderer: PdfRenderer;
-  readonly fetchImpl?: typeof fetch;
 }
 
 export async function renderDocument(
@@ -45,9 +44,7 @@ export async function renderDocument(
     });
     const signatures = request.options?.signatures ?? [];
     if (signatures.length > 0) {
-      bytes = await overlaySignatures(bytes, signatures, {
-        ...(dependencies.fetchImpl === undefined ? {} : { fetchImpl: dependencies.fetchImpl }),
-      });
+      bytes = await overlaySignatures(bytes, signatures);
     }
   }
   catch (error) {

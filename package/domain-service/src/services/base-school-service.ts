@@ -1,5 +1,5 @@
 import type { AccessPolicies, SchoolScopedActorMetadata } from '@edaya/authorization'
-import type { AtomicExecutionPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
+import type { AtomicExecutionPort, DocumentRendererPort, FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from '@edaya/core'
 import type { SchoolRepositories } from '../ports/school-repositories'
 import type { CoreEntityServices } from './runtime/core-entity-catalog'
 import type { ServiceArgs } from './service-args'
@@ -22,6 +22,7 @@ export class BaseSchoolService {
   readonly inviteBaseUrl?: string
   readonly accountInvitationsEnabled: boolean
   readonly profilePhotoMaxBytes: number
+  readonly documentRenderer?: DocumentRendererPort
   readonly entities: CoreEntityServices
   private readonly journal: ServiceArgs['commandJournal']
 
@@ -45,6 +46,7 @@ export class BaseSchoolService {
     this.inviteBaseUrl = args.inviteBaseUrl
     this.accountInvitationsEnabled = args.accountInvitationsEnabled ?? true
     this.profilePhotoMaxBytes = args.profilePhotoMaxBytes ?? DEFAULT_PROFILE_PHOTO_MAX_BYTES
+    this.documentRenderer = args.documentRenderer
     this.entities = createCoreEntityServices({ ...args, templateService: this.templateService })
   }
 }

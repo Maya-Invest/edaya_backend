@@ -39,6 +39,16 @@ const schoolSchemaBase = z.object({
   timetableGenerationMode: z.nativeEnum(TimetableGenerationMode).default(TimetableGenerationMode.Weekly),
   timetableMinPeriodSpan: z.number().int().positive('timetableMinPeriodSpan must be a strictly positive integer').default(1),
   timetableMaxPeriodSpan: z.number().int().positive('timetableMaxPeriodSpan must be a strictly positive integer').default(1),
+  postalAddress: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  phone: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  email: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  schoolCode: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  issuingName: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  logoAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  crestAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  stampAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  signatureAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  issuanceAssetVersion: z.number().int().nonnegative().default(0),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -102,6 +112,16 @@ export class School {
   get timetableGenerationMode() { return this.data.timetableGenerationMode }
   get timetableMinPeriodSpan() { return this.data.timetableMinPeriodSpan }
   get timetableMaxPeriodSpan() { return this.data.timetableMaxPeriodSpan }
+  get postalAddress() { return this.data.postalAddress }
+  get phone() { return this.data.phone }
+  get email() { return this.data.email }
+  get schoolCode() { return this.data.schoolCode }
+  get issuingName() { return this.data.issuingName }
+  get logoAttachmentId() { return this.data.logoAttachmentId }
+  get crestAttachmentId() { return this.data.crestAttachmentId }
+  get stampAttachmentId() { return this.data.stampAttachmentId }
+  get signatureAttachmentId() { return this.data.signatureAttachmentId }
+  get issuanceAssetVersion() { return this.data.issuanceAssetVersion }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

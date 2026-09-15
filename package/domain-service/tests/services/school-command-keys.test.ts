@@ -52,6 +52,7 @@ describe('school command keys', () => {
       communications: service.communicationsWorkflow,
       behavior: service.behaviorWorkflow,
       finance: service.financeWorkflow,
+      documents: service.documentsWorkflow,
     })), SCHOOL_COMMAND_KEYS)).toEqual({
       missing: [],
       extra: [],

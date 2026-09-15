@@ -1,3 +1,4 @@
+export * from './documents'
 export * from './files'
 export * from './invitations'
 export * from './notifications'

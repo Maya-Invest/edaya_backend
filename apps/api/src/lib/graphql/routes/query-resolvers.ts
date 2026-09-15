@@ -169,9 +169,49 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
       });
     }
 
+    if (queryConfig.methodName === "listDocumentTemplates") {
+      return service.listDocumentTemplates();
+    }
+
+    if (queryConfig.methodName === "listDocumentIssuances") {
+      return service.listDocumentIssuances({
+        studentId: payload.studentId as string | undefined,
+        academicYearId: payload.academicYearId as string | undefined,
+        classGroupId: payload.classGroupId as string | undefined,
+        templateKey: payload.templateKey as never,
+        sourceId: payload.sourceId as string | undefined,
+        status: payload.status as never,
+      });
+    }
+
+    if (queryConfig.methodName === "getDocumentIssuance") {
+      return service.getDocumentIssuance({ id: payload.id as string });
+    }
+
+    if (queryConfig.methodName === "grantDocumentDownload") {
+      const grant = await service.grantDocumentDownload({ id: payload.id as string });
+      return serializeGraphqlDocumentDownload(grant);
+    }
+
+    if (queryConfig.methodName === "grantDocumentBundleDownload") {
+      const bundle = await service.grantDocumentBundleDownload({
+        issuanceIds: payload.issuanceIds as string[],
+      });
+      return { items: bundle.items.map(serializeGraphqlDocumentDownload) };
+    }
+
     const count = await service[queryConfig.methodName](payload.schoolId as string);
     return { count };
   });
+}
+
+function serializeGraphqlDocumentDownload(grant: Awaited<ReturnType<import("@edaya/service").SchoolService["grantDocumentDownload"]>>) {
+  return {
+    downloadUrl: grant.downloadUrl,
+    expiresAt: grant.expiresAt instanceof Date ? grant.expiresAt.toISOString() : grant.expiresAt,
+    fileName: grant.fileName,
+    issuanceId: grant.issuanceId,
+  };
 }
 
 function serializeGraphqlAccountStatement(statement: Awaited<ReturnType<import("@edaya/service").SchoolService["getAccountStatement"]>>) {

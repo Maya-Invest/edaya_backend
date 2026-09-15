@@ -43,7 +43,7 @@ Entity reads (`findById`, `list`) remain on `/core/entities/*` query routes wher
 
 The seed flows call these `SchoolService` workflows:
 
-`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `cancelStudentCharge`, `completeAssessment`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createCatalogService`, `createClassGroup`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `enrollStudentInActivity`, `enrollStudentInService`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `refundAvailableBalance`, `registerAttachment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `relinkActorSubject`, `requestAttendanceJustification`, `rescheduleOccurrence`, `reverseAllocation`, `reversePayment`, `updateSchoolConfiguration`, `updateStudentDisciplinaryActionStatus`, `upsertStudentHealthProfile`, and `waiveStudentCharge`.
+`addStudentInvolvement`, `addTarget`, `applyDisciplinaryAction`, `assignMatterToClassSubject`, `assignResourceToLessonSession`, `assignStaffPermission`, `assignStaffToClass`, `assignStaffToClassSubject`, `assignStaffToLessonSession`, `cancelActivitySession`, `cancelLessonSession`, `cancelStudentCharge`, `completeAssessment`, `configureActivity`, `configureDisciplinaryAction`, `configureGradeLevel`, `configurePeriodDefinition`, `configureResource`, `configureSubject`, `configureSubjectMatter`, `createAcademicPeriod`, `createAcademicYear`, `createAnnouncement`, `createAssessment`, `createCalendarEvent`, `createCatalogService`, `createClassGroup`, `createGradeScale`, `createReportCardDefinition`, `createReportCardDefinitionSection`, `createSchedule`, `createStudentNote`, `enrollStudent`, `enrollStudentInActivity`, `enrollStudentInService`, `generateReportCardResult`, `linkActorSubject`, `linkGuardianToStudent`, `materializeDeliveries`, `materializeSchedule`, `offerSubjectToClass`, `publishAcademicPeriod`, `publishAnnouncement`, `publishReportCardResult`, `recordAssessmentResult`, `recordAttendance`, `recordDelivery`, `recordIncident`, `recordLessonSessionAttendance`, `recordLessonSessionProgress`, `recordPayment`, `refundAvailableBalance`, `registerAttachment`, `registerGuardian`, `registerSchool`, `registerStaffMember`, `registerStudent`, `relinkActorSubject`, `requestAttendanceJustification`, `requestDocumentIssuance`, `rescheduleOccurrence`, `reverseAllocation`, `reversePayment`, `updateSchoolConfiguration`, `updateStudentDisciplinaryActionStatus`, `upsertStudentHealthProfile`, and `waiveStudentCharge`.
 
 ## Migrated vertical ports
 
@@ -116,6 +116,10 @@ Report cards use a five-operation `ReportCardsSeedPort` for grade scales, defini
 
 Finance uses admitted catalog accounting commands: create catalog service, enroll a student, record a payment, then optional waive/cancel, allocation reversal, payment reversal, and refund. Allocation IDs are queried after FIFO receipts because they are generated. Dates cross as ISO strings and are reconstructed only by the in-process adapter.
 
+### Documents
+
+Documents use a three-operation `DocumentsSeedPort` for ready issuances (`requestDocumentIssuance` + render dispatch), failed UI rows, and a post-seed dispatch. Ready fixtures replay bulletin, receipt, and schooling-certificate commands after report-card publication and finance receipts. Failed fixtures are persisted only by the in-process adapter (no public failed-issuance command). The HTTP adapter requests the same identity instead so CLI seed stays command-only.
+
 ### Activities
 
 Activities use a two-operation `ActivitiesSeedPort` for activity programs and enrollments. Activity categories and enrollment statuses are mapped explicitly; dates cross as ISO strings and are reconstructed only in-process.
@@ -149,10 +153,11 @@ Attachments use a one-operation `AttachmentsSeedPort`. The workflow maps fixture
 5. Scheduling and attendance: migrated.
 6. Assessments and report cards: migrated.
 7. Finance: migrated.
-8. Activities: migrated.
-9. Calendar events, incidents, and student involvements: migrated.
-10. Student health profiles and pedagogical notes: migrated.
-11. Communications, discipline, and attachments: migrated.
+8. Official documents: migrated.
+9. Activities: migrated.
+10. Calendar events, incidents, and student involvements: migrated.
+11. Student health profiles and pedagogical notes: migrated.
+12. Communications, discipline, and attachments: migrated.
 
 All dev-school seed domains now run through explicit ports. HTTP seeding no longer constructs a proxy `SeedApplication` or represents JSON responses as core domain services/repositories.
 

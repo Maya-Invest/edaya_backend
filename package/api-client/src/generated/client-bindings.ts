@@ -756,6 +756,19 @@ export const clientBindings = {
           "batchUpdate": true,
           "batchDelete": true
         }
+      },
+      "documentIssuances": {
+        "publicName": "document-issuances",
+        "schemaName": "DocumentIssuance",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
       }
     },
     "commands": {
@@ -1122,7 +1135,47 @@ export const clientBindings = {
       "renderClassLogbook": {
         "publicName": "render-class-logbook",
         "requestSchemaName": "RenderClassLogbookCommand",
-        "responseSchemaName": "RenderClassLogbookResponse"
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "requestDocumentIssuance": {
+        "publicName": "request-document-issuance",
+        "requestSchemaName": "RequestDocumentIssuanceCommand",
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "requestDocumentIssuanceBatch": {
+        "publicName": "request-document-issuance-batch",
+        "requestSchemaName": "RequestDocumentIssuanceBatchCommand",
+        "responseSchemaName": "DocumentIssuanceBatchResponse"
+      },
+      "retryDocumentIssuance": {
+        "publicName": "retry-document-issuance",
+        "requestSchemaName": "RetryDocumentIssuanceCommand",
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "correctDocumentIssuance": {
+        "publicName": "correct-document-issuance",
+        "requestSchemaName": "CorrectDocumentIssuanceCommand",
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "voidDocumentIssuance": {
+        "publicName": "void-document-issuance",
+        "requestSchemaName": "VoidDocumentIssuanceCommand",
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "previewDocument": {
+        "publicName": "preview-document",
+        "requestSchemaName": "PreviewDocumentCommand",
+        "responseSchemaName": "DocumentIssuanceProjectionResponse"
+      },
+      "createSchoolIssuanceAssetUpload": {
+        "publicName": "create-school-issuance-asset-upload",
+        "requestSchemaName": "CreateSchoolIssuanceAssetUploadCommand",
+        "responseSchemaName": "CreateSchoolIssuanceAssetUploadResponse"
+      },
+      "completeSchoolIssuanceAssetUpload": {
+        "publicName": "complete-school-issuance-asset-upload",
+        "requestSchemaName": "CompleteSchoolIssuanceAssetUploadCommand",
+        "responseSchemaName": "Attachment"
       },
       "recordIncident": {
         "publicName": "record-incident",
@@ -1525,6 +1578,31 @@ export const clientBindings = {
         "publicName": "reconcile-school-finance",
         "requestSchemaName": "GetFinanceReconciliationQuery",
         "responseSchemaName": "FinanceReconciliationResponse"
+      },
+      "listDocumentTemplates": {
+        "publicName": "list-document-templates",
+        "requestSchemaName": "ListDocumentTemplatesQuery",
+        "responseSchemaName": "DocumentTemplateCatalogResponse"
+      },
+      "listDocumentIssuances": {
+        "publicName": "list-document-issuances",
+        "requestSchemaName": "ListDocumentIssuancesQuery",
+        "responseSchemaName": "DocumentIssuanceListResponse"
+      },
+      "getDocumentIssuance": {
+        "publicName": "get-document-issuance",
+        "requestSchemaName": "GetDocumentIssuanceQuery",
+        "responseSchemaName": "DocumentIssuanceProjection"
+      },
+      "grantDocumentDownload": {
+        "publicName": "grant-document-download",
+        "requestSchemaName": "GrantDocumentDownloadQuery",
+        "responseSchemaName": "DocumentDownloadGrantResponse"
+      },
+      "grantDocumentBundleDownload": {
+        "publicName": "grant-document-bundle-download",
+        "requestSchemaName": "GrantDocumentBundleDownloadQuery",
+        "responseSchemaName": "DocumentDownloadBundleResponse"
       }
     },
     "authorization": {

@@ -54,6 +54,7 @@ export const SEED_ENTITY_MANIFEST = [
   { entity: 'catalog-services', fixtureFile: 'demoDataset.entities.catalogServices', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'student-service-enrollments', fixtureFile: 'demoDataset.entities.studentServiceEnrollments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
   { entity: 'payments', fixtureFile: 'demoDataset.entities.payments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo' },
+  { entity: 'document-issuances', fixtureFile: 'demoDataset.extensions.documentIssuances', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Ready bulletin, receipt, certificate plus a failed certificate for UI states' },
   { entity: 'grade-scales', fixtureFile: 'demoDataset.entities.gradeScales', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },
   { entity: 'definitions', fixtureFile: 'demoDataset.extensions.reportCardDefinitionFixtures', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },
   { entity: 'sections', fixtureFile: 'demoDataset.extensions.reportCardDefinitionFixtures', loader: 'seed-report-cards', status: 'seeded', dataset: 'demo' },

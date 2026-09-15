@@ -258,6 +258,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'catalog-services': countArray(entities.catalogServices),
     'student-service-enrollments': countArray(entities.studentServiceEnrollments),
     'payments': countArray(entities.payments),
+    'document-issuances': countArray(dataset.extensions?.documentIssuances),
     'grade-scales': countArray(entities.gradeScales),
     'definitions': countArray(dataset.extensions?.reportCardDefinitionFixtures),
     'sections': countReportCardSections(dataset),

@@ -1,6 +1,7 @@
 import type { EntityStores } from './entity-stores-types'
 import { createAcademicsEntityStores } from './entity-stores-academics'
 import { createAssessmentsEntityStores } from './entity-stores-assessments'
+import { createDocumentsEntityStores } from './entity-stores-documents'
 import { createFinancesEntityStores } from './entity-stores-finances'
 import { createMessagingEntityStores } from './entity-stores-messaging'
 import { createSchedulingEntityStores } from './entity-stores-scheduling'
@@ -17,6 +18,7 @@ export function createEntityStores(db: any): EntityStores {
     ...createSchedulingEntityStores(db),
     ...createAssessmentsEntityStores(db),
     ...createFinancesEntityStores(db),
+    ...createDocumentsEntityStores(db),
     ...createMessagingEntityStores(db),
   }
 }

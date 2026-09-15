@@ -1,6 +1,7 @@
 export * from './academics'
 export * from './access'
 export * from './assessments'
+export * from './documents'
 export * from './finances'
 export * from './messaging'
 export * from './permissions'

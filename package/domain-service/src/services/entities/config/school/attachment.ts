@@ -115,6 +115,20 @@ async function resolveAttachmentOwnerContext(
       }
       return resolveStudentOwner(account.studentId, repositories)
     }
+    case AttachmentOwnerKind.School: {
+      const school = await repositories.schools.findById(ownerId)
+      if (!school) {
+        denyResourceAccess()
+      }
+      return { schoolId: school.id }
+    }
+    case AttachmentOwnerKind.DocumentIssuance: {
+      const issuance = await repositories.documentIssuances.findById(ownerId)
+      if (!issuance) {
+        denyResourceAccess()
+      }
+      return { schoolId: issuance.schoolId }
+    }
     case AttachmentOwnerKind.Other:
       throw new BusinessRuleViolationError('UNSUPPORTED_ATTACHMENT_OWNER', 'Attachment owner kind other is not supported by the selected public contract')
   }
