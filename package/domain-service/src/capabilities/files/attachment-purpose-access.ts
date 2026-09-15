@@ -14,6 +14,8 @@ export interface AttachmentReadPolicy {
 export interface AttachmentUploadPolicy {
   readonly purpose: string
   readonly assertSave: (attachment: Attachment, existing: Attachment | undefined) => Promise<ResourceAccessScope>
+  readonly allowedMimeTypes?: readonly string[]
+  readonly maxBytes?: number
 }
 
 export function attachmentPurpose(policy?: { readonly purpose: string }): string {

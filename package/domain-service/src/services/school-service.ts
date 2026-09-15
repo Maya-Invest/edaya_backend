@@ -5,7 +5,7 @@ import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries
 import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
-import { FeeStatus, ReportCardResultStatus } from '@edaya/core'
+import { FeeStatus, ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 
@@ -86,7 +86,17 @@ export class SchoolService {
   async getSchoolOverview(input: GetSchoolOverviewInput): Promise<SchoolOverview> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.overview.assertContext(input)
-    return buildSchoolOverview(await this.baseService.access.overview.repositories(), input)
+    let pendingStudentPhotoCount = 0
+    try {
+      pendingStudentPhotoCount = await this.baseService.entities.studentPhotoSubmissions.count({
+        status: StudentPhotoSubmissionStatus.Pending,
+      })
+    }
+    catch (error) {
+      if (!(error instanceof AuthorizationError))
+        throw error
+    }
+    return buildSchoolOverview(await this.baseService.access.overview.repositories(), input, { pendingStudentPhotoCount })
   }
 
   async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {

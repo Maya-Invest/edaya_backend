@@ -42,6 +42,10 @@ export function resolveAccountInvitationsEnabled(env: Environment | undefined): 
   return env?.ACCOUNT_INVITATIONS_ENABLED !== false;
 }
 
+export function resolveProfilePhotoMaxBytes(env: Environment | undefined): number | undefined {
+  return env?.PROFILE_PHOTO_MAX_BYTES;
+}
+
 export function platformBootstrapEmails(env: Pick<Environment, "PLATFORM_BOOTSTRAP_EMAILS"> | undefined): string[] {
   return (env?.PLATFORM_BOOTSTRAP_EMAILS ?? "")
     .split(",")

@@ -1,8 +1,8 @@
 import type { Attachment } from '@edaya/core'
 import type { SeedApplication } from '../../../support/types'
 import type { ProfilePicturesSeedPort, UploadProfilePhotoInput } from '../port'
-import { AttachmentStatus } from '@edaya/core'
-import { buildAttachmentContentUrl, createAttachmentUpload } from '@edaya/service'
+import { AttachmentStatus, parseAttachmentIdFromContentUrl } from '@edaya/core'
+import { buildAttachmentContentUrl, completeProfilePhotoUpload, createProfilePhotoUpload } from '@edaya/service'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -25,7 +25,14 @@ export function createInProcessProfilePicturesSeedPort(
       }
     }),
     setStudentPhotoUrl: (studentId, photoUrl) => withSeedPortError('profilePictures.setStudentPhotoUrl', async () => {
-      await service.studentWorkflow.updateStudentProfile({ studentId, photoUrl })
+      const attachmentId = parseAttachmentIdFromContentUrl(photoUrl)
+      if (!attachmentId)
+        throw new Error('Portrait URL must be a private content projection')
+      await service.studentWorkflow.publishStudentPhoto({
+        requestId: `seed-publish-student-photo-${studentId}`,
+        studentId,
+        attachmentId,
+      })
     }),
     setGuardianPhotoUrl: (guardianId, photoUrl) => withSeedPortError('profilePictures.setGuardianPhotoUrl', async () => {
       await service.studentWorkflow.updateGuardianContactMethods({ guardianId, photoUrl })
@@ -45,7 +52,7 @@ async function uploadProfilePhotoInProcess(
     && existing.ownerId === input.ownerId && existing.ownerKind === input.ownerKind) {
     return existing
   }
-  const { storageKey } = await createAttachmentUpload(service.baseService, {
+  const { storageKey } = await createProfilePhotoUpload(service.baseService, {
     attachmentId: input.attachmentId,
     ownerKind: input.ownerKind,
     ownerId: input.ownerId,
@@ -60,7 +67,7 @@ async function uploadProfilePhotoInProcess(
     contentType: input.mimeType,
   })
 
-  return service.setupWorkflow.registerAttachment({
+  return completeProfilePhotoUpload(service.baseService, {
     id: input.attachmentId,
     schoolId: input.schoolId,
     ownerKind: input.ownerKind,

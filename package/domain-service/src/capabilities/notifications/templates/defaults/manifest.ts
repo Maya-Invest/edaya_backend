@@ -62,6 +62,14 @@ export async function buildDefaultNotificationTemplateDocument(): Promise<School
       'Reminder: {{eventTitle}}',
       '{{dateRange}} · {{scopeLabel}}',
     ),
+    studentPhotoApproved: eventFromPlain(
+      'Photo approved — {{studentName}}',
+      'The portrait for {{studentName}} is now published.',
+    ),
+    studentPhotoRejected: eventFromPlain(
+      'Photo not approved — {{studentName}}',
+      '{{rejectionReason}}',
+    ),
     accountInvitation: {
       rich_message: {
         subject: accountInvitation.subject,

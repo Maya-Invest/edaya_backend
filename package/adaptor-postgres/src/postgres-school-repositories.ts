@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -72,6 +72,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly guardians: PostgresStore<Guardian>
   public readonly guardianLinks: PostgresStore<GuardianStudentLink>
   public readonly studentNotes: PostgresStore<StudentNote>
+  public readonly studentPhotoSubmissions: PostgresStore<StudentPhotoSubmission>
   public readonly studentHealthProfiles: PostgresStore<StudentHealthProfile>
   public readonly studentDisciplinaryActions: PostgresStore<StudentDisciplinaryAction>
   public readonly disciplinaryActions: PostgresStore<DisciplinaryAction>
@@ -137,6 +138,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.guardians = stores.guardians
     this.guardianLinks = stores.guardianLinks
     this.studentNotes = stores.studentNotes
+    this.studentPhotoSubmissions = stores.studentPhotoSubmissions
     this.studentHealthProfiles = stores.studentHealthProfiles
     this.studentDisciplinaryActions = stores.studentDisciplinaryActions
     this.disciplinaryActions = stores.disciplinaryActions

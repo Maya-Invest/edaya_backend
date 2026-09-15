@@ -50,6 +50,8 @@ export const schoolNotificationTemplateCatalogSchema = z.object({
   assessmentDueSoon: eventNotificationTemplateEntrySchema,
   activityReminder: eventNotificationTemplateEntrySchema,
   calendarEventReminder: eventNotificationTemplateEntrySchema,
+  studentPhotoApproved: eventNotificationTemplateEntrySchema,
+  studentPhotoRejected: eventNotificationTemplateEntrySchema,
   accountInvitation: invitationNotificationTemplateEntrySchema,
 })
 

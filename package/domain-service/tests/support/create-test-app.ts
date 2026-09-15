@@ -119,7 +119,7 @@ export type FailableRepository = keyof typeof failureResources
 
 /** Uses the production SQL compiler and transaction implementation; no test authorization evaluator. */
 export async function createTestApp(actor?: ActorMetadata, options: { owner?: boolean, notificationGateway?: NotificationGatewayPort, fileStorage?: FileStoragePort } = {}) {
-  const { repositories: nativeRepositories, atomic: atomicExecution } = await acquireDatabase()
+  const { repositories: nativeRepositories, atomic: atomicExecution, db } = await acquireDatabase()
   let saveFailure: { repository: FailableRepository, remainingAttempts: number } | undefined
   const failSaveOnAttempt = (repository: FailableRepository, attempt = 1) => {
     saveFailure = { repository, remainingAttempts: attempt }
@@ -232,5 +232,6 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     forActor: (boundActor: ActorMetadata) => application.forActor(boundActor),
     failSaveOnAttempt,
     atomicExecution,
+    db,
   }
 }

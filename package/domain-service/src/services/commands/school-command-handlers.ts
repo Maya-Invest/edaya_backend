@@ -1,4 +1,4 @@
-import type { StaffPermissionAssignmentInput } from '@edaya/core'
+import type { AttachmentInput, StaffPermissionAssignmentInput } from '@edaya/core'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
@@ -116,15 +116,19 @@ import type {
 } from '../workflows/setup'
 import type {
   CloseEnrollmentInput,
+  CreateProfilePhotoUploadInput,
   CreateStudentNoteInput,
   EnrollStudentInput,
   GraduateStudentInput,
   LinkGuardianToStudentInput,
   PromoteStudentInput,
+  PublishStudentPhotoInput,
   RecordProgressionDecisionInput,
   RegisterGuardianInput,
   RegisterStudentInput,
+  ReviewStudentPhotoInput,
   StudentServiceWorkflow,
+  SubmitStudentPhotoInput,
   TransferStudentInput,
   UpdateGuardianContactMethodsInput,
   UpdateGuardianStudentLinkInput,
@@ -132,6 +136,7 @@ import type {
   UpdateStudentProfileInput,
   UpdateStudentStatusInput,
   UpsertStudentHealthProfileInput,
+  WithdrawStudentPhotoSubmissionInput,
 } from '../workflows/student'
 import type {
   GenerateClassGroupTimetableInput,
@@ -242,6 +247,12 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     updateStudentNote: payload => workflows.student.updateStudentNote(payload as UpdateStudentNoteInput),
     updateGuardianContactMethods: payload => workflows.student.updateGuardianContactMethods(payload as UpdateGuardianContactMethodsInput),
     updateGuardianStudentLink: payload => workflows.student.updateGuardianStudentLink(payload as UpdateGuardianStudentLinkInput),
+    createProfilePhotoUpload: payload => workflows.student.createProfilePhotoUpload(payload as CreateProfilePhotoUploadInput),
+    completeProfilePhotoUpload: payload => workflows.student.completeProfilePhotoUpload(payload as AttachmentInput),
+    submitStudentPhoto: payload => workflows.student.submitStudentPhoto(payload as SubmitStudentPhotoInput),
+    withdrawStudentPhotoSubmission: payload => workflows.student.withdrawStudentPhotoSubmission(payload as WithdrawStudentPhotoSubmissionInput),
+    reviewStudentPhoto: payload => workflows.student.reviewStudentPhoto(payload as ReviewStudentPhotoInput),
+    publishStudentPhoto: payload => workflows.student.publishStudentPhoto(payload as PublishStudentPhotoInput),
     // scheduling
     createSchedule: payload => workflows.scheduling.createSchedule(payload as CreateScheduleInput),
     saveSchedule: payload => workflows.scheduling.saveSchedule(payload as SaveScheduleInput),

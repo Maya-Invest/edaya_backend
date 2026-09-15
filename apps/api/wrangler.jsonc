@@ -79,6 +79,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PROFILE_PHOTO_MAX_BYTES": "1048576",
         "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-staging"
       },
@@ -126,6 +127,7 @@
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
+        "PROFILE_PHOTO_MAX_BYTES": "1048576",
         "PLATFORM_BOOTSTRAP_EMAILS": "",
         "R2_BUCKET_NAME": "edaya-files-production"
       },

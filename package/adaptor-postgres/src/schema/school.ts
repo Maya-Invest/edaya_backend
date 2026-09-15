@@ -113,6 +113,8 @@ export const schoolNotificationTemplates = pgTable('school_notification_template
   assessmentDueSoon: jsonb('assessment_due_soon').$type<EventNotificationTemplateEntry>().notNull(),
   activityReminder: jsonb('activity_reminder').$type<EventNotificationTemplateEntry>().notNull(),
   calendarEventReminder: jsonb('calendar_event_reminder').$type<EventNotificationTemplateEntry>().notNull(),
+  studentPhotoApproved: jsonb('student_photo_approved').$type<EventNotificationTemplateEntry>(),
+  studentPhotoRejected: jsonb('student_photo_rejected').$type<EventNotificationTemplateEntry>(),
   accountInvitation: jsonb('account_invitation').$type<InvitationNotificationTemplateEntry>().notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),

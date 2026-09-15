@@ -11,12 +11,13 @@ import {
   StudentHealthProfile as StudentHealthProfileCtor,
   StudentIncidentInvolvement as StudentIncidentInvolvementCtor,
   StudentNote as StudentNoteCtor,
+  StudentPhotoSubmission as StudentPhotoSubmissionCtor,
 } from '@edaya/core'
 import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 
-export function createStudentsEntityStores(db: any): Pick<EntityStores, 'students' | 'enrollments' | 'guardians' | 'guardianLinks' | 'studentNotes' | 'studentHealthProfiles' | 'studentDisciplinaryActions' | 'disciplinaryActions' | 'studentIncidentInvolvements' | 'incidents'> {
+export function createStudentsEntityStores(db: any): Pick<EntityStores, 'students' | 'enrollments' | 'guardians' | 'guardianLinks' | 'studentNotes' | 'studentPhotoSubmissions' | 'studentHealthProfiles' | 'studentDisciplinaryActions' | 'disciplinaryActions' | 'studentIncidentInvolvements' | 'incidents'> {
   return {
     students: defaultStore(db, schema.students, StudentCtor),
 
@@ -68,6 +69,8 @@ export function createStudentsEntityStores(db: any): Pick<EntityStores, 'student
     guardianLinks: defaultStore(db, schema.guardianStudentLinks, GuardianStudentLinkCtor),
 
     studentNotes: defaultStore(db, schema.studentNotes, StudentNoteCtor),
+
+    studentPhotoSubmissions: defaultStore(db, schema.studentPhotoSubmissions, StudentPhotoSubmissionCtor),
 
     studentHealthProfiles: customStore(
       db,

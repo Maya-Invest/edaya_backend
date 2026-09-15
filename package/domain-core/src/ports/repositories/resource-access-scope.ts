@@ -18,6 +18,8 @@ export interface ResourceAccessClause {
   readonly attachmentOwners?: readonly AttachmentOwnerKind[]
   /** Exact purposes selected by the named policy. Generic scopes default to general only. */
   readonly attachmentPurposes?: readonly string[]
+  /** Exact attachment identities selected by a named policy. */
+  readonly attachmentIds?: readonly string[]
   readonly noteVisibility?: 'staff' | 'guardian'
   readonly authorStaffId?: string
   readonly attendanceMode?: 'session' | 'daily'

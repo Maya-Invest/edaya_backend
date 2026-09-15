@@ -58,6 +58,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
   guardians: s.guardians,
   guardianLinks: s.guardianStudentLinks,
   studentNotes: s.studentNotes,
+  studentPhotoSubmissions: s.studentPhotoSubmissions,
   studentHealthProfiles: s.studentHealthProfiles,
   studentDisciplinaryActions: s.studentDisciplinaryActions,
   disciplinaryActions: s.disciplinaryActions,
@@ -122,7 +123,15 @@ function compileClause(table: PgTable, clause: ResourceAccessClause, schoolId: s
       return [and(sql`${value('ownerKind')} = ${kind}`, exists(owner, schoolId, and(sql`${getTableColumns(owner)['id']!} = ${value('ownerId')}`, compileClause(owner, { ...clause, attachmentOwners: undefined }, schoolId))!))!]
     })
     return paths.length && clause.attachmentPurposes?.length
-      ? and(or(...paths), or(...clause.attachmentPurposes.map(purpose => sql`${value('purpose')} = ${purpose}`)))!
+      ? and(
+        or(...paths),
+        or(...clause.attachmentPurposes.map(purpose => sql`${value('purpose')} = ${purpose}`)),
+        clause.attachmentIds
+          ? (clause.attachmentIds.length
+              ? sql`${value('id')} in (${sql.join(clause.attachmentIds.map(id => sql`${id}`), sql`, `)})`
+              : sql`false`)
+          : undefined,
+      )!
       : sql`false`
   }
   return and(

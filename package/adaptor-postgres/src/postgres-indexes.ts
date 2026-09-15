@@ -1,4 +1,5 @@
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 function col(table: Record<string, AnyPgColumn>, name: string): AnyPgColumn {
@@ -162,7 +163,19 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('report_card_results_class_group_period_idx').on(col(table, 'classGroupId'), col(table, 'periodId')),
       ]
     case 'students':
-      return [index('students_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('students_school_id_idx').on(col(table, 'schoolId')),
+        index('students_photo_attachment_id_idx').on(col(table, 'photoAttachmentId')),
+      ]
+    case 'student_photo_submissions':
+      return [
+        index('student_photo_submissions_school_id_idx').on(col(table, 'schoolId')),
+        index('student_photo_submissions_student_id_idx').on(col(table, 'studentId')),
+        index('student_photo_submissions_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        uniqueIndex('student_photo_submissions_one_pending_uidx')
+          .on(col(table, 'schoolId'), col(table, 'studentId'))
+          .where(sql`${col(table, 'status')} = 'pending'`),
+      ]
     case 'student_class_enrollments':
       return [
         index('student_class_enrollments_student_id_idx').on(col(table, 'studentId')),

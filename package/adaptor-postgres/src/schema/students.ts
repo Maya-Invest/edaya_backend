@@ -12,6 +12,7 @@ export const students = pgTable('students', {
   nationality: text('nationality'),
   matricule: text('matricule'),
   photoUrl: text('photo_url'),
+  photoAttachmentId: text('photo_attachment_id'),
   subjectId: text('subject_id'),
   status: text('status').notNull(),
   enrollmentDate: timestamp('enrollment_date', { mode: 'date' }),
@@ -92,6 +93,21 @@ export const studentNotes = pgTable('student_notes', {
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('student_notes', table))
+
+export const studentPhotoSubmissions = pgTable('student_photo_submissions', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  studentId: text('student_id').notNull(),
+  attachmentId: text('attachment_id').notNull(),
+  submitterGuardianId: text('submitter_guardian_id').notNull(),
+  status: text('status').notNull(),
+  version: integer('version').notNull(),
+  reviewerStaffId: text('reviewer_staff_id'),
+  reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+  rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('student_photo_submissions', table))
 
 // 38. Student Health Profile Table
 

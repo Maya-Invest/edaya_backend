@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, feeSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, disciplinaryActionSchema, EnrollmentEndReason, feeSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, ProgressionDecision, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, // Zod schemas from core
   schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentFeeSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectMatterSchema, subjectSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -318,7 +318,7 @@ export const registerGuardianCommandSchema = objectFromSchema(guardianSchema)
 
 export const updateStudentProfileCommandSchema = objectFromSchema(studentSchema)
   .partial()
-  .omit({ id: true, schoolId: true, status: true, createdAt: true })
+  .omit({ id: true, schoolId: true, status: true, createdAt: true, photoUrl: true, photoAttachmentId: true })
   .extend({
     studentId: field.id(),
   })
@@ -763,6 +763,46 @@ export const cancelStudentFeeCommandSchema = z.object({
   cancelledAt: field.optionalDate(),
   updatedAt: field.optionalDate(),
 }).openapi("CancelStudentFeeCommand");
+
+export const createProfilePhotoUploadCommandSchema = z.object({
+  ownerKind: z.nativeEnum(AttachmentOwnerKind),
+  ownerId: field.id(),
+  fileName: field.string(),
+  mimeType: field.string(),
+  sizeBytes: field.positiveNumber(),
+  attachmentId: field.id().optional(),
+}).openapi("CreateProfilePhotoUploadCommand");
+
+export const completeProfilePhotoUploadCommandSchema = objectFromSchema(attachmentSchema)
+  .extend({ purpose: attachmentPurposeSchema.optional() })
+  .omit({ uploadedById: true })
+  .openapi("CompleteProfilePhotoUploadCommand");
+
+export const submitStudentPhotoCommandSchema = z.object({
+  requestId: field.id(),
+  studentId: field.id(),
+  attachmentId: field.id(),
+}).openapi("SubmitStudentPhotoCommand");
+
+export const withdrawStudentPhotoSubmissionCommandSchema = z.object({
+  requestId: field.id(),
+  submissionId: field.id(),
+  expectedVersion: field.positiveNumber(),
+}).openapi("WithdrawStudentPhotoSubmissionCommand");
+
+export const reviewStudentPhotoCommandSchema = z.object({
+  requestId: field.id(),
+  submissionId: field.id(),
+  expectedVersion: field.positiveNumber(),
+  decision: z.enum(["approve", "reject"]),
+  rejectionReason: field.optionalString(),
+}).openapi("ReviewStudentPhotoCommand");
+
+export const publishStudentPhotoCommandSchema = z.object({
+  requestId: field.id(),
+  studentId: field.id(),
+  attachmentId: field.id(),
+}).openapi("PublishStudentPhotoCommand");
 
 export const createAnnouncementCommandSchema = objectFromSchema(announcementSchema)
   .omit({

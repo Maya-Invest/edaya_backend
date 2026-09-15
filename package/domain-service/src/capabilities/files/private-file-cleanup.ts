@@ -2,6 +2,7 @@ import type { SchoolApplication } from '../../services/school-application'
 import type { SchoolCronJobContext } from '../scheduling-jobs/cron-job-context'
 import { createSystemActorMetadata } from '@edaya/authorization'
 import { DurableWorkFailure, runDurableWorkBatch } from '../scheduling-jobs/durable-work'
+import { sweepExpiredStudentPortraitAttachments } from './student-photo-lifecycle'
 
 export const PRIVATE_FILE_CLEANUP_KIND = 'private-file.cleanup'
 
@@ -9,6 +10,7 @@ export const PRIVATE_FILE_CLEANUP_KIND = 'private-file.cleanup'
 export async function preparePrivateFileCleanup(context: SchoolCronJobContext) {
   const base = context.service.baseService
   await base.access.attachments.assertCleanup()
+  const portraits = await sweepExpiredStudentPortraitAttachments(base, context.asOf)
   const candidates = await base.repositories.privateFiles.listDue(base.actor.schoolId, 50)
   let processed = 0
   for (const object of candidates) {
@@ -33,7 +35,7 @@ export async function preparePrivateFileCleanup(context: SchoolCronJobContext) {
     if (prepared)
       processed++
   }
-  return { processed, skipped: candidates.length - processed }
+  return { processed: portraits.processed + processed, skipped: portraits.skipped + candidates.length - processed }
 }
 
 /** Shared work leases/retries; tombstones prevent both new references and stale upload completion. */

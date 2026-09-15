@@ -6,7 +6,7 @@ import type { Environment } from "@/runtime/shared/env/schema";
 import { coreRouteErrorResponses, validatedJson, validatedParam } from "@/lib/school-api/routes/shared";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
-import { createAttachmentUpload, grantAttachmentDownload, loadAttachmentAsset, receiveAttachmentUpload } from "@edaya/service";
+import { createAttachmentUpload, grantAttachmentDownload, loadAttachmentAsset, receiveAttachmentUpload, resolveAttachmentReadPolicy } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -182,7 +182,9 @@ export const getFileDownloadUrlHandler: AppRouteHandler<typeof getFileDownloadUr
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
 
-    const presigned = await grantAttachmentDownload(c.var.schoolApp.forActor(actor).baseService, attachmentId);
+    const base = c.var.schoolApp.forActor(actor).baseService;
+    const access = await resolveAttachmentReadPolicy(base, attachmentId);
+    const presigned = await grantAttachmentDownload(base, attachmentId, { access });
     if (!presigned) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
@@ -237,18 +239,21 @@ export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = 
   }
 
   try {
+    const base = c.var.schoolApp.forActor(c.var.actor).baseService;
     const { storageKey } = validatedParam(c) as { storageKey: string };
     const key = decodeURIComponent(storageKey);
-    const attachment = await c.var.schoolApp.forActor(c.var.actor).baseService.entities.attachments.findOne({ storageKey: key });
+    const attachment = await base.entities.attachments.findOne({ storageKey: key });
     if (!attachment || attachment.status !== AttachmentStatus.Ready) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
-    const stored = await loadAttachmentAsset(c.var.schoolApp.forActor(c.var.actor).baseService, {
+    const access = await resolveAttachmentReadPolicy(base, attachment.id);
+    const stored = await loadAttachmentAsset(base, {
       attachmentId: attachment.id,
       ownerKind: attachment.ownerKind,
       ownerId: attachment.ownerId,
       maxBytes: attachment.sizeBytes!,
       allowedMimeTypes: [attachment.mimeType!],
+      access,
     });
 
     const fileName = attachment.fileName;
@@ -271,7 +276,9 @@ export const getFileContentHandler: AppRouteHandler<typeof getFileContentRoute> 
   }
   try {
     const { attachmentId } = validatedParam(c) as { attachmentId: string };
-    const presigned = await grantAttachmentDownload(c.var.schoolApp.forActor(c.var.actor).baseService, attachmentId, { inlineImages: true });
+    const base = c.var.schoolApp.forActor(c.var.actor).baseService;
+    const access = await resolveAttachmentReadPolicy(base, attachmentId);
+    const presigned = await grantAttachmentDownload(base, attachmentId, { inlineImages: true, access });
     if (!presigned) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }

@@ -103,6 +103,7 @@ const familyResources = new Set<CoreEntityKey>([
   'payments',
   'attachments',
   'activityEnrollments',
+  'studentPhotoSubmissions',
 ])
 
 /** An admitted read with no current relationships returns an empty SQL result. */
@@ -187,6 +188,10 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
       return [{ target: { kind: 'records', ids: [actor.guardianId] } }]
     if (resource === 'guardianLinks')
       return [{ target: { kind: 'records', ids: (await facts.list('guardianLinks', { guardianId: actor.guardianId })).map(link => link.id) } }]
+    if (resource === 'studentPhotoSubmissions') {
+      const studentIds = await facts.linkedStudents()
+      return visibleRows(studentIds.map(studentId => ({ target: { kind: 'student' as const, studentId } })))
+    }
     return []
   }
   if (actor.kind === 'guardian' && (resource === 'guardians' || resource === 'guardianLinks')
@@ -215,7 +220,7 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
   if (resource === 'definitions')
     return [{ target: { kind: 'school' }, publishedOnly: true }]
   const academicYearId = await facts.academicYear()
-  if (!academicYearId && resource !== undefined && resource !== 'students' && resource !== 'attachments')
+  if (!academicYearId && resource !== undefined && resource !== 'students' && resource !== 'attachments' && resource !== 'studentPhotoSubmissions')
     return visibleRows([])
   if (resource === 'attachments') {
     const ownProfile: ResourceAccessClause[] = actor.kind === 'guardian' ? [{ target: { kind: 'records', ids: [actor.guardianId] }, attachmentOwners: [Owner.Guardian] }] : []

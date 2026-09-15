@@ -52,6 +52,8 @@ export const EnvSchema = z.object({
   WEBAPP_ORIGIN: z.string().url().optional(),
   /** When false, account invitations are disabled (auto-invite and manual send). Defaults to true. */
   ACCOUNT_INVITATIONS_ENABLED: envBooleanSchema.optional(),
+  /** JPEG portrait admission cap in bytes. Defaults to 1 MiB. */
+  PROFILE_PHOTO_MAX_BYTES: z.coerce.number().int().positive().default(1_048_576),
   /** Optional Gotenberg base URL for local / wrangler-dev HTML→PDF (e.g. http://localhost:3000). */
   GOTENBERG_URL: z.string().url().optional(),
   /** When true, schedule report-card PDF render after publishReportCardResult. */

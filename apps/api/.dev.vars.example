@@ -44,6 +44,7 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:passw
 # --- Optional ---
 # WEBAPP_ORIGIN=https://staging.app.edayaplus.com
 # ACCOUNT_INVITATIONS_ENABLED=true
+# PROFILE_PHOTO_MAX_BYTES=1048576
 # STAGING_NOTIFICATION_EMAILS=
 
 # --- Not used in Wrangler / worker ---

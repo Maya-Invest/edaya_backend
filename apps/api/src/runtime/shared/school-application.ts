@@ -11,7 +11,7 @@ import { resolveFileStorage } from "@/runtime/shared/adapters/file-storage";
 import { resolveInvitationDelivery } from "@/runtime/shared/adapters/invitation-delivery";
 import { resolveNotificationGateway } from "@/runtime/shared/adapters/notification-gateway";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
-import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl } from "@/runtime/shared/env/derived";
+import { resolveAccountInvitationsEnabled, resolveInviteBaseUrl, resolveProfilePhotoMaxBytes } from "@/runtime/shared/env/derived";
 
 export interface BuildSchoolApplicationOptions {
   databaseUrl?: string;
@@ -59,6 +59,7 @@ export async function buildSchoolApplication(
     invitationDelivery,
     inviteBaseUrl: resolveInviteBaseUrl(options.env),
     accountInvitationsEnabled: resolveAccountInvitationsEnabled(options.env),
+    profilePhotoMaxBytes: resolveProfilePhotoMaxBytes(options.env),
     authContactResolver: options.identityDirectory
       ? createAuthContactResolver(options.identityDirectory)
       : undefined,

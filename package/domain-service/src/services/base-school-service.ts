@@ -4,7 +4,7 @@ import type { SchoolRepositories } from '../ports/school-repositories'
 import type { CoreEntityServices } from './runtime/core-entity-catalog'
 import type { ServiceArgs } from './service-args'
 import { createAccessPolicies } from '@edaya/authorization'
-import { noOpInvitationDeliveryPort } from '@edaya/core'
+import { DEFAULT_PROFILE_PHOTO_MAX_BYTES, noOpInvitationDeliveryPort } from '@edaya/core'
 import { NotificationTemplateService } from '../capabilities/notifications/templates/notification-template-service'
 import { CommandExecution } from './commands/command-execution'
 import { createCoreEntityServices } from './runtime/core-entity-catalog'
@@ -21,6 +21,7 @@ export class BaseSchoolService {
   readonly authContactResolver?: import('@edaya/core').AuthContactResolverPort
   readonly inviteBaseUrl?: string
   readonly accountInvitationsEnabled: boolean
+  readonly profilePhotoMaxBytes: number
   readonly entities: CoreEntityServices
   private readonly journal: ServiceArgs['commandJournal']
 
@@ -43,6 +44,7 @@ export class BaseSchoolService {
     this.authContactResolver = args.authContactResolver
     this.inviteBaseUrl = args.inviteBaseUrl
     this.accountInvitationsEnabled = args.accountInvitationsEnabled ?? true
+    this.profilePhotoMaxBytes = args.profilePhotoMaxBytes ?? DEFAULT_PROFILE_PHOTO_MAX_BYTES
     this.entities = createCoreEntityServices({ ...args, templateService: this.templateService })
   }
 }

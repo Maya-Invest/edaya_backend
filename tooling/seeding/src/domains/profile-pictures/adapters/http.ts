@@ -1,7 +1,7 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { ProfilePicturesSeedPort } from '../port'
-import { AttachmentStatus } from '@edaya/core'
+import { AttachmentStatus, parseAttachmentIdFromContentUrl } from '@edaya/core'
 import { buildAttachmentContentUrl } from '@edaya/service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand, postEntityList } from '../../../transport/http/core-entity'
@@ -43,7 +43,7 @@ export function createHttpProfilePicturesSeedPort(
         return { attachmentId: existing[0].id, photoUrl: buildAttachmentContentUrl(options.client.origin, existing[0].id) }
       }
       const { response, body } = await options.client.jsonRequest<UploadIntentResponse>(
-        '/core/files/upload-intents',
+        '/core/commands/create-profile-photo-upload',
         {
           method: 'POST',
           headers: coreHeaders(options.serviceAccountApiKey, 'http-profile-pictures-upload'),
@@ -59,7 +59,7 @@ export function createHttpProfilePicturesSeedPort(
       )
 
       if (!response.ok || !body) {
-        throw new Error(`upload-intents failed with status ${response.status}`)
+        throw new Error(`create-profile-photo-upload failed with status ${response.status}`)
       }
 
       const uploadResponse = await options.client.request(body.uploadUrl, {
@@ -74,7 +74,7 @@ export function createHttpProfilePicturesSeedPort(
         )
       }
 
-      await postCoreCommand(requestOptions, 'registerAttachment', {
+      await postCoreCommand(requestOptions, 'completeProfilePhotoUpload', {
         id: body.attachmentId,
         schoolId: input.schoolId,
         ownerKind: input.ownerKind,
@@ -93,7 +93,14 @@ export function createHttpProfilePicturesSeedPort(
       }
     }),
     setStudentPhotoUrl: (studentId, photoUrl) => withSeedPortError('profilePictures.setStudentPhotoUrl', async () => {
-      await postCoreCommand(requestOptions, 'updateStudentProfile', { studentId, photoUrl })
+      const attachmentId = parseAttachmentIdFromContentUrl(photoUrl)
+      if (!attachmentId)
+        throw new Error('Portrait URL must be a private content projection')
+      await postCoreCommand(requestOptions, 'publishStudentPhoto', {
+        requestId: `seed-publish-student-photo-${studentId}`,
+        studentId,
+        attachmentId,
+      })
     }),
     setGuardianPhotoUrl: (guardianId, photoUrl) => withSeedPortError('profilePictures.setGuardianPhotoUrl', async () => {
       await postCoreCommand(requestOptions, 'updateGuardianContactMethods', { guardianId, photoUrl })

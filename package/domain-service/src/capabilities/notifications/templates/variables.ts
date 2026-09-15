@@ -68,5 +68,14 @@ export const NOTIFICATION_TEMPLATE_VARIABLES = {
     'dateRange',
     'scopeLabel',
   ],
+  'student_photo.approved': [
+    'schoolName',
+    'studentName',
+  ],
+  'student_photo.rejected': [
+    'schoolName',
+    'studentName',
+    'rejectionReason',
+  ],
   'account_invitation': ['schoolName', 'inviteeName', 'inviteUrl', 'expiresAt', 'actorKind'],
 } as const satisfies Record<import('./keys').NotificationTemplateKey, readonly string[]>

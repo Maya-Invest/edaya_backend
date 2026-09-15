@@ -39,6 +39,8 @@ export class SchoolNotificationTemplates {
   get assessmentDueSoon() { return this.data.assessmentDueSoon }
   get activityReminder() { return this.data.activityReminder }
   get calendarEventReminder() { return this.data.calendarEventReminder }
+  get studentPhotoApproved() { return this.data.studentPhotoApproved }
+  get studentPhotoRejected() { return this.data.studentPhotoRejected }
   get accountInvitation() { return this.data.accountInvitation }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }

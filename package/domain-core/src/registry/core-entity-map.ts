@@ -49,6 +49,7 @@ import type {
   StudentHealthProfile,
   StudentIncidentInvolvement,
   StudentNote,
+  StudentPhotoSubmission,
   Subject,
   SubjectMatter,
   Teacher,
@@ -107,6 +108,7 @@ export interface CoreEntityMap {
   guardians: Guardian
   guardianLinks: GuardianStudentLink
   studentNotes: StudentNote
+  studentPhotoSubmissions: StudentPhotoSubmission
   studentHealthProfiles: StudentHealthProfile
   studentDisciplinaryActions: StudentDisciplinaryAction
   disciplinaryActions: DisciplinaryAction
@@ -177,6 +179,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'guardians',
   'guardianLinks',
   'studentNotes',
+  'studentPhotoSubmissions',
   'studentHealthProfiles',
   'studentDisciplinaryActions',
   'disciplinaryActions',

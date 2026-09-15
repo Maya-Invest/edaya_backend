@@ -115,6 +115,12 @@ export type SchoolCommandKey
     | 'cancelPayment'
     | 'adjustStudentFee'
     | 'cancelStudentFee'
+    | 'createProfilePhotoUpload'
+    | 'completeProfilePhotoUpload'
+    | 'submitStudentPhoto'
+    | 'withdrawStudentPhotoSubmission'
+    | 'reviewStudentPhoto'
+    | 'publishStudentPhoto'
 
 function defineSchoolCommandKeys<const Keys extends readonly SchoolCommandKey[]>(
   keys: Keys & (
@@ -243,4 +249,10 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'cancelPayment',
   'adjustStudentFee',
   'cancelStudentFee',
+  'createProfilePhotoUpload',
+  'completeProfilePhotoUpload',
+  'submitStudentPhoto',
+  'withdrawStudentPhotoSubmission',
+  'reviewStudentPhoto',
+  'publishStudentPhoto',
 ] as const)

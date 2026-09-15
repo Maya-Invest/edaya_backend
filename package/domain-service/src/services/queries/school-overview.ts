@@ -25,6 +25,7 @@ export type DashboardActionKey
     | 'pending_justifications'
     | 'high_severity_incidents'
     | 'incomplete_grading'
+    | 'pending_student_photos'
 
 export interface DashboardActionItem {
   key: DashboardActionKey
@@ -214,7 +215,7 @@ function computeClassRiskLevel(args: {
   return 'normal'
 }
 
-function buildActionItems(kpis: SchoolOverviewKpis): DashboardActionItem[] {
+function buildActionItems(kpis: SchoolOverviewKpis, pendingStudentPhotoCount = 0): DashboardActionItem[] {
   const candidates: DashboardActionItem[] = []
 
   if (kpis.overdueFeeCount > 0) {
@@ -246,6 +247,12 @@ function buildActionItems(kpis: SchoolOverviewKpis): DashboardActionItem[] {
     candidates.push({
       key: 'incomplete_grading',
       count: kpis.incompleteGradingClassCount,
+    })
+  }
+  if (pendingStudentPhotoCount > 0) {
+    candidates.push({
+      key: 'pending_student_photos',
+      count: pendingStudentPhotoCount,
     })
   }
 
@@ -406,6 +413,7 @@ function buildClassRiskRows(args: {
 export async function buildSchoolOverview(
   repositories: OverviewRepositories,
   input: GetSchoolOverviewInput,
+  extras: { pendingStudentPhotoCount?: number } = {},
 ): Promise<SchoolOverview> {
   const referenceDate = input.referenceDate ?? new Date()
   const refKey = toDateKey(referenceDate)
@@ -646,7 +654,7 @@ export async function buildSchoolOverview(
     referenceDate: refKey,
     generatedAt: new Date().toISOString(),
     kpis,
-    actionItems: buildActionItems(kpis),
+    actionItems: buildActionItems(kpis, extras.pendingStudentPhotoCount ?? 0),
     upcoming: buildUpcoming({
       calendarEvents,
       schoolFees,

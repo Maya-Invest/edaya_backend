@@ -2,8 +2,10 @@ import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, Activ
 import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
+import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/profile-photo-uploads'
 import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
@@ -344,6 +346,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async updateStaffMemberProfile({ staffId, ...changes }: UpdateStaffMemberProfileInput): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.staffMembers, staffId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Staff, staffId, changes.photoUrl)
       const staffMember = await this.saveConstructed(this.baseService.entities.staffMembers, new StaffMemberEntity({
         id: existing.id,
         schoolId: existing.schoolId,
@@ -455,6 +458,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async registerAttachment(input: RegisterAttachmentInput): Promise<Attachment> {
+    assertGenericAttachmentIsNotPortrait(input.purpose)
     return completeAttachmentUpload(this.baseService, input)
   }
 

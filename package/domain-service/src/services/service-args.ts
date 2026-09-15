@@ -18,4 +18,6 @@ export interface ServiceArgs {
   inviteBaseUrl?: string
   /** When false, auto-invite and manual send are skipped at runtime. Defaults to true. */
   accountInvitationsEnabled?: boolean
+  /** JPEG portrait admission cap. Defaults to 1 MiB. */
+  profilePhotoMaxBytes?: number
 }

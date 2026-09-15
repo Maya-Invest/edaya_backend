@@ -61,13 +61,13 @@ describe('guardian preference policies through persisted workflows and entities'
       await expect(service.baseService.entities.guardians.save(new Guardian({ ...before.data, contactMethods: [...before.contactMethods], ...changes }))).rejects.toBeInstanceOf(AuthorizationError)
     }
     await fixture.repositories.guardians.save(new Guardian({ id: 'unrelated', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian', subjectId: 'person-a' }))
-    await expect(service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'unrelated', photoUrl: 'photo' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'unrelated', contactMethods: [{ type: GuardianContactMethodType.Email, value: 'other@example.test', allowsNotifications: true }] })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test.each(['UPDATE guardians SET has_access = false WHERE id = \'guardian-a\'', 'UPDATE guardians SET subject_id = \'new-login\' WHERE id = \'guardian-a\''])('rechecks profile after %s', async (mutation) => {
-    await service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'guardian-a', photoUrl: 'first' })
+    await service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'guardian-a', contactMethods: [{ type: GuardianContactMethodType.Email, value: 'keep@example.test', allowsNotifications: true }] })
     await fixture.db.exec(mutation)
-    await expect(service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'guardian-a', photoUrl: 'second' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'guardian-a', contactMethods: [{ type: GuardianContactMethodType.Email, value: 'again@example.test', allowsNotifications: true }] })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('removed links cannot be recreated by a stale preference request', async () => {

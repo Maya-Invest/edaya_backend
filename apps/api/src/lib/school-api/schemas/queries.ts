@@ -27,6 +27,7 @@ export const dashboardActionItemSchema = z.object({
     "pending_justifications",
     "high_severity_incidents",
     "incomplete_grading",
+    "pending_student_photos",
   ]),
   count: z.number().int().nonnegative(),
   amount: z.number().int().nonnegative().optional(),

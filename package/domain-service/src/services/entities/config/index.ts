@@ -53,3 +53,4 @@ export { studentDisciplinaryActionConfig } from './students/student-disciplinary
 export { studentHealthProfileConfig } from './students/student-health-profile'
 export { studentIncidentInvolvementConfig } from './students/student-incident-involvement'
 export { studentNoteConfig, validateStudentNoteSave } from './students/student-note'
+export { studentPhotoSubmissionConfig, validateStudentPhotoSubmissionSave } from './students/student-photo-submission'

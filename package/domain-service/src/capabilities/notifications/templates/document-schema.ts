@@ -62,6 +62,8 @@ export const schoolNotificationTemplateDocumentPatchSchema = z.object({
   'assessment.due_soon': eventEntryPatchSchema.optional(),
   'activity.reminder': eventEntryPatchSchema.optional(),
   'calendar.event_reminder': eventEntryPatchSchema.optional(),
+  'student_photo.approved': eventEntryPatchSchema.optional(),
+  'student_photo.rejected': eventEntryPatchSchema.optional(),
   [ACCOUNT_INVITATION_TEMPLATE_KEY]: invitationEntryPatchSchema.optional(),
 }).partial()
 

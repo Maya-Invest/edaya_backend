@@ -2,7 +2,7 @@ import type { PublicEntityOperations } from "./public-operations";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, Fee, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentDisciplinaryAction, StudentFee, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -114,6 +114,7 @@ const apiEntityDecorations = {
   teacherUnavailabilities: decoration("teacher-unavailabilities", "Teacher Unavailabilities", entitySchemas.teacherUnavailabilityQuerySchema, entitySchemas.teacherUnavailabilityResponseSchema, TeacherUnavailability, PUBLIC_CRUD),
   guardianLinks: decoration("guardian-links", "Guardian Student Links", entitySchemas.guardianLinkQuerySchema, entitySchemas.guardianLinkResponseSchema, GuardianStudentLink, PUBLIC_CRUD),
   studentNotes: decoration("student-notes", "Student Notes", entitySchemas.studentNoteQuerySchema, entitySchemas.studentNoteResponseSchema, StudentNote, PUBLIC_CRUD),
+  studentPhotoSubmissions: decoration("student-photo-submissions", "Student Photo Submissions", entitySchemas.studentPhotoSubmissionQuerySchema, entitySchemas.studentPhotoSubmissionResponseSchema, StudentPhotoSubmission, COMMAND_ONLY),
   studentHealthProfiles: decoration("student-health-profiles", "Student Health Profiles", entitySchemas.studentHealthProfileQuerySchema, entitySchemas.studentHealthProfileResponseSchema, StudentHealthProfile, PUBLIC_CRUD),
   studentDisciplinaryActions: decoration("student-disciplinary-actions", "Student Disciplinary Actions", entitySchemas.studentDisciplinaryActionQuerySchema, entitySchemas.studentDisciplinaryActionResponseSchema, StudentDisciplinaryAction, PUBLIC_CRUD),
   disciplinaryActions: decoration("disciplinary-actions", "Disciplinary Actions", entitySchemas.disciplinaryActionQuerySchema, entitySchemas.disciplinaryActionResponseSchema, DisciplinaryAction, PUBLIC_CRUD),
@@ -229,6 +230,12 @@ export const coreCommands = [
   command("cancel-payment", "cancelPayment", commandSchemas.cancelPaymentCommandSchema),
   command("adjust-student-fee", "adjustStudentFee", commandSchemas.adjustStudentFeeCommandSchema),
   command("cancel-student-fee", "cancelStudentFee", commandSchemas.cancelStudentFeeCommandSchema),
+  command("create-profile-photo-upload", "createProfilePhotoUpload", commandSchemas.createProfilePhotoUploadCommandSchema),
+  command("complete-profile-photo-upload", "completeProfilePhotoUpload", commandSchemas.completeProfilePhotoUploadCommandSchema),
+  command("submit-student-photo", "submitStudentPhoto", commandSchemas.submitStudentPhotoCommandSchema),
+  command("withdraw-student-photo-submission", "withdrawStudentPhotoSubmission", commandSchemas.withdrawStudentPhotoSubmissionCommandSchema),
+  command("review-student-photo", "reviewStudentPhoto", commandSchemas.reviewStudentPhotoCommandSchema),
+  command("publish-student-photo", "publishStudentPhoto", commandSchemas.publishStudentPhotoCommandSchema),
   command("create-schedule", "createSchedule", commandSchemas.createScheduleCommandSchema),
   command("save-schedule", "saveSchedule", commandSchemas.saveScheduleCommandSchema),
   command("materialize-schedule", "materializeSchedule", commandSchemas.materializeScheduleCommandSchema),

@@ -189,6 +189,19 @@ const manualClientRoutes: Pick<
       basePath: "root",
       responseSchemaName: "AcceptInvitationResponse",
     },
+    listMyInvitations: {
+      method: "GET",
+      path: "public/me/invitations",
+      basePath: "root",
+      responseSchemaName: "ListMyInvitationsResponse",
+    },
+    acceptMyInvitation: {
+      method: "POST",
+      path: "public/me/invitations/{invitationId}/accept",
+      pathParams: ["invitationId"],
+      basePath: "root",
+      responseSchemaName: "AcceptInvitationResponse",
+    },
   },
 };
 

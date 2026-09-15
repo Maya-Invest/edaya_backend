@@ -32,6 +32,8 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'gradeLevels',
     'guardians',
     'classGroups',
+    'studentPhotoSubmissions',
+    'attachments',
   ],
   scheduling: [
     'schedules',

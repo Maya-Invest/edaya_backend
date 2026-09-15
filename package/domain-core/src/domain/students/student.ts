@@ -20,6 +20,7 @@ export const studentSchema = z.object({
   nationality: z.string().trim().min(1, 'nationality must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   matricule: z.string().trim().min(1, 'matricule must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
+  photoAttachmentId: z.string().trim().min(1, 'photoAttachmentId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   status: z.nativeEnum(StudentStatus).default(StudentStatus.Active),
   enrollmentDate: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
@@ -54,6 +55,7 @@ export class Student {
   get nationality() { return this.data.nationality }
   get matricule() { return this.data.matricule }
   get photoUrl() { return this.data.photoUrl }
+  get photoAttachmentId() { return this.data.photoAttachmentId }
   get subjectId() { return this.data.subjectId }
   get status() { return this.data.status }
   get enrollmentDate() { return this.data.enrollmentDate }
@@ -75,6 +77,7 @@ export class Student {
       nationality: this.nationality,
       matricule: this.matricule,
       photoUrl: this.photoUrl,
+      photoAttachmentId: this.photoAttachmentId,
       subjectId: this.subjectId,
       status: this.status,
       enrollmentDate: this.enrollmentDate,

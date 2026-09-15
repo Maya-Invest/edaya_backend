@@ -95,7 +95,7 @@ export async function createAttachmentUpload(base: BaseSchoolService, input: Cre
     if (value !== undefined && (!value.trim() || value !== value.trim()))
       fail('ATTACHMENT_UPLOAD_METADATA_INVALID', 'Upload metadata must be nonempty and have no surrounding whitespace')
   }
-  assertUploadPolicyAllowed(input)
+  assertUploadPolicyAllowed(input, policy)
   const id = input.attachmentId ?? `att-${crypto.randomUUID()}`
   let current: AttachmentUploadIntent | undefined
   const acceptedInput = { attachmentId: id, ownerKind: input.ownerKind, ownerId: input.ownerId, purpose, fileName: input.fileName, mimeType: input.mimeType, sizeBytes: input.sizeBytes }

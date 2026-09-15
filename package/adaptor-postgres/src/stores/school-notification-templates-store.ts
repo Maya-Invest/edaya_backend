@@ -1,4 +1,4 @@
-import type { Filter, QueryOptions, SchoolNotificationTemplateCatalog } from '@edaya/core'
+import type { EventNotificationTemplateEntry, Filter, QueryOptions } from '@edaya/core'
 import { SchoolNotificationTemplates } from '@edaya/core'
 import { buildDefaultNotificationTemplateDocument, mergeNotificationTemplateCatalogs } from '@edaya/service'
 import * as schema from '../postgres-schema'
@@ -8,6 +8,17 @@ type SchoolNotificationTemplatesRow = typeof schema.schoolNotificationTemplates.
 type SchoolNotificationTemplatesQuery
   = QueryOptions<SchoolNotificationTemplates>
     | Filter<SchoolNotificationTemplates>
+
+function pendingStudentPhotoTemplate(title: string, body: string): EventNotificationTemplateEntry {
+  return {
+    enable_email: true,
+    enable_push: true,
+    enable_sms: false,
+    base_message: { title, body },
+    rich_message: { subject: title, body: `<p>${body}</p>` },
+    simple_message: { body: `${title}: ${body}` },
+  }
+}
 
 export function normalizeSchoolNotificationTemplatesQuery(
   options?: SchoolNotificationTemplatesQuery,
@@ -45,13 +56,15 @@ function packTemplateRow(entity: SchoolNotificationTemplates): SchoolNotificatio
     assessmentDueSoon: entity.assessmentDueSoon,
     activityReminder: entity.activityReminder,
     calendarEventReminder: entity.calendarEventReminder,
+    studentPhotoApproved: entity.studentPhotoApproved ?? null,
+    studentPhotoRejected: entity.studentPhotoRejected ?? null,
     accountInvitation: entity.accountInvitation,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
   }
 }
 
-function storedCatalog(row: SchoolNotificationTemplatesRow): SchoolNotificationTemplateCatalog {
+function storedCatalog(row: SchoolNotificationTemplatesRow) {
   return {
     invitationSmsEnabled: row.invitationSmsEnabled,
     announcementPublished: row.announcementPublished,
@@ -62,6 +75,14 @@ function storedCatalog(row: SchoolNotificationTemplatesRow): SchoolNotificationT
     assessmentDueSoon: row.assessmentDueSoon,
     activityReminder: row.activityReminder,
     calendarEventReminder: row.calendarEventReminder,
+    studentPhotoApproved: row.studentPhotoApproved ?? pendingStudentPhotoTemplate(
+      'Photo approved',
+      'The portrait is now published.',
+    ),
+    studentPhotoRejected: row.studentPhotoRejected ?? pendingStudentPhotoTemplate(
+      'Photo not approved',
+      'The school did not approve this portrait.',
+    ),
     accountInvitation: row.accountInvitation,
   }
 }

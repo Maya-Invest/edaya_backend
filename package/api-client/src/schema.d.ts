@@ -2163,6 +2163,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/create-profile-photo-upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** create-profile-photo-upload */
+        post: operations["commands.createProfilePhotoUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/complete-profile-photo-upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** complete-profile-photo-upload */
+        post: operations["commands.completeProfilePhotoUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/submit-student-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** submit-student-photo */
+        post: operations["commands.submitStudentPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/withdraw-student-photo-submission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** withdraw-student-photo-submission */
+        post: operations["commands.withdrawStudentPhotoSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/review-student-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** review-student-photo */
+        post: operations["commands.reviewStudentPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/publish-student-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** publish-student-photo */
+        post: operations["commands.publishStudentPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-schedule": {
         parameters: {
             query?: never;
@@ -8776,6 +8878,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/student-photo-submissions/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Student Photo Submissions */
+        post: operations["entities.studentPhotoSubmissions.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-photo-submissions/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Student Photo Submissions */
+        post: operations["entities.studentPhotoSubmissions.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-photo-submissions/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Student Photo Submissions */
+        post: operations["entities.studentPhotoSubmissions.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-photo-submissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student Photo Submissions */
+        get: operations["entities.studentPhotoSubmissions.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/student-health-profiles/list": {
         parameters: {
             query?: never;
@@ -10462,6 +10632,7 @@ export interface components {
             nationality?: string | null;
             matricule?: string | null;
             photoUrl?: string | null;
+            photoAttachmentId?: string | null;
             subjectId?: string | null;
             /**
              * @default active
@@ -10851,6 +11022,7 @@ export interface components {
             firstName: string;
             lastName: string;
             birthDate?: unknown;
+            photoAttachmentId?: string | null;
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
             inviteEmail?: string;
@@ -11001,7 +11173,6 @@ export interface components {
             placeOfBirth?: string | null;
             nationality?: string | null;
             matricule?: string | null;
-            photoUrl?: string | null;
             subjectId?: string | null;
             enrollmentDate?: unknown;
             studentId: string;
@@ -11912,6 +12083,85 @@ export interface components {
             cancelledAt?: string | null;
             updatedAt?: string | null;
         };
+        CreateProfilePhotoUploadResponse: {
+            attachmentId: string;
+            storageKey: string;
+            /** Format: uri */
+            uploadUrl: string;
+            expiresAt: string | null;
+            headers?: {
+                [key: string]: string;
+            };
+            /** @enum {string} */
+            status: "pending_upload";
+        };
+        CreateProfilePhotoUploadCommand: {
+            /** @enum {string} */
+            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "staff" | "other";
+            ownerId: string;
+            fileName: string;
+            mimeType: string;
+            sizeBytes: number;
+            attachmentId?: string;
+        };
+        CompleteProfilePhotoUploadCommand: {
+            id: string;
+            schoolId: string;
+            /** @enum {string} */
+            ownerKind: "student_health_profile" | "incident" | "student" | "guardian" | "report_card" | "payment" | "attendance_record" | "assessment_result" | "student_enrollment" | "applied_disciplinary_action" | "staff" | "other";
+            ownerId: string;
+            purpose?: string;
+            fileName: string;
+            storageKey?: string | null;
+            fileUrl?: string | null;
+            /**
+             * @default ready
+             * @enum {string}
+             */
+            status: "pending_upload" | "ready" | "failed";
+            checksum?: string | null;
+            mimeType?: string | null;
+            sizeBytes?: number | null;
+            createdAt?: unknown;
+        };
+        StudentPhotoSubmission: {
+            id: string;
+            schoolId: string;
+            studentId: string;
+            attachmentId: string;
+            submitterGuardianId: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "superseded" | "withdrawn";
+            version: number;
+            reviewerStaffId?: string | null;
+            reviewedAt?: unknown;
+            rejectionReason?: string | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        SubmitStudentPhotoCommand: {
+            requestId: string;
+            studentId: string;
+            attachmentId: string;
+        };
+        WithdrawStudentPhotoSubmissionCommand: {
+            requestId: string;
+            submissionId: string;
+            expectedVersion: number;
+        };
+        ReviewStudentPhotoCommand: {
+            requestId: string;
+            submissionId: string;
+            expectedVersion: number;
+            /** @enum {string} */
+            decision: "approve" | "reject";
+            rejectionReason?: string;
+        };
+        PublishStudentPhotoCommand: {
+            requestId: string;
+            studentId: string;
+            attachmentId: string;
+        };
         Schedule: {
             id: string;
             schoolId: string;
@@ -12530,6 +12780,44 @@ export interface components {
                     body: string;
                 };
             };
+            studentPhotoApproved: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            studentPhotoRejected: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
             accountInvitation: {
                 rich_message: {
                     subject: string;
@@ -12555,7 +12843,7 @@ export interface components {
         ResetSchoolNotificationTemplatesCommand: {
             schoolId: string;
             /** @enum {string} */
-            templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "account_invitation";
+            templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "student_photo.approved" | "student_photo.rejected" | "account_invitation";
         };
         CountResponse: {
             count: number;
@@ -12582,7 +12870,7 @@ export interface components {
         };
         DashboardActionItem: {
             /** @enum {string} */
-            key: "overdue_fees" | "unpublished_report_cards" | "pending_justifications" | "high_severity_incidents" | "incomplete_grading";
+            key: "overdue_fees" | "unpublished_report_cards" | "pending_justifications" | "high_severity_incidents" | "incomplete_grading" | "pending_student_photos";
             count: number;
             amount?: number;
         };
@@ -12945,27 +13233,28 @@ export interface components {
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_50: Record<string, never>;
+        Filter_51: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_51: Record<string, never>;
+        Filter_50: Record<string, never>;
+        Filter_52: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_52: Record<string, never>;
+        Filter_53: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
-        Filter_53: Record<string, never>;
+        Filter_54: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_54: Record<string, never>;
+        Filter_55: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_55: Record<string, never>;
+        Filter_56: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };
@@ -22043,6 +22332,474 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentFee"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.createProfilePhotoUpload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description create-profile-photo-upload payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateProfilePhotoUploadCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed create-profile-photo-upload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateProfilePhotoUploadResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.completeProfilePhotoUpload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description complete-profile-photo-upload payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CompleteProfilePhotoUploadCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed complete-profile-photo-upload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attachment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.submitStudentPhoto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description submit-student-photo payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitStudentPhotoCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed submit-student-photo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.withdrawStudentPhotoSubmission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description withdraw-student-photo-submission payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WithdrawStudentPhotoSubmissionCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed withdraw-student-photo-submission */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.reviewStudentPhoto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description review-student-photo payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReviewStudentPhotoCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed review-student-photo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.publishStudentPhoto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description publish-student-photo payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PublishStudentPhotoCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed publish-student-photo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Student"];
                 };
             };
             /** @description Invalid request payload */
@@ -55073,7 +55830,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55159,7 +55916,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55256,7 +56013,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55760,6 +56517,363 @@ export interface operations {
             };
         };
     };
+    "entities.studentPhotoSubmissions.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Photo Submissions query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_50"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Student Photo Submissions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentPhotoSubmissions.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Photo Submissions query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_50"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Student Photo Submissions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Photo Submissions not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentPhotoSubmissions.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Photo Submissions query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_50"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Student Photo Submissions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentPhotoSubmissions.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Student Photo Submissions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPhotoSubmission"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Photo Submissions not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "entities.studentHealthProfiles.list": {
         parameters: {
             query?: never;
@@ -55770,7 +56884,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55856,7 +56970,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55953,7 +57067,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56467,7 +57581,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56553,7 +57667,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56650,7 +57764,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57164,7 +58278,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57250,7 +58364,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57347,7 +58461,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57861,7 +58975,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57947,7 +59061,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58044,7 +59158,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58558,7 +59672,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58644,7 +59758,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58741,7 +59855,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */

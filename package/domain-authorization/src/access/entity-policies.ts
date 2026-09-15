@@ -68,6 +68,7 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
   studentHealthProfiles: { read: [Permission.STUDENT_HEALTH_READ], write: [Permission.STUDENT_HEALTH_UPDATE] },
   studentIncidentInvolvements: { read: [Permission.DISCIPLINE_READ], write: (_entity, existing) => existing ? Permission.DISCIPLINE_UPDATE : Permission.DISCIPLINE_CREATE, delete: Permission.DISCIPLINE_ARCHIVE },
   studentNotes: { read: [Permission.QUERY_STUDENT_DIRECTORY_READ, Permission.QUERY_STUDENT_DETAIL_READ], write: [Permission.CLASS_LOGBOOK_UPDATE] },
+  studentPhotoSubmissions: { read: [Permission.STUDENT_UPDATE, Permission.QUERY_STUDENT_DETAIL_READ], write: [Permission.STUDENT_UPDATE, Permission.PARENT_UPDATE] },
   students: { read: [Permission.STUDENT_READ, Permission.QUERY_STUDENT_DIRECTORY_READ, Permission.QUERY_STUDENT_DETAIL_READ], write: (entity, existing) => !existing ? Permission.STUDENT_CREATE : existing.status !== entity.status && entity.status !== 'active' ? Permission.STUDENT_ARCHIVE : Permission.STUDENT_UPDATE, delete: Permission.STUDENT_ARCHIVE },
 }
 

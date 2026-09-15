@@ -7,6 +7,8 @@ export const EVENT_NOTIFICATION_TEMPLATE_KEYS = [
   'assessment.due_soon',
   'activity.reminder',
   'calendar.event_reminder',
+  'student_photo.approved',
+  'student_photo.rejected',
 ] as const
 
 export const ACCOUNT_INVITATION_TEMPLATE_KEY = 'account_invitation' as const
@@ -28,6 +30,8 @@ export const NOTIFICATION_TEMPLATE_FIELDS = {
   'assessment.due_soon': 'assessmentDueSoon',
   'activity.reminder': 'activityReminder',
   'calendar.event_reminder': 'calendarEventReminder',
+  'student_photo.approved': 'studentPhotoApproved',
+  'student_photo.rejected': 'studentPhotoRejected',
   'account_invitation': 'accountInvitation',
 } as const satisfies Record<NotificationTemplateKey, string>
 
@@ -42,5 +46,7 @@ export const NOTIFICATION_TEMPLATE_SQL_COLUMNS = {
   'assessment.due_soon': 'assessment_due_soon',
   'activity.reminder': 'activity_reminder',
   'calendar.event_reminder': 'calendar_event_reminder',
+  'student_photo.approved': 'student_photo_approved',
+  'student_photo.rejected': 'student_photo_rejected',
   'account_invitation': 'account_invitation',
 } as const satisfies Record<NotificationTemplateKey, string>

@@ -1,10 +1,27 @@
-import type { ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput } from '@edaya/core'
+import type { Attachment, AttachmentInput, ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput, StudentPhotoSubmission } from '@edaya/core'
+import type {
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+import type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
 import type { BaseSchoolService } from '../base-school-service'
 import type { StudentWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { AccountInvitationKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core'
+import { AccountInvitationKind, AttachmentOwnerKind, BusinessRuleViolationError, EnrollmentEndReason, Guardian, GuardianStudentLink, ProgressionDecision, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentHealthProfile as StudentHealthProfileEntity, StudentNote as StudentNoteEntity, StudentStatus } from '@edaya/core'
+import {
+  completeProfilePhotoUpload,
+  createProfilePhotoUpload,
+  publishStudentPhoto,
+  reviewStudentPhoto,
+  submitStudentPhoto,
+  withdrawStudentPhotoSubmission,
+} from '../../capabilities/files'
+import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
 import { resolveStudentInvitationEmail, scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
-
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
@@ -76,7 +93,7 @@ export interface RecordProgressionDecisionInput {
   notes?: string
 }
 
-export interface UpdateStudentProfileInput extends Partial<StudentInput> {
+export interface UpdateStudentProfileInput extends Partial<Omit<StudentInput, 'photoUrl' | 'photoAttachmentId'>> {
   studentId: string
 }
 
@@ -106,6 +123,16 @@ export interface UpdateGuardianStudentLinkInput extends Partial<ConstructorParam
   guardianId: string
   studentId: string
 }
+
+export type {
+  CreateProfilePhotoUploadInput,
+} from '../../capabilities/files/profile-photo-uploads'
+export type {
+  PublishStudentPhotoInput,
+  ReviewStudentPhotoInput,
+  SubmitStudentPhotoInput,
+  WithdrawStudentPhotoSubmissionInput,
+} from '../../capabilities/files/student-photos'
 
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
   private readonly repositories: StudentWorkflowRepositories
@@ -407,7 +434,8 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   async updateStudentProfile({ studentId, ...changes }: UpdateStudentProfileInput): Promise<Student> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.students, studentId)
-      const student = existing.copyWith(changes)
+      const { photoUrl: _photoUrl, photoAttachmentId: _photoAttachmentId, ...profile } = changes as Partial<StudentInput>
+      const student = existing.copyWith(profile)
       await this.baseService.entities.students.save(student)
       return student
     })
@@ -469,6 +497,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   async updateGuardianContactMethods({ guardianId, ...changes }: UpdateGuardianContactMethodsInput): Promise<Guardian> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireEntity(this.baseService.entities.guardians, guardianId)
+      await assertImmediatePortraitPhotoUrl(this.baseService, AttachmentOwnerKind.Guardian, guardianId, changes.photoUrl)
       const guardian = new Guardian({
         ...existing.data,
         phone: undefined,
@@ -557,6 +586,30 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     }
     await this.baseService.access.enrollments.assertUpdate({ studentId: enrollment.studentId, classGroupId: nextClassGroup.id })
     return nextClassGroup
+  }
+
+  async createProfilePhotoUpload(input: CreateProfilePhotoUploadInput) {
+    return createProfilePhotoUpload(this.baseService, input)
+  }
+
+  async completeProfilePhotoUpload(input: AttachmentInput): Promise<Attachment> {
+    return completeProfilePhotoUpload(this.baseService, input)
+  }
+
+  async submitStudentPhoto(input: SubmitStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return submitStudentPhoto(this.baseService, input)
+  }
+
+  async withdrawStudentPhotoSubmission(input: WithdrawStudentPhotoSubmissionInput): Promise<StudentPhotoSubmission> {
+    return withdrawStudentPhotoSubmission(this.baseService, input)
+  }
+
+  async reviewStudentPhoto(input: ReviewStudentPhotoInput): Promise<StudentPhotoSubmission> {
+    return reviewStudentPhoto(this.baseService, input)
+  }
+
+  async publishStudentPhoto(input: PublishStudentPhotoInput): Promise<Student> {
+    return publishStudentPhoto(this.baseService, input)
   }
 
   private async createSuccessorEnrollment({

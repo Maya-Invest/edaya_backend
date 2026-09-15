@@ -25,6 +25,7 @@ const directDeleteGateExceptions = new Set([
   'students/guardian-student-link.ts',
   'students/student-health-profile.ts',
   'students/student-note.ts',
+  'students/student-photo-submission.ts',
 ])
 
 interface ConfigSource {
