@@ -388,6 +388,34 @@ describe('AccountInvitationServiceWorkflow', () => {
       contactValue: 'p.martin@school.edu',
     })).rejects.toMatchObject({ code: 'OWNER_SUBJECT_ALREADY_ASSIGNED' })
   })
+
+  test('acceptAccountInvitationById links a guardian without a token', async () => {
+    const guardian = new Guardian({
+      id: 'gua-session',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      email: 'grace@school.edu',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    })
+    const { service, accountInvitations, repositories } = await createInvitationContext({ guardians: [guardian] })
+    const { invitation } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Guardian,
+      targetId: guardian.id,
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    const result = await invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitationById({
+      invitationId: invitation.id,
+      subjectId: 'auth-user-1',
+      contactValue: 'grace@school.edu',
+    })
+
+    expect(result.kind).toBe('guardian')
+    expect(result.entity.subjectId).toBe('auth-user-1')
+    expect((await repositories.guardians.findById(guardian.id))?.subjectId).toBe('auth-user-1')
+    expect((await accountInvitations.findById(invitation.id))?.status).toBe(AccountInvitationStatus.Accepted)
+  })
 })
 
 describe('invitation token helpers', () => {

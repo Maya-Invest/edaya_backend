@@ -85,6 +85,14 @@ Do not add `localhost` to associated domains. Universal Links and App Links do n
 - [ ] Authenticated redeem that creates/reuses the intended guardian–student link without a delivered invitation.
 - [ ] Human-enterable code in mail/SMS and an in-app entry surface for phones that never see the mailbox.
 
+### 01.5 — Session list and accept (follow-on)
+
+Verified guardian Email OTP sessions can list pending **email-channel guardian** invitations and accept one by id from the waiting screen (no linked students). Token preview/accept stays for mail and deep links. Staff, teacher, student, and phone-channel invites stay on the token path. Never auto-accept. Pairing codes remain later.
+
+- [x] `GET /public/me/invitations` and `POST /public/me/invitations/{invitationId}/accept` via identity-only admission; `kind=guardian`, verified email, contact match.
+- [x] Waiting screen lists pending invites and requires an explicit Accept tap.
+- [x] Token routes unchanged.
+
 ## Local testing (OS will not verify localhost)
 
 1. **App logic** — unit tests feed `https://staging.app.edayaplus.com/invite/{token}` into the parser, pending store, and router.

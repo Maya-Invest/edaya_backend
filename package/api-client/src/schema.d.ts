@@ -379,6 +379,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/me/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List pending guardian invitations for the signed-in identity */
+        get: operations["public.listMyInvitations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/me/invitations/{invitationId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a pending guardian invitation for the signed-in identity */
+        post: operations["public.acceptMyInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/invitations/{token}": {
         parameters: {
             query?: never;
@@ -9964,20 +9998,19 @@ export interface components {
         RotateS2sClientKeyRequest: {
             apiKey?: string;
         };
-        InvitationPreviewResponse: {
+        SessionInvitation: {
+            id: string;
+            /** @enum {string} */
+            kind: "guardian";
             /** @enum {string} */
             status: "pending" | "accepted" | "revoked" | "expired";
-            /** @enum {string} */
-            kind: "staff" | "guardian" | "student" | "teacher";
-            targetId: string;
             expiresAt: string | null;
             schoolName: string;
             inviteeName: string;
             contactChannel: string;
-            /** Format: email */
-            contactEmail?: string;
-            contactPhone?: string;
-            authAccountExists?: boolean;
+        };
+        ListMyInvitationsResponse: {
+            invitations: components["schemas"]["SessionInvitation"][];
         };
         AcceptInvitationResponse: {
             /** @enum {string} */
@@ -9997,6 +10030,21 @@ export interface components {
             entity: {
                 [key: string]: unknown;
             };
+        };
+        InvitationPreviewResponse: {
+            /** @enum {string} */
+            status: "pending" | "accepted" | "revoked" | "expired";
+            /** @enum {string} */
+            kind: "staff" | "guardian" | "student" | "teacher";
+            targetId: string;
+            expiresAt: string | null;
+            schoolName: string;
+            inviteeName: string;
+            contactChannel: string;
+            /** Format: email */
+            contactEmail?: string;
+            contactPhone?: string;
+            authAccountExists?: boolean;
         };
         CreateFileUploadIntentResponse: {
             attachmentId: string;
@@ -14656,6 +14704,165 @@ export interface operations {
             };
             /** @description Access denied due to authorization policies */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "public.listMyInvitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pending invitations for this identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListMyInvitationsResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "public.acceptMyInvitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked actor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptInvitationResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invitation not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

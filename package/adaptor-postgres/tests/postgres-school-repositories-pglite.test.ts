@@ -1,4 +1,4 @@
-import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -191,5 +191,41 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       completedPercentage: 25,
       notes: `progress-${batchSize - 1}`,
     })
+  })
+
+  test('finds pending invitations by contact and excludes expired or other kinds', async () => {
+    const pending = new AccountInvitation({
+      id: 'inv-pending',
+      schoolId: 'school-1',
+      kind: AccountInvitationKind.Guardian,
+      targetId: 'guardian-1',
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: 'parent@school.edu',
+      tokenHash: 'a'.repeat(64),
+      status: AccountInvitationStatus.Pending,
+      expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+      createdByStaffId: 'staff-1',
+    })
+    const expired = pending.copyWith({
+      id: 'inv-expired',
+      tokenHash: 'b'.repeat(64),
+      expiresAt: new Date('2000-01-01T00:00:00.000Z'),
+    })
+    const staff = pending.copyWith({
+      id: 'inv-staff',
+      kind: AccountInvitationKind.Staff,
+      targetId: 'staff-1',
+      tokenHash: 'c'.repeat(64),
+    })
+    await repos.accountInvitations.save(pending)
+    await repos.accountInvitations.save(expired)
+    await repos.accountInvitations.save(staff)
+
+    const found = await repos.accountInvitations.findPendingByContact({
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: 'parent@school.edu',
+      kind: AccountInvitationKind.Guardian,
+    })
+    expect(found.map(invitation => invitation.id)).toEqual(['inv-pending'])
   })
 })

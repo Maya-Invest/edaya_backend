@@ -15,6 +15,7 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'service_api_keys', columns: { staffMemberId: 'staff_member_id' }, minIndexes: 1 },
   { tableName: 'platform_users', columns: { subjectId: 'subject_id', email: 'email' }, minIndexes: 2 },
   { tableName: 's2s_clients', columns: { keyHash: 'key_hash', schoolId: 'school_id', clientId: 'client_id' }, minIndexes: 3 },
+  { tableName: 'account_invitations', columns: { contactChannel: 'contact_channel', contactValue: 'contact_value', status: 'status' }, minIndexes: 1 },
   { tableName: 'staff_assignments', columns: { staffId: 'staff_id', classGroupId: 'class_group_id' }, minIndexes: 2 },
   { tableName: 'staff_permission_assignments', columns: { staffId: 'staff_id', schoolId: 'school_id', academicYearId: 'academic_year_id' }, minIndexes: 3 },
   { tableName: 'attachments', columns: { schoolId: 'school_id', ownerKind: 'owner_kind', ownerId: 'owner_id' }, minIndexes: 2 },

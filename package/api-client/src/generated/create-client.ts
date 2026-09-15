@@ -64,6 +64,8 @@ type PlatformUsersClients<TSchemas extends Record<string, unknown>> = {
 }
 
 type PublicClients<TSchemas extends Record<string, unknown>> = {
+  listMyInvitations: () => Promise<SchemaName<TSchemas, 'ListMyInvitationsResponse'>>
+  acceptMyInvitation: (params: { invitationId: string }) => Promise<SchemaName<TSchemas, 'AcceptInvitationResponse'>>
   previewInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'InvitationPreviewResponse'>>
   acceptInvitation: (params: { token: string }) => Promise<SchemaName<TSchemas, 'AcceptInvitationResponse'>>
 }
@@ -160,6 +162,8 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     deactivate: (params: { id: string }) => transport.request('POST', resolveClientRoutePath('platform-users/{id}/deactivate', params)),
   } as PlatformUsersClients<TSchemas>,
     public: {
+    listMyInvitations: () => transport.request('GET', resolveClientRoutePath('public/me/invitations', {}, 'root')),
+    acceptMyInvitation: (params: { invitationId: string }) => transport.request('POST', resolveClientRoutePath('public/me/invitations/{invitationId}/accept', params, 'root')),
     previewInvitation: (params: { token: string }) => transport.request('GET', resolveClientRoutePath('public/invitations/{token}', params, 'root')),
     acceptInvitation: (params: { token: string }) => transport.request('POST', resolveClientRoutePath('public/invitations/{token}/accept', params, 'root')),
   } as PublicClients<TSchemas>,

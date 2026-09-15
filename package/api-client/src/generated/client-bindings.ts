@@ -1491,6 +1491,21 @@ export const clientBindings = {
       }
     },
     "public": {
+      "listMyInvitations": {
+        "method": "GET",
+        "path": "public/me/invitations",
+        "responseSchemaName": "ListMyInvitationsResponse",
+        "basePath": "root"
+      },
+      "acceptMyInvitation": {
+        "method": "POST",
+        "path": "public/me/invitations/{invitationId}/accept",
+        "pathParams": [
+          "invitationId"
+        ],
+        "responseSchemaName": "AcceptInvitationResponse",
+        "basePath": "root"
+      },
       "previewInvitation": {
         "method": "GET",
         "path": "public/invitations/{token}",

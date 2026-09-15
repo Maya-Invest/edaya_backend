@@ -26,6 +26,20 @@ const invitationPreviewResponseSchema = z.object({
   authAccountExists: z.boolean().optional(),
 }).openapi("InvitationPreviewResponse");
 
+const sessionInvitationSchema = z.object({
+  id: z.string(),
+  kind: z.literal(AccountInvitationKind.Guardian),
+  status: z.nativeEnum(AccountInvitationStatus),
+  expiresAt: z.coerce.date(),
+  schoolName: z.string(),
+  inviteeName: z.string(),
+  contactChannel: z.string(),
+}).openapi("SessionInvitation");
+
+const listMyInvitationsResponseSchema = z.object({
+  invitations: z.array(sessionInvitationSchema),
+}).openapi("ListMyInvitationsResponse");
+
 const acceptInvitationResponseSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("staff"),
@@ -40,6 +54,49 @@ const acceptInvitationResponseSchema = z.discriminatedUnion("kind", [
     entity: z.record(z.unknown()),
   }),
 ]).openapi("AcceptInvitationResponse");
+
+export const listMyInvitationsRoute = createRoute({
+  method: "get",
+  path: "/public/me/invitations",
+  tags: ["Public Invitations"],
+  summary: "List pending guardian invitations for the signed-in identity",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "listMyInvitations",
+    path: "public/me/invitations",
+    basePath: "root",
+    responseSchemaName: "ListMyInvitationsResponse",
+  }),
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(listMyInvitationsResponseSchema, "Pending invitations for this identity"),
+    ...coreRouteErrorResponses,
+  },
+});
+
+export const acceptMyInvitationRoute = createRoute({
+  method: "post",
+  path: "/public/me/invitations/{invitationId}/accept",
+  tags: ["Public Invitations"],
+  summary: "Accept a pending guardian invitation for the signed-in identity",
+  ...clientRouteOperation({
+    namespace: "public",
+    clientKey: "acceptMyInvitation",
+    path: "public/me/invitations/{invitationId}/accept",
+    pathParams: ["invitationId"],
+    basePath: "root",
+    responseSchemaName: "AcceptInvitationResponse",
+  }),
+  request: {
+    params: z.object({
+      invitationId: z.string().min(1),
+    }),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(acceptInvitationResponseSchema, "Linked actor"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(createMessageObjectSchema(), "Invitation not found"),
+    ...coreRouteErrorResponses,
+  },
+});
 
 export const invitationPreviewRoute = createRoute({
   method: "get",
@@ -117,6 +174,67 @@ async function resolveInviteeName(
   const student = await repositories.students.findById(invitation.targetId) as Student | undefined;
   return student ? resolveInviteeDisplayName(student) : "Student";
 }
+
+async function toSessionInvitation(
+  repositories: SchoolRepositories,
+  invitation: AccountInvitation,
+): Promise<z.infer<typeof sessionInvitationSchema>> {
+  const school = await repositories.schools.findById(invitation.schoolId);
+  const inviteeName = await resolveInviteeName(repositories, invitation);
+  return {
+    id: invitation.id,
+    kind: AccountInvitationKind.Guardian,
+    status: invitation.status,
+    expiresAt: invitation.expiresAt,
+    schoolName: school?.name ?? "School",
+    inviteeName,
+    contactChannel: invitation.contactChannel,
+  };
+}
+
+export const listMyInvitationsHandler: AppRouteHandler<typeof listMyInvitationsRoute> = async (c) => {
+  const entry = await admitIdentityOnlyEntry({
+    headers: c.req.raw.headers,
+    identityClient: c.var.identityClient,
+    schoolApp: c.var.schoolApp,
+    selectedActor: c.var.actor,
+  });
+  if (!entry) {
+    return unauthorizedResponse(c);
+  }
+
+  const invitations = await entry.listMyInvitations();
+  const repositories = c.var.schoolApp.repositories;
+  return c.json({
+    invitations: await Promise.all(invitations.map(invitation => toSessionInvitation(repositories, invitation))),
+  }, HttpStatusCodes.OK);
+};
+
+export const acceptMyInvitationHandler: AppRouteHandler<typeof acceptMyInvitationRoute> = async (c) => {
+  const entry = await admitIdentityOnlyEntry({
+    headers: c.req.raw.headers,
+    identityClient: c.var.identityClient,
+    schoolApp: c.var.schoolApp,
+    selectedActor: c.var.actor,
+  });
+  if (!entry) {
+    return unauthorizedResponse(c);
+  }
+
+  try {
+    const result = await entry.acceptInvitationById(c.req.valid("param").invitationId);
+    if (!result) {
+      return c.json({ message: "Invitation not found" }, HttpStatusCodes.NOT_FOUND);
+    }
+    return c.json(
+      serializeCommandResult(result) as z.infer<typeof acceptInvitationResponseSchema>,
+      HttpStatusCodes.OK,
+    );
+  }
+  catch (err) {
+    return routeErrorResponse(c, err);
+  }
+};
 
 export const invitationPreviewHandler: AppRouteHandler<typeof invitationPreviewRoute> = async (c) => {
   const token = c.req.valid("param").token;

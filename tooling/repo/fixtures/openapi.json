@@ -3019,9 +3019,18 @@
           }
         }
       },
-      "InvitationPreviewResponse": {
+      "SessionInvitation": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "guardian"
+            ]
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -3030,18 +3039,6 @@
               "revoked",
               "expired"
             ]
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "staff",
-              "guardian",
-              "student",
-              "teacher"
-            ]
-          },
-          "targetId": {
-            "type": "string"
           },
           "expiresAt": {
             "type": "string",
@@ -3055,26 +3052,30 @@
           },
           "contactChannel": {
             "type": "string"
-          },
-          "contactEmail": {
-            "type": "string",
-            "format": "email"
-          },
-          "contactPhone": {
-            "type": "string"
-          },
-          "authAccountExists": {
-            "type": "boolean"
           }
         },
         "required": [
-          "status",
+          "id",
           "kind",
-          "targetId",
+          "status",
           "expiresAt",
           "schoolName",
           "inviteeName",
           "contactChannel"
+        ]
+      },
+      "ListMyInvitationsResponse": {
+        "type": "object",
+        "properties": {
+          "invitations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionInvitation"
+            }
+          }
+        },
+        "required": [
+          "invitations"
         ]
       },
       "AcceptInvitationResponse": {
@@ -3142,6 +3143,64 @@
               "entity"
             ]
           }
+        ]
+      },
+      "InvitationPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "revoked",
+              "expired"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "staff",
+              "guardian",
+              "student",
+              "teacher"
+            ]
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "inviteeName": {
+            "type": "string"
+          },
+          "contactChannel": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "authAccountExists": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "kind",
+          "targetId",
+          "expiresAt",
+          "schoolName",
+          "inviteeName",
+          "contactChannel"
         ]
       },
       "CreateFileUploadIntentResponse": {
@@ -18158,6 +18217,281 @@
           },
           "403": {
             "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/me/invitations": {
+      "get": {
+        "tags": [
+          "Public Invitations"
+        ],
+        "summary": "List pending guardian invitations for the signed-in identity",
+        "operationId": "public.listMyInvitations",
+        "x-edaya-kind": "public",
+        "x-edaya-client-key": "listMyInvitations",
+        "x-edaya-client-path": "public/me/invitations",
+        "x-edaya-response-schema": "ListMyInvitationsResponse",
+        "x-edaya-base-path": "root",
+        "responses": {
+          "200": {
+            "description": "Pending invitations for this identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMyInvitationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/me/invitations/{invitationId}/accept": {
+      "post": {
+        "tags": [
+          "Public Invitations"
+        ],
+        "summary": "Accept a pending guardian invitation for the signed-in identity",
+        "operationId": "public.acceptMyInvitation",
+        "x-edaya-kind": "public",
+        "x-edaya-client-key": "acceptMyInvitation",
+        "x-edaya-client-path": "public/me/invitations/{invitationId}/accept",
+        "x-edaya-response-schema": "AcceptInvitationResponse",
+        "x-edaya-path-params": [
+          "invitationId"
+        ],
+        "x-edaya-base-path": "root",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "invitationId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Linked actor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invitation not found",
             "content": {
               "application/json": {
                 "schema": {

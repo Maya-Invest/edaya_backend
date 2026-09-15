@@ -23,23 +23,43 @@ async function headers(aud = audience, expSeconds = 900) {
 
 function fixture() {
   const accept = mock(async (_input: { token: string; subjectId: string; contactValue?: string }) => ({ kind: "guardian", entity: { id: "guardian" } }));
-  const forActor = mock((_actor: ActorMetadata) => ({ accountInvitationWorkflow: { acceptAccountInvitation: accept } }));
-  const find = mock(async (hash: string) => hash === hashInvitationToken("valid-credential")
-    ? {
-        schoolId: "credential-school",
-        targetId: "guardian",
-        kind: AccountInvitationKind.Guardian,
-        contactChannel: AccountInvitationContactChannel.Email,
-      }
-    : undefined);
-  return { accept, forActor, find, schoolApp: { repositories: { accountInvitations: { findByTokenHash: find } }, forActor } as unknown as ApiSchoolApplication };
+  const acceptById = mock(async (_input: { invitationId: string; subjectId: string; contactValue?: string }) => ({ kind: "guardian", entity: { id: "guardian" } }));
+  const forActor = mock((_actor: ActorMetadata) => ({
+    accountInvitationWorkflow: { acceptAccountInvitation: accept, acceptAccountInvitationById: acceptById },
+  }));
+  const invitation = {
+    id: "inv-guardian",
+    schoolId: "credential-school",
+    targetId: "guardian",
+    kind: AccountInvitationKind.Guardian,
+    contactChannel: AccountInvitationContactChannel.Email,
+    contactValue: "guardian@example.test",
+  };
+  const find = mock(async (hash: string) => hash === hashInvitationToken("valid-credential") ? invitation : undefined);
+  const findById = mock(async (id: string) => id === invitation.id ? invitation : undefined);
+  const findPendingByContact = mock(async () => [invitation]);
+  return {
+    accept,
+    acceptById,
+    forActor,
+    find,
+    findById,
+    findPendingByContact,
+    invitation,
+    schoolApp: {
+      repositories: {
+        accountInvitations: { findByTokenHash: find, findById, findPendingByContact },
+      },
+      forActor,
+    } as unknown as ApiSchoolApplication,
+  };
 }
 
 describe("identity-only admitted entry", () => {
   it("admits an unlinked identity with only the named operation and credential-derived school", async () => {
     const f = fixture();
     const entry = await admitIdentityOnlyEntry({ headers: await headers(), identityClient, schoolApp: f.schoolApp, selectedActor: null });
-    expect(Object.keys(entry!)).toEqual(["acceptInvitation"]);
+    expect(Object.keys(entry!)).toEqual(["acceptInvitation", "listMyInvitations", "acceptInvitationById"]);
     expect(Object.isFrozen(entry)).toBe(true);
     expect(f.find).not.toHaveBeenCalled();
     expect(f.forActor).not.toHaveBeenCalled();
@@ -64,6 +84,39 @@ describe("identity-only admitted entry", () => {
     const selectedActor = createGuardianActorMetadata({ schoolId: "other-school", guardianId: "guardian", subjectId: "verified-subject", requestId: "test", authenticatedAt: new Date() });
     const entry = await admitIdentityOnlyEntry({ headers: await headers(), identityClient, schoolApp: f.schoolApp, selectedActor });
     await expect(entry!.acceptInvitation("valid-credential")).rejects.toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
+    expect(f.forActor).not.toHaveBeenCalled();
+  });
+
+  it("lists and accepts pending guardian email invitations for a verified session", async () => {
+    const f = fixture();
+    const entry = await admitIdentityOnlyEntry({ headers: await headers(), identityClient, schoolApp: f.schoolApp, selectedActor: null });
+    expect(await entry!.listMyInvitations()).toEqual([f.invitation as never]);
+    expect(f.findPendingByContact).toHaveBeenCalledWith({
+      contactChannel: AccountInvitationContactChannel.Email,
+      contactValue: "guardian@example.test",
+      kind: AccountInvitationKind.Guardian,
+    });
+    expect(await entry!.acceptInvitationById("inv-guardian")).toMatchObject({ kind: "guardian" });
+    expect(f.acceptById.mock.calls[0]![0]).toEqual({
+      invitationId: "inv-guardian",
+      subjectId: "verified-subject",
+      contactValue: "guardian@example.test",
+    });
+    expect(await entry!.acceptInvitationById("unknown")).toBeNull();
+  });
+
+  it("hides session invitations when email is not verified", async () => {
+    const f = fixture();
+    const token = await signTestIdentityToken(keys, { sub: "verified-subject", email: "guardian@example.test", email_verified: false, iss: issuer, aud: audience });
+    const entry = await admitIdentityOnlyEntry({
+      headers: new Headers({ authorization: `Bearer ${token}` }),
+      identityClient,
+      schoolApp: f.schoolApp,
+      selectedActor: null,
+    });
+    expect(await entry!.listMyInvitations()).toEqual([]);
+    expect(f.findPendingByContact).not.toHaveBeenCalled();
+    expect(await entry!.acceptInvitationById("inv-guardian")).toBeNull();
     expect(f.forActor).not.toHaveBeenCalled();
   });
 });

@@ -234,6 +234,14 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('s2s_clients_school_id_idx').on(col(table, 'schoolId')),
         index('s2s_clients_school_client_idx').on(col(table, 'schoolId'), col(table, 'clientId')),
       ]
+    case 'account_invitations':
+      return [
+        index('account_invitations_contact_status_idx').on(
+          col(table, 'contactChannel'),
+          col(table, 'contactValue'),
+          col(table, 'status'),
+        ),
+      ]
     default:
       return []
   }

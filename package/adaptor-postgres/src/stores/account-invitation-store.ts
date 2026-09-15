@@ -1,6 +1,9 @@
-import type { AccountInvitationKind } from '@edaya/core'
+import type {
+  AccountInvitationKind,
+  FindPendingInvitationsByContactInput,
+} from '@edaya/core'
 import { AccountInvitation, AccountInvitationStatus } from '@edaya/core'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, gt } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
 import { PostgresStore } from '../postgres-store'
 
@@ -156,5 +159,22 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
 
     const row = rows[0]
     return row ? this.mapRow(row) : undefined
+  }
+
+  async findPendingByContact(
+    input: FindPendingInvitationsByContactInput,
+  ): Promise<AccountInvitation[]> {
+    const rows = await this.getClient()
+      .select()
+      .from(schema.accountInvitations)
+      .where(and(
+        eq(schema.accountInvitations.contactChannel, input.contactChannel),
+        eq(schema.accountInvitations.contactValue, input.contactValue),
+        eq(schema.accountInvitations.kind, input.kind),
+        eq(schema.accountInvitations.status, AccountInvitationStatus.Pending),
+        gt(schema.accountInvitations.expiresAt, new Date()),
+      ))
+
+    return rows.map((row: AccountInvitationRow) => this.mapRow(row))
   }
 }

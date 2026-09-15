@@ -1,8 +1,18 @@
-import type { AccountInvitation, AccountInvitationKind } from '../../domain/access/account-invitation'
+import type {
+  AccountInvitation,
+  AccountInvitationContactChannel,
+  AccountInvitationKind,
+} from '../../domain/access/account-invitation'
 import type { BaseRepositoryInterface } from './base-repository'
 
 export interface SaveAccountInvitationOptions {
   tokenHash?: string
+}
+
+export interface FindPendingInvitationsByContactInput {
+  contactChannel: AccountInvitationContactChannel
+  contactValue: string
+  kind: AccountInvitationKind
 }
 
 export interface AccountInvitationRepository extends BaseRepositoryInterface<AccountInvitation> {
@@ -13,4 +23,5 @@ export interface AccountInvitationRepository extends BaseRepositoryInterface<Acc
     kind: AccountInvitationKind,
     targetId: string,
   ) => Promise<AccountInvitation | undefined>
+  findPendingByContact: (input: FindPendingInvitationsByContactInput) => Promise<AccountInvitation[]>
 }

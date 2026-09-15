@@ -57,8 +57,12 @@ import {
 import {
   acceptInvitationHandler,
   acceptInvitationRoute,
+  acceptMyInvitationHandler,
+  acceptMyInvitationRoute,
   invitationPreviewHandler,
   invitationPreviewRoute,
+  listMyInvitationsHandler,
+  listMyInvitationsRoute,
 } from "@/routes/invitation.routes";
 import {
   createFileUploadIntentHandler,
@@ -124,6 +128,8 @@ router
   .openapi(createS2sClientRoute, createS2sClientHandler)
   .openapi(revokeS2sClientRoute, revokeS2sClientHandler)
   .openapi(rotateS2sClientKeyRoute, rotateS2sClientKeyHandler)
+  .openapi(listMyInvitationsRoute, listMyInvitationsHandler)
+  .openapi(acceptMyInvitationRoute, acceptMyInvitationHandler)
   .openapi(invitationPreviewRoute, invitationPreviewHandler)
   .openapi(acceptInvitationRoute, acceptInvitationHandler)
   .openapi(createFileUploadIntentRoute, createFileUploadIntentHandler)

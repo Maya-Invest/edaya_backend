@@ -44,6 +44,12 @@ export interface AcceptAccountInvitationInput {
   contactValue?: string
 }
 
+export interface AcceptAccountInvitationByIdInput {
+  invitationId: string
+  subjectId: string
+  contactValue?: string
+}
+
 export type AcceptAccountInvitationResult = LinkSubjectToActorResult
 
 export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
@@ -108,38 +114,17 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       await this.baseService.access.invitations.assertAccept()
       const invitation = await this.requireValidInvitationToken(input.token)
-      this.assertContactMatches(invitation, input.contactValue)
+      return this.completeAccept(invitation, input.subjectId, input.contactValue)
+    })
+  }
 
-      if (invitation.status === AccountInvitationStatus.Accepted) {
-        if (invitation.acceptedSubjectId === input.subjectId) {
-          return this.loadLinkedEntity(invitation)
-        }
-        throw new BusinessRuleViolationError(
-          'INVITATION_ALREADY_ACCEPTED',
-          'This invitation was already used by another account',
-        )
-      }
-
-      await this.assertPendingOwnerAssignable(invitation, input.subjectId)
-
-      const result = await linkSubjectToActor(
-        this.baseService,
-        this.repositories,
-        invitation.schoolId,
-        this.buildLinkInput(invitation, input.subjectId),
-      )
-
-      await this.assignPendingOwnerIfNeeded(invitation, input.subjectId)
-
-      await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
-
-      await this.saveInvitation(invitation.copyWith({
-        status: AccountInvitationStatus.Accepted,
-        acceptedAt: new Date(),
-        acceptedSubjectId: input.subjectId,
-      }))
-
-      return result
+  async acceptAccountInvitationById(
+    input: AcceptAccountInvitationByIdInput,
+  ): Promise<AcceptAccountInvitationResult> {
+    return this.baseService.atomicExecution.execute(async () => {
+      await this.baseService.access.invitations.assertAccept()
+      const invitation = await this.requireValidInvitationId(input.invitationId)
+      return this.completeAccept(invitation, input.subjectId, input.contactValue)
     })
   }
 
@@ -276,11 +261,62 @@ export class AccountInvitationServiceWorkflow extends BaseServiceWorkflow {
     return { displayName, contactValue }
   }
 
+  private async completeAccept(
+    invitation: AccountInvitation,
+    subjectId: string,
+    contactValue: string | undefined,
+  ): Promise<AcceptAccountInvitationResult> {
+    this.assertContactMatches(invitation, contactValue)
+
+    if (invitation.status === AccountInvitationStatus.Accepted) {
+      if (invitation.acceptedSubjectId === subjectId) {
+        return this.loadLinkedEntity(invitation)
+      }
+      throw new BusinessRuleViolationError(
+        'INVITATION_ALREADY_ACCEPTED',
+        'This invitation was already used by another account',
+      )
+    }
+
+    await this.assertPendingOwnerAssignable(invitation, subjectId)
+
+    const result = await linkSubjectToActor(
+      this.baseService,
+      this.repositories,
+      invitation.schoolId,
+      this.buildLinkInput(invitation, subjectId),
+    )
+
+    await this.assignPendingOwnerIfNeeded(invitation, subjectId)
+
+    await this.baseService.invitationDelivery.revoke(invitation.id, invitation.schoolId)
+
+    await this.saveInvitation(invitation.copyWith({
+      status: AccountInvitationStatus.Accepted,
+      acceptedAt: new Date(),
+      acceptedSubjectId: subjectId,
+    }))
+
+    return result
+  }
+
   private async requireValidInvitationToken(token: string): Promise<AccountInvitation> {
     const invitation = await this.repositories.accountInvitations.findByTokenHash(hashInvitationToken(token))
     if (!invitation) {
       throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
     }
+    return this.requireUsableInvitation(invitation)
+  }
+
+  private async requireValidInvitationId(invitationId: string): Promise<AccountInvitation> {
+    const invitation = await this.repositories.accountInvitations.findById(invitationId)
+    if (!invitation) {
+      throw new BusinessRuleViolationError('INVITATION_NOT_FOUND', 'Invitation not found or invalid')
+    }
+    return this.requireUsableInvitation(invitation)
+  }
+
+  private async requireUsableInvitation(invitation: AccountInvitation): Promise<AccountInvitation> {
     await this.baseService.access.invitations.assertUse(invitation.id)
     if (invitation.status === AccountInvitationStatus.Revoked) {
       throw new BusinessRuleViolationError('INVITATION_REVOKED', 'This invitation has been revoked')
