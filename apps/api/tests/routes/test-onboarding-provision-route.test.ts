@@ -81,7 +81,7 @@ describe("onboarding provision route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${accessToken}`,
+        "authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify(typicalProvisionBody),
     }));
