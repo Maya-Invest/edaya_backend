@@ -11,6 +11,8 @@ describe('demo school shell', () => {
   it('assembles school shell, people, and curriculum entities', () => {
     expect(demoDataset.purpose).toBe('demo')
     expect(demoDataset.entities.school?.id).toBe('sch-edaya-central')
+    expect(demoDataset.entities.school?.issuingName).toBe('EDAYA — Campus Central')
+    expect(demoDataset.entities.school?.schoolCode).toBe('EDAYA-OTT')
     expect(demoDataset.entities.gradeLevels).toHaveLength(12)
     expect(demoFoundationClassGroups).toHaveLength(3)
     expect(demoStaffMembers).toHaveLength(8)

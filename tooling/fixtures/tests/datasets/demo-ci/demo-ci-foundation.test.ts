@@ -19,6 +19,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiDataset.entities.school?.country).toBe('Côte d\'Ivoire')
     expect(demoCiDataset.entities.school?.city).toBe('Abidjan')
     expect(demoCiDataset.entities.school?.timeZone).toBe('Africa/Abidjan')
+    expect(demoCiDataset.entities.school?.issuingName).toBe('École Edaya — Cocody')
+    expect(demoCiDataset.entities.school?.schoolCode).toBe('EDAYA-CI')
     expect(demoCiGradeLevels).toHaveLength(4)
     expect(demoCiClassGroups).toHaveLength(5)
     expect(demoCiStaffMembers).toHaveLength(5)

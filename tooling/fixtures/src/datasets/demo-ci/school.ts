@@ -11,6 +11,11 @@ export const demoCiSchool = {
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
   timetableMinDayGapSameSubject: 1,
+  issuingName: 'École Edaya — Cocody',
+  postalAddress: 'Boulevard Latrille, Cocody, Abidjan',
+  phone: '+225 27 22 44 00 00',
+  email: 'secretariat@edaya-ci.test',
+  schoolCode: 'EDAYA-CI',
 } satisfies SchoolInput
 
 export const demoCiAcademicYear = {

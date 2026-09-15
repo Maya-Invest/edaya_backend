@@ -1177,6 +1177,11 @@ export const clientBindings = {
         "requestSchemaName": "CompleteSchoolIssuanceAssetUploadCommand",
         "responseSchemaName": "Attachment"
       },
+      "clearSchoolIssuanceAsset": {
+        "publicName": "clear-school-issuance-asset",
+        "requestSchemaName": "ClearSchoolIssuanceAssetCommand",
+        "responseSchemaName": "School"
+      },
       "recordIncident": {
         "publicName": "record-incident",
         "requestSchemaName": "RecordIncidentCommand",

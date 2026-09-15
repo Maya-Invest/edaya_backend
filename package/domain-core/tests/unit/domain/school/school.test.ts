@@ -70,4 +70,16 @@ describe('School entity', () => {
     expect(school.timetableAllowUnassignedTeacherPlacements).toBe(true)
     expect(school.timetableUseHomeroomTeacherFallback).toBe(true)
   })
+
+  test('allowlists only logo and crest as public branding purposes', () => {
+    const school = new School({
+      ...baseArgs,
+      publicBrandingPurposes: ['school.logo', 'school.crest', 'school.logo'],
+    })
+    expect(school.publicBrandingPurposes).toEqual(['school.logo', 'school.crest'])
+    expect(() => new School({
+      ...baseArgs,
+      publicBrandingPurposes: ['school.stamp'] as never,
+    })).toThrow()
+  })
 })

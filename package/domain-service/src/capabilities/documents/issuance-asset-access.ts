@@ -2,13 +2,29 @@ import type { Attachment, ResourceAccessScope, SchoolIssuanceAssetPurpose } from
 import type { BaseSchoolService } from '../../services/base-school-service'
 import type { AttachmentReadPolicy, AttachmentUploadPolicy } from '../files/attachment-purpose-access'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AttachmentOwnerKind, resourceAccessScope, SCHOOL_CREST_PURPOSE, SCHOOL_ISSUANCE_ASSET_MAX_BYTES, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_LOGO_PURPOSE, SCHOOL_SIGNATURE_PURPOSE, SCHOOL_STAMP_PURPOSE } from '@edaya/core'
+import {
+  AttachmentOwnerKind,
+  AttachmentStatus,
+  resourceAccessScope,
+  SCHOOL_CREST_PURPOSE,
+  SCHOOL_ISSUANCE_ASSET_MAX_BYTES,
+  SCHOOL_ISSUANCE_ASSET_PURPOSES,
+  SCHOOL_LOGO_PURPOSE,
+  SCHOOL_PUBLIC_BRANDING_PURPOSES,
+  SCHOOL_SIGNATURE_PURPOSE,
+  SCHOOL_STAMP_PURPOSE,
+} from '@edaya/core'
 import { validateAttachmentSave } from '../../services/entities/config/school/attachment'
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
+const SCHOOL_ACTOR_KINDS = new Set(['staff', 'teacher', 'guardian', 'student', 'system'])
 
 export function isSchoolIssuanceAssetPurpose(purpose: string): purpose is SchoolIssuanceAssetPurpose {
   return (SCHOOL_ISSUANCE_ASSET_PURPOSES as readonly string[]).includes(purpose)
+}
+
+export function isPublicBrandingPurpose(purpose: string): purpose is typeof SCHOOL_PUBLIC_BRANDING_PURPOSES[number] {
+  return (SCHOOL_PUBLIC_BRANDING_PURPOSES as readonly string[]).includes(purpose)
 }
 
 export function schoolIssuanceAssetSlot(purpose: SchoolIssuanceAssetPurpose): 'logoAttachmentId' | 'crestAttachmentId' | 'stampAttachmentId' | 'signatureAttachmentId' {
@@ -37,16 +53,42 @@ async function assertIssuanceAssetAuthority(base: BaseSchoolService, _purpose: S
   await base.access.documents.assertConfigureIssuanceAssets()
 }
 
+async function isAllowlistedPublicBranding(
+  base: BaseSchoolService,
+  purpose: SchoolIssuanceAssetPurpose,
+  attachment?: Attachment,
+): Promise<boolean> {
+  if (!isPublicBrandingPurpose(purpose) || !SCHOOL_ACTOR_KINDS.has(base.actor.kind))
+    return false
+  if (attachment && (
+    attachment.ownerKind !== AttachmentOwnerKind.School
+    || attachment.ownerId !== base.actor.schoolId
+    || attachment.schoolId !== base.actor.schoolId
+    || attachment.purpose !== purpose
+    || attachment.status !== AttachmentStatus.Ready
+  )) {
+    return false
+  }
+  const school = await base.repositories.schools.findById(base.actor.schoolId)
+  if (!school?.publicBrandingPurposes.includes(purpose))
+    return false
+  const currentId = school[schoolIssuanceAssetSlot(purpose)]
+  if (!currentId)
+    return false
+  return !attachment || attachment.id === currentId
+}
+
 export async function schoolIssuanceAssetReadPolicy(
   base: BaseSchoolService,
   purpose: SchoolIssuanceAssetPurpose,
+  attachment?: Attachment,
 ): Promise<AttachmentReadPolicy> {
-  await assertIssuanceAssetAuthority(base, purpose)
   return {
     purpose,
     readScope: async (): Promise<ResourceAccessScope> => {
-      await assertIssuanceAssetAuthority(base, purpose)
-      return issuanceAssetScope(base.actor.schoolId, purpose)
+      if (!await isAllowlistedPublicBranding(base, purpose, attachment))
+        await assertIssuanceAssetAuthority(base, purpose)
+      return issuanceAssetScope(base.actor.schoolId, purpose, attachment ? [attachment.id] : undefined)
     },
   }
 }

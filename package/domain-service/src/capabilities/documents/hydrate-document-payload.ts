@@ -22,7 +22,7 @@ function assetDataUri(asset: { body: Uint8Array, contentType?: string }, fallbac
 
 export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: DocumentIssuance, options: { preview?: boolean } = {}): Promise<HydratedDocumentRender> {
   const facts = asFacts(issuance.snapshot.facts)
-  const assets = await loadSchoolIssuanceAssets(base, issuance.schoolId)
+  const assets = await loadSchoolIssuanceAssets(base, issuance.schoolId, issuance.snapshot)
   const logoUrl = assets.logo ? assetDataUri(assets.logo) : undefined
   const crestUrl = assets.crest ? assetDataUri(assets.crest) : undefined
   const stampUrl = assets.stamp ? assetDataUri(assets.stamp) : undefined

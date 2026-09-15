@@ -11,6 +11,7 @@ import type { DocumentsSeedPort } from '../domains/documents/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
+import type { SchoolBrandingSeedPort } from '../domains/school-branding/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
 import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
@@ -39,6 +40,7 @@ import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-p
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
 import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
+import { createInProcessSchoolBrandingSeedPort } from '../domains/school-branding/adapters/in-process'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/adapters/in-process'
 import { createInProcessSchedulingSeedPort } from '../domains/scheduling/adapters/in-process'
 import { createInProcessSchoolLifeSeedPort } from '../domains/school-life/adapters/in-process'
@@ -101,6 +103,7 @@ export interface RunDevSeedsOptions {
   /** Explicit attachments adapter; defaults to the in-process application adapter. */
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
+  schoolBrandingPort?: SchoolBrandingSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
   /** Skip profile photo uploads (local file storage unavailable or explicit opt-out). */
@@ -188,6 +191,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       application: requireApplication('profilePicturesPort'),
       apiBaseUrl: options.apiBaseUrl ?? 'http://localhost:9999',
     })
+  const schoolBrandingPort = options.schoolBrandingPort
+    ?? createInProcessSchoolBrandingSeedPort(requireApplication('schoolBrandingPort'))
   const results: RunDevSeedsResults = {
     school: null,
     authProvision: null,
@@ -227,6 +232,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       communicationsPort,
       attachmentsPort,
       profilePicturesPort,
+      schoolBrandingPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
       skipAttachments: options.skipAttachments,
@@ -272,6 +278,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       communicationsPort,
       attachmentsPort,
       profilePicturesPort,
+      schoolBrandingPort,
       apiBaseUrl: options.apiBaseUrl,
       skipProfilePhotos: options.skipProfilePhotos,
       skipAttachments: options.skipAttachments,

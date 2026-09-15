@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import Ajv from "ajv";
 import type { RenderFormat, TemplateCatalogEntry } from "../types";
 import { compileTemplateHtml } from "./compile-html";
@@ -31,16 +32,29 @@ export interface TemplateDefinition {
   compileHtml: (locale: string, payload: unknown) => string;
 }
 
+function resolveImportedStyles(styles: string): string {
+  if (styles.includes("{")) {
+    return styles;
+  }
+  try {
+    return readFileSync(styles, "utf8");
+  }
+  catch {
+    return styles;
+  }
+}
+
 function createTemplateDefinition(assets: TemplateAssets): TemplateDefinition {
+  const resolved: TemplateAssets = { ...assets, styles: resolveImportedStyles(assets.styles) };
   const ajv = new Ajv({ allErrors: true, strict: false });
-  const validate = ajv.compile(assets.schema);
+  const validate = ajv.compile(resolved.schema);
 
   return {
-    key: assets.manifest.key,
-    formats: assets.manifest.formats,
-    locales: assets.manifest.locales,
-    version: assets.manifest.version,
-    assets,
+    key: resolved.manifest.key,
+    formats: resolved.manifest.formats,
+    locales: resolved.manifest.locales,
+    version: resolved.manifest.version,
+    assets: resolved,
     validatePayload(payload: unknown): string | null {
       if (validate(payload)) {
         return null;
@@ -62,7 +76,7 @@ function createTemplateDefinition(assets: TemplateAssets): TemplateDefinition {
       return `${path} ${first.message ?? "is invalid"}`;
     },
     compileHtml(locale: string, payload: unknown): string {
-      return compileTemplateHtml({ locale, payload, assets });
+      return compileTemplateHtml({ locale, payload, assets: resolved });
     },
   };
 }

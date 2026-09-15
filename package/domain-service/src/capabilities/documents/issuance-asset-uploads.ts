@@ -1,8 +1,9 @@
-import type { Attachment, AttachmentInput, SchoolIssuanceAssetPurpose } from '@edaya/core'
+import type { Attachment, AttachmentInput, School, SchoolIssuanceAssetPurpose } from '@edaya/core'
 import type { BaseSchoolService } from '../../services/base-school-service'
-import { AttachmentOwnerKind, BusinessRuleViolationError, DOCUMENT_FAILURES, School, SCHOOL_ISSUANCE_ASSET_CAPABILITY } from '@edaya/core'
+import { AttachmentOwnerKind, BusinessRuleViolationError, DOCUMENT_FAILURES } from '@edaya/core'
 import { completeAttachmentUpload, createAttachmentUpload } from '../files/attachment-uploads'
-import { isSchoolIssuanceAssetPurpose, schoolIssuanceAssetSlot, schoolIssuanceAssetUploadPolicy } from './issuance-asset-access'
+import { isSchoolIssuanceAssetPurpose, schoolIssuanceAssetUploadPolicy } from './issuance-asset-access'
+import { writeSchoolIssuanceSlot } from './issuance-asset-lifecycle'
 
 export interface CreateSchoolIssuanceAssetUploadInput {
   purpose: SchoolIssuanceAssetPurpose
@@ -10,6 +11,10 @@ export interface CreateSchoolIssuanceAssetUploadInput {
   mimeType: string
   sizeBytes: number
   attachmentId?: string
+}
+
+export interface ClearSchoolIssuanceAssetInput {
+  purpose: SchoolIssuanceAssetPurpose
 }
 
 export async function createSchoolIssuanceAssetUpload(base: BaseSchoolService, input: CreateSchoolIssuanceAssetUploadInput) {
@@ -38,39 +43,14 @@ export async function completeSchoolIssuanceAssetUpload(base: BaseSchoolService,
     ownerId: schoolId,
     purpose: input.purpose,
   }, policy)
-  const slot = schoolIssuanceAssetSlot(input.purpose)
   await base.atomicExecution.execute(async () => {
-    await base.access.documents.assertConfigureIssuanceAssets()
-    const existing = await base.repositories.schools.findById(schoolId)
-    if (!existing)
-      throw new BusinessRuleViolationError(DOCUMENT_FAILURES.SOURCE_MISSING, 'School was not found')
-    const previousId = existing[slot]
-    const school = new School({
-      ...existing.data,
-      [slot]: attachment.id,
-      issuanceAssetVersion: existing.issuanceAssetVersion + 1,
-    })
-    await base.repositories.schools.forSchool!(schoolId).save(school)
-    if (attachment.storageKey) {
-      await base.repositories.privateFiles.retain({
-        schoolId,
-        sourceType: SCHOOL_ISSUANCE_ASSET_CAPABILITY,
-        sourceId: schoolId,
-        slot: input.purpose,
-        attachmentId: attachment.id,
-        storageKey: attachment.storageKey,
-      })
-    }
-    if (previousId && previousId !== attachment.id) {
-      const previous = await base.repositories.attachments.forSchool!(schoolId).findById(previousId)
-      if (previous?.storageKey) {
-        await base.repositories.privateFiles.reserve({
-          schoolId,
-          storageKey: previous.storageKey,
-          protectedUntil: new Date(Date.now() + 60 * 60 * 1000),
-        })
-      }
-    }
+    await writeSchoolIssuanceSlot(base, input.purpose, attachment)
   })
   return attachment
+}
+
+export async function clearSchoolIssuanceAsset(base: BaseSchoolService, input: ClearSchoolIssuanceAssetInput): Promise<School> {
+  if (!isSchoolIssuanceAssetPurpose(input.purpose))
+    throw new BusinessRuleViolationError(DOCUMENT_FAILURES.TEMPLATE_UNSUPPORTED, 'Unknown school issuance asset purpose')
+  return base.atomicExecution.execute(async () => writeSchoolIssuanceSlot(base, input.purpose, undefined))
 }

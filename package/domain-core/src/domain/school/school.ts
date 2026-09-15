@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { SCHOOL_CREST_PURPOSE, SCHOOL_LOGO_PURPOSE } from '../documents/document-failures'
 import { TimetableGenerationMode } from '../scheduling/timetable-generation-mode'
 import { parseDomain, zodDate } from '../shared/utils'
 
@@ -49,6 +50,7 @@ const schoolSchemaBase = z.object({
   stampAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   signatureAttachmentId: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   issuanceAssetVersion: z.number().int().nonnegative().default(0),
+  publicBrandingPurposes: z.array(z.enum([SCHOOL_LOGO_PURPOSE, SCHOOL_CREST_PURPOSE])).default([]).transform(purposes => [...new Set(purposes)]),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -122,6 +124,7 @@ export class School {
   get stampAttachmentId() { return this.data.stampAttachmentId }
   get signatureAttachmentId() { return this.data.signatureAttachmentId }
   get issuanceAssetVersion() { return this.data.issuanceAssetVersion }
+  get publicBrandingPurposes() { return this.data.publicBrandingPurposes }
   get createdAt() { return this.data.createdAt }
 
   get location(): string | undefined {

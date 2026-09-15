@@ -44,6 +44,7 @@ export const schools = pgTable('schools', {
   stampAttachmentId: text('stamp_attachment_id'),
   signatureAttachmentId: text('signature_attachment_id'),
   issuanceAssetVersion: integer('issuance_asset_version').notNull().default(0),
+  publicBrandingPurposes: jsonb('public_branding_purposes').notNull().default([]),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 })
 

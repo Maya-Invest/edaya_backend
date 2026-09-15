@@ -10,6 +10,7 @@ import type { DocumentsSeedPort } from '../domains/documents/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
+import type { SchoolBrandingSeedPort } from '../domains/school-branding/port'
 import type { ReportCardsSeedPort } from '../domains/report-cards/port'
 import type { SchedulingSeedPort } from '../domains/scheduling/port'
 import type { SchoolLifeSeedPort } from '../domains/school-life/port'
@@ -46,6 +47,8 @@ import { createInProcessPopulationSeedPort } from '../domains/population/adapter
 import { seedDevPopulation } from '../domains/population/workflow'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
 import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
+import { createInProcessSchoolBrandingSeedPort } from '../domains/school-branding/adapters/in-process'
+import { seedDevSchoolBranding } from '../domains/school-branding/workflow'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/adapters/in-process'
 import { seedDevReportCards } from '../domains/report-cards/workflow'
 import { createInProcessSchedulingSeedPort } from '../domains/scheduling/adapters/in-process'
@@ -127,6 +130,7 @@ export interface RunDevSchoolSeedOptions {
   communicationsPort?: CommunicationsSeedPort
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
+  schoolBrandingPort?: SchoolBrandingSeedPort
   /** API origin used to build seeded profile photo URLs. */
   apiBaseUrl?: string
   skipProfilePhotos?: boolean
@@ -193,12 +197,17 @@ export async function runDevSchoolSeed(
       application: requireSeedApplication(application, 'profilePicturesPort'),
       apiBaseUrl: options?.apiBaseUrl ?? 'http://localhost:9999',
     })
+  const schoolBrandingPort = options?.schoolBrandingPort
+    ?? createInProcessSchoolBrandingSeedPort(requireSeedApplication(application, 'schoolBrandingPort'))
 
   const seedContext = resolveDevSeedContext()
   const seedDataset = seedContext.dataset
   const structureInspection = await inspectDevSchoolStructure(schoolStructurePort, seedDataset)
 
   if (structureInspection.status === 'skipped') {
+    await runSchoolSeedStep(options?.progress, async () => {
+      await seedDevSchoolBranding(schoolBrandingPort, seedDataset)
+    })
     if (options?.auth) {
       await syncDevAuthAndGuardianInboxProbes(
         options.authLinkPort ?? createInProcessAuthLinkSeedPort(
@@ -285,6 +294,9 @@ export async function runDevSchoolSeed(
     ? { attachments: 0 }
     : await runSchoolSeedStep(options?.progress, async () =>
         seedDevAttachments(attachmentsPort, seedDataset))
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevSchoolBranding(schoolBrandingPort, seedDataset)
+  })
   const profilePictureCounts = options?.skipProfilePhotos
     ? { profilePhotos: 0 }
     : await runSchoolSeedStep(options?.progress, async tick =>

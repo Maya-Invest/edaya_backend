@@ -83,6 +83,10 @@
     "./shared/attachment-assets": {
       "types": "./src/shared/attachment-assets.ts",
       "import": "./src/shared/attachment-assets.ts"
+    },
+    "./shared/issuance-assets": {
+      "types": "./src/shared/issuance-assets.ts",
+      "import": "./src/shared/issuance-assets.ts"
     }
   },
   "scripts": {

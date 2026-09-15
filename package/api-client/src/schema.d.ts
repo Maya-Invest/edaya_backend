@@ -2061,6 +2061,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/clear-school-issuance-asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** clear-school-issuance-asset */
+        post: operations["commands.clearSchoolIssuanceAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/record-incident": {
         parameters: {
             query?: never;
@@ -10633,6 +10650,8 @@ export interface components {
             signatureAttachmentId?: string | null;
             /** @default 0 */
             issuanceAssetVersion: number;
+            /** @default [] */
+            publicBrandingPurposes: ("school.logo" | "school.crest")[];
             createdAt?: unknown;
         };
         OnboardingRegisterSchoolRequest: {
@@ -11080,6 +11099,8 @@ export interface components {
             signatureAttachmentId?: string | null;
             /** @default 0 */
             issuanceAssetVersion: number;
+            /** @default [] */
+            publicBrandingPurposes: ("school.logo" | "school.crest")[];
             createdAt?: unknown;
         };
         UpdateSchoolConfigurationCommand: {
@@ -11120,12 +11141,7 @@ export interface components {
             email?: string | null;
             schoolCode?: string | null;
             issuingName?: string | null;
-            logoAttachmentId?: string | null;
-            crestAttachmentId?: string | null;
-            stampAttachmentId?: string | null;
-            signatureAttachmentId?: string | null;
-            /** @default 0 */
-            issuanceAssetVersion: number;
+            publicBrandingPurposes?: ("school.logo" | "school.crest")[];
             schoolId: string;
         };
         AcademicYear: {
@@ -12752,6 +12768,10 @@ export interface components {
             mimeType?: string | null;
             sizeBytes?: number | null;
             createdAt?: unknown;
+        };
+        ClearSchoolIssuanceAssetCommand: {
+            /** @enum {string} */
+            purpose: "school.logo" | "school.crest" | "school.stamp" | "school.signature";
         };
         Incident: {
             id: string;
@@ -14745,6 +14765,9 @@ export interface components {
                 stampAttachmentId?: string;
                 signatureAttachmentId?: string;
                 issuanceAssetVersion?: number;
+                academicPeriodId?: string;
+                classSubjectId?: string;
+                teacherId?: string;
                 staffFields?: {
                     recipient?: string;
                     date?: string;
@@ -23380,6 +23403,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Attachment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.clearSchoolIssuanceAsset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description clear-school-issuance-asset payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ClearSchoolIssuanceAssetCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed clear-school-issuance-asset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["School"];
                 };
             };
             /** @description Invalid request payload */

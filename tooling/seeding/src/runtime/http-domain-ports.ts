@@ -12,6 +12,7 @@ import { createHttpDocumentsSeedPort } from '../domains/documents/adapters/http'
 import { createHttpFinanceSeedPort } from '../domains/finance/adapters/http'
 import { createHttpPopulationSeedPort } from '../domains/population/adapters/http'
 import { createHttpProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/http'
+import { createHttpSchoolBrandingSeedPort } from '../domains/school-branding/adapters/http'
 import { createHttpReportCardsSeedPort } from '../domains/report-cards/adapters/http'
 import { createHttpSchedulingSeedPort } from '../domains/scheduling/adapters/http'
 import { createHttpSchoolLifeSeedPort } from '../domains/school-life/adapters/http'
@@ -42,6 +43,7 @@ export function createHttpDomainSeedPorts(
     communicationsPort: createHttpCommunicationsSeedPort({ client, serviceAccountApiKey }),
     attachmentsPort: createHttpAttachmentsSeedPort({ client, serviceAccountApiKey }),
     profilePicturesPort: createHttpProfilePicturesSeedPort({ client, serviceAccountApiKey }),
+    schoolBrandingPort: createHttpSchoolBrandingSeedPort({ client, serviceAccountApiKey }),
   }
 }
 

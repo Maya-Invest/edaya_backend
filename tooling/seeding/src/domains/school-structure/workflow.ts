@@ -63,6 +63,11 @@ export async function seedDevSchoolStructure(
       timeZone: school.timeZone,
       city: school.city ?? undefined,
       country: school.country ?? undefined,
+      issuingName: school.issuingName,
+      postalAddress: school.postalAddress,
+      phone: school.phone,
+      email: school.email,
+      schoolCode: school.schoolCode,
       ...(options.ownerSubjectId ? { ownerSubjectId: options.ownerSubjectId } : {}),
     })
   }

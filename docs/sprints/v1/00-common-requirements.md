@@ -19,7 +19,7 @@ This is the index and common implementation contract for exactly seven sequentia
 |---|---|---|---|
 | 00 | [Common requirements](00-common-requirements.md) | done | Shared foundations are verified and consumable |
 | 01 | [Guardian pairing and invitations](01-guardian-pairing-and-invitations.md) | on-going | A guardian opens the existing invitation link in the app and reaches the intended child |
-| 02 | [Student photos and branding](02-student-photos-and-branding.md) | on-going | Portrait review and approved publication work (02.1–02.3 student review; 02.4 branding later) |
+| 02 | [Student photos and branding](02-student-photos-and-branding.md) | done | Portrait review, approved publication, and school branding/issuance assets |
 | 03 | [Service catalog and accounting](03-service-catalog-and-accounting.md) | done | Account-based finance and all consumers agree |
 | 04 | [Official documents](04-official-documents.md) | done | Every retained document is issuable and privately downloadable |
 | 05 | [Family feedback surveys](05-family-feedback-surveys.md) | planned | Confidential feedback produces protected published results |

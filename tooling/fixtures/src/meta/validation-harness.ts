@@ -56,6 +56,7 @@ export const SEED_ENTITY_TO_SERVICE_NAME: Record<string, string> = {
   'student-disciplinary-actions': 'studentDisciplinaryActions',
   'attachments': 'attachments',
   'profile-photos': 'attachments',
+  'school-branding': 'schools',
 }
 
 export interface SeedValidationTarget {

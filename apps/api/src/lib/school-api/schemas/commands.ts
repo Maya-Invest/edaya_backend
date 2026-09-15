@@ -46,6 +46,7 @@ import {
   resourceSchema,
   scheduleSchema,
   SCHOOL_ISSUANCE_ASSET_PURPOSES,
+  SCHOOL_PUBLIC_BRANDING_PURPOSES,
   schoolSchema,
   SchoolType,
   staffAssignmentSchema,
@@ -128,12 +129,26 @@ export const registerSchoolCommandSchema = objectFromSchema(schoolSchema)
 
 export const updateSchoolConfigurationCommandSchema = objectFromSchema(schoolSchema)
   .partial()
-  .omit({ id: true, createdAt: true })
+  .omit({
+    id: true,
+    createdAt: true,
+    logoAttachmentId: true,
+    crestAttachmentId: true,
+    stampAttachmentId: true,
+    signatureAttachmentId: true,
+    issuanceAssetVersion: true,
+  })
   .extend({
     schoolId: field.id(),
     type: z.nativeEnum(SchoolType).nullable().optional(),
     country: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
+    postalAddress: z.string().nullable().optional(),
+    phone: z.string().nullable().optional(),
+    email: z.string().nullable().optional(),
+    schoolCode: z.string().nullable().optional(),
+    issuingName: z.string().nullable().optional(),
+    publicBrandingPurposes: z.array(z.enum(SCHOOL_PUBLIC_BRANDING_PURPOSES)).optional(),
   })
   .openapi("UpdateSchoolConfigurationCommand");
 
@@ -753,6 +768,10 @@ export const completeSchoolIssuanceAssetUploadCommandSchema = objectFromSchema(a
   .extend({ purpose: z.enum(SCHOOL_ISSUANCE_ASSET_PURPOSES) })
   .omit({ uploadedById: true })
   .openapi("CompleteSchoolIssuanceAssetUploadCommand");
+
+export const clearSchoolIssuanceAssetCommandSchema = z.object({
+  purpose: z.enum(SCHOOL_ISSUANCE_ASSET_PURPOSES),
+}).openapi("ClearSchoolIssuanceAssetCommand");
 
 export const recordIncidentCommandSchema = objectFromSchema(incidentSchema)
   .omit({

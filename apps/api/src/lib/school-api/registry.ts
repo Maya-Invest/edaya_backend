@@ -227,6 +227,7 @@ export const coreCommands = [
   command("preview-document", "previewDocument", commandSchemas.previewDocumentCommandSchema),
   command("create-school-issuance-asset-upload", "createSchoolIssuanceAssetUpload", commandSchemas.createSchoolIssuanceAssetUploadCommandSchema),
   command("complete-school-issuance-asset-upload", "completeSchoolIssuanceAssetUpload", commandSchemas.completeSchoolIssuanceAssetUploadCommandSchema),
+  command("clear-school-issuance-asset", "clearSchoolIssuanceAsset", commandSchemas.clearSchoolIssuanceAssetCommandSchema),
   command("record-incident", "recordIncident", commandSchemas.recordIncidentCommandSchema),
   command("add-student-involvement", "addStudentInvolvement", commandSchemas.addStudentInvolvementCommandSchema),
   command("configure-disciplinary-action", "configureDisciplinaryAction", commandSchemas.disciplinaryActionConfigCommandSchema),

@@ -13,6 +13,7 @@ import {
   documentNumberSeriesId,
 } from '@edaya/core'
 import { getDocumentTemplateCatalogEntry } from './catalog'
+import { retainIssuanceSnapshotAssets } from './issuance-asset-lifecycle'
 
 export interface PersistRequestedIssuanceInput {
   id?: string
@@ -100,6 +101,7 @@ export async function persistRequestedIssuance(base: BaseSchoolService, input: P
     replacesIssuanceId: input.replacesIssuanceId,
   })
   await store.save(issuance)
+  await retainIssuanceSnapshotAssets(base, issuance.id, issuance.snapshot)
   if (input.replacesIssuanceId) {
     const prior = await store.findById(input.replacesIssuanceId)
     if (prior)

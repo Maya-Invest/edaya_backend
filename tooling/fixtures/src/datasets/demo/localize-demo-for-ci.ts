@@ -9,6 +9,11 @@ const CI_SCHOOL: SchoolInput = {
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',
+  issuingName: 'École Edaya — Cocody',
+  postalAddress: 'Boulevard Latrille, Cocody, Abidjan',
+  phone: '+225 27 22 44 00 00',
+  email: 'secretariat@edaya-ci.test',
+  schoolCode: 'EDAYA-CI',
 }
 
 const STAFF_CI_NAMES = DEV_STAFF_CI_NAME_PARTS

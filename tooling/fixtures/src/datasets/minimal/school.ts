@@ -7,4 +7,9 @@ export const minimalSchool = {
   timeZone: 'America/Toronto',
   city: 'Ottawa',
   country: 'CA',
+  issuingName: 'EDAYA — Campus Central',
+  postalAddress: '100 Rideau Street, Ottawa, ON K1N 5W8',
+  phone: '+1 613 555 0100',
+  email: 'secretariat@edaya.test',
+  schoolCode: 'EDAYA-OTT',
 } satisfies SchoolInput

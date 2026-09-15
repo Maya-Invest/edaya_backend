@@ -64,6 +64,7 @@ export type SchoolCommandKey
     | 'previewDocument'
     | 'createSchoolIssuanceAssetUpload'
     | 'completeSchoolIssuanceAssetUpload'
+    | 'clearSchoolIssuanceAsset'
     | 'registerStudent'
     | 'enrollStudent'
     | 'linkGuardianToStudent'
@@ -220,6 +221,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'previewDocument',
   'createSchoolIssuanceAssetUpload',
   'completeSchoolIssuanceAssetUpload',
+  'clearSchoolIssuanceAsset',
   'registerStudent',
   'enrollStudent',
   'linkGuardianToStudent',

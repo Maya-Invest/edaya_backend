@@ -14,6 +14,7 @@ import {
   STUDENT_PORTRAIT_PURPOSE,
   StudentPhotoSubmissionStatus,
 } from '@edaya/core'
+import { isSchoolIssuanceAssetPurpose, schoolIssuanceAssetReadPolicy } from '../documents/issuance-asset-access'
 
 export async function requireCurrentGuardianStudentLink(
   base: BaseSchoolService,
@@ -221,7 +222,11 @@ export async function resolveAttachmentReadPolicy(
   attachmentId: string,
 ): Promise<AttachmentReadPolicy | undefined> {
   const attachment = await base.repositories.attachments.forSchool!(base.actor.schoolId).findById(attachmentId)
-  if (!attachment || !isProfilePhotoPurpose(attachment.purpose))
+  if (!attachment)
     return undefined
-  return profilePhotoReadPolicy(base, attachment)
+  if (isProfilePhotoPurpose(attachment.purpose))
+    return profilePhotoReadPolicy(base, attachment)
+  if (isSchoolIssuanceAssetPurpose(attachment.purpose))
+    return schoolIssuanceAssetReadPolicy(base, attachment.purpose, attachment)
+  return undefined
 }

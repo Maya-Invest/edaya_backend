@@ -13,6 +13,11 @@ export interface SchoolStructureSchoolRecord {
   type?: SchoolType
   country?: string
   city?: string
+  issuingName?: string
+  postalAddress?: string
+  phone?: string
+  email?: string
+  schoolCode?: string
 }
 
 export interface GradeLevelSeedRecord {

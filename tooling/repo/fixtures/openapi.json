@@ -1485,6 +1485,17 @@
             "minimum": 0,
             "default": 0
           },
+          "publicBrandingPurposes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "school.logo",
+                "school.crest"
+              ]
+            },
+            "default": []
+          },
           "createdAt": {}
         },
         "required": [
@@ -3523,6 +3534,17 @@
             "minimum": 0,
             "default": 0
           },
+          "publicBrandingPurposes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "school.logo",
+                "school.crest"
+              ]
+            },
+            "default": []
+          },
           "createdAt": {}
         },
         "required": [
@@ -3631,53 +3653,33 @@
           },
           "postalAddress": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "email": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "schoolCode": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
           "issuingName": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1
+            "nullable": true
           },
-          "logoAttachmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "crestAttachmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "stampAttachmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "signatureAttachmentId": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "issuanceAssetVersion": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
+          "publicBrandingPurposes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "school.logo",
+                "school.crest"
+              ]
+            }
           },
           "schoolId": {
             "type": "string",
@@ -10828,6 +10830,23 @@
           "ownerId",
           "purpose",
           "fileName"
+        ]
+      },
+      "ClearSchoolIssuanceAssetCommand": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "school.logo",
+              "school.crest",
+              "school.stamp",
+              "school.signature"
+            ]
+          }
+        },
+        "required": [
+          "purpose"
         ]
       },
       "Incident": {
@@ -18793,6 +18812,18 @@
               "issuanceAssetVersion": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "academicPeriodId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "classSubjectId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "teacherId": {
+                "type": "string",
+                "minLength": 1
               },
               "staffFields": {
                 "type": "object",
@@ -33673,6 +33704,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/clear-school-issuance-asset": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "clear-school-issuance-asset",
+        "operationId": "commands.clearSchoolIssuanceAsset",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "clearSchoolIssuanceAsset",
+        "x-edaya-command-public-name": "clear-school-issuance-asset",
+        "x-edaya-request-schema": "ClearSchoolIssuanceAssetCommand",
+        "x-edaya-response-schema": "School",
+        "requestBody": {
+          "description": "clear-school-issuance-asset payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearSchoolIssuanceAssetCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed clear-school-issuance-asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/School"
                 }
               }
             }

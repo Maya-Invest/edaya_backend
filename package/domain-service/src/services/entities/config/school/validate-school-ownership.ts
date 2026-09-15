@@ -8,6 +8,18 @@ export async function validateSchoolOwnership(
   existing: School | undefined,
   repositories: Pick<SchoolRepositories, 'schools'>,
 ): Promise<void> {
+  if (existing && (
+    school.logoAttachmentId !== existing.logoAttachmentId
+    || school.crestAttachmentId !== existing.crestAttachmentId
+    || school.stampAttachmentId !== existing.stampAttachmentId
+    || school.signatureAttachmentId !== existing.signatureAttachmentId
+    || school.issuanceAssetVersion !== existing.issuanceAssetVersion
+  )) {
+    throw new BusinessRuleViolationError(
+      'SCHOOL_ISSUANCE_ASSETS_COMMAND_OWNED',
+      'Issuance assets must be changed through named upload or clear commands',
+    )
+  }
   if (existing?.ownerSubjectId && !school.ownerSubjectId)
     throw new BusinessRuleViolationError('SCHOOL_OWNER_REQUIRED', 'Transfer school ownership instead of removing the owner')
   if (!school.ownerSubjectId || school.ownerSubjectId === existing?.ownerSubjectId)

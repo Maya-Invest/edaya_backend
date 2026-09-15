@@ -76,6 +76,24 @@ describe("official template catalog A–E", () => {
     }
   });
 
+  test("embeds issuing identity and logo into letterhead HTML", () => {
+    const template = getTemplateDefinition("schooling-certificate.v1");
+    expect(template).not.toBeNull();
+    const html = template!.compileHtml("fr", {
+      ...LETTER_PAYLOAD,
+      logoUrl: "data:image/png;base64,AAAA",
+      schoolAddress: "Boulevard Latrille, Cocody, Abidjan",
+      schoolPhone: "+225 27 22 44 00 00",
+      schoolEmail: "secretariat@edaya-ci.test",
+    });
+    expect(html).toContain("data:image/png;base64,AAAA");
+    expect(html).toContain("Boulevard Latrille, Cocody, Abidjan");
+    expect(html).toContain("+225 27 22 44 00 00");
+    expect(html).toContain("secretariat@edaya-ci.test");
+    expect(html).toContain("@page");
+    expect(html).toContain(".letter-header");
+  });
+
   test("renders a receipt through the stub PDF path", async () => {
     const result = await renderDocument({
       templateKey: "receipt.v1",

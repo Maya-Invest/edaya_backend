@@ -67,6 +67,7 @@ export const SEED_ENTITY_MANIFEST = [
   { entity: 'student-disciplinary-actions', fixtureFile: 'demoDataset.entities.studentDisciplinaryActions', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Linked to incidents i1–i3' },
   { entity: 'attachments', fixtureFile: 'demoDataset.entities.attachments', loader: 'run-dev-school-seed', status: 'seeded', dataset: 'demo', notes: 'Incidents, health, finance, academics' },
   { entity: 'profile-photos', fixtureFile: 'shared/profile-pictures.ts + assets/profile-pictures/pic####.jpg', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Staff, students, guardians via file storage' },
+  { entity: 'school-branding', fixtureFile: 'shared/issuance-assets.ts + assets/branding/*.jpg', loader: 'run-dev-school-seed', status: 'seeded', notes: 'Logo/crest allowlisted; stamp/signature restricted' },
 ] as const satisfies readonly SeedEntityManifestEntryShape[]
 
 export type SeedEntitySlug = (typeof SEED_ENTITY_MANIFEST)[number]['entity']

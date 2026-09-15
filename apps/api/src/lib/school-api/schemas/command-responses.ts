@@ -350,6 +350,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     status: z.literal("pending_upload"),
   }).openapi("CreateSchoolIssuanceAssetUploadResponse"),
   completeSchoolIssuanceAssetUpload: attachmentResponseSchema,
+  clearSchoolIssuanceAsset: schoolResponseSchema,
   recordIncident: incidentResponseSchema,
   addStudentInvolvement: studentIncidentInvolvementResponseSchema,
   applyDisciplinaryAction: studentDisciplinaryActionResponseSchema,
