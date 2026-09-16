@@ -1,4 +1,5 @@
 import type { Permission } from './permission'
+import type { PermissionProfileScopeGrain } from './permission-scopes'
 import { z } from 'zod'
 import { permissionScope } from './permission-scopes'
 
@@ -58,4 +59,28 @@ export function grantScopeContains(granted: GrantScope, requested: GrantScope): 
       && (granted.classGroupId === undefined || granted.classGroupId === requested.classGroupId)
     case 'student': return requested.kind === 'student' && granted.studentId === requested.studentId
   }
+}
+
+export function grantScopesEquivalent(left: readonly GrantScope[], right: readonly GrantScope[]): boolean {
+  if (left.length !== right.length)
+    return false
+  const keys = (scopes: readonly GrantScope[]) => [...scopes.map(scope => JSON.stringify(scope))].sort()
+  const a = keys(left)
+  const b = keys(right)
+  return a.every((key, index) => key === b[index])
+}
+
+export function defaultScopesForProfileGrain(grain: PermissionProfileScopeGrain): GrantScope[] {
+  return grain === 'school' ? [{ kind: 'school' }] : [{ kind: 'all', grain }]
+}
+
+export function validateProfileBindingScopes(grain: PermissionProfileScopeGrain, scopes: readonly GrantScope[]): void {
+  const parsed = grantScopesSchema.parse(scopes)
+  if (grain === 'school') {
+    if (parsed.length !== 1 || parsed[0]!.kind !== 'school')
+      throw new Error('School profiles require a single school scope')
+    return
+  }
+  if (parsed.some(scope => (scope.kind === 'all' ? scope.grain !== grain : scope.kind !== grain)))
+    throw new Error(`Profile grain ${grain} does not match binding scopes`)
 }

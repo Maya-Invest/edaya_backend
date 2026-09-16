@@ -444,6 +444,7 @@ export class AccessPolicies {
   readonly staffPermissions = {
     assertRead: () => this.assertSchool(P.ACCESS_CONTROL_READ),
     assertAssign: () => this.assertSchool(P.ACCESS_CONTROL_ASSIGN),
+    assertConfigure: () => this.assertSchool(P.ACCESS_CONTROL_CONFIGURE),
   }
 
   readonly timetable = {

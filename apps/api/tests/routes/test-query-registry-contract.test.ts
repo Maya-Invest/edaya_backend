@@ -74,7 +74,7 @@ describe("core route registry contracts", () => {
 
   it("omits unavailable generic writes while retaining named commands", () => {
     const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
-    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations", "document-issuances"]) {
+    for (const name of ["attachments", "students", "enrollments", "payments", "student-charges", "catalog-services", "student-year-accounts", "student-service-enrollments", "assessment-results", "results", "account-invitations", "document-issuances", "staff-permission-profile-bindings"]) {
       for (const action of ["save", "delete", "batch-save", "batch-delete"]) {
         expect(paths.has(`/core/entities/${name}/${action}`)).toBe(false);
       }
@@ -84,6 +84,9 @@ describe("core route registry contracts", () => {
     expect(paths.has("/core/commands/cancel-student-fee")).toBe(true);
     expect(paths.has("/core/entities/class-subjects/save")).toBe(false);
     expect(paths.has("/core/entities/class-subjects/delete")).toBe(true);
+    expect(paths.has("/core/entities/staff-permission-profiles/save")).toBe(false);
+    expect(paths.has("/core/entities/staff-permission-profiles/delete")).toBe(true);
+    expect(paths.has("/core/commands/configure-permission-profile")).toBe(true);
   });
 
   it("does not expose family feedback through generic entity routes", () => {

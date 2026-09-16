@@ -81,11 +81,11 @@ describe("service account routes", () => {
     expect(response.status).toBe(401);
   }, 30_000);
 
-  it("returns 403 when the service account lacks entity read permission", async () => {
+  it("returns only the service account itself when it lacks staff directory permission", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const { apiKey } = await provisionServiceAccountForTests(application, {
+    const { apiKey, staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "narrow-teacher",
       displayName: "Teacher Integration",
       permissionAssignments: [
@@ -103,7 +103,9 @@ describe("service account routes", () => {
       body: JSON.stringify({}),
     }));
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
+    const listed = await response.json() as Array<{ id: string }>;
+    expect(listed.map(row => row.id)).toEqual([staffMember.id]);
   }, 30_000);
 
   it("lists service accounts for verified human staff", async () => {

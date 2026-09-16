@@ -15,7 +15,7 @@ import type {
   SetClassSubjectOfferedInput,
   UpdateGradeLevelSubjectInput,
 } from '../workflows/academics'
-import type { AccessControlServiceWorkflow, LinkActorSubjectInput } from '../workflows/access-control'
+import type { AccessControlServiceWorkflow, ApplyStaffPermissionProfileInput, ConfigurePermissionProfileInput, LinkActorSubjectInput, RemoveStaffPermissionProfileInput, ReorderStaffPermissionProfilesInput } from '../workflows/access-control'
 import type {
   AcceptAccountInvitationInput,
   AccountInvitationServiceWorkflow,
@@ -215,6 +215,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
     assignStaffToLessonSession: payload => workflows.setup.assignStaffToLessonSession(payload as AssignStaffInput),
     assignStaffPermission: payload => workflows.accessControl.assignStaffPermission(payload as StaffPermissionAssignmentInput),
+    configurePermissionProfile: payload => workflows.accessControl.configurePermissionProfile(payload as ConfigurePermissionProfileInput),
+    applyStaffPermissionProfile: payload => workflows.accessControl.applyStaffPermissionProfile(payload as ApplyStaffPermissionProfileInput),
+    reorderStaffPermissionProfiles: payload => workflows.accessControl.reorderStaffPermissionProfiles(payload as ReorderStaffPermissionProfilesInput),
+    removeStaffPermissionProfile: payload => workflows.accessControl.removeStaffPermissionProfile(payload as RemoveStaffPermissionProfileInput),
     assignResourceToClass: payload => workflows.setup.assignResourceToClass(payload as AssignResourceInput),
     assignResourceToLessonSession: payload => workflows.setup.assignResourceToLessonSession(payload as AssignResourceInput),
     removeResourceAssignment: payload => workflows.setup.removeResourceAssignment(payload as RemoveResourceAssignmentInput),

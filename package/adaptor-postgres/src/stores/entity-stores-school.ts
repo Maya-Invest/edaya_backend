@@ -8,6 +8,8 @@ import {
   School as SchoolCtor,
   StaffAssignment as StaffAssignmentCtor,
   StaffMember as StaffMemberCtor,
+  StaffPermissionProfileBinding as StaffPermissionProfileBindingCtor,
+  StaffPermissionProfile as StaffPermissionProfileCtor,
   TeacherAssignment as TeacherAssignmentCtor,
   TeacherAssignmentKind,
   TeacherAssignmentStatus,
@@ -23,7 +25,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
+export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
   return {
     consortiums: customStore(
       db,
@@ -125,6 +127,9 @@ export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiu
         createdAt: row.createdAt,
       }),
     ),
+
+    staffPermissionProfiles: defaultStore(db, schema.staffPermissionProfiles, StaffPermissionProfileCtor),
+    staffPermissionProfileBindings: defaultStore(db, schema.staffPermissionProfileBindings, StaffPermissionProfileBindingCtor),
 
     teachers: customStore(
       db,

@@ -17,6 +17,8 @@ const relatedFields: Record<string, PgTable> = {
   studentId: schema.students,
   guardianId: schema.guardians,
   staffId: schema.staffMembers,
+  profileId: schema.staffPermissionProfiles,
+  sourceProfileId: schema.staffPermissionProfiles,
   teacherId: schema.teachers,
   activityId: schema.activities,
   catalogServiceId: schema.catalogServices,

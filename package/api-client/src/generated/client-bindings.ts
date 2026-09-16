@@ -159,6 +159,32 @@ export const clientBindings = {
           "batchDelete": true
         }
       },
+      "staffPermissionProfiles": {
+        "publicName": "staff-permission-profiles",
+        "schemaName": "StaffPermissionProfile",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": true,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": true
+        }
+      },
+      "staffPermissionProfileBindings": {
+        "publicName": "staff-permission-profile-bindings",
+        "schemaName": "StaffPermissionProfileBinding",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
       "attachments": {
         "publicName": "attachments",
         "schemaName": "Attachment",
@@ -911,6 +937,26 @@ export const clientBindings = {
         "publicName": "assign-staff-permission",
         "requestSchemaName": "StaffPermissionAssignmentConfigCommand",
         "responseSchemaName": "StaffPermissionAssignment"
+      },
+      "configurePermissionProfile": {
+        "publicName": "configure-permission-profile",
+        "requestSchemaName": "ConfigurePermissionProfileCommand",
+        "responseSchemaName": "StaffPermissionProfile"
+      },
+      "applyStaffPermissionProfile": {
+        "publicName": "apply-staff-permission-profile",
+        "requestSchemaName": "ApplyStaffPermissionProfileCommand",
+        "responseSchemaName": "StaffPermissionProfileBinding"
+      },
+      "reorderStaffPermissionProfiles": {
+        "publicName": "reorder-staff-permission-profiles",
+        "requestSchemaName": "ReorderStaffPermissionProfilesCommand",
+        "responseSchemaName": "ReorderStaffPermissionProfilesResponse"
+      },
+      "removeStaffPermissionProfile": {
+        "publicName": "remove-staff-permission-profile",
+        "requestSchemaName": "RemoveStaffPermissionProfileCommand",
+        "responseSchemaName": "RemoveStaffPermissionProfileResponse"
       },
       "assignResourceToClass": {
         "publicName": "assign-resource-to-class",

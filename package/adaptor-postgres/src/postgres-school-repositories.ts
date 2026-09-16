@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -38,6 +38,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly cronJobSchedules: PostgresCronJobScheduleStore
   public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
   public readonly staffPermissionAssignments: PostgresStore<StaffPermissionAssignment>
+  public readonly staffPermissionProfiles: PostgresStore<StaffPermissionProfile>
+  public readonly staffPermissionProfileBindings: PostgresStore<StaffPermissionProfileBinding>
   public readonly attachments: PostgresStore<Attachment>
   public readonly resources: PostgresStore<Resource>
   public readonly resourceAssignments: PostgresStore<ResourceAssignment>
@@ -106,6 +108,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.gradeLevels = stores.gradeLevels
     this.staffMembers = stores.staffMembers
     this.staffAssignments = stores.staffAssignments
+    this.staffPermissionProfiles = stores.staffPermissionProfiles
+    this.staffPermissionProfileBindings = stores.staffPermissionProfileBindings
     this.teachers = stores.teachers
     this.teacherAssignments = stores.teacherAssignments
     this.teacherUnavailabilities = stores.teacherUnavailabilities

@@ -470,9 +470,10 @@ describe('authorization policies against native repository scopes', () => {
     await addGrant(Permission.QUERY_WORKSPACE_READ, 'workspace', { scopes: [{ kind: 'school' }] })
     await addGrant(Permission.SCHOOL_STRUCTURE_CONFIGURE, 'structure', { scopes: [{ kind: 'school' }] })
     const people = schoolService().baseService.entities.staffMembers
-    await expect(people.list()).rejects.toThrow()
-    await expect(people.count()).rejects.toThrow()
-    await expect(people.findById('staff-a')).rejects.toThrow()
+    expect((await people.findById('staff-a'))?.id).toBe('staff-a')
+    expect(await people.findById('staff-b')).toBeUndefined()
+    expect((await people.list()).map(row => row.id)).toEqual(['staff-a'])
+    expect(await people.count()).toBe(1)
     const original = (await repositories.staffMembers.findById('staff-a'))!
     await expect(people.save(new StaffMember({ ...original.data, lastName: 'Changed' }))).rejects.toThrow()
     await addGrant(Permission.STAFF_READ, 'staff', { scopes: [{ kind: 'school' }] })

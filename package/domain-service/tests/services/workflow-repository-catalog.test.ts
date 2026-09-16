@@ -5,7 +5,7 @@ import { pickWorkflowRepositories, WORKFLOW_REPOSITORY_KEYS } from '../../src/se
 describe('workflow repository catalog', () => {
   test('documents repository keys for workflows with narrow direct repository usage', () => {
     expect(WORKFLOW_REPOSITORY_KEYS.setup.length).toBeLessThan(4)
-    expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBeLessThanOrEqual(5)
+    expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBe(9)
     expect(WORKFLOW_REPOSITORY_KEYS.finance.length).toBe(10)
     expect(WORKFLOW_REPOSITORY_KEYS.invitations.length).toBeGreaterThan(4)
   })
@@ -19,14 +19,28 @@ describe('workflow repository catalog', () => {
       schools: { id: 'school-repo' },
       academicYears: { id: 'year-repo' },
       accountInvitations: { id: 'invitation-repo' },
+      staffPermissionProfiles: { id: 'profile-repo' },
+      staffPermissionProfileBindings: { id: 'binding-repo' },
+      staffPermissionAssignments: { id: 'assignment-repo' },
+      teachers: { id: 'teacher-repo' },
     } as unknown as SchoolRepositories
 
     const accessControl = pickWorkflowRepositories('accessControl', repositories)
-    expect(Object.keys(accessControl).sort()).toEqual(['guardianLinks', 'guardians', 'staffMembers', 'students', 'teachers'])
+    expect(Object.keys(accessControl).sort()).toEqual([
+      'academicYears',
+      'guardianLinks',
+      'guardians',
+      'staffMembers',
+      'staffPermissionAssignments',
+      'staffPermissionProfileBindings',
+      'staffPermissionProfiles',
+      'students',
+      'teachers',
+    ])
     expect(accessControl.staffMembers).toBe(repositories.staffMembers)
 
     const setup = pickWorkflowRepositories('setup', repositories)
-    expect(Object.keys(setup).sort()).toEqual(['academicYears', 'schools'])
+    expect(Object.keys(setup).sort()).toEqual(['academicYears', 'schools', 'staffPermissionProfiles'])
 
     const invitations = pickWorkflowRepositories('invitations', repositories)
     expect(Object.keys(invitations).sort()).toEqual([

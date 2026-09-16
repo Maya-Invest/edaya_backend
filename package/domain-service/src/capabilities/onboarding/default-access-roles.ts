@@ -25,6 +25,12 @@ const WEBAPP_READ_PERMISSIONS: readonly Permission[] = [
   Permission.QUERY_REPORT_CARD_DETAIL_READ,
 ]
 
+const EDUCATOR_WEBAPP_READ_PERMISSIONS: readonly Permission[] = WEBAPP_READ_PERMISSIONS.filter(permission =>
+  permission !== Permission.QUERY_CALENDAR_READ
+  && permission !== Permission.QUERY_TIMETABLE_READ
+  && permission !== Permission.STAFF_READ,
+)
+
 const EDUCATOR_PERMISSIONS: readonly Permission[] = [
   Permission.DISCIPLINE_READ,
   Permission.DISCIPLINE_CREATE,
@@ -136,7 +142,7 @@ export const STAFF_INVITE_PERMISSION_PRESETS: readonly StaffInvitePermissionPres
     id: 'role-educator',
     name: 'CPE / Vie scolaire',
     description: 'Discipline, absences et suivi des élèves',
-    permissions: mergePermissions(EDUCATOR_PERMISSIONS, WEBAPP_READ_PERMISSIONS),
+    permissions: mergePermissions(EDUCATOR_PERMISSIONS, EDUCATOR_WEBAPP_READ_PERMISSIONS),
   },
   {
     id: 'role-studies-director',

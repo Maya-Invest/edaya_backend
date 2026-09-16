@@ -55,6 +55,8 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
   staffAssignments: { read: [Permission.ACCESS_CONTROL_READ, Permission.QUERY_WORKSPACE_READ], write: Permission.ACCESS_CONTROL_ASSIGN },
   staffMembers: { read: [Permission.STAFF_READ], write: (entity, existing) => !existing ? Permission.STAFF_CREATE : existing.isActive && !entity.isActive ? Permission.STAFF_ARCHIVE : Permission.STAFF_UPDATE, delete: Permission.STAFF_ARCHIVE },
   staffPermissionAssignments: { read: [Permission.ACCESS_CONTROL_READ], write: [Permission.ACCESS_CONTROL_ASSIGN] },
+  staffPermissionProfiles: { read: [Permission.ACCESS_CONTROL_READ], write: Permission.ACCESS_CONTROL_CONFIGURE, delete: Permission.ACCESS_CONTROL_CONFIGURE },
+  staffPermissionProfileBindings: { read: [Permission.ACCESS_CONTROL_READ], write: [] },
   teacherAssignments: { read: [Permission.STAFF_READ, Permission.ACCESS_CONTROL_READ], write: Permission.ACCESS_CONTROL_ASSIGN },
   teacherUnavailabilities: { read: [Permission.STAFF_READ, Permission.ACCESS_CONTROL_READ], write: Permission.ACCESS_CONTROL_ASSIGN },
   teachers: { read: [Permission.STAFF_READ, Permission.ACCESS_CONTROL_READ], write: Permission.ACCESS_CONTROL_ASSIGN },

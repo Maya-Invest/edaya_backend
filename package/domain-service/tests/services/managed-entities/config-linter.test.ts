@@ -20,7 +20,7 @@ const directDeleteGateExceptions = new Set([
   'school/grade-level.ts',
   'school/grade-scale.ts',
   'school/school.ts',
-  'school/staff-permission-assignment.ts',
+  'school/staff-permission-profile-binding.ts',
   'students/disciplinary-action.ts',
   'students/guardian-student-link.ts',
   'students/student-health-profile.ts',

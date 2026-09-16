@@ -20,6 +20,8 @@ const tables: Record<CoreEntityKey, PgTable> = {
   teacherUnavailabilities: s.teacherUnavailabilities,
   accountInvitations: s.accountInvitations,
   staffPermissionAssignments: s.staffPermissionAssignments,
+  staffPermissionProfiles: s.staffPermissionProfiles,
+  staffPermissionProfileBindings: s.staffPermissionProfileBindings,
   attachments: s.attachments,
   resources: s.resources,
   resourceAssignments: s.resourceAssignments,

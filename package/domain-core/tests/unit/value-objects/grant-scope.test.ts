@@ -1,5 +1,5 @@
 import type { GrantScope } from '@edaya/core'
-import { grantScopeContains, grantScopesSchema, Permission, validatePermissionScopes } from '@edaya/core'
+import { grantScopeContains, grantScopesEquivalent, grantScopesSchema, Permission, validatePermissionScopes, validateProfileBindingScopes } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('typed staff grant scopes', () => {
@@ -56,5 +56,24 @@ describe('typed staff grant scopes', () => {
     expect(() => validatePermissionScopes(Permission.GRADE_INPUT, [{ kind: 'student', studentId: 'student' }])).toThrow()
     expect(() => validatePermissionScopes(Permission.PAYMENT_RECORD, [{ kind: 'all', grain: 'student' }])).toThrow()
     expect(() => validatePermissionScopes(Permission.PLATFORM_USER_CREATE, [{ kind: 'school' }])).toThrow()
+  })
+
+  test('equivalent scopes ignore order', () => {
+    expect(grantScopesEquivalent(
+      [{ kind: 'class_group', classGroupId: 'a' }, { kind: 'class_group', classGroupId: 'b' }],
+      [{ kind: 'class_group', classGroupId: 'b' }, { kind: 'class_group', classGroupId: 'a' }],
+    )).toBe(true)
+    expect(grantScopesEquivalent(
+      [{ kind: 'class_group', classGroupId: 'a' }],
+      [{ kind: 'class_group', classGroupId: 'b' }],
+    )).toBe(false)
+  })
+
+  test('profile binding scopes match the template grain', () => {
+    expect(() => validateProfileBindingScopes('school', [{ kind: 'school' }])).not.toThrow()
+    expect(() => validateProfileBindingScopes('school', [{ kind: 'all', grain: 'class_group' }])).toThrow()
+    expect(() => validateProfileBindingScopes('class_group', [{ kind: 'all', grain: 'class_group' }])).not.toThrow()
+    expect(() => validateProfileBindingScopes('class_group', [{ kind: 'class_group', classGroupId: 'class' }])).not.toThrow()
+    expect(() => validateProfileBindingScopes('class_group', [{ kind: 'student', studentId: 'student' }])).toThrow()
   })
 })

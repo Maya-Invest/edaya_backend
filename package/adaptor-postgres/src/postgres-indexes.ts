@@ -40,6 +40,26 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_permission_assignments_staff_id_idx').on(col(table, 'staffId')),
         index('staff_permission_assignments_school_id_idx').on(col(table, 'schoolId')),
         index('staff_permission_assignments_academic_year_id_idx').on(col(table, 'academicYearId')),
+        index('staff_permission_assignments_source_profile_id_idx').on(col(table, 'sourceProfileId')),
+      ]
+    case 'staff_permission_profiles':
+      return [
+        index('staff_permission_profiles_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('staff_permission_profiles_source_key_uidx')
+          .on(col(table, 'schoolId'), col(table, 'sourceKey'))
+          .where(sql`${col(table, 'sourceKey')} is not null`),
+      ]
+    case 'staff_permission_profile_bindings':
+      return [
+        index('staff_permission_profile_bindings_school_id_idx').on(col(table, 'schoolId')),
+        index('staff_permission_profile_bindings_staff_id_idx').on(col(table, 'staffId')),
+        index('staff_permission_profile_bindings_profile_id_idx').on(col(table, 'profileId')),
+        uniqueIndex('staff_permission_profile_bindings_staff_profile_uidx').on(col(table, 'staffId'), col(table, 'profileId')),
+        uniqueIndex('staff_permission_profile_bindings_sort_uidx').on(
+          col(table, 'staffId'),
+          col(table, 'academicYearId'),
+          col(table, 'sortOrder'),
+        ),
       ]
     case 'attachments':
       return [

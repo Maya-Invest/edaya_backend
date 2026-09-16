@@ -43,6 +43,8 @@ import type {
   StaffAssignment,
   StaffMember,
   StaffPermissionAssignment,
+  StaffPermissionProfile,
+  StaffPermissionProfileBinding,
   Student,
   StudentCharge,
   StudentClassEnrollment,
@@ -73,6 +75,8 @@ export interface CoreEntityMap {
   teacherUnavailabilities: TeacherUnavailability
   accountInvitations: AccountInvitation
   staffPermissionAssignments: StaffPermissionAssignment
+  staffPermissionProfiles: StaffPermissionProfile
+  staffPermissionProfileBindings: StaffPermissionProfileBinding
   attachments: Attachment
   resources: Resource
   resourceAssignments: ResourceAssignment
@@ -147,6 +151,8 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'teacherUnavailabilities',
   'accountInvitations',
   'staffPermissionAssignments',
+  'staffPermissionProfiles',
+  'staffPermissionProfileBindings',
   'attachments',
   'resources',
   'resourceAssignments',

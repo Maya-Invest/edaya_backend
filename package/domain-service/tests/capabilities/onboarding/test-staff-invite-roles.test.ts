@@ -50,6 +50,16 @@ describe('onboarding staff invite roles', () => {
     expect(preset!.permissions).not.toContain(Permission.ACCESS_CONTROL_ASSIGN)
   })
 
+  it('keeps educator school-life rights without calendar or staff directory', () => {
+    const preset = getStaffInvitePermissionPreset('role-educator')
+    expect(preset).toBeDefined()
+    expect(preset!.permissions).toContain(Permission.DISCIPLINE_READ)
+    expect(preset!.permissions).toContain(Permission.ATTENDANCE_RECORD)
+    expect(preset!.permissions).not.toContain(Permission.QUERY_CALENDAR_READ)
+    expect(preset!.permissions).not.toContain(Permission.QUERY_TIMETABLE_READ)
+    expect(preset!.permissions).not.toContain(Permission.STAFF_READ)
+  })
+
   it('registers dedicated presets alongside legacy coordinator/educator/director', () => {
     const ids = STAFF_INVITE_PERMISSION_PRESETS.map(preset => preset.id)
     expect(ids).toContain('role-studies-director')

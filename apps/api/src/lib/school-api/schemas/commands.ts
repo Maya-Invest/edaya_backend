@@ -30,6 +30,7 @@ import {
   gradeLevelSubjectMatterSchema,
   gradeLevelSubjectSchema,
   gradeScaleSchema,
+  grantScopesSchema,
   guardianContactMethodSchema,
   guardianSchema,
   guardianStudentLinkSchema,
@@ -52,6 +53,7 @@ import {
   staffAssignmentSchema,
   staffMemberSchema,
   staffPermissionAssignmentSchema,
+  staffPermissionProfileSchema,
   studentClassEnrollmentSchema,
   studentDisciplinaryActionSchema,
   StudentDisciplinaryActionStatus,
@@ -288,6 +290,27 @@ export const assignStaffToLessonSessionCommandSchema = objectFromSchema(staffAss
 
 export const staffPermissionAssignmentConfigCommandSchema = objectFromSchema(staffPermissionAssignmentSchema)
   .openapi("StaffPermissionAssignmentConfigCommand");
+
+export const configurePermissionProfileCommandSchema = objectFromSchema(staffPermissionProfileSchema)
+  .omit({ sourceKey: true, createdAt: true, updatedAt: true })
+  .openapi("ConfigurePermissionProfileCommand");
+
+export const applyStaffPermissionProfileCommandSchema = z.object({
+  staffId: field.id(),
+  profileId: field.id(),
+  academicYearId: field.id().optional(),
+  scopes: grantScopesSchema,
+}).openapi("ApplyStaffPermissionProfileCommand");
+
+export const reorderStaffPermissionProfilesCommandSchema = z.object({
+  staffId: field.id(),
+  profileIds: z.array(field.id()).min(1),
+}).openapi("ReorderStaffPermissionProfilesCommand");
+
+export const removeStaffPermissionProfileCommandSchema = z.object({
+  staffId: field.id(),
+  profileId: field.id(),
+}).openapi("RemoveStaffPermissionProfileCommand");
 
 export const assignResourceToClassCommandSchema = objectFromSchema(resourceAssignmentSchema)
   .omit({ lessonSessionId: true, activitySessionId: true, assessmentId: true })

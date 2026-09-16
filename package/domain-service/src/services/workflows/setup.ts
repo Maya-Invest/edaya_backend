@@ -9,6 +9,7 @@ import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/p
 import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
+import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 
 import { requireSchool } from '../require-school'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -112,6 +113,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       const school = new SchoolEntity(schoolInput)
       await this.baseService.entities.schools.save(school)
       await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
+      await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
       return school
     })
   }

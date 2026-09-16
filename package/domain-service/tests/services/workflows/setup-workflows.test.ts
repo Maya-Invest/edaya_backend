@@ -122,7 +122,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('registerSchool seeds notification templates for a new school', async () => {
-    const { schoolNotificationTemplates, schools, service } = await createContext({
+    const { schoolNotificationTemplates, schools, staffPermissionProfiles, service } = await createContext({
       actorOverride: createPlatformRegisterTestActor('sch-new'),
     })
 
@@ -135,6 +135,7 @@ describe('SchoolService setup workflows', () => {
     expect(school.id).toBe('sch-new')
     expect((await schools.findById('sch-new'))?.name).toBe('New School')
     expect(await schoolNotificationTemplates.findById('sch-new')).toBeDefined()
+    expect(await staffPermissionProfiles.count({ schoolId: 'sch-new' })).toBeGreaterThan(0)
   })
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {

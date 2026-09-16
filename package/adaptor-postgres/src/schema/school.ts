@@ -159,12 +159,37 @@ export const staffPermissionAssignments = pgTable('staff_permission_assignments'
   status: text('status').notNull(),
   startsAt: timestamp('starts_at', { mode: 'date' }),
   endsAt: timestamp('ends_at', { mode: 'date' }),
+  sourceProfileId: text('source_profile_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => ({
   ...definePerformanceIndexes('staff_permission_assignments', table),
   scopesNonempty: check('staff_grant_scopes_nonempty', sql`jsonb_typeof(${table.scopes}) = 'array' AND jsonb_array_length(${table.scopes}) > 0`),
 }))
+
+export const staffPermissionProfiles = pgTable('staff_permission_profiles', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  scopeGrain: text('scope_grain').notNull(),
+  permissions: jsonb('permissions').$type<string[]>().notNull(),
+  sourceKey: text('source_key'),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_profiles', table))
+
+export const staffPermissionProfileBindings = pgTable('staff_permission_profile_bindings', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  profileId: text('profile_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  scopes: jsonb('scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  sortOrder: integer('sort_order').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_profile_bindings', table))
 
 // 8. Attachment Table
 

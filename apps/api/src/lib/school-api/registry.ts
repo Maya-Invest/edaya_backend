@@ -2,7 +2,7 @@ import type { PublicEntityOperations } from "./public-operations";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -73,6 +73,8 @@ const apiEntityDecorations = {
   staffAssignments: decoration("staff-assignments", "Staff Assignments", entitySchemas.staffAssignmentQuerySchema, entitySchemas.staffAssignmentResponseSchema, StaffAssignment, PUBLIC_CRUD),
   accountInvitations: decoration("account-invitations", "Account Invitations", entitySchemas.accountInvitationQuerySchema, entitySchemas.accountInvitationResponseSchema, AccountInvitation, COMMAND_ONLY),
   staffPermissionAssignments: decoration("staff-permission-assignments", "Staff Permission Assignments", entitySchemas.staffPermissionAssignmentQuerySchema, entitySchemas.staffPermissionAssignmentResponseSchema, StaffPermissionAssignment, PUBLIC_CRUD),
+  staffPermissionProfiles: decoration("staff-permission-profiles", "Staff Permission Profiles", entitySchemas.staffPermissionProfileQuerySchema, entitySchemas.staffPermissionProfileResponseSchema, StaffPermissionProfile, PUBLIC_DELETE),
+  staffPermissionProfileBindings: decoration("staff-permission-profile-bindings", "Staff Permission Profile Bindings", entitySchemas.staffPermissionProfileBindingQuerySchema, entitySchemas.staffPermissionProfileBindingResponseSchema, StaffPermissionProfileBinding, COMMAND_ONLY),
   attachments: decoration("attachments", "Attachments", entitySchemas.attachmentQuerySchema, entitySchemas.attachmentResponseSchema, Attachment, COMMAND_ONLY),
   resources: decoration("resources", "Resources", entitySchemas.resourceQuerySchema, entitySchemas.resourceResponseSchema, Resource, PUBLIC_CRUD),
   resourceAssignments: decoration("resource-assignments", "Resource Assignments", entitySchemas.resourceAssignmentQuerySchema, entitySchemas.resourceAssignmentResponseSchema, ResourceAssignment, PUBLIC_CRUD),
@@ -174,6 +176,10 @@ export const coreCommands = [
   command("assign-staff-to-class-subject", "assignStaffToClassSubject", commandSchemas.assignStaffToClassSubjectCommandSchema),
   command("assign-staff-to-lesson-session", "assignStaffToLessonSession", commandSchemas.assignStaffToLessonSessionCommandSchema),
   command("assign-staff-permission", "assignStaffPermission", commandSchemas.staffPermissionAssignmentConfigCommandSchema),
+  command("configure-permission-profile", "configurePermissionProfile", commandSchemas.configurePermissionProfileCommandSchema),
+  command("apply-staff-permission-profile", "applyStaffPermissionProfile", commandSchemas.applyStaffPermissionProfileCommandSchema),
+  command("reorder-staff-permission-profiles", "reorderStaffPermissionProfiles", commandSchemas.reorderStaffPermissionProfilesCommandSchema),
+  command("remove-staff-permission-profile", "removeStaffPermissionProfile", commandSchemas.removeStaffPermissionProfileCommandSchema),
   command("assign-resource-to-class", "assignResourceToClass", commandSchemas.assignResourceToClassCommandSchema),
   command("assign-resource-to-lesson-session", "assignResourceToLessonSession", commandSchemas.assignResourceToLessonSessionCommandSchema),
   command("remove-resource-assignment", "removeResourceAssignment", commandSchemas.removeResourceAssignmentCommandSchema),
