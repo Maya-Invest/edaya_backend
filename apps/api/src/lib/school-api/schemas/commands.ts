@@ -1082,3 +1082,53 @@ export const listClassSubjectAssessmentResultsForPeriodCommandSchema = z.object(
   classSubjectId: field.id(),
   periodId: field.id(),
 }).openapi("ListClassSubjectAssessmentResultsForPeriodCommand");
+
+const familyFeedbackAnswersCommandSchema = z.object({
+  communication: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal("cannot_assess")]),
+  clarity: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal("cannot_assess")]),
+  support: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal("cannot_assess")]),
+  student_experience: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal("cannot_assess")]),
+});
+
+export const createFamilyFeedbackCampaignCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id().optional(),
+  academicYearId: field.id(),
+  academicPeriodId: field.id(),
+  teacherAssignmentId: field.id(),
+  opensAt: field.optionalDate(),
+  closesAt: field.optionalDate(),
+  moderatorStaffId: field.id().optional(),
+}).openapi("CreateFamilyFeedbackCampaignCommand");
+
+export const updateFamilyFeedbackCampaignCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+  opensAt: field.optionalDate(),
+  closesAt: field.optionalDate(),
+}).openapi("UpdateFamilyFeedbackCampaignCommand");
+
+export const assignFamilyFeedbackModeratorCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+  moderatorStaffId: field.id(),
+}).openapi("AssignFamilyFeedbackModeratorCommand");
+
+export const familyFeedbackCampaignIdCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+}).openapi("FamilyFeedbackCampaignIdCommand");
+
+export const submitFamilyFeedbackResponseCommandSchema = z.object({
+  requestId: field.id(),
+  campaignId: field.id(),
+  studentId: field.id(),
+  answers: familyFeedbackAnswersCommandSchema,
+  comment: field.optionalString(),
+}).openapi("SubmitFamilyFeedbackResponseCommand");
+
+export const saveFamilyFeedbackThemeDraftCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+  themes: field.text(),
+}).openapi("SaveFamilyFeedbackThemeDraftCommand");

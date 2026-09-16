@@ -322,6 +322,40 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
           col(table, 'academicYearId'),
         ),
       ]
+    case 'family_feedback_campaigns':
+      return [
+        index('family_feedback_campaigns_school_id_idx').on(col(table, 'schoolId')),
+        index('family_feedback_campaigns_status_idx').on(col(table, 'schoolId'), col(table, 'status')),
+        index('family_feedback_campaigns_assignment_idx').on(
+          col(table, 'schoolId'),
+          col(table, 'teacherAssignmentId'),
+          col(table, 'academicPeriodId'),
+        ),
+      ]
+    case 'family_feedback_slots':
+      return [
+        uniqueIndex('family_feedback_slots_identity_uidx').on(
+          col(table, 'schoolId'),
+          col(table, 'campaignId'),
+          col(table, 'studentId'),
+          col(table, 'teacherAssignmentId'),
+        ),
+        index('family_feedback_slots_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId'), col(table, 'status')),
+        index('family_feedback_slots_student_idx').on(col(table, 'schoolId'), col(table, 'studentId')),
+      ]
+    case 'family_feedback_responses':
+      return [
+        uniqueIndex('family_feedback_responses_slot_uidx').on(col(table, 'schoolId'), col(table, 'slotId')),
+        index('family_feedback_responses_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId')),
+      ]
+    case 'family_feedback_snapshots':
+      return [
+        uniqueIndex('family_feedback_snapshots_campaign_uidx').on(col(table, 'schoolId'), col(table, 'campaignId')),
+      ]
+    case 'family_feedback_comment_read_audit':
+      return [
+        index('family_feedback_comment_read_audit_campaign_idx').on(col(table, 'schoolId'), col(table, 'campaignId')),
+      ]
     default:
       return []
   }

@@ -15,6 +15,9 @@ export const PERMISSION_ASSURANCE: Partial<Record<Permission, ActorAssuranceLeve
   [Permission.PAYMENT_REVERSE]: ActorAssuranceLevel.Verified,
   [Permission.REPORT_CARD_PUBLISH]: ActorAssuranceLevel.Verified,
   [Permission.DOCUMENT_VOID]: ActorAssuranceLevel.Verified,
+  [Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE]: ActorAssuranceLevel.Verified,
+  [Permission.FAMILY_FEEDBACK_MODERATE]: ActorAssuranceLevel.Verified,
+  [Permission.FAMILY_FEEDBACK_PUBLISH]: ActorAssuranceLevel.Verified,
   [Permission.STUDENT_UPDATE]: ActorAssuranceLevel.Verified,
   [Permission.STUDENT_HEALTH_UPDATE]: ActorAssuranceLevel.Verified,
   [Permission.DISCIPLINE_VALIDATE]: ActorAssuranceLevel.Verified,
@@ -43,6 +46,9 @@ export const HUMAN_ONLY_PERMISSIONS = new Set<Permission>([
   Permission.ACCESS_CONTROL_ASSIGN,
   Permission.ACCESS_CONTROL_CONFIGURE,
   Permission.PLATFORM_REGISTER_SCHOOL,
+  Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE,
+  Permission.FAMILY_FEEDBACK_MODERATE,
+  Permission.FAMILY_FEEDBACK_PUBLISH,
 ])
 
 /** Permissions that elevated school owners may manage without verified step-up. */
@@ -87,6 +93,7 @@ export function assertPermissionAssurance(
 const ELEVATED_SERVICE_OPERATIONAL_PERMISSIONS = new Set<Permission>([
   Permission.ACCESS_CONTROL_ASSIGN,
   Permission.ACCESS_CONTROL_CONFIGURE,
+  Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE,
 ])
 
 export function assertHumanOnlyPermission(

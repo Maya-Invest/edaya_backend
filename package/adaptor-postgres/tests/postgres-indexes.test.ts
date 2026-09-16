@@ -64,6 +64,11 @@ const INDEX_CASES: Array<{ tableName: string, columns: Record<string, string>, m
   { tableName: 'incidents', columns: { schoolId: 'school_id', classGroupId: 'class_group_id' }, minIndexes: 2 },
   { tableName: 'document_issuances', columns: { schoolId: 'school_id', studentId: 'student_id', classGroupId: 'class_group_id', templateKey: 'template_key', sourceId: 'source_id', status: 'status', requestId: 'request_id' }, minIndexes: 6 },
   { tableName: 'document_number_series', columns: { schoolId: 'school_id', documentKind: 'document_kind', academicYearId: 'academic_year_id' }, minIndexes: 2 },
+  { tableName: 'family_feedback_campaigns', columns: { schoolId: 'school_id', status: 'status', teacherAssignmentId: 'teacher_assignment_id', academicPeriodId: 'academic_period_id' }, minIndexes: 3 },
+  { tableName: 'family_feedback_slots', columns: { schoolId: 'school_id', campaignId: 'campaign_id', studentId: 'student_id', teacherAssignmentId: 'teacher_assignment_id', status: 'status' }, minIndexes: 3 },
+  { tableName: 'family_feedback_responses', columns: { schoolId: 'school_id', slotId: 'slot_id', campaignId: 'campaign_id' }, minIndexes: 2 },
+  { tableName: 'family_feedback_snapshots', columns: { schoolId: 'school_id', campaignId: 'campaign_id' }, minIndexes: 1 },
+  { tableName: 'family_feedback_comment_read_audit', columns: { schoolId: 'school_id', campaignId: 'campaign_id' }, minIndexes: 1 },
 ]
 
 describe('definePerformanceIndexes', () => {

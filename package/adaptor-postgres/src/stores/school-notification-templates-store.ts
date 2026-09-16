@@ -58,6 +58,10 @@ function packTemplateRow(entity: SchoolNotificationTemplates): SchoolNotificatio
     calendarEventReminder: entity.calendarEventReminder,
     studentPhotoApproved: entity.studentPhotoApproved ?? null,
     studentPhotoRejected: entity.studentPhotoRejected ?? null,
+    familyFeedbackOpened: entity.familyFeedbackOpened ?? null,
+    familyFeedbackReminder: entity.familyFeedbackReminder ?? null,
+    familyFeedbackPublished: entity.familyFeedbackPublished ?? null,
+    familyFeedbackPurgeReminder: entity.familyFeedbackPurgeReminder ?? null,
     accountInvitation: entity.accountInvitation,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
@@ -82,6 +86,22 @@ function storedCatalog(row: SchoolNotificationTemplatesRow) {
     studentPhotoRejected: row.studentPhotoRejected ?? pendingStudentPhotoTemplate(
       'Photo not approved',
       'The school did not approve this portrait.',
+    ),
+    familyFeedbackOpened: row.familyFeedbackOpened ?? pendingStudentPhotoTemplate(
+      'Family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackReminder: row.familyFeedbackReminder ?? pendingStudentPhotoTemplate(
+      'Reminder: family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackPublished: row.familyFeedbackPublished ?? pendingStudentPhotoTemplate(
+      'Family feedback published — {{subjectName}}',
+      'Aggregated results for {{classGroupName}} are available.',
+    ),
+    familyFeedbackPurgeReminder: row.familyFeedbackPurgeReminder ?? pendingStudentPhotoTemplate(
+      'Family feedback comments will be deleted',
+      'Raw answers for this campaign will be deleted on {{purgeAtLabel}}.',
     ),
     accountInvitation: row.accountInvitation,
   }

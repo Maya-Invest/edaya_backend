@@ -19,6 +19,7 @@ import { AssessmentsServiceWorkflow } from './workflows/assessments'
 import { BehaviorServiceWorkflow } from './workflows/behavior'
 import { CommunicationsServiceWorkflow } from './workflows/communications'
 import { DocumentsServiceWorkflow } from './workflows/documents'
+import { FamilyFeedbackServiceWorkflow } from './workflows/family-feedback'
 import { FinanceServiceWorkflow } from './workflows/finance'
 import { NotificationTemplatesServiceWorkflow } from './workflows/notification-templates'
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
@@ -41,6 +42,7 @@ export class SchoolService {
   readonly accountInvitationWorkflow: AccountInvitationServiceWorkflow
   readonly notificationTemplatesWorkflow: NotificationTemplatesServiceWorkflow
   readonly documentsWorkflow: DocumentsServiceWorkflow
+  readonly familyFeedbackWorkflow: FamilyFeedbackServiceWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -58,6 +60,7 @@ export class SchoolService {
     this.accountInvitationWorkflow = new AccountInvitationServiceWorkflow(this.baseService)
     this.notificationTemplatesWorkflow = new NotificationTemplatesServiceWorkflow(this.baseService)
     this.documentsWorkflow = new DocumentsServiceWorkflow(this.baseService)
+    this.familyFeedbackWorkflow = new FamilyFeedbackServiceWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
@@ -72,6 +75,7 @@ export class SchoolService {
       behavior: this.behaviorWorkflow,
       finance: this.financeWorkflow,
       documents: this.documentsWorkflow,
+      familyFeedback: this.familyFeedbackWorkflow,
     })
   }
 
@@ -137,6 +141,46 @@ export class SchoolService {
 
   grantDocumentBundleDownload(input: Parameters<DocumentsServiceWorkflow['grantDocumentBundleDownload']>[0]) {
     return this.documentsWorkflow.grantDocumentBundleDownload(input)
+  }
+
+  listFamilyFeedbackCampaigns() {
+    return this.familyFeedbackWorkflow.listFamilyFeedbackCampaigns()
+  }
+
+  getFamilyFeedbackCampaign(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackCampaign(input)
+  }
+
+  previewFamilyFeedbackAudience(input: Parameters<FamilyFeedbackServiceWorkflow['previewFamilyFeedbackAudience']>[0]) {
+    return this.familyFeedbackWorkflow.previewFamilyFeedbackAudience(input)
+  }
+
+  getFamilyFeedbackInstrument(input: Parameters<FamilyFeedbackServiceWorkflow['getFamilyFeedbackInstrument']>[0]) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackInstrument(input)
+  }
+
+  listGuardianFamilyFeedbackCampaigns() {
+    return this.familyFeedbackWorkflow.listGuardianFamilyFeedbackCampaigns()
+  }
+
+  getGuardianFamilyFeedbackQuestionnaire(input: Parameters<FamilyFeedbackServiceWorkflow['getGuardianFamilyFeedbackQuestionnaire']>[0]) {
+    return this.familyFeedbackWorkflow.getGuardianFamilyFeedbackQuestionnaire(input)
+  }
+
+  listFamilyFeedbackComments(input: { id: string }) {
+    return this.familyFeedbackWorkflow.listFamilyFeedbackComments(input)
+  }
+
+  getFamilyFeedbackAggregateReview(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getFamilyFeedbackAggregateReview(input)
+  }
+
+  listTeacherFamilyFeedbackResults() {
+    return this.familyFeedbackWorkflow.listTeacherFamilyFeedbackResults()
+  }
+
+  getTeacherFamilyFeedbackResult(input: { id: string }) {
+    return this.familyFeedbackWorkflow.getTeacherFamilyFeedbackResult(input)
   }
 
   reconcileStudentYearAccount(input: { accountId: string }) {

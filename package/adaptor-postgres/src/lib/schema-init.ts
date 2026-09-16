@@ -2,6 +2,11 @@ import { sql } from 'drizzle-orm'
 
 /** Tables cleared in dependency-safe order (children before parents where practical). */
 export const CLEAR_TABLE_ORDER = [
+  'family_feedback_comment_read_audit',
+  'family_feedback_responses',
+  'family_feedback_snapshots',
+  'family_feedback_slots',
+  'family_feedback_campaigns',
   'private_file_references',
   'attachment_uploads',
   'cron_occurrences',

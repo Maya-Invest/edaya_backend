@@ -8,6 +8,7 @@ import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
 import type { DocumentsSeedPort } from '../domains/documents/port'
+import type { FamilyFeedbackSeedPort } from '../domains/family-feedback/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
@@ -36,6 +37,7 @@ import { createInProcessCommunicationsSeedPort } from '../domains/communications
 import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapters/in-process'
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
 import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
+import { createInProcessFamilyFeedbackSeedPort } from '../domains/family-feedback/adapters/in-process'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
@@ -90,6 +92,8 @@ export interface RunDevSeedsOptions {
   financePort?: FinanceSeedPort
   /** Explicit official-documents adapter; defaults to the in-process application adapter. */
   documentsPort?: DocumentsSeedPort
+  /** Explicit family-feedback campaign adapter; defaults to the in-process application adapter. */
+  familyFeedbackPort?: FamilyFeedbackSeedPort
   /** Explicit extracurricular-activities adapter; defaults to the in-process application adapter. */
   activitiesPort?: ActivitiesSeedPort
   /** Explicit calendar/incident adapter; defaults to the in-process application adapter. */
@@ -174,6 +178,8 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
     ?? createInProcessFinanceSeedPort(requireApplication('financePort'))
   const documentsPort = options.documentsPort
     ?? createInProcessDocumentsSeedPort(requireApplication('documentsPort'))
+  const familyFeedbackPort = options.familyFeedbackPort
+    ?? createInProcessFamilyFeedbackSeedPort(requireApplication('familyFeedbackPort'))
   const activitiesPort = options.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireApplication('activitiesPort'))
   const schoolLifePort = options.schoolLifePort
@@ -225,6 +231,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       reportCardsPort,
       financePort,
       documentsPort,
+      familyFeedbackPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -271,6 +278,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       reportCardsPort,
       financePort,
       documentsPort,
+      familyFeedbackPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,

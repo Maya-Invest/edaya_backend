@@ -115,6 +115,27 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'guardians',
     'guardianLinks',
   ],
+  familyFeedback: [
+    'familyFeedbackCampaigns',
+    'familyFeedbackSlots',
+    'familyFeedbackResponses',
+    'familyFeedbackSnapshots',
+    'familyFeedbackCommentReadAudit',
+    'teacherAssignments',
+    'teachers',
+    'classSubjects',
+    'classGroups',
+    'subjects',
+    'academicYears',
+    'academicPeriods',
+    'enrollments',
+    'students',
+    'guardians',
+    'guardianLinks',
+    'staffMembers',
+    'staffPermissionAssignments',
+    'schools',
+  ],
 } as const satisfies Record<string, readonly (keyof SchoolRepositories)[]>
 
 export type WorkflowRepositoryScope = keyof typeof WORKFLOW_REPOSITORY_KEYS
@@ -155,3 +176,5 @@ export type BehaviorWorkflowRepositories = WorkflowRepositoryDeps<'behavior'>
 export type FinanceWorkflowRepositories = WorkflowRepositoryDeps<'finance'>
 
 export type DocumentsWorkflowRepositories = WorkflowRepositoryDeps<'documents'>
+
+export type FamilyFeedbackWorkflowRepositories = WorkflowRepositoryDeps<'familyFeedback'>

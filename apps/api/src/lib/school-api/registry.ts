@@ -19,7 +19,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -262,6 +262,17 @@ export const coreCommands = [
   command("withdraw-student-photo-submission", "withdrawStudentPhotoSubmission", commandSchemas.withdrawStudentPhotoSubmissionCommandSchema),
   command("review-student-photo", "reviewStudentPhoto", commandSchemas.reviewStudentPhotoCommandSchema),
   command("publish-student-photo", "publishStudentPhoto", commandSchemas.publishStudentPhotoCommandSchema),
+  command("create-family-feedback-campaign", "createFamilyFeedbackCampaign", commandSchemas.createFamilyFeedbackCampaignCommandSchema),
+  command("update-family-feedback-campaign", "updateFamilyFeedbackCampaign", commandSchemas.updateFamilyFeedbackCampaignCommandSchema),
+  command("assign-family-feedback-moderator", "assignFamilyFeedbackModerator", commandSchemas.assignFamilyFeedbackModeratorCommandSchema),
+  command("schedule-family-feedback-campaign", "scheduleFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
+  command("open-family-feedback-campaign", "openFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
+  command("close-family-feedback-campaign", "closeFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
+  command("cancel-family-feedback-campaign", "cancelFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
+  command("submit-family-feedback-response", "submitFamilyFeedbackResponse", commandSchemas.submitFamilyFeedbackResponseCommandSchema),
+  command("save-family-feedback-theme-draft", "saveFamilyFeedbackThemeDraft", commandSchemas.saveFamilyFeedbackThemeDraftCommandSchema),
+  command("publish-family-feedback-campaign", "publishFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
+  command("archive-family-feedback-campaign", "archiveFamilyFeedbackCampaign", commandSchemas.familyFeedbackCampaignIdCommandSchema),
   command("create-schedule", "createSchedule", commandSchemas.createScheduleCommandSchema),
   command("save-schedule", "saveSchedule", commandSchemas.saveScheduleCommandSchema),
   command("materialize-schedule", "materializeSchedule", commandSchemas.materializeScheduleCommandSchema),
@@ -446,6 +457,76 @@ export const coreQueries = [
     methodName: "grantDocumentBundleDownload",
     requestSchema: querySchemas.grantDocumentBundleDownloadQuerySchema,
     responseSchema: querySchemas.documentDownloadBundleResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-family-feedback-campaigns",
+    methodName: "listFamilyFeedbackCampaigns",
+    requestSchema: querySchemas.listFamilyFeedbackCampaignsQuerySchema,
+    responseSchema: querySchemas.familyFeedbackCampaignProjectionListQueryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-family-feedback-campaign",
+    methodName: "getFamilyFeedbackCampaign",
+    requestSchema: querySchemas.getFamilyFeedbackCampaignQuerySchema,
+    responseSchema: querySchemas.familyFeedbackCampaignProjectionQueryResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "preview-family-feedback-audience",
+    methodName: "previewFamilyFeedbackAudience",
+    requestSchema: querySchemas.previewFamilyFeedbackAudienceQuerySchema,
+    responseSchema: querySchemas.familyFeedbackAudiencePreviewResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-family-feedback-instrument",
+    methodName: "getFamilyFeedbackInstrument",
+    requestSchema: querySchemas.getFamilyFeedbackInstrumentQuerySchema,
+    responseSchema: querySchemas.familyFeedbackInstrumentResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-guardian-family-feedback-campaigns",
+    methodName: "listGuardianFamilyFeedbackCampaigns",
+    requestSchema: querySchemas.listGuardianFamilyFeedbackCampaignsQuerySchema,
+    responseSchema: querySchemas.guardianFamilyFeedbackCampaignListResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-guardian-family-feedback-questionnaire",
+    methodName: "getGuardianFamilyFeedbackQuestionnaire",
+    requestSchema: querySchemas.getGuardianFamilyFeedbackQuestionnaireQuerySchema,
+    responseSchema: querySchemas.guardianFamilyFeedbackQuestionnaireResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-family-feedback-comments",
+    methodName: "listFamilyFeedbackComments",
+    requestSchema: querySchemas.listFamilyFeedbackCommentsQuerySchema,
+    responseSchema: querySchemas.familyFeedbackCommentsResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-family-feedback-aggregate-review",
+    methodName: "getFamilyFeedbackAggregateReview",
+    requestSchema: querySchemas.getFamilyFeedbackAggregateReviewQuerySchema,
+    responseSchema: querySchemas.familyFeedbackAggregateResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "list-teacher-family-feedback-results",
+    methodName: "listTeacherFamilyFeedbackResults",
+    requestSchema: querySchemas.listTeacherFamilyFeedbackResultsQuerySchema,
+    responseSchema: querySchemas.teacherFamilyFeedbackResultListResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-teacher-family-feedback-result",
+    methodName: "getTeacherFamilyFeedbackResult",
+    requestSchema: querySchemas.getTeacherFamilyFeedbackResultQuerySchema,
+    responseSchema: querySchemas.teacherFamilyFeedbackResultResponseSchema,
     responseShape: "body",
   },
 ] satisfies CoreQueryConfig[];

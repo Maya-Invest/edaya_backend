@@ -9,6 +9,10 @@ export const EVENT_NOTIFICATION_TEMPLATE_KEYS = [
   'calendar.event_reminder',
   'student_photo.approved',
   'student_photo.rejected',
+  'family_feedback.opened',
+  'family_feedback.reminder',
+  'family_feedback.published',
+  'family_feedback.purge_reminder',
 ] as const
 
 export const ACCOUNT_INVITATION_TEMPLATE_KEY = 'account_invitation' as const
@@ -32,6 +36,10 @@ export const NOTIFICATION_TEMPLATE_FIELDS = {
   'calendar.event_reminder': 'calendarEventReminder',
   'student_photo.approved': 'studentPhotoApproved',
   'student_photo.rejected': 'studentPhotoRejected',
+  'family_feedback.opened': 'familyFeedbackOpened',
+  'family_feedback.reminder': 'familyFeedbackReminder',
+  'family_feedback.published': 'familyFeedbackPublished',
+  'family_feedback.purge_reminder': 'familyFeedbackPurgeReminder',
   'account_invitation': 'accountInvitation',
 } as const satisfies Record<NotificationTemplateKey, string>
 
@@ -48,5 +56,9 @@ export const NOTIFICATION_TEMPLATE_SQL_COLUMNS = {
   'calendar.event_reminder': 'calendar_event_reminder',
   'student_photo.approved': 'student_photo_approved',
   'student_photo.rejected': 'student_photo_rejected',
+  'family_feedback.opened': 'family_feedback_opened',
+  'family_feedback.reminder': 'family_feedback_reminder',
+  'family_feedback.published': 'family_feedback_published',
+  'family_feedback.purge_reminder': 'family_feedback_purge_reminder',
   'account_invitation': 'account_invitation',
 } as const satisfies Record<NotificationTemplateKey, string>

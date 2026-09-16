@@ -128,6 +128,10 @@
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
                     "DOCUMENT_VOID",
+                    "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                    "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                    "FAMILY_FEEDBACK_MODERATE",
+                    "FAMILY_FEEDBACK_PUBLISH",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -573,6 +577,10 @@
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
               "DOCUMENT_VOID",
+              "FAMILY_FEEDBACK_CAMPAIGN_READ",
+              "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+              "FAMILY_FEEDBACK_MODERATE",
+              "FAMILY_FEEDBACK_PUBLISH",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -753,6 +761,10 @@
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
                     "DOCUMENT_VOID",
+                    "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                    "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                    "FAMILY_FEEDBACK_MODERATE",
+                    "FAMILY_FEEDBACK_PUBLISH",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -1099,6 +1111,10 @@
                     "FINANCIAL_REPORT_READ",
                     "FINANCIAL_REPORT_EXPORT",
                     "DOCUMENT_VOID",
+                    "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                    "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                    "FAMILY_FEEDBACK_MODERATE",
+                    "FAMILY_FEEDBACK_PUBLISH",
                     "COMMUNICATION_READ",
                     "COMMUNICATION_CREATE",
                     "COMMUNICATION_UPDATE",
@@ -2539,6 +2555,10 @@
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
               "DOCUMENT_VOID",
+              "FAMILY_FEEDBACK_CAMPAIGN_READ",
+              "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+              "FAMILY_FEEDBACK_MODERATE",
+              "FAMILY_FEEDBACK_PUBLISH",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -5706,6 +5726,10 @@
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
                 "DOCUMENT_VOID",
+                "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                "FAMILY_FEEDBACK_MODERATE",
+                "FAMILY_FEEDBACK_PUBLISH",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -5889,6 +5913,10 @@
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
                 "DOCUMENT_VOID",
+                "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                "FAMILY_FEEDBACK_MODERATE",
+                "FAMILY_FEEDBACK_PUBLISH",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -6052,6 +6080,10 @@
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
                 "DOCUMENT_VOID",
+                "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                "FAMILY_FEEDBACK_MODERATE",
+                "FAMILY_FEEDBACK_PUBLISH",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -6215,6 +6247,10 @@
                 "FINANCIAL_REPORT_READ",
                 "FINANCIAL_REPORT_EXPORT",
                 "DOCUMENT_VOID",
+                "FAMILY_FEEDBACK_CAMPAIGN_READ",
+                "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+                "FAMILY_FEEDBACK_MODERATE",
+                "FAMILY_FEEDBACK_PUBLISH",
                 "COMMUNICATION_READ",
                 "COMMUNICATION_CREATE",
                 "COMMUNICATION_UPDATE",
@@ -6376,6 +6412,10 @@
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
               "DOCUMENT_VOID",
+              "FAMILY_FEEDBACK_CAMPAIGN_READ",
+              "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+              "FAMILY_FEEDBACK_MODERATE",
+              "FAMILY_FEEDBACK_PUBLISH",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -6729,6 +6769,10 @@
               "FINANCIAL_REPORT_READ",
               "FINANCIAL_REPORT_EXPORT",
               "DOCUMENT_VOID",
+              "FAMILY_FEEDBACK_CAMPAIGN_READ",
+              "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+              "FAMILY_FEEDBACK_MODERATE",
+              "FAMILY_FEEDBACK_PUBLISH",
               "COMMUNICATION_READ",
               "COMMUNICATION_CREATE",
               "COMMUNICATION_UPDATE",
@@ -12973,6 +13017,452 @@
           "attachmentId"
         ]
       },
+      "FamilyFeedbackCampaignCommandResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherAssignmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "questionVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "opensAt": {
+            "type": "string"
+          },
+          "closesAt": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string"
+          },
+          "closedAt": {
+            "type": "string"
+          },
+          "cancelledAt": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "archivedAt": {
+            "type": "string"
+          },
+          "answersPurgedAt": {
+            "type": "string"
+          },
+          "moderatorStaffId": {
+            "type": "string"
+          },
+          "themeDraft": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "academicYearId",
+          "academicPeriodId",
+          "classGroupId",
+          "classSubjectId",
+          "teacherAssignmentId",
+          "teacherId",
+          "subjectId",
+          "questionVersion"
+        ]
+      },
+      "CreateFamilyFeedbackCampaignCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherAssignmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "opensAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "closesAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "moderatorStaffId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "academicYearId",
+          "academicPeriodId",
+          "teacherAssignmentId"
+        ]
+      },
+      "UpdateFamilyFeedbackCampaignCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "opensAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "closesAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "requestId",
+          "id"
+        ]
+      },
+      "AssignFamilyFeedbackModeratorCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "moderatorStaffId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "moderatorStaffId"
+        ]
+      },
+      "FamilyFeedbackCampaignIdCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "id"
+        ]
+      },
+      "FamilyFeedbackSubmitReceipt": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slotId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed"
+            ]
+          },
+          "alreadyCompleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaignId",
+          "slotId",
+          "studentId",
+          "status",
+          "alreadyCompleted"
+        ]
+      },
+      "SubmitFamilyFeedbackResponseCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "answers": {
+            "type": "object",
+            "properties": {
+              "communication": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      3
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      4
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      5
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "cannot_assess"
+                    ]
+                  }
+                ]
+              },
+              "clarity": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      3
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      4
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      5
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "cannot_assess"
+                    ]
+                  }
+                ]
+              },
+              "support": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      3
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      4
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      5
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "cannot_assess"
+                    ]
+                  }
+                ]
+              },
+              "student_experience": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      2
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      3
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      4
+                    ]
+                  },
+                  {
+                    "type": "number",
+                    "enum": [
+                      5
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "cannot_assess"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "communication",
+              "clarity",
+              "support",
+              "student_experience"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "campaignId",
+          "studentId",
+          "answers"
+        ]
+      },
+      "SaveFamilyFeedbackThemeDraftCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "themes": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "themes"
+        ]
+      },
       "Schedule": {
         "type": "object",
         "properties": {
@@ -15406,6 +15896,278 @@
               "simple_message"
             ]
           },
+          "familyFeedbackOpened": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "familyFeedbackReminder": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "familyFeedbackPublished": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
+          "familyFeedbackPurgeReminder": {
+            "type": "object",
+            "properties": {
+              "enable_email": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_push": {
+                "type": "boolean",
+                "default": true
+              },
+              "enable_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "base_message": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              },
+              "rich_message": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "subject",
+                  "body"
+                ]
+              },
+              "simple_message": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            },
+            "required": [
+              "base_message",
+              "rich_message",
+              "simple_message"
+            ]
+          },
           "accountInvitation": {
             "type": "object",
             "properties": {
@@ -15462,6 +16224,10 @@
           "calendarEventReminder",
           "studentPhotoApproved",
           "studentPhotoRejected",
+          "familyFeedbackOpened",
+          "familyFeedbackReminder",
+          "familyFeedbackPublished",
+          "familyFeedbackPurgeReminder",
           "accountInvitation",
           "schoolId"
         ]
@@ -15512,6 +16278,10 @@
               "calendar.event_reminder",
               "student_photo.approved",
               "student_photo.rejected",
+              "family_feedback.opened",
+              "family_feedback.reminder",
+              "family_feedback.published",
+              "family_feedback.purge_reminder",
               "account_invitation"
             ]
           }
@@ -17605,6 +18375,662 @@
         },
         "required": [
           "issuanceIds"
+        ]
+      },
+      "FamilyFeedbackCampaignProjection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherAssignmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "questionVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "opensAt": {
+            "type": "string"
+          },
+          "closesAt": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string"
+          },
+          "closedAt": {
+            "type": "string"
+          },
+          "cancelledAt": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "archivedAt": {
+            "type": "string"
+          },
+          "answersPurgedAt": {
+            "type": "string"
+          },
+          "moderatorStaffId": {
+            "type": "string"
+          },
+          "themeDraft": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "academicYearId",
+          "academicPeriodId",
+          "classGroupId",
+          "classSubjectId",
+          "teacherAssignmentId",
+          "teacherId",
+          "subjectId",
+          "questionVersion"
+        ]
+      },
+      "FamilyFeedbackCampaignProjectionList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/FamilyFeedbackCampaignProjection"
+        }
+      },
+      "ListFamilyFeedbackCampaignsQuery": {
+        "type": "object",
+        "properties": {}
+      },
+      "GetFamilyFeedbackCampaignQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "FamilyFeedbackAudiencePreview": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          },
+          "eligibleCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "campaignId",
+          "eligibleCount",
+          "completedCount",
+          "blockers"
+        ]
+      },
+      "PreviewFamilyFeedbackAudienceQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicPeriodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherAssignmentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "academicYearId",
+          "academicPeriodId",
+          "teacherAssignmentId"
+        ]
+      },
+      "FamilyFeedbackInstrument": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "intro": {
+            "type": "string",
+            "minLength": 1
+          },
+          "confidentialityNotice": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scaleHelper": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scaleLabels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "commentPrompt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "stem": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "stem"
+              ]
+            }
+          }
+        },
+        "required": [
+          "version",
+          "intro",
+          "confidentialityNotice",
+          "scaleHelper",
+          "scaleLabels",
+          "commentPrompt",
+          "items"
+        ]
+      },
+      "GetFamilyFeedbackInstrumentQuery": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          }
+        },
+        "required": [
+          "locale"
+        ]
+      },
+      "FamilyFeedbackContext": {
+        "type": "object",
+        "properties": {
+          "studentName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "className": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodName": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "studentName",
+          "teacherName",
+          "subjectName",
+          "className",
+          "periodName"
+        ]
+      },
+      "GuardianFamilyFeedbackCampaignList": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "campaignId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "studentId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slotState": {
+              "type": "string",
+              "minLength": 1
+            },
+            "closesAt": {
+              "type": "string"
+            },
+            "context": {
+              "$ref": "#/components/schemas/FamilyFeedbackContext"
+            }
+          },
+          "required": [
+            "campaignId",
+            "studentId",
+            "slotState",
+            "context"
+          ]
+        }
+      },
+      "ListGuardianFamilyFeedbackCampaignsQuery": {
+        "type": "object",
+        "properties": {}
+      },
+      "GuardianFamilyFeedbackQuestionnaire": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slotId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slotState": {
+            "type": "string",
+            "minLength": 1
+          },
+          "closesAt": {
+            "type": "string"
+          },
+          "context": {
+            "$ref": "#/components/schemas/FamilyFeedbackContext"
+          },
+          "instrument": {
+            "$ref": "#/components/schemas/FamilyFeedbackInstrument"
+          },
+          "receipt": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed"
+                ]
+              },
+              "completedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "campaignId",
+          "studentId",
+          "slotId",
+          "slotState",
+          "context"
+        ]
+      },
+      "GetGuardianFamilyFeedbackQuestionnaireQuery": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          }
+        },
+        "required": [
+          "campaignId",
+          "studentId",
+          "locale"
+        ]
+      },
+      "FamilyFeedbackComments": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "comment": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "comment"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comments"
+        ]
+      },
+      "ListFamilyFeedbackCommentsQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "FamilyFeedbackAggregate": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eligibleSlotCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completedSlotCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "responseRate": {
+            "type": "number"
+          },
+          "overallSuppressed": {
+            "type": "boolean"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "questionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "suppressed": {
+                  "type": "boolean"
+                },
+                "nScored": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nCannotAssess": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "distribution": {
+                  "type": "object",
+                  "properties": {
+                    "1": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "2": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "3": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "4": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "5": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ]
+                }
+              },
+              "required": [
+                "questionId",
+                "suppressed",
+                "nScored",
+                "nCannotAssess",
+                "distribution"
+              ]
+            }
+          },
+          "themes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaignId",
+          "status",
+          "eligibleSlotCount",
+          "completedSlotCount",
+          "responseRate",
+          "overallSuppressed",
+          "questions"
+        ]
+      },
+      "GetFamilyFeedbackAggregateReviewQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "TeacherFamilyFeedbackResult": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eligibleSlotCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completedSlotCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "responseRate": {
+            "type": "number"
+          },
+          "overallSuppressed": {
+            "type": "boolean"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "questionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "suppressed": {
+                  "type": "boolean"
+                },
+                "nScored": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nCannotAssess": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "distribution": {
+                  "type": "object",
+                  "properties": {
+                    "1": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "2": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "3": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "4": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "5": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ]
+                }
+              },
+              "required": [
+                "questionId",
+                "suppressed",
+                "nScored",
+                "nCannotAssess",
+                "distribution"
+              ]
+            }
+          },
+          "themes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaignId",
+          "eligibleSlotCount",
+          "completedSlotCount",
+          "responseRate",
+          "overallSuppressed",
+          "questions"
+        ]
+      },
+      "TeacherFamilyFeedbackResultList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TeacherFamilyFeedbackResult"
+        }
+      },
+      "ListTeacherFamilyFeedbackResultsQuery": {
+        "type": "object",
+        "properties": {}
+      },
+      "GetTeacherFamilyFeedbackResultQuery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
         ]
       },
       "Filter_1": {
@@ -38355,6 +39781,1436 @@
         }
       }
     },
+    "/core/commands/create-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "create-family-feedback-campaign",
+        "operationId": "commands.createFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "createFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "create-family-feedback-campaign",
+        "x-edaya-request-schema": "CreateFamilyFeedbackCampaignCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "create-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFamilyFeedbackCampaignCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed create-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/update-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "update-family-feedback-campaign",
+        "operationId": "commands.updateFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "updateFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "update-family-feedback-campaign",
+        "x-edaya-request-schema": "UpdateFamilyFeedbackCampaignCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "update-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFamilyFeedbackCampaignCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed update-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/assign-family-feedback-moderator": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "assign-family-feedback-moderator",
+        "operationId": "commands.assignFamilyFeedbackModerator",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "assignFamilyFeedbackModerator",
+        "x-edaya-command-public-name": "assign-family-feedback-moderator",
+        "x-edaya-request-schema": "AssignFamilyFeedbackModeratorCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "assign-family-feedback-moderator payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignFamilyFeedbackModeratorCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed assign-family-feedback-moderator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/schedule-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "schedule-family-feedback-campaign",
+        "operationId": "commands.scheduleFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "scheduleFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "schedule-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "schedule-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed schedule-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/open-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "open-family-feedback-campaign",
+        "operationId": "commands.openFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "openFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "open-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "open-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed open-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/close-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "close-family-feedback-campaign",
+        "operationId": "commands.closeFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "closeFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "close-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "close-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed close-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/cancel-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "cancel-family-feedback-campaign",
+        "operationId": "commands.cancelFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "cancelFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "cancel-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "cancel-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed cancel-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/submit-family-feedback-response": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "submit-family-feedback-response",
+        "operationId": "commands.submitFamilyFeedbackResponse",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "submitFamilyFeedbackResponse",
+        "x-edaya-command-public-name": "submit-family-feedback-response",
+        "x-edaya-request-schema": "SubmitFamilyFeedbackResponseCommand",
+        "x-edaya-response-schema": "FamilyFeedbackSubmitReceipt",
+        "requestBody": {
+          "description": "submit-family-feedback-response payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitFamilyFeedbackResponseCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed submit-family-feedback-response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackSubmitReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/save-family-feedback-theme-draft": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "save-family-feedback-theme-draft",
+        "operationId": "commands.saveFamilyFeedbackThemeDraft",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "saveFamilyFeedbackThemeDraft",
+        "x-edaya-command-public-name": "save-family-feedback-theme-draft",
+        "x-edaya-request-schema": "SaveFamilyFeedbackThemeDraftCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "save-family-feedback-theme-draft payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFamilyFeedbackThemeDraftCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed save-family-feedback-theme-draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/publish-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "publish-family-feedback-campaign",
+        "operationId": "commands.publishFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "publishFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "publish-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "publish-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed publish-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/archive-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "archive-family-feedback-campaign",
+        "operationId": "commands.archiveFamilyFeedbackCampaign",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "archiveFamilyFeedbackCampaign",
+        "x-edaya-command-public-name": "archive-family-feedback-campaign",
+        "x-edaya-request-schema": "FamilyFeedbackCampaignIdCommand",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignCommandResponse",
+        "requestBody": {
+          "description": "archive-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyFeedbackCampaignIdCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed archive-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/create-schedule": {
       "post": {
         "tags": [
@@ -44884,6 +47740,1306 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentDownloadBundleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-family-feedback-campaigns": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-family-feedback-campaigns",
+        "operationId": "queries.listFamilyFeedbackCampaigns",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listFamilyFeedbackCampaigns",
+        "x-edaya-query-public-name": "list-family-feedback-campaigns",
+        "x-edaya-request-schema": "ListFamilyFeedbackCampaignsQuery",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignProjectionList",
+        "requestBody": {
+          "description": "list-family-feedback-campaigns payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListFamilyFeedbackCampaignsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-family-feedback-campaigns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignProjectionList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-family-feedback-campaign": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-family-feedback-campaign",
+        "operationId": "queries.getFamilyFeedbackCampaign",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getFamilyFeedbackCampaign",
+        "x-edaya-query-public-name": "get-family-feedback-campaign",
+        "x-edaya-request-schema": "GetFamilyFeedbackCampaignQuery",
+        "x-edaya-response-schema": "FamilyFeedbackCampaignProjection",
+        "requestBody": {
+          "description": "get-family-feedback-campaign payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetFamilyFeedbackCampaignQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-family-feedback-campaign",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackCampaignProjection"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/preview-family-feedback-audience": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "preview-family-feedback-audience",
+        "operationId": "queries.previewFamilyFeedbackAudience",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "previewFamilyFeedbackAudience",
+        "x-edaya-query-public-name": "preview-family-feedback-audience",
+        "x-edaya-request-schema": "PreviewFamilyFeedbackAudienceQuery",
+        "x-edaya-response-schema": "FamilyFeedbackAudiencePreview",
+        "requestBody": {
+          "description": "preview-family-feedback-audience payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewFamilyFeedbackAudienceQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved preview-family-feedback-audience",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackAudiencePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-family-feedback-instrument": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-family-feedback-instrument",
+        "operationId": "queries.getFamilyFeedbackInstrument",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getFamilyFeedbackInstrument",
+        "x-edaya-query-public-name": "get-family-feedback-instrument",
+        "x-edaya-request-schema": "GetFamilyFeedbackInstrumentQuery",
+        "x-edaya-response-schema": "FamilyFeedbackInstrument",
+        "requestBody": {
+          "description": "get-family-feedback-instrument payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetFamilyFeedbackInstrumentQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-family-feedback-instrument",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackInstrument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-guardian-family-feedback-campaigns": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-guardian-family-feedback-campaigns",
+        "operationId": "queries.listGuardianFamilyFeedbackCampaigns",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listGuardianFamilyFeedbackCampaigns",
+        "x-edaya-query-public-name": "list-guardian-family-feedback-campaigns",
+        "x-edaya-request-schema": "ListGuardianFamilyFeedbackCampaignsQuery",
+        "x-edaya-response-schema": "GuardianFamilyFeedbackCampaignList",
+        "requestBody": {
+          "description": "list-guardian-family-feedback-campaigns payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListGuardianFamilyFeedbackCampaignsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-guardian-family-feedback-campaigns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianFamilyFeedbackCampaignList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-guardian-family-feedback-questionnaire": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-guardian-family-feedback-questionnaire",
+        "operationId": "queries.getGuardianFamilyFeedbackQuestionnaire",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getGuardianFamilyFeedbackQuestionnaire",
+        "x-edaya-query-public-name": "get-guardian-family-feedback-questionnaire",
+        "x-edaya-request-schema": "GetGuardianFamilyFeedbackQuestionnaireQuery",
+        "x-edaya-response-schema": "GuardianFamilyFeedbackQuestionnaire",
+        "requestBody": {
+          "description": "get-guardian-family-feedback-questionnaire payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGuardianFamilyFeedbackQuestionnaireQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-guardian-family-feedback-questionnaire",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardianFamilyFeedbackQuestionnaire"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-family-feedback-comments": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-family-feedback-comments",
+        "operationId": "queries.listFamilyFeedbackComments",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listFamilyFeedbackComments",
+        "x-edaya-query-public-name": "list-family-feedback-comments",
+        "x-edaya-request-schema": "ListFamilyFeedbackCommentsQuery",
+        "x-edaya-response-schema": "FamilyFeedbackComments",
+        "requestBody": {
+          "description": "list-family-feedback-comments payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListFamilyFeedbackCommentsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-family-feedback-comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackComments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-family-feedback-aggregate-review": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-family-feedback-aggregate-review",
+        "operationId": "queries.getFamilyFeedbackAggregateReview",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getFamilyFeedbackAggregateReview",
+        "x-edaya-query-public-name": "get-family-feedback-aggregate-review",
+        "x-edaya-request-schema": "GetFamilyFeedbackAggregateReviewQuery",
+        "x-edaya-response-schema": "FamilyFeedbackAggregate",
+        "requestBody": {
+          "description": "get-family-feedback-aggregate-review payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetFamilyFeedbackAggregateReviewQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-family-feedback-aggregate-review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyFeedbackAggregate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-teacher-family-feedback-results": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-teacher-family-feedback-results",
+        "operationId": "queries.listTeacherFamilyFeedbackResults",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listTeacherFamilyFeedbackResults",
+        "x-edaya-query-public-name": "list-teacher-family-feedback-results",
+        "x-edaya-request-schema": "ListTeacherFamilyFeedbackResultsQuery",
+        "x-edaya-response-schema": "TeacherFamilyFeedbackResultList",
+        "requestBody": {
+          "description": "list-teacher-family-feedback-results payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListTeacherFamilyFeedbackResultsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-teacher-family-feedback-results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherFamilyFeedbackResultList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-teacher-family-feedback-result": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-teacher-family-feedback-result",
+        "operationId": "queries.getTeacherFamilyFeedbackResult",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getTeacherFamilyFeedbackResult",
+        "x-edaya-query-public-name": "get-teacher-family-feedback-result",
+        "x-edaya-request-schema": "GetTeacherFamilyFeedbackResultQuery",
+        "x-edaya-response-schema": "TeacherFamilyFeedbackResult",
+        "requestBody": {
+          "description": "get-teacher-family-feedback-result payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTeacherFamilyFeedbackResultQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-teacher-family-feedback-result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherFamilyFeedbackResult"
                 }
               }
             }

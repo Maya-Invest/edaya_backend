@@ -72,6 +72,14 @@ function applyInputNullability(type: GraphQLInputType, nullable: boolean, option
   return new GraphQLNonNull(type);
 }
 
+function isGraphQLName(name: string): boolean {
+  return /^[_A-Za-z][_0-9A-Za-z]*$/.test(name);
+}
+
+function objectHasInvalidGraphQLKeys(schema: AnySchema): boolean {
+  return Object.keys(unwrapShape(schema)).some(key => !isGraphQLName(key));
+}
+
 export class GraphQLTypeRegistry {
   private readonly outputTypes = new Map<string, GraphQLObjectType>();
   private readonly inputTypes = new Map<string, GraphQLInputObjectType>();
@@ -201,7 +209,9 @@ export class GraphQLTypeRegistry {
         break;
       }
       case "ZodObject":
-        resolved = this.getOrCreateOutputType(this.nestedTypeName(parentTypeName, fieldName), inner);
+        resolved = objectHasInvalidGraphQLKeys(inner)
+          ? GraphQLJSON
+          : this.getOrCreateOutputType(this.nestedTypeName(parentTypeName, fieldName), inner);
         break;
       case "ZodRecord":
         resolved = GraphQLJSON;
@@ -240,7 +250,9 @@ export class GraphQLTypeRegistry {
         break;
       }
       case "ZodObject":
-        resolved = this.getOrCreateInputType(`${this.nestedTypeName(parentTypeName, fieldName)}Input`, inner);
+        resolved = objectHasInvalidGraphQLKeys(inner)
+          ? GraphQLJSON
+          : this.getOrCreateInputType(`${this.nestedTypeName(parentTypeName, fieldName)}Input`, inner);
         break;
       case "ZodRecord":
         resolved = GraphQLJSON;

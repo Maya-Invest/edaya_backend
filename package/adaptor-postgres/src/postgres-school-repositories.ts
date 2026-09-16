@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { PostgresStore } from './postgres-store'
@@ -9,6 +9,7 @@ import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { createEntityStores } from './stores/entity-stores'
 import { createDocumentNumberSeriesStore } from './stores/entity-stores-documents'
+import { createFamilyFeedbackStores } from './stores/entity-stores-family-feedback'
 import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
@@ -86,6 +87,11 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly incidents: PostgresStore<Incident>
   public readonly documentIssuances: PostgresStore<DocumentIssuance>
   public readonly documentNumberSeries: PostgresStore<DocumentNumberSeries>
+  public readonly familyFeedbackCampaigns: PostgresStore<FamilyFeedbackCampaign>
+  public readonly familyFeedbackSlots: PostgresStore<FamilyFeedbackSlot>
+  public readonly familyFeedbackResponses: PostgresStore<FamilyFeedbackResponse>
+  public readonly familyFeedbackSnapshots: PostgresStore<FamilyFeedbackSnapshot>
+  public readonly familyFeedbackCommentReadAudit: PostgresStore<FamilyFeedbackCommentReadAudit>
   public readonly schools: SchoolRepositories['schools']
 
   constructor(private readonly db: any) {
@@ -159,6 +165,12 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.incidents = stores.incidents
     this.documentIssuances = stores.documentIssuances
     this.documentNumberSeries = createDocumentNumberSeriesStore(db)
+    const familyFeedback = createFamilyFeedbackStores(db)
+    this.familyFeedbackCampaigns = familyFeedback.familyFeedbackCampaigns
+    this.familyFeedbackSlots = familyFeedback.familyFeedbackSlots
+    this.familyFeedbackResponses = familyFeedback.familyFeedbackResponses
+    this.familyFeedbackSnapshots = familyFeedback.familyFeedbackSnapshots
+    this.familyFeedbackCommentReadAudit = familyFeedback.familyFeedbackCommentReadAudit
 
     this.staffPermissionAssignments = new PostgresStaffPermissionAssignmentStore(db)
 

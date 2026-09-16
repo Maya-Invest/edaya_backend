@@ -41,6 +41,10 @@ export class SchoolNotificationTemplates {
   get calendarEventReminder() { return this.data.calendarEventReminder }
   get studentPhotoApproved() { return this.data.studentPhotoApproved }
   get studentPhotoRejected() { return this.data.studentPhotoRejected }
+  get familyFeedbackOpened() { return this.data.familyFeedbackOpened }
+  get familyFeedbackReminder() { return this.data.familyFeedbackReminder }
+  get familyFeedbackPublished() { return this.data.familyFeedbackPublished }
+  get familyFeedbackPurgeReminder() { return this.data.familyFeedbackPurgeReminder }
   get accountInvitation() { return this.data.accountInvitation }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }

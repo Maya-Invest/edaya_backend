@@ -14,6 +14,7 @@ const jobs = [
   { id: 'invitation-dispatch', actions: [P.ACCESS_CONTROL_READ] },
   { id: 'preparePrivateFileCleanup', actions: [P.ATTACHMENT_CONFIGURE] },
   { id: 'private-file-cleanup', actions: [P.ATTACHMENT_CONFIGURE] },
+  { id: 'advanceFamilyFeedbackCampaigns', actions: [P.FAMILY_FEEDBACK_CAMPAIGN_READ, P.FAMILY_FEEDBACK_CAMPAIGN_MANAGE] },
   { id: 'school-bootstrap', actions: [P.PLATFORM_REGISTER_SCHOOL, P.SCHOOL_STRUCTURE_CONFIGURE, P.SCHOOL_LIFECYCLE_MANAGE, P.ACCESS_CONTROL_ASSIGN, P.STAFF_CREATE, P.QUERY_WORKSPACE_READ] },
   { id: 'unknown-job', actions: [] },
 ]

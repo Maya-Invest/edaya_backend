@@ -2656,6 +2656,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/create-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** create-family-feedback-campaign */
+        post: operations["commands.createFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/update-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** update-family-feedback-campaign */
+        post: operations["commands.updateFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/assign-family-feedback-moderator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** assign-family-feedback-moderator */
+        post: operations["commands.assignFamilyFeedbackModerator"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/schedule-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** schedule-family-feedback-campaign */
+        post: operations["commands.scheduleFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/open-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** open-family-feedback-campaign */
+        post: operations["commands.openFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/close-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** close-family-feedback-campaign */
+        post: operations["commands.closeFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/cancel-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** cancel-family-feedback-campaign */
+        post: operations["commands.cancelFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/submit-family-feedback-response": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** submit-family-feedback-response */
+        post: operations["commands.submitFamilyFeedbackResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/save-family-feedback-theme-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** save-family-feedback-theme-draft */
+        post: operations["commands.saveFamilyFeedbackThemeDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/publish-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** publish-family-feedback-campaign */
+        post: operations["commands.publishFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/archive-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** archive-family-feedback-campaign */
+        post: operations["commands.archiveFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-schedule": {
         parameters: {
             query?: never;
@@ -3517,6 +3704,176 @@ export interface paths {
         put?: never;
         /** grant-document-bundle-download */
         post: operations["queries.grantDocumentBundleDownload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-family-feedback-campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-family-feedback-campaigns */
+        post: operations["queries.listFamilyFeedbackCampaigns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-family-feedback-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-family-feedback-campaign */
+        post: operations["queries.getFamilyFeedbackCampaign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/preview-family-feedback-audience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** preview-family-feedback-audience */
+        post: operations["queries.previewFamilyFeedbackAudience"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-family-feedback-instrument": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-family-feedback-instrument */
+        post: operations["queries.getFamilyFeedbackInstrument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-guardian-family-feedback-campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-guardian-family-feedback-campaigns */
+        post: operations["queries.listGuardianFamilyFeedbackCampaigns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-guardian-family-feedback-questionnaire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-guardian-family-feedback-questionnaire */
+        post: operations["queries.getGuardianFamilyFeedbackQuestionnaire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-family-feedback-comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-family-feedback-comments */
+        post: operations["queries.listFamilyFeedbackComments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-family-feedback-aggregate-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-family-feedback-aggregate-review */
+        post: operations["queries.getFamilyFeedbackAggregateReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-teacher-family-feedback-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-teacher-family-feedback-results */
+        post: operations["queries.listTeacherFamilyFeedbackResults"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-teacher-family-feedback-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-teacher-family-feedback-result */
+        post: operations["queries.getTeacherFamilyFeedbackResult"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10438,7 +10795,7 @@ export interface components {
             assuranceLevel: "standard" | "verified" | "strong" | "service";
             grants: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: (({
                     /** @enum {string} */
                     kind: "school";
@@ -10505,7 +10862,7 @@ export interface components {
         };
         PermissionCatalogEntry: {
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             /** @enum {string} */
             scope?: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student" | "platform";
         };
@@ -10519,7 +10876,7 @@ export interface components {
         ScopeRenderResponse: {
             items: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: {
                     scope: {
                         /** @enum {string} */
@@ -10566,7 +10923,7 @@ export interface components {
             academicYearId: string;
             items: {
                 /** @enum {string} */
-                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+                permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
                 scopes: ({
                     /** @enum {string} */
                     kind: "school";
@@ -10861,7 +11218,7 @@ export interface components {
         };
         ServiceAccountPermissionAssignmentRequest: {
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -11631,7 +11988,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classGroupId?: string | null;
             classSubjectId?: string | null;
             lessonSessionId?: string | null;
@@ -11645,7 +12002,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classGroupId: string;
             createdAt?: unknown;
         };
@@ -11655,7 +12012,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             classSubjectId: string;
             createdAt?: unknown;
         };
@@ -11665,7 +12022,7 @@ export interface components {
             academicYearId: string;
             responsibility: string;
             /** @default [] */
-            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
+            permissions: ("SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY")[];
             lessonSessionId: string;
             createdAt?: unknown;
         };
@@ -11675,7 +12032,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -11728,7 +12085,7 @@ export interface components {
             schoolId: string;
             academicYearId: string;
             /** @enum {string} */
-            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
+            permission: "SCHOOL_STRUCTURE_READ" | "SCHOOL_STRUCTURE_CONFIGURE" | "SCHOOL_LIFECYCLE_MANAGE" | "STAFF_READ" | "STAFF_CREATE" | "STAFF_UPDATE" | "STAFF_ARCHIVE" | "ACCESS_CONTROL_READ" | "ACCESS_CONTROL_CONFIGURE" | "ACCESS_CONTROL_ASSIGN" | "SERVICE_ACCOUNT_READ" | "SERVICE_ACCOUNT_CREATE" | "SERVICE_ACCOUNT_UPDATE" | "SERVICE_ACCOUNT_REVOKE" | "SERVICE_ACCOUNT_ROTATE_KEY" | "ACADEMIC_PROGRAM_READ" | "ACADEMIC_PROGRAM_CREATE" | "ACADEMIC_PROGRAM_UPDATE" | "ACADEMIC_PROGRAM_DELETE" | "ACADEMIC_PROGRAM_ASSIGN" | "STUDENT_READ" | "STUDENT_CREATE" | "STUDENT_UPDATE" | "STUDENT_ARCHIVE" | "STUDENT_HEALTH_READ" | "STUDENT_HEALTH_UPDATE" | "PARENT_READ" | "PARENT_CREATE" | "PARENT_UPDATE" | "PARENT_ARCHIVE" | "ENROLLMENT_READ" | "ENROLLMENT_CREATE" | "ENROLLMENT_UPDATE" | "ENROLLMENT_ARCHIVE" | "DISCIPLINE_READ" | "DISCIPLINE_CREATE" | "DISCIPLINE_UPDATE" | "DISCIPLINE_VALIDATE" | "DISCIPLINE_ARCHIVE" | "ATTENDANCE_READ" | "ATTENDANCE_RECORD" | "ATTENDANCE_UPDATE" | "ATTENDANCE_JUSTIFY" | "ATTENDANCE_VALIDATE" | "EXAM_CONFIG_READ" | "EXAM_CONFIG_CREATE" | "EXAM_CONFIG_UPDATE" | "EXAM_CONFIG_CONFIGURE" | "EXAM_CONFIG_LOCK" | "EXAM_CONFIG_UNLOCK" | "GRADE_READ" | "GRADE_INPUT" | "GRADE_UPDATE" | "GRADE_VALIDATE" | "GRADE_LOCK" | "GRADE_UNLOCK" | "GRADE_PUBLISH" | "REPORT_CARD_READ" | "REPORT_CARD_CONFIGURE" | "REPORT_CARD_GENERATE" | "REPORT_CARD_LOCK" | "REPORT_CARD_UNLOCK" | "REPORT_CARD_SIGN" | "REPORT_CARD_PUBLISH" | "REPORT_CARD_EXPORT" | "CLASS_LOGBOOK_READ" | "CLASS_LOGBOOK_CREATE" | "CLASS_LOGBOOK_UPDATE" | "CLASS_LOGBOOK_VALIDATE" | "TIMETABLE_READ" | "TIMETABLE_CREATE" | "TIMETABLE_UPDATE" | "TIMETABLE_PUBLISH" | "TIMETABLE_LOCK" | "TIMETABLE_UNLOCK" | "FINANCIAL_CONFIG_READ" | "FINANCIAL_CONFIG_CONFIGURE" | "FINANCIAL_CONFIG_UPDATE" | "PAYMENT_READ" | "PAYMENT_RECORD" | "PAYMENT_ALLOCATE" | "PAYMENT_CANCEL" | "PAYMENT_REVERSE" | "PAYMENT_EXPORT" | "FINANCIAL_REPORT_READ" | "FINANCIAL_REPORT_EXPORT" | "DOCUMENT_VOID" | "FAMILY_FEEDBACK_CAMPAIGN_READ" | "FAMILY_FEEDBACK_CAMPAIGN_MANAGE" | "FAMILY_FEEDBACK_MODERATE" | "FAMILY_FEEDBACK_PUBLISH" | "COMMUNICATION_READ" | "COMMUNICATION_CREATE" | "COMMUNICATION_UPDATE" | "COMMUNICATION_SEND" | "COMMUNICATION_APPROVE" | "COMMUNICATION_DELETE" | "RESOURCE_READ" | "RESOURCE_CONFIGURE" | "ATTACHMENT_READ" | "ATTACHMENT_CONFIGURE" | "QUERY_WORKSPACE_READ" | "QUERY_OVERVIEW_READ" | "QUERY_STUDENT_DIRECTORY_READ" | "QUERY_STUDENT_DETAIL_READ" | "QUERY_ENROLLMENT_HISTORY_READ" | "QUERY_REPORT_CARD_DETAIL_READ" | "QUERY_COMMUNICATIONS_READ" | "QUERY_CALENDAR_READ" | "QUERY_CURRICULUM_PROGRESS_READ" | "QUERY_CLASS_DIRECTORY_READ" | "QUERY_CLASS_CURRICULUM_READ" | "QUERY_TIMETABLE_READ" | "QUERY_ATTENDANCE_READ" | "QUERY_GUARDIAN_STUDENTS_ADMIN_READ" | "QUERY_GUARDIAN_SELF_READ" | "QUERY_OVERDUE_FEES_READ" | "PLATFORM_REGISTER_SCHOOL" | "PLATFORM_USER_READ" | "PLATFORM_USER_CREATE" | "PLATFORM_USER_DEACTIVATE" | "S2S_CLIENT_READ" | "S2S_CLIENT_CREATE" | "S2S_CLIENT_REVOKE" | "S2S_CLIENT_ROTATE_KEY";
             scopes: ({
                 /** @enum {string} */
                 kind: "school";
@@ -13316,6 +13673,78 @@ export interface components {
             studentId: string;
             attachmentId: string;
         };
+        FamilyFeedbackCampaignCommandResponse: {
+            id: string;
+            status: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            classGroupId: string;
+            classSubjectId: string;
+            teacherAssignmentId: string;
+            teacherId: string;
+            subjectId: string;
+            questionVersion: string;
+            opensAt?: string;
+            closesAt?: string;
+            openedAt?: string;
+            closedAt?: string;
+            cancelledAt?: string;
+            publishedAt?: string;
+            archivedAt?: string;
+            answersPurgedAt?: string;
+            moderatorStaffId?: string;
+            themeDraft?: string;
+        };
+        CreateFamilyFeedbackCampaignCommand: {
+            requestId: string;
+            id?: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            teacherAssignmentId: string;
+            opensAt?: string | null;
+            closesAt?: string | null;
+            moderatorStaffId?: string;
+        };
+        UpdateFamilyFeedbackCampaignCommand: {
+            requestId: string;
+            id: string;
+            opensAt?: string | null;
+            closesAt?: string | null;
+        };
+        AssignFamilyFeedbackModeratorCommand: {
+            requestId: string;
+            id: string;
+            moderatorStaffId: string;
+        };
+        FamilyFeedbackCampaignIdCommand: {
+            requestId: string;
+            id: string;
+        };
+        FamilyFeedbackSubmitReceipt: {
+            campaignId: string;
+            slotId: string;
+            studentId: string;
+            /** @enum {string} */
+            status: "completed";
+            alreadyCompleted: boolean;
+        };
+        SubmitFamilyFeedbackResponseCommand: {
+            requestId: string;
+            campaignId: string;
+            studentId: string;
+            answers: {
+                communication: 1 | 2 | 3 | 4 | 5 | "cannot_assess";
+                clarity: 1 | 2 | 3 | 4 | 5 | "cannot_assess";
+                support: 1 | 2 | 3 | 4 | 5 | "cannot_assess";
+                student_experience: 1 | 2 | 3 | 4 | 5 | "cannot_assess";
+            };
+            comment?: string;
+        };
+        SaveFamilyFeedbackThemeDraftCommand: {
+            requestId: string;
+            id: string;
+            themes: string;
+        };
         Schedule: {
             id: string;
             schoolId: string;
@@ -13972,6 +14401,82 @@ export interface components {
                     body: string;
                 };
             };
+            familyFeedbackOpened: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            familyFeedbackReminder: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            familyFeedbackPublished: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
+            familyFeedbackPurgeReminder: {
+                /** @default true */
+                enable_email: boolean;
+                /** @default true */
+                enable_push: boolean;
+                /** @default false */
+                enable_sms: boolean;
+                base_message: {
+                    title: string;
+                    body: string;
+                };
+                rich_message: {
+                    subject: string;
+                    body: string;
+                };
+                simple_message: {
+                    body: string;
+                };
+            };
             accountInvitation: {
                 rich_message: {
                     subject: string;
@@ -13997,7 +14502,7 @@ export interface components {
         ResetSchoolNotificationTemplatesCommand: {
             schoolId: string;
             /** @enum {string} */
-            templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "student_photo.approved" | "student_photo.rejected" | "account_invitation";
+            templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "student_photo.approved" | "student_photo.rejected" | "family_feedback.opened" | "family_feedback.reminder" | "family_feedback.published" | "family_feedback.purge_reminder" | "account_invitation";
         };
         CountResponse: {
             count: number;
@@ -14479,6 +14984,158 @@ export interface components {
         };
         GrantDocumentBundleDownloadQuery: {
             issuanceIds: string[];
+        };
+        FamilyFeedbackCampaignProjection: {
+            id: string;
+            status: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            classGroupId: string;
+            classSubjectId: string;
+            teacherAssignmentId: string;
+            teacherId: string;
+            subjectId: string;
+            questionVersion: string;
+            opensAt?: string;
+            closesAt?: string;
+            openedAt?: string;
+            closedAt?: string;
+            cancelledAt?: string;
+            publishedAt?: string;
+            archivedAt?: string;
+            answersPurgedAt?: string;
+            moderatorStaffId?: string;
+            themeDraft?: string;
+        };
+        FamilyFeedbackCampaignProjectionList: components["schemas"]["FamilyFeedbackCampaignProjection"][];
+        ListFamilyFeedbackCampaignsQuery: Record<string, never>;
+        GetFamilyFeedbackCampaignQuery: {
+            id: string;
+        };
+        FamilyFeedbackAudiencePreview: {
+            campaignId: string;
+            eligibleCount: number;
+            completedCount: number;
+            blockers: string[];
+        };
+        PreviewFamilyFeedbackAudienceQuery: {
+            id?: string;
+            academicYearId: string;
+            academicPeriodId: string;
+            teacherAssignmentId: string;
+        };
+        FamilyFeedbackInstrument: {
+            version: string;
+            intro: string;
+            confidentialityNotice: string;
+            scaleHelper: string;
+            scaleLabels: {
+                [key: string]: string;
+            };
+            commentPrompt: string;
+            items: {
+                id: string;
+                stem: string;
+            }[];
+        };
+        GetFamilyFeedbackInstrumentQuery: {
+            /** @enum {string} */
+            locale: "fr" | "en";
+        };
+        FamilyFeedbackContext: {
+            studentName: string;
+            teacherName: string;
+            subjectName: string;
+            className: string;
+            periodName: string;
+        };
+        GuardianFamilyFeedbackCampaignList: {
+            campaignId: string;
+            studentId: string;
+            slotState: string;
+            closesAt?: string;
+            context: components["schemas"]["FamilyFeedbackContext"];
+        }[];
+        ListGuardianFamilyFeedbackCampaignsQuery: Record<string, never>;
+        GuardianFamilyFeedbackQuestionnaire: {
+            campaignId: string;
+            studentId: string;
+            slotId: string;
+            slotState: string;
+            closesAt?: string;
+            context: components["schemas"]["FamilyFeedbackContext"];
+            instrument?: components["schemas"]["FamilyFeedbackInstrument"];
+            receipt?: {
+                /** @enum {string} */
+                status: "completed";
+                completedAt?: string;
+            };
+        };
+        GetGuardianFamilyFeedbackQuestionnaireQuery: {
+            campaignId: string;
+            studentId: string;
+            /** @enum {string} */
+            locale: "fr" | "en";
+        };
+        FamilyFeedbackComments: {
+            comments: {
+                id: string;
+                comment: string;
+            }[];
+        };
+        ListFamilyFeedbackCommentsQuery: {
+            id: string;
+        };
+        FamilyFeedbackAggregate: {
+            campaignId: string;
+            status: string;
+            eligibleSlotCount: number;
+            completedSlotCount: number;
+            responseRate: number;
+            overallSuppressed: boolean;
+            questions: {
+                questionId: string;
+                suppressed: boolean;
+                nScored: number;
+                nCannotAssess: number;
+                distribution: {
+                    1: number;
+                    2: number;
+                    3: number;
+                    4: number;
+                    5: number;
+                };
+            }[];
+            themes?: string;
+        };
+        GetFamilyFeedbackAggregateReviewQuery: {
+            id: string;
+        };
+        TeacherFamilyFeedbackResult: {
+            campaignId: string;
+            eligibleSlotCount: number;
+            completedSlotCount: number;
+            responseRate: number;
+            overallSuppressed: boolean;
+            questions: {
+                questionId: string;
+                suppressed: boolean;
+                nScored: number;
+                nCannotAssess: number;
+                distribution: {
+                    1: number;
+                    2: number;
+                    3: number;
+                    4: number;
+                    5: number;
+                };
+            }[];
+            themes?: string;
+        };
+        TeacherFamilyFeedbackResultList: components["schemas"]["TeacherFamilyFeedbackResult"][];
+        ListTeacherFamilyFeedbackResultsQuery: Record<string, never>;
+        GetTeacherFamilyFeedbackResultQuery: {
+            id: string;
         };
         Filter_1: Record<string, never>;
         CoreEntityDelete: {
@@ -26190,6 +26847,864 @@ export interface operations {
             };
         };
     };
+    "commands.createFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description create-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateFamilyFeedbackCampaignCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed create-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.updateFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description update-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateFamilyFeedbackCampaignCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed update-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.assignFamilyFeedbackModerator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description assign-family-feedback-moderator payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AssignFamilyFeedbackModeratorCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed assign-family-feedback-moderator */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.scheduleFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description schedule-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed schedule-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.openFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description open-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed open-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.closeFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description close-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed close-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.cancelFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description cancel-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed cancel-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.submitFamilyFeedbackResponse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description submit-family-feedback-response payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitFamilyFeedbackResponseCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed submit-family-feedback-response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackSubmitReceipt"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.saveFamilyFeedbackThemeDraft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description save-family-feedback-theme-draft payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SaveFamilyFeedbackThemeDraftCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed save-family-feedback-theme-draft */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.publishFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description publish-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed publish-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.archiveFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description archive-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FamilyFeedbackCampaignIdCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed archive-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.createSchedule": {
         parameters: {
             query?: never;
@@ -30111,6 +31626,786 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentDownloadBundleResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listFamilyFeedbackCampaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-family-feedback-campaigns payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListFamilyFeedbackCampaignsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-family-feedback-campaigns */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignProjectionList"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFamilyFeedbackCampaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-family-feedback-campaign payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFamilyFeedbackCampaignQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-family-feedback-campaign */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackCampaignProjection"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.previewFamilyFeedbackAudience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description preview-family-feedback-audience payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PreviewFamilyFeedbackAudienceQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved preview-family-feedback-audience */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackAudiencePreview"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFamilyFeedbackInstrument": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-family-feedback-instrument payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFamilyFeedbackInstrumentQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-family-feedback-instrument */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackInstrument"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listGuardianFamilyFeedbackCampaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-guardian-family-feedback-campaigns payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListGuardianFamilyFeedbackCampaignsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-guardian-family-feedback-campaigns */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianFamilyFeedbackCampaignList"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getGuardianFamilyFeedbackQuestionnaire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-guardian-family-feedback-questionnaire payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetGuardianFamilyFeedbackQuestionnaireQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-guardian-family-feedback-questionnaire */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianFamilyFeedbackQuestionnaire"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listFamilyFeedbackComments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-family-feedback-comments payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListFamilyFeedbackCommentsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-family-feedback-comments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackComments"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFamilyFeedbackAggregateReview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-family-feedback-aggregate-review payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFamilyFeedbackAggregateReviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-family-feedback-aggregate-review */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyFeedbackAggregate"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listTeacherFamilyFeedbackResults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-teacher-family-feedback-results payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListTeacherFamilyFeedbackResultsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-teacher-family-feedback-results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherFamilyFeedbackResultList"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getTeacherFamilyFeedbackResult": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-teacher-family-feedback-result payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetTeacherFamilyFeedbackResultQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-teacher-family-feedback-result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherFamilyFeedbackResult"];
                 };
             };
             /** @description Invalid request payload */

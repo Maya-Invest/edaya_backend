@@ -70,6 +70,22 @@ export async function buildDefaultNotificationTemplateDocument(): Promise<School
       'Photo not approved — {{studentName}}',
       '{{rejectionReason}}',
     ),
+    familyFeedbackOpened: eventFromPlain(
+      'Family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackReminder: eventFromPlain(
+      'Reminder: family feedback — {{studentName}}',
+      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
+    ),
+    familyFeedbackPublished: eventFromPlain(
+      'Family feedback published — {{subjectName}}',
+      'Aggregated results for {{classGroupName}} are available.',
+    ),
+    familyFeedbackPurgeReminder: eventFromPlain(
+      'Family feedback comments will be deleted',
+      'Raw answers for this campaign will be deleted on {{purgeAtLabel}}.',
+    ),
     accountInvitation: {
       rich_message: {
         subject: accountInvitation.subject,

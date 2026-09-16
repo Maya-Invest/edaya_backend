@@ -7,6 +7,7 @@ import type { CommunicationsSeedPort } from '../domains/communications/port'
 import type { CurriculumSeedPort } from '../domains/curriculum/port'
 import type { DisciplineSeedPort } from '../domains/discipline/port'
 import type { DocumentsSeedPort } from '../domains/documents/port'
+import type { FamilyFeedbackSeedPort } from '../domains/family-feedback/port'
 import type { FinanceSeedPort } from '../domains/finance/port'
 import type { PopulationSeedPort } from '../domains/population/port'
 import type { ProfilePicturesSeedPort } from '../domains/profile-pictures/port'
@@ -41,6 +42,8 @@ import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapter
 import { seedDevDiscipline } from '../domains/discipline/workflow'
 import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
 import { seedDevDocuments } from '../domains/documents/workflow'
+import { createInProcessFamilyFeedbackSeedPort } from '../domains/family-feedback/adapters/in-process'
+import { seedDevFamilyFeedback } from '../domains/family-feedback/workflow'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { seedDevFinance } from '../domains/finance/workflow'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
@@ -127,6 +130,7 @@ export interface RunDevSchoolSeedOptions {
   studentSupportPort?: StudentSupportSeedPort
   disciplinePort?: DisciplineSeedPort
   documentsPort?: DocumentsSeedPort
+  familyFeedbackPort?: FamilyFeedbackSeedPort
   communicationsPort?: CommunicationsSeedPort
   attachmentsPort?: AttachmentsSeedPort
   profilePicturesPort?: ProfilePicturesSeedPort
@@ -180,6 +184,8 @@ export async function runDevSchoolSeed(
     ?? createInProcessFinanceSeedPort(requireSeedApplication(application, 'financePort'))
   const documentsPort = options?.documentsPort
     ?? createInProcessDocumentsSeedPort(requireSeedApplication(application, 'documentsPort'))
+  const familyFeedbackPort = options?.familyFeedbackPort
+    ?? createInProcessFamilyFeedbackSeedPort(requireSeedApplication(application, 'familyFeedbackPort'))
   const activitiesPort = options?.activitiesPort
     ?? createInProcessActivitiesSeedPort(requireSeedApplication(application, 'activitiesPort'))
   const schoolLifePort = options?.schoolLifePort
@@ -251,6 +257,9 @@ export async function runDevSchoolSeed(
   })
   await runSchoolSeedStep(options?.progress, async () => {
     await seedDevTeachers(teachersPort, seedDataset)
+  })
+  await runSchoolSeedStep(options?.progress, async () => {
+    await seedDevFamilyFeedback(familyFeedbackPort, seedDataset)
   })
   const activitiesCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevActivities(activitiesPort, seedDataset))

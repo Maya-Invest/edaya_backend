@@ -68,6 +68,9 @@ const STUDIES_DIRECTOR_EXTRA_PERMISSIONS: readonly Permission[] = [
   Permission.ENROLLMENT_READ,
   Permission.ENROLLMENT_UPDATE,
   Permission.DISCIPLINE_UPDATE,
+  Permission.FAMILY_FEEDBACK_CAMPAIGN_READ,
+  Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE,
+  Permission.FAMILY_FEEDBACK_PUBLISH,
 ]
 
 /** Technical administration: accounts, access, structure — not pedagogy write. */

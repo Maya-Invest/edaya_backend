@@ -68,6 +68,15 @@ import type {
   VoidDocumentIssuanceInput,
 } from '../workflows/documents'
 import type {
+  AssignFamilyFeedbackModeratorInput,
+  CreateFamilyFeedbackCampaignInput,
+  FamilyFeedbackCampaignIdInput,
+  FamilyFeedbackServiceWorkflow,
+  SaveFamilyFeedbackThemeDraftInput,
+  SubmitFamilyFeedbackResponseInput,
+  UpdateFamilyFeedbackCampaignInput,
+} from '../workflows/family-feedback'
+import type {
   AdjustStudentChargeInput,
   AllocateAccountBalanceInput,
   CancelServiceEnrollmentInput,
@@ -175,6 +184,7 @@ export interface SchoolWorkflowHandlers {
   readonly finance: FinanceServiceWorkflow
   readonly notificationTemplates: NotificationTemplatesServiceWorkflow
   readonly documents: DocumentsServiceWorkflow
+  readonly familyFeedback: FamilyFeedbackServiceWorkflow
 }
 
 export type SchoolCommandHandlerMap = {
@@ -283,6 +293,17 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     withdrawStudentPhotoSubmission: payload => workflows.student.withdrawStudentPhotoSubmission(payload as WithdrawStudentPhotoSubmissionInput),
     reviewStudentPhoto: payload => workflows.student.reviewStudentPhoto(payload as ReviewStudentPhotoInput),
     publishStudentPhoto: payload => workflows.student.publishStudentPhoto(payload as PublishStudentPhotoInput),
+    createFamilyFeedbackCampaign: payload => workflows.familyFeedback.createFamilyFeedbackCampaign(payload as CreateFamilyFeedbackCampaignInput),
+    updateFamilyFeedbackCampaign: payload => workflows.familyFeedback.updateFamilyFeedbackCampaign(payload as UpdateFamilyFeedbackCampaignInput),
+    assignFamilyFeedbackModerator: payload => workflows.familyFeedback.assignFamilyFeedbackModerator(payload as AssignFamilyFeedbackModeratorInput),
+    scheduleFamilyFeedbackCampaign: payload => workflows.familyFeedback.scheduleFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
+    openFamilyFeedbackCampaign: payload => workflows.familyFeedback.openFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
+    closeFamilyFeedbackCampaign: payload => workflows.familyFeedback.closeFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
+    cancelFamilyFeedbackCampaign: payload => workflows.familyFeedback.cancelFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
+    submitFamilyFeedbackResponse: payload => workflows.familyFeedback.submitFamilyFeedbackResponse(payload as SubmitFamilyFeedbackResponseInput),
+    saveFamilyFeedbackThemeDraft: payload => workflows.familyFeedback.saveFamilyFeedbackThemeDraft(payload as SaveFamilyFeedbackThemeDraftInput),
+    publishFamilyFeedbackCampaign: payload => workflows.familyFeedback.publishFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
+    archiveFamilyFeedbackCampaign: payload => workflows.familyFeedback.archiveFamilyFeedbackCampaign(payload as FamilyFeedbackCampaignIdInput),
     // scheduling
     createSchedule: payload => workflows.scheduling.createSchedule(payload as CreateScheduleInput),
     saveSchedule: payload => workflows.scheduling.saveSchedule(payload as SaveScheduleInput),

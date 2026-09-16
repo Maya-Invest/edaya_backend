@@ -39,6 +39,7 @@ export { createHttpCommunicationsSeedPort } from '../domains/communications/adap
 export { createHttpCurriculumSeedPort } from '../domains/curriculum/adapters/http'
 export { createHttpDisciplineSeedPort } from '../domains/discipline/adapters/http'
 export { createHttpDocumentsSeedPort } from '../domains/documents/adapters/http'
+export { createHttpFamilyFeedbackSeedPort } from '../domains/family-feedback/adapters/http'
 export { createHttpFinanceSeedPort } from '../domains/finance/adapters/http'
 export { createHttpPopulationSeedPort } from '../domains/population/adapters/http'
 export { createHttpProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/http'

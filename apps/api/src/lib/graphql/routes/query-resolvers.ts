@@ -200,6 +200,55 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
       return { items: bundle.items.map(serializeGraphqlDocumentDownload) };
     }
 
+    if (queryConfig.methodName === "listFamilyFeedbackCampaigns") {
+      return service.listFamilyFeedbackCampaigns();
+    }
+
+    if (queryConfig.methodName === "getFamilyFeedbackCampaign") {
+      return service.getFamilyFeedbackCampaign({ id: payload.id as string });
+    }
+
+    if (queryConfig.methodName === "previewFamilyFeedbackAudience") {
+      return service.previewFamilyFeedbackAudience({
+        id: payload.id as string | undefined,
+        academicYearId: payload.academicYearId as string,
+        academicPeriodId: payload.academicPeriodId as string,
+        teacherAssignmentId: payload.teacherAssignmentId as string,
+      });
+    }
+
+    if (queryConfig.methodName === "getFamilyFeedbackInstrument") {
+      return service.getFamilyFeedbackInstrument({ locale: payload.locale as "fr" | "en" });
+    }
+
+    if (queryConfig.methodName === "listGuardianFamilyFeedbackCampaigns") {
+      return service.listGuardianFamilyFeedbackCampaigns();
+    }
+
+    if (queryConfig.methodName === "getGuardianFamilyFeedbackQuestionnaire") {
+      return service.getGuardianFamilyFeedbackQuestionnaire({
+        campaignId: payload.campaignId as string,
+        studentId: payload.studentId as string,
+        locale: payload.locale as "fr" | "en",
+      });
+    }
+
+    if (queryConfig.methodName === "listFamilyFeedbackComments") {
+      return service.listFamilyFeedbackComments({ id: payload.id as string });
+    }
+
+    if (queryConfig.methodName === "getFamilyFeedbackAggregateReview") {
+      return service.getFamilyFeedbackAggregateReview({ id: payload.id as string });
+    }
+
+    if (queryConfig.methodName === "listTeacherFamilyFeedbackResults") {
+      return service.listTeacherFamilyFeedbackResults();
+    }
+
+    if (queryConfig.methodName === "getTeacherFamilyFeedbackResult") {
+      return service.getTeacherFamilyFeedbackResult({ id: payload.id as string });
+    }
+
     const count = await service[queryConfig.methodName](payload.schoolId as string);
     return { count };
   });

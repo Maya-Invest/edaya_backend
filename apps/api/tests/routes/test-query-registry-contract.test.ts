@@ -86,6 +86,22 @@ describe("core route registry contracts", () => {
     expect(paths.has("/core/entities/class-subjects/delete")).toBe(true);
   });
 
+  it("does not expose family feedback through generic entity routes", () => {
+    const paths = new Set(coreRoutePairs.map(({ route }) => route.path));
+    for (const name of [
+      "family-feedback-campaigns",
+      "family-feedback-slots",
+      "family-feedback-responses",
+      "family-feedback-snapshots",
+      "family-feedback-comment-read-audit",
+    ]) {
+      expect(paths.has(`/core/entities/${name}/list`)).toBe(false);
+      expect(paths.has(`/core/entities/${name}/one`)).toBe(false);
+    }
+    expect(CORE_ENTITY_KEYS.some(key => key.toLowerCase().includes("familyfeedback"))).toBe(false);
+    expect(coreEntities.some(entity => entity.serviceName.toLowerCase().includes("familyfeedback"))).toBe(false);
+  });
+
   it("does not register duplicate public route names", () => {
     const commandNames = coreCommands.map(command => command.publicName);
     const queryNames = coreQueries.map(query => query.publicName);

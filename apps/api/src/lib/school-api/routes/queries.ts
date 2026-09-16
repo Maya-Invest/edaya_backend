@@ -202,6 +202,55 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json({ items: bundle.items.map(serializeDocumentDownload) }, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "listFamilyFeedbackCampaigns") {
+          return c.json(await service.listFamilyFeedbackCampaigns() as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getFamilyFeedbackCampaign") {
+          return c.json(await service.getFamilyFeedbackCampaign({ id: payload.id as string }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "previewFamilyFeedbackAudience") {
+          return c.json(await service.previewFamilyFeedbackAudience({
+            id: payload.id as string | undefined,
+            academicYearId: payload.academicYearId as string,
+            academicPeriodId: payload.academicPeriodId as string,
+            teacherAssignmentId: payload.teacherAssignmentId as string,
+          }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getFamilyFeedbackInstrument") {
+          return c.json(await service.getFamilyFeedbackInstrument({ locale: payload.locale as "fr" | "en" }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "listGuardianFamilyFeedbackCampaigns") {
+          return c.json(await service.listGuardianFamilyFeedbackCampaigns() as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getGuardianFamilyFeedbackQuestionnaire") {
+          return c.json(await service.getGuardianFamilyFeedbackQuestionnaire({
+            campaignId: payload.campaignId as string,
+            studentId: payload.studentId as string,
+            locale: payload.locale as "fr" | "en",
+          }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "listFamilyFeedbackComments") {
+          return c.json(await service.listFamilyFeedbackComments({ id: payload.id as string }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getFamilyFeedbackAggregateReview") {
+          return c.json(await service.getFamilyFeedbackAggregateReview({ id: payload.id as string }) as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "listTeacherFamilyFeedbackResults") {
+          return c.json(await service.listTeacherFamilyFeedbackResults() as never, HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getTeacherFamilyFeedbackResult") {
+          return c.json(await service.getTeacherFamilyFeedbackResult({ id: payload.id as string }) as never, HttpStatusCodes.OK);
+        }
+
         const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }

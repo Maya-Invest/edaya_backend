@@ -26,6 +26,7 @@ export type {
   VoidDocumentIssuanceInput,
 } from './workflows/documents'
 export { DocumentsServiceWorkflow } from './workflows/documents'
+export * from './workflows/family-feedback'
 export * from './workflows/finance'
 export { assertNoClassGroupScheduleConflict, assertNoSessionConflict } from './workflows/schedule-conflicts'
 export * from './workflows/teacher-unavailability'

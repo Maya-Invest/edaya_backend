@@ -112,6 +112,28 @@ export class NotificationDeliveryAccessPolicy {
           return denied('Calendar event no longer affects this recipient')
         return
       }
+      case 'family_feedback.opened': {
+        requireSource(request.metadata.campaignId, request.metadata.studentId)
+        await this.assertStudentSource(facts, delivery, request.metadata.studentId!, 'general')
+        return
+      }
+      case 'family_feedback.reminder': {
+        requireSource(request.metadata.campaignId, request.metadata.studentId, request.metadata.reminderKind)
+        await this.assertStudentSource(facts, delivery, request.metadata.studentId!, 'general')
+        return
+      }
+      case 'family_feedback.published': {
+        requireSource(request.metadata.campaignId)
+        if (delivery.recipientKind !== 'teacher' || delivery.recipientId !== request.metadata.teacherId)
+          return denied('Published family feedback is only for the evaluated teacher')
+        return
+      }
+      case 'family_feedback.purge_reminder': {
+        requireSource(request.metadata.campaignId)
+        if (delivery.recipientKind !== 'staff')
+          return denied('Purge reminders are staff-only')
+        return
+      }
       default: return denied('Unknown notification source')
     }
   }

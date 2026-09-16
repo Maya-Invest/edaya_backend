@@ -458,3 +458,122 @@ export const grantDocumentBundleDownloadQuerySchema = z.object({
 export const documentDownloadBundleResponseSchema = z.object({
   items: z.array(documentDownloadGrantResponseSchema),
 }).openapi("DocumentDownloadBundleResponse");
+
+export const familyFeedbackLocaleQuerySchema = z.enum(["fr", "en"]);
+
+export const familyFeedbackCampaignProjectionQueryResponseSchema = z.object({
+  id: z.string().min(1),
+  status: z.string().min(1),
+  academicYearId: z.string().min(1),
+  academicPeriodId: z.string().min(1),
+  classGroupId: z.string().min(1),
+  classSubjectId: z.string().min(1),
+  teacherAssignmentId: z.string().min(1),
+  teacherId: z.string().min(1),
+  subjectId: z.string().min(1),
+  questionVersion: z.string().min(1),
+  opensAt: z.string().optional(),
+  closesAt: z.string().optional(),
+  openedAt: z.string().optional(),
+  closedAt: z.string().optional(),
+  cancelledAt: z.string().optional(),
+  publishedAt: z.string().optional(),
+  archivedAt: z.string().optional(),
+  answersPurgedAt: z.string().optional(),
+  moderatorStaffId: z.string().optional(),
+  themeDraft: z.string().optional(),
+}).openapi("FamilyFeedbackCampaignProjection");
+export const familyFeedbackCampaignProjectionListQueryResponseSchema = z
+  .array(familyFeedbackCampaignProjectionQueryResponseSchema)
+  .openapi("FamilyFeedbackCampaignProjectionList");
+
+export const listFamilyFeedbackCampaignsQuerySchema = z.object({}).openapi("ListFamilyFeedbackCampaignsQuery");
+export const getFamilyFeedbackCampaignQuerySchema = z.object({ id: z.string().min(1) }).openapi("GetFamilyFeedbackCampaignQuery");
+export const previewFamilyFeedbackAudienceQuerySchema = z.object({
+  id: z.string().min(1).optional(),
+  academicYearId: z.string().min(1),
+  academicPeriodId: z.string().min(1),
+  teacherAssignmentId: z.string().min(1),
+}).openapi("PreviewFamilyFeedbackAudienceQuery");
+export const familyFeedbackAudiencePreviewResponseSchema = z.object({
+  campaignId: z.string(),
+  eligibleCount: z.number().int().nonnegative(),
+  completedCount: z.number().int().nonnegative(),
+  blockers: z.array(z.string()),
+}).openapi("FamilyFeedbackAudiencePreview");
+export const getFamilyFeedbackInstrumentQuerySchema = z.object({
+  locale: familyFeedbackLocaleQuerySchema,
+}).openapi("GetFamilyFeedbackInstrumentQuery");
+export const familyFeedbackInstrumentResponseSchema = z.object({
+  version: z.string().min(1),
+  intro: z.string().min(1),
+  confidentialityNotice: z.string().min(1),
+  scaleHelper: z.string().min(1),
+  scaleLabels: z.record(z.string(), z.string()),
+  commentPrompt: z.string().min(1),
+  items: z.array(z.object({ id: z.string().min(1), stem: z.string().min(1) })),
+}).openapi("FamilyFeedbackInstrument");
+export const listGuardianFamilyFeedbackCampaignsQuerySchema = z.object({}).openapi("ListGuardianFamilyFeedbackCampaignsQuery");
+export const familyFeedbackContextSchema = z.object({
+  studentName: z.string().min(1),
+  teacherName: z.string().min(1),
+  subjectName: z.string().min(1),
+  className: z.string().min(1),
+  periodName: z.string().min(1),
+}).openapi("FamilyFeedbackContext");
+export const guardianFamilyFeedbackCampaignListResponseSchema = z.array(z.object({
+  campaignId: z.string().min(1),
+  studentId: z.string().min(1),
+  slotState: z.string().min(1),
+  closesAt: z.string().optional(),
+  context: familyFeedbackContextSchema,
+})).openapi("GuardianFamilyFeedbackCampaignList");
+export const getGuardianFamilyFeedbackQuestionnaireQuerySchema = z.object({
+  campaignId: z.string().min(1),
+  studentId: z.string().min(1),
+  locale: familyFeedbackLocaleQuerySchema,
+}).openapi("GetGuardianFamilyFeedbackQuestionnaireQuery");
+export const guardianFamilyFeedbackQuestionnaireResponseSchema = z.object({
+  campaignId: z.string().min(1),
+  studentId: z.string().min(1),
+  slotId: z.string().min(1),
+  slotState: z.string().min(1),
+  closesAt: z.string().optional(),
+  context: familyFeedbackContextSchema,
+  instrument: familyFeedbackInstrumentResponseSchema.optional(),
+  receipt: z.object({
+    status: z.literal("completed"),
+    completedAt: z.string().optional(),
+  }).optional(),
+}).openapi("GuardianFamilyFeedbackQuestionnaire");
+export const listFamilyFeedbackCommentsQuerySchema = z.object({ id: z.string().min(1) }).openapi("ListFamilyFeedbackCommentsQuery");
+export const familyFeedbackCommentsResponseSchema = z.object({
+  comments: z.array(z.object({ id: z.string().min(1), comment: z.string().min(1) })),
+}).openapi("FamilyFeedbackComments");
+export const getFamilyFeedbackAggregateReviewQuerySchema = z.object({ id: z.string().min(1) }).openapi("GetFamilyFeedbackAggregateReviewQuery");
+export const familyFeedbackAggregateResponseSchema = z.object({
+  campaignId: z.string().min(1),
+  status: z.string().min(1),
+  eligibleSlotCount: z.number().int().nonnegative(),
+  completedSlotCount: z.number().int().nonnegative(),
+  responseRate: z.number(),
+  overallSuppressed: z.boolean(),
+  questions: z.array(z.object({
+    questionId: z.string().min(1),
+    suppressed: z.boolean(),
+    nScored: z.number().int().nonnegative(),
+    nCannotAssess: z.number().int().nonnegative(),
+    distribution: z.object({
+      1: z.number().int().nonnegative(),
+      2: z.number().int().nonnegative(),
+      3: z.number().int().nonnegative(),
+      4: z.number().int().nonnegative(),
+      5: z.number().int().nonnegative(),
+    }),
+  })),
+  themes: z.string().optional(),
+}).openapi("FamilyFeedbackAggregate");
+export const listTeacherFamilyFeedbackResultsQuerySchema = z.object({}).openapi("ListTeacherFamilyFeedbackResultsQuery");
+export const getTeacherFamilyFeedbackResultQuerySchema = z.object({ id: z.string().min(1) }).openapi("GetTeacherFamilyFeedbackResultQuery");
+export const teacherFamilyFeedbackResultResponseSchema = familyFeedbackAggregateResponseSchema.omit({ status: true }).openapi("TeacherFamilyFeedbackResult");
+export const teacherFamilyFeedbackResultListResponseSchema = z.array(teacherFamilyFeedbackResultResponseSchema).openapi("TeacherFamilyFeedbackResultList");

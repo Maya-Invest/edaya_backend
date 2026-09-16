@@ -144,6 +144,17 @@ export type SchoolCommandKey
     | 'withdrawStudentPhotoSubmission'
     | 'reviewStudentPhoto'
     | 'publishStudentPhoto'
+    | 'createFamilyFeedbackCampaign'
+    | 'updateFamilyFeedbackCampaign'
+    | 'assignFamilyFeedbackModerator'
+    | 'scheduleFamilyFeedbackCampaign'
+    | 'openFamilyFeedbackCampaign'
+    | 'closeFamilyFeedbackCampaign'
+    | 'cancelFamilyFeedbackCampaign'
+    | 'submitFamilyFeedbackResponse'
+    | 'saveFamilyFeedbackThemeDraft'
+    | 'publishFamilyFeedbackCampaign'
+    | 'archiveFamilyFeedbackCampaign'
 
 function defineSchoolCommandKeys<const Keys extends readonly SchoolCommandKey[]>(
   keys: Keys & (
@@ -301,4 +312,15 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'withdrawStudentPhotoSubmission',
   'reviewStudentPhoto',
   'publishStudentPhoto',
+  'createFamilyFeedbackCampaign',
+  'updateFamilyFeedbackCampaign',
+  'assignFamilyFeedbackModerator',
+  'scheduleFamilyFeedbackCampaign',
+  'openFamilyFeedbackCampaign',
+  'closeFamilyFeedbackCampaign',
+  'cancelFamilyFeedbackCampaign',
+  'submitFamilyFeedbackResponse',
+  'saveFamilyFeedbackThemeDraft',
+  'publishFamilyFeedbackCampaign',
+  'archiveFamilyFeedbackCampaign',
 ] as const)

@@ -64,6 +64,10 @@ export const schoolNotificationTemplateDocumentPatchSchema = z.object({
   'calendar.event_reminder': eventEntryPatchSchema.optional(),
   'student_photo.approved': eventEntryPatchSchema.optional(),
   'student_photo.rejected': eventEntryPatchSchema.optional(),
+  'family_feedback.opened': eventEntryPatchSchema.optional(),
+  'family_feedback.reminder': eventEntryPatchSchema.optional(),
+  'family_feedback.published': eventEntryPatchSchema.optional(),
+  'family_feedback.purge_reminder': eventEntryPatchSchema.optional(),
   [ACCOUNT_INVITATION_TEMPLATE_KEY]: invitationEntryPatchSchema.optional(),
 }).partial()
 

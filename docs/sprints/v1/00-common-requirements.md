@@ -22,7 +22,7 @@ This is the index and common implementation contract for exactly seven sequentia
 | 02 | [Student photos and branding](02-student-photos-and-branding.md) | done | Portrait review, approved publication, and school branding/issuance assets |
 | 03 | [Service catalog and accounting](03-service-catalog-and-accounting.md) | done | Account-based finance and all consumers agree |
 | 04 | [Official documents](04-official-documents.md) | done | Every retained document is issuable and privately downloadable |
-| 05 | [Family feedback surveys](05-family-feedback-surveys.md) | planned | Confidential feedback produces protected published results |
+| 05 | [Family feedback surveys](05-family-feedback-surveys.md) | on-going | Confidential feedback produces protected published results |
 | 06 | [Final release rehearsal](06-final-release-rehearsal.md) | planned | The exact coordinated candidate has release-readiness evidence |
 
 Approved defaults:

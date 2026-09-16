@@ -17,6 +17,11 @@ const CRON_SCHEDULE_SEEDS = [
     jobKey: 'reconcilePendingDeliveries',
     cronExpression: '*/5 * * * *',
   },
+  {
+    id: 'cron-schedule-advance-family-feedback',
+    jobKey: 'advanceFamilyFeedbackCampaigns',
+    cronExpression: '*/5 * * * *',
+  },
 ] as const
 
 export async function seedCronJobSchedules(
