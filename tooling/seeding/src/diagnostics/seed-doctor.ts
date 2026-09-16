@@ -8,6 +8,7 @@ import {
   probeLocalFilesService,
   resolveLocalFilesUrl,
 } from './profile-photo-preflight'
+import { countPublishedProfilePhotos } from './published-profile-photos'
 
 function expectedAccessPermissionAssignments(): number {
   const context = resolveDevSeedContext()
@@ -215,12 +216,12 @@ export async function runHttpSeedDoctor(
         ))
       }
       else {
-        const attachmentCount = await postEntityCount(listOptions, 'attachments', { schoolId: context.schoolId })
-        if (attachmentCount < expectedPhotos) {
+        const photoCount = await countPublishedProfilePhotos(listOptions)
+        if (photoCount < expectedPhotos) {
           findings.push(finding(
             'warn',
             'profile-photos-missing',
-            `Demo school has ${attachmentCount} attachment(s); expected at least ${expectedPhotos} profile photos.`,
+            `Demo school has ${photoCount} published profile photo(s); expected at least ${expectedPhotos}.`,
             'Run `bun repo seed --scope profile-pictures` or `bun repo seed --scope doctor --repair`.',
           ))
         }
@@ -228,7 +229,7 @@ export async function runHttpSeedDoctor(
           findings.push(finding(
             'ok',
             'profile-photos-present',
-            `Profile photo attachments present (${attachmentCount}).`,
+            `Profile photos present (${photoCount}).`,
           ))
         }
       }

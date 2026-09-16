@@ -12,6 +12,7 @@ import {
 import {
   buildClassStudentIds,
   countGuardians,
+  countPublishedPhotosFromPeople,
   countStudents,
 } from '@edaya/fixtures/meta/fixture-counts'
 import {
@@ -33,6 +34,24 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     const failures: string[] = []
     for (const target of buildSeedValidationTargets()) {
       if (!isSeedEntityKey(target.serviceName)) {
+        continue
+      }
+      if (target.entity === 'profile-photos') {
+        const people = await Promise.all((['students', 'staffMembers', 'guardians'] as const).map(async (entityKey) => {
+          const response = await app.request(createAppRequest(`/core/entities/${seedEntityPublicName(entityKey)}/list`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ $limit: 500 }),
+          }))
+          if (response.status !== 200) {
+            return []
+          }
+          return unwrapEntityList(await response.json())
+        }))
+        const count = countPublishedPhotosFromPeople(people[0], people[1], people[2])
+        if (count < target.minCount) {
+          failures.push(`${target.entity}: expected >= ${target.minCount}, got ${count}`)
+        }
         continue
       }
       const entityPath = seedEntityPublicName(target.serviceName)

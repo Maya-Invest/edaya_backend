@@ -6,6 +6,7 @@ export {
   SEEDING_SERVICE_ID,
 } from '../bootstrap/service-account'
 export {
+  countPublishedProfilePhotos,
   deriveRepairScopesFromFindings,
   type HttpSeedValidationResult,
   logSeedDoctorRepairResult,

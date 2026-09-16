@@ -39,7 +39,7 @@ export async function assertFamilyFeedbackManage(base: BaseSchoolService): Promi
     return
   if (base.actor.kind !== 'staff' && base.actor.kind !== 's2s')
     denyResourceAccess()
-  await base.access.assertSchool(Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE)
+  await base.access.familyFeedback.assertManage()
 }
 
 export async function assertFamilyFeedbackRead(base: BaseSchoolService): Promise<void> {
@@ -47,13 +47,13 @@ export async function assertFamilyFeedbackRead(base: BaseSchoolService): Promise
     return
   if (base.actor.kind !== 'staff' && base.actor.kind !== 's2s')
     denyResourceAccess()
-  await base.access.assertSchool([Permission.FAMILY_FEEDBACK_CAMPAIGN_READ, Permission.FAMILY_FEEDBACK_CAMPAIGN_MANAGE, Permission.FAMILY_FEEDBACK_PUBLISH])
+  await base.access.familyFeedback.assertRead()
 }
 
 export async function assertFamilyFeedbackPublish(base: BaseSchoolService, campaign: FamilyFeedbackCampaign): Promise<void> {
   if (base.actor.kind !== 'staff')
     denyResourceAccess()
-  await base.access.assertSchool(Permission.FAMILY_FEEDBACK_PUBLISH)
+  await base.access.familyFeedback.assertPublish()
   await assertNotEvaluatedSubject(base, campaign.teacherId)
 }
 
@@ -61,7 +61,7 @@ export async function assertFamilyFeedbackModerate(base: BaseSchoolService, camp
   if (base.actor.kind !== 'staff')
     denyResourceAccess()
   await assertNotEvaluatedSubject(base, campaign.teacherId)
-  await base.access.assertSchool(Permission.FAMILY_FEEDBACK_MODERATE)
+  await base.access.familyFeedback.assertModerate()
   if (base.actor.staffMemberId !== campaign.moderatorStaffId)
     denyResourceAccess()
 }

@@ -7,6 +7,7 @@ export {
   resolveProfilePhotoSeedPlan,
   seedScopeUsesProfilePhotos,
 } from './profile-photo-preflight'
+export { countPublishedProfilePhotos } from './published-profile-photos'
 export {
   logSeedDoctorResult,
   runHttpSeedDoctor,

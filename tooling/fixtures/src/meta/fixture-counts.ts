@@ -20,6 +20,25 @@ export function countGuardians(dataset: FixtureDataset): number {
   return countArray(dataset.entities.guardians)
 }
 
+/** Portraits live on people records; generic attachment lists hide purpose-restricted photos. */
+export function personHasPublishedPhoto(row: unknown): boolean {
+  if (!row || typeof row !== 'object') {
+    return false
+  }
+  const record = row as { photoUrl?: unknown, photoAttachmentId?: unknown }
+  const photoUrl = typeof record.photoUrl === 'string' ? record.photoUrl.trim() : ''
+  const photoAttachmentId = typeof record.photoAttachmentId === 'string' ? record.photoAttachmentId.trim() : ''
+  return photoUrl.length > 0 || photoAttachmentId.length > 0
+}
+
+export function countPublishedPhotosFromPeople(
+  students: readonly unknown[],
+  staffMembers: readonly unknown[],
+  guardians: readonly unknown[],
+): number {
+  return [...students, ...staffMembers, ...guardians].filter(personHasPublishedPhoto).length
+}
+
 export function countGuardianLinks(dataset: FixtureDataset): number {
   return countArray(dataset.entities.guardianLinks)
 }

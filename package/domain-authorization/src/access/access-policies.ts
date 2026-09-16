@@ -12,6 +12,7 @@ import { DisciplineAccessPolicy } from './discipline-policies'
 import { DocumentAccessPolicy } from './document-policies'
 import { EntityAccessPolicy } from './entity-policies'
 import { AccessFacts, denied } from './facts'
+import { FamilyFeedbackAccessPolicy } from './family-feedback-policies'
 import { FinanceAccessPolicy } from './finance-policies'
 import { assertAssignmentDelegation, assertGrantDelegation } from './grant-administration'
 import { incidentChanges } from './incident-changes'
@@ -95,6 +96,12 @@ export class AccessPolicies {
       return [{ target: { kind: 'school' } }]
     if (intent === 'read' && action === P.QUERY_WORKSPACE_READ && resource === 'staffAssignments')
       return [{ target: { kind: 'records', ids: (await facts.list('staffAssignments', { staffId: actor.staffMemberId })).map(assignment => assignment.id) } }]
+    // Selected staff profile is the caller record, not a directory grant.
+    const ownStaffProfile: ResourceAccessClause[] = intent === 'read'
+      && action === P.STAFF_READ
+      && resource === 'staffMembers'
+      ? [{ target: { kind: 'records', ids: [actor.staffMemberId] } }]
+      : []
     const ownCommunications: ResourceAccessClause[] = action === P.QUERY_COMMUNICATIONS_READ && actor.accountKind === 'human'
       ? resource === 'messageDeliveries'
         ? [{ target: { kind: 'recipient', actorKind: actor.kind, actorId: actor.actorId, subjectId: actor.subjectId } }]
@@ -102,7 +109,7 @@ export class AccessPolicies {
           ? [{ target: { kind: 'records', ids: [actor.actorId] } }]
           : resource === 'announcements' || resource === 'announcementTargets' ? [{ target: { kind: 'audience', actorKind: actor.kind, actorId: actor.actorId, classGroupIds: [] } }] : []
       : []
-    return [...ownCommunications, ...(await facts.staffGrants(action)).flatMap(grant => grant.scopes.map(target => ({
+    return [...ownStaffProfile, ...ownCommunications, ...(await facts.staffGrants(action)).flatMap(grant => grant.scopes.map(target => ({
       target,
       academicYearId: grant.academicYearId,
       ...(resource === 'studentNotes'
@@ -625,6 +632,7 @@ export class AccessPolicies {
   readonly logbooks = new LogbookAccessPolicy(this)
   readonly reportCards = new ReportCardAccessPolicy(this)
   readonly documents = new DocumentAccessPolicy(this)
+  readonly familyFeedback = new FamilyFeedbackAccessPolicy(this)
 }
 
 export function createAccessPolicies(args: { actor: SchoolScopedActorMetadata, repositories: AuthorizationRepositories }): AccessPolicies {

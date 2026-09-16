@@ -1,4 +1,4 @@
-import { allowStagingInvitation, allowStagingNotification } from "@/staging-notifications";
+import { allowStagingNotification } from "@/staging-notifications";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
@@ -80,8 +80,9 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         if (!schoolApp)
           throw new Error("Invitation resolver is not initialized");
         const actor = createSystemActorMetadata({ systemId: "invitation-dispatch", schoolId: request.schoolId, requestId: `invitation:${request.invitationId}`, reason: "Resolve current invitation delivery" });
-        const recipient = await resolveInvitationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
-        return allowStagingInvitation(options.env.API_ORIGIN, recipient, options.env.STAGING_NOTIFICATION_EMAILS) ? recipient : undefined;
+        // Invitation destinations are command-owned. The staging school-notification
+        // allowlist must not cancel an address a staff member just invited.
+        return resolveInvitationDispatchRecipient(schoolApp.forActor(actor).baseService, request);
       },
       onDeliveryEvent: async (event) => {
         await deliverySink.apply?.(event);

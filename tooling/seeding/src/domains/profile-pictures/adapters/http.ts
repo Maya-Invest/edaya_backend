@@ -4,7 +4,7 @@ import type { ProfilePicturesSeedPort } from '../port'
 import { AttachmentStatus, parseAttachmentIdFromContentUrl } from '@edaya/core'
 import { buildAttachmentContentUrl } from '@edaya/service'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand, postEntityList } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntityFindById } from '../../../transport/http/core-entity'
 
 export interface CreateHttpProfilePicturesSeedPortOptions {
   client: HttpSeedClient
@@ -37,10 +37,16 @@ export function createHttpProfilePicturesSeedPort(
 
   return {
     uploadProfilePhoto: input => withSeedPortError('profilePictures.uploadProfilePhoto', async () => {
-      const existing = await postEntityList(requestOptions, 'attachments', { id: input.attachmentId, $limit: 1 }) as { id: string, schoolId: string, ownerId: string, ownerKind: string, status: string }[]
-      if (existing[0]?.status === AttachmentStatus.Ready && existing[0].schoolId === input.schoolId
-        && existing[0].ownerId === input.ownerId && existing[0].ownerKind === input.ownerKind) {
-        return { attachmentId: existing[0].id, photoUrl: buildAttachmentContentUrl(options.client.origin, existing[0].id) }
+      const existing = await postEntityFindById(requestOptions, 'attachments', input.attachmentId).catch(() => undefined) as {
+        id: string
+        schoolId: string
+        ownerId: string
+        ownerKind: string
+        status: string
+      } | undefined
+      if (existing?.status === AttachmentStatus.Ready && existing.schoolId === input.schoolId
+        && existing.ownerId === input.ownerId && existing.ownerKind === input.ownerKind) {
+        return { attachmentId: existing.id, photoUrl: buildAttachmentContentUrl(options.client.origin, existing.id) }
       }
       const { response, body } = await options.client.jsonRequest<UploadIntentResponse>(
         '/core/commands/create-profile-photo-upload',
@@ -57,6 +63,13 @@ export function createHttpProfilePicturesSeedPort(
           }),
         },
       )
+
+      if (response.status === 409) {
+        return {
+          attachmentId: input.attachmentId,
+          photoUrl: buildAttachmentContentUrl(options.client.origin, input.attachmentId),
+        }
+      }
 
       if (!response.ok || !body) {
         throw new Error(`create-profile-photo-upload failed with status ${response.status}`)

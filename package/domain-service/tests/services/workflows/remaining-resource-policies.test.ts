@@ -88,6 +88,16 @@ describe('remaining resource policies against native SQL and transactions', () =
     await expect(service({ ...staff, academicYearId: 'year-old' }).baseService.entities.studentHealthProfiles.list()).rejects.toBeInstanceOf(AuthorizationError)
   })
 
+  test('staff without directory grants can read their selected profile but not colleagues', async () => {
+    await fixture.db.exec(`INSERT INTO staff_members (id, school_id, first_name, last_name, is_active, created_at) VALUES ('staff-other', 'school-a', 'Other', 'Staff', true, now())`)
+    const entities = service().baseService.entities.staffMembers
+    expect((await entities.findById('staff-a'))?.id).toBe('staff-a')
+    expect(await entities.findById('staff-other')).toBeUndefined()
+    expect((await entities.list()).map(row => row.id)).toEqual(['staff-a'])
+    const before = (await fixture.repositories.staffMembers.findById('staff-a'))!
+    await expect(entities.save(before)).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
   test('teacher availability self reads exclude other teachers but cannot alter scheduling constraints', async () => {
     await availability()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
