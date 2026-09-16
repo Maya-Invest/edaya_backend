@@ -1,5 +1,7 @@
+/// <reference types="@cloudflare/workers-types" />
 import type { Context } from "hono";
 import { buildWorkerApiRuntime } from "@/runtime/worker/build-runtime";
+import { drainRequestNotifications } from "@/runtime/shared/drain-request-notifications";
 import type { AppBindings } from "@/http/bindings";
 import type { ApiRuntime } from "@/runtime/types";
 
@@ -24,6 +26,22 @@ export async function closeRequestApiRuntime(c: Context<AppBindings>): Promise<v
     return;
   }
 
-  await runtime.close();
   c.set("apiRuntime", undefined);
+
+  const finish = async () => {
+    try {
+      await drainRequestNotifications(runtime, c);
+    }
+    finally {
+      await runtime.close();
+    }
+  };
+
+  const waitUntil = c.executionCtx?.waitUntil?.bind(c.executionCtx);
+  if (waitUntil) {
+    waitUntil(finish());
+    return;
+  }
+
+  await finish();
 }
