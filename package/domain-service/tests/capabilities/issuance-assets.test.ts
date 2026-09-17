@@ -1,6 +1,8 @@
+import type {
+  SCHOOL_SIGNATURE_PURPOSE,
+} from '@edaya/core'
 import { AuthorizationError, createGuardianActorMetadata, createSystemActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import {
-  AttachmentOwnerKind,
   AttachmentStatus,
   createInMemoryFileStorage,
   DocumentAudience,
@@ -9,12 +11,11 @@ import {
   DocumentSourceType,
   Guardian,
   GuardianStudentLink,
+  School,
   SCHOOL_CREST_PURPOSE,
   SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS,
   SCHOOL_LOGO_PURPOSE,
-  SCHOOL_SIGNATURE_PURPOSE,
   SCHOOL_STAMP_PURPOSE,
-  School,
   Student,
   Teacher,
 } from '@edaya/core'

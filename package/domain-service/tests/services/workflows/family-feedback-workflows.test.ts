@@ -277,7 +277,8 @@ describe('FamilyFeedbackServiceWorkflow', () => {
     })
     expect(created.moderatorStaffId).toBeUndefined()
     await expect(staff.openFamilyFeedbackCampaign({ requestId: 'ff-open-denied', id: 'camp-mod' }))
-      .rejects.toMatchObject({ code: FAMILY_FEEDBACK_FAILURES.MODERATOR_REQUIRED })
+      .rejects
+      .toMatchObject({ code: FAMILY_FEEDBACK_FAILURES.MODERATOR_REQUIRED })
     await expect(staff.assignFamilyFeedbackModerator({
       requestId: 'ff-conflict',
       id: 'camp-mod',

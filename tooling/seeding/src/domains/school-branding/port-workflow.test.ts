@@ -1,4 +1,4 @@
-import type { SchoolIssuingIdentitySeedRecord, SchoolBrandingSeedPort, UploadSchoolIssuanceAssetInput } from './port'
+import type { SchoolBrandingSeedPort, SchoolIssuingIdentitySeedRecord, UploadSchoolIssuanceAssetInput } from './port'
 import { demoDataset } from '@edaya/fixtures'
 import { SEED_ISSUANCE_ASSETS, SEED_PUBLIC_BRANDING_PURPOSES } from '@edaya/fixtures/shared/issuance-assets'
 import { describe, expect, test } from 'bun:test'

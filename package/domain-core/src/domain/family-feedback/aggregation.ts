@@ -1,12 +1,10 @@
-import type { FamilyFeedbackQuestionAggregate } from './snapshot'
+import type { FamilyFeedbackAnswer, FamilyFeedbackQuestionId, FamilyFeedbackScoredValue } from './catalog'
+import type { FamilyFeedbackAggregatePayload, FamilyFeedbackQuestionAggregate } from './snapshot'
 import {
   FAMILY_FEEDBACK_QUESTION_IDS,
   FAMILY_FEEDBACK_SCORED_SUBJECT_THRESHOLD,
-  type FamilyFeedbackAnswer,
-  type FamilyFeedbackQuestionId,
-  type FamilyFeedbackScoredValue,
+
 } from './catalog'
-import type { FamilyFeedbackAggregatePayload } from './snapshot'
 
 export interface FamilyFeedbackScoredRow {
   questionId: FamilyFeedbackQuestionId

@@ -1,14 +1,15 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { EXAMPLE_LOGBOOK_RENDER_REQUEST, EXAMPLE_RENDER_REQUEST } from "../tests/examples"
-import { getTemplateDefinition, listTemplateDefinitions } from "../src/templates/registry"
+import { Buffer } from "node:buffer";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { listTemplateDefinitions } from "../src/templates/registry";
+import { EXAMPLE_LOGBOOK_RENDER_REQUEST, EXAMPLE_RENDER_REQUEST } from "../tests/examples";
 
-const brandingDir = resolve(import.meta.dir, "../../../tooling/fixtures/assets/branding")
-const outDir = resolve(import.meta.dir, "../../../docs/sprints/v1/evidence/branded-samples")
+const brandingDir = resolve(import.meta.dir, "../../../tooling/fixtures/assets/branding");
+const outDir = resolve(import.meta.dir, "../../../docs/sprints/v1/evidence/branded-samples");
 
 function dataUri(fileName: string): string {
-  const bytes = readFileSync(resolve(brandingDir, fileName))
-  return `data:image/jpeg;base64,${Buffer.from(bytes).toString("base64")}`
+  const bytes = readFileSync(resolve(brandingDir, fileName));
+  return `data:image/jpeg;base64,${Buffer.from(bytes).toString("base64")}`;
 }
 
 const identity = {
@@ -19,7 +20,7 @@ const identity = {
   schoolEmail: "secretariat@edaya-ci.test",
   schoolCode: "EDAYA-CI",
   primaryColor: "#1f4b7a",
-}
+};
 
 const assets = {
   logoUrl: dataUri("logo.jpg"),
@@ -27,7 +28,7 @@ const assets = {
   stampUrl: dataUri("stamp.jpg"),
   signatureUrl: dataUri("signature.jpg"),
   photoUrl: dataUri("portrait.jpg"),
-}
+};
 
 const ASSET_SLOTS: Record<string, readonly (keyof typeof assets)[]> = {
   "report-card.v1": ["logoUrl", "crestUrl", "stampUrl", "signatureUrl", "photoUrl"],
@@ -48,11 +49,11 @@ const ASSET_SLOTS: Record<string, readonly (keyof typeof assets)[]> = {
   "class-roster.v1": ["logoUrl"],
   "attendance-sheet.v1": ["logoUrl"],
   "incident-report.v1": ["logoUrl"],
-}
+};
 
 function assetsFor(key: string): Partial<typeof assets> {
-  const slots = ASSET_SLOTS[key] ?? ["logoUrl"]
-  return Object.fromEntries(slots.map(slot => [slot, assets[slot]]))
+  const slots = ASSET_SLOTS[key] ?? ["logoUrl"];
+  return Object.fromEntries(slots.map(slot => [slot, assets[slot]]));
 }
 
 const letterPayload = {
@@ -75,40 +76,40 @@ const letterPayload = {
     { cells: ["Transport T1", "15 000 XOF"] },
     { cells: ["Total reçu", "75 000 XOF"] },
   ],
-}
+};
 
 function payloadFor(key: string): unknown {
-  const selected = assetsFor(key)
+  const selected = assetsFor(key);
   if (key === "report-card.v1") {
-    const bulletin = EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>
-    const council = { ...(bulletin.council as Record<string, unknown>), principalStampUrl: assets.stampUrl }
+    const bulletin = EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>;
+    const council = { ...(bulletin.council as Record<string, unknown>), principalStampUrl: assets.stampUrl };
     return {
       ...bulletin,
       ...identity,
       ...selected,
       council,
-    }
+    };
   }
   if (key === "logbook.v1") {
     return {
       ...EXAMPLE_LOGBOOK_RENDER_REQUEST.payload,
       ...identity,
       ...selected,
-    }
+    };
   }
-  return { ...letterPayload, ...selected }
+  return { ...letterPayload, ...selected };
 }
 
-mkdirSync(outDir, { recursive: true })
+mkdirSync(outDir, { recursive: true });
 
-const written: string[] = []
+const written: string[] = [];
 for (const template of listTemplateDefinitions()) {
-  const html = template.compileHtml("fr", payloadFor(template.key))
-  const file = resolve(outDir, `${template.key}.html`)
-  writeFileSync(file, html)
-  written.push(file)
-  console.log(template.key, html.length)
+  const html = template.compileHtml("fr", payloadFor(template.key));
+  const file = resolve(outDir, `${template.key}.html`);
+  writeFileSync(file, html);
+  written.push(file);
+  console.log(template.key, html.length);
 }
 
-writeFileSync(resolve(outDir, "index.json"), `${JSON.stringify(written.map(path => path.split("/").at(-1)), null, 2)}\n`)
-console.log(`wrote ${written.length} html files to ${outDir}`)
+writeFileSync(resolve(outDir, "index.json"), `${JSON.stringify(written.map(path => path.split("/").at(-1)), null, 2)}\n`);
+console.log(`wrote ${written.length} html files to ${outDir}`);

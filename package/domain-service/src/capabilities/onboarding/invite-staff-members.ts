@@ -4,9 +4,9 @@ import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
 import { randomUUID } from 'node:crypto'
 import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
 import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, defaultScopesForProfileGrain, StaffMember } from '@edaya/core'
+import { ensureSchoolPermissionProfiles, inviteRoleSourceKeys } from '../access-control/seed-staff-permission-profiles'
 import { getStaffInvitePermissionPreset } from './default-access-roles'
 import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
-import { ensureSchoolPermissionProfiles, inviteRoleSourceKeys } from '../access-control/seed-staff-permission-profiles'
 
 export interface InviteStaffMemberInput {
   email: string

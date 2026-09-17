@@ -73,7 +73,7 @@ function applyInputNullability(type: GraphQLInputType, nullable: boolean, option
 }
 
 function isGraphQLName(name: string): boolean {
-  return /^[_A-Za-z][_0-9A-Za-z]*$/.test(name);
+  return /^[_A-Z]\w*$/i.test(name);
 }
 
 function objectHasInvalidGraphQLKeys(schema: AnySchema): boolean {

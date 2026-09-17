@@ -1,8 +1,9 @@
 import type { Permission, PermissionProfileScopeGrain } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
-import { PERMISSION_PROFILE_GRAIN_ORDER, profileGrainForPermission, StaffPermissionProfile } from '@edaya/core'
+import type { StaffInvitePermissionPreset } from '../onboarding/default-access-roles'
 import { randomUUID } from 'node:crypto'
-import { STAFF_INVITE_PERMISSION_PRESETS, type StaffInvitePermissionPreset } from '../onboarding/default-access-roles'
+import { PERMISSION_PROFILE_GRAIN_ORDER, profileGrainForPermission, StaffPermissionProfile } from '@edaya/core'
+import { STAFF_INVITE_PERMISSION_PRESETS } from '../onboarding/default-access-roles'
 
 const GRAIN_LABELS: Record<PermissionProfileScopeGrain, string> = {
   school: '',
@@ -80,4 +81,3 @@ export function inviteRoleSourceKeys(roleId: string): string[] {
     return []
   return splitInvitePresetIntoProfiles(preset).map(fragment => fragment.sourceKey)
 }
-

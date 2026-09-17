@@ -1,4 +1,5 @@
-import { aggregateFamilyFeedback, familyFeedbackReminderTimes, type FamilyFeedbackScoredRow } from '@edaya/core'
+import type { FamilyFeedbackScoredRow } from '@edaya/core'
+import { aggregateFamilyFeedback, familyFeedbackReminderTimes } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 function rowsForSubjects(count: number, value: FamilyFeedbackScoredRow['value'] = 4): FamilyFeedbackScoredRow[] {

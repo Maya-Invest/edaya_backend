@@ -5,13 +5,13 @@ import {
   BusinessRuleViolationError,
   DOCUMENT_FAILURES,
   DOCUMENT_ISSUANCE_CAPABILITY,
-  School as SchoolEntity,
+  SCHOOL_CREST_PURPOSE,
   SCHOOL_ISSUANCE_ASSET_CAPABILITY,
   SCHOOL_ISSUANCE_ASSET_TERMINAL_RETAIN_MS,
   SCHOOL_LOGO_PURPOSE,
-  SCHOOL_CREST_PURPOSE,
-  SCHOOL_STAMP_PURPOSE,
   SCHOOL_SIGNATURE_PURPOSE,
+  SCHOOL_STAMP_PURPOSE,
+  School as SchoolEntity,
 } from '@edaya/core'
 import { isPublicBrandingPurpose, isSchoolIssuanceAssetPurpose, schoolIssuanceAssetSlot } from './issuance-asset-access'
 
@@ -132,8 +132,9 @@ export async function writeSchoolIssuanceSlot(
     publicBrandingPurposes: nextAttachment ? existing.publicBrandingPurposes : brandingPurposesWithout(existing, purpose),
   })
   await base.repositories.schools.forSchool!(schoolId).save(school)
-  if (nextAttachment)
+  if (nextAttachment) {
     await retainCurrentIssuanceAsset(base, schoolId, purpose, nextAttachment)
+  }
   else {
     await base.repositories.privateFiles.release({
       schoolId,

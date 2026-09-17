@@ -1,8 +1,8 @@
 import type { StaffPermissionProfile } from '@edaya/core'
 import type { EntityConfigFactory } from '../../entity-config'
+import { finishPermissionProfileCatalogDelete, preparePermissionProfileCatalogDelete } from '../../../../capabilities/access-control/delete-permission-profile'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
-import { finishPermissionProfileCatalogDelete, preparePermissionProfileCatalogDelete } from '../../../../capabilities/access-control/delete-permission-profile'
 
 export const staffPermissionProfileConfig: EntityConfigFactory<StaffPermissionProfile> = ({ repositories, atomicExecution }) =>
   config({

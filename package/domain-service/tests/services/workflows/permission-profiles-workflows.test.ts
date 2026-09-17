@@ -1,11 +1,11 @@
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
 import { AcademicYear, ClassGroup, GradeLevel, Permission, StaffMember } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { createTestApp } from '../../support/create-test-app'
-import { createTestStaffActor } from '../../support/test-actor'
 import { profileBoundGrantId } from '../../../src/capabilities/access-control/profile-bound-grant-id'
 import { splitInvitePresetIntoProfiles } from '../../../src/capabilities/access-control/seed-staff-permission-profiles'
 import { STAFF_INVITE_PERMISSION_PRESETS } from '../../../src/capabilities/onboarding/default-access-roles'
+import { createTestApp } from '../../support/create-test-app'
+import { createTestStaffActor } from '../../support/test-actor'
 
 async function createProfileContext() {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'staff-admin'), { owner: true })

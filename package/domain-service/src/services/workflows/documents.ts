@@ -19,7 +19,7 @@ import { assembleDocumentSource } from '../../capabilities/documents/assemble-do
 import { documentTemplatesVisibleTo, getDocumentTemplateCatalogEntry } from '../../capabilities/documents/catalog'
 import { documentArtifactFileName, projectDocumentIssuance } from '../../capabilities/documents/document-projection'
 import { DOCUMENT_PREVIEW_KIND, DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-document-render'
-import { completeSchoolIssuanceAssetUpload, createSchoolIssuanceAssetUpload, clearSchoolIssuanceAsset } from '../../capabilities/documents/issuance-asset-uploads'
+import { clearSchoolIssuanceAsset, completeSchoolIssuanceAssetUpload, createSchoolIssuanceAssetUpload } from '../../capabilities/documents/issuance-asset-uploads'
 import { documentNumberLockKey, documentRenderOutbox, persistRequestedIssuance } from '../../capabilities/documents/persist-requested-issuance'
 import { grantAttachmentDownload } from '../../capabilities/files/grant-attachment-download'
 import { schoolCommandScope } from '../commands/school-command-scope'

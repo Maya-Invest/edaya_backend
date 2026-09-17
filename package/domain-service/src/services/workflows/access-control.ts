@@ -2,10 +2,10 @@ import type { GrantScope, Guardian, StaffMember, StaffPermissionAssignment, Staf
 import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
-import { BusinessRuleViolationError, defaultScopesForProfileGrain, findPublishedAcademicYear, permissionMatchesProfileGrain, StaffPermissionAssignment as StaffPermissionAssignmentEntity, StaffPermissionProfile as StaffPermissionProfileEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, validatePermissionScopes, validateProfileBindingScopes } from '@edaya/core'
+import { BusinessRuleViolationError, defaultScopesForProfileGrain, findPublishedAcademicYear, permissionMatchesProfileGrain, StaffPermissionAssignment as StaffPermissionAssignmentEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, StaffPermissionProfile as StaffPermissionProfileEntity, validatePermissionScopes, validateProfileBindingScopes } from '@edaya/core'
 
-import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { resolveStaffProfileGrants } from '../../capabilities/access-control/resolve-staff-profile-grants'
+import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { linkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
 
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'

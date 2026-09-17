@@ -1,3 +1,4 @@
+import type { SchoolIssuanceAssetPurpose, SchoolPublicBrandingPurpose } from '@edaya/core'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -6,8 +7,6 @@ import {
   SCHOOL_PUBLIC_BRANDING_PURPOSES,
   SCHOOL_SIGNATURE_PURPOSE,
   SCHOOL_STAMP_PURPOSE,
-  type SchoolIssuanceAssetPurpose,
-  type SchoolPublicBrandingPurpose,
 } from '@edaya/core'
 
 export const SEED_ISSUANCE_ASSET_MIME_TYPE = 'image/jpeg'
