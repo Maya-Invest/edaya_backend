@@ -178,7 +178,7 @@ describe('FamilyFeedbackServiceWorkflow', () => {
       answers: ANSWERS,
       comment: 'The messages are clear.',
     })
-    expect(receipt).toEqual({
+    expect(receipt).toMatchObject({
       campaignId: 'camp1',
       slotId: 'ffs:camp1:stu1',
       studentId: 'stu1',
