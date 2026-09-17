@@ -16,6 +16,11 @@ const manualClientRoutes: Pick<
       path: "authorization/effective-grants",
       responseSchemaName: "EffectiveGrantsResponse",
     },
+    profiles: {
+      method: "GET",
+      path: "authorization/profiles",
+      responseSchemaName: "AuthorizationProfilesResponse",
+    },
     permissionCatalog: {
       method: "GET",
       path: "authorization/permission-catalog",

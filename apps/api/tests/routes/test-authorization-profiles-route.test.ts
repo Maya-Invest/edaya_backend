@@ -66,7 +66,15 @@ describe("authorization profiles route", () => {
 
     expect(response.status).toBe(200);
     expect(staffList).toHaveBeenCalledWith({ subjectId: "identity-user-1" });
-    expect(await response.json()).toEqual({
+    expect(await response.json() as {
+      profiles: Array<{
+        kind: string;
+        actorId: string;
+        schoolId: string;
+        schoolName: string;
+        schoolShortName: string;
+      }>;
+    }).toEqual({
       profiles: [
         {
           kind: "staff",
@@ -115,7 +123,7 @@ describe("authorization profiles route", () => {
       headers: { authorization: `Bearer ${jwt}` },
     });
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ profiles: [] });
+    expect(await response.json() as { profiles: unknown[] }).toEqual({ profiles: [] });
   });
 
   it("returns 401 without a bearer JWT", async () => {

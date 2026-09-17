@@ -71,7 +71,11 @@ describe("onboarding register-school route", () => {
     }));
     expect(profilesResponse.status).toBe(200);
     const profiles = await profilesResponse.json() as {
-      profiles: Array<{ kind: string, schoolId: string, actorId: string }>
+      profiles: Array<{
+        kind: string;
+        schoolId: string;
+        actorId: string;
+      }>;
     };
     expect(profiles.profiles).toEqual([
       expect.objectContaining({
