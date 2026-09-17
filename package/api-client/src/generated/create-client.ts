@@ -36,6 +36,7 @@ type QueryClients<TSchemas extends Record<string, unknown>> = {
 
 type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
   effectiveGrants: () => Promise<SchemaName<TSchemas, 'EffectiveGrantsResponse'>>
+  profiles: () => Promise<SchemaName<TSchemas, 'AuthorizationProfilesResponse'>>
   permissionCatalog: () => Promise<SchemaName<TSchemas, 'PermissionCatalogResponse'>>
   scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeRenderResponse'>>
 }
@@ -138,6 +139,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     queries,
     authorization: {
     effectiveGrants: () => transport.request('GET', resolveClientRoutePath('authorization/effective-grants')),
+    profiles: () => transport.request('GET', resolveClientRoutePath('authorization/profiles')),
     permissionCatalog: () => transport.request('GET', resolveClientRoutePath('authorization/permission-catalog')),
     scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope/render'), { body: payload }),
   } as AuthorizationClients<TSchemas>,

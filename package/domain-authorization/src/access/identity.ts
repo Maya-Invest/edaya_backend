@@ -28,11 +28,7 @@ export async function resolveInteractiveActorIdentity(
   }
 
   const identities = await listIdentitiesForSubject(repositories, args.subjectId)
-  if (identities.length !== 1) {
-    return null
-  }
-
-  return identities[0] ?? null
+  return pickDefaultIdentity(identities)
 }
 
 async function resolveByActorKind(
@@ -68,32 +64,36 @@ async function resolveByActorKindAndSubject(
 
   switch (args.actorKind) {
     case 'staff': {
-      const staff = await repositories.staffMembers.findOne(filter)
-      if (!staff || (args.schoolId && staff.schoolId !== args.schoolId)) {
-        return null
-      }
-      return { kind: 'staff', schoolId: staff.schoolId, actorId: staff.id }
+      const matches = await listKindIdentities(repositories.staffMembers, filter, staff => ({
+        kind: 'staff' as const,
+        schoolId: staff.schoolId,
+        actorId: staff.id,
+      }))
+      return pickUniqueKindIdentity(matches, args.schoolId)
     }
     case 'guardian': {
-      const guardian = await repositories.guardians.findOne(filter)
-      if (!guardian?.hasAccess || (args.schoolId && guardian.schoolId !== args.schoolId)) {
-        return null
-      }
-      return { kind: 'guardian', schoolId: guardian.schoolId, actorId: guardian.id }
+      const matches = await listKindIdentities(repositories.guardians, filter, guardian => (
+        guardian.hasAccess
+          ? { kind: 'guardian' as const, schoolId: guardian.schoolId, actorId: guardian.id }
+          : null
+      ))
+      return pickUniqueKindIdentity(matches, args.schoolId)
     }
     case 'student': {
-      const student = await repositories.students.findOne(filter)
-      if (!student || (args.schoolId && student.schoolId !== args.schoolId)) {
-        return null
-      }
-      return { kind: 'student', schoolId: student.schoolId, actorId: student.id }
+      const matches = await listKindIdentities(repositories.students, filter, student => ({
+        kind: 'student' as const,
+        schoolId: student.schoolId,
+        actorId: student.id,
+      }))
+      return pickUniqueKindIdentity(matches, args.schoolId)
     }
     case 'teacher': {
-      const teacher = await repositories.teachers.findOne(filter)
-      if (!teacher?.isActive || (args.schoolId && teacher.schoolId !== args.schoolId)) {
-        return null
-      }
-      return { kind: 'teacher', schoolId: teacher.schoolId, actorId: teacher.id }
+      const matches = await listKindIdentities(repositories.teachers, filter, teacher => (
+        teacher.isActive
+          ? { kind: 'teacher' as const, schoolId: teacher.schoolId, actorId: teacher.id }
+          : null
+      ))
+      return pickUniqueKindIdentity(matches, args.schoolId)
     }
     case 'platform':
       return null
@@ -158,34 +158,70 @@ export async function subjectHasSchoolInteractiveIdentity(
   return identities.length > 0
 }
 
-async function listIdentitiesForSubject(
+export async function listIdentitiesForSubject(
   repositories: ActorRepositories,
   subjectId: string,
 ): Promise<ResolvedInteractiveActorIdentity[]> {
-  const [staff, guardian, student, teacher] = await Promise.all([
-    repositories.staffMembers.findOne({ subjectId }),
-    repositories.guardians.findOne({ subjectId }),
-    repositories.students.findOne({ subjectId }),
-    repositories.teachers.findOne({ subjectId }),
+  const filter = { subjectId }
+  const [staff, guardians, students, teachers] = await Promise.all([
+    listKindIdentities(repositories.staffMembers, filter, member => ({
+      kind: 'staff' as const,
+      schoolId: member.schoolId,
+      actorId: member.id,
+    })),
+    listKindIdentities(repositories.guardians, filter, guardian => (
+      guardian.hasAccess
+        ? { kind: 'guardian' as const, schoolId: guardian.schoolId, actorId: guardian.id }
+        : null
+    )),
+    listKindIdentities(repositories.students, filter, student => ({
+      kind: 'student' as const,
+      schoolId: student.schoolId,
+      actorId: student.id,
+    })),
+    listKindIdentities(repositories.teachers, filter, teacher => (
+      teacher.isActive
+        ? { kind: 'teacher' as const, schoolId: teacher.schoolId, actorId: teacher.id }
+        : null
+    )),
   ])
 
-  const identities: ResolvedInteractiveActorIdentity[] = []
+  return [...staff, ...guardians, ...students, ...teachers]
+}
 
-  if (staff) {
-    identities.push({ kind: 'staff', schoolId: staff.schoolId, actorId: staff.id })
+function pickDefaultIdentity(
+  identities: ResolvedInteractiveActorIdentity[],
+): ResolvedInteractiveActorIdentity | null {
+  const staff = identities.filter(identity => identity.kind === 'staff')
+  if (staff.length === 1) {
+    return staff[0] ?? null
+  }
+  if (staff.length > 1) {
+    return null
   }
 
-  if (guardian?.hasAccess) {
-    identities.push({ kind: 'guardian', schoolId: guardian.schoolId, actorId: guardian.id })
-  }
+  const others = identities.filter(identity => identity.kind !== 'staff')
+  return others.length === 1 ? others[0] ?? null : null
+}
 
-  if (student) {
-    identities.push({ kind: 'student', schoolId: student.schoolId, actorId: student.id })
-  }
+function pickUniqueKindIdentity(
+  identities: ResolvedInteractiveActorIdentity[],
+  schoolId?: string,
+): ResolvedInteractiveActorIdentity | null {
+  const matches = schoolId
+    ? identities.filter(identity => identity.schoolId === schoolId)
+    : identities
+  return matches.length === 1 ? matches[0] ?? null : null
+}
 
-  if (teacher?.isActive) {
-    identities.push({ kind: 'teacher', schoolId: teacher.schoolId, actorId: teacher.id })
-  }
-
-  return identities
+async function listKindIdentities<T extends { id: string, schoolId: string }>(
+  repository: { list: (filter: { subjectId: string, schoolId?: string }) => Promise<T[]> },
+  filter: { subjectId: string, schoolId?: string },
+  toIdentity: (entity: T) => ResolvedInteractiveActorIdentity | null,
+): Promise<ResolvedInteractiveActorIdentity[]> {
+  const rows = await repository.list(filter)
+  return rows.flatMap((row) => {
+    const identity = toIdentity(row)
+    return identity ? [identity] : []
+  })
 }

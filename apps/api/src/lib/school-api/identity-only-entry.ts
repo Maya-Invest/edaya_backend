@@ -50,7 +50,7 @@ export async function admitIdentityOnlyEntry(input: {
   }
 
   function invitationAcceptanceService(invitation: AccountInvitation) {
-    if (selectedActor && !actorMatchesInvitationTarget(selectedActor, invitation)) {
+    if (selectedActor && actorBlocksInvitationAcceptance(selectedActor, invitation)) {
       throw new BusinessRuleViolationError("SUBJECT_ALREADY_LINKED", "This account is already linked to a school actor");
     }
     // The credential's persisted record selects the school; request headers never do.
@@ -95,6 +95,12 @@ export async function admitIdentityOnlyEntry(input: {
       });
     },
   });
+}
+
+function actorBlocksInvitationAcceptance(actor: ActorMetadata, invitation: AccountInvitation): boolean {
+  if (!("schoolId" in actor) || actor.schoolId !== invitation.schoolId)
+    return false;
+  return !actorMatchesInvitationTarget(actor, invitation);
 }
 
 function actorMatchesInvitationTarget(actor: ActorMetadata, invitation: AccountInvitation): boolean {

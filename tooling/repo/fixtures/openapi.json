@@ -484,6 +484,53 @@
           "grants"
         ]
       },
+      "AuthorizationProfile": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "staff",
+              "guardian",
+              "student",
+              "teacher"
+            ]
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "schoolShortName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "actorId",
+          "schoolId",
+          "schoolName",
+          "schoolShortName"
+        ]
+      },
+      "AuthorizationProfilesResponse": {
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorizationProfile"
+            }
+          }
+        },
+        "required": [
+          "profiles"
+        ]
+      },
       "PermissionCatalogEntry": {
         "type": "object",
         "properties": {
@@ -21325,6 +21372,73 @@
           },
           "403": {
             "description": "System actors cannot introspect grants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/authorization/profiles": {
+      "get": {
+        "tags": [
+          "Core Authorization"
+        ],
+        "summary": "List school identities for the signed-in subject",
+        "operationId": "authorization.profiles",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "profiles",
+        "x-edaya-client-path": "authorization/profiles",
+        "x-edaya-response-schema": "AuthorizationProfilesResponse",
+        "responses": {
+          "200": {
+            "description": "School identities for this identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
             "content": {
               "application/json": {
                 "schema": {

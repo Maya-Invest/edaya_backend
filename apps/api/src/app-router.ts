@@ -1,4 +1,5 @@
 import { createRouter } from "@/http/create-app";
+import { getAuthorizationProfilesHandler, getAuthorizationProfilesRoute } from "@/routes/authorization-profiles.route";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
   getPermissionCatalogHandler,
@@ -106,6 +107,7 @@ const router = createRouter()
 // Mount routes from route builders
 router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
+  .openapi(getAuthorizationProfilesRoute, getAuthorizationProfilesHandler)
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)

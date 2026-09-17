@@ -46,12 +46,13 @@ describe("identity JWT session actor", () => {
     };
     const repos: any = {
       staffMembers: {
+        list: mock(async () => [staff]),
         findOne: mock(async () => staff),
         findById: mock(async () => staff),
       },
-      guardians: { findOne: mock(async () => undefined) },
-      students: { findOne: mock(async () => undefined) },
-      teachers: { findOne: mock(async () => undefined) },
+      guardians: { list: mock(async () => []), findOne: mock(async () => undefined) },
+      students: { list: mock(async () => []), findOne: mock(async () => undefined) },
+      teachers: { list: mock(async () => []), findOne: mock(async () => undefined) },
       staffAssignments: { list: mock(async () => []) },
       staffPermissionAssignments: { list: mock(async () => []) },
       serviceApiKeys: { findActiveByHash: mock(async () => undefined) },
@@ -118,10 +119,10 @@ describe("identity JWT session actor", () => {
     });
     const saved: unknown[] = [];
     const repos: any = {
-      staffMembers: { findOne: mock(async () => undefined), findById: mock(async () => undefined) },
-      guardians: { findOne: mock(async () => undefined) },
-      students: { findOne: mock(async () => undefined) },
-      teachers: { findOne: mock(async () => undefined) },
+      staffMembers: { list: mock(async () => []), findOne: mock(async () => undefined), findById: mock(async () => undefined) },
+      guardians: { list: mock(async () => []), findOne: mock(async () => undefined) },
+      students: { list: mock(async () => []), findOne: mock(async () => undefined) },
+      teachers: { list: mock(async () => []), findOne: mock(async () => undefined) },
       serviceApiKeys: { findActiveByHash: mock(async () => undefined) },
       s2sClients: { findActiveByHash: mock(async () => undefined) },
       platformUsers: {

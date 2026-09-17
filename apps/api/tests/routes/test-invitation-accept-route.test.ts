@@ -151,4 +151,24 @@ describe("invitation accept route", () => {
     });
     expect(response.status).toBe(409);
   });
+
+  it("accepts a staff invitation into a second school", async () => {
+    const actor = createStaffActorMetadata({
+      schoolId: "other-school",
+      subjectId: "identity-user-1",
+      requestId: "req-2",
+      authenticatedAt: new Date(),
+      assuranceLevel: ActorAssuranceLevel.Standard,
+      staffMemberId: "staff-home",
+    });
+    const invitationToken = "accept-token-second-school";
+    const { app, acceptAccountInvitation } = createInvitationApp(invitationToken, actor);
+    const jwt = await tokenFor("staff@school.edu");
+    const response = await app.request(`/public/invitations/${invitationToken}/accept`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${jwt}` },
+    });
+    expect(response.status).toBe(200);
+    expect(acceptAccountInvitation).toHaveBeenCalled();
+  });
 });

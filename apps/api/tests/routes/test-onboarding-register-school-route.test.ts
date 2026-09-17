@@ -63,6 +63,37 @@ describe("onboarding register-school route", () => {
     expect(grants.kind).toBe("staff");
     expect(grants.grants.length).toBeGreaterThan(0);
     expect(grants.grants.every(grant => grant.source === "owner")).toBe(true);
+
+    const profilesResponse = await app.request(createAppRequest("/core/authorization/profiles", {
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+      },
+    }));
+    expect(profilesResponse.status).toBe(200);
+    const profiles = await profilesResponse.json() as {
+      profiles: Array<{ kind: string, schoolId: string, actorId: string }>
+    };
+    expect(profiles.profiles).toEqual([
+      expect.objectContaining({
+        kind: "staff",
+        schoolId: school.id,
+        actorId: ownerStaff!.id,
+      }),
+    ]);
+
+    const secondRegister = await app.request(createAppRequest("/core/onboarding/register-school", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        name: "Second School",
+        timeZone: "UTC",
+      }),
+    }));
+    expect(secondRegister.status).toBe(409);
+    expect(await secondRegister.json()).toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
   });
 
   it("returns 503 when public school registration is disabled", async () => {

@@ -2,7 +2,7 @@ import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/authorization";
 import type { IdentityClient } from "@maya-invest/edaya-identity-client";
 import { admitIdentityOnlyEntry } from "@/lib/school-api/identity-only-entry";
-import { createGuardianActorMetadata } from "@edaya/authorization";
+import { createGuardianActorMetadata, createStaffActorMetadata } from "@edaya/authorization";
 import { AccountInvitationContactChannel, AccountInvitationKind } from "@edaya/core";
 import { hashInvitationToken } from "@edaya/service";
 import { verifyIdentityToken } from "@maya-invest/edaya-identity-client";
@@ -79,9 +79,17 @@ describe("identity-only admitted entry", () => {
     expect(f.forActor).not.toHaveBeenCalled();
   });
 
-  it("does not treat a matching actor ID in another school as the invited target", async () => {
+  it("allows accepting an invitation into another school while already linked", async () => {
     const f = fixture();
-    const selectedActor = createGuardianActorMetadata({ schoolId: "other-school", guardianId: "guardian", subjectId: "verified-subject", requestId: "test", authenticatedAt: new Date() });
+    const selectedActor = createStaffActorMetadata({ schoolId: "other-school", staffMemberId: "staff-home", subjectId: "verified-subject", requestId: "test", authenticatedAt: new Date() });
+    const entry = await admitIdentityOnlyEntry({ headers: await headers(), identityClient, schoolApp: f.schoolApp, selectedActor });
+    expect(await entry!.acceptInvitation("valid-credential")).toMatchObject({ kind: "guardian" });
+    expect(f.forActor.mock.calls[0]![0]).toMatchObject({ kind: "system", schoolId: "credential-school" });
+  });
+
+  it("rejects a different target in the same school", async () => {
+    const f = fixture();
+    const selectedActor = createGuardianActorMetadata({ schoolId: "credential-school", guardianId: "other-guardian", subjectId: "verified-subject", requestId: "test", authenticatedAt: new Date() });
     const entry = await admitIdentityOnlyEntry({ headers: await headers(), identityClient, schoolApp: f.schoolApp, selectedActor });
     await expect(entry!.acceptInvitation("valid-credential")).rejects.toMatchObject({ code: "SUBJECT_ALREADY_LINKED" });
     expect(f.forActor).not.toHaveBeenCalled();
