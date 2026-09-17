@@ -208,6 +208,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
     })
     const expired = pending.copyWith({
       id: 'inv-expired',
+      targetId: 'guardian-expired',
       tokenHash: 'b'.repeat(64),
       expiresAt: new Date('2000-01-01T00:00:00.000Z'),
     })

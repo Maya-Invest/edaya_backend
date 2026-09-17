@@ -33,11 +33,11 @@ export async function seedDevSchoolBranding(
 
   await port.updateIssuingIdentity({
     schoolId: school.id,
-    issuingName: school.issuingName,
-    postalAddress: school.postalAddress,
-    phone: school.phone,
-    email: school.email,
-    schoolCode: school.schoolCode,
+    issuingName: school.issuingName ?? undefined,
+    postalAddress: school.postalAddress ?? undefined,
+    phone: school.phone ?? undefined,
+    email: school.email ?? undefined,
+    schoolCode: school.schoolCode ?? undefined,
     publicBrandingPurposes: SEED_PUBLIC_BRANDING_PURPOSES,
   })
 

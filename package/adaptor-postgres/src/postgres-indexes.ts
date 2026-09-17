@@ -27,6 +27,9 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_members_school_id_idx').on(col(table, 'schoolId')),
         index('staff_members_subject_id_idx').on(col(table, 'subjectId')),
         uniqueIndex('staff_members_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('staff_members_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
       ]
     case 'service_api_keys':
       return [index('service_api_keys_staff_member_id_idx').on(col(table, 'staffMemberId'))]
@@ -230,6 +233,9 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('students_school_id_idx').on(col(table, 'schoolId')),
         index('students_photo_attachment_id_idx').on(col(table, 'photoAttachmentId')),
+        uniqueIndex('students_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
       ]
     case 'student_photo_submissions':
       return [
@@ -253,6 +259,9 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('guardians_school_id_idx').on(col(table, 'schoolId')),
         uniqueIndex('guardians_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('guardians_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
       ]
     case 'guardian_student_links':
       return [
@@ -299,6 +308,9 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
       return [
         index('teachers_school_id_idx').on(col(table, 'schoolId')),
         uniqueIndex('teachers_school_code_uidx').on(col(table, 'schoolId'), col(table, 'code')),
+        uniqueIndex('teachers_school_subject_uidx')
+          .on(col(table, 'schoolId'), col(table, 'subjectId'))
+          .where(sql`${col(table, 'subjectId')} is not null`),
       ]
     case 'platform_users':
       return [
@@ -318,6 +330,10 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
           col(table, 'contactValue'),
           col(table, 'status'),
         ),
+        uniqueIndex('account_invitations_token_hash_uidx').on(col(table, 'tokenHash')),
+        uniqueIndex('account_invitations_pending_target_uidx')
+          .on(col(table, 'schoolId'), col(table, 'kind'), col(table, 'targetId'))
+          .where(sql`${col(table, 'status')} = 'pending'`),
       ]
     case 'document_issuances':
       return [

@@ -1,4 +1,5 @@
 export * from './constants'
+export * from './invitation-lifecycle'
 export * from './invitation-token'
 export * from './resolve-invitation-contact'
 export * from './resolve-invitation-dispatch-recipient'

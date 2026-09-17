@@ -38,7 +38,7 @@ export class NotificationDeliveryAccessPolicy {
   }
 
   private async assertSource(facts: AccessFacts, delivery: MessageDelivery, request: NotificationDispatchRequest) {
-    const { assessmentResultId, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId } = request.metadata
+    const { assessmentResultId, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId, campaignId, reminderKind, teacherId } = request.metadata
     if (delivery.announcementId) {
       const scope = resourceAccessScope(delivery.schoolId, 'announcements', [{ target: await facts.communicationAudience(delivery.recipientKind!, delivery.recipientId!) }])
       if (delivery.sourceKey !== delivery.announcementId || !await this.access.repositories.announcements.forAccess(scope).findById(delivery.announcementId))
@@ -113,23 +113,23 @@ export class NotificationDeliveryAccessPolicy {
         return
       }
       case 'family_feedback.opened': {
-        requireSource(request.metadata.campaignId, request.metadata.studentId)
-        await this.assertStudentSource(facts, delivery, request.metadata.studentId!, 'general')
+        requireSource(campaignId, studentId)
+        await this.assertStudentSource(facts, delivery, studentId!, 'general')
         return
       }
       case 'family_feedback.reminder': {
-        requireSource(request.metadata.campaignId, request.metadata.studentId, request.metadata.reminderKind)
-        await this.assertStudentSource(facts, delivery, request.metadata.studentId!, 'general')
+        requireSource(campaignId, studentId, reminderKind)
+        await this.assertStudentSource(facts, delivery, studentId!, 'general')
         return
       }
       case 'family_feedback.published': {
-        requireSource(request.metadata.campaignId)
-        if (delivery.recipientKind !== 'teacher' || delivery.recipientId !== request.metadata.teacherId)
+        requireSource(campaignId)
+        if (delivery.recipientKind !== 'teacher' || delivery.recipientId !== teacherId)
           return denied('Published family feedback is only for the evaluated teacher')
         return
       }
       case 'family_feedback.purge_reminder': {
-        requireSource(request.metadata.campaignId)
+        requireSource(campaignId)
         if (delivery.recipientKind !== 'staff')
           return denied('Purge reminders are staff-only')
         return

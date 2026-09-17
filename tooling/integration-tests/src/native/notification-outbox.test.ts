@@ -125,7 +125,8 @@ test('invitation intent rolls back with business state and dispatches only after
   await repo.staffMembers.save(new StaffMember({ id: 'invitation-creator', schoolId: 'invitation-school', firstName: 'Fixture', lastName: 'Staff' }))
   const port = createNotifyInvitationDeliveryPort(runtime)
   const enqueue = async (id: string) => {
-    const invitation = new AccountInvitation({ id, schoolId: 'invitation-school', kind: AccountInvitationKind.Staff, targetId: 'invitation-creator', createdByStaffId: 'invitation-creator', contactChannel: AccountInvitationContactChannel.Email, contactValue: 'synthetic@example.test', tokenHash: `hash-${id}`, expiresAt: new Date(Date.now() + 60000) })
+    await repo.staffMembers.save(new StaffMember({ id, schoolId: 'invitation-school', firstName: 'Fixture', lastName: id, email: 'synthetic@example.test' }))
+    const invitation = new AccountInvitation({ id, schoolId: 'invitation-school', kind: AccountInvitationKind.Staff, targetId: id, createdByStaffId: 'invitation-creator', contactChannel: AccountInvitationContactChannel.Email, contactValue: 'synthetic@example.test', tokenHash: `hash-${id}`, expiresAt: new Date(Date.now() + 60000) })
     await repo.accountInvitations.save(invitation)
     await port.deliver({ invitationId: id, schoolId: invitation.schoolId, contactChannel: invitation.contactChannel, contactValue: invitation.contactValue, displayName: 'Synthetic', actorKind: invitation.kind, inviteUrl: 'https://example.test/synthetic-only', expiresAt: invitation.expiresAt, emailSubject: 'Fixture', emailBody: 'Synthetic' })
     expect(sends).toBe(0)

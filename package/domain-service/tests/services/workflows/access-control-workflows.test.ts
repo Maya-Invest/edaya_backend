@@ -115,7 +115,7 @@ describe('SchoolService access-control workflows', () => {
     expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
-  test('linkActorSubject replaces an existing entity subject when relinking', async () => {
+  test('linkActorSubject rejects replacing an existing entity subject', async () => {
     const { repositories, service } = await createAccessControlContext()
     await repositories.staffMembers.save(new StaffMember({
       id: 'st1',
@@ -127,13 +127,13 @@ describe('SchoolService access-control workflows', () => {
       createdAt: new Date('2026-01-01T00:00:00Z'),
     }))
 
-    const result = await service.accessControlWorkflow.linkActorSubject({
+    await expect(service.accessControlWorkflow.linkActorSubject({
       subjectId: 'auth-user-new',
       staffMemberId: 'st1',
-    })
-
-    expect(result.entity.subjectId).toBe('auth-user-new')
-    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
+    })).rejects.toMatchObject({
+      code: 'ACTOR_SUBJECT_ALREADY_LINKED',
+    } satisfies Partial<BusinessRuleViolationError>)
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe('auth-user-old')
   })
 
   test('unlinkActorSubject clears the auth subject from a linked staff member', async () => {

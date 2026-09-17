@@ -78,11 +78,19 @@ const letterPayload = {
   ],
 };
 
+function asObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? { ...(value as Record<string, unknown>) } : {};
+}
+
+function payloadValue(record: Record<string, unknown>, key: string): unknown {
+  return record[key];
+}
+
 function payloadFor(key: string): unknown {
   const selected = assetsFor(key);
   if (key === "report-card.v1") {
-    const bulletin = EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>;
-    const council = { ...(bulletin.council as Record<string, unknown>), principalStampUrl: assets.stampUrl };
+    const bulletin = asObject(EXAMPLE_RENDER_REQUEST.payload);
+    const council = { ...asObject(payloadValue(bulletin, "council")), principalStampUrl: assets.stampUrl };
     return {
       ...bulletin,
       ...identity,
@@ -92,7 +100,7 @@ function payloadFor(key: string): unknown {
   }
   if (key === "logbook.v1") {
     return {
-      ...EXAMPLE_LOGBOOK_RENDER_REQUEST.payload,
+      ...asObject(EXAMPLE_LOGBOOK_RENDER_REQUEST.payload),
       ...identity,
       ...selected,
     };

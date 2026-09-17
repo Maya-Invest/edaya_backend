@@ -11402,8 +11402,13 @@ export interface components {
                 phase: string;
                 ms: number;
             }[];
+            replayed?: boolean;
         };
         OnboardingProvisionRequest: {
+            /** Format: uuid */
+            schoolId: string;
+            /** Format: uuid */
+            requestId: string;
             school: {
                 name: string;
                 timeZone: string;

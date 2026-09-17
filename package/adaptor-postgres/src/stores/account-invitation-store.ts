@@ -177,4 +177,27 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
 
     return rows.map((row: AccountInvitationRow) => this.mapRow(row))
   }
+
+  async compareAndSetStatus(
+    id: string,
+    expectedStatus: AccountInvitationStatus,
+    entity: AccountInvitation,
+    options: SaveAccountInvitationOptions = {},
+  ): Promise<boolean> {
+    const tokenHash = options.tokenHash ?? entity.tokenHash ?? entity.data.tokenHash
+    const rows = await this.getClient()
+      .update(schema.accountInvitations)
+      .set({
+        ...toMutableUpdateSet(entity),
+        ...(tokenHash ? { tokenHash } : {}),
+      })
+      .where(and(
+        eq(schema.accountInvitations.id, id),
+        eq(schema.accountInvitations.status, expectedStatus),
+        this.schoolId ? eq(schema.accountInvitations.schoolId, this.schoolId) : undefined,
+      ))
+      .returning({ id: schema.accountInvitations.id })
+
+    return rows.length === 1
+  }
 }

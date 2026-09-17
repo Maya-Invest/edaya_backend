@@ -27,6 +27,9 @@ export async function seedDevFamilyFeedback(
 
   const staff = await port.listStaffMembers()
   const assignment = assignments[0]
+  if (!assignment) {
+    return { campaigns: 0 }
+  }
   const moderator = staff.find(member => member.id !== assignment.teacherId) ?? staff[0]
 
   await port.createCampaign({

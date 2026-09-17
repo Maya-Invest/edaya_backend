@@ -1,5 +1,5 @@
 import { AuthorizationError, createSystemActorMetadata } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, noOpNotificationGateway } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, noOpNotificationGateway, StaffMember } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
@@ -13,10 +13,21 @@ describe('invitation expiry uses tenant-bound job policies', () => {
   })
   test('expires only pending invitations for this school and cannot run under a notification principal', async () => {
     fixture = await createAuthorizationDatabase()
+    await fixture.repositories.staffMembers.save(new StaffMember({
+      id: 'staff-a-active',
+      schoolId: 'school-a',
+      firstName: 'Active',
+      lastName: 'Staff',
+      isActive: true,
+    }))
     const revoke = mock(async (_id: string) => {})
     const application = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage, invitationDelivery: { deliver: async () => {}, revoke } })
-    for (const [id, suffix, expiresAt] of [['expired', 'a', '2026-01-01'], ['active', 'a', '2026-01-03'], ['foreign', 'b', '2026-01-01']] as const)
-      await fixture.repositories.accountInvitations.save(new AccountInvitation({ id, schoolId: `school-${suffix}`, kind: AccountInvitationKind.Staff, targetId: `staff-${suffix}`, contactChannel: AccountInvitationContactChannel.Email, contactValue: 'staff@example.test', tokenHash: `hash-${id}`, status: AccountInvitationStatus.Pending, expiresAt: new Date(expiresAt), createdByStaffId: `staff-${suffix}` }))
+    for (const [id, schoolSuffix, targetId, expiresAt] of [
+      ['expired', 'a', 'staff-a', '2026-01-01'],
+      ['active', 'a', 'staff-a-active', '2026-01-03'],
+      ['foreign', 'b', 'staff-b', '2026-01-01'],
+    ] as const)
+      await fixture.repositories.accountInvitations.save(new AccountInvitation({ id, schoolId: `school-${schoolSuffix}`, kind: AccountInvitationKind.Staff, targetId, contactChannel: AccountInvitationContactChannel.Email, contactValue: 'staff@example.test', tokenHash: `hash-${id}`, status: AccountInvitationStatus.Pending, expiresAt: new Date(expiresAt), createdByStaffId: `staff-${schoolSuffix}` }))
     const actor = createSystemActorMetadata({ systemId: 'expireAccountInvitations', schoolId: 'school-a', requestId: 'expiry', reason: 'Expire invitations' })
     const asOf = new Date('2026-01-02')
     expect(await expireAccountInvitations({ actor, asOf, service: application.forActor(actor) })).toEqual({ processed: 1, skipped: 1 })

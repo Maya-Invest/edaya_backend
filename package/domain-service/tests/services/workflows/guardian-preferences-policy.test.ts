@@ -60,7 +60,7 @@ describe('guardian preference policies through persisted workflows and entities'
     for (const changes of [{ subjectId: 'new-login' }, { notificationEmail: 'changed@example.test' }, { firstName: 'Changed' }, { schoolId: 'school-b' }, { id: 'new-guardian' }]) {
       await expect(service.baseService.entities.guardians.save(new Guardian({ ...before.data, contactMethods: [...before.contactMethods], ...changes }))).rejects.toBeInstanceOf(AuthorizationError)
     }
-    await fixture.repositories.guardians.save(new Guardian({ id: 'unrelated', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian', subjectId: 'person-a' }))
+    await fixture.repositories.guardians.save(new Guardian({ id: 'unrelated', schoolId: 'school-a', firstName: 'Other', lastName: 'Guardian', subjectId: 'person-unrelated' }))
     await expect(service.studentWorkflow.updateGuardianContactMethods({ guardianId: 'unrelated', contactMethods: [{ type: GuardianContactMethodType.Email, value: 'other@example.test', allowsNotifications: true }] })).rejects.toBeInstanceOf(AuthorizationError)
   })
 

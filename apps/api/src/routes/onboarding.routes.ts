@@ -154,6 +154,8 @@ const onboardingCompleteWizardRequestSchema = z.object({
 }).openapi("OnboardingCompleteWizardRequest");
 
 const onboardingProvisionRequestSchema = z.object({
+  schoolId: z.string().uuid(),
+  requestId: z.string().uuid(),
   school: z.object({
     name: z.string().trim().min(1),
     timeZone: z.string().trim().min(1),
@@ -190,6 +192,7 @@ const onboardingProvisionResponseSchema = z.object({
     phase: z.string(),
     ms: z.number(),
   })),
+  replayed: z.boolean().optional(),
 }).openapi("OnboardingProvisionResponse");
 
 export const onboardingRegisterSchoolRoute = createRoute({
@@ -486,7 +489,6 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
   }
 
   const body = c.req.valid("json");
-  const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
   const allowPublicSchoolRegistration = shouldAllowPublicSchoolRegistration(c.env);
 
   try {
@@ -494,6 +496,8 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
       c.get("schoolApp"),
       session,
       {
+        schoolId: body.schoolId,
+        requestId: body.requestId,
         school: body.school,
         structure: {
           ...body.structure,
@@ -502,7 +506,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         ...(body.invites ? { invites: body.invites } : {}),
       },
       {
-        requestId,
+        requestId: body.requestId,
         existingActor: c.get("actor") ?? undefined,
         inviteBaseUrl: resolveInviteBaseUrl(c.env),
         allowPublicSchoolRegistration,

@@ -1,7 +1,7 @@
-import type { CommandJson, FamilyFeedbackAnswers, FamilyFeedbackLocale, FamilyFeedbackScoredRow } from '@edaya/core'
+import type { CommandJson, FamilyFeedbackAnswer, FamilyFeedbackAnswers, FamilyFeedbackLocale, FamilyFeedbackScoredRow } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
-import { AuthorizationError, denyResourceAccess } from '@edaya/authorization'
-import { aggregateFamilyFeedback, BusinessRuleViolationError, FAMILY_FEEDBACK_COMMENT_MAX_CHARS, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_PURGE_WARN_MS, FAMILY_FEEDBACK_QUESTION_IDS, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, familyFeedbackAnswersSchema, FamilyFeedbackCampaign, FamilyFeedbackCampaignStatus, FamilyFeedbackCommentReadAudit, familyFeedbackInstrumentCopy, familyFeedbackReminderTimes, FamilyFeedbackResponse, FamilyFeedbackSlot, familyFeedbackSlotId, FamilyFeedbackSlotStatus, FamilyFeedbackSnapshot, familyFeedbackSnapshotId, renderFamilyFeedbackInstrument, StudentClassEnrollmentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { AuthorizationError, denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
+import { aggregateFamilyFeedback, BusinessRuleViolationError, FAMILY_FEEDBACK_CANNOT_ASSESS, FAMILY_FEEDBACK_COMMENT_MAX_CHARS, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_PURGE_WARN_MS, FAMILY_FEEDBACK_QUESTION_IDS, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, FAMILY_FEEDBACK_SCORED_VALUES, familyFeedbackAnswersSchema, FamilyFeedbackCampaign, FamilyFeedbackCampaignStatus, FamilyFeedbackCommentReadAudit, familyFeedbackInstrumentCopy, familyFeedbackReminderTimes, FamilyFeedbackResponse, FamilyFeedbackSlot, familyFeedbackSlotId, FamilyFeedbackSlotStatus, FamilyFeedbackSnapshot, familyFeedbackSnapshotId, renderFamilyFeedbackInstrument, StudentClassEnrollmentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import {
   assertFamilyFeedbackManage,
   assertFamilyFeedbackModerate,
@@ -290,7 +290,7 @@ export class FamilyFeedbackServiceWorkflow {
         return campaign
       },
       replay: async stored => this.requireCampaign((stored as { id: string }).id),
-      persistResult: result => ({ id: result.id, moderatorStaffId: result.moderatorStaffId }),
+      persistResult: result => ({ id: result.id, moderatorStaffId: result.moderatorStaffId ?? null }),
       audit: result => [{ event: 'family-feedback.moderator-assigned', resourceType: 'family-feedback-campaign', resourceId: result.id }],
     }).then(campaign => projectCampaign(campaign, true))
   }
@@ -459,7 +459,6 @@ export class FamilyFeedbackServiceWorkflow {
             studentId: slot.studentId,
             status: 'completed' as const,
             alreadyCompleted: true,
-            completingGuardianId: slot.completingGuardianId,
           }
         }
         const completed = slot.copyWith({
@@ -485,7 +484,6 @@ export class FamilyFeedbackServiceWorkflow {
           studentId: slot.studentId,
           status: 'completed' as const,
           alreadyCompleted: false,
-          completingGuardianId: guardian.id,
         }
       },
       replay: async (stored) => {
@@ -503,7 +501,7 @@ export class FamilyFeedbackServiceWorkflow {
         alreadyCompleted: result.alreadyCompleted,
       }),
       audit: result => [{ event: 'family-feedback.submitted', resourceType: 'family-feedback-campaign', resourceId: result.campaignId }],
-    }).then(({ completingGuardianId: _ignored, ...receipt }) => receipt)
+    })
   }
 
   async listFamilyFeedbackCampaigns(): Promise<FamilyFeedbackCampaignProjection[]> {
@@ -630,9 +628,9 @@ export class FamilyFeedbackServiceWorkflow {
       id: crypto.randomUUID(),
       schoolId: campaign.schoolId,
       campaignId: campaign.id,
-      actorId: actor.actorId,
+      actorId: resolveAuditActorId(actor),
       actorKind: actor.kind,
-      subjectId: actor.kind === 'staff' ? actor.subjectId : actor.actorId,
+      subjectId: actor.kind === 'staff' ? actor.subjectId : resolveAuditActorId(actor),
     }))
     const responses = await this.responses().list({ campaignId: campaign.id })
     return {
@@ -829,9 +827,12 @@ export class FamilyFeedbackServiceWorkflow {
       if (!guardian?.subjectId)
         continue
       for (const questionId of FAMILY_FEEDBACK_QUESTION_IDS) {
+        const value = response.answers[questionId]
+        if (value !== FAMILY_FEEDBACK_CANNOT_ASSESS && !(FAMILY_FEEDBACK_SCORED_VALUES as readonly number[]).includes(value))
+          continue
         rows.push({
           questionId,
-          value: response.answers[questionId],
+          value: value as FamilyFeedbackAnswer,
           guardianSubjectId: guardian.subjectId,
         })
       }

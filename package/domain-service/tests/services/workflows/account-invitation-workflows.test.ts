@@ -219,9 +219,39 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(invitationDelivery.deliveries).toHaveLength(1)
   })
 
-  test('acceptAccountInvitation rejects a missing phone claim', async () => {
+  test('acceptAccountInvitation rejects a missing phone claim on a leftover phone invitation', async () => {
     const guardian = new Guardian({
       id: 'gua-phone',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      phone: '+2250102030405',
+    })
+    const { service, repositories } = await createInvitationContext({ guardians: [guardian] })
+    const token = 'leftover-phone-token'
+    await repositories.accountInvitations.save(new AccountInvitation({
+      id: 'inv-phone-leftover',
+      schoolId: 'sch1',
+      kind: AccountInvitationKind.Guardian,
+      targetId: guardian.id,
+      contactChannel: AccountInvitationContactChannel.Phone,
+      contactValue: '+2250102030405',
+      tokenHash: hashInvitationToken(token),
+      status: AccountInvitationStatus.Pending,
+      expiresAt: new Date('2027-01-01T00:00:00Z'),
+      createdByStaffId: 'staff-admin',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    }))
+
+    await expect(invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'guardian-subject',
+    })).rejects.toMatchObject({ code: 'INVITATION_PHONE_MISMATCH' })
+  })
+
+  test('sendAccountInvitation rejects phone invites until phone authentication ships', async () => {
+    const guardian = new Guardian({
+      id: 'gua-sms-off',
       schoolId: 'sch1',
       firstName: 'Grace',
       lastName: 'Hopper',
@@ -233,36 +263,13 @@ describe('AccountInvitationServiceWorkflow', () => {
       ...await buildDefaultNotificationTemplateDocument(),
       invitationSmsEnabled: true,
     }))
-    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
-      kind: AccountInvitationKind.Guardian,
-      targetId: guardian.id,
-      contactChannel: AccountInvitationContactChannel.Phone,
-      contactValue: '+2250102030405',
-      inviteBaseUrl: 'https://app.edaya.test/invite',
-    })
-
-    await expect(invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitation({
-      token,
-      subjectId: 'guardian-subject',
-    })).rejects.toMatchObject({ code: 'INVITATION_PHONE_MISMATCH' })
-  })
-
-  test('sendAccountInvitation rejects phone invites when SMS invitations are off', async () => {
-    const guardian = new Guardian({
-      id: 'gua-sms-off',
-      schoolId: 'sch1',
-      firstName: 'Grace',
-      lastName: 'Hopper',
-      phone: '+2250102030405',
-    })
-    const { service } = await createInvitationContext({ guardians: [guardian] })
     await expect(service.accountInvitationWorkflow.sendAccountInvitation({
       kind: AccountInvitationKind.Guardian,
       targetId: guardian.id,
       contactChannel: AccountInvitationContactChannel.Phone,
       contactValue: '+2250102030405',
       inviteBaseUrl: 'https://app.edaya.test/invite',
-    })).rejects.toMatchObject({ code: 'INVITATION_SMS_DISABLED' })
+    })).rejects.toMatchObject({ code: 'INVITATION_PHONE_UNSUPPORTED' })
   })
 
   test('getInvitationPreviewByToken returns a pending invitation', async () => {
@@ -415,6 +422,30 @@ describe('AccountInvitationServiceWorkflow', () => {
     expect(result.entity.subjectId).toBe('auth-user-1')
     expect((await repositories.guardians.findById(guardian.id))?.subjectId).toBe('auth-user-1')
     expect((await accountInvitations.findById(invitation.id))?.status).toBe(AccountInvitationStatus.Accepted)
+  })
+
+  test('acceptAccountInvitation rejects a target linked to another subject after the invite was sent', async () => {
+    const { service, repositories } = await createInvitationContext()
+    const { token } = await service.accountInvitationWorkflow.sendAccountInvitation({
+      kind: AccountInvitationKind.Staff,
+      targetId: 'st9',
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+    await repositories.staffMembers.save(new StaffMember({
+      id: 'st9',
+      schoolId: 'sch1',
+      firstName: 'Paul',
+      lastName: 'Martin',
+      email: 'p.martin@school.edu',
+      isActive: true,
+      subjectId: 'already-linked',
+    }))
+
+    await expect(invitationAcceptanceService(service).accountInvitationWorkflow.acceptAccountInvitation({
+      token,
+      subjectId: 'auth-user-1',
+      contactValue: 'p.martin@school.edu',
+    })).rejects.toMatchObject({ code: 'ACTOR_SUBJECT_ALREADY_LINKED' })
   })
 })
 

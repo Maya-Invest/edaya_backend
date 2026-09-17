@@ -2,6 +2,7 @@ import type {
   AccountInvitation,
   AccountInvitationContactChannel,
   AccountInvitationKind,
+  AccountInvitationStatus,
 } from '../../domain/access/account-invitation'
 import type { BaseRepositoryInterface } from './base-repository'
 
@@ -24,4 +25,10 @@ export interface AccountInvitationRepository extends BaseRepositoryInterface<Acc
     targetId: string,
   ) => Promise<AccountInvitation | undefined>
   findPendingByContact: (input: FindPendingInvitationsByContactInput) => Promise<AccountInvitation[]>
+  compareAndSetStatus: (
+    id: string,
+    expectedStatus: AccountInvitationStatus,
+    entity: AccountInvitation,
+    options?: SaveAccountInvitationOptions,
+  ) => Promise<boolean>
 }

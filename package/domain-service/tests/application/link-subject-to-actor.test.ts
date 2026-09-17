@@ -12,7 +12,7 @@ async function createLinkContext() {
   await repositories.staffMembers.save(new StaffMember({ id: 'staff-1', schoolId: 'school-1', firstName: 'Ada', lastName: 'Lovelace', email: 'ada@school.edu' }))
   await repositories.guardians.save(new Guardian({ id: 'guardian-1', schoolId: 'school-1', firstName: 'Grace', lastName: 'Hopper' }))
   await repositories.teachers.save(new Teacher({ id: 'teacher-1', schoolId: 'school-1', firstName: 'Alan', lastName: 'Turing', email: 'alan@school.edu' }))
-  await repositories.students.save(new Student({ id: 'student-1', schoolId: 'school-1', firstName: 'Katherine', lastName: 'Johnson', subjectId: 'auth-old' }))
+  await repositories.students.save(new Student({ id: 'student-1', schoolId: 'school-1', firstName: 'Katherine', lastName: 'Johnson' }))
   await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link-1', schoolId: 'school-1', guardianId: 'guardian-1', studentId: 'student-1' }))
   return { baseService: fixture.app.baseService, repositories, gateway }
 }
@@ -64,6 +64,27 @@ describe('linkSubjectToActor', () => {
     expect((await ctx.repositories.guardians.findById('guardian-1'))?.subjectId).toBe('auth-guardian')
     expect((await ctx.repositories.teachers.findById('teacher-1'))?.subjectId).toBe('auth-teacher')
     expect((await ctx.repositories.students.findById('student-1'))?.subjectId).toBe('auth-student')
+  })
+
+  test('rejects replacing an existing subject on the target actor', async () => {
+    const ctx = await createLinkContext()
+    await ctx.repositories.staffMembers.save(new StaffMember({
+      id: 'staff-1',
+      schoolId: 'school-1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@school.edu',
+      subjectId: 'auth-existing',
+    }))
+
+    await expect(linkSubjectToActor(
+      ctx.baseService,
+      ctx.repositories,
+      'school-1',
+      { subjectId: 'auth-next', staffMemberId: 'staff-1' },
+    )).rejects.toMatchObject({
+      code: 'ACTOR_SUBJECT_ALREADY_LINKED',
+    } satisfies Partial<BusinessRuleViolationError>)
   })
 
   test('rejects ambiguous actor targets', async () => {

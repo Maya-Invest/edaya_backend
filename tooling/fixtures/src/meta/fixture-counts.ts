@@ -290,5 +290,6 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'student-disciplinary-actions': countArray(entities.studentDisciplinaryActions),
     'attachments': countAttachments(dataset),
     'profile-photos': staff + students + guardians,
+    'school-branding': entities.school ? 1 : 0,
   }
 }

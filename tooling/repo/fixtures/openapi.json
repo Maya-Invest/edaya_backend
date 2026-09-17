@@ -2232,6 +2232,9 @@
                 "ms"
               ]
             }
+          },
+          "replayed": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2247,6 +2250,14 @@
       "OnboardingProvisionRequest": {
         "type": "object",
         "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "school": {
             "type": "object",
             "properties": {
@@ -2397,6 +2408,8 @@
           }
         },
         "required": [
+          "schoolId",
+          "requestId",
           "school",
           "structure"
         ]

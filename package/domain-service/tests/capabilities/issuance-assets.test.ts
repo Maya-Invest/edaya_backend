@@ -218,7 +218,8 @@ describe('school issuance assets', () => {
     }))
     const issuance = (await fixture.schoolRepositories.documentIssuances.findById('iss-1'))!
     const hydrated = await hydrateDocumentPayload(renderer.baseService, issuance)
-    expect(String(hydrated.input.payload.logoUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
+    const payload = hydrated.input.payload as { logoUrl?: unknown }
+    expect(String(payload.logoUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
   })
 
   test('generic school save cannot rewrite issuance slots', async () => {

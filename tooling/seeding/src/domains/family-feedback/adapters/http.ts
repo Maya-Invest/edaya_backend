@@ -16,6 +16,11 @@ function asRecordList(value: unknown): Record<string, unknown>[] {
   return []
 }
 
+function recordString(row: Record<string, unknown>, key: string): string | undefined {
+  const value = row[key]
+  return typeof value === 'string' ? value : undefined
+}
+
 export function createHttpFamilyFeedbackSeedPort(
   options: CreateHttpFamilyFeedbackSeedPortOptions,
 ): FamilyFeedbackSeedPort {
@@ -33,28 +38,32 @@ export function createHttpFamilyFeedbackSeedPort(
         status: 'active',
       })
       return asRecordList(rows).flatMap((row) => {
-        if (typeof row.id !== 'string' || typeof row.teacherId !== 'string') {
+        const id = recordString(row, 'id')
+        const teacherId = recordString(row, 'teacherId')
+        if (!id || !teacherId) {
           return []
         }
-        return [{ id: row.id, teacherId: row.teacherId }]
+        return [{ id, teacherId }]
       })
     }),
     listStaffMembers: () => withSeedPortError('familyFeedback.listStaffMembers', async () => {
       const rows = await postEntityList(requestOptions, 'staffMembers', { accountKind: 'human' })
       return asRecordList(rows).flatMap((row) => {
-        if (typeof row.id !== 'string') {
+        const id = recordString(row, 'id')
+        if (!id) {
           return []
         }
-        return [{ id: row.id }]
+        return [{ id }]
       })
     }),
     listCampaigns: () => withSeedPortError('familyFeedback.listCampaigns', async () => {
       const rows = await postCoreQuery(requestOptions, 'listFamilyFeedbackCampaigns', {})
       return asRecordList(rows).flatMap((row) => {
-        if (typeof row.id !== 'string') {
+        const id = recordString(row, 'id')
+        if (!id) {
           return []
         }
-        return [{ id: row.id, status: typeof row.status === 'string' ? row.status : 'draft' }]
+        return [{ id, status: recordString(row, 'status') ?? 'draft' }]
       })
     }),
     createCampaign: record => withSeedPortError('familyFeedback.createCampaign', async () => {
