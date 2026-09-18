@@ -65,8 +65,16 @@ export function detectChromeExecutable(explicitPath?: string): string | undefine
   return [...playwrightHeadlessShells(), ...CHROME_CANDIDATES].find(candidate => existsSync(candidate));
 }
 
-function withPrintCss(html: string, paper: PdfRenderInput["paper"], orientation: PdfRenderInput["orientation"]): string {
-  const css = `@page{size:${paper} ${orientation};margin:0}`;
+/** Keep template `@page` margins. Only set paper size when the HTML has no page box. */
+export function prepareChromePrintHtml(
+  html: string,
+  paper: PdfRenderInput["paper"],
+  orientation: PdfRenderInput["orientation"],
+): string {
+  if (/@page\b/i.test(html)) {
+    return html;
+  }
+  const css = `@page{size:${paper} ${orientation}}`;
   if (html.includes("</head>")) {
     return html.replace("</head>", `<style>${css}</style></head>`);
   }
@@ -149,7 +157,7 @@ export function createChromePdfRenderer(executablePath: string): PdfRenderer {
       const pdfPath = join(dir, "document.pdf");
       let child: ChildProcess | undefined;
       try {
-        await writeFile(htmlPath, withPrintCss(input.html, input.paper, input.orientation), "utf8");
+        await writeFile(htmlPath, prepareChromePrintHtml(input.html, input.paper, input.orientation), "utf8");
         const htmlUrl = pathToFileURL(htmlPath).href;
         child = spawnChrome(executablePath, [
           "--headless=new",

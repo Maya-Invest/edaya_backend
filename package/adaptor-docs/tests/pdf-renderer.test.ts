@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { describe, expect, test } from "bun:test";
 import { createBrowserRunPdfRenderer } from "../src/adapters/browser-run-pdf-renderer";
-import { createChromePdfRenderer, detectChromeExecutable } from "../src/adapters/chrome-pdf-renderer";
+import { createChromePdfRenderer, detectChromeExecutable, prepareChromePrintHtml } from "../src/adapters/chrome-pdf-renderer";
 import { createGotenbergPdfRenderer } from "../src/adapters/gotenberg-pdf-renderer";
 import { createStubPdfRenderer } from "../src/adapters/stub-pdf-renderer";
 import { resolvePdfRenderer } from "../src/resolve";
@@ -56,6 +56,20 @@ describe("resolvePdfRenderer", () => {
     }
     expect(resolvePdfRenderer({ RUNTIME: "local", CHROME_PATH: chromePath })?.kind).toBe("chrome");
     expect(resolvePdfRenderer({ RUNTIME: "local" })?.kind).toBe("chrome");
+  });
+});
+
+describe("prepareChromePrintHtml", () => {
+  test("does not override template page margins", () => {
+    const html = `<html><head><style>@page { size: A4 portrait; margin: 14mm; }</style></head><body></body></html>`;
+    expect(prepareChromePrintHtml(html, "A4", "landscape")).toBe(html);
+    expect(prepareChromePrintHtml(html, "A4", "portrait")).not.toContain("margin:0");
+  });
+
+  test("sets paper size when the HTML has no @page rule", () => {
+    const html = prepareChromePrintHtml("<p>bulletin</p>", "A4", "portrait");
+    expect(html).toContain("@page{size:A4 portrait}");
+    expect(html).not.toContain("margin:0");
   });
 });
 
