@@ -54,7 +54,7 @@ export class NotificationDeliveryAccessPolicy {
         requireSource(assessmentResultId)
         const result = await facts.one('assessmentResults', assessmentResultId!)
         await this.assertStudentSource(facts, delivery, result.studentId, 'academic')
-        await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId, true)
+        await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId)
         return
       }
       case 'report_card.published': {

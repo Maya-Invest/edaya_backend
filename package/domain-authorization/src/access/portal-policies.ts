@@ -230,9 +230,15 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
     const ownProfile: ResourceAccessClause[] = actor.kind === 'guardian' ? [{ target: { kind: 'records', ids: [actor.guardianId] }, attachmentOwners: [Owner.Guardian] }] : []
     return visibleRows([...ownProfile, ...studentIds.flatMap(studentId => [
       { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.Student, Owner.StudentClassEnrollment, Owner.AttendanceRecord, Owner.Payment] },
-      { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.AssessmentResult, Owner.ReportCard], publishedOnly: true },
+      { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.AssessmentResult] },
+      { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.ReportCard], publishedOnly: true },
     ])])
   }
-  const publishedOnly = resource === 'results' || resource === 'assessmentResults'
-  return visibleRows(studentIds.map(studentId => ({ target: { kind: 'student', studentId }, academicYearId, ...(publishedOnly ? { publishedOnly: true } : {}) })))
+  // Bulletins stay unpublished until staff publish them. Recorded evaluation
+  // marks are visible to the linked family as soon as they exist.
+  return visibleRows(studentIds.map(studentId => ({
+    target: { kind: 'student', studentId },
+    academicYearId,
+    ...(resource === 'results' ? { publishedOnly: true } : {}),
+  })))
 }

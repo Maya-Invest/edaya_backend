@@ -120,7 +120,7 @@ describe('authorization policies against native repository scopes', () => {
     await db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
     const access = new AccessPolicies(guardian, repositories)
     await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })).rejects.toThrow()
-    expect(await repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(0)
+    expect((await repositories.assessmentResults.forAccess(await access.grades.readScope()).list()).map(row => row.id).sort()).toEqual(['1-math', '2-french'])
   })
 
   test('updates check both old and proposed placement, including every student', async () => {
@@ -446,7 +446,7 @@ describe('authorization policies against native repository scopes', () => {
     expect(await teacherFiles.count()).toBe(2)
     expect(await teacherFiles.findById('french-file')).toBeUndefined()
     const familyFiles = repositories.attachments.forAccess(await new AccessPolicies(guardian, repositories).scope(Permission.ATTACHMENT_READ, 'attachments'))
-    expect((await familyFiles.list()).map(row => row.id)).toEqual(['own-profile'])
+    expect((await familyFiles.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual(['french-file', 'math-file', 'own-profile'])
     expect(await familyFiles.findById('health-file')).toBeUndefined()
     expect(await familyFiles.findById('foreign-profile')).toBeUndefined()
   })

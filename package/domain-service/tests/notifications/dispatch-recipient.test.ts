@@ -125,7 +125,7 @@ describe('delayed notification dispatch uses current business facts', () => {
   }
 
   test.each([
-    ['assessment.result_recorded', '1-math', { assessmentResultId: '1-math' }, 'UPDATE report_card_results SET status = \'draft\' WHERE id = \'report\''],
+    ['assessment.result_recorded', '1-math', { assessmentResultId: '1-math' }, 'DELETE FROM assessment_results WHERE id = \'1-math\''],
     ['report_card.published', 'report', { reportCardResultId: 'report' }, 'UPDATE guardian_student_links SET receives_academic_reports = false WHERE id = \'guardian-link\''],
     ['calendar.event_reminder', 'calendar', { calendarEventId: 'calendar' }, 'UPDATE calendar_events SET scope_id = \'class-other\' WHERE id = \'calendar\''],
     ['activity.reminder', 'activity', { activityId: 'activity' }, 'UPDATE activity_enrollments SET status = \'denied\' WHERE id = \'activity-enrollment\''],
