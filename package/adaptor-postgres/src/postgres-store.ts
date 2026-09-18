@@ -14,7 +14,7 @@ import { compileResourceAccess } from './lib/resource-access-scope'
 import { schoolScope } from './lib/school-scope'
 import { PostgresAtomicExecution, transactionContext } from './lib/transaction'
 
-/** Listed in `@edaya/api` `bun --watch` so local process reloads workspace package edits. */
+/** Listed in `@edaya/api` `bun --watch` so local process reloads workspace package and env edits. */
 export class PostgresStore<T extends { readonly id: string }>
 implements BaseRepositoryInterface<T> {
   constructor(

@@ -136,7 +136,7 @@ export function createFcmHttpV1Transport(serviceAccountJson: string): FcmTranspo
         }),
       });
       if (!response.ok) {
-        throw new Error(`FCM send failed: ${response.status} ${await response.text()}`);
+        throw new Error(`FCM send failed: ${response.status}`);
       }
       const body = await response.json() as { name?: string };
       return { providerMessageId: body.name };

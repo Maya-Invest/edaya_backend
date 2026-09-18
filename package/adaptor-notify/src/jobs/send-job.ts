@@ -198,6 +198,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
               body: job.body,
             },
           }));
+          deps.log("notify push (fcm)", { title: job.title });
           lastProviderId = sent.providerMessageId;
           anySent = true;
           subjectSent = true;
