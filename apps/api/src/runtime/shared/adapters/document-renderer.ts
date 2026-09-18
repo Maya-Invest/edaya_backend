@@ -23,7 +23,10 @@ export function resolveDocumentRenderer(
   }
 
   if (resolved.kind === "stub") {
-    logger?.info({}, "document renderer using stub PDF; set GOTENBERG_URL for real PDFs");
+    logger?.info({}, "document renderer using stub PDF; set GOTENBERG_URL or install Chrome for real PDFs");
+  }
+  else if (resolved.kind === "chrome") {
+    logger?.info({}, "document renderer using local Chrome print-to-pdf");
   }
 
   return createDocumentRenderer({ pdfRenderer: resolved.renderer });

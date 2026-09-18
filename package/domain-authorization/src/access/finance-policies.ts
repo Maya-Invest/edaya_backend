@@ -35,7 +35,7 @@ export class FinanceAccessPolicy {
   }
 
   assertReadAccount(accountId: string) {
-    return this.assertAccount(Permission.PAYMENT_READ, accountId)
+    return this.assertAccount(Permission.PAYMENT_READ, accountId, 'read')
   }
 
   assertReconciliation() {
@@ -74,10 +74,10 @@ export class FinanceAccessPolicy {
     return this.assertReversePayment(input.paymentId)
   }
 
-  private async assertAccount(action: Permission, accountId: string) {
+  private async assertAccount(action: Permission, accountId: string, intent: 'read' | 'write' = 'write') {
     const account = await new AccessFacts(this.access.actor, this.access.repositories).one('studentYearAccounts', accountId)
-    await this.access.assertResources(action, 'students', [account.studentId])
-    await this.access.assertResources(action, 'studentYearAccounts', [account.id])
+    await this.access.assertResources(action, 'students', [account.studentId], intent)
+    await this.access.assertResources(action, 'studentYearAccounts', [account.id], intent)
     return account
   }
 }

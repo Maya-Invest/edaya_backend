@@ -30,6 +30,7 @@ flowchart LR
   Adaptor --> Templates
   Adaptor --> Pdf
   Commands --> Files
+  Pdf -->|local| Chrome
   Pdf -->|local| Gotenberg
   Pdf -->|worker| BrowserRun[API Worker BROWSER]
   Pdf -->|fallback| Stub
@@ -50,20 +51,20 @@ Both documents display teachers from active, valid teacher assignments in the do
 1. `RUNTIME=in-memory` or silent tests → not configured (no-op)
 2. `RUNTIME=worker` + `BROWSER` binding → Browser Run `quickAction('pdf')`
 3. `GOTENBERG_URL` → Gotenberg (local or wrangler `.dev.vars`)
-4. `RUNTIME=local` else → stub PDF + log (tiny file; existing skip/replace still applies)
+4. `RUNTIME=local` → Chrome/Chromium `--print-to-pdf` when a binary is found (`CHROME_PATH` or well-known paths); otherwise stub PDF + log
 5. Worker without `BROWSER` or Gotenberg → not configured (`renderClassLogbook` throws `DOCS_NOT_CONFIGURED`; publish-on-render is skipped)
 
 Stub PDFs are **local-only**. Do not persist them on `RUNTIME=worker`.
 
 ## Local real PDFs
 
-`bun repo dev` does not start Gotenberg. To render real PDFs locally:
+`bun repo dev` does not start Gotenberg. Local Generate/Download uses **Google Chrome or Chromium** when installed. To force Gotenberg instead:
 
 ```sh
 docker run --rm -p 3000:3000 gotenberg/gotenberg:8
 ```
 
-Then set `GOTENBERG_URL=http://localhost:3000` in `apps/api/.env`.
+Then set `GOTENBERG_URL=http://localhost:3000` in `apps/api/.env`. Set `CHROME_PATH=` (empty) to keep the stub when neither Gotenberg nor Chrome should run.
 
 `wrangler dev` Miniflare does not implement `quickAction`. Use `GOTENBERG_URL` in `.dev.vars` or `"remote": true` on the browser binding.
 

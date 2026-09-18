@@ -7,16 +7,14 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
 import {
-  AttachmentOwnerKind,
   BusinessRuleViolationError,
   DOCUMENT_BATCH_LIMIT,
   DOCUMENT_FAILURES,
-  DOCUMENT_ISSUANCE_PURPOSE,
   DocumentIssuanceStatus,
-  resourceAccessScope,
 } from '@edaya/core'
 import { assembleDocumentSource } from '../../capabilities/documents/assemble-document-source'
 import { documentTemplatesVisibleTo, getDocumentTemplateCatalogEntry } from '../../capabilities/documents/catalog'
+import { documentArtifactReadPolicy } from '../../capabilities/documents/document-artifact-access'
 import { documentArtifactFileName, projectDocumentIssuance } from '../../capabilities/documents/document-projection'
 import { DOCUMENT_PREVIEW_KIND, DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-document-render'
 import { clearSchoolIssuanceAsset, completeSchoolIssuanceAssetUpload, createSchoolIssuanceAssetUpload } from '../../capabilities/documents/issuance-asset-uploads'
@@ -429,22 +427,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private documentReadPolicy(issuance: DocumentIssuance): AttachmentReadPolicy {
-    const base = this.baseService
-    return {
-      purpose: DOCUMENT_ISSUANCE_PURPOSE,
-      readScope: async () => {
-        const current = await base.repositories.documentIssuances.findById(issuance.id)
-        if (!current)
-          denyResourceAccess()
-        await base.access.documents.assertDownload(current)
-        return resourceAccessScope(base.actor.schoolId, 'attachments', [{
-          target: { kind: 'school' },
-          attachmentOwners: [AttachmentOwnerKind.DocumentIssuance],
-          attachmentPurposes: [DOCUMENT_ISSUANCE_PURPOSE],
-          attachmentIds: current.artifactAttachmentId ? [current.artifactAttachmentId] : [],
-        }])
-      },
-    }
+    return documentArtifactReadPolicy(this.baseService, issuance)
   }
 
   private async run<Result extends DocumentIssuance, Stored extends CommandJson & { id: string } = { id: string, status: string }>(options: {

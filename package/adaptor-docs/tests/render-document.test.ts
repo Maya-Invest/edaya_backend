@@ -34,6 +34,40 @@ describe("renderDocument", () => {
     expect(pdfRenderer.calls[0]?.html).toContain("10,75 / 20");
   });
 
+  test("rejects a root principalStampUrl that letter and report-card schemas do not allow", () => {
+    const extra = { principalStampUrl: "data:image/png;base64,xx" };
+    const letter = getTemplateDefinition("enrollment-record.v1");
+    expect(letter).not.toBeNull();
+    expect(letter!.validatePayload({
+      studentName: "Yao Christelle",
+      schoolName: "LYCEE MAMIE ADJOUA",
+      schoolYear: "2025-2026",
+      ...extra,
+    })).toMatch(/additional/i);
+
+    const incident = getTemplateDefinition("incident-report.v1");
+    expect(incident).not.toBeNull();
+    expect(incident!.validatePayload({
+      schoolName: "LYCEE MAMIE ADJOUA",
+      paragraphs: [{ text: "Bagare" }],
+      ...extra,
+    })).toMatch(/additional/i);
+
+    const bulletin = getTemplateDefinition("report-card.v1");
+    expect(bulletin).not.toBeNull();
+    expect(bulletin!.validatePayload({
+      ...EXAMPLE_RENDER_REQUEST.payload,
+      ...extra,
+    })).toMatch(/additional/i);
+    expect(bulletin!.validatePayload({
+      ...EXAMPLE_RENDER_REQUEST.payload,
+      council: {
+        ...(EXAMPLE_RENDER_REQUEST.payload as { council?: Record<string, unknown> }).council,
+        principalStampUrl: "data:image/png;base64,xx",
+      },
+    })).toBeNull();
+  });
+
   test("rejects invalid payload", async () => {
     const pdfRenderer = createRecordingPdfRenderer(new Uint8Array());
     const result = await renderDocument({

@@ -205,6 +205,12 @@ function isLocalMemoryFileStorageEnabled(env: Environment): boolean {
   return env.RUNTIME === "local" || env.RUNTIME === "in-memory";
 }
 
+/** HTTP headers are Latin-1; keep an ASCII filename= fallback and RFC 5987 filename*. */
+export function contentDisposition(fileName: string, inline: boolean): string {
+  const ascii = fileName.replace(/[^\u0020-\u007E]/g, "-").replaceAll("\"", "");
+  return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+}
+
 export const putMemoryFileHandler: AppRouteHandler<typeof putMemoryFileRoute> = async (c) => {
   if (!isLocalMemoryFileStorageEnabled(c.env)) {
     return c.json({ message: "Not Found" }, HttpStatusCodes.NOT_FOUND);
@@ -242,7 +248,7 @@ export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = 
     const base = c.var.schoolApp.forActor(c.var.actor).baseService;
     const { storageKey } = validatedParam(c) as { storageKey: string };
     const key = decodeURIComponent(storageKey);
-    const attachment = await base.entities.attachments.findOne({ storageKey: key });
+    const attachment = await base.repositories.attachments.forSchool!(base.actor.schoolId).findOne({ storageKey: key });
     if (!attachment || attachment.status !== AttachmentStatus.Ready) {
       return c.json({ message: "Attachment not found" }, HttpStatusCodes.NOT_FOUND);
     }
@@ -256,13 +262,12 @@ export const getMemoryFileHandler: AppRouteHandler<typeof getMemoryFileRoute> = 
       access,
     });
 
-    const fileName = attachment.fileName;
     const inline = (stored.contentType ?? "application/octet-stream").toLowerCase().startsWith("image/");
     return c.body(Buffer.from(stored.body), HttpStatusCodes.OK, {
       "Cache-Control": "private, no-store",
       "Vary": "Authorization",
       "Content-Type": stored.contentType ?? "application/octet-stream",
-      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${fileName.replace(/"/g, "")}"`,
+      "Content-Disposition": contentDisposition(attachment.fileName, inline),
     });
   }
   catch (error) {

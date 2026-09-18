@@ -1,6 +1,6 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
 import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, Student, StudentClassEnrollment } from '@edaya/core'
-import { dispatchDocumentRender } from '@edaya/service'
+import { dispatchDocumentRender, resolveAttachmentReadPolicy } from '@edaya/service'
 import {
   describe,
   expect,
@@ -90,6 +90,7 @@ describe('DocumentsServiceWorkflow', () => {
     expect(attachment?.status).toBe(AttachmentStatus.Ready)
     expect(attachment?.ownerKind).toBe(AttachmentOwnerKind.DocumentIssuance)
     expect(attachment?.purpose).toBe('document.issuance')
+    expect((await resolveAttachmentReadPolicy(app.baseService, attachment!.id))?.purpose).toBe('document.issuance')
   })
 
   test('retry with a changed snapshot conflicts; same snapshot is idempotent', async () => {
@@ -259,6 +260,34 @@ describe('DocumentsServiceWorkflow', () => {
       assuranceLevel: ActorAssuranceLevel.Verified,
     })
     expect(await fixture.forActor(family).documentsWorkflow.listDocumentIssuances({ studentId: 'stu1' })).toEqual([])
+  })
+
+  test('invalid renderer payloads fail as DOCUMENT_INPUT_CONFLICT instead of RENDER_UNAVAILABLE', async () => {
+    const staff = createTestStaffActor('sch1', 'user1')
+    const error = Object.assign(new Error('payload must NOT have additional properties'), {
+      name: 'DocumentRenderError',
+      code: 'document-rendering.invalid-payload',
+    })
+    const { app, application, schoolRepositories } = await createTestApp(staff, {
+      owner: true,
+      documentRenderer: {
+        async render() {
+          throw error
+        },
+      },
+      fileStorage: createInMemoryFileStorage(),
+    })
+    await seedSchooling(schoolRepositories)
+
+    const issuance = await app.documentsWorkflow.requestDocumentIssuance({
+      requestId: 'req-invalid-payload',
+      templateKey: 'schooling-certificate.v1',
+      sourceId: 'enr1',
+    })
+    await dispatchDocumentRender(application)
+    const failed = await schoolRepositories.documentIssuances.findById(issuance.id)
+    expect(failed?.status).toBe(DocumentIssuanceStatus.Failed)
+    expect(failed?.failureCode).toBe('DOCUMENT_INPUT_CONFLICT')
   })
 
   test('source-prerequisite gates reject missing enrollments and unpublished years', async () => {

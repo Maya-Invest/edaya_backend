@@ -4,6 +4,7 @@ import { AttachmentOwnerKind, createInMemoryFileStorage, noOpNotificationGateway
 import { parseEnv } from "@/runtime";
 import type { AppBindings } from "@/http/types";
 import indexRouter from "@/app-router";
+import { contentDisposition } from "@/routes/file-storage.routes";
 import { Hono } from "hono";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createStaffActorMetadata } from "@edaya/authorization";
@@ -24,6 +25,11 @@ const workerEnv = parseEnv({
 });
 
 describe("memory file storage routes", () => {
+  it("encodes non-ASCII download filenames for HTTP headers", () => {
+    expect(contentDisposition("Fiche-ENROLLME-2026—2027.pdf", false)).toBe(
+      "attachment; filename=\"Fiche-ENROLLME-2026-2027.pdf\"; filename*=UTF-8''Fiche-ENROLLME-2026%E2%80%942027.pdf",
+    );
+  });
   it("requires an issued staging capability and authenticated access to accepted bytes", async () => {
     const fixture = await createAuthorizationDatabase();
     try {

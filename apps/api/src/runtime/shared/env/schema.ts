@@ -56,6 +56,8 @@ export const EnvSchema = z.object({
   PROFILE_PHOTO_MAX_BYTES: z.coerce.number().int().positive().default(1_048_576),
   /** Optional Gotenberg base URL for local / wrangler-dev HTML→PDF (e.g. http://localhost:3000). */
   GOTENBERG_URL: z.string().url().optional(),
+  /** Optional Chrome/Chromium binary for local HTML→PDF when Gotenberg is unset. Blank keeps the stub. */
+  CHROME_PATH: z.string().optional(),
   /** When true, schedule report-card PDF render after publishReportCardResult. */
   DOCS_RENDER_ON_PUBLISH: envBooleanSchema.optional(),
   /** Cloudflare account id (dashboard). Optional when R2_ENDPOINT is set; may differ from the endpoint hostname. */

@@ -35,11 +35,22 @@ const PERMANENT_FAILURES = new Set<string>([
   DOCUMENT_FAILURES.NOT_RETRYABLE,
 ])
 
+const DOCUMENT_RENDER_ERROR_CODES: Record<string, string> = {
+  'document-rendering.invalid-payload': DOCUMENT_FAILURES.INPUT_CONFLICT,
+  'document-rendering.template-not-found': DOCUMENT_FAILURES.TEMPLATE_UNSUPPORTED,
+  'document-rendering.unavailable': DOCUMENT_FAILURES.RENDER_UNAVAILABLE,
+}
+
 function asFailure(error: unknown): DurableWorkFailure {
   if (error instanceof DurableWorkFailure)
     return error
   if (error instanceof BusinessRuleViolationError)
     return new DurableWorkFailure(error.code, PERMANENT_FAILURES.has(error.code))
+  if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string') {
+    const mapped = DOCUMENT_RENDER_ERROR_CODES[error.code]
+    if (mapped)
+      return new DurableWorkFailure(mapped, PERMANENT_FAILURES.has(mapped))
+  }
   return new DurableWorkFailure(DOCUMENT_FAILURES.RENDER_UNAVAILABLE)
 }
 

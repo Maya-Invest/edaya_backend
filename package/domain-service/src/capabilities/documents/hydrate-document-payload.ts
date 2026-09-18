@@ -39,15 +39,22 @@ export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: 
     throw new BusinessRuleViolationError(DOCUMENT_FAILURES.ASSET_MISSING, 'An approved portrait is required for a student ID card')
   }
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     ...facts,
     ...(logoUrl ? { logoUrl } : {}),
     ...(crestUrl ? { crestUrl } : {}),
-    ...(stampUrl ? { stampUrl, principalStampUrl: stampUrl } : {}),
+    ...(stampUrl ? { stampUrl } : {}),
     ...(signatureUrl ? { signatureUrl } : {}),
     ...(photoUrl ? { photoUrl } : {}),
     ...(issuance.number ? { orderNumber: issuance.number } : {}),
     ...(options.preview || issuance.status === 'preview' ? { watermark: true } : {}),
+  }
+  // Report-card templates read the stamp from council; letter schemas reject unknown root fields.
+  if (stampUrl && issuance.templateKey === 'report-card.v1') {
+    payload.council = {
+      ...asFacts(payload.council),
+      principalStampUrl: stampUrl,
+    }
   }
 
   const signatures: DocumentSignatureSlot[] = []

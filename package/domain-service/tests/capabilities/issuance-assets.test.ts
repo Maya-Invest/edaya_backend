@@ -222,6 +222,82 @@ describe('school issuance assets', () => {
     expect(String(payload.logoUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
   })
 
+  test('hydrate puts the principal stamp on report-card council, not letter payload roots', async () => {
+    const stamp = await completeAsset(SCHOOL_STAMP_PURPOSE, 'att-hydrate-stamp')
+    const renderer = fixture.forActor(createSystemActorMetadata({
+      schoolId: 'school',
+      systemId: 'document-render',
+      requestId: 'hydrate-stamp',
+      reason: 'test',
+    }))
+
+    await fixture.schoolRepositories.documentIssuances.save(new DocumentIssuance({
+      id: 'iss-letter',
+      schoolId: 'school',
+      templateKey: 'enrollment-record.v1',
+      templateVersion: '1',
+      locale: 'fr',
+      academicYearId: 'year-1',
+      sourceType: DocumentSourceType.Enrollment,
+      sourceId: 'enr1',
+      sourceVersion: '1',
+      snapshot: {
+        facts: { studentName: 'Ada Lovelace', schoolName: 'Fixture school', schoolYear: '2026-2027' },
+        sourceVersion: '1',
+        locale: 'fr',
+        timeZone: 'UTC',
+        stampAttachmentId: stamp.id,
+      },
+      issuerActorId: 'admin',
+      audience: DocumentAudience.Staff,
+      requestId: 'req-letter',
+      status: DocumentIssuanceStatus.Requested,
+    }))
+    const letter = (await fixture.schoolRepositories.documentIssuances.findById('iss-letter'))!
+    const letterPayload = (await hydrateDocumentPayload(renderer.baseService, letter)).input.payload as Record<string, unknown>
+    expect(String(letterPayload.stampUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
+    expect(letterPayload).not.toHaveProperty('principalStampUrl')
+
+    await fixture.schoolRepositories.documentIssuances.save(new DocumentIssuance({
+      id: 'iss-bulletin',
+      schoolId: 'school',
+      templateKey: 'report-card.v1',
+      templateVersion: '1',
+      locale: 'fr',
+      academicYearId: 'year-1',
+      sourceType: DocumentSourceType.ReportCardResult,
+      sourceId: 'rcr1',
+      sourceVersion: '1',
+      snapshot: {
+        facts: {
+          studentName: 'Ada Lovelace',
+          schoolName: 'Fixture school',
+          periodLabel: 'T1',
+          subjects: [{ name: 'Maths', kind: 'subject' }],
+          council: { principalName: 'Jean Aka' },
+        },
+        sourceVersion: '1',
+        locale: 'fr',
+        timeZone: 'UTC',
+        stampAttachmentId: stamp.id,
+      },
+      issuerActorId: 'admin',
+      audience: DocumentAudience.Staff,
+      requestId: 'req-bulletin',
+      status: DocumentIssuanceStatus.Requested,
+    }))
+    const bulletin = (await fixture.schoolRepositories.documentIssuances.findById('iss-bulletin'))!
+    const bulletinPayload = (await hydrateDocumentPayload(renderer.baseService, bulletin)).input.payload as {
+      stampUrl?: unknown
+      principalStampUrl?: unknown
+      council?: { principalStampUrl?: unknown, principalName?: unknown }
+    }
+    expect(String(bulletinPayload.stampUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
+    expect(bulletinPayload).not.toHaveProperty('principalStampUrl')
+    expect(bulletinPayload.council?.principalName).toBe('Jean Aka')
+    expect(String(bulletinPayload.council?.principalStampUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
+  })
+
   test('generic school save cannot rewrite issuance slots', async () => {
     const logo = await completeAsset(SCHOOL_LOGO_PURPOSE, 'att-locked')
     const existing = (await fixture.schoolRepositories.schools.findById('school'))!

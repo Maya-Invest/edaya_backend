@@ -61,7 +61,8 @@ Demo/demo-ci fixtures seed a ready bulletin, receipt, schooling certificate and 
 |---|---|---|---|
 | Worker | `BROWSER.quickAction` | `browser` | yes |
 | Worker / local | `GOTENBERG_URL` | `gotenberg` | yes |
-| Local | neither | `stub` | local only; logs that Gotenberg is unset |
+| Local | Chrome/Chromium binary | `chrome` | yes (local) |
+| Local | neither | `stub` | local only; logs that Gotenberg/Chrome are unset |
 | Worker | neither | unconfigured | renderer omitted; jobs fail `DOCUMENT_RENDER_UNAVAILABLE` — stub is never deployed success |
 
 This machine: Docker daemon not running, Gotenberg `127.0.0.1:3000` unreachable, `pdftotext`/`pdftoppm` absent. Visual QA therefore used Handlebars HTML compile of all 18 templates (accents, long names, 24 extra transaction rows) under `/tmp/edaya-v1-plan04/html-samples/` plus the adaptor-docs stub PDF path. Plan 06 must inspect real Browser Run / Gotenberg pages for pagination, headers/footers, branding and portrait placement. Stamp bitmaps are not cryptographic signatures.

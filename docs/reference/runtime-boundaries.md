@@ -25,11 +25,11 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 | File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files-server` | R2 (`@edaya/adaptor-r2`) |
 | Notifications | no-op | in-process notify (API injects log email + log SMS) | in-process notify (API injects Cloudflare email + unimplemented SMS) + FCM |
 | Invitation delivery | no-op | in-process notify | in-process notify |
-| Document rendering | not configured | stub or Gotenberg (`GOTENBERG_URL`) | Browser Run (`BROWSER`) or Gotenberg |
+| Document rendering | not configured | Chrome, Gotenberg (`GOTENBERG_URL`), or stub | Browser Run (`BROWSER`) or Gotenberg |
 
 \* **Notify** — `RUNTIME=local` or `worker` uses in-process `@edaya/adaptor-notify`. Email and SMS transports are selected in `apps/api`, not inside notify. `in-memory` never calls notify.
 
-\* **Documents** — in-process `@edaya/adaptor-docs`. `in-memory` never calls Gotenberg or Browser Run. Worker prefers the `BROWSER` binding; without it (and without `GOTENBERG_URL`) rendering is not configured. Stub PDFs are local-only.
+\* **Documents** — in-process `@edaya/adaptor-docs`. `in-memory` never calls Gotenberg, Chrome, or Browser Run. Worker prefers the `BROWSER` binding; without it (and without `GOTENBERG_URL`) rendering is not configured. Local prefers Gotenberg, then Chrome `--print-to-pdf`, then a stub. Stub PDFs are local-only.
 
 ## Bootstrap rule
 

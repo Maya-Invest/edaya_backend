@@ -96,6 +96,11 @@ describe('portal actions use current relationships and publication', () => {
       expect(await repository.findById(deniedId)).toBeUndefined()
     }
     await expect(access.assertSchool(Permission.PAYMENT_RECORD)).rejects.toThrow()
+    const linkedAccountId = studentYearAccountId('school-a', 'student-a', 'year-a', 'XOF')
+    const unlinkedAccountId = studentYearAccountId('school-a', 'student-other', 'year-a', 'XOF')
+    await expect(access.finance.assertReadStudent('student-a')).resolves.toBeDefined()
+    await expect(access.finance.assertReadAccount(linkedAccountId)).resolves.toMatchObject({ id: linkedAccountId })
+    await expect(access.finance.assertReadAccount(unlinkedAccountId)).rejects.toThrow()
     if (actor.kind === 'guardian') {
       await fixture.repositories.guardianLinks.delete('guardian-link')
       expect(await fixture.repositories.payments.forAccess(await access.entity('payments').readScope()).count()).toBe(0)
