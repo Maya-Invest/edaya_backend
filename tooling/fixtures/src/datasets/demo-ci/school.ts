@@ -21,9 +21,9 @@ export const demoCiSchool = {
 export const demoCiAcademicYear = {
   id: DEMO_CI_ACADEMIC_YEAR_ID,
   schoolId: DEMO_CI_SCHOOL_ID,
-  name: '2025 — 2026',
-  startDate: '2025-09-15',
-  endDate: '2026-07-10',
+  name: '2026 — 2027',
+  startDate: '2026-09-14',
+  endDate: '2027-07-09',
 } satisfies AcademicYearInput
 
 export const demoCiAcademicPeriods = [
@@ -32,24 +32,24 @@ export const demoCiAcademicPeriods = [
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 1',
-    startDate: '2025-09-15',
-    endDate: '2025-12-19',
+    startDate: '2026-09-14',
+    endDate: '2026-12-18',
   },
   {
     id: 'ci-2025-t2',
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 2',
-    startDate: '2026-01-05',
-    endDate: '2026-03-27',
+    startDate: '2027-01-04',
+    endDate: '2027-03-26',
   },
   {
     id: 'ci-2025-t3',
     schoolId: DEMO_CI_SCHOOL_ID,
     academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
     name: 'Trimestre 3',
-    startDate: '2026-04-14',
-    endDate: '2026-07-10',
+    startDate: '2027-04-12',
+    endDate: '2027-07-09',
   },
 ] as const satisfies readonly AcademicPeriodInput[]
 
@@ -101,9 +101,9 @@ function demoCiClassName(gradeLevelId: string, index: number): string {
 export const demoCiClassGroups = [
   { id: 'ci-6a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 0), capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
   { id: 'ci-6b', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-6', name: demoCiClassName('ci-gl-6', 1), capacity: 35, attendanceMode: AttendanceMode.Daily },
-  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: demoCiClassName('ci-gl-5', 0), capacity: 35, homeroomStaffId: 'ci-st3' },
-  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: demoCiClassName('ci-gl-4', 0), capacity: 35 },
-  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35 },
+  { id: 'ci-5a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-5', name: demoCiClassName('ci-gl-5', 0), capacity: 35, homeroomStaffId: 'ci-st3', attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-4a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-4', name: demoCiClassName('ci-gl-4', 0), capacity: 35, attendanceMode: AttendanceMode.Daily },
+  { id: 'ci-3a', schoolId: DEMO_CI_SCHOOL_ID, academicYearId: DEMO_CI_ACADEMIC_YEAR_ID, gradeLevelId: 'ci-gl-3', name: demoCiClassName('ci-gl-3', 0), capacity: 35, attendanceMode: AttendanceMode.Daily },
 ] as const satisfies readonly ClassGroupInput[]
 
 /** Matières du collège ivoirien (cf. template ci-college). */

@@ -140,6 +140,7 @@ export const demoPayments = [
     id: 'pay-120',
     studentId: 's1',
     academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
+    accountId: `sya:${DEMO_CENTRAL_SCHOOL_ID}:s1:${DEMO_CENTRAL_ACADEMIC_YEAR_ID}:EUR`,
     amount: 120_000,
     paymentDate: '2026-04-01T12:00:00.000Z',
     method: PaymentMethod.BankTransfer,

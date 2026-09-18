@@ -29,5 +29,8 @@ export function createInProcessFamilyFeedbackSeedPort(
     createCampaign: record => withSeedPortError('familyFeedback.createCampaign', async () => {
       await service.familyFeedbackWorkflow.createFamilyFeedbackCampaign(record)
     }),
+    assignModerator: record => withSeedPortError('familyFeedback.assignModerator', async () => {
+      await service.familyFeedbackWorkflow.assignFamilyFeedbackModerator(record)
+    }),
   }
 }

@@ -33,7 +33,7 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 
 | Variable | Used by | Default |
 |----------|---------|---------|
-| `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-06-16` in `@edaya/fixtures` |
+| `SEED_REFERENCE_DATE` | Fixture rolling dates | demo-ci `2026-09-17`, central `2026-06-16` |
 | `SEED_API_URL` | School API for `bun repo seed` | `http://localhost:9999` |
 | `SEED_AUTH_URL` | Central identity API for auth provisioning | `http://localhost:9900` |
 | `SEED_APP_ORIGIN` | Local identity `Origin` header | `http://localhost:5173` |

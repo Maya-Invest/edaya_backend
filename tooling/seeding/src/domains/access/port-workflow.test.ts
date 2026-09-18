@@ -1,5 +1,7 @@
 import type {
   AccessSeedPort,
+  ApplyStaffPermissionProfileSeedRecord,
+  PermissionProfileSeedRecord,
   StaffAssignmentSeedRecord,
   StaffPermissionAssignmentSeedRecord,
 } from './port'
@@ -15,13 +17,18 @@ import {
 /* eslint-disable-next-line dot-notation -- process.env index signature */
 process.env['SEED_DATASET'] = 'demo'
 
-function createMemoryPort(schoolExists = true): {
+function createMemoryPort(
+  schoolExists = true,
+  profiles: readonly PermissionProfileSeedRecord[] = [],
+): {
   port: AccessSeedPort
   permissionAssignments: StaffPermissionAssignmentSeedRecord[]
   staffAssignments: StaffAssignmentSeedRecord[]
+  profileBindings: ApplyStaffPermissionProfileSeedRecord[]
 } {
   const permissionAssignments: StaffPermissionAssignmentSeedRecord[] = []
   const staffAssignments: StaffAssignmentSeedRecord[] = []
+  const profileBindings: ApplyStaffPermissionProfileSeedRecord[] = []
 
   const schoolId = resolveDevSeedContext().schoolId
 
@@ -34,9 +41,14 @@ function createMemoryPort(schoolExists = true): {
       saveStaffAssignment: async (record) => {
         staffAssignments.push(record)
       },
+      listPermissionProfiles: async () => profiles,
+      applyStaffPermissionProfile: async (record) => {
+        profileBindings.push(record)
+      },
     },
     permissionAssignments,
     staffAssignments,
+    profileBindings,
   }
 }
 
@@ -58,6 +70,29 @@ describe('access seed port workflow', () => {
     expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(
       demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0,
     )
+  })
+
+  test('binds staff to invite permission-profile fragments after grants', async () => {
+    const memory = createMemoryPort(true, [
+      { id: 'pp-director', sourceKey: 'role-director', scopeGrain: 'school' },
+      { id: 'pp-director-cg', sourceKey: 'role-director:class_group', scopeGrain: 'class_group' },
+      { id: 'pp-coordinator', sourceKey: 'role-coordinator', scopeGrain: 'school' },
+      { id: 'pp-educator', sourceKey: 'role-educator', scopeGrain: 'class_group' },
+    ])
+
+    await runDevAccessAssignmentsSeedWithPort(memory.port)
+
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'st5').map(binding => binding.profileId))
+      .toEqual(['pp-director', 'pp-director-cg'])
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'st8').map(binding => binding.profileId))
+      .toEqual(['pp-director', 'pp-director-cg'])
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'st3').map(binding => binding.profileId))
+      .toEqual(['pp-coordinator'])
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'st7').map(binding => binding.profileId))
+      .toEqual(['pp-educator'])
+    expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director-cg')?.scopes).toEqual([
+      { kind: 'all', grain: 'class_group' },
+    ])
   })
 
   test('skips assignments when the school is missing', async () => {

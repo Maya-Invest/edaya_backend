@@ -3,16 +3,6 @@ import { DEMO_CI_ACADEMIC_YEAR_ID } from '../../../shared/ids'
 
 export const demoCiDocumentIssuances = [
   {
-    id: 'ci-doc-bulletin-s1',
-    requestId: 'ci-seed-bulletin-s1',
-    templateKey: 'report-card.v1',
-    sourceId: 'ci-rcr-s1-t1',
-    studentId: 'ci-s1',
-    classGroupId: 'ci-6a',
-    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
-    status: 'ready',
-  },
-  {
     id: 'ci-doc-receipt-s1',
     requestId: 'ci-seed-receipt-s1',
     templateKey: 'receipt.v1',

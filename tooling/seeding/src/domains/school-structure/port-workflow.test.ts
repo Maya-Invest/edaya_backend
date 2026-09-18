@@ -8,7 +8,7 @@ import type {
   SchoolStructureSeedPort,
   SchoolStructureStaffRecord,
 } from './port'
-import { demoDataset, devSeedDataset } from '@edaya/fixtures'
+import { demoCiDataset, demoDataset, devSeedDataset } from '@edaya/fixtures'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { describe, expect, test } from 'bun:test'
 import { inspectDevSchoolStructure, seedDevSchoolStructure } from './workflow'
@@ -115,6 +115,17 @@ describe('school-structure seed port workflow', () => {
     expect(memory.staff.find(member => member.id === 'st7')?.profileRole).toBe('educateur')
     expect(memory.staff.find(member => member.id === 'st1')?.profileRole).toBeUndefined()
     expect(memory.classGroups).toHaveLength(devSeedDataset.entities.classGroups?.length ?? 0)
+  })
+
+  test('publishes only the listed academic periods for demo-ci', async () => {
+    const memory = createMemoryPort()
+    await seedDevSchoolStructure(memory.port, {
+      demoSchoolExists: false,
+    }, demoCiDataset)
+
+    expect(memory.academicYears[0]?.name).toBe('2026 — 2027')
+    expect(memory.academicPeriods).toHaveLength(3)
+    expect(memory.publishedPeriodIds).toEqual(['ci-2025-t1'])
   })
 
   test('repairs a partial demo without replacing its existing director or school', async () => {

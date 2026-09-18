@@ -1,4 +1,9 @@
 import type { FixtureDataset } from '../types'
+import {
+  DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
+  DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
+  DEMO_CI_SEED_REFERENCE_DATE,
+} from '../../meta/dates'
 import { DEMO_CI_SCHOOL_ID } from '../../shared/ids'
 import { demoCiActivities, demoCiActivityEnrollments, demoCiClassActivityEnrollments } from './domains/activities'
 import {
@@ -120,5 +125,8 @@ export const demoCiDataset = {
     reportCardResults: demoCiReportCardResults,
     announcementMaterializePlans: demoCiAnnouncementMaterializePlans,
     documentIssuances: demoCiDocumentIssuances,
+    publishAcademicPeriodIds: [DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID],
+    schedulingReferenceWeekStart: DEMO_CI_SCHEDULING_REFERENCE_WEEK_START,
+    seedReferenceDate: DEMO_CI_SEED_REFERENCE_DATE,
   },
 } satisfies FixtureDataset<'demo-ci'>

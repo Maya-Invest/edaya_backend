@@ -21,9 +21,16 @@ export interface CreateFamilyFeedbackCampaignSeedRecord {
   moderatorStaffId?: string
 }
 
+export interface AssignFamilyFeedbackModeratorSeedRecord {
+  requestId: string
+  id: string
+  moderatorStaffId: string
+}
+
 export interface FamilyFeedbackSeedPort {
   listSubjectAssignments: (academicYearId: string) => Promise<FamilyFeedbackSubjectAssignmentSeedRecord[]>
   listStaffMembers: () => Promise<FamilyFeedbackStaffSeedRecord[]>
   listCampaigns: () => Promise<FamilyFeedbackCampaignSeedRecord[]>
   createCampaign: (record: CreateFamilyFeedbackCampaignSeedRecord) => Promise<void>
+  assignModerator: (record: AssignFamilyFeedbackModeratorSeedRecord) => Promise<void>
 }

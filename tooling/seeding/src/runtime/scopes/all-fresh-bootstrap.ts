@@ -6,6 +6,7 @@ import {
 } from '../../bootstrap/service-account'
 import { bootstrapHttpCoreSession } from '../../bootstrap/session/http-core-session'
 import { throwHttpBootstrapFailure } from '../../bootstrap/session/local-dev-errors'
+import { seedDevFamilyFeedback } from '../../domains/family-feedback/workflow'
 import {
   runDevAccessAssignmentsSeedWithPort,
   runDevAccessRolesSeedWithPort,
@@ -101,6 +102,7 @@ export async function tryRunAllFreshBootstrap(
     createHttpAccessSeedPort({ client, serviceAccountApiKey: seedingAuthKey }),
     { progress },
   )
+  await seedDevFamilyFeedback(ports.familyFeedbackPort, seedContext.dataset)
   if (options.skipProfilePhotos) {
     results.profilePhotos = 0
     results.profilePhotosSkipped = true

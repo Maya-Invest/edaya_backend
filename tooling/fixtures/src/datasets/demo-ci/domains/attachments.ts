@@ -14,7 +14,7 @@ export const demoCiAttachments = [
     mimeType: 'image/jpeg',
     sizeBytes: 245_760,
     uploadedById: 'ci-st7',
-    createdAt: '2026-03-22T12:00:00.000Z',
+    createdAt: '2026-09-15T12:00:00.000Z',
   },
   {
     id: 'ci-att-hp-s3-plan',
@@ -27,7 +27,7 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 128_400,
     uploadedById: 'ci-st5',
-    createdAt: '2025-09-10T12:00:00.000Z',
+    createdAt: '2026-09-10T12:00:00.000Z',
   },
   {
     id: 'ci-att-sda-i2',
@@ -40,7 +40,7 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 52_300,
     uploadedById: 'ci-st5',
-    createdAt: '2026-03-24T12:00:00.000Z',
+    createdAt: '2026-09-15T12:00:00.000Z',
   },
   {
     id: 'ci-att-rcr-s1-t1',
@@ -53,7 +53,7 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 312_000,
     uploadedById: 'ci-st3',
-    createdAt: '2025-12-19T12:00:00.000Z',
+    createdAt: '2026-09-14T12:00:00.000Z',
   },
   {
     id: 'ci-att-pay-120',
@@ -66,7 +66,7 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 89_500,
     uploadedById: 'ci-st5',
-    createdAt: '2025-09-15T12:00:00.000Z',
+    createdAt: '2026-09-16T12:00:00.000Z',
   },
   {
     id: 'ci-att-att-today-s3',
@@ -79,7 +79,7 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 67_800,
     uploadedById: 'ci-st3',
-    createdAt: '2026-06-16T12:00:00.000Z',
+    createdAt: '2026-09-17T12:00:00.000Z',
   },
   {
     id: 'ci-att-enr-s1',
@@ -92,6 +92,6 @@ export const demoCiAttachments = [
     mimeType: 'application/pdf',
     sizeBytes: 95_100,
     uploadedById: 'ci-st5',
-    createdAt: '2025-09-15T12:00:00.000Z',
+    createdAt: '2026-09-16T12:00:00.000Z',
   },
 ] as const satisfies readonly AttachmentInput[]

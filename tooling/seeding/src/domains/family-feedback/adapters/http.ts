@@ -69,5 +69,8 @@ export function createHttpFamilyFeedbackSeedPort(
     createCampaign: record => withSeedPortError('familyFeedback.createCampaign', async () => {
       await postCoreCommand(requestOptions, 'createFamilyFeedbackCampaign', record)
     }),
+    assignModerator: record => withSeedPortError('familyFeedback.assignModerator', async () => {
+      await postCoreCommand(requestOptions, 'assignFamilyFeedbackModerator', record)
+    }),
   }
 }

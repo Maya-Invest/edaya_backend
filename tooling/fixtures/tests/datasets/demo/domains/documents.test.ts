@@ -13,10 +13,11 @@ describe('demo official documents', () => {
     expect(demoDocumentIssuances.every(row => row.academicYearId === DEMO_CENTRAL_ACADEMIC_YEAR_ID)).toBe(true)
   })
 
-  it('mirrors the same UI states on demo-ci ids', () => {
-    expect(demoCiDocumentIssuances).toHaveLength(demoDocumentIssuances.length)
-    expect(demoCiDocumentIssuances.some(row => row.sourceId === 'ci-rcr-s1-t1')).toBe(true)
+  it('keeps receipt and certificate issuances when T1 bulletins are unpublished', () => {
+    expect(demoCiDocumentIssuances.some(row => row.templateKey === 'report-card.v1')).toBe(false)
     expect(demoCiDocumentIssuances.some(row => row.sourceId === 'ci-pay-120')).toBe(true)
+    expect(demoCiDocumentIssuances.some(row => row.templateKey === 'schooling-certificate.v1' && row.status === 'ready')).toBe(true)
+    expect(demoCiDocumentIssuances.some(row => row.status === 'failed' && row.failureCode === 'DOCUMENT_RENDER_UNAVAILABLE')).toBe(true)
     expect(demoCiDocumentIssuances.every(row => row.academicYearId === DEMO_CI_ACADEMIC_YEAR_ID)).toBe(true)
   })
 })

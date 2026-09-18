@@ -7,6 +7,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromPreset } from '@edaya/authorization'
+import { defaultScopesForProfileGrain } from '@edaya/core'
 import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
@@ -77,6 +78,37 @@ function countStaffPermissionAssignments(
   }
 
   return count
+}
+
+function matchesRoleSourceKey(sourceKey: string | undefined, roleId: string): boolean {
+  return sourceKey === roleId || sourceKey?.startsWith(`${roleId}:`) === true
+}
+
+async function seedStaffPermissionProfileBindings(
+  port: AccessSeedPort,
+  staffRoleAssignmentPresets: readonly StaffRoleAssignmentPresetRecord[],
+): Promise<void> {
+  const schoolId = staffRoleAssignmentPresets[0]?.schoolId
+  if (!schoolId) {
+    return
+  }
+
+  const profiles = await port.listPermissionProfiles(schoolId)
+  if (profiles.length === 0) {
+    return
+  }
+
+  for (const assignment of staffRoleAssignmentPresets) {
+    const matching = profiles.filter(profile => matchesRoleSourceKey(profile.sourceKey, assignment.roleId))
+    for (const profile of matching) {
+      await port.applyStaffPermissionProfile({
+        staffId: assignment.staffId,
+        profileId: profile.id,
+        academicYearId: assignment.academicYearId,
+        scopes: defaultScopesForProfileGrain(profile.scopeGrain),
+      })
+    }
+  }
 }
 
 export type DevAccessSeedResult
@@ -151,6 +183,7 @@ export async function runDevAccessAssignmentsSeedWithPort(
       staffRoleAssignmentRecords,
       tick,
     )
+    await seedStaffPermissionProfileBindings(port, staffRoleAssignmentRecords)
 
     for (const assignment of baseStaffAssignmentRecords) {
       await port.saveStaffAssignment({

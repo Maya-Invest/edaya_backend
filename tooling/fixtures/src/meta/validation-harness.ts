@@ -1,6 +1,6 @@
 import type { SeedEntityManifestStatus } from './entity-manifest'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '../shared/ids'
-import { SEED_DASHBOARD_ACADEMIC_PERIOD_ID, SEED_REFERENCE_DATE } from './dates'
+import { dashboardAcademicPeriodIdForDataset, resolveSeedReferenceDate } from './dates'
 import { SEED_ENTITY_MANIFEST, seedManifestEntitiesByStatus } from './entity-manifest'
 import { resolveExpectedCounts } from './fixture-counts'
 import { resolveDevSeedContext } from './resolve-dev-seed-context'
@@ -103,7 +103,9 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
   const schoolId = context.schoolId
   const academicYearId = context.dataset.entities.academicYear?.id
     ?? (context.datasetId === 'demo-ci' ? '2025-ci' : DEMO_CENTRAL_ACADEMIC_YEAR_ID)
-  const academicPeriodId = context.datasetId === 'demo-ci' ? 'ci-2025-t3' : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
+  const academicPeriodId = dashboardAcademicPeriodIdForDataset(context.datasetId)
+  const referenceDate = context.dataset.extensions?.seedReferenceDate
+    ?? resolveSeedReferenceDate(context.datasetId)
   const expectsFinanceAndReportCards = context.datasetId === 'central'
 
   return [
@@ -114,7 +116,7 @@ export function buildSeedQueryValidationTargets(): SeedQueryValidationTarget[] {
         schoolId,
         academicYearId,
         academicPeriodId,
-        referenceDate: SEED_REFERENCE_DATE,
+        referenceDate,
       },
     },
     {

@@ -18,5 +18,16 @@ export function createInProcessAccessSeedPort(application: SeedApplication): Acc
         permissions: record.permissions ? [...record.permissions] : undefined,
       }))
     }),
+    listPermissionProfiles: schoolId => withSeedPortError('access.listPermissionProfiles', async () => {
+      const rows = await application.repositories.staffPermissionProfiles.list({ schoolId })
+      return rows.map(row => ({
+        id: row.id,
+        sourceKey: row.sourceKey,
+        scopeGrain: row.scopeGrain,
+      }))
+    }),
+    applyStaffPermissionProfile: record => withSeedPortError('access.applyStaffPermissionProfile', async () => {
+      await service.accessControlWorkflow.applyStaffPermissionProfile(record)
+    }),
   }
 }

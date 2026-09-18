@@ -5,6 +5,16 @@ export interface DevFamilyFeedbackSeedCounts {
   campaigns: number
 }
 
+function moderatorStaffIdForDataset(dataset: FixtureDataset): string | undefined {
+  if (dataset.purpose === 'demo-ci') {
+    return 'ci-st5'
+  }
+  if (dataset.purpose === 'demo') {
+    return 'st5'
+  }
+  return undefined
+}
+
 export async function seedDevFamilyFeedback(
   port: FamilyFeedbackSeedPort,
   dataset: FixtureDataset,
@@ -25,21 +35,29 @@ export async function seedDevFamilyFeedback(
     return { campaigns: 0 }
   }
 
-  const staff = await port.listStaffMembers()
-  const assignment = assignments[0]
+  const moderatorStaffId = moderatorStaffIdForDataset(dataset)
+  const assignment = assignments.find(candidate => candidate.teacherId !== moderatorStaffId) ?? assignments[0]
   if (!assignment) {
     return { campaigns: 0 }
   }
-  const moderator = staff.find(member => member.id !== assignment.teacherId) ?? staff[0]
 
+  const campaignId = `ff-campaign-${dataset.schoolId}`
   await port.createCampaign({
     requestId: `dev-family-feedback-seed:${dataset.schoolId}`,
-    id: `ff-campaign-${dataset.schoolId}`,
+    id: campaignId,
     academicYearId,
     academicPeriodId: period.id,
     teacherAssignmentId: assignment.id,
-    moderatorStaffId: moderator?.id,
   })
+
+  const staffIds = new Set((await port.listStaffMembers()).map(staff => staff.id))
+  if (moderatorStaffId && staffIds.has(moderatorStaffId)) {
+    await port.assignModerator({
+      requestId: `dev-family-feedback-moderator:${dataset.schoolId}`,
+      id: campaignId,
+      moderatorStaffId,
+    })
+  }
 
   return { campaigns: 1 }
 }

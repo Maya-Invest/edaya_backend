@@ -196,6 +196,12 @@ export interface FixtureDatasetExtensions {
   /** When true, schedules may still be created but lesson sessions are not materialized (timetable generation QA). */
   skipLessonSessionSeeding?: boolean
   documentIssuances?: readonly FixtureDocumentIssuance[]
+  /** When set, only these academic periods are published after create. Default: all periods. */
+  publishAcademicPeriodIds?: readonly string[]
+  /** Monday of the week used to materialize recurring lesson sessions. */
+  schedulingReferenceWeekStart?: string
+  /** Narrative "today" for dashboard windows and finance upcoming dues. */
+  seedReferenceDate?: string
 }
 
 export interface FixtureDocumentIssuance {

@@ -38,7 +38,8 @@ demo-ci/
 | Parents | 21 |
 | Personnel | 5 |
 | Enseignants portail | 5 (`ci-t1` → `ci-t5`) |
-| Bulletins (T1) | 30 résultats (tous les élèves) |
+| Année | 2026 — 2027 (T1 publié, rentrée 14 sept. 2026) |
+| Bulletins (T1) | 30 résultats générés, non publiés |
 
 ## Nommage des classes
 

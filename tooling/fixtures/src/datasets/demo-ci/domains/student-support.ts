@@ -11,7 +11,7 @@ export const demoCiStudentHealthProfiles = [
     allergies: 'Pollen',
     medicalConditions: 'Asthme',
     clinicalNotes: 'Allergie saisonnière légère.',
-    lastVisit: '2026-02-14T12:00:00.000Z',
+    lastVisit: '2026-09-15T12:00:00.000Z',
   },
   {
     id: 'ci-hp-s3',
@@ -22,7 +22,7 @@ export const demoCiStudentHealthProfiles = [
     medicalConditions: 'Asthme',
     medications: 'EpiPen',
     clinicalNotes: 'Allergie sévère aux arachides. EpiPen à l\'infirmerie.',
-    lastVisit: '2026-04-08T12:00:00.000Z',
+    lastVisit: '2026-09-16T12:00:00.000Z',
   },
   {
     id: 'ci-hp-s11',
@@ -30,7 +30,7 @@ export const demoCiStudentHealthProfiles = [
     studentId: 'ci-s11',
     bloodType: 'B+',
     clinicalNotes: 'Aucun problème connu.',
-    lastVisit: '2025-11-22T12:00:00.000Z',
+    lastVisit: '2026-09-14T12:00:00.000Z',
   },
 ] as const satisfies readonly StudentHealthProfileInput[]
 
@@ -42,8 +42,8 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st3',
     category: StudentNoteCategory.Progress,
     body: 'Très bonne progression en mathématiques, raisonnement clair.',
-    createdAt: '2026-05-12T12:00:00.000Z',
-    updatedAt: '2026-05-12T12:00:00.000Z',
+    createdAt: '2026-09-16T12:00:00.000Z',
+    updatedAt: '2026-09-16T12:00:00.000Z',
   },
   {
     id: 'ci-pn2',
@@ -52,8 +52,8 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st4',
     category: StudentNoteCategory.Work,
     body: 'Travail écrit soigné, à approfondir l\'argumentation.',
-    createdAt: '2026-04-22T12:00:00.000Z',
-    updatedAt: '2026-04-22T12:00:00.000Z',
+    createdAt: '2026-09-15T12:00:00.000Z',
+    updatedAt: '2026-09-15T12:00:00.000Z',
   },
   {
     id: 'ci-pn3',
@@ -62,8 +62,8 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st3',
     category: StudentNoteCategory.Behavior,
     body: 'Bavardages réguliers en classe, vigilance demandée.',
-    createdAt: '2026-05-05T12:00:00.000Z',
-    updatedAt: '2026-05-05T12:00:00.000Z',
+    createdAt: '2026-09-15T12:00:00.000Z',
+    updatedAt: '2026-09-15T12:00:00.000Z',
   },
   {
     id: 'ci-pn4',
@@ -72,8 +72,8 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st7',
     category: StudentNoteCategory.Progress,
     body: 'Compréhension solide en histoire-géographie, bon esprit de synthèse.',
-    createdAt: '2026-05-18T12:00:00.000Z',
-    updatedAt: '2026-05-18T12:00:00.000Z',
+    createdAt: '2026-09-17T12:00:00.000Z',
+    updatedAt: '2026-09-17T12:00:00.000Z',
   },
   {
     id: 'ci-pn5',
@@ -82,8 +82,8 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st3',
     category: StudentNoteCategory.Encouragement,
     body: 'Excellente adaptation en 5ème, participation active.',
-    createdAt: '2026-04-02T12:00:00.000Z',
-    updatedAt: '2026-04-02T12:00:00.000Z',
+    createdAt: '2026-09-14T12:00:00.000Z',
+    updatedAt: '2026-09-14T12:00:00.000Z',
   },
   {
     id: 'ci-pn6',
@@ -92,7 +92,7 @@ export const demoCiStudentNotes = [
     authorStaffId: 'ci-st5',
     category: StudentNoteCategory.Work,
     body: 'Devoirs rendus en retard à deux reprises ce trimestre.',
-    createdAt: '2026-04-10T12:00:00.000Z',
-    updatedAt: '2026-04-10T12:00:00.000Z',
+    createdAt: '2026-09-16T12:00:00.000Z',
+    updatedAt: '2026-09-16T12:00:00.000Z',
   },
 ] as const satisfies readonly StudentNoteInput[]

@@ -1,14 +1,15 @@
 import type { FixtureDataset, FixtureSchedulingSlot } from '@edaya/fixtures'
 import type { SchedulingSeedPort } from './port'
 import { ScheduleKind } from '@edaya/core'
-import { planningSessionDateForDayOfWeek } from '@edaya/fixtures/meta/dates'
+import { DEMO_SCHEDULING_REFERENCE_WEEK_START, planningSessionDateForDayOfWeek } from '@edaya/fixtures/meta/dates'
 import { seedDateAndTime } from '../../support/seed-date'
 
 function lessonSessionIdForSlot(
   scheduleId: string,
   dayOfWeek: NonNullable<FixtureSchedulingSlot['schedule']['dayOfWeek']>,
+  weekStart: string,
 ): string {
-  return `${scheduleId}:${planningSessionDateForDayOfWeek(dayOfWeek)}`
+  return `${scheduleId}:${planningSessionDateForDayOfWeek(dayOfWeek, weekStart)}`
 }
 
 export async function seedDevScheduling(
@@ -18,6 +19,7 @@ export async function seedDevScheduling(
   const resources = dataset.entities.resources ?? []
   const slots = dataset.extensions?.schedulingSlots ?? []
   const skipLessonSessions = dataset.extensions?.skipLessonSessionSeeding === true
+  const weekStart = dataset.extensions?.schedulingReferenceWeekStart ?? DEMO_SCHEDULING_REFERENCE_WEEK_START
   const anchor = dataset.extensions?.schedulingSessionProgressAnchor
   const academicYearId = dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Fixture dataset must include academicYear for scheduling seed') })()
@@ -81,7 +83,7 @@ export async function seedDevScheduling(
       continue
     }
 
-    const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek)
+    const lessonSessionId = lessonSessionIdForSlot(schedule.id, schedule.dayOfWeek, weekStart)
 
     if (lessonSessionStaffId) {
       await port.assignStaffToLessonSession({
@@ -115,6 +117,7 @@ export async function seedDevScheduling(
     const progressLessonSessionId = lessonSessionIdForSlot(
       progressAnchor.scheduleId,
       progressAnchor.dayOfWeek,
+      weekStart,
     )
     await port.recordLessonSessionProgress({
       id: progressAnchor.progress.id,
@@ -123,7 +126,7 @@ export async function seedDevScheduling(
       completedPercentage: progressAnchor.progress.completedPercentage,
       notes: progressAnchor.progress.notes,
       recordedAt: seedDateAndTime(
-        planningSessionDateForDayOfWeek(progressAnchor.dayOfWeek),
+        planningSessionDateForDayOfWeek(progressAnchor.dayOfWeek, weekStart),
         progressAnchor.recordedAtTime,
       ),
     })

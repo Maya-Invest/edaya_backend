@@ -181,7 +181,12 @@ const homeroomComments: Partial<Record<string, string>> = {
   'ci-s23': 'Bon niveau en 3ème, à confirmer au brevet.',
 }
 
-function buildTrimesterResults(periodId: string, periodSuffix: string, generatedAt: string, publishedAt: string): FixtureReportCardResult[] {
+function buildTrimesterResults(
+  periodId: string,
+  periodSuffix: string,
+  generatedAt: string,
+  publishedAt: string | undefined,
+): FixtureReportCardResult[] {
   const results: FixtureReportCardResult[] = []
 
   for (const [classGroupId, studentIds] of Object.entries(demoCiClassRosters)) {
@@ -190,7 +195,7 @@ function buildTrimesterResults(periodId: string, periodSuffix: string, generated
 
     for (const [index, studentId] of studentIds.entries()) {
       const classRank = index + 1
-      const narrativeStatus = classRank === classSize && classSize > 2 ? 'generated' : 'published'
+      const narrativeStatus = publishedAt ? (classRank === classSize && classSize > 2 ? 'generated' : 'published') : 'generated'
 
       results.push({
         id: `ci-rcr-${studentId.replace('ci-s', 's')}-${periodSuffix}`,
@@ -214,9 +219,7 @@ function buildTrimesterResults(periodId: string, periodSuffix: string, generated
   return results
 }
 
-/** Trimestres 1–3 — bulletins pour les 30 élèves du collège. */
+/** Trimestre 1 — generated but unpublished (conseils de classe en décembre). */
 export const demoCiReportCardResults = [
-  ...buildTrimesterResults('ci-2025-t1', 't1', '2025-12-15', '2025-12-19'),
-  ...buildTrimesterResults('ci-2025-t2', 't2', '2026-03-24', '2026-03-28'),
-  ...buildTrimesterResults('ci-2025-t3', 't3', '2026-06-30', '2026-07-04'),
+  ...buildTrimesterResults('ci-2025-t1', 't1', '2026-12-15', undefined),
 ] as const satisfies readonly FixtureReportCardResult[]

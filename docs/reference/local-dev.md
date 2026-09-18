@@ -178,7 +178,7 @@ bun repo seed    # terminal 2
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
-**Reference date:** rolling dashboard data anchors to `SEED_REFERENCE_DATE` in `tooling/fixtures/src/meta/dates.ts` (default `2026-06-16`). Override at seed time in `apps/api/.env` or repo root `.env`.
+**Reference date:** rolling dashboard data anchors to the dataset clock in `tooling/fixtures/src/meta/dates.ts` (demo-ci default `2026-09-17`, central `2026-06-16`). Override at seed time with `SEED_REFERENCE_DATE` in `apps/api/.env` or repo root `.env`.
 
 See `tooling/fixtures/src/meta/entity-manifest.ts` for entity coverage status.
 

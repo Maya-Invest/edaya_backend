@@ -93,6 +93,10 @@ export async function seedDevSchoolStructure(
 
   await port.publishAcademicYear(academicYear.id)
 
+  const publishPeriodIds = dataset.extensions?.publishAcademicPeriodIds
+  const shouldPublishPeriod = (periodId: string): boolean =>
+    publishPeriodIds === undefined || publishPeriodIds.includes(periodId)
+
   for (const period of academicPeriods) {
     await port.createAcademicPeriod({
       id: period.id,
@@ -103,7 +107,9 @@ export async function seedDevSchoolStructure(
       startDate: seedDateTime(isoDateString(period.startDate)),
       endDate: seedDateTime(isoDateString(period.endDate)),
     })
-    await port.publishAcademicPeriod(period.id)
+    if (shouldPublishPeriod(period.id)) {
+      await port.publishAcademicPeriod(period.id)
+    }
   }
 
   for (const slot of periodDefinitions) {

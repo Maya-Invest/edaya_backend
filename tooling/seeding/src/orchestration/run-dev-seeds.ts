@@ -38,6 +38,7 @@ import { createInProcessCurriculumSeedPort } from '../domains/curriculum/adapter
 import { createInProcessDisciplineSeedPort } from '../domains/discipline/adapters/in-process'
 import { createInProcessDocumentsSeedPort } from '../domains/documents/adapters/in-process'
 import { createInProcessFamilyFeedbackSeedPort } from '../domains/family-feedback/adapters/in-process'
+import { seedDevFamilyFeedback } from '../domains/family-feedback/workflow'
 import { createInProcessFinanceSeedPort } from '../domains/finance/adapters/in-process'
 import { createInProcessPopulationSeedPort } from '../domains/population/adapters/in-process'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
@@ -231,7 +232,6 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       reportCardsPort,
       financePort,
       documentsPort,
-      familyFeedbackPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -261,6 +261,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         progress: options.progress,
       },
     )
+    await seedDevFamilyFeedback(familyFeedbackPort, resolveDevSeedContext().dataset)
     return results
   }
 
@@ -278,7 +279,6 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
       reportCardsPort,
       financePort,
       documentsPort,
-      familyFeedbackPort,
       activitiesPort,
       schoolLifePort,
       studentSupportPort,
@@ -323,6 +323,7 @@ export async function runDevSeeds(options: RunDevSeedsOptions): Promise<RunDevSe
         progress: options.progress,
       },
     )
+    await seedDevFamilyFeedback(familyFeedbackPort, resolveDevSeedContext().dataset)
   }
 
   if (scope === 'profile-pictures') {
