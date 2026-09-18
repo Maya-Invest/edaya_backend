@@ -28,6 +28,7 @@ import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolResponseSchema } from "@/lib/school-api/schemas/entities";
+import { resolveChildrenAiS2sKeyMode } from "@edaya/authorization";
 import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
 import { createRoute, z } from "@hono/zod-openapi";
 import { randomUUID } from "node:crypto";
@@ -270,6 +271,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
+      childrenAiS2sKeyMode: resolveChildrenAiS2sKeyMode(c.env.NODE_ENV),
     });
 
     return c.json(
@@ -523,6 +525,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         existingActor: c.get("actor") ?? undefined,
         inviteBaseUrl: resolveInviteBaseUrl(c.env),
         allowPublicSchoolRegistration,
+        childrenAiS2sKeyMode: resolveChildrenAiS2sKeyMode(c.env.NODE_ENV),
       },
     );
     return c.json(result, HttpStatusCodes.OK);

@@ -13,6 +13,7 @@ const stagingEnv = parseEnv({
   IDENTITY_ISSUER: "https://identity.edaya.test",
   IDENTITY_DIRECTORY_URL: "https://identity.edaya.test",
   IDENTITY_DIRECTORY_SECRET: "test-directory-secret",
+  CHILDREN_AI_RESOLVE_SECRET: "test-children-ai-resolve-secret",
   TRUSTED_ORIGINS: "https://app.edaya.test",
 });
 

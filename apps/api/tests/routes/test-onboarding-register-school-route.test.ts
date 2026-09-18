@@ -1,3 +1,4 @@
+import { CHILDREN_AI_S2S_CLIENT_ID, encodeS2sApiKey, localChildrenAiS2sApiKey } from "@edaya/authorization";
 import { describe, expect, it } from "bun:test";
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/types";
@@ -48,6 +49,13 @@ describe("onboarding register-school route", () => {
     const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     expect(ownerStaff?.subjectId).toBe(subjectId);
     expect(ownerStaff?.schoolId).toBe(school.id);
+
+    const s2s = await application.repositories.s2sClients.findActiveBySchoolAndClientId(
+      school.id,
+      CHILDREN_AI_S2S_CLIENT_ID,
+    );
+    expect(s2s?.accessClass).toBe("read");
+    expect(s2s?.keyHash).toBe(encodeS2sApiKey(localChildrenAiS2sApiKey(school.id)).hash);
 
     const grantsResponse = await app.request(createAppRequest("/core/authorization/effective-grants", {
       headers: {

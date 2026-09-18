@@ -65,6 +65,10 @@ import {
   invitationPreviewRoute,
 } from "@/routes/invitation.routes";
 import {
+  childrenAiResolveGuardianHandler,
+  childrenAiResolveGuardianRoute,
+} from "@/routes/children-ai-internal.routes";
+import {
   createFileUploadIntentHandler,
   createFileUploadIntentRoute,
   getFileContentHandler,
@@ -108,6 +112,7 @@ router
   .openapi(getEffectiveGrantsRoute, getEffectiveGrantsHandler)
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
+  .openapi(childrenAiResolveGuardianRoute, childrenAiResolveGuardianHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)

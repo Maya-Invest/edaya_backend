@@ -24,7 +24,7 @@
   //
   // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
   // [env.*] bindings — HYPERDRIVE (school), IDENTITY (optional service binding), CRON_JOBS
-  // Secrets          — IDENTITY_DIRECTORY_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
+  // Secrets          — IDENTITY_DIRECTORY_SECRET, CHILDREN_AI_RESOLVE_SECRET, NOVU_SECRET_KEY, NOVU_WEBHOOK_SECRET,
   //                    FCM_SERVICE_ACCOUNT_JSON (in-process notify),
   //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
   // Bindings         — HYPERDRIVE, IDENTITY, CRON_JOBS, EMAIL, BROWSER

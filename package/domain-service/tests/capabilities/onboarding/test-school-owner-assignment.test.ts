@@ -1,5 +1,6 @@
 import type { OnboardingSchoolApplication } from '../../../src/capabilities/onboarding/onboarding-application'
 import { StaffMember } from '@edaya/core'
+import { CHILDREN_AI_S2S_CLIENT_ID, encodeS2sApiKey, localChildrenAiS2sApiKey } from '@edaya/authorization'
 import { describe, expect, it } from 'bun:test'
 import { registerSchoolWithOwner } from '../../../src/capabilities/onboarding/register-school-with-owner'
 import { createInMemoryTestApp } from '../../support/create-test-app'
@@ -31,6 +32,13 @@ describe('registerSchoolWithOwner', () => {
 
     expect(result.school.ownerSubjectId).toBe('subject-1')
     expect(result.school.pendingOwnerStaffId).toBeUndefined()
+
+    const s2s = await application.repositories.s2sClients.findActiveBySchoolAndClientId(
+      result.school.id,
+      CHILDREN_AI_S2S_CLIENT_ID,
+    )
+    expect(s2s?.accessClass).toBe('read')
+    expect(s2s?.keyHash).toBe(encodeS2sApiKey(localChildrenAiS2sApiKey(result.school.id)).hash)
   })
 
   it('rejects when the subject is already linked', async () => {

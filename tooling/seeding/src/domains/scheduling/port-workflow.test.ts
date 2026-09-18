@@ -87,8 +87,8 @@ describe('scheduling seed port workflow', () => {
 
     await seedDevScheduling(port, demoCiDataset)
 
-    expect(slots).toHaveLength(6)
-    expect(schedules).toHaveLength(6)
+    expect(slots).toHaveLength(14)
+    expect(schedules).toHaveLength(14)
     expect(materializedScheduleIds).toHaveLength(slots.length)
     expect(staffAssignments).toHaveLength(0)
     expect(progress).toHaveLength(

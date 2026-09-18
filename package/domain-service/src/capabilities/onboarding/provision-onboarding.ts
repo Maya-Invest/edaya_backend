@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { ActorMetadata, ChildrenAiS2sKeyMode } from '@edaya/authorization'
 import type { ApplyStructureTemplateResult } from './apply-structure-template'
 import type { InviteStaffMembersResult } from './invite-staff-members'
 import type { OnboardingAccountStatus } from './onboarding-account-state'
@@ -149,6 +149,7 @@ export async function provisionOnboarding(
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
     allowPublicSchoolRegistration: boolean
+    childrenAiS2sKeyMode?: ChildrenAiS2sKeyMode
   },
 ): Promise<ProvisionOnboardingResult> {
   const requestId = options.requestId ?? randomUUID()
@@ -197,6 +198,9 @@ export async function provisionOnboarding(
           city: input.school.city,
           country: input.school.country,
           requestId,
+          ...(options.childrenAiS2sKeyMode
+            ? { childrenAiS2sKeyMode: options.childrenAiS2sKeyMode }
+            : {}),
         })
       })
       schoolId = registered.school.id

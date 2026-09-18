@@ -34,6 +34,8 @@ export const EnvSchema = z.object({
   IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
   IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
+  /** Shared secret for Children AI in-process guardian resolve (not a JWT / s2s_live_ key). */
+  CHILDREN_AI_RESOLVE_SECRET: z.string().min(1).default("local-children-ai-resolve-secret"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   /** Cross-request authorization caching is disabled until shared revisions exist. */
   GRANTS_CACHE_TTL_MS: z.coerce.number().int().min(0).max(0).optional(),
@@ -86,6 +88,13 @@ export const EnvSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["IDENTITY_DIRECTORY_SECRET"],
       message: "Production requires an explicit identity directory secret",
+    });
+  }
+  if (env.NODE_ENV === "production" && env.CHILDREN_AI_RESOLVE_SECRET === "local-children-ai-resolve-secret") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["CHILDREN_AI_RESOLVE_SECRET"],
+      message: "Production requires an explicit Children AI resolve secret",
     });
   }
 });
