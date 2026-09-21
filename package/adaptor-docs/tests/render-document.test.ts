@@ -56,11 +56,11 @@ describe("renderDocument", () => {
     const bulletin = getTemplateDefinition("report-card.v1");
     expect(bulletin).not.toBeNull();
     expect(bulletin!.validatePayload({
-      ...EXAMPLE_RENDER_REQUEST.payload,
+      ...(EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>),
       ...extra,
     })).toMatch(/additional/i);
     expect(bulletin!.validatePayload({
-      ...EXAMPLE_RENDER_REQUEST.payload,
+      ...(EXAMPLE_RENDER_REQUEST.payload as Record<string, unknown>),
       council: {
         ...(EXAMPLE_RENDER_REQUEST.payload as { council?: Record<string, unknown> }).council,
         principalStampUrl: "data:image/png;base64,xx",

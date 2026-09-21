@@ -6,10 +6,12 @@ export const PROFILE_PHOTO_JPEG_MIME = 'image/jpeg'
 export const STUDENT_PORTRAIT_PURPOSE = 'student.portrait'
 export const GUARDIAN_PORTRAIT_PURPOSE = 'guardian.portrait'
 export const STAFF_PORTRAIT_PURPOSE = 'staff.portrait'
+export const TEACHER_PORTRAIT_PURPOSE = 'teacher.portrait'
 export const PROFILE_PHOTO_PURPOSES = [
   STUDENT_PORTRAIT_PURPOSE,
   GUARDIAN_PORTRAIT_PURPOSE,
   STAFF_PORTRAIT_PURPOSE,
+  TEACHER_PORTRAIT_PURPOSE,
 ] as const
 export const STUDENT_PHOTO_CAPABILITY = 'capability.student-photo'
 export const STUDENT_PHOTO_ABANDONED_MS = 24 * 60 * 60 * 1000
@@ -29,6 +31,8 @@ export function profilePhotoPurposeForOwner(ownerKind: AttachmentOwnerKind): Pro
       return GUARDIAN_PORTRAIT_PURPOSE
     case AttachmentOwnerKind.Staff:
       return STAFF_PORTRAIT_PURPOSE
+    case AttachmentOwnerKind.Teacher:
+      return TEACHER_PORTRAIT_PURPOSE
     default:
       throw new BusinessRuleViolationError(
         'PROFILE_PHOTO_OWNER_NOT_ALLOWED',

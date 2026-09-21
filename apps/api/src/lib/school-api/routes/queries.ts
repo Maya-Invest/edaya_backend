@@ -1,4 +1,4 @@
-import type { AppShellCounts, ClassGroupTimetable, GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, ResolveTimetableSpaceInput } from "@edaya/service";
+import type { AppShellCounts, ClassGroupTimetable, GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, GetTeacherTimetableInput, ResolveTimetableSpaceInput, TeacherTimetable } from "@edaya/service";
 import type { AppRouteHandler } from "@/http/types";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { coreQueries } from "@/lib/school-api/registry";
@@ -70,7 +70,17 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
             endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
           };
           const timetable = await service.getClassGroupTimetable(input);
-          return c.json(serializeClassGroupTimetable(timetable), HttpStatusCodes.OK);
+          return c.json(serializeTimetable(timetable), HttpStatusCodes.OK);
+        }
+
+        if (queryConfig.methodName === "getTeacherTimetable") {
+          const input: GetTeacherTimetableInput = {
+            teacherId: payload.teacherId as string,
+            startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+            endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
+          };
+          const timetable = await service.getTeacherTimetable(input);
+          return c.json(serializeTimetable(timetable), HttpStatusCodes.OK);
         }
 
         if (queryConfig.methodName === "resolveTimetableSpace") {
@@ -274,7 +284,7 @@ function serializeDocumentDownload(grant: Awaited<ReturnType<import("@edaya/serv
   };
 }
 
-function serializeClassGroupTimetable(timetable: ClassGroupTimetable) {
+function serializeTimetable(timetable: ClassGroupTimetable | TeacherTimetable) {
   return {
     ...timetable,
     events: timetable.events.map(event => ({

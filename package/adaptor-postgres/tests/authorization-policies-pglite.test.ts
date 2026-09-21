@@ -1,6 +1,6 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
@@ -427,6 +427,31 @@ describe('authorization policies against native repository scopes', () => {
     await expect(service.getClassGroupTimetable({ ...input, classGroupId: 'class-other' })).rejects.toThrow()
     await db.exec('DELETE FROM teacher_assignments')
     await expect(service.getClassGroupTimetable(input)).rejects.toThrow()
+  })
+
+  test('teacher timetable queries keep assigned sessions and reject other teachers', async () => {
+    for (const [id, classSubjectId, classGroupId, teacherIds] of [
+      ['math-session', 'math-a', 'class-a', ['teacher-a']],
+      ['french-session', 'french-a', 'class-a', []],
+      ['other-session', 'math-other', 'class-other', ['teacher-a']],
+    ] as const) {
+      await repositories.lessonSessions.save(new LessonSession({
+        id,
+        schoolId: 'school-a',
+        classGroupId,
+        classSubjectId,
+        displayLabel: id,
+        startsAt: new Date('2026-05-01T10:00:00Z'),
+        endsAt: new Date('2026-05-01T11:00:00Z'),
+        timetableTeacherIds: [...teacherIds],
+      }))
+    }
+    const input = { teacherId: 'teacher-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-01') }
+    const service = schoolService(teacher)
+    expect((await service.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
+    await repositories.teachers.save(new Teacher({ id: 'teacher-other', schoolId: 'school-a', firstName: 'Other', lastName: 'Teacher' }))
+    await expect(service.getTeacherTimetable({ ...input, teacherId: 'teacher-other' })).rejects.toThrow()
+    await expect(schoolService(guardian).getTeacherTimetable(input)).rejects.toThrow()
   })
 
   test('attachment scopes follow their owner and do not expose unrelated, foreign or sensitive records', async () => {

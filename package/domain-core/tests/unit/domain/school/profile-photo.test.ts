@@ -1,4 +1,4 @@
-import { parseAttachmentIdFromContentUrl, STUDENT_PHOTO_ABANDONED_MS, STUDENT_PHOTO_TERMINAL_RETAIN_MS } from '@edaya/core'
+import { AttachmentOwnerKind, GUARDIAN_PORTRAIT_PURPOSE, parseAttachmentIdFromContentUrl, profilePhotoPurposeForOwner, STAFF_PORTRAIT_PURPOSE, STUDENT_PHOTO_ABANDONED_MS, STUDENT_PHOTO_TERMINAL_RETAIN_MS, STUDENT_PORTRAIT_PURPOSE, TEACHER_PORTRAIT_PURPOSE } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('parseAttachmentIdFromContentUrl', () => {
@@ -19,5 +19,14 @@ describe('student portrait retention windows', () => {
   test('abandoned unsubmitted portraits last 24 hours and terminal proposals last 30 days', () => {
     expect(STUDENT_PHOTO_ABANDONED_MS).toBe(24 * 60 * 60 * 1000)
     expect(STUDENT_PHOTO_TERMINAL_RETAIN_MS).toBe(30 * 24 * 60 * 60 * 1000)
+  })
+})
+
+describe('profilePhotoPurposeForOwner', () => {
+  test('maps people owners onto their portrait purposes', () => {
+    expect(profilePhotoPurposeForOwner(AttachmentOwnerKind.Student)).toBe(STUDENT_PORTRAIT_PURPOSE)
+    expect(profilePhotoPurposeForOwner(AttachmentOwnerKind.Guardian)).toBe(GUARDIAN_PORTRAIT_PURPOSE)
+    expect(profilePhotoPurposeForOwner(AttachmentOwnerKind.Staff)).toBe(STAFF_PORTRAIT_PURPOSE)
+    expect(profilePhotoPurposeForOwner(AttachmentOwnerKind.Teacher)).toBe(TEACHER_PORTRAIT_PURPOSE)
   })
 })

@@ -42,7 +42,7 @@ const systemActions: Record<string, readonly Permission[]> = {
   'school-bootstrap': [P.PLATFORM_REGISTER_SCHOOL, P.SCHOOL_STRUCTURE_CONFIGURE, P.SCHOOL_LIFECYCLE_MANAGE, P.ACCESS_CONTROL_ASSIGN, P.STAFF_CREATE, P.QUERY_WORKSPACE_READ],
 }
 
-export const OVERVIEW_RESOURCES = ['students', 'guardians', 'staffMembers', 'studentCharges', 'results', 'incidents', 'attendance', 'assessments', 'assessmentResults', 'enrollments', 'calendarEvents', 'classGroups', 'payments', 'studentDisciplinaryActions', 'activities', 'academicPeriods'] as const
+export const OVERVIEW_RESOURCES = ['students', 'guardians', 'staffMembers', 'teachers', 'studentCharges', 'results', 'incidents', 'attendance', 'assessments', 'assessmentResults', 'enrollments', 'calendarEvents', 'classGroups', 'payments', 'studentDisciplinaryActions', 'activities', 'academicPeriods'] as const
 export type OverviewRepositories = Pick<AuthorizationRepositories, typeof OVERVIEW_RESOURCES[number]>
 
 export class AccessPolicies {
@@ -450,6 +450,27 @@ export class AccessPolicies {
   readonly timetable = {
     eventRepositories: async (classGroupId: string) => {
       await this.assertResources(P.QUERY_TIMETABLE_READ, 'classGroups', [classGroupId], 'read')
+      return {
+        lessonSessions: this.repositories.lessonSessions.forAccess(await this.scope(P.QUERY_TIMETABLE_READ, 'lessonSessions')),
+        activitySessions: this.repositories.activitySessions.forAccess(await this.scope(P.QUERY_TIMETABLE_READ, 'activitySessions')),
+        assessments: this.repositories.assessments.forAccess(await this.scope(P.QUERY_TIMETABLE_READ, 'assessments')),
+        classGroups: this.repositories.classGroups.forSchool!(this.actor.schoolId),
+        teacherAssignments: this.repositories.teacherAssignments.forSchool!(this.actor.schoolId),
+        teachers: this.repositories.teachers.forSchool!(this.actor.schoolId),
+        activities: this.repositories.activities.forSchool!(this.actor.schoolId),
+      }
+    },
+    teacherEventRepositories: async (teacherId: string) => {
+      const teacher = await this.repositories.teachers.forSchool!(this.actor.schoolId).findById(teacherId)
+      if (!teacher)
+        denied()
+      if (this.actor.kind === 'teacher') {
+        if (this.actor.teacherId !== teacherId)
+          denied()
+      }
+      else if (this.actor.kind !== 'staff' && this.actor.kind !== 'system' && this.actor.kind !== 's2s') {
+        denied()
+      }
       return {
         lessonSessions: this.repositories.lessonSessions.forAccess(await this.scope(P.QUERY_TIMETABLE_READ, 'lessonSessions')),
         activitySessions: this.repositories.activitySessions.forAccess(await this.scope(P.QUERY_TIMETABLE_READ, 'activitySessions')),

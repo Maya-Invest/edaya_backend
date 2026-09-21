@@ -70,6 +70,13 @@ async function authorizeProfilePhotoOwner(
     await base.access.entity('staffMembers').assertSave(staff, staff)
     return
   }
+  if (ownerKind === AttachmentOwnerKind.Teacher) {
+    const teacher = await base.entities.teachers.findById(ownerId)
+    if (!teacher || teacher.schoolId !== actor.schoolId)
+      denyResourceAccess()
+    await base.access.entity('teachers').assertSave(teacher, teacher)
+    return
+  }
   denyResourceAccess()
 }
 
@@ -169,6 +176,17 @@ async function selfPortraitReadScope(base: BaseSchoolService, attachment: Attach
     const publishedId = staff.photoUrl ? parseAttachmentIdFromContentUrl(staff.photoUrl) : undefined
     if (publishedId === attachment.id) {
       if (!await base.entities.staffMembers.findById(staff.id))
+        denyResourceAccess()
+      return ownerAttachmentScope(base.actor.schoolId, attachment.ownerKind, attachment.ownerId, purpose, [attachment.id])
+    }
+  }
+  if (attachment.ownerKind === AttachmentOwnerKind.Teacher) {
+    const teacher = await base.repositories.teachers.forSchool!(base.actor.schoolId).findById(attachment.ownerId)
+    if (!teacher)
+      denyResourceAccess()
+    const publishedId = teacher.photoUrl ? parseAttachmentIdFromContentUrl(teacher.photoUrl) : undefined
+    if (publishedId === attachment.id) {
+      if (!await base.entities.teachers.findById(teacher.id))
         denyResourceAccess()
       return ownerAttachmentScope(base.actor.schoolId, attachment.ownerKind, attachment.ownerId, purpose, [attachment.id])
     }

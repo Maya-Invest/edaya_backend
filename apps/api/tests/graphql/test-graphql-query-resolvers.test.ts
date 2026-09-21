@@ -77,4 +77,33 @@ describe("createCoreQueryResolver", () => {
       endsAt: endsAt.toISOString(),
     });
   });
+
+  test("serializes teacher timetable event timestamps to ISO strings", async () => {
+    const startsAt = new Date("2026-03-01T09:00:00.000Z");
+    const endsAt = new Date("2026-03-01T10:00:00.000Z");
+    const getTeacherTimetable = async () => ({
+      teacherId: "teacher-1",
+      events: [{ id: "event-1", startsAt, endsAt, label: "Math" }],
+    });
+    const resolver = createCoreQueryResolver(
+      coreQueries.find(query => query.methodName === "getTeacherTimetable")!,
+    );
+
+    const result = await resolver({}, {
+      input: {
+        teacherId: "teacher-1",
+        startDate: "2026-03-01",
+        endDate: "2026-03-07",
+      },
+    }, resolverContext({ getTeacherTimetable })) as {
+      events: Array<{ id: string; startsAt: string; endsAt: string; label: string }>;
+    };
+
+    expect(result.events[0]).toEqual({
+      id: "event-1",
+      label: "Math",
+      startsAt: startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    });
+  });
 });

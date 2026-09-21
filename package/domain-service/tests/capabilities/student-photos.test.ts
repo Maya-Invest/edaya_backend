@@ -469,6 +469,29 @@ describe('student portrait review', () => {
     expect(await fixture.app.baseService.entities.studentPhotoSubmissions.count({})).toBe(0)
   })
 
+  test('teacher portraits publish immediately through teachers.save', async () => {
+    await fixture.schoolRepositories.teachers.save(new Teacher({
+      id: 'tea1',
+      schoolId: 'school',
+      firstName: 'Ada',
+      lastName: 'Teacher',
+    }))
+    const teacherPhoto = await completePortrait({
+      ownerKind: AttachmentOwnerKind.Teacher,
+      ownerId: 'tea1',
+      attachmentId: 'att-teacher',
+    })
+    const existing = (await fixture.app.baseService.entities.teachers.findById('tea1'))!
+    await fixture.app.baseService.entities.teachers.save(existing.copyWith({
+      photoUrl: `/core/files/${teacherPhoto.id}/content`,
+    }))
+    expect((await fixture.app.baseService.entities.teachers.findById('tea1'))?.photoUrl).toBe(`/core/files/${teacherPhoto.id}/content`)
+    await expect(fixture.app.baseService.entities.teachers.save(existing.copyWith({
+      photoUrl: 'https://cdn.example/photo.jpg',
+    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    expect(await fixture.app.baseService.entities.studentPhotoSubmissions.count({})).toBe(0)
+  })
+
   async function remainingProtectionMs(storageKey: string): Promise<number> {
     const { rows } = await fixture.db.query<{ remaining_ms: string }>(
       `SELECT (EXTRACT(EPOCH FROM (protected_until - clock_timestamp())) * 1000)::bigint AS remaining_ms

@@ -1,4 +1,4 @@
-import type { GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, ResolveTimetableSpaceInput } from "@edaya/service";
+import type { GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, GetTeacherTimetableInput, ResolveTimetableSpaceInput } from "@edaya/service";
 import type { CoreQueryConfig } from "@/lib/school-api/registry";
 import { requireActor, wrapResolver } from "@/lib/graphql/resolver-utils";
 
@@ -44,14 +44,17 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
         endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
       };
       const timetable = await service.getClassGroupTimetable(input);
-      return {
-        ...timetable,
-        events: timetable.events.map(event => ({
-          ...event,
-          startsAt: event.startsAt.toISOString(),
-          endsAt: event.endsAt.toISOString(),
-        })),
+      return serializeTimetableEvents(timetable);
+    }
+
+    if (queryConfig.methodName === "getTeacherTimetable") {
+      const input: GetTeacherTimetableInput = {
+        teacherId: payload.teacherId as string,
+        startDate: new Date(`${payload.startDate as string}T00:00:00.000Z`),
+        endDate: new Date(`${payload.endDate as string}T00:00:00.000Z`),
       };
+      const timetable = await service.getTeacherTimetable(input);
+      return serializeTimetableEvents(timetable);
     }
 
     if (queryConfig.methodName === "resolveTimetableSpace") {
@@ -252,6 +255,17 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
     const count = await service[queryConfig.methodName](payload.schoolId as string);
     return { count };
   });
+}
+
+function serializeTimetableEvents(timetable: { events: Array<{ startsAt: Date; endsAt: Date }> }) {
+  return {
+    ...timetable,
+    events: timetable.events.map(event => ({
+      ...event,
+      startsAt: event.startsAt.toISOString(),
+      endsAt: event.endsAt.toISOString(),
+    })),
+  };
 }
 
 function serializeGraphqlDocumentDownload(grant: Awaited<ReturnType<import("@edaya/service").SchoolService["grantDocumentDownload"]>>) {

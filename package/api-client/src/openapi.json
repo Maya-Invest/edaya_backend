@@ -3409,6 +3409,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -8059,6 +8060,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -8153,6 +8155,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -11718,6 +11721,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -13641,6 +13645,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -13699,6 +13704,7 @@
               "student_enrollment",
               "applied_disciplinary_action",
               "staff",
+              "teacher",
               "school",
               "document_issuance",
               "other"
@@ -17656,6 +17662,10 @@
           "staffCount": {
             "type": "integer",
             "minimum": 0
+          },
+          "teacherCount": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
@@ -17663,7 +17673,8 @@
           "activeEnrollmentCountsByClass",
           "studentCount",
           "guardianCount",
-          "staffCount"
+          "staffCount",
+          "teacherCount"
         ]
       },
       "GetAppShellCountsQuery": {
@@ -17723,6 +17734,13 @@
           "teacherName": {
             "type": "string",
             "minLength": 1
+          },
+          "timetableTeacherIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           },
           "startsAt": {
             "type": "string",
@@ -17809,6 +17827,57 @@
         },
         "required": [
           "classGroupId",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "TeacherTimetableResponse": {
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimetableEvent"
+            }
+          }
+        },
+        "required": [
+          "teacherId",
+          "startDate",
+          "endDate",
+          "events"
+        ]
+      },
+      "GetTeacherTimetableQuery": {
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "teacherId",
           "startDate",
           "endDate"
         ]
@@ -47033,6 +47102,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassGroupTimetableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-teacher-timetable": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-teacher-timetable",
+        "operationId": "queries.getTeacherTimetable",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getTeacherTimetable",
+        "x-edaya-query-public-name": "get-teacher-timetable",
+        "x-edaya-request-schema": "GetTeacherTimetableQuery",
+        "x-edaya-response-schema": "TeacherTimetableResponse",
+        "requestBody": {
+          "description": "get-teacher-timetable payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTeacherTimetableQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-teacher-timetable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherTimetableResponse"
                 }
               }
             }

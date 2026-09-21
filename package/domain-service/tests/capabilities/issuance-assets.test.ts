@@ -254,7 +254,9 @@ describe('school issuance assets', () => {
       status: DocumentIssuanceStatus.Requested,
     }))
     const letter = (await fixture.schoolRepositories.documentIssuances.findById('iss-letter'))!
-    const letterPayload = (await hydrateDocumentPayload(renderer.baseService, letter)).input.payload as Record<string, unknown>
+    const letterPayload = (await hydrateDocumentPayload(renderer.baseService, letter)).input.payload as {
+      stampUrl?: unknown
+    }
     expect(String(letterPayload.stampUrl ?? '')).toMatch(/^data:image\/jpeg;base64,/)
     expect(letterPayload).not.toHaveProperty('principalStampUrl')
 

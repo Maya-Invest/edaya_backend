@@ -201,4 +201,37 @@ describe("generated core query endpoints", () => {
       endDate: new Date("2026-05-31T00:00:00.000Z"),
     });
   });
+
+  it("executes get-teacher-timetable query route", async () => {
+    const mockGetTeacherTimetable = mock().mockResolvedValue({
+      teacherId: "teacher-1",
+      startDate: "2026-05-01",
+      endDate: "2026-05-31",
+      events: [],
+    });
+    const app = setupTestApp({
+      baseService: {},
+      getTeacherTimetable: mockGetTeacherTimetable,
+    });
+
+    const res = await app.request("/core/queries/get-teacher-timetable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        teacherId: "teacher-1",
+        startDate: "2026-05-01",
+        endDate: "2026-05-31",
+      }),
+    });
+
+    const body = await res.json() as { teacherId: string; events: unknown[] };
+    expect(res.status).toBe(200);
+    expect(body.teacherId).toBe("teacher-1");
+    expect(body.events).toEqual([]);
+    expect(mockGetTeacherTimetable).toHaveBeenCalledWith({
+      teacherId: "teacher-1",
+      startDate: new Date("2026-05-01T00:00:00.000Z"),
+      endDate: new Date("2026-05-31T00:00:00.000Z"),
+    });
+  });
 });

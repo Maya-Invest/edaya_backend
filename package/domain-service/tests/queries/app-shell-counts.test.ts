@@ -8,6 +8,7 @@ describe('buildAppShellCounts', () => {
       students: { count: async () => 12 },
       guardians: { count: async () => 8 },
       staffMembers: { count: async () => 5 },
+      teachers: { count: async () => 4 },
       enrollments: {
         list: async () => [
           { classGroupId: 'class-a', status: StudentClassEnrollmentStatus.Active },
@@ -30,6 +31,7 @@ describe('buildAppShellCounts', () => {
       studentCount: 12,
       guardianCount: 8,
       staffCount: 5,
+      teacherCount: 4,
     })
   })
 
@@ -39,6 +41,7 @@ describe('buildAppShellCounts', () => {
       students: { count: async () => 1 },
       guardians: { count: async () => 2 },
       staffMembers: { count: async () => 3 },
+      teachers: { count: async () => 2 },
       enrollments: {
         list: async () => {
           enrollmentListCalls += 1
@@ -55,6 +58,7 @@ describe('buildAppShellCounts', () => {
       studentCount: 1,
       guardianCount: 2,
       staffCount: 3,
+      teacherCount: 2,
     })
 
     expect(enrollmentListCalls).toBe(0)

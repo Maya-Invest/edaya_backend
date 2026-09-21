@@ -47,6 +47,8 @@ async function resolveAttachmentOwnerContext(
       return requireOwned(repositories.guardians.findById(ownerId))
     case AttachmentOwnerKind.Staff:
       return requireOwned(repositories.staffMembers.findById(ownerId))
+    case AttachmentOwnerKind.Teacher:
+      return requireOwned(repositories.teachers.findById(ownerId))
     case AttachmentOwnerKind.StudentHealthProfile: {
       const healthProfile = await repositories.studentHealthProfiles.findById(ownerId)
       if (!healthProfile) {

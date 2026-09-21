@@ -12,18 +12,20 @@ export interface AppShellCounts {
   studentCount: number
   guardianCount: number
   staffCount: number
+  teacherCount: number
 }
 
 export async function buildAppShellCounts(
-  repositories: Pick<SchoolRepositories, 'students' | 'guardians' | 'staffMembers' | 'enrollments'>,
+  repositories: Pick<SchoolRepositories, 'students' | 'guardians' | 'staffMembers' | 'teachers' | 'enrollments'>,
   input: GetAppShellCountsInput,
 ): Promise<AppShellCounts> {
   const classGroupIds = [...new Set(input.classGroupIds ?? [])]
 
-  const [studentCount, guardianCount, staffCount, enrollments] = await Promise.all([
+  const [studentCount, guardianCount, staffCount, teacherCount, enrollments] = await Promise.all([
     repositories.students.count({ schoolId: input.schoolId }),
     repositories.guardians.count({ schoolId: input.schoolId }),
     repositories.staffMembers.count({ schoolId: input.schoolId }),
+    repositories.teachers.count({ schoolId: input.schoolId }),
     classGroupIds.length > 0
       ? repositories.enrollments.list({
           status: StudentClassEnrollmentStatus.Active,
@@ -47,5 +49,6 @@ export async function buildAppShellCounts(
     studentCount,
     guardianCount,
     staffCount,
+    teacherCount,
   }
 }

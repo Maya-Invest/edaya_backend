@@ -19,7 +19,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
+  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "getTeacherTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -344,6 +344,13 @@ export const coreQueries = [
     methodName: "getClassGroupTimetable",
     requestSchema: querySchemas.getClassGroupTimetableQuerySchema,
     responseSchema: querySchemas.classGroupTimetableResponseSchema,
+    responseShape: "body",
+  },
+  {
+    publicName: "get-teacher-timetable",
+    methodName: "getTeacherTimetable",
+    requestSchema: querySchemas.getTeacherTimetableQuerySchema,
+    responseSchema: querySchemas.teacherTimetableResponseSchema,
     responseShape: "body",
   },
   {

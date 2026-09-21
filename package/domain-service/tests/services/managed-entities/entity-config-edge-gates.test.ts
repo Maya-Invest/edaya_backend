@@ -27,6 +27,7 @@ function repositories(overrides: Partial<SchoolRepositories> = {}): SchoolReposi
     results: { findById: mock(async () => ({ id: 'report-card-1', studentId: 'student-1' })) },
     lessonSessions: { findById: mock(async () => ({ id: 'session-1', classGroupId: 'class-1', classSubjectId: 'subject-1', schoolId: 'school' })) },
     staffMembers: { findById: mock(async () => ({ id: 'staff-1', schoolId: 'school' })) },
+    teachers: { findById: mock(async () => ({ id: 'teacher-1', schoolId: 'school' })) },
     studentDisciplinaryActions: { findById: mock(async () => ({ id: 'action-1', studentId: 'student-1' })) },
     studentYearAccounts: { findById: mock(async () => ({ id: 'account-1', studentId: 'student-1', schoolId: 'school' })) },
     studentCharges: { findById: mock(async () => ({ id: 'student-fee-1', studentId: 'student-1' })) },
@@ -62,6 +63,7 @@ describe('entity config edge gates', () => {
     await validateAttachmentSave(attachment(AttachmentOwnerKind.Student, 'student-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.Guardian, 'guardian-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.Staff, 'staff-1'), undefined, repos)
+    await validateAttachmentSave(attachment(AttachmentOwnerKind.Teacher, 'teacher-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.StudentHealthProfile, 'health-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.StudentClassEnrollment, 'enrollment-1'), undefined, repos)
     await validateAttachmentSave(attachment(AttachmentOwnerKind.AttendanceRecord, 'attendance-1'), undefined, repos)

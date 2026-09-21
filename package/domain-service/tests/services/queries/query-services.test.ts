@@ -1,5 +1,5 @@
 import { AuthorizationError, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment } from '@edaya/core'
+import { CalendarEvent, CalendarEventKind, CalendarEventScopeKind, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, DayOfWeek, LessonSession, noOpNotificationGateway, PeriodDefinition, Permission, StaffPermissionAssignment, StudentCharge, StudentServiceEnrollment, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
@@ -89,6 +89,7 @@ describe('SchoolService aggregate and timetable queries', () => {
     await expect(service.getAppShellCounts({ schoolId: 'school-a', classGroupIds: ['class-a', 'class-b'] })).rejects.toBeInstanceOf(AuthorizationError)
     const counts = await service.getAppShellCounts({ schoolId: 'school-a', classGroupIds: ['class-a'] })
     expect(counts.studentCount).toBe(2)
+    expect(counts.teacherCount).toBe(1)
     expect(counts.activeEnrollmentCountsByClass).toEqual({ 'class-a': 1 })
   })
 
@@ -100,6 +101,42 @@ describe('SchoolService aggregate and timetable queries', () => {
     expect(result.events).toEqual([])
     for (const classGroupId of ['missing', 'class-other', 'class-b'])
       await expect(service.getClassGroupTimetable({ ...input, classGroupId })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('teacher timetable authorization filters assigned sessions and rejects other teachers and family actors', async () => {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.lessonSessions.save(new LessonSession({
+      id: 'math-session',
+      schoolId: 'school-a',
+      classGroupId: 'class-a',
+      classSubjectId: 'math-a',
+      displayLabel: 'Math',
+      startsAt: new Date('2026-05-01T10:00:00Z'),
+      endsAt: new Date('2026-05-01T11:00:00Z'),
+      timetableTeacherIds: ['teacher-a'],
+    }))
+    await fixture.repositories.lessonSessions.save(new LessonSession({
+      id: 'other-session',
+      schoolId: 'school-a',
+      classGroupId: 'class-other',
+      classSubjectId: 'math-other',
+      displayLabel: 'Other',
+      startsAt: new Date('2026-05-01T10:00:00Z'),
+      endsAt: new Date('2026-05-01T11:00:00Z'),
+      timetableTeacherIds: ['teacher-a'],
+    }))
+    const input = { teacherId: 'teacher-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-01') }
+    expect((await service.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
+    await expect(service.getTeacherTimetable({ ...input, teacherId: 'missing' })).rejects.toBeInstanceOf(AuthorizationError)
+    await fixture.repositories.teachers.save(new Teacher({ id: 'teacher-b', schoolId: 'school-a', firstName: 'B', lastName: 'Teacher' }))
+
+    const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'teacher-timetable', authenticatedAt: new Date() }
+    const teacherService = new SchoolService({ actor: createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    expect((await teacherService.getTeacherTimetable(input)).events.map(event => event.id)).toEqual(['math-session'])
+    await expect(teacherService.getTeacherTimetable({ ...input, teacherId: 'teacher-b' })).rejects.toBeInstanceOf(AuthorizationError)
+
+    const guardianService = new SchoolService({ actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    await expect(guardianService.getTeacherTimetable(input)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test.each(['staff', 'teacher', 'guardian', 'student'] as const)('%s availability scopes supporting reads before building cells', async (kind) => {

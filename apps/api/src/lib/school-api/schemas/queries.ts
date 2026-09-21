@@ -18,6 +18,7 @@ export const appShellCountsResponseSchema = z.object({
   studentCount: z.number().int().nonnegative(),
   guardianCount: z.number().int().nonnegative(),
   staffCount: z.number().int().nonnegative(),
+  teacherCount: z.number().int().nonnegative(),
 }).openapi("AppShellCountsResponse");
 
 export const dashboardActionItemSchema = z.object({
@@ -110,6 +111,7 @@ export const timetableEventSchema = z.object({
   title: z.string().min(1),
   subjectLabel: z.string().min(1).optional(),
   teacherName: z.string().min(1).optional(),
+  timetableTeacherIds: z.array(z.string().min(1)).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   lessonSessionId: z.string().min(1).optional(),
@@ -130,6 +132,19 @@ export const classGroupTimetableResponseSchema = z.object({
   endDate: z.string().date(),
   events: z.array(timetableEventSchema),
 }).openapi("ClassGroupTimetableResponse");
+
+export const getTeacherTimetableQuerySchema = z.object({
+  teacherId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+}).openapi("GetTeacherTimetableQuery");
+
+export const teacherTimetableResponseSchema = z.object({
+  teacherId: z.string().min(1),
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+  events: z.array(timetableEventSchema),
+}).openapi("TeacherTimetableResponse");
 
 export const resolveTimetableSpaceQuerySchema = z.object({
   classGroupId: z.string().min(1),

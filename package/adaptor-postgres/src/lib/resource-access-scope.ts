@@ -99,6 +99,7 @@ const attachmentOwners: Partial<Record<AttachmentOwnerKind, PgTable>> = {
   [AttachmentOwnerKind.Student]: s.students,
   [AttachmentOwnerKind.Guardian]: s.guardians,
   [AttachmentOwnerKind.Staff]: s.staffMembers,
+  [AttachmentOwnerKind.Teacher]: s.teachers,
   [AttachmentOwnerKind.StudentHealthProfile]: s.studentHealthProfiles,
   [AttachmentOwnerKind.StudentClassEnrollment]: s.studentClassEnrollments,
   [AttachmentOwnerKind.AttendanceRecord]: s.attendanceRecords,

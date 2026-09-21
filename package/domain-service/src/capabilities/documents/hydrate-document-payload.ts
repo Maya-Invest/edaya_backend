@@ -39,7 +39,7 @@ export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: 
     throw new BusinessRuleViolationError(DOCUMENT_FAILURES.ASSET_MISSING, 'An approved portrait is required for a student ID card')
   }
 
-  const payload: Record<string, unknown> = {
+  const payload: Record<string, unknown> & { council?: unknown } = {
     ...facts,
     ...(logoUrl ? { logoUrl } : {}),
     ...(crestUrl ? { crestUrl } : {}),

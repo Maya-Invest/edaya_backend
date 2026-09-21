@@ -1625,6 +1625,11 @@ export const clientBindings = {
         "requestSchemaName": "GetClassGroupTimetableQuery",
         "responseSchemaName": "ClassGroupTimetableResponse"
       },
+      "getTeacherTimetable": {
+        "publicName": "get-teacher-timetable",
+        "requestSchemaName": "GetTeacherTimetableQuery",
+        "responseSchemaName": "TeacherTimetableResponse"
+      },
       "resolveTimetableSpace": {
         "publicName": "resolve-timetable-space",
         "requestSchemaName": "ResolveTimetableSpaceQuery",

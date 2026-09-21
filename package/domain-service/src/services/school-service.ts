@@ -1,7 +1,7 @@
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
 import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
-import type { ClassGroupTimetable, GetClassGroupTimetableInput } from './queries/timetable'
+import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetTeacherTimetableInput, TeacherTimetable } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
@@ -11,7 +11,7 @@ import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 
 import { buildAppShellCounts } from './queries/app-shell-counts'
 import { buildSchoolOverview } from './queries/school-overview'
-import { buildClassGroupTimetable } from './queries/timetable'
+import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
 import { AccountInvitationServiceWorkflow } from './workflows/account-invitation'
@@ -223,6 +223,11 @@ export class SchoolService {
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {
     const repositories = await this.baseService.access.timetable.eventRepositories(input.classGroupId)
     return buildClassGroupTimetable(repositories, input)
+  }
+
+  async getTeacherTimetable(input: GetTeacherTimetableInput): Promise<TeacherTimetable> {
+    const repositories = await this.baseService.access.timetable.teacherEventRepositories(input.teacherId)
+    return buildTeacherTimetable(repositories, input)
   }
 
   async resolveTimetableSpace(input: ResolveTimetableSpaceInput): Promise<ResolvedTimetableCell[]> {
