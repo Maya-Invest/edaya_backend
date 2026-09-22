@@ -171,8 +171,16 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('message_deliveries_subject_id_idx').on(col(table, 'subjectId')),
         uniqueIndex('message_deliveries_source_recipient_uidx').on(col(table, 'schoolId'), col(table, 'sourceKey'), col(table, 'subjectId'), col(table, 'recipientKind'), col(table, 'recipientId')),
       ]
+    case 'subject_categories':
+      return [
+        index('subject_categories_school_id_idx').on(col(table, 'schoolId')),
+        uniqueIndex('subject_categories_school_name_uidx').on(col(table, 'schoolId'), col(table, 'name')),
+      ]
     case 'subjects':
-      return [index('subjects_school_id_idx').on(col(table, 'schoolId'))]
+      return [
+        index('subjects_school_id_idx').on(col(table, 'schoolId')),
+        index('subjects_category_id_idx').on(col(table, 'categoryId')),
+      ]
     case 'subject_matters':
       return [index('subject_matters_subject_id_idx').on(col(table, 'subjectId'))]
     case 'class_groups':

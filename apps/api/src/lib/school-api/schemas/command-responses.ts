@@ -53,6 +53,7 @@ import {
   studentResponseSchema,
   studentServiceEnrollmentResponseSchema,
   subjectMatterResponseSchema,
+  subjectCategoryResponseSchema,
   subjectResponseSchema,
   teacherResponseSchema,
 } from "./entities";
@@ -222,6 +223,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   createClassGroup: classGroupResponseSchema,
   updateClassGroupConfiguration: classGroupResponseSchema,
   registerStaffMember: staffMemberResponseSchema,
+  registerTeacher: teacherResponseSchema,
   updateStaffMemberStatus: staffMemberResponseSchema,
   updateStaffMemberProfile: staffMemberResponseSchema,
   linkActorSubject: z.discriminatedUnion("kind", [
@@ -287,6 +289,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     profileId: z.string().min(1),
   }).openapi("RemoveStaffPermissionProfileResponse"),
   configureSubject: subjectResponseSchema,
+  configureSubjectCategory: subjectCategoryResponseSchema,
   configureSubjectMatter: subjectMatterResponseSchema,
   configureDisciplinaryAction: disciplinaryActionResponseSchema,
   requestAttendanceJustification: attendanceResponseSchema,

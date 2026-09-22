@@ -72,11 +72,13 @@ export interface GraduateStudentInput {
   notes?: string
 }
 
-export type RegisterStudentInput = StudentInput & {
+export type RegisterStudentInput = Omit<StudentInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
   inviteEmail?: string
 }
-export type RegisterGuardianInput = GuardianInput & {
+export type RegisterGuardianInput = Omit<GuardianInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
 }
 
@@ -155,7 +157,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         )
       }
 
-      const student = new Student(entityInput)
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.students.findById(candidate),
+        entityInput.id,
+        'STUDENT_ID_ALREADY_EXISTS',
+        'Student',
+      )
+      const student = new Student({ ...entityInput, id })
       await this.baseService.entities.students.save(student)
       await scheduleAccountInvitationIfEligible(
         this.baseService,
@@ -174,7 +182,13 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
   async registerGuardian(input: RegisterGuardianInput): Promise<Guardian> {
     return this.baseService.atomicExecution.execute(async () => {
       const { sendAccountInvitation, ...entityInput } = input
-      const guardian = new Guardian(entityInput)
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.guardians.findById(candidate),
+        entityInput.id,
+        'GUARDIAN_ID_ALREADY_EXISTS',
+        'Guardian',
+      )
+      const guardian = new Guardian({ ...entityInput, id })
       await this.baseService.entities.guardians.save(guardian)
       await scheduleAccountInvitationIfEligible(
         this.baseService,

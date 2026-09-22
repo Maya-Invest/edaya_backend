@@ -55,13 +55,20 @@ export const gradeLevels = pgTable('grade_levels', {
 
 // 6. Staff Member Table
 
+export const subjectCategories = pgTable('subject_categories', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('subject_categories', table))
+
 export const subjects = pgTable('subjects', {
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
   code: text('code'),
   defaultCoefficient: integer('default_coefficient'),
-  category: text('category').notNull().default('Scientifique'),
+  categoryId: text('category_id').notNull(),
   color: text('color').notNull().default('mint'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('subjects', table))

@@ -4,6 +4,7 @@ export { classSubjectProgressConfig, validateClassSubjectProgressSave } from './
 export { gradeLevelSubjectConfig, validateGradeLevelSubjectDelete, validateGradeLevelSubjectSave } from './academics/grade-level-subject'
 export { gradeLevelSubjectMatterConfig, validateGradeLevelSubjectMatterSave } from './academics/grade-level-subject-matter'
 export { subjectConfig } from './academics/subject'
+export { subjectCategoryConfig } from './academics/subject-category'
 export { subjectMatterConfig } from './academics/subject-matter'
 export { accountInvitationConfig } from './access/account-invitation'
 export { assessmentConfig } from './assessments/assessment'

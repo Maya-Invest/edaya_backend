@@ -956,6 +956,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/register-teacher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** register-teacher */
+        post: operations["commands.registerTeacher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/update-staff-member-status": {
         parameters: {
             query?: never;
@@ -1613,6 +1630,23 @@ export interface paths {
         put?: never;
         /** configure-subject */
         post: operations["commands.configureSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-subject-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-subject-category */
+        post: operations["commands.configureSubjectCategory"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7824,6 +7858,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/subject-categories/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Subject Categories */
+        post: operations["entities.subjectCategories.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Subject Categories */
+        post: operations["entities.subjectCategories.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Subject Categories */
+        post: operations["entities.subjectCategories.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Subject Categories */
+        get: operations["entities.subjectCategories.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Subject Categories */
+        post: operations["entities.subjectCategories.save"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Subject Categories */
+        post: operations["entities.subjectCategories.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/batch-save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch save Subject Categories */
+        post: operations["entities.subjectCategories.batchSave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-categories/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete Subject Categories */
+        post: operations["entities.subjectCategories.batchDelete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/subject-matters/list": {
         parameters: {
             query?: never;
@@ -12055,6 +12225,38 @@ export interface components {
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
         };
+        Teacher: {
+            id: string;
+            schoolId: string;
+            firstName: string;
+            lastName: string;
+            code?: string | null;
+            photoUrl?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
+            subjectId?: string | null;
+            /** @default true */
+            isActive: boolean;
+            createdAt?: unknown;
+        };
+        RegisterTeacherCommand: {
+            id: string;
+            schoolId: string;
+            firstName: string;
+            lastName: string;
+            code?: string | null;
+            photoUrl?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            notificationEmail?: string | null;
+            notificationPhone?: string | null;
+            subjectId?: string | null;
+            /** @default true */
+            isActive: boolean;
+            createdAt?: unknown;
+        };
         UpdateStaffMemberStatusCommand: {
             staffId: string;
             isActive: boolean;
@@ -12116,22 +12318,6 @@ export interface components {
              */
             status: "active" | "inactive" | "graduated" | "archived";
             enrollmentDate?: unknown;
-            createdAt?: unknown;
-        };
-        Teacher: {
-            id: string;
-            schoolId: string;
-            firstName: string;
-            lastName: string;
-            code?: string | null;
-            photoUrl?: string | null;
-            email?: string | null;
-            phone?: string | null;
-            notificationEmail?: string | null;
-            notificationPhone?: string | null;
-            subjectId?: string | null;
-            /** @default true */
-            isActive: boolean;
             createdAt?: unknown;
         };
         LinkActorSubjectResponse: {
@@ -12915,11 +13101,7 @@ export interface components {
             shortName?: string | null;
             code?: string | null;
             defaultCoefficient?: number | null;
-            /**
-             * @default Scientifique
-             * @enum {string}
-             */
-            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
+            categoryId: string;
             /**
              * @default mint
              * @enum {string}
@@ -12933,16 +13115,23 @@ export interface components {
             shortName?: string | null;
             code?: string | null;
             defaultCoefficient?: number | null;
-            /**
-             * @default Scientifique
-             * @enum {string}
-             */
-            category: "Scientifique" | "Littéraire" | "Langues" | "Sciences humaines" | "Sport" | "Arts";
+            categoryId: string;
             /**
              * @default mint
              * @enum {string}
              */
             color: "mint" | "sky" | "warm";
+            createdAt?: unknown;
+        };
+        SubjectCategory: {
+            id: string;
+            schoolId: string;
+            name: string;
+            createdAt?: unknown;
+        };
+        SubjectCategoryConfigCommand: {
+            id: string;
+            name: string;
             createdAt?: unknown;
         };
         SubjectMatter: {
@@ -15735,29 +15924,33 @@ export interface components {
             entities: components["schemas"]["Subject"][];
         };
         Filter_34: Record<string, never>;
+        SubjectCategoriesBatchSave: {
+            entities: components["schemas"]["SubjectCategory"][];
+        };
+        Filter_35: Record<string, never>;
         SubjectMattersBatchSave: {
             entities: components["schemas"]["SubjectMatter"][];
         };
-        Filter_37: Record<string, never>;
         Filter_38: Record<string, never>;
-        Filter_35: Record<string, never>;
+        Filter_39: Record<string, never>;
+        Filter_36: Record<string, never>;
         ClassGroupsBatchSave: {
             entities: components["schemas"]["ClassGroup"][];
         };
-        Filter_36: Record<string, never>;
-        Filter_39: Record<string, never>;
+        Filter_37: Record<string, never>;
+        Filter_40: Record<string, never>;
         ClassSubjectMattersBatchSave: {
             entities: components["schemas"]["ClassSubjectMatter"][];
         };
-        Filter_40: Record<string, never>;
+        Filter_41: Record<string, never>;
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_42: Record<string, never>;
         ActivitiesBatchSave: {
             entities: components["schemas"]["Activity"][];
         };
-        Filter_42: Record<string, never>;
+        Filter_43: Record<string, never>;
         ActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ActivityEnrollment"][];
         };
@@ -15767,60 +15960,60 @@ export interface components {
             classGroupId: string;
             createdAt?: unknown;
         };
-        Filter_43: Record<string, never>;
+        Filter_44: Record<string, never>;
         ClassActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ClassActivityEnrollment"][];
         };
-        Filter_44: Record<string, never>;
+        Filter_45: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_45: Record<string, never>;
         Filter_46: Record<string, never>;
+        Filter_47: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_47: Record<string, never>;
+        Filter_48: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_48: Record<string, never>;
+        Filter_49: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
-        Filter_49: Record<string, never>;
         Filter_50: Record<string, never>;
         Filter_51: Record<string, never>;
         Filter_52: Record<string, never>;
+        Filter_53: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_53: Record<string, never>;
+        Filter_54: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_55: Record<string, never>;
+        Filter_56: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
-        Filter_54: Record<string, never>;
-        Filter_56: Record<string, never>;
+        Filter_55: Record<string, never>;
+        Filter_57: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_57: Record<string, never>;
+        Filter_58: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
-        Filter_58: Record<string, never>;
+        Filter_59: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_59: Record<string, never>;
+        Filter_60: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_60: Record<string, never>;
+        Filter_61: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };
@@ -15885,7 +16078,7 @@ export interface components {
             createdAt?: unknown;
             updatedAt?: unknown;
         };
-        Filter_61: Record<string, never>;
+        Filter_62: Record<string, never>;
     };
     responses: never;
     parameters: never;
@@ -19443,6 +19636,84 @@ export interface operations {
             };
         };
     };
+    "commands.registerTeacher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description register-teacher payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RegisterTeacherCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed register-teacher */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Teacher"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.updateStaffMemberStatus": {
         parameters: {
             query?: never;
@@ -22428,6 +22699,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Subject"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureSubjectCategory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-subject-category payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubjectCategoryConfigCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-subject-category */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectCategory"];
                 };
             };
             /** @description Invalid request payload */
@@ -53088,6 +53437,703 @@ export interface operations {
             };
         };
     };
+    "entities.subjectCategories.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_34"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectCategory"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_34"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectCategory"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Subject Categories not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_34"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectCategory"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Subject Categories not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories entity */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubjectCategory"];
+            };
+        };
+        responses: {
+            /** @description Saved Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubjectCategory"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Use a domain command for this entity */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityDelete"];
+            };
+        };
+        responses: {
+            /** @description Deleted Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.batchSave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories batch save request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubjectCategoriesBatchSave"];
+            };
+        };
+        responses: {
+            /** @description Batch saved Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        ids: string[];
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Use a domain command for this entity */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectCategories.batchDelete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Subject Categories batch delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityBatchDelete"];
+            };
+        };
+        responses: {
+            /** @description Batch deleted Subject Categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "entities.subjectMatters.list": {
         parameters: {
             query?: never;
@@ -53098,7 +54144,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53184,7 +54230,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53281,7 +54327,7 @@ export interface operations {
         /** @description Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_34"] & {
+                "application/json": components["schemas"]["Filter_35"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53795,7 +54841,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53881,7 +54927,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -53978,7 +55024,7 @@ export interface operations {
         /** @description Grade Level Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_37"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54152,7 +55198,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54238,7 +55284,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54335,7 +55381,7 @@ export interface operations {
         /** @description Grade Level Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_38"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54509,7 +55555,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54595,7 +55641,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -54692,7 +55738,7 @@ export interface operations {
         /** @description Class Groups query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_35"] & {
+                "application/json": components["schemas"]["Filter_36"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55206,7 +56252,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55292,7 +56338,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55389,7 +56435,7 @@ export interface operations {
         /** @description Class Subjects query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_36"] & {
+                "application/json": components["schemas"]["Filter_37"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55723,7 +56769,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55809,7 +56855,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -55906,7 +56952,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_39"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56420,7 +57466,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56506,7 +57552,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -56603,7 +57649,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57117,7 +58163,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57203,7 +58249,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57300,7 +58346,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57814,7 +58860,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57900,7 +58946,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -57997,7 +59043,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58511,7 +59557,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58597,7 +59643,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -58694,7 +59740,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59208,7 +60254,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59294,7 +60340,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59391,7 +60437,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59905,7 +60951,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -59991,7 +61037,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -60088,7 +61134,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -60262,7 +61308,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -60348,7 +61394,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -60445,7 +61491,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -60959,7 +62005,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61045,7 +62091,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61142,7 +62188,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61656,7 +62702,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61742,7 +62788,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61839,7 +62885,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62353,7 +63399,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62439,7 +63485,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62536,7 +63582,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62710,7 +63756,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62796,7 +63842,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -62893,7 +63939,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63067,7 +64113,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63153,7 +64199,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63250,7 +64296,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63424,7 +64470,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63510,7 +64556,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -63607,7 +64653,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -64121,7 +65167,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -64207,7 +65253,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -64304,7 +65350,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -64818,7 +65864,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -64904,7 +65950,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65001,7 +66047,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65515,7 +66561,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65601,7 +66647,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65698,7 +66744,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65872,7 +66918,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65958,7 +67004,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66055,7 +67101,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66569,7 +67615,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66655,7 +67701,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66752,7 +67798,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67266,7 +68312,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67352,7 +68398,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67449,7 +68495,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67963,7 +69009,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68049,7 +69095,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68146,7 +69192,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68660,7 +69706,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68746,7 +69792,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68843,7 +69889,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69357,7 +70403,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69443,7 +70489,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69540,7 +70586,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */

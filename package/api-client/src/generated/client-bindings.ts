@@ -432,6 +432,19 @@ export const clientBindings = {
           "batchDelete": true
         }
       },
+      "subjectCategories": {
+        "publicName": "subject-categories",
+        "schemaName": "SubjectCategory",
+        "allowDirectSave": true,
+        "publicOperations": {
+          "create": true,
+          "update": true,
+          "delete": true,
+          "batchCreate": true,
+          "batchUpdate": true,
+          "batchDelete": true
+        }
+      },
       "subjectMatters": {
         "publicName": "subject-matters",
         "schemaName": "SubjectMatter",
@@ -873,6 +886,11 @@ export const clientBindings = {
         "requestSchemaName": "RegisterStaffMemberCommand",
         "responseSchemaName": "StaffMember"
       },
+      "registerTeacher": {
+        "publicName": "register-teacher",
+        "requestSchemaName": "RegisterTeacherCommand",
+        "responseSchemaName": "Teacher"
+      },
       "updateStaffMemberStatus": {
         "publicName": "update-staff-member-status",
         "requestSchemaName": "UpdateStaffMemberStatusCommand",
@@ -1067,6 +1085,11 @@ export const clientBindings = {
         "publicName": "configure-subject",
         "requestSchemaName": "SubjectConfigCommand",
         "responseSchemaName": "Subject"
+      },
+      "configureSubjectCategory": {
+        "publicName": "configure-subject-category",
+        "requestSchemaName": "SubjectCategoryConfigCommand",
+        "responseSchemaName": "SubjectCategory"
       },
       "configureSubjectMatter": {
         "publicName": "configure-subject-matter",

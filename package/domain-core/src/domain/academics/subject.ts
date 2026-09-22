@@ -1,15 +1,7 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
-
-export enum SubjectCategory {
-  Scientific = 'Scientifique',
-  Literary = 'Littéraire',
-  Languages = 'Langues',
-  Humanities = 'Sciences humaines',
-  Sport = 'Sport',
-  Arts = 'Arts',
-}
+import { defaultSubjectCategoryId, SubjectCategory } from './subject-category'
 
 export enum SubjectColor {
   Mint = 'mint',
@@ -24,13 +16,26 @@ export const subjectSchema = z.object({
   shortName: z.string().trim().min(1, 'shortName must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   defaultCoefficient: z.number().positive('defaultCoefficient must be a finite, positive number').nullable().optional().transform(v => v === null ? undefined : v),
-  category: z.nativeEnum(SubjectCategory).default(SubjectCategory.Scientific),
+  categoryId: z.string().trim().min(1, 'categoryId must not be blank'),
   color: z.nativeEnum(SubjectColor).default(SubjectColor.Mint),
   createdAt: zodDate().default(() => new Date()),
 })
 
 export type SubjectData = z.infer<typeof subjectSchema>
-export type SubjectInput = z.input<typeof subjectSchema>
+export type SubjectInput = Omit<z.input<typeof subjectSchema>, 'categoryId'> & {
+  categoryId?: string
+  /** Legacy name used by seeds. Resolved to categoryId for the school. */
+  category?: string
+}
+
+function subjectConstructorArgs(args: SubjectInput): z.input<typeof subjectSchema> {
+  const { category, categoryId, ...rest } = args
+  return {
+    ...rest,
+    categoryId: categoryId?.trim()
+      || defaultSubjectCategoryId(args.schoolId, category?.trim() || SubjectCategory.Scientific),
+  }
+}
 
 export const subjectCreateSchema = subjectSchema.omit({ createdAt: true })
 export const subjectUpdateSchema = subjectSchema.partial().required({ id: true })
@@ -43,7 +48,7 @@ export class Subject {
   readonly data: SubjectData
 
   constructor(args: SubjectInput) {
-    this.data = parseDomain(subjectSchema, args)
+    this.data = parseDomain(subjectSchema, subjectConstructorArgs(args))
   }
 
   get id() { return this.data.id }
@@ -53,7 +58,7 @@ export class Subject {
   get displayShortName() { return this.data.shortName ?? this.data.name }
   get code() { return this.data.code }
   get defaultCoefficient() { return this.data.defaultCoefficient }
-  get category() { return this.data.category }
+  get categoryId() { return this.data.categoryId }
   get color() { return this.data.color }
   get createdAt() { return this.data.createdAt }
 
@@ -65,7 +70,10 @@ export class Subject {
       shortName: overrides.shortName !== undefined ? overrides.shortName : this.shortName,
       code: overrides.code !== undefined ? overrides.code : this.code,
       defaultCoefficient: overrides.defaultCoefficient !== undefined ? overrides.defaultCoefficient : this.defaultCoefficient,
-      category: overrides.category ?? this.category,
+      categoryId: overrides.categoryId
+        ?? (overrides.category
+          ? defaultSubjectCategoryId(this.schoolId, overrides.category)
+          : this.categoryId),
       color: overrides.color ?? this.color,
       createdAt: this.createdAt,
     })

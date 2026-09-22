@@ -1,14 +1,15 @@
-import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole } from '@edaya/core'
+import type { AcademicPeriod, AcademicPeriodInput, AcademicYear, Activity, ActivityEnrollment, ActivityEnrollmentInput, ActivityInput, Attachment, AttachmentInput, ClassGroupInput, GradeLevel, GradeLevelInput, PeriodDefinition, PeriodDefinitionInput, Resource, ResourceAssignmentInput, ResourceInput, School, SchoolInput, StaffAssignment, StaffAssignmentInput, StaffMember, StaffMemberInput, StaffProfileRole, Teacher, TeacherInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
-import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity } from '@edaya/core'
+import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
 import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
 import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/profile-photo-uploads'
 import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
+import { ensureDefaultSubjectCategories } from '../../capabilities/academics/ensure-default-subject-categories'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 
 import { requireSchool } from '../require-school'
@@ -51,8 +52,13 @@ export interface UpdateClassGroupConfigurationInput extends Partial<ClassGroupIn
   classGroupId: string
 }
 
-export type RegisterStaffMemberInput = StaffMemberInput & {
+export type RegisterStaffMemberInput = Omit<StaffMemberInput, 'id'> & {
+  id?: string
   sendAccountInvitation?: boolean
+}
+
+export type RegisterTeacherInput = Omit<TeacherInput, 'id'> & {
+  id?: string
 }
 
 export interface UpdateStaffMemberStatusInput {
@@ -113,6 +119,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
       const school = new SchoolEntity(schoolInput)
       await this.baseService.entities.schools.save(school)
       await seedSchoolNotificationTemplates(this.baseService.repositories, school.id)
+      await ensureDefaultSubjectCategories(this.baseService.repositories, school.id)
       await ensureSchoolPermissionProfiles(this.baseService.repositories, school.id)
       return school
     })
@@ -319,9 +326,15 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async registerStaffMember(staffMemberInput: RegisterStaffMemberInput): Promise<StaffMember> {
     return this.baseService.atomicExecution.execute(async () => {
       const { sendAccountInvitation, ...entityInput } = staffMemberInput
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.staffMembers.findById(candidate),
+        entityInput.id,
+        'STAFF_MEMBER_ID_ALREADY_EXISTS',
+        'Staff member',
+      )
       const staffMember = await this.saveConstructed(
         this.baseService.entities.staffMembers,
-        new StaffMemberEntity(entityInput),
+        new StaffMemberEntity({ ...entityInput, id }),
       )
 
       await scheduleAccountInvitationIfEligible(
@@ -334,6 +347,21 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         staffMember,
       )
       return staffMember
+    })
+  }
+
+  async registerTeacher(teacherInput: RegisterTeacherInput): Promise<Teacher> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const id = await this.allocateNewEntityId(
+        candidate => this.baseService.repositories.teachers.findById(candidate),
+        teacherInput.id,
+        'TEACHER_ID_ALREADY_EXISTS',
+        'Teacher',
+      )
+      return this.saveConstructed(
+        this.baseService.entities.teachers,
+        new TeacherEntity({ ...teacherInput, id }),
+      )
     })
   }
 

@@ -56,6 +56,7 @@ import type {
   StudentServiceEnrollment,
   StudentYearAccount,
   Subject,
+  SubjectCategoryEntity,
   SubjectMatter,
   Teacher,
   TeacherAssignment,
@@ -96,6 +97,7 @@ export interface CoreEntityMap {
   messageDeliveries: MessageDelivery
   schoolNotificationTemplates: SchoolNotificationTemplates
   subjects: Subject
+  subjectCategories: SubjectCategoryEntity
   subjectMatters: SubjectMatter
   gradeLevelSubjects: GradeLevelSubject
   gradeLevelSubjectMatters: GradeLevelSubjectMatter
@@ -172,6 +174,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'messageDeliveries',
   'schoolNotificationTemplates',
   'subjects',
+  'subjectCategories',
   'subjectMatters',
   'gradeLevelSubjects',
   'gradeLevelSubjectMatters',

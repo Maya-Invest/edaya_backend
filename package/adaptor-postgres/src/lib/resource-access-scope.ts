@@ -41,6 +41,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
   messageDeliveries: s.messageDeliveries,
   schoolNotificationTemplates: s.schoolNotificationTemplates,
   subjects: s.subjects,
+  subjectCategories: s.subjectCategories,
   subjectMatters: s.subjectMatters,
   gradeLevelSubjects: s.gradeLevelSubjects,
   gradeLevelSubjectMatters: s.gradeLevelSubjectMatters,

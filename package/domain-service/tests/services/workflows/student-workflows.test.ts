@@ -308,6 +308,66 @@ describe('SchoolService student workflows', () => {
     expect((await guardians.findById('gua-new'))).toBeDefined()
   })
 
+  test('registerGuardian persists code and rejects an existing id', async () => {
+    const { guardians, service } = await createStudentAdminContext()
+
+    const created = await service.studentWorkflow.registerGuardian({
+      id: 'gua-coded',
+      schoolId: 'sch1',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      code: 'GRD-001',
+      sendAccountInvitation: false,
+    })
+
+    expect(created.code).toBe('GRD-001')
+    expect((await guardians.findById('gua-coded'))?.code).toBe('GRD-001')
+
+    await expect(service.studentWorkflow.registerGuardian({
+      id: 'gua-coded',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Guardian',
+      code: 'GRD-002',
+      sendAccountInvitation: false,
+    })).rejects.toMatchObject({ code: 'GUARDIAN_ID_ALREADY_EXISTS' })
+
+    expect((await guardians.findById('gua-coded'))).toMatchObject({
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      code: 'GRD-001',
+    })
+  })
+
+  test('registerStudent rejects an existing id', async () => {
+    const { students, service } = await createStudentAdminContext({
+      inviteBaseUrl: 'https://app.edaya.test/invite',
+    })
+
+    await service.studentWorkflow.registerStudent({
+      id: 'stu-new',
+      schoolId: 'sch1',
+      firstName: 'New',
+      lastName: 'Student',
+      birthDate: new Date('2011-01-01'),
+      sendAccountInvitation: false,
+    })
+
+    await expect(service.studentWorkflow.registerStudent({
+      id: 'stu-new',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Student',
+      birthDate: new Date('2012-01-01'),
+      sendAccountInvitation: false,
+    })).rejects.toMatchObject({ code: 'STUDENT_ID_ALREADY_EXISTS' })
+
+    expect((await students.findById('stu-new'))).toMatchObject({
+      firstName: 'New',
+      lastName: 'Student',
+    })
+  })
+
   test('closeEnrollment closes active enrollments', async () => {
     const { enrollments, service } = await createStudentAdminContext()
 

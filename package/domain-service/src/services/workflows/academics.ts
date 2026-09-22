@@ -1,9 +1,9 @@
-import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
+import type { ClassSubjectInput, ClassSubjectMatterInput, GradeLevelSubject, GradeLevelSubjectInput, GradeLevelSubjectMatter, GradeLevelSubjectMatterInput, Subject, SubjectCategoryEntity, SubjectCategoryInput, SubjectInput, SubjectMatter, SubjectMatterInput } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Subject as SubjectEntity, SubjectCategoryEntity as SubjectCategoryRecord, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
 
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -62,6 +62,7 @@ export type AssignMatterToGradeLevelSubjectInput = GradeLevelSubjectMatterInput 
 }
 
 export type ConfigureSubjectInput = SubjectInput & { schoolId?: string }
+export type ConfigureSubjectCategoryInput = SubjectCategoryInput & { schoolId?: string }
 export type ConfigureSubjectMatterInput = SubjectMatterInput
 
 export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
@@ -79,6 +80,16 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       const subject = new SubjectEntity({ ...input, schoolId })
       await this.baseService.entities.subjects.save(subject)
       return subject
+    })
+  }
+
+  async configureSubjectCategory(input: ConfigureSubjectCategoryInput): Promise<SubjectCategoryEntity> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const schoolId = input.schoolId ?? this.baseService.actor.schoolId
+      this.checkActorSchool(schoolId)
+      const category = new SubjectCategoryRecord({ ...input, schoolId })
+      await this.baseService.entities.subjectCategories.save(category)
+      return category
     })
   }
 

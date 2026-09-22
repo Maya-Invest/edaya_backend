@@ -61,6 +61,7 @@ export const CLEAR_TABLE_ORDER = [
   'subject_matters',
   'class_groups',
   'subjects',
+  'subject_categories',
   'grade_scales',
   'report_card_definitions',
   'disciplinary_actions',

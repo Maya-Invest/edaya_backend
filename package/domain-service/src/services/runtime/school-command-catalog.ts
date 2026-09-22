@@ -14,6 +14,7 @@ export type SchoolCommandKey
     | 'createClassGroup'
     | 'updateClassGroupConfiguration'
     | 'registerStaffMember'
+    | 'registerTeacher'
     | 'updateStaffMemberStatus'
     | 'updateStaffMemberProfile'
     | 'assignStaffToClass'
@@ -37,6 +38,7 @@ export type SchoolCommandKey
     | 'revokeAccountInvitation'
     | 'acceptAccountInvitation'
     | 'configureSubject'
+    | 'configureSubjectCategory'
     | 'configureSubjectMatter'
     | 'offerSubjectToClass'
     | 'assignMatterToClassSubject'
@@ -186,6 +188,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'createClassGroup',
   'updateClassGroupConfiguration',
   'registerStaffMember',
+  'registerTeacher',
   'updateStaffMemberStatus',
   'updateStaffMemberProfile',
   'assignStaffToClass',
@@ -209,6 +212,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'revokeAccountInvitation',
   'acceptAccountInvitation',
   'configureSubject',
+  'configureSubjectCategory',
   'configureSubjectMatter',
   'offerSubjectToClass',
   'assignMatterToClassSubject',

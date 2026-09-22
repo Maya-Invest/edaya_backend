@@ -2,7 +2,7 @@ import type { PublicEntityOperations } from "./public-operations";
 import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
+import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -94,6 +94,7 @@ const apiEntityDecorations = {
   messageDeliveries: decoration("message-deliveries", "Message Deliveries", entitySchemas.messageDeliveryQuerySchema, entitySchemas.messageDeliveryResponseSchema, MessageDelivery, PUBLIC_CRUD),
   schoolNotificationTemplates: decoration("school-notification-templates", "School Notification Templates", entitySchemas.schoolNotificationTemplatesQuerySchema, entitySchemas.schoolNotificationTemplatesResponseSchema, SchoolNotificationTemplates, COMMAND_ONLY),
   subjects: decoration("subjects", "Subjects", entitySchemas.subjectQuerySchema, entitySchemas.subjectResponseSchema, Subject, PUBLIC_CRUD),
+  subjectCategories: decoration("subject-categories", "Subject Categories", entitySchemas.subjectCategoryQuerySchema, entitySchemas.subjectCategoryResponseSchema, SubjectCategoryEntity, PUBLIC_CRUD),
   subjectMatters: decoration("subject-matters", "Subject Matters", entitySchemas.subjectMatterQuerySchema, entitySchemas.subjectMatterResponseSchema, SubjectMatter, PUBLIC_CRUD),
   gradeLevelSubjects: decoration("grade-level-subjects", "Grade Level Subjects", entitySchemas.gradeLevelSubjectQuerySchema, entitySchemas.gradeLevelSubjectResponseSchema, GradeLevelSubject, COMMAND_ONLY),
   gradeLevelSubjectMatters: decoration("grade-level-subject-matters", "Grade Level Subject Matters", entitySchemas.gradeLevelSubjectMatterQuerySchema, entitySchemas.gradeLevelSubjectMatterResponseSchema, GradeLevelSubjectMatter, COMMAND_ONLY),
@@ -163,6 +164,7 @@ export const coreCommands = [
   command("create-class-group", "createClassGroup", commandSchemas.createClassGroupCommandSchema),
   command("update-class-group-configuration", "updateClassGroupConfiguration", commandSchemas.updateClassGroupConfigurationCommandSchema),
   command("register-staff-member", "registerStaffMember", commandSchemas.registerStaffMemberCommandSchema),
+  command("register-teacher", "registerTeacher", commandSchemas.registerTeacherCommandSchema),
   command("update-staff-member-status", "updateStaffMemberStatus", commandSchemas.updateStaffMemberStatusCommandSchema),
   command("update-staff-member-profile", "updateStaffMemberProfile", commandSchemas.updateStaffMemberProfileCommandSchema),
   command("link-actor-subject", "linkActorSubject", commandSchemas.linkActorSubjectCommandSchema),
@@ -202,6 +204,7 @@ export const coreCommands = [
   command("update-guardian-contact-methods", "updateGuardianContactMethods", commandSchemas.updateGuardianContactMethodsCommandSchema),
   command("update-guardian-student-link", "updateGuardianStudentLink", commandSchemas.updateGuardianStudentLinkCommandSchema),
   command("configure-subject", "configureSubject", commandSchemas.subjectConfigCommandSchema),
+  command("configure-subject-category", "configureSubjectCategory", commandSchemas.subjectCategoryConfigCommandSchema),
   command("configure-subject-matter", "configureSubjectMatter", commandSchemas.subjectMatterConfigCommandSchema),
   command("offer-subject-to-class", "offerSubjectToClass", commandSchemas.offerSubjectToClassCommandSchema),
   command("assign-matter-to-class-subject", "assignMatterToClassSubject", commandSchemas.assignMatterToClassSubjectCommandSchema),

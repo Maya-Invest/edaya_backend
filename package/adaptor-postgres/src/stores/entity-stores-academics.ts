@@ -25,6 +25,7 @@ import {
   GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor,
   PeriodDefinition as PeriodDefinitionCtor,
   Subject as SubjectCtor,
+  SubjectCategoryEntity as SubjectCategoryCtor,
   SubjectMatter as SubjectMatterCtor,
 } from '@edaya/core'
 import { customStore, defaultStore } from '../lib/store-factory'
@@ -33,7 +34,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createAcademicsEntityStores(db: any): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectMatters' | 'gradeLevelSubjects' | 'gradeLevelSubjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
+export function createAcademicsEntityStores(db: any): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectCategories' | 'subjectMatters' | 'gradeLevelSubjects' | 'gradeLevelSubjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
   return {
     academicYears: customStore(
       db,
@@ -90,6 +91,8 @@ export function createAcademicsEntityStores(db: any): Pick<EntityStores, 'academ
     gradeLevels: defaultStore(db, schema.gradeLevels, GradeLevelCtor),
 
     subjects: defaultStore(db, schema.subjects, SubjectCtor),
+
+    subjectCategories: defaultStore(db, schema.subjectCategories, SubjectCategoryCtor),
 
     subjectMatters: customStore(
       db,

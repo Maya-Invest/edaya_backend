@@ -122,7 +122,7 @@ describe('SchoolService setup workflows', () => {
   })
 
   test('registerSchool seeds notification templates for a new school', async () => {
-    const { schoolNotificationTemplates, schools, staffPermissionProfiles, service } = await createContext({
+    const { schoolNotificationTemplates, schools, staffPermissionProfiles, subjectCategories, service } = await createContext({
       actorOverride: createPlatformRegisterTestActor('sch-new'),
     })
 
@@ -136,6 +136,7 @@ describe('SchoolService setup workflows', () => {
     expect((await schools.findById('sch-new'))?.name).toBe('New School')
     expect(await schoolNotificationTemplates.findById('sch-new')).toBeDefined()
     expect(await staffPermissionProfiles.count({ schoolId: 'sch-new' })).toBeGreaterThan(0)
+    expect(await subjectCategories.count({ schoolId: 'sch-new' })).toBe(6)
   })
 
   test('updateSchoolConfiguration updates school fields for elevated staff', async () => {
@@ -282,6 +283,77 @@ describe('SchoolService setup workflows', () => {
 
     expect(deactivated.isActive).toBe(false)
     expect((await staffMembers.findById('staff-new'))?.isActive).toBe(false)
+  })
+
+  test('registerStaffMember persists code and rejects an existing id', async () => {
+    const { staffMembers, service } = await createContext()
+
+    const created = await service.setupWorkflow.registerStaffMember({
+      id: 'staff-coded',
+      schoolId: 'sch1',
+      firstName: 'Coded',
+      lastName: 'Staff',
+      code: 'STF-001',
+      sendAccountInvitation: false,
+    })
+
+    expect(created.code).toBe('STF-001')
+    expect((await staffMembers.findById('staff-coded'))?.code).toBe('STF-001')
+
+    await expect(service.setupWorkflow.registerStaffMember({
+      id: 'staff-coded',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Person',
+      code: 'STF-002',
+      sendAccountInvitation: false,
+    })).rejects.toMatchObject({ code: 'STAFF_MEMBER_ID_ALREADY_EXISTS' })
+
+    expect((await staffMembers.findById('staff-coded'))).toMatchObject({
+      firstName: 'Coded',
+      lastName: 'Staff',
+      code: 'STF-001',
+    })
+  })
+
+  test('registerTeacher is create-only and keeps uniqueness on code not id', async () => {
+    const { teachers, service } = await createContext()
+
+    const created = await service.setupWorkflow.registerTeacher({
+      id: 'teacher-1',
+      schoolId: 'sch1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      code: 'T001',
+      email: 'ada@example.test',
+    })
+
+    expect(created.code).toBe('T001')
+    expect(created.email).toBe('ada@example.test')
+
+    await expect(service.setupWorkflow.registerTeacher({
+      id: 'teacher-1',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Teacher',
+      code: 'T002',
+    })).rejects.toMatchObject({ code: 'TEACHER_ID_ALREADY_EXISTS' })
+
+    await expect(service.setupWorkflow.registerTeacher({
+      id: 'teacher-2',
+      schoolId: 'sch1',
+      firstName: 'Other',
+      lastName: 'Teacher',
+      code: 'T001',
+    })).rejects.toMatchObject({ code: 'TEACHER_CODE_ALREADY_EXISTS' })
+
+    expect(await teachers.findById('teacher-1')).toMatchObject({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      code: 'T001',
+      email: 'ada@example.test',
+    })
+    expect(await teachers.findById('teacher-2')).toBeUndefined()
   })
 
   test('updateStaffMemberProfile updates profile fields', async () => {

@@ -62,7 +62,9 @@ import {
   studentNoteSchema,
   studentSchema,
   StudentStatus,
+  teacherSchema,
   subjectMatterSchema,
+  subjectCategorySchema,
   subjectSchema,
 } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
@@ -84,6 +86,10 @@ export const resourceConfigCommandSchema = objectFromSchema(resourceSchema)
 export const subjectConfigCommandSchema = objectFromSchema(subjectSchema)
   .omit({ schoolId: true })
   .openapi("SubjectConfigCommand");
+
+export const subjectCategoryConfigCommandSchema = objectFromSchema(subjectCategorySchema)
+  .omit({ schoolId: true })
+  .openapi("SubjectCategoryConfigCommand");
 
 export const subjectMatterConfigCommandSchema = objectFromSchema(subjectMatterSchema)
   .openapi("SubjectMatterConfigCommand");
@@ -189,6 +195,9 @@ export const registerStaffMemberCommandSchema = objectFromSchema(staffMemberSche
     sendAccountInvitation: field.optionalBoolean(),
   })
   .openapi("RegisterStaffMemberCommand");
+
+export const registerTeacherCommandSchema = objectFromSchema(teacherSchema)
+  .openapi("RegisterTeacherCommand");
 
 export const updateStaffMemberStatusCommandSchema = z.object({
   staffId: field.id(),
