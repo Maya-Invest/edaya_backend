@@ -1,4 +1,4 @@
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -16,6 +16,35 @@ describe('PostgresSchoolRepositories with PGlite', () => {
 
   afterEach(async () => {
     await pglite.close()
+  })
+
+  test('round-trips a fractional assessment score', async () => {
+    await repos.assessments.save(new Assessment({
+      id: 'assessment-fraction',
+      classGroupId: 'class-a',
+      classSubjectId: 'subject-a',
+      periodId: 'period-a',
+      title: 'Quiz',
+      kind: AssessmentKind.Quiz,
+      maxScore: 20,
+      coefficient: 1.5,
+      startsAt: new Date('2026-02-01T09:00:00.000Z'),
+      endsAt: new Date('2026-02-01T10:00:00.000Z'),
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+    }))
+    await repos.assessmentResults.save(new AssessmentResult({
+      id: 'result-fraction',
+      studentId: 'student-a',
+      assessmentId: 'assessment-fraction',
+      score: 12.5,
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+    }))
+
+    const assessment = await repos.assessments.findById('assessment-fraction')
+    const result = await repos.assessmentResults.findById('result-fraction')
+    expect(assessment?.maxScore).toBe(20)
+    expect(assessment?.coefficient).toBe(1.5)
+    expect(result?.score).toBe(12.5)
   })
 
   test('persists and reads schools through PostgresStore', async () => {

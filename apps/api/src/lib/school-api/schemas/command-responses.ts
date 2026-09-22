@@ -226,6 +226,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   registerTeacher: teacherResponseSchema,
   updateStaffMemberStatus: staffMemberResponseSchema,
   updateStaffMemberProfile: staffMemberResponseSchema,
+  updateTeacherSelfProfile: teacherResponseSchema,
   linkActorSubject: z.discriminatedUnion("kind", [
     z.object({
       kind: z.literal("staff"),
@@ -368,6 +369,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   listClassSubjectAssessmentResultsForPeriod: assessmentResultCommandListResponseSchema,
   generateReportCardResult: resultResponseSchema,
   writeHomeroomReportComment: resultResponseSchema,
+  writeReportCardSectionComments: resultResponseSchema,
   publishReportCardResult: resultResponseSchema,
   renderClassLogbook: documentIssuanceProjectionResponseSchema,
   requestDocumentIssuance: documentIssuanceProjectionResponseSchema,

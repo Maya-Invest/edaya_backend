@@ -36,6 +36,11 @@ export interface WriteHomeroomReportCommentInput {
   teacherComment: string
 }
 
+export interface WriteReportCardSectionCommentsInput {
+  id: string
+  sections: Array<{ sectionId: string, comment?: string | null }>
+}
+
 export type CreateGradeScaleInput = GradeScaleInput
 export type CreateReportCardDefinitionInput = ReportCardDefinitionInput
 export type CreateReportCardDefinitionSectionInput = ReportCardDefinitionSectionInput
@@ -172,6 +177,47 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         classSize: existing.classSize,
         passThreshold: existing.passThreshold,
         teacherComment: input.teacherComment.trim(),
+        principalComment: existing.principalComment,
+        status: existing.status,
+        generatedAt: existing.generatedAt,
+        publishedAt: existing.publishedAt,
+        aggregation: existing.aggregation,
+      })
+      await this.baseService.entities.results.save(updated)
+      return updated
+    })
+  }
+
+  async writeReportCardSectionComments(input: WriteReportCardSectionCommentsInput): Promise<ReportCardResult> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const existing = await this.requireEntity(this.baseService.entities.results, input.id)
+      const commentsBySectionId = new Map<string, string | undefined>()
+      for (const section of input.sections) {
+        const comment = section.comment?.trim()
+        commentsBySectionId.set(section.sectionId, comment ? comment : undefined)
+      }
+      const seen = new Set<string>()
+      const sectionResults = patchReportCardSectionComments(existing.sectionResults, commentsBySectionId, seen)
+      if (seen.size !== commentsBySectionId.size) {
+        throw new BusinessRuleViolationError(
+          'REPORT_CARD_COMMENT_INVALID_SECTION',
+          'One or more report card sections do not belong to this result',
+        )
+      }
+      const updated = new ReportCardResult({
+        id: existing.id,
+        reportCardDefinitionId: existing.reportCardDefinitionId,
+        studentId: existing.studentId,
+        classGroupId: existing.classGroupId,
+        periodId: existing.periodId,
+        sectionResults,
+        attendanceSummary: existing.attendanceSummary,
+        assessmentResultCount: existing.assessmentResultCount,
+        overallAverage: existing.overallAverage,
+        rank: existing.rank,
+        classSize: existing.classSize,
+        passThreshold: existing.passThreshold,
+        teacherComment: existing.teacherComment,
         principalComment: existing.principalComment,
         status: existing.status,
         generatedAt: existing.generatedAt,
@@ -677,4 +723,28 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     }
     return entity
   }
+}
+
+function patchReportCardSectionComments(
+  sections: readonly ReportCardResultSection[],
+  commentsBySectionId: Map<string, string | undefined>,
+  seen: Set<string>,
+): ReportCardResultSection[] {
+  return sections.map((section) => {
+    const hasUpdate = commentsBySectionId.has(section.sectionId)
+    if (hasUpdate)
+      seen.add(section.sectionId)
+    return new ReportCardResultSection({
+      sectionId: section.sectionId,
+      sectionKind: section.sectionKind,
+      name: section.name,
+      average: section.average,
+      weight: section.weight,
+      parentSectionId: section.parentSectionId,
+      classSubjectId: section.classSubjectId,
+      comment: hasUpdate ? commentsBySectionId.get(section.sectionId) : section.comment,
+      rank: section.rank,
+      subResults: patchReportCardSectionComments(section.subResults, commentsBySectionId, seen),
+    })
+  })
 }

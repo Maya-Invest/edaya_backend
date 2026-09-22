@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, numeric, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const assessments = pgTable('assessments', {
@@ -8,8 +8,8 @@ export const assessments = pgTable('assessments', {
   periodId: text('period_id').notNull(),
   title: text('title').notNull(),
   kind: text('kind').notNull(),
-  maxScore: integer('max_score').notNull(),
-  coefficient: integer('coefficient').notNull(),
+  maxScore: numeric('max_score', { precision: 8, scale: 2 }).notNull(),
+  coefficient: numeric('coefficient', { precision: 8, scale: 2 }).notNull(),
   description: text('description'),
   attachments: jsonb('attachments').notNull().default([]),
   lessonSessionId: text('lesson_session_id'),
@@ -26,7 +26,7 @@ export const assessmentResults = pgTable('assessment_results', {
   id: text('id').primaryKey(),
   studentId: text('student_id').notNull(),
   assessmentId: text('assessment_id').notNull(),
-  score: integer('score'),
+  score: numeric('score', { precision: 8, scale: 2 }),
   status: text('status'),
   notes: text('notes'),
   createdBy: text('created_by'),

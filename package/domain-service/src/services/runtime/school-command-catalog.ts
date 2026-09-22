@@ -17,6 +17,7 @@ export type SchoolCommandKey
     | 'registerTeacher'
     | 'updateStaffMemberStatus'
     | 'updateStaffMemberProfile'
+    | 'updateTeacherSelfProfile'
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
     | 'assignStaffToLessonSession'
@@ -60,6 +61,7 @@ export type SchoolCommandKey
     | 'listClassSubjectAssessmentResultsForPeriod'
     | 'generateReportCardResult'
     | 'writeHomeroomReportComment'
+    | 'writeReportCardSectionComments'
     | 'publishReportCardResult'
     | 'renderClassLogbook'
     | 'requestDocumentIssuance'
@@ -191,6 +193,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'registerTeacher',
   'updateStaffMemberStatus',
   'updateStaffMemberProfile',
+  'updateTeacherSelfProfile',
   'assignStaffToClass',
   'assignStaffToClassSubject',
   'assignStaffToLessonSession',
@@ -234,6 +237,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'listClassSubjectAssessmentResultsForPeriod',
   'generateReportCardResult',
   'writeHomeroomReportComment',
+  'writeReportCardSectionComments',
   'publishReportCardResult',
   'renderClassLogbook',
   'requestDocumentIssuance',

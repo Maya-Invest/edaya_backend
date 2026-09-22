@@ -100,6 +100,29 @@ describe('SchoolService assessment workflows', () => {
     expect((await results.findById('rc1'))?.teacherComment).toBe('Bon début d\'année.')
   })
 
+  test('writeReportCardSectionComments updates only the named section comment', async () => {
+    const { results, service } = await createReportCardContext()
+    const generated = await service.assessmentsWorkflow.generateReportCardResult({
+      id: 'rc1',
+      studentId: 'stu1',
+      periodId: 'per1',
+      reportCardDefinitionId: 'def1',
+    })
+    const math = generated.sectionResults.flatMap(section => section.subResults).find(section => section.classSubjectId === 'cs1')
+    expect(math?.sectionId).toBeTruthy()
+
+    const updated = await service.assessmentsWorkflow.writeReportCardSectionComments({
+      id: generated.id,
+      sections: [{ sectionId: math!.sectionId, comment: 'Solide en calcul.' }],
+    })
+
+    const updatedMath = updated.sectionResults.flatMap(section => section.subResults).find(section => section.sectionId === math!.sectionId)
+    expect(updatedMath?.comment).toBe('Solide en calcul.')
+    expect(updated.overallAverage).toBe(generated.overallAverage)
+    expect(updated.teacherComment).toBe(generated.teacherComment)
+    expect((await results.findById(generated.id))?.sectionResults.flatMap(section => section.subResults).find(section => section.sectionId === math!.sectionId)?.comment).toBe('Solide en calcul.')
+  })
+
   test('publishReportCardResult publishes generated report cards through managed service', async () => {
     const { repositories, service } = await createReportCardContext()
 

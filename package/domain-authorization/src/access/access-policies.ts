@@ -312,6 +312,24 @@ export class AccessPolicies {
       denied('Service account grants must be managed through service-account commands')
   }
 
+  assertTeacherSelfProfile(after: CoreEntityMap['teachers'], before: CoreEntityMap['teachers'] | undefined): ResourceAccessScope {
+    const actor = this.actor
+    if (actor.kind !== 'teacher' || !before)
+      denied('Teachers may update only their own profile')
+    if (after.id !== before.id || after.id !== actor.teacherId || after.schoolId !== actor.schoolId || before.schoolId !== actor.schoolId)
+      denied('Teachers may update only their own profile')
+    if (after.code !== before.code
+      || after.photoUrl !== before.photoUrl
+      || after.notificationEmail !== before.notificationEmail
+      || after.notificationPhone !== before.notificationPhone
+      || after.subjectId !== before.subjectId
+      || after.isActive !== before.isActive
+      || after.createdAt.getTime() !== before.createdAt.getTime()) {
+      denied('Teachers cannot change administrative profile fields')
+    }
+    return resourceAccessScope(actor.schoolId, 'teachers', [{ target: { kind: 'records', ids: [actor.teacherId] } }])
+  }
+
   private async assertTeacherComments(after: CoreEntityMap['results'], before: CoreEntityMap['results']): Promise<void> {
     const facts = new AccessFacts(this.actor, this.repositories)
     const teaching = await facts.teaching()

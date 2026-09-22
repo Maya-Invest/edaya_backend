@@ -23,6 +23,17 @@ import {
   serializeReportCardResultSection,
 } from './entity-store-helpers'
 
+function numberToNumeric(value: number): string {
+  return value.toFixed(2)
+}
+
+function numericToNumber(value: string | number): number {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(parsed))
+    throw new Error(`Invalid numeric grade value: ${value}`)
+  return parsed
+}
+
 export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'assessments' | 'assessmentResults' | 'gradeScales' | 'definitions' | 'sections' | 'results'> {
   return {
     assessments: customStore(
@@ -35,8 +46,8 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         periodId: entity.periodId,
         title: entity.title,
         kind: entity.kind,
-        maxScore: entity.maxScore,
-        coefficient: entity.coefficient,
+        maxScore: numberToNumeric(entity.maxScore),
+        coefficient: numberToNumeric(entity.coefficient),
         description: entity.description ?? null,
         attachments: entity.attachments,
         lessonSessionId: entity.lessonSessionId ?? null,
@@ -53,8 +64,8 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         periodId: row.periodId,
         title: row.title,
         kind: enumValue(AssessmentKind, row.kind, 'assessments.kind'),
-        maxScore: row.maxScore,
-        coefficient: row.coefficient,
+        maxScore: numericToNumber(row.maxScore),
+        coefficient: numericToNumber(row.coefficient),
         description: row.description ?? undefined,
         attachments: deserializeJsonb(row.attachments) ?? [],
         lessonSessionId: row.lessonSessionId ?? undefined,
@@ -73,7 +84,7 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         id: entity.id,
         studentId: entity.studentId,
         assessmentId: entity.assessmentId,
-        score: entity.score ?? null,
+        score: entity.score == null ? null : numberToNumeric(entity.score),
         status: entity.status ?? null,
         notes: entity.notes ?? null,
         createdBy: entity.createdBy ?? null,
@@ -83,7 +94,7 @@ export function createAssessmentsEntityStores(db: any): Pick<EntityStores, 'asse
         id: row.id,
         studentId: row.studentId,
         assessmentId: row.assessmentId,
-        score: row.score,
+        score: row.score == null ? undefined : numericToNumber(row.score),
         status: row.status === null ? undefined : enumValue(DeadlineComplianceStatus, row.status, 'assessmentResults.status'),
         notes: row.notes,
         createdBy: row.createdBy,

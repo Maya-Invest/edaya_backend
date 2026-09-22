@@ -61,6 +61,13 @@ export type RegisterTeacherInput = Omit<TeacherInput, 'id'> & {
   id?: string
 }
 
+export interface UpdateTeacherSelfProfileInput {
+  firstName: string
+  lastName: string
+  email?: string | null
+  phone?: string | null
+}
+
 export interface UpdateStaffMemberStatusInput {
   staffId: string
   isActive: boolean
@@ -362,6 +369,24 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         this.baseService.entities.teachers,
         new TeacherEntity({ ...teacherInput, id }),
       )
+    })
+  }
+
+  async updateTeacherSelfProfile(input: UpdateTeacherSelfProfileInput): Promise<Teacher> {
+    return this.baseService.atomicExecution.execute(async () => {
+      const actor = this.baseService.actor
+      if (actor.kind !== 'teacher')
+        denyResourceAccess()
+      const existing = await this.requireEntity(this.baseService.entities.teachers, actor.teacherId)
+      const email = input.email === undefined ? existing.email : input.email?.trim() || undefined
+      const phone = input.phone === undefined ? existing.phone : input.phone?.trim() || undefined
+      return this.saveConstructed(this.baseService.entities.teachers, new TeacherEntity({
+        ...existing.data,
+        firstName: input.firstName.trim(),
+        lastName: input.lastName.trim(),
+        email,
+        phone,
+      }))
     })
   }
 

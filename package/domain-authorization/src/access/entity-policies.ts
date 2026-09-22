@@ -93,6 +93,12 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
   }
 
   async assertSave(entity: CoreEntityMap[K], existing?: CoreEntityMap[K]) {
+    if (this.resource === 'teachers' && this.access.actor.kind === 'teacher') {
+      return this.access.assertTeacherSelfProfile(
+        entity as CoreEntityMap['teachers'],
+        existing as CoreEntityMap['teachers'] | undefined,
+      )
+    }
     const action = typeof this.rule.write === 'function' ? this.rule.write(entity, existing) : this.rule.write
     if (this.resource === 'payments' && action !== Permission.PAYMENT_RECORD) {
       const after = entity as Payment

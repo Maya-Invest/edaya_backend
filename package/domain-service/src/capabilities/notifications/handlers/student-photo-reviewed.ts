@@ -45,7 +45,7 @@ export async function notifyStudentPhotoReviewed(
       rejectionReason: submission.rejectionReason ?? '',
     },
     metadata: {
-      route: '/child-profile',
+      route: '/child',
       studentId: student.id,
       submissionId: submission.id,
     },

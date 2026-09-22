@@ -36,6 +36,7 @@ import type {
   PublishReportCardResultInput,
   RecordAssessmentResultInput,
   WriteHomeroomReportCommentInput,
+  WriteReportCardSectionCommentsInput,
 } from '../workflows/assessments'
 import type {
   AddStudentInvolvementInput,
@@ -139,6 +140,7 @@ import type {
   UpdateSchoolConfigurationInput,
   UpdateStaffMemberProfileInput,
   UpdateStaffMemberStatusInput,
+  UpdateTeacherSelfProfileInput,
 } from '../workflows/setup'
 import type {
   CloseEnrollmentInput,
@@ -214,6 +216,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     registerTeacher: payload => workflows.setup.registerTeacher(payload as RegisterTeacherInput),
     updateStaffMemberStatus: payload => workflows.setup.updateStaffMemberStatus(payload as UpdateStaffMemberStatusInput),
     updateStaffMemberProfile: payload => workflows.setup.updateStaffMemberProfile(payload as UpdateStaffMemberProfileInput),
+    updateTeacherSelfProfile: payload => workflows.setup.updateTeacherSelfProfile(payload as UpdateTeacherSelfProfileInput),
     assignStaffToClass: payload => workflows.setup.assignStaffToClass(payload as AssignStaffInput),
     assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
     assignStaffToLessonSession: payload => workflows.setup.assignStaffToLessonSession(payload as AssignStaffInput),
@@ -260,6 +263,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     listClassSubjectAssessmentResultsForPeriod: payload => workflows.assessments.listClassSubjectAssessmentResultsForPeriod(payload as ListClassSubjectAssessmentResultsForPeriodInput),
     generateReportCardResult: payload => workflows.assessments.generateReportCardResult(payload as GenerateReportCardResultInput),
     writeHomeroomReportComment: payload => workflows.assessments.writeHomeroomReportComment(payload as WriteHomeroomReportCommentInput),
+    writeReportCardSectionComments: payload => workflows.assessments.writeReportCardSectionComments(payload as WriteReportCardSectionCommentsInput),
     publishReportCardResult: payload => workflows.assessments.publishReportCardResult(payload as PublishReportCardResultInput),
     renderClassLogbook: payload => workflows.documents.requestDocumentIssuance({
       requestId: (payload as { requestId?: string }).requestId ?? `logbook:${(payload as RequestDocumentIssuanceInput).sourceId ?? (payload as { classGroupId: string }).classGroupId}:${(payload as { academicPeriodId?: string }).academicPeriodId ?? ''}:${(payload as { classSubjectId?: string }).classSubjectId ?? ''}`,

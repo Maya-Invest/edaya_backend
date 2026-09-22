@@ -695,4 +695,23 @@ describe('authorization policies against native repository scopes', () => {
     await expect(service.accountInvitationWorkflow.acceptAccountInvitation(input)).rejects.toMatchObject({ code: 'INVITATION_EXPIRED' })
     expect((await repositories.staffMembers.findById('pending-owner'))?.subjectId).toBeUndefined()
   })
+
+  test('a teacher can update only their own contact profile', async () => {
+    const updated = await schoolService(teacher).setupWorkflow.updateTeacherSelfProfile({
+      firstName: 'Awa',
+      lastName: 'Teacher',
+      email: 'awa@example.test',
+      phone: null,
+    })
+    expect(updated.id).toBe('teacher-a')
+    expect(updated.firstName).toBe('Awa')
+    expect(updated.email).toBe('awa@example.test')
+    expect(updated.phone).toBeUndefined()
+    expect(updated.subjectId).toBe('person-a')
+    expect((await repositories.teachers.findById('teacher-a'))?.email).toBe('awa@example.test')
+    await expect(schoolService(staff).setupWorkflow.updateTeacherSelfProfile({
+      firstName: 'Staff',
+      lastName: 'Override',
+    })).rejects.toBeInstanceOf(AuthorizationError)
+  })
 })

@@ -29,7 +29,13 @@ export async function seedAuthorizationPlacement(db: PGlite): Promise<void> {
       ('class-other', 'school-a', 'level-a', 'Other', 'year-a', now()),
       ('class-old', 'school-a', 'level-a', 'Old', 'year-old', now()),
       ('class-b', 'school-b', 'level-b', 'B', 'year-b', now());
-    INSERT INTO subjects (id, school_id, name, created_at) VALUES ('math', 'school-a', 'Math', now()), ('french', 'school-a', 'French', now()), ('foreign-math', 'school-b', 'Math', now());
+    INSERT INTO subject_categories (id, school_id, name, created_at) VALUES
+      ('category-a', 'school-a', 'General', now()),
+      ('category-b', 'school-b', 'General', now());
+    INSERT INTO subjects (id, school_id, name, category_id, created_at) VALUES
+      ('math', 'school-a', 'Math', 'category-a', now()),
+      ('french', 'school-a', 'French', 'category-a', now()),
+      ('foreign-math', 'school-b', 'Math', 'category-b', now());
     INSERT INTO class_subjects (id, class_group_id, subject_id, created_at, completed_percentage) VALUES
       ('math-a', 'class-a', 'math', now(), 0), ('french-a', 'class-a', 'french', now(), 0),
       ('math-other', 'class-other', 'math', now(), 0), ('math-b', 'class-b', 'foreign-math', now(), 0);

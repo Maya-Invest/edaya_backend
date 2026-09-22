@@ -204,6 +204,13 @@ export const updateStaffMemberStatusCommandSchema = z.object({
   isActive: field.boolean(),
 }).openapi("UpdateStaffMemberStatusCommand");
 
+export const updateTeacherSelfProfileCommandSchema = z.object({
+  firstName: field.text(),
+  lastName: field.text(),
+  email: field.nullableText(),
+  phone: field.nullableText(),
+}).openapi("UpdateTeacherSelfProfileCommand");
+
 export const updateStaffMemberProfileCommandSchema = objectFromSchema(staffMemberSchema)
   .partial()
   .omit({
@@ -715,6 +722,14 @@ export const writeHomeroomReportCommentCommandSchema = z.object({
   id: field.id(),
   teacherComment: field.text(),
 }).openapi("WriteHomeroomReportCommentCommand");
+
+export const writeReportCardSectionCommentsCommandSchema = z.object({
+  id: field.id(),
+  sections: z.array(z.object({
+    sectionId: field.id(),
+    comment: field.nullableText(),
+  })).min(1),
+}).openapi("WriteReportCardSectionCommentsCommand");
 
 export const publishReportCardResultCommandSchema = z.object({
   id: field.id(),
