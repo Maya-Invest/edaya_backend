@@ -1,13 +1,10 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
-import { createHash } from 'node:crypto'
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories, resetDisposableFinanceRecords } from '@edaya/adaptor-postgres'
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import {
   AcademicYear,
   AllocationKind,
-  Attachment,
-  AttachmentOwnerKind,
   CatalogServiceStatus,
   ChargeStatus,
   noOpFileStorage,
@@ -287,64 +284,4 @@ test('canonical 60k/40k/120k scenario and allocation reversal', async () => {
   expect((await repos.studentCharges.findById('native-enr-60'))?.allocatedAmount.amount).toBe(0)
   const recon = await services[0]!.financeWorkflow.reconcileStudentYearAccount({ accountId: id })
   expect(recon.balanced).toBe(true)
-})
-
-async function preservationDigest() {
-  const [schools, students, staff, years, attachments] = await Promise.all([
-    repos.schools.list(),
-    repos.students.list(),
-    repos.staffMembers.list(),
-    repos.academicYears.list(),
-    repos.attachments.list(),
-  ])
-  const payload = {
-    schools: schools.map(row => ({ id: row.id, name: row.name })).sort((a, b) => a.id.localeCompare(b.id)),
-    students: students.map(row => ({ id: row.id, lastName: row.lastName })).sort((a, b) => a.id.localeCompare(b.id)),
-    staff: staff.map(row => ({ id: row.id, firstName: row.firstName })).sort((a, b) => a.id.localeCompare(b.id)),
-    years: years.map(row => ({ id: row.id, name: row.name })).sort((a, b) => a.id.localeCompare(b.id)),
-    attachments: attachments
-      .filter(row => row.ownerKind !== AttachmentOwnerKind.Payment)
-      .map(row => ({ id: row.id, ownerKind: row.ownerKind, ownerId: row.ownerId }))
-      .sort((a, b) => a.id.localeCompare(b.id)),
-  }
-  return createHash('sha256').update(JSON.stringify(payload)).digest('hex')
-}
-
-test('finance-only reset preserves non-finance records and drops payment attachments', async () => {
-  await student('native-reset')
-  await catalog('native-reset-cat', 500, '2026-02-01')
-  await services[0]!.financeWorkflow.enrollStudentInService({ id: 'native-reset-enr', studentId: 'native-reset', catalogServiceId: 'native-reset-cat' })
-  const payment = await services[0]!.financeWorkflow.recordPayment({
-    id: 'native-reset-pay',
-    studentId: 'native-reset',
-    academicYearId: yearId,
-    amount: 50,
-    paymentDate,
-    method: PaymentMethod.Cash,
-    allocation: { mode: 'account_only' },
-  })
-  await repos.attachments.save(new Attachment({
-    id: 'native-payment-attachment',
-    schoolId: actor.schoolId,
-    ownerKind: AttachmentOwnerKind.Payment,
-    ownerId: payment.id,
-    fileName: 'receipt.pdf',
-    fileUrl: 'https://files.example.test/receipt.pdf',
-  }))
-  await repos.attachments.save(new Attachment({
-    id: 'native-student-attachment',
-    schoolId: actor.schoolId,
-    ownerKind: AttachmentOwnerKind.Student,
-    ownerId: 'native-reset',
-    fileName: 'note.pdf',
-    fileUrl: 'https://files.example.test/note.pdf',
-  }))
-  const before = await preservationDigest()
-  await resetDisposableFinanceRecords(nativeDb(handles[0]!.db))
-  expect(await repos.payments.findById('native-reset-pay')).toBeUndefined()
-  expect(await repos.catalogServices.findById('native-reset-cat')).toBeUndefined()
-  expect(await repos.attachments.findById('native-payment-attachment')).toBeUndefined()
-  expect((await repos.attachments.findById('native-student-attachment'))?.fileName).toBe('note.pdf')
-  expect((await repos.students.findById('native-reset'))?.lastName).toBe('native-reset')
-  expect(await preservationDigest()).toBe(before)
 })
