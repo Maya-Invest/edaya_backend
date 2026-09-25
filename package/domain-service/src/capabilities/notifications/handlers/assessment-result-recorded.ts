@@ -26,7 +26,7 @@ export async function handleAssessmentResultRecorded(
   payload: AssessmentResultRecordedPayload,
 ): Promise<void> {
   const { result, assessment, student } = payload
-  if (student.schoolId !== context.actor.schoolId || assessment.marksStatus !== 'approved') {
+  if (student.schoolId !== context.actor.schoolId || assessment.marksStatus !== 'submitted') {
     return
   }
 
@@ -68,13 +68,13 @@ export async function handleAssessmentResultRecorded(
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY,
-    idempotencyKeyPrefix: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:${result.id}:${assessment.marksRevision}`,
+    idempotencyKeyPrefix: `${ASSESSMENT_RESULT_RECORDED_EVENT_KEY}:${result.id}:${result.revision}`,
     ...content,
     recipients,
     metadata: {
       assessmentResultId: result.id,
       assessmentId: assessment.id,
-      marksRevision: String(assessment.marksRevision),
+      marksRevision: String(result.revision),
       studentId: student.id,
       score: result.score === undefined ? '' : String(result.score),
     },

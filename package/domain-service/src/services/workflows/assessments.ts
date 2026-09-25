@@ -1,23 +1,24 @@
-import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, GradeScale, GradeScaleInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, StudentClassEnrollment } from '@edaya/core'
+import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, DecideMarksCorrectionInput, GradeScale, GradeScaleInput, RejectMarksCorrectionInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, RequestMarksCorrectionInput, StudentClassEnrollment } from '@edaya/core'
 import type { ReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-import type { MarksReviewInput, ReturnMarksInput } from './marks-review'
+import type { MarksReviewInput } from './marks-review'
 import type { ReportAggregationContext } from './report-card-aggregation'
 import type { HomeroomCommentInput, SectionCommentsInput } from './report-comments'
 import { denyResourceAccess } from '@edaya/authorization'
 import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
 import { academicStateLock, assertMarksRevision, enrollmentEffectiveAt } from '../../capabilities/academics/marks-state'
-import { loadReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
+import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import { preserveReportComments } from '../../capabilities/academics/report-comments'
 import { DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-document-render'
 import { documentNumberLockKey } from '../../capabilities/documents/persist-requested-issuance'
 import { REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { schoolCommandScope } from '../commands/school-command-scope'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
-
 import { BaseServiceWorkflow } from './base-service-workflow'
+
 import { DocumentsServiceWorkflow } from './documents'
+import { MarksCorrectionsWorkflow } from './marks-corrections'
 import { MarksReviewWorkflow } from './marks-review'
 import { buildGroupResultFromChildren, buildSubjectAverageFromAssessments, buildSubjectAverageFromPriorReportCards, childReportCardDefinitionSections, dedupeReportCardDefinitionSections, loadReportAggregationContext, rootReportCardDefinitionSections } from './report-card-aggregation'
 import { writeReportComments } from './report-comments'
@@ -114,13 +115,10 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     return new MarksReviewWorkflow(this.baseService).transition('submit', input)
   }
 
-  async approveAssessmentMarks(input: MarksReviewInput): Promise<Assessment> {
-    return new MarksReviewWorkflow(this.baseService).transition('approve', input)
-  }
-
-  async returnAssessmentMarks(input: ReturnMarksInput): Promise<Assessment> {
-    return new MarksReviewWorkflow(this.baseService).transition('return', input)
-  }
+  async requestAssessmentMarksCorrection(input: RequestMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).request(input) }
+  async approveAssessmentMarksCorrection(input: DecideMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).decide('approve', input) }
+  async rejectAssessmentMarksCorrection(input: RejectMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).decide('reject', input) }
+  async withdrawAssessmentMarksCorrection(input: DecideMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).decide('withdraw', input) }
 
   async recordAssessmentResult(input: RecordAssessmentResultInput): Promise<AssessmentResult> {
     return this.writeAssessmentResult(input, 'marks')
@@ -253,7 +251,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
         }
         const generated = await this.buildReportCardResult(input, true)
         if (generated.pendingAssessmentIds.length)
-          throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_APPROVED', 'All applicable evaluation sheets must be approved before publication')
+          throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_SUBMITTED', 'All applicable evaluation sheets must be submitted before publication')
         const published = generated.copyWith({
           status: ReportCardResultStatus.Published,
           publishedAt: input.publishedAt ?? new Date(),
@@ -328,7 +326,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const period = await this.requirePeriod(periodId)
     const existing = await this.repositories.results.findOne({ studentId, periodId })
     const resolvedAggregation = aggregation ?? existing?.aggregation
-    const context = await loadReportAssessmentContext(this.repositories, period.schoolId, studentId, resolvedAggregation?.sourcePeriodIds ?? [periodId])
+    let context = await loadReportAssessmentContext(this.repositories, period.schoolId, studentId, resolvedAggregation?.sourcePeriodIds ?? [periodId])
     const enrollment = this.requireEnrollmentForPeriod({
       enrollments: context.enrollments,
       academicYearId: period.academicYearId,
@@ -341,6 +339,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           gradeLevelId: classGroup.gradeLevelId,
           academicYearId: period.academicYearId,
         })
+    context = await scopeReportAssessmentContext(this.repositories, context, definition.id, classGroup.id)
     const aggregationContext = resolvedAggregation ? await loadReportAggregationContext(this.repositories, studentId, resolvedAggregation) : undefined
     const { sectionResults, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
       studentId,
@@ -352,17 +351,10 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       period,
       context,
     })
-    const sourceAssessments = context.assessments.filter(row => row.marksStatus === 'approved').map(row => ({ assessmentId: row.id, revision: row.marksRevision }))
+    const sourceAssessments = context.assessments.filter(row => row.marksStatus === 'submitted').map(row => ({ assessmentId: row.id, revision: row.marksRevision }))
+    const sourceMarks = context.results.map(({ result }) => ({ resultId: result.id, assessmentId: result.assessmentId, revision: result.revision }))
     if (publishing && !canPublish)
       throw new BusinessRuleViolationError(resolvedAggregation ? 'AGGREGATED_REPORT_CARD_SOURCES_NOT_READY' : 'ACADEMIC_PERIOD_NOT_PUBLISHED', 'Publish all required source periods and report cards before publishing this report')
-    if (aggregationContext) {
-      for (const report of aggregationContext.priorResultsByPeriodId.values()) {
-        for (const source of report.sourceAssessments) {
-          if (!sourceAssessments.some(row => row.assessmentId === source.assessmentId))
-            sourceAssessments.push(source)
-        }
-      }
-    }
     const periodAssessmentResults = context.results
     const resolvedAttendanceSummary = attendanceSummary ?? await this.buildAttendanceSummary({
       studentId,
@@ -378,7 +370,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       sectionResults: preserveReportComments(existing, definition.id, sectionResults),
       version: (existing?.version ?? 0) + 1,
       sourceAssessments,
-      pendingAssessmentIds: context.assessments.filter(row => row.marksStatus !== 'approved').map(row => row.id),
+      sourceMarks,
+      pendingCorrectionIds: await this.repositories.marksCorrections.pendingForMarks(period.schoolId, sourceMarks.map(row => row.resultId)),
+      pendingAssessmentIds: context.assessments.filter(row => row.marksStatus !== 'submitted').map(row => row.id),
       calculationStale: false,
       attendanceSummary: resolvedAttendanceSummary,
       assessmentResultCount: assessmentResultCount ?? periodAssessmentResults.length,

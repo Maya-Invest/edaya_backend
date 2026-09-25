@@ -76,6 +76,12 @@ export function createInProcessAssessmentsSeedPort(
       const submitted = await teacher.assessmentsWorkflow.submitAssessmentMarks({ requestId: `seed-submit:${assessmentId}`, assessmentId, expectedRevision: revision })
       if (state === 'submitted')
         return
+      const mark = (await teacher.getAssessmentMarksReview({ assessmentId })).results[0]
+      if (!mark)
+        throw new Error('Seed correction requires a mark')
+      const correction = await teacher.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: `seed-correction:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision, reason: 'Verify the recorded mark comment', changes: [{ resultId: mark.id, proposed: { score: mark.score ?? null, designation: mark.designation ?? 'scored', notes: 'Comment checked against the original assessment' } }] })
+      if (state === 'correction-pending')
+        return
       const context = resolveDevSeedContext()
       const staff = await application.repositories.staffMembers.findById(context.ownerStaffId)
       const group = await application.repositories.classGroups.findById(submitted.classGroupId)
@@ -86,7 +92,10 @@ export function createInProcessAssessmentsSeedPort(
         await service.accessControlWorkflow.linkActorSubject({ staffMemberId: staff.id, subjectId })
       await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: `seed-review:${group.id}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: group.id }] }))
       const reviewer = application.forActor(createStaffActorMetadata({ schoolId: group.schoolId, staffMemberId: staff.id, subjectId, academicYearId: group.academicYearId, requestId: `seed-review:${assessmentId}`, authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
-      await reviewer.assessmentsWorkflow.approveAssessmentMarks({ requestId: `seed-approve:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision })
+      const decision = { requestId: `seed-decision:${assessmentId}`, correctionId: correction.id, expectedVersion: correction.version }
+      if (state === 'correction-approved')
+        await reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection(decision)
+      else await reviewer.assessmentsWorkflow.rejectAssessmentMarksCorrection({ ...decision, reason: 'Keep the original comment' })
     }),
     createAssessment: record => withSeedPortError('assessments.createAssessment', async () => {
       await service.assessmentsWorkflow.createAssessment({

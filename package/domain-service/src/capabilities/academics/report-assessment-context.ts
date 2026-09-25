@@ -33,7 +33,7 @@ export async function loadReportAssessmentContext(
     if (enrollments.some(row => row.classGroupId === assessment.classGroupId && enrollmentEffectiveAt(row, at)))
       assessments.push(assessment)
   }
-  const approved = new Map(assessments.filter(row => row.marksStatus === 'approved' && row.marksReview.rosterStudentIds.includes(studentId)).map(row => [row.id, row]))
+  const approved = new Map(assessments.filter(row => row.marksStatus === 'submitted' && row.marksReview.rosterStudentIds.includes(studentId)).map(row => [row.id, row]))
   const subjects = await loadInBatches(assessments.map(row => row.classSubjectId), batch => repositories.classSubjects.findByIds(batch))
   const marks = await loadInBatches([...approved.keys()], batch => repositories.assessmentResults.list({ studentId, assessmentId: { $in: batch } }))
   return {
@@ -42,4 +42,21 @@ export async function loadReportAssessmentContext(
     results: marks.filter(result => approved.has(result.assessmentId)).map(result => ({ result, assessment: approved.get(result.assessmentId)! })),
     subjectByClassSubject: new Map(subjects.map(row => [row.id, row.subjectId])),
   }
+}
+
+/** Only curriculum subjects offered by the destination class and present in the report contribute sources. */
+export async function scopeReportAssessmentContext(
+  repositories: AssessmentsWorkflowRepositories,
+  context: ReportAssessmentContext,
+  definitionId: string,
+  classGroupId: string,
+): Promise<ReportAssessmentContext> {
+  const [sections, classSubjects] = await Promise.all([
+    repositories.sections.list({ reportCardDefinitionId: definitionId }),
+    repositories.classSubjects.list({ classGroupId }),
+  ])
+  const offered = new Set(classSubjects.filter(row => row.isOffered !== false).map(row => row.subjectId))
+  const subjects = new Set(sections.filter(row => row.kind === 'subject' && row.subjectId && offered.has(row.subjectId)).map(row => row.subjectId))
+  const includes = (assessment: Assessment) => subjects.has(context.subjectByClassSubject.get(assessment.classSubjectId))
+  return { ...context, assessments: context.assessments.filter(includes), results: context.results.filter(row => includes(row.assessment)) }
 }

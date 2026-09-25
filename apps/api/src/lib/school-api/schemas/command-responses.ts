@@ -57,6 +57,7 @@ import {
   subjectResponseSchema,
   teacherResponseSchema,
 } from "./entities";
+import { marksCorrectionResponseSchema } from "./marks-corrections";
 
 const familyFeedbackCampaignCommandResponseSchema = z.object({
   id: z.string().min(1),
@@ -364,8 +365,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   createReportCardDefinitionSection: sectionResponseSchema,
   createAssessment: assessmentResponseSchema,
   submitAssessmentMarks: assessmentResponseSchema,
-  approveAssessmentMarks: assessmentResponseSchema,
-  returnAssessmentMarks: assessmentResponseSchema,
+  requestAssessmentMarksCorrection: marksCorrectionResponseSchema,
+  approveAssessmentMarksCorrection: marksCorrectionResponseSchema,
+  rejectAssessmentMarksCorrection: marksCorrectionResponseSchema,
+  withdrawAssessmentMarksCorrection: marksCorrectionResponseSchema,
   completeAssessment: assessmentResponseSchema,
   recordAssessmentResults: z.array(assessmentResultResponseSchema).openapi("RecordAssessmentResultsResponse"),
   recordAssessmentResult: assessmentResultResponseSchema,

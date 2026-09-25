@@ -1,4 +1,4 @@
-import type { AttachmentInput, StaffPermissionAssignmentInput } from '@edaya/core'
+import type { AttachmentInput, DecideMarksCorrectionInput, RejectMarksCorrectionInput, RequestMarksCorrectionInput, StaffPermissionAssignmentInput } from '@edaya/core'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
@@ -95,7 +95,7 @@ import type {
   UpdateCatalogServiceInput,
   WaiveStudentChargeInput,
 } from '../workflows/finance'
-import type { MarksReviewInput, ReturnMarksInput } from '../workflows/marks-review'
+import type { MarksReviewInput } from '../workflows/marks-review'
 import type {
   NotificationTemplatesServiceWorkflow,
   ResetSchoolNotificationTemplatesInput,
@@ -260,8 +260,10 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),
     createAssessment: payload => workflows.assessments.createAssessment(payload as CreateAssessmentInput),
     submitAssessmentMarks: payload => workflows.assessments.submitAssessmentMarks(payload as MarksReviewInput),
-    approveAssessmentMarks: payload => workflows.assessments.approveAssessmentMarks(payload as MarksReviewInput),
-    returnAssessmentMarks: payload => workflows.assessments.returnAssessmentMarks(payload as ReturnMarksInput),
+    requestAssessmentMarksCorrection: payload => workflows.assessments.requestAssessmentMarksCorrection(payload as RequestMarksCorrectionInput),
+    approveAssessmentMarksCorrection: payload => workflows.assessments.approveAssessmentMarksCorrection(payload as DecideMarksCorrectionInput),
+    rejectAssessmentMarksCorrection: payload => workflows.assessments.rejectAssessmentMarksCorrection(payload as RejectMarksCorrectionInput),
+    withdrawAssessmentMarksCorrection: payload => workflows.assessments.withdrawAssessmentMarksCorrection(payload as DecideMarksCorrectionInput),
     completeAssessment: payload => workflows.assessments.completeAssessment(payload as CompleteAssessmentInput),
     recordAssessmentResults: payload => workflows.assessments.recordAssessmentResults(payload as RecordAssessmentResultsInput),
     recordAssessmentResult: payload => workflows.assessments.recordAssessmentResult(payload as RecordAssessmentResultInput),

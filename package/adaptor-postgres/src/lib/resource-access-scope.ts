@@ -149,9 +149,9 @@ function compileClause(table: PgTable, clause: ResourceAccessClause, schoolId: s
       : targetPredicate(table, clause.target, schoolId, clause.academicYearId, new Set(), proposed),
     clause.academicYearId ? yearPredicate(table, clause.academicYearId, schoolId, new Set(), proposed) : undefined,
     clause.publishedOnly ? publicationPredicate(table, schoolId, value) : undefined,
-    clause.approvedMarksOnly
+    clause.submittedMarksOnly
       ? getTableName(table) === 'assessment_results'
-        ? exists(s.assessments, schoolId, and(sql`${s.assessments.id} = ${value('assessmentId')}`, eq(s.assessments.marksStatus, 'approved'))!)
+        ? exists(s.assessments, schoolId, and(sql`${s.assessments.id} = ${value('assessmentId')}`, eq(s.assessments.marksStatus, 'submitted'))!)
         : sql`false`
       : undefined,
     clause.noteVisibility === 'staff' ? sql`${value('visibility')} <> 'admin_only'` : undefined,

@@ -1,73 +1,6 @@
-import { z } from "@hono/zod-openapi";
-import {
-  academicPeriodSchema,
-  academicYearSchema,
-  AccountInvitationContactChannel,
-  AccountInvitationKind,
-  activityEnrollmentSchema,
-  activitySchema,
-  announcementSchema,
-  announcementTargetSchema,
-  assessmentResultSchema,
-  assessmentSchema,
-  AttachmentOwnerKind,
-  attachmentPurposeSchema,
-  attachmentSchema,
-  AttendanceJustificationStatus,
-  attendanceRecordSchema,
-  AttendanceStatus,
-  calendarEventSchema,
-  classGroupSchema,
-  classSubjectMatterSchema,
-  classSubjectProgressSchema,
-  classSubjectSchema,
-  gradeScaleRangeSchema as coreGradeScaleRangeSchema,
-  DeadlineComplianceStatus,
-  disciplinaryActionSchema,
-  DOCUMENT_TEMPLATE_KEYS,
-  EnrollmentEndReason,
-  gradeLevelSchema,
-  gradeLevelSubjectMatterSchema,
-  gradeLevelSubjectSchema,
-  gradeScaleSchema,
-  grantScopesSchema,
-  guardianContactMethodSchema,
-  guardianSchema,
-  guardianStudentLinkSchema,
-  IncidentInvolvementRole,
-  incidentSchema,
-  messageDeliverySchema,
-  PaymentMethod,
-  periodDefinitionSchema,
-  ProgressionDecision,
-  reportCardDefinitionSchema,
-  reportCardDefinitionSectionSchema,
-  reportCardResultSchema,
-  resourceAssignmentSchema,
-  resourceSchema,
-  scheduleSchema,
-  SCHOOL_ISSUANCE_ASSET_PURPOSES,
-  SCHOOL_PUBLIC_BRANDING_PURPOSES,
-  schoolSchema,
-  SchoolType,
-  staffAssignmentSchema,
-  staffMemberSchema,
-  staffPermissionAssignmentSchema,
-  staffPermissionProfileSchema,
-  studentClassEnrollmentSchema,
-  studentDisciplinaryActionSchema,
-  StudentDisciplinaryActionStatus,
-  studentHealthProfileSchema,
-  studentIncidentInvolvementSchema,
-  studentNoteSchema,
-  studentSchema,
-  StudentStatus,
-  subjectCategorySchema,
-  subjectMatterSchema,
-  subjectSchema,
-  teacherSchema,
-} from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, grantScopesSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, rejectMarksCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, teacherSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
+import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
 
 const optionalText = () => z.string().optional();
@@ -680,19 +613,21 @@ export const submitAssessmentMarksCommandSchema = z.object({
   assessmentId: z.string().trim().min(1),
   expectedRevision: z.number().int().nonnegative(),
 }).openapi("SubmitAssessmentMarksCommand");
-export const approveAssessmentMarksCommandSchema = submitAssessmentMarksCommandSchema.openapi("ApproveAssessmentMarksCommand");
-export const returnAssessmentMarksCommandSchema = submitAssessmentMarksCommandSchema.extend({ reason: z.string().trim().min(1) }).openapi("ReturnAssessmentMarksCommand");
+export const requestAssessmentMarksCorrectionCommandSchema = requestMarksCorrectionSchema.openapi("RequestAssessmentMarksCorrectionCommand");
+export const approveAssessmentMarksCorrectionCommandSchema = decideMarksCorrectionSchema.openapi("ApproveAssessmentMarksCorrectionCommand");
+export const rejectAssessmentMarksCorrectionCommandSchema = rejectMarksCorrectionSchema.openapi("RejectAssessmentMarksCorrectionCommand");
+export const withdrawAssessmentMarksCorrectionCommandSchema = decideMarksCorrectionSchema.openapi("WithdrawAssessmentMarksCorrectionCommand");
 
 export const completeAssessmentCommandSchema = z.object({
   assessmentId: field.id(),
   completedAt: field.optionalDate(),
 }).openapi("CompleteAssessmentCommand");
 
-export const recordAssessmentResultCommandSchema = objectFromSchema(assessmentResultSchema).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ status: true, notes: true, createdBy: true, createdAt: true }).openapi("RecordAssessmentResultCommand");
+export const recordAssessmentResultCommandSchema = objectFromSchema(assessmentResultSchema).omit({ revision: true }).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ status: true, notes: true, createdBy: true, createdAt: true }).openapi("RecordAssessmentResultCommand");
 
-export const recordAssessmentResultsCommandSchema = z.object({ requestId: z.string().trim().min(1).max(200), assessmentId: z.string().trim().min(1), expectedRevision: z.number().int().nonnegative(), results: z.array(objectFromSchema(assessmentResultSchema).omit({ assessmentId: true, createdBy: true, createdAt: true })).min(1).max(500) }).openapi("RecordAssessmentResultsCommand");
+export const recordAssessmentResultsCommandSchema = z.object({ requestId: z.string().trim().min(1).max(200), assessmentId: z.string().trim().min(1), expectedRevision: z.number().int().nonnegative(), results: z.array(objectFromSchema(assessmentResultSchema).omit({ revision: true }).omit({ assessmentId: true, createdBy: true, createdAt: true })).min(1).max(500) }).openapi("RecordAssessmentResultsCommand");
 
-export const recordAssessmentResultComplianceCommandSchema = objectFromSchema(assessmentResultSchema).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ score: true, designation: true, createdBy: true, createdAt: true }).extend({
+export const recordAssessmentResultComplianceCommandSchema = objectFromSchema(assessmentResultSchema).omit({ revision: true }).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ score: true, designation: true, createdBy: true, createdAt: true }).extend({
   status: z.nativeEnum(DeadlineComplianceStatus),
 }).openapi("RecordAssessmentResultComplianceCommand");
 
@@ -703,6 +638,8 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
   .omit({
     version: true,
     sourceAssessments: true,
+    sourceMarks: true,
+    pendingCorrectionIds: true,
     pendingAssessmentIds: true,
     calculationStale: true,
     classGroupId: true,

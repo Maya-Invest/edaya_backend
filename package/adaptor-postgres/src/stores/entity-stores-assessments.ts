@@ -88,6 +88,7 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
       db,
       schema.assessmentResults,
       (entity: AssessmentResult) => ({
+        revision: entity.revision,
         id: entity.id,
         studentId: entity.studentId,
         assessmentId: entity.assessmentId,
@@ -99,6 +100,7 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
         createdAt: entity.createdAt,
       }),
       row => new AssessmentResultCtor({
+        revision: row.revision,
         id: row.id,
         studentId: row.studentId,
         assessmentId: row.assessmentId,
@@ -187,6 +189,8 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
         attendanceSummary: entity.attendanceSummary,
         assessmentResultCount: entity.assessmentResultCount,
         version: entity.version,
+        sourceMarks: entity.sourceMarks,
+        pendingCorrectionIds: entity.pendingCorrectionIds,
         sourceAssessments: entity.sourceAssessments,
         pendingAssessmentIds: entity.pendingAssessmentIds,
         calculationStale: entity.calculationStale,
@@ -215,6 +219,8 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
           attendanceSummary: new AttendanceSummary(attendanceData),
           assessmentResultCount: row.assessmentResultCount,
           version: row.version,
+          sourceMarks: deserializeJsonb(row.sourceMarks),
+          pendingCorrectionIds: deserializeJsonb(row.pendingCorrectionIds),
           sourceAssessments: deserializeJsonb(row.sourceAssessments),
           pendingAssessmentIds: deserializeJsonb(row.pendingAssessmentIds),
           calculationStale: row.calculationStale,

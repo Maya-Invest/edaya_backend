@@ -11,6 +11,7 @@ export enum DeadlineComplianceStatus {
 
 export const assessmentResultSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
+  revision: z.number().int().nonnegative().default(0),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   assessmentId: z.string().trim().min(1, 'assessmentId must not be blank'),
   score: z.number().finite().nonnegative('score must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
@@ -40,6 +41,7 @@ export class AssessmentResult {
   }
 
   get id() { return this.data.id }
+  get revision() { return this.data.revision }
   get studentId() { return this.data.studentId }
   get assessmentId() { return this.data.assessmentId }
   get score() { return this.data.score }

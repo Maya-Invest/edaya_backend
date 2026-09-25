@@ -46,6 +46,12 @@ export function createHttpAssessmentsSeedPort(
       const submitted = await postCoreCommand(requestOptions, 'submitAssessmentMarks', { requestId: `seed-submit:${assessmentId}`, assessmentId, expectedRevision: revision }) as Assessment['data']
       if (state === 'submitted')
         return
+      const mark = (await detail(assessmentId)).results[0]
+      if (!mark)
+        throw new Error('Seed correction requires a mark')
+      const correction = await postCoreCommand(requestOptions, 'requestAssessmentMarksCorrection', { requestId: `seed-correction:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision, reason: 'Verify the recorded mark comment', changes: [{ resultId: mark.id, proposed: { score: mark.score ?? null, designation: mark.designation ?? 'scored', notes: 'Comment checked against the original assessment' } }] }) as { id: string, version: number }
+      if (state === 'correction-pending')
+        return
       const context = resolveDevSeedContext()
       const account = context.staffAccounts.find(row => row.staffId !== context.ownerStaffId && row.staffId !== context.minimalStaffId)
       if (!account)
@@ -59,7 +65,7 @@ export function createHttpAssessmentsSeedPort(
       await postEntitySave(requestOptions, 'staffPermissionAssignments', { id: `seed-review:${submitted.classGroupId}`, schoolId: context.schoolId, staffId: account.staffId, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: submitted.classGroupId }] })
       await options.client.withCookieSnapshot(async () => {
         await auth.ensureUser({ email: account.email, name: account.name, password: context.authPassword })
-        await postCoreCommand({ client: options.client, actor: { schoolId: context.schoolId, actorId: account.staffId, academicYearId: group.academicYearId } }, 'approveAssessmentMarks', { requestId: `seed-approve:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision })
+        await postCoreCommand({ client: options.client, actor: { schoolId: context.schoolId, actorId: account.staffId, academicYearId: group.academicYearId } }, state === 'correction-approved' ? 'approveAssessmentMarksCorrection' : 'rejectAssessmentMarksCorrection', { requestId: `seed-decision:${assessmentId}`, correctionId: correction.id, expectedVersion: correction.version, ...(state === 'correction-rejected' ? { reason: 'Keep the original comment' } : {}) })
       })
     }),
     createAssessment: record => withSeedPortError('assessments.createAssessment', async () => {

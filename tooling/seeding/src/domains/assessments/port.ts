@@ -33,7 +33,7 @@ export interface AssessmentResultSeedRecord {
 
 export interface AssessmentsSeedPort {
   recordAssessmentResults?: (records: AssessmentResultSeedRecord[]) => Promise<void>
-  finalizeMarks: (assessmentId: string, state: 'draft' | 'submitted' | 'approved') => Promise<void>
+  finalizeMarks: (assessmentId: string, state: 'draft' | 'submitted' | 'correction-pending' | 'correction-approved' | 'correction-rejected') => Promise<void>
   createAssessment: (record: AssessmentSeedRecord) => Promise<void>
   recordAssessmentResult: (record: AssessmentResultSeedRecord) => Promise<void>
 }

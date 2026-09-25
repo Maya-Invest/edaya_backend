@@ -87,6 +87,15 @@ export async function linkSubjectToActor(
   return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: false })
 }
 
+export async function relinkSubjectToActor(
+  baseService: BaseSchoolService,
+  repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,
+  schoolId: string,
+  input: LinkSubjectToActorInput,
+): Promise<LinkSubjectToActorResult> {
+  return replaceActorSubject(baseService, repositories, schoolId, input, { allowReplace: true })
+}
+
 export async function unlinkSubjectFromActor(
   baseService: BaseSchoolService,
   repositories: Pick<SchoolRepositories, 'staffMembers' | 'guardians' | 'students' | 'guardianLinks' | 'teachers'>,

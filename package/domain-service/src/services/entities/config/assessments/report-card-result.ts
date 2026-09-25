@@ -3,7 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
-import { loadReportAssessmentContext } from '../../../../capabilities/academics/report-assessment-context'
+import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../../../capabilities/academics/report-assessment-context'
 import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 
@@ -58,11 +58,17 @@ async function validateReportCardResultSave(
   }
 
   if (result.status === ReportCardResultStatus.Published) {
-    const context = await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId])
-    if (context.assessments.some(assessment => assessment.marksStatus !== 'approved'))
-      throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_APPROVED', 'Every applicable evaluation requires approval before publication')
-    if (context.assessments.some(assessment => !result.sourceAssessments.some(source => source.assessmentId === assessment.id && source.revision === assessment.marksRevision)))
-      throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the report from the current approved revisions')
+    const context = await scopeReportAssessmentContext(repositories, await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId]), definition.id, classGroup.id)
+    if (context.assessments.some(assessment => assessment.marksStatus !== 'submitted'))
+      throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_SUBMITTED', 'Every applicable evaluation must be submitted before publication')
+    const expectedMarks = context.results.map(({ result: mark }) => mark)
+    if (result.sourceMarks.length !== expectedMarks.length || expectedMarks.some(mark => !result.sourceMarks.some(source => source.resultId === mark.id && source.revision === mark.revision)))
+      throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the report from the current submitted marks')
+    const sources = await repositories.assessmentResults.findByIds(result.sourceMarks.map(source => source.resultId))
+    if (sources.length !== result.sourceMarks.length || sources.some(mark => mark.studentId !== result.studentId || !result.sourceMarks.some(source => source.resultId === mark.id && source.assessmentId === mark.assessmentId && source.revision === mark.revision)))
+      throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Report source marks must match this student and their current revisions')
+    if ((await repositories.marksCorrections.pendingForMarks(student.schoolId, result.sourceMarks.map(source => source.resultId))).length)
+      throw new BusinessRuleViolationError('REPORT_CARD_CORRECTIONS_PENDING', 'Resolve pending corrections for this student before publication')
   }
 
   const published = await repositories.results.findOne({

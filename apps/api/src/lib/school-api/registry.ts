@@ -1,6 +1,5 @@
-import type { PublicEntityOperations } from "./public-operations";
-import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
+import type { PublicEntityOperations } from "./public-operations";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
 import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
@@ -9,6 +8,7 @@ import * as commandResponseSchemas from "@/lib/school-api/schemas/command-respon
 import * as commandSchemas from "@/lib/school-api/schemas/commands";
 import * as entitySchemas from "@/lib/school-api/schemas/entities";
 import * as querySchemas from "@/lib/school-api/schemas/queries";
+import { COMMAND_ONLY, PUBLIC_CRUD, PUBLIC_DELETE } from "./public-operations";
 
 export interface CoreCommandConfig {
   publicName: string;
@@ -222,8 +222,10 @@ export const coreCommands = [
   command("create-report-card-definition-section", "createReportCardDefinitionSection", commandSchemas.createReportCardDefinitionSectionCommandSchema),
   command("create-assessment", "createAssessment", commandSchemas.createAssessmentCommandSchema),
   command("submit-assessment-marks", "submitAssessmentMarks", commandSchemas.submitAssessmentMarksCommandSchema),
-  command("approve-assessment-marks", "approveAssessmentMarks", commandSchemas.approveAssessmentMarksCommandSchema),
-  command("return-assessment-marks", "returnAssessmentMarks", commandSchemas.returnAssessmentMarksCommandSchema),
+  command("request-assessment-marks-correction", "requestAssessmentMarksCorrection", commandSchemas.requestAssessmentMarksCorrectionCommandSchema),
+  command("approve-assessment-marks-correction", "approveAssessmentMarksCorrection", commandSchemas.approveAssessmentMarksCorrectionCommandSchema),
+  command("reject-assessment-marks-correction", "rejectAssessmentMarksCorrection", commandSchemas.rejectAssessmentMarksCorrectionCommandSchema),
+  command("withdraw-assessment-marks-correction", "withdrawAssessmentMarksCorrection", commandSchemas.withdrawAssessmentMarksCorrectionCommandSchema),
   command("complete-assessment", "completeAssessment", commandSchemas.completeAssessmentCommandSchema),
   command("record-assessment-results", "recordAssessmentResults", commandSchemas.recordAssessmentResultsCommandSchema),
   command("record-assessment-result", "recordAssessmentResult", commandSchemas.recordAssessmentResultCommandSchema),

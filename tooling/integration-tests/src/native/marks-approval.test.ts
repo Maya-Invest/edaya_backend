@@ -22,7 +22,6 @@ test('native concurrent publication uses the existing draft, one issuance and bl
   const f = await fixture('marks-publish')
   await f.editor.assessmentsWorkflow.recordAssessmentResult(f.edit('first', 0))
   await f.editor.assessmentsWorkflow.submitAssessmentMarks(f.command('submit', 1))
-  await f.reviewer.assessmentsWorkflow.approveAssessmentMarks(f.command('approve', 2))
   await f.editor.assessmentsWorkflow.generateReportCardResult(f.report)
   const reports = await Promise.all([
     f.editor.assessmentsWorkflow.publishReportCardResult({ ...f.report, id: f.id('request-a') }),
@@ -32,7 +31,7 @@ test('native concurrent publication uses the existing draft, one issuance and bl
   expect(reports[0]!.overallAverage).toBe(12.75)
   expect(await f.r.results.count({ studentId: f.report.studentId, status: ReportCardResultStatus.Published })).toBe(1)
   expect(await f.r.documentIssuances.count({ schoolId: f.id('school') })).toBe(1)
-  await expect(f.reviewer.assessmentsWorkflow.returnAssessmentMarks({ ...f.command('return', 3), reason: 'Correction' })).rejects.toMatchObject({ code: 'PUBLISHED_REPORT_CARD_IMMUTABLE' })
+  await expect(f.editor.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...f.command('correction', 2), reason: 'Correction', changes: [{ resultId: f.id('mark'), proposed: { score: 14, designation: 'scored', notes: null } }] })).rejects.toMatchObject({ code: 'PUBLISHED_REPORT_CARD_IMMUTABLE' })
   const projection = await f.editor.getSchoolOverview({ schoolId: f.id('school'), academicYearId: f.id('year'), academicPeriodId: f.id('period'), referenceDate: new Date('2026-02-02') })
   expect(projection.kpis.studentCount).toBe(1)
   expect(projection.kpis.publishedReportCardCount).toBe(1)
@@ -40,19 +39,20 @@ test('native concurrent publication uses the existing draft, one issuance and bl
   expect((await f.editor.getAppShellCounts({ schoolId: f.id('school'), classGroupIds: [f.id('class')] })).activeEnrollmentCountsByClass).toEqual({ [f.id('class')]: 1 })
 }, 30000)
 
-test('native return versus publication leaves a published dependency approved or publication rejected', async () => {
+test('native correction creation versus publication cannot publish a mark with a pending correction', async () => {
   const f = await fixture('marks-return')
   await f.editor.assessmentsWorkflow.recordAssessmentResult(f.edit('first', 0))
   await f.editor.assessmentsWorkflow.submitAssessmentMarks(f.command('submit', 1))
-  await f.reviewer.assessmentsWorkflow.approveAssessmentMarks(f.command('approve', 2))
   const outcomes = await Promise.allSettled([
     f.editor.assessmentsWorkflow.publishReportCardResult(f.report),
-    f.reviewer.assessmentsWorkflow.returnAssessmentMarks({ ...f.command('return', 3), reason: 'Correction' }),
+    f.editor.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...f.command('correction', 2), reason: 'Correction', changes: [{ resultId: f.id('mark'), proposed: { score: 14, designation: 'scored', notes: null } }] }),
   ])
   expect(outcomes.filter(item => item.status === 'fulfilled')).toHaveLength(1)
   const sheet = (await f.r.assessments.findById(f.id('assessment')))!
   const published = await f.r.results.count({ studentId: f.report.studentId, status: ReportCardResultStatus.Published })
-  expect(published).toBe(sheet.marksStatus === 'approved' ? 1 : 0)
+  expect(sheet.marksStatus).toBe('submitted')
+  const pending = await f.r.marksCorrections.pendingForMarks(f.id('school'), [f.id('mark')])
+  expect(published).toBe(pending.length ? 0 : 1)
 }, 30000)
 
 test('native teacher to independent reviewer to family and publication journey', async () => {
@@ -68,13 +68,43 @@ test('native teacher to independent reviewer to family and publication journey',
   expect(await family.baseService.entities.assessmentResults.count()).toBe(0)
   expect(f.gateway.enqueued).toHaveLength(0)
   await teacher.assessmentsWorkflow.submitAssessmentMarks(f.command('teacher-submit', 1))
-  // The same identity also owns the school through its staff profile.
-  await expect(f.editor.assessmentsWorkflow.approveAssessmentMarks(f.command('owner-self-review', 2))).rejects.toMatchObject({ code: 'MARKS_SELF_APPROVAL' })
-  await f.reviewer.assessmentsWorkflow.approveAssessmentMarks(f.command('independent-review', 2))
   expect(await family.baseService.entities.assessmentResults.count()).toBe(1)
-  expect((await family.baseService.entities.assessmentResults.list({ $limit: 1 }))[0]!.score).toBe(12.75)
+  const correction = await teacher.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...f.command('correction', 2), reason: 'Original script checked', changes: [{ resultId: f.id('mark'), proposed: { score: 14.25, designation: 'scored', notes: null } }] })
+  const decision = { requestId: 'decision', correctionId: correction.id, expectedVersion: 0 }
+  // The teacher identity also owns the school through its staff profile.
+  await expect(f.editor.assessmentsWorkflow.approveAssessmentMarksCorrection(decision)).rejects.toMatchObject({ code: 'MARKS_SELF_APPROVAL' })
+  expect((await family.baseService.entities.assessmentResults.findById(f.id('mark')))!.score).toBe(12.75)
+  await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection(decision)
+  expect(await family.baseService.entities.assessmentResults.count()).toBe(1)
+  expect((await family.baseService.entities.assessmentResults.list({ $limit: 1 }))[0]!.score).toBe(14.25)
   expect(f.gateway.enqueued.length).toBeGreaterThan(0)
   const report = await f.editor.assessmentsWorkflow.publishReportCardResult(f.report)
-  expect(report.overallAverage).toBe(12.75)
+  expect(report.overallAverage).toBe(14.25)
   expect((await family.baseService.entities.results.findById(report.id))!.status).toBe(ReportCardResultStatus.Published)
+}, 30000)
+
+test('native concurrent correction requests create one pending batch and approval races safely with publication', async () => {
+  const f = await fixture('correction-concurrent')
+  await f.editor.assessmentsWorkflow.recordAssessmentResult(f.edit('first', 0))
+  await f.editor.assessmentsWorkflow.submitAssessmentMarks(f.command('submit', 1))
+  const input = { ...f.command('request-a', 2), reason: 'Original script checked', changes: [{ resultId: f.id('mark'), proposed: { score: 15, designation: 'scored' as const, notes: null } }] }
+  const requests = await Promise.allSettled([
+    f.editor.assessmentsWorkflow.requestAssessmentMarksCorrection(input),
+    f.other.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...input, requestId: 'request-b' }),
+  ])
+  expect(requests.filter(row => row.status === 'fulfilled')).toHaveLength(1)
+  const correction = (await f.r.marksCorrections.forAssessment(f.id('school'), f.id('assessment')))[0]!
+  const outcomes = await Promise.allSettled([
+    f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'approve', correctionId: correction.id, expectedVersion: 0 }),
+    f.editor.assessmentsWorkflow.publishReportCardResult(f.report),
+  ])
+  expect(outcomes[0]!.status).toBe('fulfilled')
+  const published = await f.r.results.findById(f.report.id)
+  if (published) {
+    expect(published.overallAverage).toBe(15)
+    expect(published.sourceMarks[0]!.revision).toBe(2)
+  }
+  else {
+    expect(outcomes[1]!.status).toBe('rejected')
+  }
 }, 30000)

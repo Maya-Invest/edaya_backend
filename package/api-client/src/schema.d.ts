@@ -1942,7 +1942,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/commands/approve-assessment-marks": {
+    "/core/commands/request-assessment-marks-correction": {
         parameters: {
             query?: never;
             header?: never;
@@ -1951,15 +1951,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** approve-assessment-marks */
-        post: operations["commands.approveAssessmentMarks"];
+        /** request-assessment-marks-correction */
+        post: operations["commands.requestAssessmentMarksCorrection"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/commands/return-assessment-marks": {
+    "/core/commands/approve-assessment-marks-correction": {
         parameters: {
             query?: never;
             header?: never;
@@ -1968,8 +1968,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** return-assessment-marks */
-        post: operations["commands.returnAssessmentMarks"];
+        /** approve-assessment-marks-correction */
+        post: operations["commands.approveAssessmentMarksCorrection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/reject-assessment-marks-correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** reject-assessment-marks-correction */
+        post: operations["commands.rejectAssessmentMarksCorrection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/withdraw-assessment-marks-correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** withdraw-assessment-marks-correction */
+        post: operations["commands.withdrawAssessmentMarksCorrection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13590,7 +13624,7 @@ export interface components {
              * @default draft
              * @enum {string}
              */
-            marksStatus: "draft" | "submitted" | "approved";
+            marksStatus: "draft" | "submitted";
             /** @default 0 */
             marksRevision: number;
             /** @default {} */
@@ -13605,12 +13639,10 @@ export interface components {
                 editedBySubjectIds: string[];
                 submittedBy?: string;
                 submittedAt?: unknown;
-                approvedBy?: string;
-                approvedAt?: unknown;
                 /** @default [] */
                 history: {
                     /** @enum {string} */
-                    action: "submit" | "approve" | "return";
+                    action: "submit";
                     revision: number;
                     subjectId: string;
                     at: unknown;
@@ -13647,13 +13679,70 @@ export interface components {
             assessmentId: string;
             expectedRevision: number;
         };
-        ApproveAssessmentMarksCommand: {
+        AssessmentMarksCorrectionResponse: {
+            id: string;
+            schoolId: string;
+            assessmentId: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "withdrawn";
+            version: number;
+            baseRevision: number;
+            authorSubjectId: string;
+            reason: string;
+            /** Format: date-time */
+            createdAt: string;
+            changes: {
+                resultId: string;
+                studentId: string;
+                revision: number;
+                before: {
+                    score: number | null;
+                    /** @enum {string} */
+                    designation: "scored" | "absent" | "exempt";
+                    notes: string | null;
+                };
+                proposed: {
+                    score: number | null;
+                    /** @enum {string} */
+                    designation: "scored" | "absent" | "exempt";
+                    notes: string | null;
+                };
+            }[];
+            decidedBy?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+            rejectionReason?: string;
+        };
+        RequestAssessmentMarksCorrectionCommand: {
             requestId: string;
             assessmentId: string;
             expectedRevision: number;
-        };
-        ReturnAssessmentMarksCommand: components["schemas"]["SubmitAssessmentMarksCommand"] & {
             reason: string;
+            changes: {
+                resultId: string;
+                proposed: {
+                    score: number | null;
+                    /** @enum {string} */
+                    designation: "scored" | "absent" | "exempt";
+                    notes: string | null;
+                };
+            }[];
+        };
+        ApproveAssessmentMarksCorrectionCommand: {
+            requestId: string;
+            correctionId: string;
+            expectedVersion: number;
+        };
+        RejectAssessmentMarksCorrectionCommand: {
+            requestId: string;
+            correctionId: string;
+            expectedVersion: number;
+            reason: string;
+        };
+        WithdrawAssessmentMarksCorrectionCommand: {
+            requestId: string;
+            correctionId: string;
+            expectedVersion: number;
         };
         CompleteAssessmentCommand: {
             assessmentId: string;
@@ -13661,6 +13750,8 @@ export interface components {
         };
         AssessmentResult: {
             id: string;
+            /** @default 0 */
+            revision: number;
             studentId: string;
             assessmentId: string;
             score?: number | null;
@@ -13718,6 +13809,14 @@ export interface components {
             id: string;
             /** @default 0 */
             version: number;
+            /** @default [] */
+            sourceMarks: {
+                resultId: string;
+                assessmentId: string;
+                revision: number;
+            }[];
+            /** @default [] */
+            pendingCorrectionIds: string[];
             /** @default [] */
             sourceAssessments: {
                 assessmentId: string;
@@ -15361,35 +15460,39 @@ export interface components {
             }[];
             results: components["schemas"]["AssessmentResult"][];
             missingStudentIds: string[];
+            publishedResultIds: string[];
+            corrections: (components["schemas"]["AssessmentMarksCorrectionResponse"] & {
+                allowedActions: {
+                    approve: boolean;
+                    reject: boolean;
+                    withdraw: boolean;
+                };
+            })[];
             allowedActions: {
                 submit: boolean;
-                approve: boolean;
-                return: boolean;
+                requestCorrection: boolean;
             };
         };
         GetAssessmentMarksReviewQuery: {
             assessmentId: string;
         };
         AssessmentMarksReviewsResponse: {
-            items: (components["schemas"]["Assessment"] & {
-                completeness: {
-                    eligible: number;
-                    completed: number;
-                    missing: number;
-                };
+            items: {
+                correction: components["schemas"]["AssessmentMarksCorrectionResponse"];
+                assessment: components["schemas"]["Assessment"];
                 allowedActions: {
-                    submit: boolean;
                     approve: boolean;
-                    return: boolean;
+                    reject: boolean;
+                    withdraw: boolean;
                 };
-            })[];
+            }[];
             total: number;
             offset: number;
             limit: number;
         };
         ListAssessmentMarksReviewsQuery: {
             /** @enum {string} */
-            status?: "draft" | "submitted" | "approved";
+            status?: "pending" | "approved" | "rejected" | "withdrawn";
             classGroupId?: string;
             periodId?: string;
             offset?: number;
@@ -24449,27 +24552,27 @@ export interface operations {
             };
         };
     };
-    "commands.approveAssessmentMarks": {
+    "commands.requestAssessmentMarksCorrection": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description approve-assessment-marks payload */
+        /** @description request-assessment-marks-correction payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ApproveAssessmentMarksCommand"];
+                "application/json": components["schemas"]["RequestAssessmentMarksCorrectionCommand"];
             };
         };
         responses: {
-            /** @description Executed approve-assessment-marks */
+            /** @description Executed request-assessment-marks-correction */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Assessment"];
+                    "application/json": components["schemas"]["AssessmentMarksCorrectionResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -24527,27 +24630,183 @@ export interface operations {
             };
         };
     };
-    "commands.returnAssessmentMarks": {
+    "commands.approveAssessmentMarksCorrection": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description return-assessment-marks payload */
+        /** @description approve-assessment-marks-correction payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReturnAssessmentMarksCommand"];
+                "application/json": components["schemas"]["ApproveAssessmentMarksCorrectionCommand"];
             };
         };
         responses: {
-            /** @description Executed return-assessment-marks */
+            /** @description Executed approve-assessment-marks-correction */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Assessment"];
+                    "application/json": components["schemas"]["AssessmentMarksCorrectionResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.rejectAssessmentMarksCorrection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description reject-assessment-marks-correction payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RejectAssessmentMarksCorrectionCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed reject-assessment-marks-correction */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentMarksCorrectionResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.withdrawAssessmentMarksCorrection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description withdraw-assessment-marks-correction payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WithdrawAssessmentMarksCorrectionCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed withdraw-assessment-marks-correction */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentMarksCorrectionResponse"];
                 };
             };
             /** @description Invalid request payload */

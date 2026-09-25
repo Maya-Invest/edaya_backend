@@ -15,6 +15,7 @@ import { createDocumentNumberSeriesStore } from './stores/entity-stores-document
 import { createFamilyFeedbackStores } from './stores/entity-stores-family-feedback'
 import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
 import { PostgresFinanceProjections } from './stores/finance-projections-store'
+import { PostgresMarksCorrections } from './stores/marks-corrections-store'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
 import { PostgresS2sClientStore } from './stores/s2s-client-store'
@@ -25,6 +26,7 @@ import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permissio
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly financeProjections: PostgresFinanceProjections
   public readonly dashboardProjections: PostgresDashboardProjections
+  public readonly marksCorrections: PostgresMarksCorrections
   public readonly assessmentDependencies: PostgresAssessmentDependencies
   public readonly privateFiles: PostgresPrivateFileLifecycleStore
   public readonly attachmentUploads: PostgresAttachmentUploadStore
@@ -110,6 +112,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.db = db
     this.financeProjections = new PostgresFinanceProjections(db)
     this.dashboardProjections = new PostgresDashboardProjections(db)
+    this.marksCorrections = new PostgresMarksCorrections(db)
     this.assessmentDependencies = new PostgresAssessmentDependencies(db)
     this.privateFiles = new PostgresPrivateFileLifecycleStore(db)
     this.attachmentUploads = new PostgresAttachmentUploadStore(db)

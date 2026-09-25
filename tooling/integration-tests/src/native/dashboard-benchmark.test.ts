@@ -14,7 +14,7 @@ for (const size of [30, 300, 3000]) {
   benchmark(`dashboard projection benchmark ${size} students`, async () => {
     const f = await fixture(`benchmark-${size}`)
     const db = f.handles[0]!.db as { execute: (query: SQL) => Promise<{ rows: Record<string, unknown>[] }> }
-    // Thirty students per class, one approved sheet and one partially settled charge per student.
+    // Thirty students per class, one submitted sheet and one partially settled charge per student.
     await db.execute(sql`insert into class_groups (id,school_id,academic_year_id,grade_level_id,name,created_at)
       select ${f.id('cohort-')}||i,${f.id('school')},${f.id('year')},${f.id('grade')},'Class '||i,now() from generate_series(1,${Math.ceil(size / 30)}) i`)
     await db.execute(sql`insert into students (id,school_id,first_name,last_name,status,created_at)
@@ -24,7 +24,7 @@ for (const size of [30, 300, 3000]) {
     await db.execute(sql`insert into class_subjects (id,class_group_id,subject_id,coefficient,is_offered,completed_percentage,created_at)
       select ${f.id('subject-')}||i,${f.id('cohort-')}||i,${f.id('math')},1,true,0,now() from generate_series(1,${Math.ceil(size / 30)}) i`)
     await db.execute(sql`insert into assessments (id,class_group_id,class_subject_id,period_id,title,kind,max_score,coefficient,starts_at,ends_at,marks_status,marks_review,created_at)
-      select ${f.id('quiz-')}||i,${f.id('cohort-')}||i,${f.id('subject-')}||i,${f.id('period')},'Quiz','quiz',20,1,'2026-02-01','2026-02-01 01:00','approved',
+      select ${f.id('quiz-')}||i,${f.id('cohort-')}||i,${f.id('subject-')}||i,${f.id('period')},'Quiz','quiz',20,1,'2026-02-01','2026-02-01 01:00','submitted',
         jsonb_build_object('rosterStudentIds',(select jsonb_agg(student_id) from student_class_enrollments where class_group_id=${f.id('cohort-')}||i),'editedBySubjectIds','[]'::jsonb,'history','[]'::jsonb),now() from generate_series(1,${Math.ceil(size / 30)}) i`)
     await db.execute(sql`insert into assessment_results (id,student_id,assessment_id,score,designation,created_at)
       select ${f.id('score-')}||i,${f.id('pupil-')}||i,${f.id('quiz-')}||((i-1)/30+1),12.75,'scored',now() from generate_series(1,${size}) i`)

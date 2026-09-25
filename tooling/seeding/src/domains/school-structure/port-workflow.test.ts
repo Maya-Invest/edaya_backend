@@ -22,6 +22,7 @@ interface MemoryPortOptions {
 function createMemoryPort(options: MemoryPortOptions = {}): {
   port: SchoolStructureSeedPort
   schools: SchoolStructureSchoolRecord[]
+  configuredCurrencies: Array<{ schoolId: string, financeCurrency: string }>
   gradeLevels: GradeLevelSeedRecord[]
   academicYears: AcademicYearSeedRecord[]
   academicPeriods: AcademicPeriodSeedRecord[]
@@ -31,6 +32,7 @@ function createMemoryPort(options: MemoryPortOptions = {}): {
   classGroups: ClassGroupSeedRecord[]
 } {
   const schools: SchoolStructureSchoolRecord[] = []
+  const configuredCurrencies: Array<{ schoolId: string, financeCurrency: string }> = []
   const gradeLevels: GradeLevelSeedRecord[] = []
   const academicYears: AcademicYearSeedRecord[] = []
   const academicPeriods: AcademicPeriodSeedRecord[] = []
@@ -48,6 +50,9 @@ function createMemoryPort(options: MemoryPortOptions = {}): {
       }),
       registerSchool: async (record) => {
         schools.push(record)
+      },
+      configureFinanceCurrency: async (schoolId, financeCurrency) => {
+        configuredCurrencies.push({ schoolId, financeCurrency })
       },
       saveGradeLevel: async (record) => {
         gradeLevels.push(record)
@@ -74,6 +79,7 @@ function createMemoryPort(options: MemoryPortOptions = {}): {
       },
     },
     schools,
+    configuredCurrencies,
     gradeLevels,
     academicYears,
     academicPeriods,
@@ -100,7 +106,9 @@ describe('school-structure seed port workflow', () => {
     }, devSeedDataset)
 
     expect(memory.schools).toHaveLength(1)
+    expect(memory.schools[0]?.financeCurrency).toBe(devSeedDataset.entities.school?.financeCurrency)
     expect(memory.schools[0]?.ownerSubjectId).toBe('subject-owner')
+    expect(memory.configuredCurrencies).toHaveLength(0)
     expect(memory.gradeLevels).toHaveLength(demoDataset.entities.gradeLevels?.length ?? 0)
     expect(memory.academicYears).toHaveLength(1)
     expect(memory.academicYears[0]?.startDate).toBe('2025-09-01T12:00:00.000Z')
@@ -147,6 +155,10 @@ describe('school-structure seed port workflow', () => {
     await seedDevSchoolStructure(memory.port, inspection, demoDataset)
 
     expect(memory.schools).toHaveLength(0)
+    expect(memory.configuredCurrencies).toEqual([{
+      schoolId: demoDataset.entities.school?.id,
+      financeCurrency: demoDataset.entities.school?.financeCurrency,
+    }])
     expect(memory.staff).toHaveLength((demoDataset.entities.staffMembers?.length ?? 0) - 1)
     expect(memory.staff.some(member => member.id === directorId)).toBe(false)
   })

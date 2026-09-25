@@ -1,9 +1,10 @@
-import type { AccountInvitationRepository, Allocation, AssessmentDependenciesPort, AttachmentUploadStore, BaseRepositoryInterface, CoreEntityRepositories, DashboardProjectionPort, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, FinanceProjectionPort, PlatformUserRepository, PrivateFileLifecycleStore, S2sClientRepository, SchoolNotificationTemplatesRepository, ServiceApiKeyRepository, StudentAccountEntry } from '@edaya/core'
+import type { AccountInvitationRepository, Allocation, AssessmentDependenciesPort, AttachmentUploadStore, BaseRepositoryInterface, CoreEntityRepositories, DashboardProjectionPort, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, FinanceProjectionPort, MarksCorrectionsPort, PlatformUserRepository, PrivateFileLifecycleStore, S2sClientRepository, SchoolNotificationTemplatesRepository, ServiceApiKeyRepository, StudentAccountEntry } from '@edaya/core'
 import type { CronJobSchedulePort } from './platform/cron-job-schedule'
 
 export interface SchoolRepositories extends CoreEntityRepositories {
   readonly financeProjections: FinanceProjectionPort
   readonly dashboardProjections: DashboardProjectionPort
+  readonly marksCorrections: MarksCorrectionsPort
   readonly assessmentDependencies: AssessmentDependenciesPort
   readonly privateFiles: PrivateFileLifecycleStore
   readonly attachmentUploads: AttachmentUploadStore

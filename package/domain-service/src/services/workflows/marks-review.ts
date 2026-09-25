@@ -1,7 +1,7 @@
 import type { Assessment } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, BusinessRuleViolationError } from '@edaya/core'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, BusinessRuleViolationError } from '@edaya/core'
 import { academicStateLock, assertMarkDesignation, assertMarksDraft, assertMarksRevision, assessmentRoster, invalidateAssessmentDrafts } from '../../capabilities/academics/marks-state'
 import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { schoolCommandScope } from '../commands/school-command-scope'
@@ -12,7 +12,6 @@ export interface MarksReviewInput {
   assessmentId: string
   expectedRevision: number
 }
-export interface ReturnMarksInput extends MarksReviewInput { reason: string }
 
 /** Review transitions own state fields; ordinary entity writes cannot set them. */
 export class MarksReviewWorkflow {
@@ -21,15 +20,11 @@ export class MarksReviewWorkflow {
     this.repositories = pickWorkflowRepositories('assessments', base.repositories)
   }
 
-  async transition(action: 'submit' | 'approve' | 'return', input: MarksReviewInput & { reason?: string }): Promise<Assessment> {
+  async transition(action: 'submit', input: MarksReviewInput & { reason?: string }): Promise<Assessment> {
     const actor = this.base.actor
     if (actor.kind !== 'staff' && actor.kind !== 'teacher')
       denyResourceAccess()
-    if (action !== 'submit' && actor.kind !== 'staff')
-      denyResourceAccess()
-    if (action === 'return' && !input.reason?.trim())
-      throw new BusinessRuleViolationError('MARKS_RETURN_REASON_REQUIRED', 'Explain why the marks sheet is being returned')
-    const command = { submit: 'submitAssessmentMarks', approve: 'approveAssessmentMarks', return: 'returnAssessmentMarks' }[action]
+    const command = 'submitAssessmentMarks'
     return this.base.commandExecution.execute({
       scope: await schoolCommandScope(actor, command, input.requestId),
       input,
@@ -39,13 +34,7 @@ export class MarksReviewWorkflow {
         const assessment = await this.repositories.assessments.forSchool!(actor.schoolId).findById(input.assessmentId)
         if (!assessment)
           denyResourceAccess()
-        if (action === 'submit') {
-          await this.base.access.marksReview.edit(assessment.id)
-        }
-        else {
-          const reviewAction = action === 'return' && (assessment.marksStatus === 'approved' || assessment.marksReview.history.find(event => event.revision === input.expectedRevision)?.action === 'approve') ? 'returnApproved' : action === 'return' ? 'returnSubmitted' : 'approve'
-          await this.base.access.marksReview.assertClassAction(reviewAction, assessment.classGroupId)
-        }
+        await this.base.access.marksReview.edit(assessment.id)
       },
       execute: async () => {
         const assessment = await this.repositories.assessments.findById(input.assessmentId)
@@ -71,34 +60,21 @@ export class MarksReviewWorkflow {
             if (result.score !== undefined && result.score > assessment.maxScore)
               throw new BusinessRuleViolationError('SCORE_EXCEEDS_MAX_SCORE', 'A recorded mark exceeds the evaluation maximum')
           }
-          review = { ...review, rosterStudentIds, submittedBy: actor.subjectId, submittedAt: at, approvedBy: undefined, approvedAt: undefined }
-        }
-        else if (action === 'approve') {
-          if (assessment.marksStatus !== 'submitted')
-            throw new BusinessRuleViolationError('MARKS_NOT_SUBMITTED', 'Only submitted marks can be approved')
-          if (review.submittedBy === actor.subjectId || review.editedBySubjectIds.includes(actor.subjectId))
-            throw new BusinessRuleViolationError('MARKS_SELF_APPROVAL', 'An independent staff reviewer must approve this marks sheet')
-          review = { ...review, approvedBy: actor.subjectId, approvedAt: at }
-        }
-        else {
-          if (assessment.marksStatus === 'draft')
-            throw new BusinessRuleViolationError('MARKS_ALREADY_DRAFT', 'The marks sheet is already editable')
-          const published = await this.repositories.assessmentDependencies.publishedAssessmentIds(actor.schoolId, [assessment.id])
-          if (published.has(assessment.id))
-            throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', 'A published report depends on these marks')
-          review = { ...review, approvedBy: undefined, approvedAt: undefined, rosterStudentIds: [] }
+          review = { ...review, rosterStudentIds, submittedBy: actor.subjectId, submittedAt: at }
         }
         const updated = new AssessmentEntity({
           ...assessment.data,
-          marksStatus: action === 'submit' ? 'submitted' : action === 'approve' ? 'approved' : 'draft',
+          marksStatus: 'submitted',
           marksRevision: assessment.marksRevision + 1,
-          marksReview: { ...review, history: [...review.history, { action, revision: assessment.marksRevision + 1, subjectId: actor.subjectId, at, ...(action === 'return' ? { reason: input.reason!.trim() } : {}) }] },
+          marksReview: { ...review, history: [...review.history, { action, revision: assessment.marksRevision + 1, subjectId: actor.subjectId, at }] },
         })
         await this.repositories.assessments.save(updated)
         await invalidateAssessmentDrafts(updated, this.repositories)
-        if (action === 'approve') {
+        {
           const students = new Map((await this.repositories.students.findByIds(results.map(result => result.studentId))).map(student => [student.id, student]))
-          for (const result of results) {
+          for (const original of results) {
+            const result = new AssessmentResultEntity({ ...original.data, revision: original.revision + 1 })
+            await this.repositories.assessmentResults.save(result)
             const student = students.get(result.studentId)
             if (student)
               await runWorkflowNotifications(this.base, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, { result, assessment: updated, student })

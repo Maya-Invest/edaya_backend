@@ -135,7 +135,7 @@ describe('portal actions use current relationships and publication', () => {
     expect(await fixture.repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(0)
     const unpublishedFiles = fixture.repositories.attachments.forAccess(await access.entity('attachments').readScope())
     expect((await unpublishedFiles.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual([])
-    await fixture.db.exec('UPDATE assessments SET marks_status = \'approved\'')
+    await fixture.db.exec('UPDATE assessments SET marks_status = \'submitted\'')
     expect(await fixture.repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(2)
     expect((await unpublishedFiles.list()).map(row => row.id)).toEqual(['grade-file'])
     await fixture.repositories.results.save(card.copyWith({ status: ReportCardResultStatus.Published, publishedAt: new Date() }))

@@ -52,6 +52,9 @@ export async function seedDevSchoolStructure(
   if (!school) {
     throw new Error('Fixture dataset must include school for school-structure seeding')
   }
+  if (!school.financeCurrency) {
+    throw new Error('Seed school must configure financeCurrency before financial seeding')
+  }
   if (!academicYear) {
     throw new Error('Fixture dataset must include academicYear for school-structure seeding')
   }
@@ -71,6 +74,9 @@ export async function seedDevSchoolStructure(
       schoolCode: school.schoolCode ?? undefined,
       ...(options.ownerSubjectId ? { ownerSubjectId: options.ownerSubjectId } : {}),
     })
+  }
+  else {
+    await port.configureFinanceCurrency(school.id, school.financeCurrency)
   }
 
   for (const gradeLevel of gradeLevels) {

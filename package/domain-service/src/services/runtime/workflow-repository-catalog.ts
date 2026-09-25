@@ -16,6 +16,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
   ],
   assessments: [
     'assessmentDependencies',
+    'marksCorrections',
     'students',
     'lessonSessions',
     'academicPeriods',

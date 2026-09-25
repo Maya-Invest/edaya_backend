@@ -1,4 +1,4 @@
-# Backend remediation and marks approval
+# Backend remediation and marks corrections
 
 Implementation baseline: `6cf9b7d65df440e351cf209d5717ae3895b6d1cc`.
 Source audit: `../../../audits/edaya-backend-2026-09-22/REPORT.md` in the parent workspace.
@@ -6,16 +6,16 @@ Source audit: `../../../audits/edaya-backend-2026-09-22/REPORT.md` in the parent
 ## Accepted decisions
 
 - Address B01–B16 and O1–O7 with coordinated backend/web/mobile contracts.
-- Marks: whole evaluation Draft → Submitted → Approved; submission freezes marks/configuration/roster. Separate staff reviewer, no self-approval across identities. Return with a reason only before dependent report publication.
-- Complete effective-date roster; scored/absent/exempt are separate from homework compliance. Absence/exemption do not contribute score or weight. Families see approved marks only.
-- Report publication requires all applicable sheets approved; preserve section comments, two-decimal precision, source revisions, and period-end placement. Carry transferred marks by curriculum subject identity.
+- Marks: whole evaluation Draft → Submitted; submission makes marks official and freezes marks/configuration/roster. Later corrections require independent staff review of an immutable batch; no self-review across identity profiles or reopening to Draft.
+- Complete effective-date roster; scored/absent/exempt are separate from homework compliance. Absence/exemption do not contribute score or weight. Families see submitted official marks only.
+- Report publication requires all applicable sheets submitted and no pending correction to the student’s source marks; preserve section comments, two-decimal precision, source revisions, and period-end placement. Carry transferred marks by curriculum subject identity.
 - One explicit school currency; complete-input command receipts; installation-specific push.
 - Fresh database is an operational prerequisite managed separately. No remote reset, Identity deletion, storage deletion, or deployment is part of local implementation.
 
 ## Milestones and evidence
 
 - [x] M1: production authentication, historical fixtures, verification hygiene (B07/B08/B15/B16/O7).
-- [x] M2: marks approval, concurrency, teacher/staff/family interfaces (B09/O4).
+- [x] M2: submitted marks and staff-approved corrections, concurrency, teacher/staff/family interfaces (B09/O4).
 - [x] M3: report context, comments, precision, placement, publication replay (B01/B02/B03/B12/O2/O4).
 - [x] M4: currency, replay, common aging and finance queries (B04/B05/B06/B10/O2/O4).
 - [x] M5: independent document runtime and installation push (B11/B13).
@@ -24,7 +24,7 @@ Source audit: `../../../audits/edaya-backend-2026-09-22/REPORT.md` in the parent
 
 Implementation is in the working tree across backend, `edaya_frontend`, and `edaya_mobile`. Checked milestones have implementation and local automated evidence. M7 remains open for coordinated deployment and live acceptance; the program is not release-approved yet. Current contracts and rollout prerequisites are documented in [marks approval and release](../reference/marks-approval-and-release.md). The [deployment acceptance checklist](backend-release-acceptance.md) records the remaining environment journeys.
 
-Pinned release: `28b4b1c33a65c439a60a7416e1a00bfb9a87acb63777c6ae53b6d9db02494272`. All three local contract comparisons pass. This is a content-addressed working-tree release, not a committed or deployed revision.
+The current release is identified by `release-contract.json`. Updated implementation and verification evidence for the replacement correction workflow are recorded in [submitted marks corrections](submitted-marks-corrections.md). The ledger below preserves the earlier remediation baseline and is not evidence for subsequent changes.
 
 ## Finding traceability
 
@@ -40,7 +40,7 @@ Paths below are relative to the backend unless marked otherwise. Regression test
 | B06 | Migration 0032 school finance currency; shared currency validation, financial gates, explicit statement currency | Finance workflow/ledger tests; fresh school seeds configure currency |
 | B07 | Production `http/dependencies/session-actor.ts` propagates selected academic year | `production-session-actor.integration.test.ts` |
 | B08 | Verified-email requirement at HTTP and platform provisioning boundaries | Platform provisioning and production authentication tests |
-| B09 | Approval schema, shared marks gates/hooks, revisioned commands, scoped review policy, effective-date roster | Marks review tests cover lifecycle, no self-review, batch rollback, curriculum freeze, score/compliance preservation and history retention under ordinary/batch deletion; native profile journey and races |
+| B09 | Migration 0034 correction requests, shared marks gates/hooks, per-result revisions, scoped independent review, effective-date roster and exact published-mark locks | Marks review tests cover lifecycle, no self-review, batch rollback, curriculum freeze, score/compliance preservation and history retention under ordinary/batch deletion; native profile journey and races |
 | B10 | Shared installment-aging SQL and domain calculation; one reference date | Native finance/reset/concurrency; dashboard benchmark validates partial installment amounts |
 | B11 | Background document work owns its Worker runtime and closes it in `finally` | `apps/api/tests/lib/test-schedule-background-task.test.ts`; durable native document tests |
 | B12 | Effective enrollment at period end; transfer matching by underlying subject identity | Report-card workflow/aggregation regressions and native report tests |
@@ -63,7 +63,7 @@ Service paths in this table are under `package/domain-service/src`; service test
 | O6 | Typed SQL store/row/table boundaries; public repository types hide private mapper types; template defaults constructed in service composition | Type checks and template parity tests |
 | O7 | Corrected repository/testing docs, drift diagnostics name affected files, current feature/release documentation | Repo doctor, boundaries, naming and contract checks |
 
-## Verification ledger
+## Historical verification ledger — earlier approval workflow
 
 - Native PostgreSQL final run: **60 passed, 0 failed** (`/tmp/edaya-native-final2.log`), including the teacher-profile → independent reviewer → guardian → publication journey and same-identity owner/staff self-review denial. The three opt-in dashboard benchmarks are skipped in the ordinary suite and passed in their separate final projection run (`/tmp/edaya-bench5.log`); plans and measurements are stored as evidence files in `docs/performance/`.
 - Web `bun run verify`: **passed**, 929 webapp tests, quality and production builds (`/tmp/edaya-web-verifyfinal2.log`).

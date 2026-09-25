@@ -10700,8 +10700,7 @@
             "type": "string",
             "enum": [
               "draft",
-              "submitted",
-              "approved"
+              "submitted"
             ],
             "default": "draft"
           },
@@ -10738,10 +10737,6 @@
                 "type": "string"
               },
               "submittedAt": {},
-              "approvedBy": {
-                "type": "string"
-              },
-              "approvedAt": {},
               "history": {
                 "type": "array",
                 "items": {
@@ -10750,9 +10745,7 @@
                     "action": {
                       "type": "string",
                       "enum": [
-                        "submit",
-                        "approve",
-                        "return"
+                        "submit"
                       ]
                     },
                     "revision": {
@@ -10909,7 +10902,153 @@
           "expectedRevision"
         ]
       },
-      "ApproveAssessmentMarksCommand": {
+      "AssessmentMarksCorrectionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "assessmentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "authorSubjectId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resultId": {
+                  "type": "string"
+                },
+                "studentId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "before": {
+                  "type": "object",
+                  "properties": {
+                    "score": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": 0
+                    },
+                    "designation": {
+                      "type": "string",
+                      "enum": [
+                        "scored",
+                        "absent",
+                        "exempt"
+                      ]
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "score",
+                    "designation",
+                    "notes"
+                  ],
+                  "additionalProperties": false
+                },
+                "proposed": {
+                  "type": "object",
+                  "properties": {
+                    "score": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": 0
+                    },
+                    "designation": {
+                      "type": "string",
+                      "enum": [
+                        "scored",
+                        "absent",
+                        "exempt"
+                      ]
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "score",
+                    "designation",
+                    "notes"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "resultId",
+                "studentId",
+                "revision",
+                "before",
+                "proposed"
+              ]
+            }
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectionReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "assessmentId",
+          "status",
+          "version",
+          "baseRevision",
+          "authorSubjectId",
+          "reason",
+          "createdAt",
+          "changes"
+        ]
+      },
+      "RequestAssessmentMarksCorrectionCommand": {
         "type": "object",
         "properties": {
           "requestId": {
@@ -10924,32 +11063,145 @@
           "expectedRevision": {
             "type": "integer",
             "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resultId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "proposed": {
+                  "type": "object",
+                  "properties": {
+                    "score": {
+                      "type": "number",
+                      "nullable": true,
+                      "minimum": 0
+                    },
+                    "designation": {
+                      "type": "string",
+                      "enum": [
+                        "scored",
+                        "absent",
+                        "exempt"
+                      ]
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "score",
+                    "designation",
+                    "notes"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "resultId",
+                "proposed"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 500
           }
         },
         "required": [
           "requestId",
           "assessmentId",
-          "expectedRevision"
-        ]
+          "expectedRevision",
+          "reason",
+          "changes"
+        ],
+        "additionalProperties": false
       },
-      "ReturnAssessmentMarksCommand": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/SubmitAssessmentMarksCommand"
+      "ApproveAssessmentMarksCorrectionCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           },
-          {
-            "type": "object",
-            "properties": {
-              "reason": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "required": [
-              "reason"
-            ]
+          "correctionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
           }
-        ]
+        },
+        "required": [
+          "requestId",
+          "correctionId",
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "RejectAssessmentMarksCorrectionCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "correctionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "correctionId",
+          "expectedVersion",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "WithdrawAssessmentMarksCorrectionCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "correctionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "correctionId",
+          "expectedVersion"
+        ],
+        "additionalProperties": false
       },
       "CompleteAssessmentCommand": {
         "type": "object",
@@ -10973,6 +11225,11 @@
           "id": {
             "type": "string",
             "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
           },
           "studentId": {
             "type": "string",
@@ -11234,6 +11491,37 @@
             "type": "integer",
             "minimum": 0,
             "default": 0
+          },
+          "sourceMarks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resultId": {
+                  "type": "string"
+                },
+                "assessmentId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "resultId",
+                "assessmentId",
+                "revision"
+              ]
+            },
+            "default": []
+          },
+          "pendingCorrectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
           },
           "sourceAssessments": {
             "type": "array",
@@ -17804,23 +18092,62 @@
               "type": "string"
             }
           },
+          "publishedResultIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "corrections": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "allowedActions": {
+                      "type": "object",
+                      "properties": {
+                        "approve": {
+                          "type": "boolean"
+                        },
+                        "reject": {
+                          "type": "boolean"
+                        },
+                        "withdraw": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "approve",
+                        "reject",
+                        "withdraw"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "allowedActions"
+                  ]
+                }
+              ]
+            }
+          },
           "allowedActions": {
             "type": "object",
             "properties": {
               "submit": {
                 "type": "boolean"
               },
-              "approve": {
-                "type": "boolean"
-              },
-              "return": {
+              "requestCorrection": {
                 "type": "boolean"
               }
             },
             "required": [
               "submit",
-              "approve",
-              "return"
+              "requestCorrection"
             ]
           }
         },
@@ -17829,6 +18156,8 @@
           "students",
           "results",
           "missingStudentIds",
+          "publishedResultIds",
+          "corrections",
           "allowedActions"
         ]
       },
@@ -17850,57 +18179,38 @@
           "items": {
             "type": "array",
             "items": {
-              "allOf": [
-                {
+              "type": "object",
+              "properties": {
+                "correction": {
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
+                },
+                "assessment": {
                   "$ref": "#/components/schemas/Assessment"
                 },
-                {
+                "allowedActions": {
                   "type": "object",
                   "properties": {
-                    "completeness": {
-                      "type": "object",
-                      "properties": {
-                        "eligible": {
-                          "type": "integer"
-                        },
-                        "completed": {
-                          "type": "integer"
-                        },
-                        "missing": {
-                          "type": "integer"
-                        }
-                      },
-                      "required": [
-                        "eligible",
-                        "completed",
-                        "missing"
-                      ]
+                    "approve": {
+                      "type": "boolean"
                     },
-                    "allowedActions": {
-                      "type": "object",
-                      "properties": {
-                        "submit": {
-                          "type": "boolean"
-                        },
-                        "approve": {
-                          "type": "boolean"
-                        },
-                        "return": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "submit",
-                        "approve",
-                        "return"
-                      ]
+                    "reject": {
+                      "type": "boolean"
+                    },
+                    "withdraw": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "completeness",
-                    "allowedActions"
+                    "approve",
+                    "reject",
+                    "withdraw"
                   ]
                 }
+              },
+              "required": [
+                "correction",
+                "assessment",
+                "allowedActions"
               ]
             }
           },
@@ -17927,9 +18237,10 @@
           "status": {
             "type": "string",
             "enum": [
-              "draft",
-              "submitted",
-              "approved"
+              "pending",
+              "approved",
+              "rejected",
+              "withdrawn"
             ]
           },
           "classGroupId": {
@@ -36006,35 +36317,35 @@
         }
       }
     },
-    "/core/commands/approve-assessment-marks": {
+    "/core/commands/request-assessment-marks-correction": {
       "post": {
         "tags": [
           "Core Commands"
         ],
-        "summary": "approve-assessment-marks",
-        "operationId": "commands.approveAssessmentMarks",
+        "summary": "request-assessment-marks-correction",
+        "operationId": "commands.requestAssessmentMarksCorrection",
         "x-edaya-kind": "command",
-        "x-edaya-command-key": "approveAssessmentMarks",
-        "x-edaya-command-public-name": "approve-assessment-marks",
-        "x-edaya-request-schema": "ApproveAssessmentMarksCommand",
-        "x-edaya-response-schema": "Assessment",
+        "x-edaya-command-key": "requestAssessmentMarksCorrection",
+        "x-edaya-command-public-name": "request-assessment-marks-correction",
+        "x-edaya-request-schema": "RequestAssessmentMarksCorrectionCommand",
+        "x-edaya-response-schema": "AssessmentMarksCorrectionResponse",
         "requestBody": {
-          "description": "approve-assessment-marks payload",
+          "description": "request-assessment-marks-correction payload",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ApproveAssessmentMarksCommand"
+                "$ref": "#/components/schemas/RequestAssessmentMarksCorrectionCommand"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Executed approve-assessment-marks",
+            "description": "Executed request-assessment-marks-correction",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Assessment"
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
                 }
               }
             }
@@ -36136,35 +36447,295 @@
         }
       }
     },
-    "/core/commands/return-assessment-marks": {
+    "/core/commands/approve-assessment-marks-correction": {
       "post": {
         "tags": [
           "Core Commands"
         ],
-        "summary": "return-assessment-marks",
-        "operationId": "commands.returnAssessmentMarks",
+        "summary": "approve-assessment-marks-correction",
+        "operationId": "commands.approveAssessmentMarksCorrection",
         "x-edaya-kind": "command",
-        "x-edaya-command-key": "returnAssessmentMarks",
-        "x-edaya-command-public-name": "return-assessment-marks",
-        "x-edaya-request-schema": "ReturnAssessmentMarksCommand",
-        "x-edaya-response-schema": "Assessment",
+        "x-edaya-command-key": "approveAssessmentMarksCorrection",
+        "x-edaya-command-public-name": "approve-assessment-marks-correction",
+        "x-edaya-request-schema": "ApproveAssessmentMarksCorrectionCommand",
+        "x-edaya-response-schema": "AssessmentMarksCorrectionResponse",
         "requestBody": {
-          "description": "return-assessment-marks payload",
+          "description": "approve-assessment-marks-correction payload",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReturnAssessmentMarksCommand"
+                "$ref": "#/components/schemas/ApproveAssessmentMarksCorrectionCommand"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Executed return-assessment-marks",
+            "description": "Executed approve-assessment-marks-correction",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Assessment"
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/reject-assessment-marks-correction": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "reject-assessment-marks-correction",
+        "operationId": "commands.rejectAssessmentMarksCorrection",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "rejectAssessmentMarksCorrection",
+        "x-edaya-command-public-name": "reject-assessment-marks-correction",
+        "x-edaya-request-schema": "RejectAssessmentMarksCorrectionCommand",
+        "x-edaya-response-schema": "AssessmentMarksCorrectionResponse",
+        "requestBody": {
+          "description": "reject-assessment-marks-correction payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectAssessmentMarksCorrectionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed reject-assessment-marks-correction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/withdraw-assessment-marks-correction": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "withdraw-assessment-marks-correction",
+        "operationId": "commands.withdrawAssessmentMarksCorrection",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "withdrawAssessmentMarksCorrection",
+        "x-edaya-command-public-name": "withdraw-assessment-marks-correction",
+        "x-edaya-request-schema": "WithdrawAssessmentMarksCorrectionCommand",
+        "x-edaya-response-schema": "AssessmentMarksCorrectionResponse",
+        "requestBody": {
+          "description": "withdraw-assessment-marks-correction payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WithdrawAssessmentMarksCorrectionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed withdraw-assessment-marks-correction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentMarksCorrectionResponse"
                 }
               }
             }

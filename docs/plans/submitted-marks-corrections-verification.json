@@ -1,0 +1,101 @@
+{
+  "status": "passed-local",
+  "completedAt": "2026-09-25T03:21:49.513011+00:00",
+  "releaseId": "eff763a3fbd73cad7de214c68ab5c0a26dbbfb17a778c5b551ba4244eee00891",
+  "schemaFingerprint": "a0a11734c5eea214e5e68e9c1fd10eb8e48919e01b49b939eafc7f8251312278",
+  "backendSourceRevision": "sha256:0c2ca6eb7a122c230b4ffea1fe69a9887b1b59c3db48819a85c4eb982fe199d7",
+  "commands": [
+    {
+      "repository": "backend",
+      "command": "bun repo verify --full",
+      "exitCode": 0,
+      "summary": {
+        "serviceUnitTests": 765,
+        "apiUnitTests": 286,
+        "postgresAdapterTests": 195,
+        "serviceIntegrationTests": 18,
+        "authenticationAndHttpIntegrationTests": 34
+      },
+      "log": "/tmp/edaya-correction-fullverify6.log",
+      "logSha256": "a28f99659504170a734373020a3b40311d3c14fd4f9ff7677ce6b48ce2385dbb"
+    },
+    {
+      "repository": "backend/tooling/integration-tests",
+      "command": "bun src/native/run.ts",
+      "exitCode": 0,
+      "summary": {
+        "passed": 61,
+        "failed": 0,
+        "skipped": 3,
+        "skipReason": "Opt-in dashboard performance benchmarks; unchanged by this workflow update"
+      },
+      "log": "/tmp/edaya-correction-native2.log",
+      "logSha256": "694390abe9fd2d238926c5ee3cec1004f2638d7e75c4a4867b60c751ffffa0bb"
+    },
+    {
+      "repository": "backend/tooling/integration-tests",
+      "command": "bun src/native/run.ts --seed",
+      "exitCode": 0,
+      "summary": {
+        "passed": 8,
+        "failed": 0
+      },
+      "log": "/tmp/edaya-correction-seed.log",
+      "logSha256": "3885b73849231cd34056bf77aada955be6b71d0af52788ce2ca8cae1b3719bdc"
+    },
+    {
+      "repository": "web",
+      "command": "bun run verify",
+      "exitCode": 0,
+      "summary": {
+        "webappTests": 931,
+        "failed": 0
+      },
+      "log": "/tmp/edaya-correction-web-verify5.log",
+      "logSha256": "f9a896765c5c51c3e79eafcb147d659cc37d2a688cfc3158f678ec88eb53c2e5"
+    },
+    {
+      "repository": "mobile",
+      "command": "melos run verify",
+      "exitCode": 0,
+      "summary": {
+        "analyzedPackages": 6,
+        "analyzerIssues": 0,
+        "packageTests": {
+          "edaya_integration_tests": 6,
+          "edaya_api_client": 14,
+          "edaya_auth": 14,
+          "edaya_shared": 54,
+          "edaya_teacher": 15,
+          "edaya_guardian": 31
+        }
+      },
+      "log": "/tmp/edaya-correction-mobile-verify3.log",
+      "logSha256": "3a5788ced835ae35e27407dbe72536de49cbc6bb4327375b010a898e96a955cb"
+    }
+  ],
+  "contractComparisons": {
+    "backend": "passed",
+    "web": "passed",
+    "mobile": "passed"
+  },
+  "diffWhitespaceChecks": {
+    "backend": "passed",
+    "web": "passed",
+    "mobile": "passed"
+  },
+  "diagnostics": [
+    {
+      "issue": "Chrome PDF renderer could not produce a PDF inside the execution sandbox.",
+      "failedRun": "/tmp/edaya-correction-fullverify5.log",
+      "resolution": "The same PDF test passed outside the sandbox in 940.55 ms; the full backend suite then passed with Chrome execution permitted. No timeout or assertion was changed.",
+      "diagnosticLog": "/tmp/edaya-correction-pdf-diagnostic.log"
+    }
+  ],
+  "deferredOperationalAcceptance": [
+    "Separately managed database reset and retirement of old sessions/caches/outbox edits",
+    "Coordinated deployment of the matching backend/web/mobile release",
+    "Deployed interactive and physical-device/provider acceptance in backend-release-acceptance.md"
+  ],
+  "workingTree": "Uncommitted implementation; unrelated staged integration fixes preserved"
+}

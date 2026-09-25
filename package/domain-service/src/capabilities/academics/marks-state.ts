@@ -9,7 +9,7 @@ export function academicStateLock(schoolId: string): string {
 
 export function assertMarksDraft(assessment: Assessment): void {
   if (assessment.marksStatus !== 'draft')
-    throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Return the marks sheet for correction before editing it')
+    throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Submitted marks can only change through an approved correction')
 }
 
 export function assertMarksRevision(assessment: Assessment, expectedRevision: number): void {

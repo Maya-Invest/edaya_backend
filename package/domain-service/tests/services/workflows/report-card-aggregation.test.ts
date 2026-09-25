@@ -139,7 +139,7 @@ describe('report card aggregation helpers', () => {
     expect(buildSubjectAverageFromAssessments('cs1', [])).toBeUndefined()
     expect(buildSubjectAverageFromAssessments('cs1', [{
       result: { score: 10 } as never,
-      assessment: { marksStatus: 'approved', classSubjectId: 'cs1', maxScore: 20, coefficient: 0 } as never,
+      assessment: { marksStatus: 'submitted', classSubjectId: 'cs1', maxScore: 20, coefficient: 0 } as never,
     }])).toBe(0)
   })
 
@@ -158,7 +158,7 @@ describe('report card aggregation helpers', () => {
     const baseService = {
       academicPeriods: { findByIds: async (ids: string[]) => ids.map(id => ({ id, isPublished: id === 'per-t1' })) },
       assessmentResults: { list: async () => [{ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 15 }] },
-      assessments: { list: async () => [{ id: 'ass1', periodId: 'per-t1', classSubjectId: 'cs1', marksStatus: 'approved' }] },
+      assessments: { list: async () => [{ id: 'ass1', periodId: 'per-t1', classSubjectId: 'cs1', marksStatus: 'submitted' }] },
     } as never
 
     const published = await listPublishedPeriodIds(baseService, ['per-t1', 'per-t2'])

@@ -172,8 +172,17 @@ describe('SchoolService access-control workflows', () => {
     expect((await repositories.staffPermissionAssignments.findById('spa1'))?.data).toEqual(assignment.data)
   })
 
-  test('relinkActorSubject delegates to linkActorSubject', async () => {
+  test('relinkActorSubject replaces an existing auth subject', async () => {
     const { repositories, service } = await createAccessControlContext()
+    await repositories.staffMembers.save(new StaffMember({
+      id: 'st1',
+      schoolId: 'sch1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      subjectId: 'auth-user-old',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    }))
 
     const result = await service.accessControlWorkflow.relinkActorSubject({
       subjectId: 'auth-user-1',
@@ -181,7 +190,7 @@ describe('SchoolService access-control workflows', () => {
     })
 
     expect(result.entity.subjectId).toBe('auth-user-1')
-    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
+    expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe('auth-user-1')
   })
 
   test('unlinkActorSubject rejects ambiguous targets', async () => {

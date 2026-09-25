@@ -28,6 +28,7 @@ describe('seedAuthLinkedGuardianInboxProbes', () => {
       }),
       findTeacherById: async () => undefined,
       replaceGuardianSubjectId: async () => {},
+      replaceTeacherSubjectId: async () => {},
       linkActorSubject: async () => {},
     }
 

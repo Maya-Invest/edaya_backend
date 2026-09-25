@@ -54,8 +54,8 @@ export class NotificationDeliveryAccessPolicy {
         requireSource(assessmentResultId, marksRevision)
         const result = await facts.one('assessmentResults', assessmentResultId!)
         const sheet = await facts.one('assessments', result.assessmentId)
-        if (sheet.id !== assessmentId || sheet.marksStatus !== 'approved' || String(sheet.marksRevision) !== marksRevision)
-          denied('Marks are no longer approved at this revision')
+        if (sheet.id !== assessmentId || sheet.marksStatus !== 'submitted' || String(result.revision) !== marksRevision)
+          denied('Marks are no longer submitted at this revision')
         await this.assertStudentSource(facts, delivery, result.studentId, 'academic')
         await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId)
         return

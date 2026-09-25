@@ -26,6 +26,7 @@ export const assessments = pgTable('assessments', {
 // 28. Assessment Result Table
 
 export const assessmentResults = pgTable('assessment_results', {
+  revision: integer('revision').notNull().default(0),
   id: text('id').primaryKey(),
   studentId: text('student_id').notNull(),
   assessmentId: text('assessment_id').notNull(),
@@ -86,6 +87,8 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
 export const reportCardResults = pgTable('report_card_results', {
   id: text('id').primaryKey(),
   version: integer('version').notNull().default(0),
+  sourceMarks: jsonb('source_marks').notNull().default([]),
+  pendingCorrectionIds: jsonb('pending_correction_ids').notNull().default([]),
   sourceAssessments: jsonb('source_assessments').notNull().default([]),
   pendingAssessmentIds: jsonb('pending_assessment_ids').notNull().default([]),
   calculationStale: boolean('calculation_stale').notNull().default(false),
@@ -109,3 +112,13 @@ export const reportCardResults = pgTable('report_card_results', {
 }, table => definePerformanceIndexes('report_card_results', table))
 
 // 33. Student Table
+
+// Command-owned correction requests are persisted through MarksCorrectionsPort.
+export const assessmentMarksCorrections = pgTable('assessment_marks_corrections', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  assessmentId: text('assessment_id').notNull(),
+  status: text('status').notNull(),
+  version: integer('version').notNull(),
+  payload: jsonb('payload').notNull(),
+})

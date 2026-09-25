@@ -86,6 +86,8 @@ export interface ClassGroupSeedRecord {
 export interface SchoolStructureSeedPort {
   inspectSeedState: (demoSchoolId: string) => Promise<SchoolStructureSeedState>
   registerSchool: (record: SchoolStructureSchoolRecord) => Promise<void>
+  /** Apply the fixture currency before later domains create financial records. */
+  configureFinanceCurrency: (schoolId: string, financeCurrency: string) => Promise<void>
   saveGradeLevel: (record: GradeLevelSeedRecord) => Promise<void>
   createAcademicYear: (record: AcademicYearSeedRecord) => Promise<void>
   publishAcademicYear: (academicYearId: string) => Promise<void>

@@ -84,8 +84,8 @@ export async function seedDevAssessments(
   let unpublishedIndex = 0
   for (const assessment of [...inClassAssessments, ...homeworkAssessments]) {
     const published = dataset.extensions?.reportCardResults?.some(result => result.periodId === assessment.periodId && result.classGroupId === assessment.classGroupId && result.narrativeStatus === 'published')
-    // Published source periods must be fully approved; open periods demonstrate all three states.
-    const state = published ? 'approved' : (['draft', 'submitted', 'approved'] as const)[unpublishedIndex++ % 3]!
+    // Published source periods must be submitted; open periods demonstrate correction decisions.
+    const state = published ? 'submitted' : (['draft', 'submitted', 'correction-pending', 'correction-approved', 'correction-rejected'] as const)[unpublishedIndex++ % 5]!
     await port.finalizeMarks(assessment.id, state)
     options?.onProgress?.()
   }

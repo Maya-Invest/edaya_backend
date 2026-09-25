@@ -18,6 +18,8 @@ export enum ReportCardResultStatus {
 export const reportCardResultBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   version: z.number().int().nonnegative().default(0),
+  sourceMarks: z.array(z.object({ resultId: z.string(), assessmentId: z.string(), revision: z.number().int().nonnegative() })).default([]),
+  pendingCorrectionIds: z.array(z.string()).default([]),
   sourceAssessments: z.array(z.object({ assessmentId: z.string(), revision: z.number().int().nonnegative() })).default([]),
   pendingAssessmentIds: z.array(z.string()).default([]),
   calculationStale: z.boolean().default(false),
@@ -87,6 +89,8 @@ export class ReportCardResult {
 
   get id() { return this.data.id }
   get version() { return this.data.version }
+  get sourceMarks() { return this.data.sourceMarks }
+  get pendingCorrectionIds() { return this.data.pendingCorrectionIds }
   get sourceAssessments() { return this.data.sourceAssessments }
   get pendingAssessmentIds() { return this.data.pendingAssessmentIds }
   get calculationStale() { return this.data.calculationStale }
@@ -121,6 +125,8 @@ export class ReportCardResult {
   }): ReportCardResult {
     return new ReportCardResult({
       version: this.version,
+      sourceMarks: this.sourceMarks,
+      pendingCorrectionIds: this.pendingCorrectionIds,
       sourceAssessments: this.sourceAssessments,
       pendingAssessmentIds: this.pendingAssessmentIds,
       calculationStale: this.calculationStale,

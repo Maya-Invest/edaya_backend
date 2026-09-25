@@ -4,7 +4,7 @@ import { Permission } from '@edaya/core'
 import { AuthorizationError } from '../model/errors'
 import { denied } from './facts'
 
-export type MarksAction = 'submit' | 'approve' | 'returnSubmitted' | 'returnApproved'
+export type MarksAction = 'submit' | 'approve'
 /** Action policies own permissions and enforce class-group resource scopes. */
 export class MarksReviewAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
@@ -13,7 +13,7 @@ export class MarksReviewAccessPolicy {
   }
 
   detail(assessmentId: string) {
-    return this.access.assertResources([Permission.GRADE_READ, Permission.GRADE_VALIDATE, Permission.GRADE_UNLOCK], 'assessments', [assessmentId], 'read')
+    return this.access.assertResources([Permission.GRADE_READ, Permission.GRADE_VALIDATE], 'assessments', [assessmentId], 'read')
   }
 
   queueScope() {
@@ -25,7 +25,7 @@ export class MarksReviewAccessPolicy {
   assertClassAction(action: MarksAction, classGroupId: string) {
     if (action !== 'submit' && this.access.actor.kind !== 'staff')
       denied('Marks review requires a staff profile')
-    const permission = action === 'submit' ? [Permission.GRADE_INPUT, Permission.GRADE_UPDATE] : action === 'returnApproved' ? Permission.GRADE_UNLOCK : Permission.GRADE_VALIDATE
+    const permission = action === 'submit' ? [Permission.GRADE_INPUT, Permission.GRADE_UPDATE] : Permission.GRADE_VALIDATE
     return this.access.assertResources(permission, 'classGroups', [classGroupId])
   }
 

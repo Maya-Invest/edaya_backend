@@ -44,6 +44,9 @@ export function createInProcessAuthLinkSeedPort(application: SeedApplication): A
     replaceGuardianSubjectId: (guardianId, subjectId) => withSeedPortError('replaceGuardianSubjectId', async () => {
       await service.accessControlWorkflow.relinkActorSubject({ guardianId, subjectId })
     }),
+    replaceTeacherSubjectId: (teacherId, subjectId) => withSeedPortError('replaceTeacherSubjectId', async () => {
+      await service.accessControlWorkflow.relinkActorSubject({ teacherId, subjectId })
+    }),
     linkActorSubject: input => withSeedPortError('linkActorSubject', async () => {
       await service.accessControlWorkflow.linkActorSubject(input)
     }),

@@ -1,5 +1,6 @@
-import { assessmentResponseSchema, assessmentResultResponseSchema } from "./entities";
 import { z } from "@hono/zod-openapi";
+import { assessmentResponseSchema, assessmentResultResponseSchema } from "./entities";
+import { marksCorrectionResponseSchema } from "./marks-corrections";
 
 export const getSchoolOverviewQuerySchema = z.object({
   schoolId: z.string().min(1),
@@ -596,7 +597,7 @@ export const teacherFamilyFeedbackResultListResponseSchema = z.array(teacherFami
 
 export const getAssessmentMarksReviewQuerySchema = z.object({ assessmentId: z.string().min(1) }).openapi("GetAssessmentMarksReviewQuery");
 export const listAssessmentMarksReviewsQuerySchema = z.object({
-  status: z.enum(["draft", "submitted", "approved"]).optional(),
+  status: z.enum(["pending", "approved", "rejected", "withdrawn"]).optional(),
   classGroupId: z.string().min(1).optional(),
   periodId: z.string().min(1).optional(),
   offset: z.number().int().nonnegative().optional(),
@@ -607,13 +608,16 @@ export const assessmentMarksReviewResponseSchema = z.object({
   students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string() })),
   results: z.array(assessmentResultResponseSchema),
   missingStudentIds: z.array(z.string()),
-  allowedActions: z.object({ submit: z.boolean(), approve: z.boolean(), return: z.boolean() }),
+  publishedResultIds: z.array(z.string()),
+  corrections: z.array(marksCorrectionResponseSchema.extend({ allowedActions: z.object({ approve: z.boolean(), reject: z.boolean(), withdraw: z.boolean() }) })),
+  allowedActions: z.object({ submit: z.boolean(), requestCorrection: z.boolean() }),
 }).openapi("AssessmentMarksReviewResponse");
 export const assessmentMarksReviewsResponseSchema = z.object({
-  items: z.array(z.intersection(assessmentResponseSchema, z.object({
-    completeness: z.object({ eligible: z.number().int(), completed: z.number().int(), missing: z.number().int() }),
-    allowedActions: z.object({ submit: z.boolean(), approve: z.boolean(), return: z.boolean() }),
-  }))),
+  items: z.array(z.object({
+    correction: marksCorrectionResponseSchema,
+    assessment: assessmentResponseSchema,
+    allowedActions: z.object({ approve: z.boolean(), reject: z.boolean(), withdraw: z.boolean() }),
+  })),
   total: z.number().int(),
   offset: z.number().int(),
   limit: z.number().int(),

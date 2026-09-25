@@ -47,6 +47,8 @@ export async function validateAssessmentResultSave(
     denyResourceAccess()
   }
   assertMarksDraft(assessment)
+  if (result.revision !== (_existing?.revision ?? 0))
+    throw new BusinessRuleViolationError('MARKS_STATE_COMMAND_REQUIRED', 'Mark revisions are command owned')
   assertMarkDesignation(result)
   if (_existing && (_existing.assessmentId !== result.assessmentId || _existing.studentId !== result.studentId))
     throw new BusinessRuleViolationError('MARK_TARGET_IMMUTABLE', 'A mark cannot be reassigned to another student or evaluation')

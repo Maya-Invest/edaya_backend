@@ -93,7 +93,7 @@ export async function listAssessmentResultsForStudentAndPeriods(
   const eligiblePeriodIds = options.onlyPublishedPeriods
     ? await listPublishedPeriodIds(repositories, periodIds)
     : new Set(periodIds)
-  const assessments = await repositories.assessments.list({ periodId: { $in: [...eligiblePeriodIds] }, marksStatus: 'approved' })
+  const assessments = await repositories.assessments.list({ periodId: { $in: [...eligiblePeriodIds] }, marksStatus: 'submitted' })
   const byId = new Map(assessments.map(assessment => [assessment.id, assessment]))
   const results = assessments.length ? await repositories.assessmentResults.list({ studentId, assessmentId: { $in: [...byId.keys()] } }) : []
   const resolved = results.map(result => ({ result, assessment: byId.get(result.assessmentId)! }))
@@ -105,7 +105,7 @@ export function buildSubjectAverageFromAssessments(
   assessmentsWithResults: Array<{ result: AssessmentResult, assessment: Assessment }>,
 ): number | undefined {
   const leafResults = assessmentsWithResults
-    .filter(({ assessment, result }) => (typeof classSubjectId === 'string' ? assessment.classSubjectId === classSubjectId : classSubjectId.includes(assessment.classSubjectId)) && assessment.marksStatus === 'approved' && result.score !== undefined)
+    .filter(({ assessment, result }) => (typeof classSubjectId === 'string' ? assessment.classSubjectId === classSubjectId : classSubjectId.includes(assessment.classSubjectId)) && assessment.marksStatus === 'submitted' && result.score !== undefined)
   if (leafResults.length === 0) {
     return undefined
   }

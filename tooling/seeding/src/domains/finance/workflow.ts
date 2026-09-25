@@ -29,6 +29,9 @@ export async function seedDevFinance(
   port: FinanceSeedPort,
   dataset: FixtureDataset,
 ): Promise<DevFinanceSeedCounts> {
+  if (!dataset.entities.school?.financeCurrency) {
+    throw new Error('Seed school must configure financeCurrency before financial seeding')
+  }
   const catalogs = dataset.entities.catalogServices ?? []
   const enrollments = dataset.entities.studentServiceEnrollments ?? []
   const payments = dataset.entities.payments ?? []

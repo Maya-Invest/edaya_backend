@@ -56,8 +56,10 @@ export type SchoolCommandKey
     | 'createReportCardDefinitionSection'
     | 'createAssessment'
     | 'submitAssessmentMarks'
-    | 'approveAssessmentMarks'
-    | 'returnAssessmentMarks'
+    | 'requestAssessmentMarksCorrection'
+    | 'approveAssessmentMarksCorrection'
+    | 'rejectAssessmentMarksCorrection'
+    | 'withdrawAssessmentMarksCorrection'
     | 'completeAssessment'
     | 'recordAssessmentResults'
     | 'recordAssessmentResult'
@@ -236,8 +238,10 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'createReportCardDefinitionSection',
   'createAssessment',
   'submitAssessmentMarks',
-  'approveAssessmentMarks',
-  'returnAssessmentMarks',
+  'requestAssessmentMarksCorrection',
+  'approveAssessmentMarksCorrection',
+  'rejectAssessmentMarksCorrection',
+  'withdrawAssessmentMarksCorrection',
   'completeAssessment',
   'recordAssessmentResults',
   'recordAssessmentResult',

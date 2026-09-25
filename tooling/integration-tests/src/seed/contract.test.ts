@@ -218,7 +218,9 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     // with explicit absences. Other periods retain unfinished Draft examples.
     expect(overview.kpis.incompleteGradingClassCount).toBe(0)
     const sheets = await application.repositories.assessments.list()
-    expect(new Set(sheets.map(sheet => sheet.marksStatus))).toEqual(new Set(['draft', 'submitted', 'approved']))
+    expect(new Set(sheets.map(sheet => sheet.marksStatus))).toEqual(new Set(['draft', 'submitted']))
+    const corrections = (await Promise.all(sheets.map(sheet => application.repositories.marksCorrections.forAssessment(SEED_SCHOOL_ID, sheet.id)))).flat()
+    expect(new Set(corrections.map(row => row.status))).toEqual(new Set(['pending', 'approved', 'rejected']))
     expect(overview.upcoming.length).toBeGreaterThanOrEqual(3)
 
     const actionKeys = overview.actionItems.map(item => item.key)

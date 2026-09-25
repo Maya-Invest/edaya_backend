@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import { transactionContext } from '../lib/transaction'
 
 interface ProjectionExecutor {
-  execute: (query: SQL) => Promise<{ rows: Array<Record<string, unknown>> }>
+  execute: (query: SQL) => Promise<{ rows: Array<{ id?: unknown, payload?: unknown, total?: unknown }> }>
 }
 
 export class PostgresAssessmentDependencies implements AssessmentDependenciesPort {
@@ -27,6 +27,27 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
       for (const { id } of result.rows) ids.add(String(id))
     }
     return [...ids]
+  }
+
+  async publishedMarkIds(schoolId: string, ids: readonly string[]): Promise<Set<string>> {
+    if (!ids.length)
+      return new Set()
+    const { rows } = await this.executor().execute(sql`
+      select distinct source->>'resultId' as id from report_card_results r
+      join students s on s.id=r.student_id
+      cross join lateral jsonb_array_elements(r.source_marks) source
+      where s.school_id=${schoolId} and r.status='published'
+      and source->>'resultId' in (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`)
+    return new Set(rows.map(row => String(row.id)))
+  }
+
+  async invalidateMarkDrafts(schoolId: string, ids: readonly string[]): Promise<void> {
+    if (!ids.length)
+      return
+    await this.executor().execute(sql`update report_card_results r set calculation_stale=true, version=version+1
+      from students s where s.id=r.student_id and s.school_id=${schoolId} and r.status='draft'
+      and exists (select 1 from jsonb_array_elements(r.source_marks) source
+        where source->>'resultId' in (${sql.join(ids.map(id => sql`${id}`), sql`, `)}))`)
   }
 
   async publishedAssessmentIds(schoolId: string, assessmentIds: readonly string[]): Promise<Set<string>> {

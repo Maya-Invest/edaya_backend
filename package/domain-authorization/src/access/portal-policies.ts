@@ -230,7 +230,7 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
     const ownProfile: ResourceAccessClause[] = actor.kind === 'guardian' ? [{ target: { kind: 'records', ids: [actor.guardianId] }, attachmentOwners: [Owner.Guardian] }] : []
     return visibleRows([...ownProfile, ...studentIds.flatMap(studentId => [
       { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.Student, Owner.StudentClassEnrollment, Owner.AttendanceRecord, Owner.Payment] },
-      { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.AssessmentResult], approvedMarksOnly: true },
+      { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.AssessmentResult], submittedMarksOnly: true },
       { target: { kind: 'student' as const, studentId }, academicYearId, attachmentOwners: [Owner.ReportCard], publishedOnly: true },
     ])])
   }
@@ -239,6 +239,6 @@ export async function familyPolicy(facts: AccessFacts, action: P, resource: Core
     target: { kind: 'student', studentId },
     academicYearId,
     ...(resource === 'results' ? { publishedOnly: true } : {}),
-    ...(resource === 'assessmentResults' ? { approvedMarksOnly: true } : {}),
+    ...(resource === 'assessmentResults' ? { submittedMarksOnly: true } : {}),
   })))
 }

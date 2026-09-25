@@ -106,7 +106,7 @@ describe('delayed notification dispatch uses current business facts', () => {
   })
 
   async function sourceRecords() {
-    await fixture.db.exec('UPDATE assessments SET marks_status = \'approved\' WHERE id = \'assessment-math\'')
+    await fixture.db.exec('UPDATE assessments SET marks_status = \'submitted\' WHERE id = \'assessment-math\'')
     await fixture.db.exec(`
       INSERT INTO grade_scales (id, school_id, name, min_score, max_score, ranges, is_default, created_at) VALUES ('scale', 'school-a', 'Scale', 0, 20, '[]', true, NOW());
       INSERT INTO report_card_definitions (id, school_id, academic_year_id, grade_level_id, grade_scale_id, name, kind, status, is_default, created_at) VALUES ('definition', 'school-a', 'year-a', 'level-a', 'scale', 'Report', 'default', 'published', true, NOW());

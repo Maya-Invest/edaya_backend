@@ -6,7 +6,7 @@ import { BusinessRuleViolationError, defaultScopesForProfileGrain, findPublished
 
 import { resolveStaffProfileGrants } from '../../capabilities/access-control/resolve-staff-profile-grants'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
-import { linkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
+import { linkSubjectToActor, relinkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
 
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -82,7 +82,13 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
 
   async relinkActorSubject(input: LinkActorSubjectInput): Promise<LinkActorSubjectResult> {
     return this.baseService.atomicExecution.execute(async () => {
-      return this.linkActorSubject(input)
+      await this.baseService.access.staffPermissions.assertAssign()
+      return relinkSubjectToActor(
+        this.baseService,
+        this.repositories,
+        this.baseService.actor.schoolId,
+        input,
+      )
     })
   }
 
