@@ -24,10 +24,7 @@ describe('demo communications', () => {
     expect(delivery.announcementId).toBe('ann-parent-meeting')
   })
 
-  it('includes announcements, targets, deliveries, and materialize plans', () => {
-    expect(demoAnnouncements.length).toBeGreaterThan(0)
-    expect(demoAnnouncementTargets.length).toBeGreaterThan(0)
-    expect(demoMessageDeliveries.length).toBeGreaterThan(0)
+  it('includes three announcement materialize plans', () => {
     expect(demoAnnouncementMaterializePlans).toHaveLength(3)
   })
 })

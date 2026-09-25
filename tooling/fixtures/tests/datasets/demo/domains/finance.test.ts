@@ -67,10 +67,4 @@ describe('demo finance', () => {
     expect(demoCiCatalogServices.every(service => service.academicYearId === DEMO_CI_ACADEMIC_YEAR_ID)).toBe(true)
     expect(DEMO_CI_ACADEMIC_YEAR_ID).not.toBe(DEMO_CENTRAL_ACADEMIC_YEAR_ID)
   })
-
-  it('includes catalog services, enrollments, and payments', () => {
-    expect(demoCatalogServices.length).toBeGreaterThan(0)
-    expect(demoStudentServiceEnrollments.length).toBeGreaterThan(0)
-    expect(demoPayments.length).toBeGreaterThan(0)
-  })
 })

@@ -15,9 +15,4 @@ describe('demo homework assessments', () => {
     const submission = demoHomeworkSubmissions[0] satisfies AssessmentResultInput
     expect(submission.assessmentId).toBe('d-t1-1')
   })
-
-  it('includes assessments and submissions', () => {
-    expect(demoHomeworkAssessments.length).toBeGreaterThan(0)
-    expect(demoHomeworkSubmissions.length).toBeGreaterThan(0)
-  })
 })

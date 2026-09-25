@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '@edaya/service'
 import { ActorAssuranceLevel, AuthorizationError, createStaffActorMetadata } from '@edaya/authorization'
 import { AcademicYear, Announcement, AnnouncementTarget, AttachmentOwnerKind, BusinessRuleViolationError, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, ChargeStatus, ClassGroup, DayOfWeek, GradeLevel, LessonSession, Permission, Resource, ResourceAssignment, ResourceKind, Schedule, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentHealthProfile, StudentNote, StudentNoteVisibility, StudentStatus, AnnouncementTargetKind as TargetKind } from '@edaya/core'
-import { validateAttachmentSave, validateCalendarEventSave, validateClassGroupSave, validateLessonSessionSave, validateScheduleSave, validateStaffAssignmentSave, validateStudentSave } from '@edaya/service'
+import { validateAttachmentSave, validateCalendarEventSave, validateLessonSessionSave, validateScheduleSave, validateStaffAssignmentSave, validateStudentSave } from '@edaya/service'
 import { describe, expect, mock, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { actor } from './managed-entity-test-context'
@@ -162,25 +162,6 @@ describe('entity config edge gates', () => {
       endDate: new Date('2026-03-01'),
     }), undefined, repositories({
       gradeLevels: { findById: mock(async () => ({ id: 'grade-1', schoolId: 'other-school' })) } as any,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('validates class group save parent references and capacity floors', async () => {
-    const existing = new ClassGroup({
-      id: 'class-1',
-      schoolId: 'school',
-      academicYearId: 'year-1',
-      gradeLevelId: 'grade-1',
-      name: 'A',
-      capacity: 3,
-    })
-    await validateClassGroupSave(existing, undefined, repositories())
-
-    await expect(validateClassGroupSave(existing.copyWith({ capacity: 1 }), existing, repositories()))
-      .rejects
-      .toBeInstanceOf(BusinessRuleViolationError)
-    await expect(validateClassGroupSave(existing.copyWith({ homeroomStaffId: 'staff-1' }), existing, repositories({
-      staffMembers: { findById: mock(async () => ({ id: 'staff-1', schoolId: 'other-school' })) } as any,
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 

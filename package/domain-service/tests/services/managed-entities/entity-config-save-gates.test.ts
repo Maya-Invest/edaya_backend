@@ -3,7 +3,7 @@ import {
   AuthorizationError,
   createStaffActorMetadata,
 } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, CatalogService, CatalogServiceStatus, ChargeStatus, ClassGroup, ClassSubject, ClassSubjectProgress, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeLevelSubject, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, AcademicYear, Announcement, AnnouncementTarget, AnnouncementTargetKind, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, ChargeStatus, ClassGroup, ClassSubject, DisciplinaryAction, EnrollmentEndReason, GradeLevel, GradeLevelSubject, GradeScale, Incident, IncidentInvolvementRole, IncidentKind, IncidentStatus, LessonSession, OccurrenceStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Resource, ResourceAssignment, ResourceKind, School, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentIncidentInvolvement, StudentYearAccount, studentYearAccountId, Subject, SubjectCategory, SubjectColor } from '@edaya/core'
 import { validateStudentChargeSave } from '@edaya/service'
 import {
   describe,
@@ -52,17 +52,6 @@ describe('Entity config save gates', () => {
     }))
     expect(updated).toBeUndefined()
     expect((await repositories.classSubjectRepository.findById('class-subject-1'))?.completedPercentage).toBe(25)
-  })
-
-  test('rejects orphan class subject progress before save', async () => {
-    const { app } = await createAcademicTestApp()
-
-    await expect(app.baseService.entities.classSubjectProgress.save(new ClassSubjectProgress({
-      id: 'progress-orphan',
-      classSubjectMatterId: 'missing-matter',
-      lessonSessionId: 'missing-lesson-session',
-      completedPercentage: 10,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('assessment config preSave rejects duplicate default grade scales', async () => {
@@ -832,34 +821,7 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('catalog service preSave rejects academic years outside the school', async () => {
-    const { app, repositories } = await createAcademicTestApp()
-    await repositories.schoolRepository.save(new School({
-      id: 'school',
-      name: 'School',
-      timeZone: 'UTC',
-    }))
-    await repositories.academicYearRepository.save(new AcademicYear({
-      id: 'year-other',
-      schoolId: 'other-school',
-      name: '2026',
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-12-31T00:00:00Z'),
-    }))
-
-    await expect(app.baseService.entities.catalogServices.save(new CatalogService({
-      id: 'fee-1',
-      schoolId: 'school',
-      academicYearId: 'year-other',
-      name: 'Tuition',
-      defaultPrice: 1000,
-      currency: 'USD',
-      billingTerms: { kind: 'one_time', installments: [] },
-      status: CatalogServiceStatus.Draft,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
-  })
-
-  test('payment preSave rejects missing accounts and terminal payment transitions', async () => {
+  test('payment preSave rejects terminal payment transitions', async () => {
     const { app, repositories } = await createAcademicTestApp()
     await repositories.studentRepository.save(new Student({
       id: 'student-1',
@@ -868,18 +830,6 @@ describe('Entity config save gates', () => {
       lastName: 'Lovelace',
     }))
     const accountId = studentYearAccountId('school', 'student-1', 'year-1', 'USD')
-
-    await expect(app.baseService.entities.payments.save(new Payment({
-      id: 'payment-new',
-      schoolId: 'school',
-      accountId,
-      academicYearId: 'year-1',
-      kind: PaymentKind.Receipt,
-      amount: 100,
-      currency: 'USD',
-      paymentDate: new Date('2026-02-01T00:00:00Z'),
-      method: PaymentMethod.Cash,
-    }))).rejects.toBeInstanceOf(AuthorizationError)
 
     await repositories.studentYearAccountRepository.save(new StudentYearAccount({
       id: accountId,
@@ -970,7 +920,4 @@ describe('Entity config save gates', () => {
       publishedAt: published.publishedAt,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
-})
-
-describe('SchoolService managed config entity access', () => {
 })

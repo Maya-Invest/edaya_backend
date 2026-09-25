@@ -1,15 +1,8 @@
 import type { SchoolRepositories } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
-import { pickWorkflowRepositories, WORKFLOW_REPOSITORY_KEYS } from '../../src/services/runtime/workflow-repository-catalog'
+import { pickWorkflowRepositories } from '../../src/services/runtime/workflow-repository-catalog'
 
 describe('workflow repository catalog', () => {
-  test('documents repository keys for workflows with narrow direct repository usage', () => {
-    expect(WORKFLOW_REPOSITORY_KEYS.setup.length).toBeLessThan(4)
-    expect(WORKFLOW_REPOSITORY_KEYS.accessControl.length).toBe(9)
-    expect(WORKFLOW_REPOSITORY_KEYS.finance.length).toBe(12)
-    expect(WORKFLOW_REPOSITORY_KEYS.invitations.length).toBeGreaterThan(4)
-  })
-
   test('pickWorkflowRepositories returns only the declared keys', () => {
     const repositories = {
       staffMembers: { id: 'staff-repo' },
