@@ -1,4 +1,5 @@
 import type { Guardian } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   DisciplinaryAction as DisciplinaryActionCtor,
@@ -13,11 +14,11 @@ import {
   StudentNote as StudentNoteCtor,
   StudentPhotoSubmission as StudentPhotoSubmissionCtor,
 } from '@edaya/core'
-import { createDefaultMappers, deserializeJsonb } from '../lib/mappers'
+import { deserializeJsonb } from '../lib/mappers'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 
-export function createStudentsEntityStores(db: any): Pick<EntityStores, 'students' | 'enrollments' | 'guardians' | 'guardianLinks' | 'studentNotes' | 'studentPhotoSubmissions' | 'studentHealthProfiles' | 'studentDisciplinaryActions' | 'disciplinaryActions' | 'studentIncidentInvolvements' | 'incidents'> {
+export function createStudentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'students' | 'enrollments' | 'guardians' | 'guardianLinks' | 'studentNotes' | 'studentPhotoSubmissions' | 'studentHealthProfiles' | 'studentDisciplinaryActions' | 'disciplinaryActions' | 'studentIncidentInvolvements' | 'incidents'> {
   return {
     students: defaultStore(db, schema.students, StudentCtor),
 
@@ -75,7 +76,7 @@ export function createStudentsEntityStores(db: any): Pick<EntityStores, 'student
     studentHealthProfiles: customStore(
       db,
       schema.studentHealthProfiles,
-      createDefaultMappers(StudentHealthProfileCtor).toRow,
+      (entity: InstanceType<typeof StudentHealthProfileCtor>) => ({ ...entity.data, bloodType: entity.bloodType ?? null, allergies: entity.allergies ?? null, medicalConditions: entity.medicalConditions ?? null, medications: entity.medications ?? null, clinicalNotes: entity.clinicalNotes ?? null, emergencyProtocols: entity.emergencyProtocols ?? null, lastVisit: entity.lastVisit ?? null }),
       row => new StudentHealthProfileCtor({
         id: row.id,
         schoolId: row.schoolId,

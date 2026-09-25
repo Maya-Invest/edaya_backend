@@ -19,7 +19,7 @@ export interface CoreCommandConfig {
 
 export interface CoreQueryConfig {
   publicName: string;
-  methodName: "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "getTeacherTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
+  methodName: "getAssessmentMarksReview" | "listAssessmentMarksReviews" | "getOverdueFeeCount" | "getPublishedReportCardCount" | "getSchoolOverview" | "getAppShellCounts" | "getClassGroupTimetable" | "getTeacherTimetable" | "resolveTimetableSpace" | "getStudentFinanceSummary" | "getRelatedFamilyFinanceOverview" | "getAccountStatement" | "getStudentAccountStatement" | "getSchoolFinanceAging" | "listOpenDueCharges" | "getPaymentSettlementHistory" | "getFinanceReconciliation" | "reconcileStudentYearAccount" | "reconcileSchoolFinance" | "previewAccountAllocation" | "listDocumentTemplates" | "listDocumentIssuances" | "getDocumentIssuance" | "grantDocumentDownload" | "grantDocumentBundleDownload" | "listFamilyFeedbackCampaigns" | "getFamilyFeedbackCampaign" | "previewFamilyFeedbackAudience" | "getFamilyFeedbackInstrument" | "listGuardianFamilyFeedbackCampaigns" | "getGuardianFamilyFeedbackQuestionnaire" | "listFamilyFeedbackComments" | "getFamilyFeedbackAggregateReview" | "listTeacherFamilyFeedbackResults" | "getTeacherFamilyFeedbackResult";
   requestSchema: AnySchema;
   responseSchema: AnySchema;
   responseShape?: "count" | "body";
@@ -221,7 +221,11 @@ export const coreCommands = [
   command("create-report-card-definition", "createReportCardDefinition", commandSchemas.createReportCardDefinitionCommandSchema),
   command("create-report-card-definition-section", "createReportCardDefinitionSection", commandSchemas.createReportCardDefinitionSectionCommandSchema),
   command("create-assessment", "createAssessment", commandSchemas.createAssessmentCommandSchema),
+  command("submit-assessment-marks", "submitAssessmentMarks", commandSchemas.submitAssessmentMarksCommandSchema),
+  command("approve-assessment-marks", "approveAssessmentMarks", commandSchemas.approveAssessmentMarksCommandSchema),
+  command("return-assessment-marks", "returnAssessmentMarks", commandSchemas.returnAssessmentMarksCommandSchema),
   command("complete-assessment", "completeAssessment", commandSchemas.completeAssessmentCommandSchema),
+  command("record-assessment-results", "recordAssessmentResults", commandSchemas.recordAssessmentResultsCommandSchema),
   command("record-assessment-result", "recordAssessmentResult", commandSchemas.recordAssessmentResultCommandSchema),
   command("record-assessment-result-compliance", "recordAssessmentResultCompliance", commandSchemas.recordAssessmentResultComplianceCommandSchema),
   command("list-class-subject-assessment-results-for-period", "listClassSubjectAssessmentResultsForPeriod", commandSchemas.listClassSubjectAssessmentResultsForPeriodCommandSchema),
@@ -316,6 +320,9 @@ export const coreCommands = [
 ] satisfies CoreCommandConfig[];
 
 export const coreQueries = [
+  { publicName: "get-assessment-marks-review", methodName: "getAssessmentMarksReview", requestSchema: querySchemas.getAssessmentMarksReviewQuerySchema, responseSchema: querySchemas.assessmentMarksReviewResponseSchema, responseShape: "body" },
+  { publicName: "list-assessment-marks-reviews", methodName: "listAssessmentMarksReviews", requestSchema: querySchemas.listAssessmentMarksReviewsQuerySchema, responseSchema: querySchemas.assessmentMarksReviewsResponseSchema, responseShape: "body" },
+
   {
     publicName: "get-overdue-fee-count",
     methodName: "getOverdueFeeCount",

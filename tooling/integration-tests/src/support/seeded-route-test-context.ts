@@ -86,6 +86,9 @@ async function resolveSharedSchoolDataContext(
   fixture: IntegrationFixtureKind,
 ): Promise<SeededSchoolDataContext | LightSchoolDataContext> {
   const bucket = getSharedBucket(fixture)
+  if (bucket.route && !bucket.schoolData) {
+    bucket.schoolData = { runtime: bucket.route.runtime, application: bucket.route.application, seedResult: bucket.route.seedResult }
+  }
   if (bucket.schoolData) {
     return bucket.schoolData
   }

@@ -6,14 +6,16 @@ import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
 import { PostgresSchoolRepositories } from '../src/postgres-school-repositories'
-import { installSchemaBeforeTypedGrants, migrationDirectory, seedAuthorizationPlacement, seedAuthorizationRelationships, typedGrantsMigration } from './support/authorization-database'
+import { installSchemaBeforeTypedGrants, migrationDirectory, typedGrantsMigration } from './support/authorization-database'
+
+import { seedPre0009AuthorizationPlacement, seedPre0009AuthorizationRelationships } from './support/pre-0009-authorization-fixture'
 
 describe('typed staff grants coordinated migration', () => {
   let db: PGlite
   beforeEach(async () => {
     db = new PGlite()
     await installSchemaBeforeTypedGrants(db)
-    await seedAuthorizationPlacement(db)
+    await seedPre0009AuthorizationPlacement(db)
   })
   afterEach(async () => {
     await db.close()
@@ -56,7 +58,7 @@ describe('typed staff grants coordinated migration', () => {
   })
 
   test('converted wildcard and subject grants retain their meaning in native policy queries', async () => {
-    await seedAuthorizationRelationships(db)
+    await seedPre0009AuthorizationRelationships(db)
     await grant('grades', 'GRADE_READ', '*')
     await grant('exams', 'EXAM_CONFIG_READ', 'class-a:math-a,class-other:*')
     await migrate()

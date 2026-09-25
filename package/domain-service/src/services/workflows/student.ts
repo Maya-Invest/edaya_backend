@@ -26,6 +26,7 @@ import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 export interface EnrollStudentInput {
+  enrolledAt?: Date
   id: string
   studentId: string
   classGroupId: string
@@ -208,6 +209,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     classGroupId,
     createdAt,
+    enrolledAt,
   }: EnrollStudentInput): Promise<StudentClassEnrollment> {
     return this.baseService.atomicExecution.execute(async () => {
       const [student, classGroup] = await Promise.all([
@@ -243,6 +245,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         classGroupId,
         academicYearId: classGroup.academicYearId,
         enrollmentIndex: nextEnrollmentIndex,
+        enrolledAt,
         createdAt,
       })
       await this.baseService.entities.enrollments.save(enrollment)

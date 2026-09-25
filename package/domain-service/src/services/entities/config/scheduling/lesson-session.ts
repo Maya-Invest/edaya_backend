@@ -13,9 +13,14 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
     repository: repositories.lessonSessions,
     tenant: classGroupLinkedTenant('classGroupId'),
     resource: 'lessonSessions',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateLessonSessionSave,
+      preDelete: async (session, repos) => {
+        if (await repos.assessments.count({ lessonSessionId: session.id, marksStatus: { $ne: 'draft' } }))
+          throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Submitted evaluations depend on this lesson session')
+      },
     },
     atomicExecution,
   })
@@ -25,6 +30,10 @@ export async function validateLessonSessionSave(
   existing: LessonSession | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (existing && (lessonSession.startsAt.getTime() !== existing.startsAt.getTime() || lessonSession.classGroupId !== existing.classGroupId || lessonSession.classSubjectId !== existing.classSubjectId)) {
+    if (await repositories.assessments.count({ lessonSessionId: existing.id, marksStatus: { $ne: 'draft' } }))
+      throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Return affected marks sheets before changing their scheduled context')
+  }
   if (existing && (existing.status === OccurrenceStatus.Completed || existing.status === OccurrenceStatus.Cancelled)) {
     if (
       lessonSession.status !== existing.status

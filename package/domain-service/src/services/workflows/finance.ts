@@ -1,4 +1,4 @@
-import type { CatalogService, CommandJson, Payment, PaymentMethod, StudentCharge, StudentServiceEnrollment, StudentYearAccount } from '@edaya/core'
+import type { CatalogService, CommandJson, FinanceReconciliation, Payment, PaymentMethod, SchoolFinanceAging, StudentCharge, StudentServiceEnrollment, StudentYearAccount } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -35,6 +35,9 @@ import {
   studentYearAccountId,
   sumEntryBalance,
 } from '@edaya/core'
+import { loadFinanceReconciliation } from '../../capabilities/finance/load-finance-reconciliation'
+import { assertCurrencyAgreement, assertSchoolCurrency, requireSchoolCurrency } from '../../capabilities/finance/school-currency'
+import { groupByKey } from '../../capabilities/shared/bounded-reads'
 import { schoolCommandScope } from '../commands/school-command-scope'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -71,42 +74,9 @@ export interface AccountStatement {
   projectedAvailable: number
 }
 
-export interface SchoolFinanceAging {
-  schoolId: string
-  academicYearId?: string
-  currency: string
-  overdueCount: number
-  overdueAmount: number
-  outstandingAmount: number
-  charges: Array<{
-    chargeId: string
-    studentId: string
-    label: string
-    overdueAmount: number
-    remainingAmount: number
-    dueDate?: string
-  }>
-}
+export type { SchoolFinanceAging } from '@edaya/core'
 
-export interface FinanceReconciliation {
-  schoolId: string
-  academicYearId?: string
-  accounts: Array<{
-    accountId: string
-    studentId: string
-    projectedAvailable: number
-    entrySum: number
-    difference: number
-  }>
-  charges: Array<{
-    chargeId: string
-    studentId: string
-    projectedAllocated: number
-    settlement: number
-    difference: number
-  }>
-  balanced: boolean
-}
+export type { FinanceReconciliation } from '@edaya/core'
 
 export interface CreateCatalogServiceInput {
   id: string
@@ -122,6 +92,7 @@ export interface CreateCatalogServiceInput {
 }
 
 export interface UpdateCatalogServiceInput {
+  requestId: string
   id: string
   name?: string
   description?: string | null
@@ -187,18 +158,21 @@ export interface RefundAvailableBalanceInput {
 }
 
 export interface AdjustStudentChargeInput {
+  requestId: string
   chargeId: string
   adjustmentAmount: number
   reason: string
 }
 
 export interface WaiveStudentChargeInput {
+  requestId: string
   chargeId: string
   reason: string
   waiverAmount?: number
 }
 
 export interface CancelStudentChargeInput {
+  requestId: string
   chargeId: string
   reason: string
 }
@@ -283,7 +257,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   async updateCatalogService(input: UpdateCatalogServiceInput): Promise<CatalogService> {
     return this.run({
       command: 'updateCatalogService',
-      requestId: `update:${input.id}:${input.name ?? ''}:${input.defaultPrice ?? ''}`,
+      requestId: input.requestId,
       input,
       lockKeys: [`catalog:${input.id}`],
       authorize: async () => {
@@ -318,12 +292,12 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async activateCatalogService(input: { id: string }): Promise<CatalogService> {
-    return this.setCatalogStatus(input.id, CatalogServiceStatus.Active, 'activateCatalogService')
+  async activateCatalogService(input: { id: string, requestId: string }): Promise<CatalogService> {
+    return this.setCatalogStatus(input, CatalogServiceStatus.Active, 'activateCatalogService')
   }
 
-  async archiveCatalogService(input: { id: string }): Promise<CatalogService> {
-    return this.setCatalogStatus(input.id, CatalogServiceStatus.Archived, 'archiveCatalogService')
+  async archiveCatalogService(input: { id: string, requestId: string }): Promise<CatalogService> {
+    return this.setCatalogStatus(input, CatalogServiceStatus.Archived, 'archiveCatalogService')
   }
 
   async enrollStudentInService(input: EnrollStudentInServiceInput): Promise<StudentServiceEnrollment> {
@@ -435,7 +409,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   async adjustStudentCharge(input: AdjustStudentChargeInput): Promise<StudentCharge> {
     if (input.adjustmentAmount <= 0)
       fail('INVALID_ADJUSTMENT_AMOUNT', 'adjustmentAmount must be strictly positive')
-    return this.mutateCharge(input.chargeId, 'adjustStudentCharge', async (charge, allocations) => {
+    return this.mutateCharge(input, 'adjustStudentCharge', async (charge, allocations) => {
+      if (charge.adjustedAt)
+        fail('ALREADY_ADJUSTED_CHARGE', 'This charge already has an adjustment')
       const settlement = netActiveSettlement(allocations, charge.id)
       if (input.adjustmentAmount + charge.waiverAmount.amount + settlement > charge.expectedAmount.amount)
         fail('ADJUSTMENT_BELOW_SETTLEMENT', 'adjustmentAmount must not reduce a charge below active settlement')
@@ -450,7 +426,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async waiveStudentCharge(input: WaiveStudentChargeInput): Promise<StudentCharge> {
-    return this.mutateCharge(input.chargeId, 'waiveStudentCharge', async (charge, allocations) => {
+    return this.mutateCharge(input, 'waiveStudentCharge', async (charge, allocations) => {
+      if (charge.waivedAt)
+        fail('ALREADY_WAIVED_CHARGE', 'This charge already has a waiver')
       const settlement = netActiveSettlement(allocations, charge.id)
       const remaining = remainingChargeObligation(charge, settlement)
       const waiverAmount = input.waiverAmount ?? remaining
@@ -469,7 +447,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async cancelStudentCharge(input: CancelStudentChargeInput): Promise<StudentCharge> {
-    return this.mutateCharge(input.chargeId, 'cancelStudentCharge', async (charge, allocations) => {
+    return this.mutateCharge(input, 'cancelStudentCharge', async (charge, allocations) => {
       if (allocations.some(allocation => isAllocationActive(allocation, allocations)))
         fail('CHARGE_HAS_ACTIVE_ALLOCATIONS', `Charge ${charge.id} cannot be cancelled while active allocations remain`)
       return charge.copyWith({
@@ -596,7 +574,8 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       academicYearId: input.academicYearId,
     })
     const account = accounts[0]
-    const currency = account?.currency ?? charges[0]?.currency ?? 'XOF'
+    const currency = await requireSchoolCurrency(this.repositories, this.schoolId())
+    assertCurrencyAgreement(currency, [...accounts.map(row => row.currency), ...charges.map(row => row.currency)])
     const referenceDate = new Date()
     const outstanding = charges.reduce((sum, charge) => sum + remainingChargeObligation(charge), 0)
     const overdue = charges.reduce((sum, charge) => sum + overdueInstallmentRemainder(charge, charge.allocatedAmount.amount, referenceDate), 0)
@@ -614,6 +593,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   async getAccountStatement(input: { accountId: string }): Promise<AccountStatement> {
     const account = await this.requireAccount(input.accountId)
     await this.baseService.access.finance.assertReadAccount(account.id)
+    await assertSchoolCurrency(this.repositories, this.schoolId(), account.currency)
     const entries = await this.repositories.studentAccountEntries.list({ accountId: account.id })
     const payments = await this.repositories.payments.forAccess(await this.baseService.access.entity('payments').readScope()).list({ accountId: account.id })
     const allocations = await this.repositories.allocations.list({ accountId: account.id })
@@ -621,6 +601,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       studentId: account.studentId,
       academicYearId: account.academicYearId,
     })
+    assertCurrencyAgreement(account.currency, [...charges.map(row => row.currency), ...entries.map(row => row.amount.currency), ...allocations.map(row => row.amount.currency), ...payments.map(row => row.amount.currency)])
     return {
       account,
       entries: [...entries].sort((left, right) => left.recordedAt.getTime() - right.recordedAt.getTime() || left.id.localeCompare(right.id)),
@@ -635,72 +616,17 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   async getSchoolFinanceAging(input: { schoolId: string, academicYearId?: string }): Promise<SchoolFinanceAging> {
     this.checkActorSchool(input.schoolId)
     const chargeScope = await this.baseService.access.finance.agingScope()
-    const charges = await this.repositories.studentCharges.forAccess(chargeScope).list({
-      ...(input.academicYearId ? { academicYearId: input.academicYearId } : {}),
-    })
-    const referenceDate = new Date()
-    const open = charges.filter(charge => remainingChargeObligation(charge) > 0)
-    const overdueItems = open.map(charge => ({
-      charge,
-      overdue: overdueInstallmentRemainder(charge, charge.allocatedAmount.amount, referenceDate),
-    })).filter(item => item.overdue > 0)
-    const currency = overdueItems[0]?.charge.currency ?? open[0]?.currency ?? 'XOF'
-    return {
-      schoolId: input.schoolId,
-      academicYearId: input.academicYearId,
-      currency,
-      overdueCount: overdueItems.length,
-      overdueAmount: overdueItems.reduce((sum, item) => sum + item.overdue, 0),
-      outstandingAmount: open.reduce((sum, charge) => sum + remainingChargeObligation(charge), 0),
-      charges: overdueItems.map(item => ({
-        chargeId: item.charge.id,
-        studentId: item.charge.studentId,
-        label: item.charge.label,
-        overdueAmount: item.overdue,
-        remainingAmount: remainingChargeObligation(item.charge),
-        dueDate: item.charge.dueDate?.toISOString(),
-      })),
-    }
+    const currency = await requireSchoolCurrency(this.repositories, this.schoolId())
+    return this.repositories.financeProjections.aging({ ...input, currency, referenceDate: new Date() }, chargeScope)
   }
 
   async getFinanceReconciliation(input: { schoolId: string, academicYearId?: string }): Promise<FinanceReconciliation> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.finance.assertReconciliation()
-    const accounts = await this.repositories.studentYearAccounts.forAccess(await this.baseService.access.finance.reconciliationScope()).list({
-      ...(input.academicYearId ? { academicYearId: input.academicYearId } : {}),
-    })
-    const charges = await this.repositories.studentCharges.forAccess(await this.baseService.access.finance.agingScope()).list({
-      ...(input.academicYearId ? { academicYearId: input.academicYearId } : {}),
-    })
-    const accountRows = await Promise.all(accounts.map(async (account) => {
-      const entries = await this.repositories.studentAccountEntries.list({ accountId: account.id })
-      const entrySum = sumEntryBalance(entries)
-      return {
-        accountId: account.id,
-        studentId: account.studentId,
-        projectedAvailable: account.availableBalance.amount,
-        entrySum,
-        difference: account.availableBalance.amount - entrySum,
-      }
-    }))
-    const chargeRows = await Promise.all(charges.map(async (charge) => {
-      const allocations = await this.repositories.allocations.list({ chargeId: charge.id })
-      const settlement = netActiveSettlement(allocations, charge.id)
-      return {
-        chargeId: charge.id,
-        studentId: charge.studentId,
-        projectedAllocated: charge.allocatedAmount.amount,
-        settlement,
-        difference: charge.allocatedAmount.amount - settlement,
-      }
-    }))
-    return {
-      schoolId: input.schoolId,
-      academicYearId: input.academicYearId,
-      accounts: accountRows,
-      charges: chargeRows,
-      balanced: accountRows.every(row => row.difference === 0) && chargeRows.every(row => row.difference === 0),
-    }
+    return loadFinanceReconciliation(this.repositories, {
+      accounts: await this.baseService.access.finance.reconciliationScope(),
+      charges: await this.baseService.access.finance.agingScope(),
+    }, input)
   }
 
   async countOverdueCharges(): Promise<number> {
@@ -723,9 +649,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       studentId: input.studentId,
       academicYearId: input.academicYearId,
     })
-    const account = input.currency
-      ? accounts.find(item => item.currency === input.currency)
-      : accounts[0]
+    const currency = await requireSchoolCurrency(this.repositories, this.schoolId())
+    assertCurrencyAgreement(currency, [...accounts.map(row => row.currency), ...(input.currency ? [input.currency] : [])])
+    const account = accounts[0]
     if (!account)
       return null
     return this.getAccountStatement({ accountId: account.id })
@@ -800,8 +726,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   async reconcileStudentYearAccount(input: { accountId: string }) {
     const statement = await this.getAccountStatement(input)
     await this.baseService.access.finance.assertReconciliation()
-    const charges = await Promise.all(statement.charges.map(async (charge) => {
-      const allocations = await this.repositories.allocations.list({ chargeId: charge.id })
+    const allocationsByCharge = groupByKey(statement.allocations, row => row.chargeId)
+    const charges = statement.charges.map((charge) => {
+      const allocations = allocationsByCharge.get(charge.id) ?? []
       const settlement = netActiveSettlement(allocations, charge.id)
       return {
         chargeId: charge.id,
@@ -809,7 +736,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
         settlement,
         difference: charge.allocatedAmount.amount - settlement,
       }
-    }))
+    })
     return {
       accountId: statement.account.id,
       studentId: statement.account.studentId,
@@ -929,11 +856,12 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  private async setCatalogStatus(id: string, status: CatalogServiceStatus, command: 'activateCatalogService' | 'archiveCatalogService'): Promise<CatalogService> {
+  private async setCatalogStatus(input: { id: string, requestId: string }, status: CatalogServiceStatus, command: 'activateCatalogService' | 'archiveCatalogService'): Promise<CatalogService> {
+    const { id } = input
     return this.run({
       command,
-      requestId: `${command}:${id}`,
-      input: { id },
+      requestId: input.requestId,
+      input,
       lockKeys: [`catalog:${id}`],
       authorize: async () => {
         await this.requireCatalog(id)
@@ -1030,14 +958,15 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async mutateCharge(
-    chargeId: string,
+    input: AdjustStudentChargeInput | WaiveStudentChargeInput | CancelStudentChargeInput,
     command: 'adjustStudentCharge' | 'waiveStudentCharge' | 'cancelStudentCharge',
     mutate: (charge: StudentCharge, allocations: Allocation[]) => Promise<StudentCharge>,
   ): Promise<StudentCharge> {
+    const { chargeId } = input
     return this.run({
       command,
-      requestId: `${command}:${chargeId}`,
-      input: { chargeId },
+      requestId: input.requestId,
+      input,
       lockKeys: [`charge:${chargeId}`],
       authorize: async () => {
         const charge = await this.requireCharge(chargeId)
@@ -1064,7 +993,9 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     const charges = (await this.repositories.studentCharges.list({
       studentId: account.studentId,
       academicYearId: account.academicYearId,
-    })).filter(charge => !charge.cancelledAt && charge.currency === account.currency)
+    })).filter(charge => !charge.cancelledAt)
+    await assertSchoolCurrency(this.repositories, this.schoolId(), account.currency)
+    assertCurrencyAgreement(account.currency, charges.map(row => row.currency))
     const allocations = await this.repositories.allocations.list({ accountId: account.id })
     const open = charges
       .map(charge => this.projectCharge(charge, allocations))
@@ -1283,20 +1214,18 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       if (existing) {
         if (existing.schoolId !== this.schoolId())
           denyResourceAccess()
+        await assertSchoolCurrency(this.repositories, this.schoolId(), existing.currency)
         return { studentId: existing.studentId, academicYearId: existing.academicYearId, currency: existing.currency }
       }
       const parsed = parseStudentYearAccountId(input.accountId, this.schoolId())
       if (!parsed)
         denyResourceAccess()
+      await assertSchoolCurrency(this.repositories, this.schoolId(), parsed.currency)
       return { studentId: parsed.studentId, academicYearId: parsed.academicYearId, currency: parsed.currency }
     }
     if (!input.studentId || !input.academicYearId)
       fail('ACCOUNT_REQUIRED', 'recordPayment requires accountId or studentId and academicYearId')
-    const catalogCurrency = (await this.repositories.catalogServices.list({ academicYearId: input.academicYearId, $limit: 1 }))[0]?.defaultPrice.currency
-    const existing = (await this.repositories.studentYearAccounts.list({ studentId: input.studentId, academicYearId: input.academicYearId, $limit: 1 }))[0]
-    const currency = existing?.currency ?? catalogCurrency
-    if (!currency)
-      fail('CURRENCY_MISMATCH', 'Cannot infer account currency')
+    const currency = await requireSchoolCurrency(this.repositories, this.schoolId())
     return { studentId: input.studentId, academicYearId: input.academicYearId, currency }
   }
 
@@ -1406,7 +1335,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       scope: await schoolCommandScope(this.baseService.actor, options.command, options.requestId),
       input: options.input,
       resultMode: 'ordinary',
-      lockKeys: options.lockKeys,
+      lockKeys: [`0-finance-state:${this.schoolId()}`, ...options.lockKeys ?? []],
       authorize: options.authorize,
       execute: options.execute,
       replay: stored => options.replay(stored),

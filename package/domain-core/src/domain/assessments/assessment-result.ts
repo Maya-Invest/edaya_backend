@@ -14,6 +14,7 @@ export const assessmentResultSchema = z.object({
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   assessmentId: z.string().trim().min(1, 'assessmentId must not be blank'),
   score: z.number().finite().nonnegative('score must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  designation: z.enum(['scored', 'absent', 'exempt']).optional(),
   status: z.nativeEnum(DeadlineComplianceStatus).nullable().optional().transform(v => v === null ? undefined : v),
   notes: z.string().trim().min(1, 'notes must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdBy: z.string().trim().min(1, 'createdBy must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -42,6 +43,7 @@ export class AssessmentResult {
   get studentId() { return this.data.studentId }
   get assessmentId() { return this.data.assessmentId }
   get score() { return this.data.score }
+  get designation() { return this.data.designation }
   get status() { return this.data.status }
   get notes() { return this.data.notes }
   get createdBy() { return this.data.createdBy }

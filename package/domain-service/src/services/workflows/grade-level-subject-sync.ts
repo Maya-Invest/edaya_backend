@@ -8,7 +8,8 @@ import {
   GradeLevelSubject as GradeLevelSubjectEntity,
   GradeLevelSubjectMatter as GradeLevelSubjectMatterEntity,
 } from '@edaya/core'
-import { assertClassSubjectUnused } from '../entities/config/academics/class-subject'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { assertClassSubjectGradingMutable, assertClassSubjectUnused } from '../entities/config/academics/class-subject'
 
 export interface SyncClassSubjectOptions {
   classSubjectId?: string
@@ -21,39 +22,42 @@ export async function syncGradeLevelSubjectToClassGroup(
   classGroup: ClassGroup,
   options: SyncClassSubjectOptions = {},
 ): Promise<ClassSubject> {
-  const existing = await baseService.repositories.classSubjects.findOne({
-    classGroupId: classGroup.id,
-    gradeLevelSubjectId: gradeLevelSubject.id,
-  }) ?? await baseService.repositories.classSubjects.findOne({
-    classGroupId: classGroup.id,
-    subjectId: gradeLevelSubject.subjectId,
-  })
+  return baseService.atomicExecution.execute(async () => {
+    const existing = await baseService.repositories.classSubjects.findOne({
+      classGroupId: classGroup.id,
+      gradeLevelSubjectId: gradeLevelSubject.id,
+    }) ?? await baseService.repositories.classSubjects.findOne({
+      classGroupId: classGroup.id,
+      subjectId: gradeLevelSubject.subjectId,
+    })
 
-  const classSubject = new ClassSubject({
-    id: existing?.id ?? options.classSubjectId ?? randomUUID(),
-    classGroupId: classGroup.id,
-    subjectId: gradeLevelSubject.subjectId,
-    gradeLevelSubjectId: gradeLevelSubject.id,
-    coefficient: gradeLevelSubject.coefficient,
-    periodsPerWeek: gradeLevelSubject.periodsPerWeek,
-    minPeriodSpan: gradeLevelSubject.minPeriodSpan,
-    maxPeriodSpan: gradeLevelSubject.maxPeriodSpan,
-    completedPercentage: existing?.completedPercentage ?? 0,
-    isOffered: existing?.isOffered ?? !gradeLevelSubject.isOptional,
-    createdAt: existing?.createdAt ?? new Date(),
-  })
+    const classSubject = new ClassSubject({
+      id: existing?.id ?? options.classSubjectId ?? randomUUID(),
+      classGroupId: classGroup.id,
+      subjectId: gradeLevelSubject.subjectId,
+      gradeLevelSubjectId: gradeLevelSubject.id,
+      coefficient: gradeLevelSubject.coefficient,
+      periodsPerWeek: gradeLevelSubject.periodsPerWeek,
+      minPeriodSpan: gradeLevelSubject.minPeriodSpan,
+      maxPeriodSpan: gradeLevelSubject.maxPeriodSpan,
+      completedPercentage: existing?.completedPercentage ?? 0,
+      isOffered: existing?.isOffered ?? !gradeLevelSubject.isOptional,
+      createdAt: existing?.createdAt ?? new Date(),
+    })
 
-  const scope = await baseService.access.curriculum.assertMirrorSubject(classSubject, existing)
-  await baseService.repositories.classSubjects.forAccess(scope).save(classSubject)
+    const scope = await baseService.access.curriculum.assertMirrorSubject(classSubject, existing)
+    await assertClassSubjectGradingMutable(classSubject, existing, baseService.repositories)
+    await baseService.repositories.classSubjects.forAccess(scope).save(classSubject)
 
-  const gradeMatters = await baseService.repositories.gradeLevelSubjectMatters.list({
-    gradeLevelSubjectId: gradeLevelSubject.id,
-  })
-  for (const gradeMatter of gradeMatters) {
-    await syncGradeLevelSubjectMatterToClassSubject(baseService, classSubject, gradeMatter, options)
-  }
+    const gradeMatters = await baseService.repositories.gradeLevelSubjectMatters.list({
+      gradeLevelSubjectId: gradeLevelSubject.id,
+    })
+    for (const gradeMatter of gradeMatters) {
+      await syncGradeLevelSubjectMatterToClassSubject(baseService, classSubject, gradeMatter, options)
+    }
 
-  return classSubject
+    return classSubject
+  }, { lockKeys: [academicStateLock(baseService.actor.schoolId)] })
 }
 
 export async function syncGradeLevelSubjectMatterToClassSubject(

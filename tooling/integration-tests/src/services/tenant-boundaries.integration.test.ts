@@ -64,10 +64,10 @@ describeIntegration('tenant boundary safeguards', () => {
       lastName: 'Administrator',
       subjectId: 'school-b-admin-user',
     }))
-    await repositories.schoolRepository.save(new School({ id: 'school-a', name: 'School A', timeZone: 'UTC', ownerSubjectId: 'school-a-admin-user' }))
-    await repositories.schoolRepository.save(new School({ id: 'school-b', name: 'School B', timeZone: 'UTC', ownerSubjectId: 'school-b-admin-user' }))
-    await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC' })
-    await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC' })
+    await repositories.schoolRepository.save(new School({ id: 'school-a', name: 'School A', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-a-admin-user' }))
+    await repositories.schoolRepository.save(new School({ id: 'school-b', name: 'School B', timeZone: 'UTC', financeCurrency: 'XAF', ownerSubjectId: 'school-b-admin-user' }))
+    await saveSchool(app, { id: 'school-a', name: 'School A', timeZone: 'UTC', financeCurrency: 'XAF' })
+    await saveSchool(schoolBApp, { id: 'school-b', name: 'School B', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year-a',
       schoolId: 'school-a',

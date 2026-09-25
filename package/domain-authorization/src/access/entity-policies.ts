@@ -92,6 +92,19 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
     return this.access.scope(this.rule.read, this.resource)
   }
 
+  async assertBatchSave(entities: CoreEntityMap[K][], existing: Map<string, CoreEntityMap[K]>) {
+    if (this.resource !== 'assessmentResults') {
+      const scopes = []
+      for (const entity of entities) scopes.push(await this.assertSave(entity, existing.get(entity.id)))
+      return scopes
+    }
+    const created = entities.filter(row => !existing.has(row.id)) as CoreEntityMap['assessmentResults'][]
+    const updated = entities.filter(row => existing.has(row.id)) as CoreEntityMap['assessmentResults'][]
+    const createScope = created.length ? await this.access.assertMarkBatch(Permission.GRADE_INPUT, created, []) : undefined
+    const updateScope = updated.length ? await this.access.assertMarkBatch(Permission.GRADE_UPDATE, updated, updated.map(row => existing.get(row.id) as CoreEntityMap['assessmentResults'])) : undefined
+    return entities.map(row => (existing.has(row.id) ? updateScope : createScope)!)
+  }
+
   async assertSave(entity: CoreEntityMap[K], existing?: CoreEntityMap[K]) {
     if (this.resource === 'teachers' && this.access.actor.kind === 'teacher') {
       return this.access.assertTeacherSelfProfile(

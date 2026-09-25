@@ -1,4 +1,4 @@
-import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
+import type { Attachment, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, DashboardScopes, Permission, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
 import type { SchoolScopedActorMetadata } from '../model/actor'
 import type { AuthorizationRepositories } from '../ports/authorization-repositories'
 import type { DelegatedGrant } from './grant-administration'
@@ -17,6 +17,7 @@ import { FinanceAccessPolicy } from './finance-policies'
 import { assertAssignmentDelegation, assertGrantDelegation } from './grant-administration'
 import { incidentChanges } from './incident-changes'
 import { LogbookAccessPolicy } from './logbook-policies'
+import { MarksReviewAccessPolicy } from './marks-review-policies'
 import { NotificationDeliveryAccessPolicy } from './notification-delivery-policies'
 import { SCHOOL_OWNER_ACTIONS } from './owner-authority'
 import { familyPolicy, teacherPolicy } from './portal-policies'
@@ -46,7 +47,17 @@ export const OVERVIEW_RESOURCES = ['students', 'guardians', 'staffMembers', 'tea
 export type OverviewRepositories = Pick<AuthorizationRepositories, typeof OVERVIEW_RESOURCES[number]>
 
 export class AccessPolicies {
-  constructor(readonly actor: SchoolScopedActorMetadata, readonly repositories: AuthorizationRepositories) {}
+  private readonly preflightResources = new Map<string, Promise<void>>()
+  constructor(readonly actor: SchoolScopedActorMetadata, readonly repositories: AuthorizationRepositories, private readonly operationFacts?: AccessFacts) {}
+
+  /** A fresh authorization snapshot for one transaction's preflight phase; never retain across writes. */
+  forOperation(): AccessPolicies {
+    return new AccessPolicies(this.actor, this.repositories, new AccessFacts(this.actor, this.repositories))
+  }
+
+  private facts(): AccessFacts {
+    return this.operationFacts ?? new AccessFacts(this.actor, this.repositories)
+  }
 
   entity<K extends CoreEntityKey>(resource: K): EntityAccessPolicy<K> {
     return new EntityAccessPolicy(this, resource)
@@ -56,7 +67,7 @@ export class AccessPolicies {
     const requested = typeof actions === 'string' ? [actions] : actions
     if (!requested.length || requested.some(action => !knownActions.has(action)))
       return denied('Unknown or empty action')
-    const facts = new AccessFacts(this.actor, this.repositories)
+    const facts = this.facts()
     await facts.validateActor()
     const clauses: ResourceAccessClause[] = []
     for (const action of new Set(requested)) {
@@ -131,9 +142,24 @@ export class AccessPolicies {
       return denied('Resource assertions require a target')
     return this.completeAction(actions, async (action) => {
       const scope = await this.scope(action, resource, intent)
-      const rows = await this.repositories[resource].forAccess(scope).findByIds(expected)
-      if (rows.length !== expected.length)
-        denied()
+      const key = JSON.stringify([scope, [...expected].sort()])
+      const verify = async () => {
+        const rows = await this.repositories[resource].forAccess(scope).findByIds(expected)
+        if (rows.length !== expected.length)
+          denied()
+      }
+      // Only forOperation snapshots may reuse checks; they end before persistence.
+      if (this.operationFacts) {
+        let pending = this.preflightResources.get(key)
+        if (!pending) {
+          pending = verify()
+          this.preflightResources.set(key, pending)
+        }
+        await pending
+      }
+      else {
+        await verify()
+      }
       return scope
     })
   }
@@ -168,7 +194,7 @@ export class AccessPolicies {
     if (resource === 'announcements' && !existing && (entity as CoreEntityMap['announcements']).isPublished)
       await this.communications.assertPublish(entity as CoreEntityMap['announcements'])
     if (resource === 'accountInvitations') {
-      const facts = new AccessFacts(this.actor, this.repositories)
+      const facts = this.facts()
       for (const value of [existing, entity]) {
         if (!value)
           continue
@@ -186,7 +212,7 @@ export class AccessPolicies {
         denied('A delivery cannot be reassigned to another recipient or source')
       if (!before && after.recipientKind && after.recipientId) {
         const resources = { staff: 'staffMembers', teacher: 'teachers', guardian: 'guardians', student: 'students' } as const
-        const profile = await new AccessFacts(this.actor, this.repositories).one(resources[after.recipientKind], after.recipientId)
+        const profile = await this.facts().one(resources[after.recipientKind], after.recipientId)
         if (profile.subjectId !== after.subjectId || ('isActive' in profile && !profile.isActive) || ('hasAccess' in profile && !profile.hasAccess) || ('status' in profile && profile.status !== 'active'))
           denied('Delivery recipient must identify an active linked profile')
       }
@@ -274,12 +300,12 @@ export class AccessPolicies {
     if (resource === 'studentNotes' && !existing) {
       const authorStaffId = (entity as CoreEntityMap['studentNotes']).authorStaffId
       if (this.actor.kind === 'system' && this.actor.systemId === 'fixture-seed')
-        await new AccessFacts(this.actor, this.repositories).one('staffMembers', authorStaffId)
+        await this.facts().one('staffMembers', authorStaffId)
       else if (this.actor.kind !== 'staff' || authorStaffId !== this.actor.staffMemberId)
         denied('A note must identify its current staff author')
     }
     if (resource === 'staffPermissionAssignments' || resource === 'staffAssignments') {
-      const facts = new AccessFacts(this.actor, this.repositories)
+      const facts = this.facts()
       for (const value of [existing, entity]) {
         if (value)
           await this.assertStaffAdministrationTarget((value as CoreEntityMap['staffPermissionAssignments'] | CoreEntityMap['staffAssignments']).staffId)
@@ -307,7 +333,7 @@ export class AccessPolicies {
 
   /** Human staff administration cannot bypass service-account lifecycle and delegation policies. */
   async assertStaffAdministrationTarget(staffId: string): Promise<void> {
-    const target = await new AccessFacts(this.actor, this.repositories).one('staffMembers', staffId)
+    const target = await this.facts().one('staffMembers', staffId)
     if (target.accountKind === 'service')
       denied('Service account grants must be managed through service-account commands')
   }
@@ -331,7 +357,7 @@ export class AccessPolicies {
   }
 
   private async assertTeacherComments(after: CoreEntityMap['results'], before: CoreEntityMap['results']): Promise<void> {
-    const facts = new AccessFacts(this.actor, this.repositories)
+    const facts = this.facts()
     const teaching = await facts.teaching()
     assertDraftReportCardForTeacherComment(before)
     assertCommentOnlyReportCardUpdate(before, after)
@@ -348,6 +374,26 @@ export class AccessPolicies {
     }
   }
 
+  /** Bounded equivalent of grade-save policy, retaining both old and proposed targets. */
+  async assertMarkBatch(action: Permission.GRADE_INPUT | Permission.GRADE_UPDATE, proposed: CoreEntityMap['assessmentResults'][], existing: CoreEntityMap['assessmentResults'][]): Promise<ResourceAccessScope> {
+    const scope = await this.scope(action, 'assessmentResults', 'write')
+    const records = [...existing, ...proposed]
+    for (const [resource, ids] of [
+      ['assessments', [...new Set(records.map(row => row.assessmentId))]],
+      ['students', [...new Set(records.map(row => row.studentId))]],
+    ] as const) {
+      for (let offset = 0; offset < ids.length; offset += 500) await this.assertResources(action, resource, ids.slice(offset, offset + 500))
+    }
+    const repository = this.repositories.assessmentResults.forAccess(scope)
+    if (repository.assertAccessBatch) {
+      await repository.assertAccessBatch(records)
+    }
+    else {
+      for (const record of records) await repository.assertAccess(record)
+    }
+    return scope
+  }
+
   private async assertGradeTargets(action: Permission, target: { assessmentId: string, studentId: string }): Promise<void> {
     await this.assertResources(action, 'assessments', [target.assessmentId])
     await this.assertResources(action, 'students', [target.studentId])
@@ -358,7 +404,7 @@ export class AccessPolicies {
     const existing = await this.repositories.staffMembers.forSchool!(this.actor.schoolId).findById(id)
     if (!existing || existing.accountKind !== 'service' || (!allowInactive && !existing.isActive))
       throw new BusinessRuleViolationError('SERVICE_ACCOUNT_NOT_FOUND', 'Service account not found for this school')
-    if (existing.serviceElevated && !await new AccessFacts(this.actor, this.repositories).owner())
+    if (existing.serviceElevated && !await this.facts().owner())
       denied('Only the school owner can manage an owner service account')
     return existing
   }
@@ -366,7 +412,7 @@ export class AccessPolicies {
   readonly serviceAccounts = {
     assertCreate: async (input: { elevated?: boolean, permissionAssignments?: readonly DelegatedGrant[] }) => {
       await this.assertSchool(P.SERVICE_ACCOUNT_CREATE)
-      const facts = new AccessFacts(this.actor, this.repositories)
+      const facts = this.facts()
       if (input.elevated && !await facts.owner())
         denied('Only a school owner can create an owner service account')
       await assertGrantDelegation(facts, input.permissionAssignments ?? [])
@@ -374,13 +420,13 @@ export class AccessPolicies {
     assertUpdate: async (id: string, grants?: readonly DelegatedGrant[]) => {
       const existing = await this.serviceAccount(P.SERVICE_ACCOUNT_UPDATE, id)
       if (grants)
-        await assertGrantDelegation(new AccessFacts(this.actor, this.repositories), grants)
+        await assertGrantDelegation(this.facts(), grants)
       return existing
     },
     assertRevoke: (id: string) => this.serviceAccount(P.SERVICE_ACCOUNT_REVOKE, id, true),
     assertRotateKey: async (id: string) => {
       const existing = await this.serviceAccount(P.SERVICE_ACCOUNT_ROTATE_KEY, id)
-      const facts = new AccessFacts(this.actor, this.repositories)
+      const facts = this.facts()
       const grants = await facts.list('staffPermissionAssignments', { staffId: id, status: 'active' })
       // A new key transfers all still-usable authority, including later academic years.
       await assertGrantDelegation(facts, grants.filter(grant => !grant.endsAt || facts.now < grant.endsAt))
@@ -402,6 +448,8 @@ export class AccessPolicies {
 
   readonly notifications = new NotificationDeliveryAccessPolicy(this)
   readonly communications = new CommunicationsAccessPolicy(this)
+
+  readonly marksReview = new MarksReviewAccessPolicy(this)
 
   readonly grades = {
     readScope: () => this.scope(P.GRADE_READ, 'assessmentResults'),
@@ -551,7 +599,7 @@ export class AccessPolicies {
       if (JSON.stringify(beforeFields) !== JSON.stringify(afterFields))
         denied('Fixture owner initialization cannot change school settings')
       const scope = await this.scope(P.ACCESS_CONTROL_ASSIGN, 'schools', 'write')
-      const staff = await new AccessFacts(this.actor, this.repositories).one('staffMembers', staffId)
+      const staff = await this.facts().one('staffMembers', staffId)
       if (staff.accountKind !== 'human' || !staff.isActive || staff.subjectId !== after.ownerSubjectId)
         denied('Fixture owner must be an active linked human staff member')
       await this.repositories.schools.forAccess(scope).assertAccess(before)
@@ -565,7 +613,7 @@ export class AccessPolicies {
         || !after.ownerSubjectId) {
         denied('Ownership can be claimed only through the pending owner invitation')
       }
-      const staff = await new AccessFacts(this.actor, this.repositories).one('staffMembers', invitation.targetId)
+      const staff = await this.facts().one('staffMembers', invitation.targetId)
       if (staff.accountKind !== 'human' || staff.subjectId !== after.ownerSubjectId)
         denied()
       await this.repositories.schools.forAccess(scope).assertAccess(before)
@@ -579,7 +627,7 @@ export class AccessPolicies {
         const after = entity as CoreEntityMap['staffMembers']
         if (before.accountKind === 'service' || after.accountKind === 'service')
           denied('Service identities are managed through service-account commands')
-        const school = await new AccessFacts(this.actor, this.repositories).one('schools', this.actor.schoolId)
+        const school = await this.facts().one('schools', this.actor.schoolId)
         if (school.ownerSubjectId && before.subjectId === school.ownerSubjectId && before.subjectId !== after.subjectId)
           throw new BusinessRuleViolationError('SCHOOL_OWNER_IDENTITY_LINK_BLOCKED', 'Transfer school ownership before changing the owner’s identity link')
       }
@@ -654,12 +702,16 @@ export class AccessPolicies {
         await this.assertResources(P.QUERY_OVERVIEW_READ, 'academicYears', [input.academicYearId], 'read')
       if (input.academicPeriodId) {
         await this.assertResources(P.QUERY_OVERVIEW_READ, 'academicPeriods', [input.academicPeriodId], 'read')
-        const period = await new AccessFacts(this.actor, this.repositories).one('academicPeriods', input.academicPeriodId)
+        const period = await this.facts().one('academicPeriods', input.academicPeriodId)
         if (input.academicYearId && period.academicYearId !== input.academicYearId)
           throw new BusinessRuleViolationError('OVERVIEW_PERIOD_YEAR_MISMATCH', 'The overview period must belong to its academic year')
       }
       if (input.classGroupIds?.length)
         await this.assertResources(P.QUERY_OVERVIEW_READ, 'classGroups', input.classGroupIds, 'read')
+    },
+    scopes: async (): Promise<DashboardScopes> => {
+      const access = this.forOperation()
+      return Object.fromEntries(await Promise.all(OVERVIEW_RESOURCES.map(async resource => [resource, await access.scope(P.QUERY_OVERVIEW_READ, resource)]))) as DashboardScopes
     },
     repositories: async (): Promise<OverviewRepositories> => {
       const entries = await Promise.all(OVERVIEW_RESOURCES.map(async resource => [resource, this.repositories[resource].forAccess(await this.scope(P.QUERY_OVERVIEW_READ, resource))] as const))

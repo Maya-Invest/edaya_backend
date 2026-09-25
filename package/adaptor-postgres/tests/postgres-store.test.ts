@@ -1,3 +1,4 @@
+import type { StoreDatabase } from '../src/postgres-store'
 import { describe, expect, mock, test } from 'bun:test'
 import { pgTable, text } from 'drizzle-orm/pg-core'
 import { transactionContext } from '../src/lib/transaction'
@@ -14,7 +15,7 @@ function createThenableChain<T>(result: T) {
   const chain: Record<string, unknown> & {
     then: (onFulfilled: (value: T) => unknown, onRejected?: (reason: unknown) => unknown) => Promise<unknown>
   } = {} as never
-  for (const method of ['from', 'where', 'orderBy', 'limit', 'offset', 'values', 'onConflictDoUpdate', 'set', 'insert', 'delete', 'select']) {
+  for (const method of ['$dynamic', 'from', 'where', 'orderBy', 'limit', 'offset', 'values', 'onConflictDoUpdate', 'set', 'insert', 'delete', 'select']) {
     chain[method] = () => chain
   }
   chain.then = (onFulfilled, onRejected) => Promise.resolve(result).then(onFulfilled, onRejected)
@@ -45,21 +46,21 @@ describe('PostgresStore', () => {
 
   test('findById returns undefined when no row matches', async () => {
     const db = createMockDb({ selectRows: [] })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.findById('missing')).resolves.toBeUndefined()
   })
 
   test('findById maps the persisted row through toDomain', async () => {
     const db = createMockDb({ selectRows: [{ id: 'e1', name: 'Alpha' }] })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.findById('e1')).resolves.toEqual({ id: 'e1', name: 'Alpha' })
   })
 
   test('findByIds returns an empty list for empty input', async () => {
     const db = createMockDb()
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.findByIds([])).resolves.toEqual([])
     expect(db.select).not.toHaveBeenCalled()
@@ -72,7 +73,7 @@ describe('PostgresStore', () => {
         { id: 'e2', name: 'Beta' },
       ],
     })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.findOne({ name: 'Alpha' })).resolves.toEqual({ id: 'e1', name: 'Alpha' })
     await expect(store.findOne({ name: 'Alpha' }, true)).resolves.toEqual({ id: 'e2', name: 'Beta' })
@@ -85,7 +86,7 @@ describe('PostgresStore', () => {
         { id: 'e2', name: 'Beta' },
       ],
     })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.list({
       name: 'Alpha',
@@ -100,14 +101,14 @@ describe('PostgresStore', () => {
 
   test('count returns the aggregate total from the database', async () => {
     const db = createMockDb({ selectRows: [{ count: 7 }] })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.count({ name: 'Alpha' })).resolves.toBe(7)
   })
 
   test('save upserts through the active database client', async () => {
     const db = createMockDb()
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await store.save({ id: 'e1', name: 'Alpha' })
 
@@ -116,7 +117,7 @@ describe('PostgresStore', () => {
 
   test('batchSave and batchDelete no-op on empty input', async () => {
     const db = createMockDb()
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.batchSave([])).resolves.toEqual([])
     await store.batchDelete([])
@@ -127,7 +128,7 @@ describe('PostgresStore', () => {
 
   test('batchSave upserts all entities in a single multi-row insert', async () => {
     const db = createMockDb()
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await expect(store.batchSave([
       { id: 'e1', name: 'Alpha' },
@@ -138,7 +139,7 @@ describe('PostgresStore', () => {
 
   test('batchSave splits into sequential chunks when the batch exceeds the chunk size', async () => {
     const db = createMockDb()
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
     // testTable has 2 columns → chunk size is BATCH_SAVE_MAX_CHUNK_ROWS (500)
     const entities = Array.from({ length: 501 }, (_, index) => ({
       id: `e${index}`,
@@ -152,7 +153,7 @@ describe('PostgresStore', () => {
   test('uses the active transaction client when one is present', async () => {
     const db = createMockDb({ selectRows: [{ id: 'e1', name: 'Alpha' }] })
     const tx = createMockDb({ selectRows: [{ id: 'tx-1', name: 'Transactional' }] })
-    const store = new PostgresStore<TestEntity>(db, testTable, toRow, toDomain)
+    const store = new PostgresStore<TestEntity, typeof testTable.$inferSelect>(db as unknown as StoreDatabase, testTable, toRow, toDomain)
 
     await transactionContext.run(tx, async () => {
       await expect(store.findById('tx-1')).resolves.toEqual({ id: 'tx-1', name: 'Transactional' })

@@ -12,6 +12,7 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
     repository: repositories.classSubjects,
     tenant: classGroupLinkedTenant('classGroupId'),
     resource: 'classSubjects',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateClassSubjectSave,
@@ -67,6 +68,7 @@ async function validateClassSubjectSave(
   existing: ClassSubject | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertClassSubjectGradingMutable(classSubject, existing, repositories)
   if (!repositories.classGroups || !repositories.subjects) {
     return
   }
@@ -138,5 +140,13 @@ export async function assertClassSubjectUnused(classSubject: ClassSubject, repos
   ])
   if (dependencies.some(rows => rows.length > 0)) {
     throw new BusinessRuleViolationError('CLASS_SUBJECT_HAS_DEPENDENCIES', 'A class subject with teaching, assessment or curriculum records cannot be deleted')
+  }
+}
+
+/** Shared by generic writes and curriculum synchronization under the academic-state lock. */
+export async function assertClassSubjectGradingMutable(classSubject: ClassSubject, existing: ClassSubject | undefined, repositories: Pick<SchoolRepositories, 'assessments'>): Promise<void> {
+  if (existing && (classSubject.subjectId !== existing.subjectId || classSubject.classGroupId !== existing.classGroupId || classSubject.isOffered !== existing.isOffered || classSubject.coefficient !== existing.coefficient)) {
+    if (await repositories.assessments.count({ classSubjectId: existing.id, marksStatus: { $ne: 'draft' } }))
+      throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Return affected marks sheets before changing their subject configuration')
   }
 }

@@ -901,6 +901,11 @@ export const clientBindings = {
         "requestSchemaName": "UpdateStaffMemberProfileCommand",
         "responseSchemaName": "StaffMember"
       },
+      "updateTeacherSelfProfile": {
+        "publicName": "update-teacher-self-profile",
+        "requestSchemaName": "UpdateTeacherSelfProfileCommand",
+        "responseSchemaName": "Teacher"
+      },
       "linkActorSubject": {
         "publicName": "link-actor-subject",
         "requestSchemaName": "LinkActorSubjectCommand",
@@ -1166,10 +1171,30 @@ export const clientBindings = {
         "requestSchemaName": "CreateAssessmentCommand",
         "responseSchemaName": "Assessment"
       },
+      "submitAssessmentMarks": {
+        "publicName": "submit-assessment-marks",
+        "requestSchemaName": "SubmitAssessmentMarksCommand",
+        "responseSchemaName": "Assessment"
+      },
+      "approveAssessmentMarks": {
+        "publicName": "approve-assessment-marks",
+        "requestSchemaName": "ApproveAssessmentMarksCommand",
+        "responseSchemaName": "Assessment"
+      },
+      "returnAssessmentMarks": {
+        "publicName": "return-assessment-marks",
+        "requestSchemaName": "ReturnAssessmentMarksCommand",
+        "responseSchemaName": "Assessment"
+      },
       "completeAssessment": {
         "publicName": "complete-assessment",
         "requestSchemaName": "CompleteAssessmentCommand",
         "responseSchemaName": "Assessment"
+      },
+      "recordAssessmentResults": {
+        "publicName": "record-assessment-results",
+        "requestSchemaName": "RecordAssessmentResultsCommand",
+        "responseSchemaName": "RecordAssessmentResultsResponse"
       },
       "recordAssessmentResult": {
         "publicName": "record-assessment-result",
@@ -1194,6 +1219,11 @@ export const clientBindings = {
       "writeHomeroomReportComment": {
         "publicName": "write-homeroom-report-comment",
         "requestSchemaName": "WriteHomeroomReportCommentCommand",
+        "responseSchemaName": "ReportCardResult"
+      },
+      "writeReportCardSectionComments": {
+        "publicName": "write-report-card-section-comments",
+        "requestSchemaName": "WriteReportCardSectionCommentsCommand",
         "responseSchemaName": "ReportCardResult"
       },
       "publishReportCardResult": {
@@ -1623,6 +1653,16 @@ export const clientBindings = {
       }
     },
     "queries": {
+      "getAssessmentMarksReview": {
+        "publicName": "get-assessment-marks-review",
+        "requestSchemaName": "GetAssessmentMarksReviewQuery",
+        "responseSchemaName": "AssessmentMarksReviewResponse"
+      },
+      "listAssessmentMarksReviews": {
+        "publicName": "list-assessment-marks-reviews",
+        "requestSchemaName": "ListAssessmentMarksReviewsQuery",
+        "responseSchemaName": "AssessmentMarksReviewsResponse"
+      },
       "getOverdueFeeCount": {
         "publicName": "get-overdue-fee-count",
         "requestSchemaName": "GetOverdueFeeCountQuery",

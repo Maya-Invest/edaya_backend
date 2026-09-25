@@ -33,7 +33,8 @@ describe('subject category catalog', () => {
     await service.baseService.entities.subjects.save(subject)
 
     await expect(service.baseService.entities.subjectCategories.delete(category.id))
-      .rejects.toBeInstanceOf(BusinessRuleViolationError)
+      .rejects
+      .toBeInstanceOf(BusinessRuleViolationError)
 
     await service.baseService.entities.subjects.delete(subject.id)
     await service.baseService.entities.subjectCategories.delete(category.id)

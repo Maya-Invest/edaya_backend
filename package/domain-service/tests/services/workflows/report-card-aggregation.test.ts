@@ -90,27 +90,7 @@ describe('report card aggregation helpers', () => {
 
   test('loadPriorReportCardResults skips draft source report cards without throwing', async () => {
     const { publishedByPeriodId, missingOrDraftPeriodIds } = await loadPriorReportCardResults(
-      {
-        repositories: {
-          results: {
-            findOne: async ({ periodId }: { periodId: string }) => {
-              if (periodId === 'per-t1') {
-                return {
-                  status: ReportCardResultStatus.Published,
-                  sectionResults: [],
-                }
-              }
-              if (periodId === 'per-t2') {
-                return {
-                  status: ReportCardResultStatus.Draft,
-                  sectionResults: [],
-                }
-              }
-              return undefined
-            },
-          },
-        },
-      } as never,
+      { results: { list: async () => [{ periodId: 'per-t1', status: ReportCardResultStatus.Published, sectionResults: [] }] } } as never,
       { studentId: 'stu1', sourcePeriodIds: ['per-t1', 'per-t2', 'per-t3'] },
     )
 
@@ -120,22 +100,8 @@ describe('report card aggregation helpers', () => {
 
   test('evaluateAggregationPublishReadiness requires published periods and source bulletins', async () => {
     const baseService = {
-      repositories: {
-        academicPeriods: {
-          findById: async (id: string) => ({
-            id,
-            isPublished: id !== 'per-t2',
-          }),
-        },
-        results: {
-          findOne: async ({ periodId }: { periodId: string }) => {
-            if (periodId === 'per-t1') {
-              return { status: ReportCardResultStatus.Published }
-            }
-            return { status: ReportCardResultStatus.Draft }
-          },
-        },
-      },
+      academicPeriods: { findByIds: async (ids: string[]) => ids.map(id => ({ id, isPublished: id !== 'per-t2' })) },
+      results: { list: async () => [{ periodId: 'per-t1', status: ReportCardResultStatus.Published }] },
     } as never
 
     const aggregation: ReportCardAggregation = {
@@ -149,15 +115,14 @@ describe('report card aggregation helpers', () => {
     expect(readiness.missingOrDraftReportCardPeriodIds).toEqual(['per-t2'])
   })
 
-  test('rootReportCardDefinitionSections deduplicates root sections by name', () => {
+  test('rootReportCardDefinitionSections preserves distinct stable identities with the same name', () => {
     const roots = rootReportCardDefinitionSections([
       { id: 'sec-a', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Core', order: 1, weight: 1 },
       { id: 'sec-b', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Core', order: 2, weight: 1 },
       { id: 'sec-child', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Subject, name: 'Math', order: 1, weight: 1, parentSectionId: 'sec-a', subjectId: 'sub1' },
     ] as never)
 
-    expect(roots).toHaveLength(1)
-    expect(roots[0]?.id).toBe('sec-a')
+    expect(roots.map(section => section.id)).toEqual(['sec-a', 'sec-b'])
   })
 
   test('childReportCardDefinitionSections keeps only the first subject section per subjectId', () => {
@@ -174,7 +139,7 @@ describe('report card aggregation helpers', () => {
     expect(buildSubjectAverageFromAssessments('cs1', [])).toBeUndefined()
     expect(buildSubjectAverageFromAssessments('cs1', [{
       result: { score: 10 } as never,
-      assessment: { classSubjectId: 'cs1', maxScore: 20, coefficient: 0 } as never,
+      assessment: { marksStatus: 'approved', classSubjectId: 'cs1', maxScore: 20, coefficient: 0 } as never,
     }])).toBe(0)
   })
 
@@ -191,17 +156,9 @@ describe('report card aggregation helpers', () => {
 
   test('listPublishedPeriodIds and listAssessmentResultsForStudentAndPeriods honor published periods', async () => {
     const baseService = {
-      repositories: {
-        academicPeriods: {
-          findById: async (id: string) => ({ id, isPublished: id === 'per-t1' }),
-        },
-        assessmentResults: {
-          list: async () => [{ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 15 }],
-        },
-        assessments: {
-          findById: async () => ({ id: 'ass1', periodId: 'per-t1', classSubjectId: 'cs1' }),
-        },
-      },
+      academicPeriods: { findByIds: async (ids: string[]) => ids.map(id => ({ id, isPublished: id === 'per-t1' })) },
+      assessmentResults: { list: async () => [{ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 15 }] },
+      assessments: { list: async () => [{ id: 'ass1', periodId: 'per-t1', classSubjectId: 'cs1', marksStatus: 'approved' }] },
     } as never
 
     const published = await listPublishedPeriodIds(baseService, ['per-t1', 'per-t2'])
@@ -215,11 +172,7 @@ describe('report card aggregation helpers', () => {
 
   test('evaluateAggregationPublishReadiness allows assessment-based aggregation when source periods are published', async () => {
     const readiness = await evaluateAggregationPublishReadiness({
-      repositories: {
-        academicPeriods: {
-          findById: async (id: string) => ({ id, isPublished: true }),
-        },
-      },
+      academicPeriods: { findByIds: async (ids: string[]) => ids.map(id => ({ id, isPublished: true })) },
     } as never, 'stu1', {
       source: ReportCardAggregationSource.Assessments,
       sourcePeriodIds: ['per-t1', 'per-t2'],

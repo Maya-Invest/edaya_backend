@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, CatalogServiceStatus } from '@edaya/core'
+import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
@@ -24,6 +25,7 @@ export async function validateCatalogServiceSave(
   existing: CatalogService | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertSchoolCurrency(repositories, service.schoolId, service.defaultPrice.currency)
   const [school, academicYear] = await Promise.all([
     repositories.schools.findById(service.schoolId),
     repositories.academicYears.findById(service.academicYearId),

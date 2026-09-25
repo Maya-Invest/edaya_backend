@@ -1,4 +1,5 @@
 import type { CatalogService, Payment, StudentCharge, StudentServiceEnrollment, StudentYearAccount } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   CatalogEnrollmentMode,
@@ -21,7 +22,7 @@ import { customStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import { enumValue } from './entity-store-helpers'
 
-export function createFinancesEntityStores(db: any): Pick<EntityStores, 'catalogServices' | 'studentServiceEnrollments' | 'studentCharges' | 'studentYearAccounts' | 'payments'> {
+export function createFinancesEntityStores(db: StoreDatabase): Pick<EntityStores, 'catalogServices' | 'studentServiceEnrollments' | 'studentCharges' | 'studentYearAccounts' | 'payments'> {
   return {
     catalogServices: customStore(
       db,
@@ -159,7 +160,7 @@ export function createFinancesEntityStores(db: any): Pick<EntityStores, 'catalog
         cancellationReason: row.cancellationReason,
         cancelledById: row.cancelledById,
         cancelledAt: row.cancelledAt,
-        installments: deserializeJsonb(row.installments),
+        installments: [...deserializeJsonb(row.installments)],
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       }),

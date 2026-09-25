@@ -84,6 +84,10 @@ export async function registerSchoolPushDevice(
   input: RegisterPushDeviceInput,
 ): Promise<void> {
   await upsertDevice(runtime.sql, {
+    app_id: input.appId,
+    installation_id: input.installationId,
+    profile_kind: input.profileKind,
+    profile_id: input.profileId,
     tenant: input.schoolId,
     subject_id: input.subjectId,
     provider: input.provider,
@@ -95,7 +99,7 @@ export async function unregisterSchoolPushDevice(
   runtime: NotifyRuntime,
   input: UnregisterPushDeviceInput,
 ): Promise<void> {
-  await deleteDevice(runtime.sql, input.subjectId, input.provider, input.schoolId);
+  await deleteDevice(runtime.sql, input.subjectId, input.provider, input.schoolId, input.appId, input.installationId);
 }
 
 export async function lookupSchoolDeliveryStatuses(

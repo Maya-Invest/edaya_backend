@@ -93,6 +93,10 @@ export interface NotificationDeliveryStatusQuery {
 export type PushDeviceProvider = 'fcm' | 'apns'
 
 export interface RegisterPushDeviceInput {
+  profileId: string
+  profileKind: string
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   subjectId: string
   schoolId: string
   token: string
@@ -100,6 +104,8 @@ export interface RegisterPushDeviceInput {
 }
 
 export interface UnregisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   schoolId: string
   subjectId: string
   provider: PushDeviceProvider

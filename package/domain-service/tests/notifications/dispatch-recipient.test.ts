@@ -106,6 +106,7 @@ describe('delayed notification dispatch uses current business facts', () => {
   })
 
   async function sourceRecords() {
+    await fixture.db.exec('UPDATE assessments SET marks_status = \'approved\' WHERE id = \'assessment-math\'')
     await fixture.db.exec(`
       INSERT INTO grade_scales (id, school_id, name, min_score, max_score, ranges, is_default, created_at) VALUES ('scale', 'school-a', 'Scale', 0, 20, '[]', true, NOW());
       INSERT INTO report_card_definitions (id, school_id, academic_year_id, grade_level_id, grade_scale_id, name, kind, status, is_default, created_at) VALUES ('definition', 'school-a', 'year-a', 'level-a', 'scale', 'Report', 'default', 'published', true, NOW());
@@ -125,7 +126,7 @@ describe('delayed notification dispatch uses current business facts', () => {
   }
 
   test.each([
-    ['assessment.result_recorded', '1-math', { assessmentResultId: '1-math' }, 'DELETE FROM assessment_results WHERE id = \'1-math\''],
+    ['assessment.result_recorded', '1-math:0', { assessmentResultId: '1-math', assessmentId: 'assessment-math', marksRevision: '0' }, 'DELETE FROM assessment_results WHERE id = \'1-math\''],
     ['report_card.published', 'report', { reportCardResultId: 'report' }, 'UPDATE guardian_student_links SET receives_academic_reports = false WHERE id = \'guardian-link\''],
     ['calendar.event_reminder', 'calendar', { calendarEventId: 'calendar' }, 'UPDATE calendar_events SET scope_id = \'class-other\' WHERE id = \'calendar\''],
     ['activity.reminder', 'activity', { activityId: 'activity' }, 'UPDATE activity_enrollments SET status = \'denied\' WHERE id = \'activity-enrollment\''],
@@ -171,7 +172,7 @@ describe('delayed notification dispatch uses current business facts', () => {
       } },
     })
     const gateway = createNotifyNotificationGateway({ runtime })
-    await gateway.registerPushDevice!({ schoolId: 'school-a', subjectId: 'person-a', provider: 'fcm', token: 'test-token' })
+    await gateway.registerPushDevice!({ appId: 'guardian', installationId: 'device-1', profileKind: 'guardian', profileId: 'guardian-a', schoolId: 'school-a', subjectId: 'person-a', provider: 'fcm', token: 'test-token' })
     await gateway.enqueue({ idempotencyKey: input.deliveryId, schoolId: input.schoolId, kind: 'event', eventKey: input.eventKey, title: 'Private', body: 'Details', recipients: [{ kind: guardian, id: 'guardian-a', subjectId: input.subjectId }] })
     await drainPendingSchoolNotifications(runtime)
     expect(emails).toBe(1)

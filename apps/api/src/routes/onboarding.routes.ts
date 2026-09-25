@@ -23,6 +23,7 @@ const commandMessageSchema = createMessageObjectSchema();
 const onboardingRegisterSchoolRequestSchema = z.object({
   name: z.string().trim().min(1),
   timeZone: z.string().trim().min(1),
+  financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
   type: z.nativeEnum(SchoolType).nullable().optional(),
   country: z.string().trim().min(1).nullable().optional(),
   city: z.string().trim().min(1).nullable().optional(),
@@ -159,6 +160,7 @@ const onboardingProvisionRequestSchema = z.object({
   school: z.object({
     name: z.string().trim().min(1),
     timeZone: z.string().trim().min(1),
+    financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
     city: z.string().trim().min(1),
     country: z.string().trim().min(1),
     academicYearLabel: z.string().trim().min(1),
@@ -247,6 +249,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
     const result = await registerSchoolWithOwner(c.get("schoolApp"), toOwnerSession(session), {
       name: body.name,
       timeZone: body.timeZone,
+      financeCurrency: body.financeCurrency,
       ...(body.type ? { type: body.type } : {}),
       ...(body.country ? { country: body.country } : {}),
       ...(body.city ? { city: body.city } : {}),

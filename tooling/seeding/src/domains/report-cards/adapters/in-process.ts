@@ -33,6 +33,8 @@ export function createInProcessReportCardsSeedPort(
       withSeedPortError('reportCards.saveReportCardTeacherComment', async () => {
         await service.assessmentsWorkflow.writeHomeroomReportComment({
           id: record.id,
+          requestId: `seed-comment:${record.id}`,
+          expectedVersion: (await service.baseService.entities.results.findById(record.id))!.version,
           teacherComment: record.teacherComment,
         })
       }),

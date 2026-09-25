@@ -2,7 +2,7 @@ import type { NotificationGatewayPort, ReportCardResultInput } from '@edaya/core
 import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, ClassSubject, GradeScale, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Student, Subject } from '@edaya/core'
 import { createStudentTransitionContext } from './student-workflow-context'
 
-export async function createReportCardContext({ existingReportCard, notificationGateway = noOpNotificationGateway, academicPeriodPublished = true }: { existingReportCard?: Partial<ReportCardResultInput> & { id: string }, notificationGateway?: NotificationGatewayPort, academicPeriodPublished?: boolean } = {}) {
+export async function createReportCardContext({ existingReportCard, notificationGateway = noOpNotificationGateway, academicPeriodPublished = true, marksApproved = true }: { existingReportCard?: Partial<ReportCardResultInput> & { id: string }, notificationGateway?: NotificationGatewayPort, academicPeriodPublished?: boolean, marksApproved?: boolean } = {}) {
   const fixture = await createStudentTransitionContext({ notificationGateway })
   const { repositories } = fixture
   for (const id of ['per1', 'per-t1', 'per-unpublished']) await repositories.academicPeriods.save(new AcademicPeriod({ id, schoolId: 'sch1', academicYearId: 'ay1', name: id, type: AcademicPeriodType.Trimester, isPublished: academicPeriodPublished && id !== 'per-unpublished', startDate: new Date('2026-01-01'), endDate: new Date('2026-03-31') }))
@@ -12,7 +12,7 @@ export async function createReportCardContext({ existingReportCard, notification
   await repositories.definitions.save(new ReportCardDefinition({ id: 'def1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', gradeScaleId: 'grade-scale', name: 'Report' }))
   await repositories.sections.save(new ReportCardDefinitionSection({ id: 'sec-root', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Group, name: 'Academics', order: 1, weight: 1 }))
   await repositories.sections.save(new ReportCardDefinitionSection({ id: 'sec-math', reportCardDefinitionId: 'def1', kind: ReportCardDefinitionSectionKind.Subject, name: 'Math', order: 1, weight: 1, parentSectionId: 'sec-root', subjectId: 'subject-math' }))
-  await repositories.assessments.save(new Assessment({ id: 'ass1', classGroupId: 'cg1', classSubjectId: 'cs1', periodId: 'per1', title: 'Math test', kind: AssessmentKind.Quiz, maxScore: 100, coefficient: 1, startsAt: new Date('2026-02-01T09:00:00Z'), endsAt: new Date('2026-02-01T10:00:00Z') }))
+  await repositories.assessments.save(new Assessment({ id: 'ass1', marksStatus: marksApproved ? 'approved' : 'draft', marksReview: marksApproved ? { rosterStudentIds: ['stu1'], submittedBy: 'fixture-teacher', approvedBy: 'fixture-reviewer' } : {}, classGroupId: 'cg1', classSubjectId: 'cs1', periodId: 'per1', title: 'Math test', kind: AssessmentKind.Quiz, maxScore: 100, coefficient: 1, startsAt: new Date('2026-02-01T09:00:00Z'), endsAt: new Date('2026-02-01T10:00:00Z') }))
   await repositories.assessmentResults.save(new AssessmentResult({ id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 80 }))
   for (const [index, status] of [AttendanceStatus.Present, AttendanceStatus.Absent, AttendanceStatus.Late].entries()) {
     const startsAt = new Date(`2026-02-0${index + 1}T09:00:00Z`)

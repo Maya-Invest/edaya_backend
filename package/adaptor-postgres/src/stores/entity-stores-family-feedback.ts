@@ -5,6 +5,7 @@ import type {
   FamilyFeedbackSlot,
   FamilyFeedbackSnapshot,
 } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import {
   FamilyFeedbackCampaign as FamilyFeedbackCampaignCtor,
   FamilyFeedbackCampaignStatus,
@@ -19,7 +20,7 @@ import { customStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import { enumValue } from './entity-store-helpers'
 
-export function createFamilyFeedbackStores(db: any) {
+export function createFamilyFeedbackStores(db: StoreDatabase) {
   return {
     familyFeedbackCampaigns: customStore(
       db,

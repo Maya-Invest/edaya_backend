@@ -24,6 +24,7 @@ const schoolSchemaBase = z.object({
       return false
     }
   }, val => ({ message: `Invalid IANA time zone: ${val}` })),
+  financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
   ownerSubjectId: z.string().trim().min(1, 'ownerSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   consortiumId: z.string().trim().min(1, 'consortiumId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   pendingOwnerStaffId: z.string().trim().min(1, 'pendingOwnerStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -98,6 +99,7 @@ export class School {
   get id() { return this.data.id }
   get name() { return this.data.name }
   get timeZone() { return this.data.timeZone }
+  get financeCurrency() { return this.data.financeCurrency }
   get ownerSubjectId() { return this.data.ownerSubjectId }
   get consortiumId() { return this.data.consortiumId }
   get pendingOwnerStaffId() { return this.data.pendingOwnerStaffId }

@@ -10,6 +10,7 @@ interface VerifyStep {
 const HYGIENE_STEPS: VerifyStep[] = [
   { label: 'repo doctor', run: () => runBunScript(paths.doctor) },
   { label: 'repo check openapi', run: () => runBunScript(paths.openapiCheck) },
+  { label: 'release contract', run: () => runRepoCommand(['python3', 'scripts/release-contract.py', '--role', 'backend']) },
   { label: 'repo check boundaries', run: () => runBunScript(paths.checkBoundaries) },
   { label: 'repo check test-naming', run: () => runBunScript(paths.checkTestNaming) },
 ]
@@ -18,7 +19,7 @@ const HYGIENE_STEPS: VerifyStep[] = [
 const QUALITY_STEPS: VerifyStep[] = [
   { label: 'turbo quality', run: () => runRepoCommand(['bun', 'run', 'quality']) },
   { label: 'turbo build', run: () => runRepoCommand(['bun', 'run', 'build']) },
-  { label: 'turbo test', run: () => runRepoCommand(['bun', 'x', 'turbo', 'run', 'test', '--', '--dots']) },
+  { label: 'turbo test', run: () => runRepoCommand(['bun', 'x', 'turbo', 'run', 'test', '--concurrency=2', '--', '--dots']) },
 ]
 
 /** PR blocking integration job (`_integration.yml`). */

@@ -2,6 +2,7 @@ import type { StudentCharge } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { BusinessRuleViolationError, ChargeStatus } from '@edaya/core'
+import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
@@ -27,6 +28,7 @@ export async function validateStudentChargeSave(
   existing: StudentCharge | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertSchoolCurrency(repositories, entity.schoolId, entity.currency)
   if (!existing)
     return
   if (existing.schoolId !== entity.schoolId || existing.studentId !== entity.studentId || existing.enrollmentId !== entity.enrollmentId) {

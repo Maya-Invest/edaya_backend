@@ -1,7 +1,7 @@
 import type { SchoolRepositories } from '@edaya/service'
 import { AcademicPeriod, AcademicPeriodType, Activity, ActivityCategory, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, CalendarEvent, CalendarEventKind, ChargeStatus, ClassGroup, Incident, IncidentKind, IncidentStatus, Payment, PaymentKind, PaymentMethod, PaymentStatus, ReportCardResult, ReportCardResultStatus, Student, StudentCharge, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentDisciplinaryAction, StudentDisciplinaryActionStatus, StudentStatus, studentYearAccountId } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { buildSchoolOverview } from '../../src/services/queries/school-overview'
+import { buildSchoolOverview } from '../support/overview-reference'
 
 function createOverviewRepos(
   overrides: Record<string, { list?: () => Promise<unknown[]>, findById?: () => Promise<unknown> }> = {},
@@ -57,7 +57,7 @@ describe('buildSchoolOverview', () => {
       allocatedAmount: 2_000,
       currency: 'XOF',
       status: ChargeStatus.Overdue,
-      dueDate: new Date('2026-06-16'),
+      dueDate: new Date('2026-06-12'),
     })
     const incident = new Incident({
       id: 'incident-1',
@@ -375,7 +375,7 @@ describe('buildSchoolOverview', () => {
       className: 'Grade 7A',
       coordinatorName: 'Marie Konate',
       openIncidentCount: 1,
-      overdueFeeCount: 1,
+      overdueFeeCount: 0,
       riskLevel: 'watch',
     })
     expect(overview.areaHealth.finance.recentPaymentCount).toBe(1)

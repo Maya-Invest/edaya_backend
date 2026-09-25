@@ -7,6 +7,7 @@ describe('service catalog accounting', () => {
 
   beforeEach(async () => {
     fixture = await createTestApp()
+    await fixture.app.setupWorkflow.updateSchoolConfiguration({ schoolId: 'school', financeCurrency: 'XOF' })
     await fixture.schoolRepositories.academicYears.save(new AcademicYear({
       id: 'year-1',
       schoolId: 'school',
@@ -166,9 +167,9 @@ describe('service catalog accounting', () => {
     expect(recon.balanced).toBe(true)
   })
 
-  test('recordPayment can open a second-currency account from a generated account id', async () => {
+  test('recordPayment rejects a second-currency account', async () => {
     await catalogAndEnroll()
-    const payment = await fixture.app.financeWorkflow.recordPayment({
+    await expect(fixture.app.financeWorkflow.recordPayment({
       id: 'pay-usd',
       studentId: 'stu-1',
       academicYearId: 'year-1',
@@ -177,10 +178,6 @@ describe('service catalog accounting', () => {
       paymentDate: new Date('2026-04-02'),
       method: PaymentMethod.Card,
       allocation: { mode: 'account_only' },
-    })
-    expect(payment.accountId).toBe('sya:school:stu-1:year-1:USD')
-    const account = await fixture.schoolRepositories.studentYearAccounts.findById(payment.accountId)
-    expect(account?.currency).toBe('USD')
-    expect(account?.availableBalance.amount).toBe(5000)
+    })).rejects.toMatchObject({ code: 'CURRENCY_MISMATCH' })
   })
 })

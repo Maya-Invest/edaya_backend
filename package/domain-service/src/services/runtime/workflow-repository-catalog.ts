@@ -4,6 +4,7 @@ export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears', 'staffPermissionProfiles'],
   accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'staffPermissionProfiles', 'staffPermissionProfileBindings', 'staffPermissionAssignments', 'academicYears'],
   academics: [
+    'assessments',
     'lessonSessions',
     'classGroups',
     'classSubjectProgress',
@@ -14,6 +15,9 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'gradeLevels',
   ],
   assessments: [
+    'assessmentDependencies',
+    'students',
+    'lessonSessions',
     'academicPeriods',
     'definitions',
     'results',
@@ -40,6 +44,9 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'attachments',
   ],
   scheduling: [
+    'assessments',
+    'teacherAssignments',
+    'teacherUnavailabilities',
     'schedules',
     'calendarEvents',
     'attendance',
@@ -76,6 +83,8 @@ export const WORKFLOW_REPOSITORY_KEYS = {
     'enrollments',
   ],
   finance: [
+    'financeProjections',
+    'schools',
     'catalogServices',
     'studentServiceEnrollments',
     'studentCharges',

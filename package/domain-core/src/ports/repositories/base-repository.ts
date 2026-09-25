@@ -41,6 +41,7 @@ export interface BaseRepositoryInterface<T> {
   forAccess: (scope: ResourceAccessScope) => BaseRepositoryInterface<T>
   /** Check proposed values using the same policy predicate as reads and writes. */
   assertAccess: (entity: T) => Promise<void>
+  assertAccessBatch?: (entities: readonly T[]) => Promise<void>
   /** Bind trusted school context independently of caller filters. Adapters must scope every operation. */
   forSchool?: (schoolId: string) => BaseRepositoryInterface<T>
   findById: (id: string) => Promise<T | undefined>

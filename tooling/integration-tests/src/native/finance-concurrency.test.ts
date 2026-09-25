@@ -62,7 +62,7 @@ const yearId = 'finance-year'
 
 beforeAll(async () => {
   await repos.init({ driver: 'node-postgres' })
-  await repos.schools.save(new School({ id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
+  await repos.schools.save(new School({ financeCurrency: 'USD', id: actor.schoolId, name: 'Synthetic finance school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
   await repos.staffMembers.save(new StaffMember({ id: actor.staffMemberId, schoolId: actor.schoolId, subjectId: actor.subjectId, firstName: 'Finance', lastName: 'Owner' }))
   await repos.academicYears.save(new AcademicYear({
     id: yearId,

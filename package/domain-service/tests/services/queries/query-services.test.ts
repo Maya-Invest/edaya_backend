@@ -11,6 +11,7 @@ describe('SchoolService aggregate and timetable queries', () => {
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
+    await fixture.db.exec('UPDATE schools SET finance_currency = \'XOF\' WHERE id = \'school-a\'')
     service = new SchoolService({ actor: createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'query', authenticatedAt: new Date() }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   })
   afterEach(async () => {

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { refineEndsAtAfterStartsAt } from '../../domain/value-objects/date-time-range'
 
 import { normalizeDate, parseDomain, zodDate } from '../shared/utils'
+import { marksReviewSchema, marksStatusSchema } from './marks-review'
 
 export enum AssessmentKind {
   Quiz = 'quiz',
@@ -34,6 +35,9 @@ export const assessmentBaseSchema = z.object({
   endsAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   dueAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
   completedAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
+  marksStatus: marksStatusSchema.default('draft'),
+  marksRevision: z.number().int().nonnegative().default(0),
+  marksReview: marksReviewSchema.default({}),
   createdAt: zodDate().default(() => new Date()),
 })
 
@@ -136,6 +140,9 @@ export class Assessment {
   get endsAt() { return this.data.endsAt }
   get dueAt() { return this.data.dueAt }
   get completedAt() { return this.data.completedAt }
+  get marksStatus() { return this.data.marksStatus }
+  get marksRevision() { return this.data.marksRevision }
+  get marksReview() { return this.data.marksReview }
   get createdAt() { return this.data.createdAt }
 
   get isHomework(): boolean {

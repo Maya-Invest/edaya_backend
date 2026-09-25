@@ -3,7 +3,7 @@ import type { NotifyRecipientRow } from "../store/types";
 export type NotifySendChannel = "email" | "push" | "sms";
 
 export function resolveSendChannels(
-  recipient: Pick<NotifyRecipientRow, "email" | "phone" | "allows_notifications" | "channel_email" | "channel_push" | "channel_sms"> | undefined,
+  recipient: Pick<NotifyRecipientRow, "email" | "phone" | "allows_notifications" | "channel_email" | "channel_push" | "channel_sms"> & Partial<Pick<NotifyRecipientRow, "recipient_kind" | "recipient_id">> | undefined,
   options: { channels?: readonly NotifySendChannel[] } = {},
 ): NotifySendChannel[] {
   if (!recipient || recipient.allows_notifications === false) {

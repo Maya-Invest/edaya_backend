@@ -1,5 +1,12 @@
+import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
+import { buildSchoolApplication } from "@/runtime/shared/school-application";
+import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
+import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
+import { sql } from "drizzle-orm";
+import { createPostgresSchoolDatabase } from "@/runtime/shared/school-database";
 import indexRouter from "@/app-router";
 import type { AppBindings } from "@/http/bindings";
+import { pinoLogger } from "@/http/middleware/logger";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency } from "@/http/dependencies/session-actor";
 import type { DependencyModule } from "@/http/dependency-injection";
@@ -215,6 +222,28 @@ export async function createCoreRouteTestApp(
         IDENTITY_DIRECTORY_SECRET: process.env.IDENTITY_DIRECTORY_SECRET ?? "local-directory-secret",
       }
     : {};
+  let nativeDatabase: { url: string; drop: () => Promise<void> } | undefined;
+  // The test runner creates this loopback cluster; never read a project DATABASE_URL.
+  // eslint-disable-next-line node/no-process-env -- explicit disposable native test runner
+  const nativeUrl = process.env.EDAYA_NATIVE_SEED === "1" ? process.env.EDAYA_NATIVE_TEST_URL : undefined;
+  if (nativeUrl) {
+    if (new URL(nativeUrl).hostname !== "127.0.0.1")
+      throw new Error("Native fixtures require the disposable loopback runner");
+    const admin = await createPostgresSchoolDatabase(nativeUrl);
+    const db = admin.db as { execute: (query: ReturnType<typeof sql>) => Promise<unknown> };
+    const name = `fixture_${crypto.randomUUID().replaceAll("-", "")}`;
+    await db.execute(sql`CREATE DATABASE ${sql.identifier(name)}`);
+    const url = new URL(nativeUrl);
+    url.pathname = `/${name}`;
+    nativeDatabase = { url: url.toString(), drop: async () => {
+      try {
+        await db.execute(sql`DROP DATABASE ${sql.identifier(name)} WITH (FORCE)`);
+      }
+      finally {
+        await admin.dispose();
+      }
+    } };
+  }
   const env = options.withEmbeddedLocalFiles
     ? (() => {
         embeddedLocalFiles = startEmbeddedLocalFilesServer(pgliteEnv.LOCAL_FILES_SECRET!);
@@ -228,14 +257,49 @@ export async function createCoreRouteTestApp(
       })()
     : createPgliteTestEnv({ DATABASE_URL: "pglite", ...identityEnv, ...options.env });
 
+  if (nativeDatabase) {
+    env.DATABASE_URL = nativeDatabase.url;
+  }
   if (embeddedLocalFiles && options.autoCleanup !== false) {
     onTestFinished(() => embeddedLocalFiles?.stop());
   }
 
   const identityClientExtras = identity === "live" ? {} : { identityClient: testIdentityClient };
-  const runtime = env.RUNTIME === "local"
-    ? await buildLocalApiRuntime(env, identityClientExtras)
-    : await buildInMemoryApiRuntime(env, identityClientExtras);
+  const nativeHandle = nativeDatabase ? await createPostgresSchoolDatabase(nativeDatabase.url) : undefined;
+  if (nativeHandle)
+    await runStartupMigrations(nativeHandle.db, nativeDatabase!.url);
+  const runtime = nativeHandle
+    ? await createApiRuntime({
+      env,
+      ...identityClientExtras,
+      resolveSchoolHandle: async () => nativeHandle,
+      initSchoolApplication: (db, extras) => buildSchoolApplication(db as PostgresTransactionalDb, {
+        databaseUrl: nativeDatabase!.url,
+        env,
+        identityDirectory: extras.identityClient.directory,
+        notifyRuntime: extras.notifyRuntime,
+        runMigrations: false,
+      }),
+    })
+    : env.RUNTIME === "local"
+      ? await buildLocalApiRuntime(env, identityClientExtras)
+      : await buildInMemoryApiRuntime(env, identityClientExtras);
+  if (nativeDatabase) {
+    const close = runtime.close.bind(runtime);
+    let closed = false;
+    const { drop } = nativeDatabase;
+    runtime.close = async () => {
+      if (closed)
+        return;
+      closed = true;
+      try {
+        await close();
+      }
+      finally {
+        await drop();
+      }
+    };
+  }
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }
@@ -245,6 +309,7 @@ export async function createCoreRouteTestApp(
     c.env = env;
     await next();
   });
+  app.use(pinoLogger());
   app.use(createCoreRouteTestDependencies(
     runtime,
     options.sessionActor ?? createSessionActorDependency(),

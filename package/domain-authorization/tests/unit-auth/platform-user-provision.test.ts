@@ -48,11 +48,24 @@ function createPlatformUserRepository() {
 }
 
 describe('platform user provision', () => {
+  test.each([false, undefined, null])('never bootstraps with verification %s', async (emailVerified) => {
+    const { repository, users } = createPlatformUserRepository()
+    const result = await bootstrapPlatformUserIfAbsent(repository as never, {
+      subjectId: 'unverified',
+      email: 'op@edaya.test',
+      emailVerified: emailVerified as boolean,
+    })
+    expect(result).toBeUndefined()
+    expect(users).toHaveLength(0)
+    expect(repository.save).not.toHaveBeenCalled()
+  })
+
   test('bootstraps an active operator once and does not resurrect inactive rows', async () => {
     const { repository, users } = createPlatformUserRepository()
     const created = await bootstrapPlatformUserIfAbsent(repository as never, {
       subjectId: 'sub-1',
       email: 'Op@Edaya.test',
+      emailVerified: true,
     })
 
     expect(created?.email).toBe('op@edaya.test')
@@ -63,6 +76,7 @@ describe('platform user provision', () => {
     const again = await bootstrapPlatformUserIfAbsent(repository as never, {
       subjectId: 'sub-1',
       email: 'op@edaya.test',
+      emailVerified: true,
     })
     expect(again?.id).toBe(created?.id)
     expect(users).toHaveLength(1)
@@ -71,6 +85,7 @@ describe('platform user provision', () => {
     const resurrected = await bootstrapPlatformUserIfAbsent(repository as never, {
       subjectId: 'sub-1',
       email: 'op@edaya.test',
+      emailVerified: true,
     })
     expect(resurrected).toBeUndefined()
     expect(users[0]?.isActive).toBe(false)

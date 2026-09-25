@@ -41,6 +41,7 @@ async function seedPopulationFromDataset(
       id: enrollment.id,
       studentId: enrollment.studentId,
       classGroupId: enrollment.classGroupId,
+      enrolledAt: isoDateString(enrollment.enrolledAt ?? dataset.entities.academicYear?.startDate),
     })
   }
 

@@ -1,3 +1,4 @@
+import { assessmentResponseSchema, assessmentResultResponseSchema } from "./entities";
 import { z } from "@hono/zod-openapi";
 
 export const getSchoolOverviewQuerySchema = z.object({
@@ -592,3 +593,28 @@ export const listTeacherFamilyFeedbackResultsQuerySchema = z.object({}).openapi(
 export const getTeacherFamilyFeedbackResultQuerySchema = z.object({ id: z.string().min(1) }).openapi("GetTeacherFamilyFeedbackResultQuery");
 export const teacherFamilyFeedbackResultResponseSchema = familyFeedbackAggregateResponseSchema.omit({ status: true }).openapi("TeacherFamilyFeedbackResult");
 export const teacherFamilyFeedbackResultListResponseSchema = z.array(teacherFamilyFeedbackResultResponseSchema).openapi("TeacherFamilyFeedbackResultList");
+
+export const getAssessmentMarksReviewQuerySchema = z.object({ assessmentId: z.string().min(1) }).openapi("GetAssessmentMarksReviewQuery");
+export const listAssessmentMarksReviewsQuerySchema = z.object({
+  status: z.enum(["draft", "submitted", "approved"]).optional(),
+  classGroupId: z.string().min(1).optional(),
+  periodId: z.string().min(1).optional(),
+  offset: z.number().int().nonnegative().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+}).openapi("ListAssessmentMarksReviewsQuery");
+export const assessmentMarksReviewResponseSchema = z.object({
+  assessment: assessmentResponseSchema,
+  students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string() })),
+  results: z.array(assessmentResultResponseSchema),
+  missingStudentIds: z.array(z.string()),
+  allowedActions: z.object({ submit: z.boolean(), approve: z.boolean(), return: z.boolean() }),
+}).openapi("AssessmentMarksReviewResponse");
+export const assessmentMarksReviewsResponseSchema = z.object({
+  items: z.array(z.intersection(assessmentResponseSchema, z.object({
+    completeness: z.object({ eligible: z.number().int(), completed: z.number().int(), missing: z.number().int() }),
+    allowedActions: z.object({ submit: z.boolean(), approve: z.boolean(), return: z.boolean() }),
+  }))),
+  total: z.number().int(),
+  offset: z.number().int(),
+  limit: z.number().int(),
+}).openapi("AssessmentMarksReviewsResponse");

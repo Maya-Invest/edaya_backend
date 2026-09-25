@@ -1,3 +1,4 @@
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import { createAcademicsEntityStores } from './entity-stores-academics'
 import { createAssessmentsEntityStores } from './entity-stores-assessments'
@@ -10,7 +11,7 @@ import { createStudentsEntityStores } from './entity-stores-students'
 
 export type { EntityStores } from './entity-stores-types'
 
-export function createEntityStores(db: any): EntityStores {
+export function createEntityStores(db: StoreDatabase): EntityStores {
   return {
     ...createSchoolEntityStores(db),
     ...createAcademicsEntityStores(db),

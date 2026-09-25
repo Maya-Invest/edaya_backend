@@ -126,7 +126,7 @@ describe('SchoolService finance workflows', () => {
 
   test('recordPayment can deposit without settling a cancelled charge', async () => {
     const { repositories, service } = await createFinanceContext()
-    await service.financeWorkflow.cancelStudentCharge({ chargeId: 'enr1', reason: 'Duplicate' })
+    await service.financeWorkflow.cancelStudentCharge({ requestId: 'cancel-enr1', chargeId: 'enr1', reason: 'Duplicate' })
     const payment = await service.financeWorkflow.recordPayment({
       id: 'pay-deposit',
       studentId: 'stu1',
@@ -137,5 +137,33 @@ describe('SchoolService finance workflows', () => {
     })
     expect(payment.kind).toBe(PaymentKind.Receipt)
     expect((await repositories.studentYearAccounts.list({ studentId: 'stu1' }))[0]?.availableBalance.amount).toBe(100)
+  })
+  test('catalog status edits require their own request identity and reject changed-target retries', async () => {
+    const { service, repositories } = await createFinanceContext()
+    const catalog = (await repositories.catalogServices.findById('cat1'))!
+    await repositories.catalogServices.save(catalog.copyWith({ id: 'cat2', name: 'Other catalog' }))
+    const input = { id: 'cat1', requestId: 'catalog-archive' }
+    expect((await service.financeWorkflow.archiveCatalogService(input)).status).toBe(CatalogServiceStatus.Archived)
+    expect((await service.financeWorkflow.archiveCatalogService(input)).id).toBe('cat1')
+    await expect(service.financeWorkflow.archiveCatalogService({ ...input, id: 'cat2' })).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
+  })
+
+  test('catalog edits have independent identities and replay hashes include the entire payload', async () => {
+    const { service } = await createFinanceContext()
+    const first = { requestId: 'catalog-edit-1', id: 'cat1', name: 'Tuition revised' }
+    expect((await service.financeWorkflow.updateCatalogService(first)).name).toBe('Tuition revised')
+    expect((await service.financeWorkflow.updateCatalogService(first)).name).toBe('Tuition revised')
+    await expect(service.financeWorkflow.updateCatalogService({ ...first, name: 'Changed retry' })).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
+    expect((await service.financeWorkflow.updateCatalogService({ ...first, requestId: 'catalog-edit-2', name: 'Second edit' })).name).toBe('Second edit')
+  })
+
+  test('adjustment retries are idempotent but a second logical adjustment is rejected', async () => {
+    const { service } = await createFinanceContext()
+    const input = { requestId: 'adjust-1', chargeId: 'enr1', adjustmentAmount: 100, reason: 'Correction' }
+    await service.financeWorkflow.adjustStudentCharge(input)
+    expect((await service.financeWorkflow.adjustStudentCharge(input)).adjustmentAmount.amount).toBe(100)
+    await expect(service.financeWorkflow.adjustStudentCharge({ ...input, reason: 'Different reason' })).rejects.toMatchObject({ code: 'COMMAND_REPLAY_CONFLICT' })
+    await expect(service.financeWorkflow.adjustStudentCharge({ ...input, requestId: 'adjust-2' })).rejects.toMatchObject({ code: 'ALREADY_ADJUSTED_CHARGE' })
+    await expect(service.setupWorkflow.updateSchoolConfiguration({ schoolId: 'sch1', financeCurrency: 'EUR' })).rejects.toMatchObject({ code: 'SCHOOL_CURRENCY_LOCKED' })
   })
 })

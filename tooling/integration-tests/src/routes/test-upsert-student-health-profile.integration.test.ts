@@ -2,9 +2,9 @@ import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-
 import { ApiError } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-describeWithSeededSchool('upsert student health profile command', (getContext) => {
+describeWithLightSchool('upsert student health profile command', (getContext) => {
   it('creates and updates a health profile without client timestamps', async () => {
     const { app, authHeaders } = getContext()
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization

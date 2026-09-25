@@ -1,12 +1,12 @@
 import type { Permission } from '@edaya/authorization'
 import { StaffPermissionAssignment } from '@edaya/core'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
-export class PostgresStaffPermissionAssignmentStore extends PostgresStore<StaffPermissionAssignment> {
-  constructor(db: any) {
+export class PostgresStaffPermissionAssignmentStore extends PostgresStore<StaffPermissionAssignment, typeof schema.staffPermissionAssignments.$inferSelect> {
+  constructor(db: unknown) {
     super(
-      db,
+      asStoreDatabase(db),
       schema.staffPermissionAssignments,
       (entity: StaffPermissionAssignment) => ({
         id: entity.id,
@@ -14,13 +14,13 @@ export class PostgresStaffPermissionAssignmentStore extends PostgresStore<StaffP
         schoolId: entity.schoolId,
         academicYearId: entity.academicYearId,
         permission: entity.permission,
-        scopes: entity.scopes,
+        scopes: [...entity.scopes],
         status: entity.status,
         startsAt: entity.startsAt ?? null,
         endsAt: entity.endsAt ?? null,
         sourceProfileId: entity.sourceProfileId ?? null,
         createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
+        updatedAt: entity.updatedAt ?? entity.createdAt,
       }),
       row => new StaffPermissionAssignment({
         id: row.id,
@@ -28,8 +28,8 @@ export class PostgresStaffPermissionAssignmentStore extends PostgresStore<StaffP
         schoolId: row.schoolId,
         academicYearId: row.academicYearId,
         permission: row.permission as Permission,
-        scopes: row.scopes,
-        status: row.status,
+        scopes: row.scopes as StaffPermissionAssignment['scopes'],
+        status: row.status as StaffPermissionAssignment['status'],
         startsAt: row.startsAt ?? undefined,
         endsAt: row.endsAt ?? undefined,
         sourceProfileId: row.sourceProfileId ?? undefined,

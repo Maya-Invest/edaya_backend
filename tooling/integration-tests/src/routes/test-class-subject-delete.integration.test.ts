@@ -1,15 +1,16 @@
-import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, Schedule, Subject, SubjectMatter } from '@edaya/core'
+import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, Schedule, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-describeWithSeededSchool('generic class subject deletion', (getContext) => {
+describeWithLightSchool('generic class subject deletion', (getContext) => {
   it('preserves inherited and used allocations, preflights the entire batch, and allows an unused custom allocation', async () => {
     const { application, app, authHeaders } = getContext()
     const repositories = application.repositories
-    const inherited = (await repositories.classSubjects.list({ $limit: 100 })).find(subject => subject.gradeLevelSubjectId)
-    expect(inherited).toBeDefined()
-    const classGroup = await repositories.classGroups.findById(inherited!.classGroupId)
-    expect(classGroup).toBeDefined()
+    const classGroup = (await repositories.classGroups.list({ $limit: 1 }))[0]!
+    await repositories.subjects.save(new Subject({ id: 'delete-inherited-subject', schoolId: classGroup.schoolId, name: 'Inherited subject' }))
+    await repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'delete-inherited-curriculum', gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId, subjectId: 'delete-inherited-subject' }))
+    const inherited = new ClassSubject({ id: 'delete-inherited-allocation', classGroupId: classGroup.id, subjectId: 'delete-inherited-subject', gradeLevelSubjectId: 'delete-inherited-curriculum' })
+    await repositories.classSubjects.save(inherited)
     for (const suffix of ['unused', 'used']) {
       await repositories.subjects.save(new Subject({ id: `delete-subject-${suffix}`, schoolId: classGroup!.schoolId, name: `Delete test ${suffix}` }))
       await repositories.classSubjects.save(new ClassSubject({ id: `delete-allocation-${suffix}`, classGroupId: classGroup!.id, subjectId: `delete-subject-${suffix}` }))

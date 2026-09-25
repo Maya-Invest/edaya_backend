@@ -1,7 +1,7 @@
-import type { CommandJson, FamilyFeedbackAnswer, FamilyFeedbackAnswers, FamilyFeedbackLocale, FamilyFeedbackScoredRow } from '@edaya/core'
+import type { CommandJson, FamilyFeedbackAnswers, FamilyFeedbackLocale } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { AuthorizationError, denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { aggregateFamilyFeedback, BusinessRuleViolationError, FAMILY_FEEDBACK_CANNOT_ASSESS, FAMILY_FEEDBACK_COMMENT_MAX_CHARS, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_PURGE_WARN_MS, FAMILY_FEEDBACK_QUESTION_IDS, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, FAMILY_FEEDBACK_SCORED_VALUES, familyFeedbackAnswersSchema, FamilyFeedbackCampaign, FamilyFeedbackCampaignStatus, FamilyFeedbackCommentReadAudit, familyFeedbackInstrumentCopy, familyFeedbackReminderTimes, FamilyFeedbackResponse, FamilyFeedbackSlot, familyFeedbackSlotId, FamilyFeedbackSlotStatus, FamilyFeedbackSnapshot, familyFeedbackSnapshotId, renderFamilyFeedbackInstrument, StudentClassEnrollmentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { BusinessRuleViolationError, FAMILY_FEEDBACK_COMMENT_MAX_CHARS, FAMILY_FEEDBACK_FAILURES, FAMILY_FEEDBACK_PURGE_WARN_MS, FAMILY_FEEDBACK_QUESTION_VERSION, FAMILY_FEEDBACK_RETENTION_MS, familyFeedbackAnswersSchema, FamilyFeedbackCampaign, FamilyFeedbackCampaignStatus, FamilyFeedbackCommentReadAudit, familyFeedbackInstrumentCopy, familyFeedbackReminderTimes, FamilyFeedbackResponse, FamilyFeedbackSlot, familyFeedbackSlotId, FamilyFeedbackSlotStatus, FamilyFeedbackSnapshot, familyFeedbackSnapshotId, renderFamilyFeedbackInstrument, StudentClassEnrollmentStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
 import {
   assertFamilyFeedbackManage,
   assertFamilyFeedbackModerate,
@@ -10,6 +10,7 @@ import {
   assertStaffMayBeModerator,
   isFamilyFeedbackSystemActor,
 } from '../../capabilities/family-feedback/access'
+import { computeCampaignAggregates } from '../../capabilities/family-feedback/compute-campaign-aggregates'
 import {
   cancelFamilyFeedbackCampaignNotifications,
   cancelFamilyFeedbackSlotNotifications,
@@ -22,6 +23,7 @@ import {
 import { requireCurrentGuardianStudentLink } from '../../capabilities/files/profile-photo-access'
 import { formatPersonName } from '../../capabilities/notifications/templates/format-notification-variables'
 import { schoolCommandScope } from '../commands/school-command-scope'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 
 function fail(code: string, message: string): never {
   throw new BusinessRuleViolationError(code, message)
@@ -150,30 +152,33 @@ function projectCampaign(campaign: FamilyFeedbackCampaign, includeThemeDraft = f
 }
 
 export class FamilyFeedbackServiceWorkflow {
-  constructor(private readonly baseService: BaseSchoolService) {}
+  private readonly repositories
+  constructor(private readonly baseService: BaseSchoolService) {
+    this.repositories = pickWorkflowRepositories('familyFeedback', baseService.repositories)
+  }
 
   private schoolId() {
     return this.baseService.actor.schoolId
   }
 
   private campaigns() {
-    return this.baseService.repositories.familyFeedbackCampaigns.forSchool!(this.schoolId())
+    return this.repositories.familyFeedbackCampaigns.forSchool!(this.schoolId())
   }
 
   private slots() {
-    return this.baseService.repositories.familyFeedbackSlots.forSchool!(this.schoolId())
+    return this.repositories.familyFeedbackSlots.forSchool!(this.schoolId())
   }
 
   private responses() {
-    return this.baseService.repositories.familyFeedbackResponses.forSchool!(this.schoolId())
+    return this.repositories.familyFeedbackResponses.forSchool!(this.schoolId())
   }
 
   private snapshots() {
-    return this.baseService.repositories.familyFeedbackSnapshots.forSchool!(this.schoolId())
+    return this.repositories.familyFeedbackSnapshots.forSchool!(this.schoolId())
   }
 
   private audit() {
-    return this.baseService.repositories.familyFeedbackCommentReadAudit.forSchool!(this.schoolId())
+    return this.repositories.familyFeedbackCommentReadAudit.forSchool!(this.schoolId())
   }
 
   private async requireCampaign(id: string): Promise<FamilyFeedbackCampaign> {
@@ -543,7 +548,7 @@ export class FamilyFeedbackServiceWorkflow {
       ? undefined
       : await this.resolveAssignment(input.academicYearId, input.academicPeriodId, input.teacherAssignmentId).catch(() => undefined)
     const enrollments = resolved
-      ? await this.baseService.repositories.enrollments.forSchool!(this.schoolId()).list({
+      ? await this.repositories.enrollments.forSchool!(this.schoolId()).list({
           classGroupId: resolved.classGroup.id,
           academicYearId: input.academicYearId,
           status: StudentClassEnrollmentStatus.Active,
@@ -771,7 +776,7 @@ export class FamilyFeedbackServiceWorkflow {
     const existing = await this.slots().list({ campaignId: campaign.id })
     if (existing.length)
       return existing
-    const enrollments = await this.baseService.repositories.enrollments.forSchool!(this.schoolId()).list({
+    const enrollments = await this.repositories.enrollments.forSchool!(this.schoolId()).list({
       classGroupId: campaign.classGroupId,
       academicYearId: campaign.academicYearId,
       status: StudentClassEnrollmentStatus.Active,
@@ -816,28 +821,7 @@ export class FamilyFeedbackServiceWorkflow {
   }
 
   private async computeAggregates(campaign: FamilyFeedbackCampaign) {
-    const slots = await this.slots().list({ campaignId: campaign.id })
-    const responses = await this.responses().list({ campaignId: campaign.id })
-    const rows: FamilyFeedbackScoredRow[] = []
-    for (const response of responses) {
-      const slot = slots.find(item => item.id === response.slotId)
-      if (!slot?.completingGuardianId)
-        continue
-      const guardian = await this.baseService.repositories.guardians.forSchool!(this.schoolId()).findById(slot.completingGuardianId)
-      if (!guardian?.subjectId)
-        continue
-      for (const questionId of FAMILY_FEEDBACK_QUESTION_IDS) {
-        const value = response.answers[questionId]
-        if (value !== FAMILY_FEEDBACK_CANNOT_ASSESS && !(FAMILY_FEEDBACK_SCORED_VALUES as readonly number[]).includes(value))
-          continue
-        rows.push({
-          questionId,
-          value: value as FamilyFeedbackAnswer,
-          guardianSubjectId: guardian.subjectId,
-        })
-      }
-    }
-    return aggregateFamilyFeedback(rows, slots.length, slots.filter(slot => slot.isCompleted).length, campaign.themeDraft)
+    return computeCampaignAggregates({ slots: this.slots(), responses: this.responses(), guardians: this.repositories.guardians.forSchool!(this.schoolId()) }, campaign)
   }
 
   private async guardianSlotState(campaign: FamilyFeedbackCampaign, slot: FamilyFeedbackSlot, guardianId: string): Promise<string> {
@@ -856,7 +840,7 @@ export class FamilyFeedbackServiceWorkflow {
   }
 
   private async assertCurrentEnrollment(campaign: FamilyFeedbackCampaign, studentId: string): Promise<void> {
-    const enrollments = await this.baseService.repositories.enrollments.forSchool!(this.schoolId()).list({
+    const enrollments = await this.repositories.enrollments.forSchool!(this.schoolId()).list({
       studentId,
       classGroupId: campaign.classGroupId,
       academicYearId: campaign.academicYearId,
@@ -884,28 +868,28 @@ export class FamilyFeedbackServiceWorkflow {
   }
 
   private async resolveAssignment(academicYearId: string, academicPeriodId: string, teacherAssignmentId: string) {
-    const year = await this.baseService.repositories.academicYears.forSchool!(this.schoolId()).findById(academicYearId)
-    const period = await this.baseService.repositories.academicPeriods.forSchool!(this.schoolId()).findById(academicPeriodId)
-    const assignment = await this.baseService.repositories.teacherAssignments.forSchool!(this.schoolId()).findById(teacherAssignmentId)
+    const year = await this.repositories.academicYears.forSchool!(this.schoolId()).findById(academicYearId)
+    const period = await this.repositories.academicPeriods.forSchool!(this.schoolId()).findById(academicPeriodId)
+    const assignment = await this.repositories.teacherAssignments.forSchool!(this.schoolId()).findById(teacherAssignmentId)
     if (!year || !period || !assignment || period.academicYearId !== academicYearId || assignment.academicYearId !== academicYearId)
       fail(FAMILY_FEEDBACK_FAILURES.ASSIGNMENT_INVALID, 'Year, period and assignment must belong together')
     if (assignment.kind !== TeacherAssignmentKind.Subject || !assignment.classSubjectId || assignment.status !== TeacherAssignmentStatus.Active)
       fail(FAMILY_FEEDBACK_FAILURES.ASSIGNMENT_INVALID, 'Family feedback targets an active subject teacher assignment')
-    const classSubject = await this.baseService.repositories.classSubjects.forSchool!(this.schoolId()).findById(assignment.classSubjectId)
-    const teacher = await this.baseService.repositories.teachers.forSchool!(this.schoolId()).findById(assignment.teacherId)
+    const classSubject = await this.repositories.classSubjects.forSchool!(this.schoolId()).findById(assignment.classSubjectId)
+    const teacher = await this.repositories.teachers.forSchool!(this.schoolId()).findById(assignment.teacherId)
     if (!classSubject || !teacher)
       fail(FAMILY_FEEDBACK_FAILURES.ASSIGNMENT_INVALID, 'The evaluated assignment is incomplete')
-    const classGroup = await this.baseService.repositories.classGroups.forSchool!(this.schoolId()).findById(classSubject.classGroupId)
+    const classGroup = await this.repositories.classGroups.forSchool!(this.schoolId()).findById(classSubject.classGroupId)
     if (!classGroup || classGroup.academicYearId !== academicYearId)
       fail(FAMILY_FEEDBACK_FAILURES.ASSIGNMENT_INVALID, 'The class does not belong to this academic year')
     return { year, period, assignment, classSubject, classGroup, teacher }
   }
 
   private async campaignLabels(campaign: FamilyFeedbackCampaign) {
-    const teacher = await this.baseService.repositories.teachers.forSchool!(this.schoolId()).findById(campaign.teacherId)
-    const subject = await this.baseService.repositories.subjects.forSchool!(this.schoolId()).findById(campaign.subjectId)
-    const classGroup = await this.baseService.repositories.classGroups.forSchool!(this.schoolId()).findById(campaign.classGroupId)
-    const period = await this.baseService.repositories.academicPeriods.forSchool!(this.schoolId()).findById(campaign.academicPeriodId)
+    const teacher = await this.repositories.teachers.forSchool!(this.schoolId()).findById(campaign.teacherId)
+    const subject = await this.repositories.subjects.forSchool!(this.schoolId()).findById(campaign.subjectId)
+    const classGroup = await this.repositories.classGroups.forSchool!(this.schoolId()).findById(campaign.classGroupId)
+    const period = await this.repositories.academicPeriods.forSchool!(this.schoolId()).findById(campaign.academicPeriodId)
     return {
       teacherName: teacher ? formatPersonName(teacher.firstName, teacher.lastName) : 'Teacher',
       subjectName: subject?.name ?? 'Subject',
@@ -917,7 +901,7 @@ export class FamilyFeedbackServiceWorkflow {
 
   private async instrumentVars(campaign: FamilyFeedbackCampaign, studentId: string) {
     const labels = await this.campaignLabels(campaign)
-    const student = await this.baseService.repositories.students.forSchool!(this.schoolId()).findById(studentId)
+    const student = await this.repositories.students.forSchool!(this.schoolId()).findById(studentId)
     return {
       studentName: student ? formatPersonName(student.firstName, student.lastName) : 'Student',
       teacherName: labels.teacherName,

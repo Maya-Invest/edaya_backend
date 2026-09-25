@@ -4,6 +4,7 @@ import type { NotifySql } from "../store/types";
 import { randomUUID } from "node:crypto";
 import { buildNotifyChannelId, normalizeEmail } from "../ids";
 import {
+  deleteDevice,
   getCommandRecipient,
   listDevices,
   listJobRecipients,
@@ -172,54 +173,40 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
           });
         }
         else if (channel === "push") {
-          const devices = await listDevices(deps.sql, subjectId, job.tenant);
-          const fcm = devices.find(device => device.provider === "fcm");
-          if (!fcm) {
-            if (!await upsertJobRecipient(deps.sql, {
-              idempotency_key: idempotencyKey,
-              subject_id: subjectId,
-              channel,
-              status: "cancelled",
-              provider_message_id: null,
-              failure_reason: "no registered device",
-            }, leaseId)) {
+          const devices = (await listDevices(deps.sql, subjectId, job.tenant)).filter(device =>
+            device.provider === "fcm" && device.profile_kind === recipient?.recipient_kind && device.profile_id === recipient?.recipient_id);
+          for (const device of devices) {
+            const deviceChannel = `push:${encodeURIComponent(device.app_id)}:${encodeURIComponent(device.installation_id)}`;
+            if (recipientRows.some(row => row.subject_id === subjectId && row.channel === deviceChannel && (row.status === "sent" || row.status === "cancelled")))
+              continue;
+            let status = "sent";
+            let providerMessageId: string | undefined;
+            let failure: string | undefined;
+            try {
+              const sent = await bounded(deps.fcm.send({ token: device.token, title: job.title, body: job.body, data: { deliveryId: job.delivery_id, eventKey: job.event_key, title: job.title, body: job.body } }));
+              providerMessageId = sent.providerMessageId;
+              lastProviderId = providerMessageId;
+              anySent = true;
+              subjectSent = true;
+            }
+            catch (error) {
+              if (error instanceof Error && error.message === "FCM_TOKEN_UNREGISTERED") {
+                await deleteDevice(deps.sql, subjectId, device.provider, job.tenant, device.app_id, device.installation_id, device.token);
+                status = "cancelled";
+                failure = "FCM_TOKEN_UNREGISTERED";
+              }
+              else {
+                status = "failed";
+                failure = "NOTIFY_DELIVERY_FAILED";
+                lastFailure = failure;
+              }
+            }
+            if (!await upsertJobRecipient(deps.sql, { idempotency_key: idempotencyKey, subject_id: subjectId, channel: deviceChannel, status, provider_message_id: providerMessageId ?? null, failure_reason: failure ?? null }, leaseId)) {
               return;
             }
-            continue;
+            if (status === "sent")
+              events.push({ deliveryId: job.delivery_id, status: "sent", providerMessageId, channel: "push", occurredAt: new Date(), subjectId });
           }
-          const sent = await bounded(deps.fcm.send({
-            token: fcm.token,
-            title: job.title,
-            body: job.body,
-            data: {
-              deliveryId: job.delivery_id,
-              eventKey: job.event_key,
-              title: job.title,
-              body: job.body,
-            },
-          }));
-          deps.log("notify push (fcm)", { title: job.title });
-          lastProviderId = sent.providerMessageId;
-          anySent = true;
-          subjectSent = true;
-          if (!await upsertJobRecipient(deps.sql, {
-            idempotency_key: idempotencyKey,
-            subject_id: subjectId,
-            channel: "push",
-            status: "sent",
-            provider_message_id: sent.providerMessageId ?? null,
-            failure_reason: null,
-          }, leaseId)) {
-            return;
-          }
-          events.push({
-            deliveryId: job.delivery_id,
-            status: "sent",
-            providerMessageId: sent.providerMessageId,
-            channel: "push",
-            occurredAt: new Date(),
-            subjectId,
-          });
         }
         else if (channel === "sms") {
           if (!deps.sms.implemented) {
@@ -342,6 +329,8 @@ async function resolveSchoolRecipient(job: import("../store/types").NotifyJobRow
   if (!profile || profile.schoolId !== job.tenant || profile.recipient.subjectId !== subjectId || !profile.recipient.id)
     return undefined;
   return {
+    recipient_kind: profile.recipient.kind,
+    recipient_id: profile.recipient.id,
     email: profile.email ?? null,
     phone: profile.phone ?? null,
     allows_notifications: profile.preferences.allowsNotifications ?? true,

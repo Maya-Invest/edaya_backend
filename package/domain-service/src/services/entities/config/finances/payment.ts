@@ -2,6 +2,7 @@ import type { CoreEntityRepositories, Payment } from '@edaya/core'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { AttachmentOwnerKind, BusinessRuleViolationError, PaymentKind, PaymentStatus } from '@edaya/core'
+import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
@@ -27,6 +28,7 @@ export async function validatePaymentSave(
   existing: Payment | undefined,
   repositories: CoreEntityRepositories,
 ): Promise<void> {
+  await assertSchoolCurrency(repositories, payment.schoolId, payment.amount.currency)
   const account = await repositories.studentYearAccounts.findById(payment.accountId)
   if (!account || account.schoolId !== payment.schoolId) {
     denyResourceAccess()

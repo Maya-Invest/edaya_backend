@@ -1,6 +1,6 @@
-import type { SQL, SQLWrapper } from 'drizzle-orm'
+import type { SQLWrapper } from 'drizzle-orm'
 import type { PgTable } from 'drizzle-orm/pg-core'
-import { and, eq, getTableColumns, getTableName, isNotNull, isNull, or, sql } from 'drizzle-orm'
+import { and, eq, getTableColumns, getTableName, is, isNotNull, isNull, or, SQL, sql } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
 
 // Adapter-owned relationships. Every supplied business reference must stay in the
@@ -62,7 +62,7 @@ export function schoolScope(table: PgTable, schoolId: string, proposed?: Record<
     const column = columns[field]
     if (!column)
       throw new Error(`Missing ownership column ${name}.${field}`)
-    return proposed ? sql`${sql.param(proposed[field] ?? null, column)}::text` : column
+    return proposed ? is(proposed[field], SQL) ? proposed[field] as SQL : sql`${sql.param(proposed[field] ?? null, column)}::text` : column
   }
   const parentScope = (field: string, parent: PgTable): SQL => {
     const { id: parentId } = getTableColumns(parent)
@@ -80,7 +80,7 @@ export function schoolScope(table: PgTable, schoolId: string, proposed?: Record<
     references.push(['subjectId', schema.subjects])
   for (const [field, target] of references) {
     const column = columns[field]
-    if (!column)
+    if (!column || (proposed && !column.notNull && proposed[field] == null))
       continue
     const withinSchool = parentScope(field, target)
     predicates.push(column.notNull ? withinSchool : or(isNull(value(field)), withinSchool)!)

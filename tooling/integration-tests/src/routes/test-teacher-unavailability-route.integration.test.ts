@@ -1,13 +1,15 @@
-import { DayOfWeek, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { DayOfWeek, Teacher, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-describeWithSeededSchool('teacher unavailability routes', (getContext) => {
+describeWithLightSchool('teacher unavailability routes', (getContext) => {
   it('saves, lists, gets, and deletes a weekly rule through the generated client', async () => {
-    const { app, authHeaders } = getContext()
+    const { application, app, authHeaders } = getContext()
+    const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
+    await application.repositories.teachers.save(new Teacher({ id: 't1', schoolId: school.id, firstName: 'Route', lastName: 'Teacher' }))
     const authorization = (await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)).authorization
     const client = createInProcessSchoolClient(app, { headers: { authorization } })
     const input = {

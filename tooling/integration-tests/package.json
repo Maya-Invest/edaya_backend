@@ -9,7 +9,7 @@
     "test:integration": "bun run test:integration:api && bun run test:integration:http",
     "test:integration:api": "bun test src/services src/runtime src/adaptor --parallel=1",
     "test:integration:http": "bun test src/auth src/routes --parallel=1",
-    "test:integration:seed": "bun test src/seed --parallel=1",
+    "test:integration:seed": "bun src/native/run.ts --seed",
     "test:integration:native": "bun src/native/run.ts",
     "lint": "eslint src smoke",
     "lint:fix": "eslint src smoke --fix"

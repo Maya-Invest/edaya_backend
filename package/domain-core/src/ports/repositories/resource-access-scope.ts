@@ -15,6 +15,7 @@ export interface ResourceAccessClause {
   /** Read-only calendar context includes school and grade events affecting a visible class. */
   readonly calendarAncestors?: boolean
   readonly publishedOnly?: boolean
+  readonly approvedMarksOnly?: boolean
   readonly attachmentOwners?: readonly AttachmentOwnerKind[]
   /** Exact purposes selected by the named policy. Generic scopes default to general only. */
   readonly attachmentPurposes?: readonly string[]

@@ -7,6 +7,7 @@ export interface CoreHttpRequestOptions {
   client: HttpSeedClient
   serviceAccountApiKey?: string
   requestId?: string
+  actor?: { schoolId: string, actorId: string, academicYearId: string }
 }
 
 function serializeValue(value: unknown): unknown {
@@ -45,6 +46,7 @@ function schoolClient(options: CoreHttpRequestOptions) {
   return createSeedSchoolClient(options.client, {
     serviceAccountApiKey: options.serviceAccountApiKey,
     requestId: options.requestId,
+    actor: options.actor,
   })
 }
 
@@ -170,4 +172,17 @@ export async function postEntitySave(
   catch (error) {
     throw formatCoreError(`Entity save failed for ${serviceName}`, error)
   }
+}
+
+/** Uses the same managed entity invariants and atomic authorization as single saves. */
+export async function postEntityBatchSave(options: CoreHttpRequestOptions, serviceName: SeedEntityKey, entities: unknown[]): Promise<void> {
+  if (!entities.length)
+    return
+  try {
+    const resource = schoolClient(options).entities[serviceName]
+    if (!('batchSave' in resource) || typeof resource.batchSave !== 'function')
+      throw new Error(`Entity ${serviceName} does not support batch save`)
+    for (let offset = 0; offset < entities.length; offset += 500) await resource.batchSave({ entities: entities.slice(offset, offset + 500).map(entityPayload) as never[] })
+  }
+  catch (error) { throw formatCoreError(`Entity batch save failed for ${serviceName}`, error) }
 }

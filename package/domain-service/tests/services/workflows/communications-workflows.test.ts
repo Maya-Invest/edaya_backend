@@ -255,11 +255,11 @@ describe('communications workflows with production policies and transactions', (
   test('push devices use the current linked identity, and inactive profiles lose access', async () => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
     const workflow = service(guardian).communicationsWorkflow
-    await workflow.registerPushDevice({ token: ' device-token ', provider: 'fcm' })
-    await workflow.unregisterPushDevice({ provider: 'fcm' })
-    expect(gateway.registeredPushDevices).toEqual([{ subjectId: 'person-a', schoolId: 'school-a', token: 'device-token', provider: 'fcm' }])
-    expect(gateway.unregisteredPushDevices).toEqual([{ schoolId: 'school-a', subjectId: 'person-a', provider: 'fcm' }])
+    await workflow.registerPushDevice({ appId: 'guardian', installationId: 'device-1', token: ' device-token ', provider: 'fcm' })
+    await workflow.unregisterPushDevice({ appId: 'guardian', installationId: 'device-1', provider: 'fcm' })
+    expect(gateway.registeredPushDevices).toEqual([{ appId: 'guardian', installationId: 'device-1', profileKind: 'guardian', profileId: 'guardian-a', subjectId: 'person-a', schoolId: 'school-a', token: 'device-token', provider: 'fcm' }])
+    expect(gateway.unregisteredPushDevices).toEqual([{ appId: 'guardian', installationId: 'device-1', schoolId: 'school-a', subjectId: 'person-a', provider: 'fcm' }])
     await fixture.db.exec('UPDATE guardians SET has_access = false WHERE id = \'guardian-a\'')
-    await expect(workflow.registerPushDevice({ token: 'device-token', provider: 'fcm' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(workflow.registerPushDevice({ appId: 'guardian', installationId: 'device-1', token: 'device-token', provider: 'fcm' })).rejects.toBeInstanceOf(AuthorizationError)
   })
 })

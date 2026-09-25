@@ -38,7 +38,7 @@ export class NotificationDeliveryAccessPolicy {
   }
 
   private async assertSource(facts: AccessFacts, delivery: MessageDelivery, request: NotificationDispatchRequest) {
-    const { assessmentResultId, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId, campaignId, reminderKind, teacherId } = request.metadata
+    const { assessmentResultId, marksRevision, reportCardResultId, studentId, anchorKey, status, incidentId, assessmentId, activityId, calendarEventId, campaignId, reminderKind, teacherId } = request.metadata
     if (delivery.announcementId) {
       const scope = resourceAccessScope(delivery.schoolId, 'announcements', [{ target: await facts.communicationAudience(delivery.recipientKind!, delivery.recipientId!) }])
       if (delivery.sourceKey !== delivery.announcementId || !await this.access.repositories.announcements.forAccess(scope).findById(delivery.announcementId))
@@ -51,8 +51,11 @@ export class NotificationDeliveryAccessPolicy {
     }
     switch (request.eventKey) {
       case 'assessment.result_recorded': {
-        requireSource(assessmentResultId)
+        requireSource(assessmentResultId, marksRevision)
         const result = await facts.one('assessmentResults', assessmentResultId!)
+        const sheet = await facts.one('assessments', result.assessmentId)
+        if (sheet.id !== assessmentId || sheet.marksStatus !== 'approved' || String(sheet.marksRevision) !== marksRevision)
+          denied('Marks are no longer approved at this revision')
         await this.assertStudentSource(facts, delivery, result.studentId, 'academic')
         await this.assertVisibleStudentRecord(facts, 'assessmentResults', result.id, result.studentId)
         return

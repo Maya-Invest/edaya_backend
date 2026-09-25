@@ -2,7 +2,7 @@ import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { ReportCardsSeedPort } from '../port'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntityFindById } from '../../../transport/http/core-entity'
 
 export interface CreateHttpReportCardsSeedPortOptions {
   client: HttpSeedClient
@@ -35,7 +35,10 @@ export function createHttpReportCardsSeedPort(
       }),
     saveReportCardTeacherComment: record =>
       withSeedPortError('reportCards.saveReportCardTeacherComment', async () => {
+        const report = await postEntityFindById(requestOptions, 'results', record.id) as { version: number }
         await postCoreCommand(requestOptions, 'writeHomeroomReportComment', {
+          requestId: `seed-comment:${record.id}`,
+          expectedVersion: report.version,
           id: record.id,
           teacherComment: record.teacherComment,
         })

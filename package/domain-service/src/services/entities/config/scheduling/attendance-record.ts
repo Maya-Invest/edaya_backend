@@ -65,7 +65,7 @@ function attendanceJustificationChanged(entity: AttendanceRecord, existing: Atte
 }
 
 export async function findAttendanceRecordByAnchor(
-  repositories: SchoolRepositories,
+  repositories: Pick<SchoolRepositories, 'attendance'>,
   studentId: string,
   anchor: AttendanceAnchor,
 ): Promise<AttendanceRecord | undefined> {

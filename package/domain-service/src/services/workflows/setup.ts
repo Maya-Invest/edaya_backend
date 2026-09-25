@@ -3,13 +3,13 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess } from '@edaya/authorization'
 import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
+import { ensureDefaultSubjectCategories } from '../../capabilities/academics/ensure-default-subject-categories'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
 import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
 import { assertGenericAttachmentIsNotPortrait } from '../../capabilities/files/profile-photo-uploads'
 import { removeAttachment } from '../../capabilities/files/remove-attachment'
 import { scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
-import { ensureDefaultSubjectCategories } from '../../capabilities/academics/ensure-default-subject-categories'
 import { seedSchoolNotificationTemplates } from '../../capabilities/notifications/templates/seed-school-notification-templates'
 
 import { requireSchool } from '../require-school'
@@ -141,6 +141,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         id: existing.id,
         name: changes.name ?? existing.name,
         timeZone: changes.timeZone ?? existing.timeZone,
+        financeCurrency: changes.financeCurrency ?? existing.financeCurrency,
         ownerSubjectId,
         consortiumId: existing.consortiumId,
         pendingOwnerStaffId: changes.pendingOwnerStaffId === undefined

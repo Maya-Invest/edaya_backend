@@ -1,6 +1,8 @@
 import type { StudentServiceEnrollment } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { BusinessRuleViolationError, ServiceEnrollmentStatus } from '@edaya/core'
+import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
@@ -24,7 +26,9 @@ function enrollmentTenant(): EntityTenantResolver<StudentServiceEnrollment> {
 export async function validateStudentServiceEnrollmentSave(
   entity: StudentServiceEnrollment,
   existing: StudentServiceEnrollment | undefined,
+  repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertSchoolCurrency(repositories, entity.schoolId, entity.acceptedTerms.currency)
   if (!existing)
     return
   if (existing.schoolId !== entity.schoolId || existing.studentId !== entity.studentId || existing.catalogServiceId !== entity.catalogServiceId) {

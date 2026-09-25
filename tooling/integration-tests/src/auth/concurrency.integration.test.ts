@@ -21,7 +21,7 @@ async function createConcurrencyFixture() {
   const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Setup standard tenant school context using 'school' matching the default actor
-  await saveSchool(app, { id: 'school', name: 'Concurrent Academy', timeZone: 'UTC' })
+  await saveSchool(app, { id: 'school', name: 'Concurrent Academy', timeZone: 'UTC', financeCurrency: 'XAF' })
   await app.setupWorkflow.createAcademicYear({
     id: 'year',
     schoolId: 'school',

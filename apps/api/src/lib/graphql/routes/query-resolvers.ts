@@ -15,6 +15,10 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
     const service = context.get("schoolApp").forActor(actor);
     const payload = asRecord(args.input);
 
+    if (queryConfig.methodName === "getAssessmentMarksReview")
+      return service.getAssessmentMarksReview({ assessmentId: payload.assessmentId as string });
+    if (queryConfig.methodName === "listAssessmentMarksReviews")
+      return service.listAssessmentMarksReviews(payload as Parameters<typeof service.listAssessmentMarksReviews>[0]);
     if (queryConfig.methodName === "getSchoolOverview") {
       const input: GetSchoolOverviewInput = {
         schoolId: payload.schoolId as string,

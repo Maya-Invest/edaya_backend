@@ -5,7 +5,7 @@ import type {
 import { AccountInvitation, AccountInvitationStatus } from '@edaya/core'
 import { and, eq, gt } from 'drizzle-orm'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 type AccountInvitationRow = typeof schema.accountInvitations.$inferSelect
 type AccountInvitationInsertRow = typeof schema.accountInvitations.$inferInsert
@@ -64,7 +64,7 @@ function toMutableUpdateSet(entity: AccountInvitation): Omit<AccountInvitationIn
   }
 }
 
-export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitation> {
+export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitation, AccountInvitationRow> {
   private readonly mapRow: (row: AccountInvitationRow) => AccountInvitation
 
   constructor(db: unknown) {
@@ -92,9 +92,9 @@ export class PostgresAccountInvitationStore extends PostgresStore<AccountInvitat
     }
 
     super(
-      db,
+      asStoreDatabase(db),
       schema.accountInvitations,
-      entity => toInsertRow(entity),
+      entity => ({ ...toInsertRow(entity), acceptedAt: entity.acceptedAt ?? null, acceptedSubjectId: entity.acceptedSubjectId ?? null, lastSentAt: entity.lastSentAt ?? null }),
       mapRow,
     )
 

@@ -14,7 +14,7 @@ test('school migrations install notification persistence on a fresh database and
     await runMigrations(connection, { driver: 'pglite' })
     expect((await db.query('SELECT idempotency_key FROM notify.jobs')).rows).toEqual([{ idempotency_key: 'persisted' }])
     expect((await db.query('SELECT tablename FROM pg_tables WHERE schemaname = \'notify\' ORDER BY tablename')).rows)
-      .toEqual(['devices', 'devices_unscoped_legacy', 'job_recipients', 'jobs', 'recipients'].map(tablename => ({ tablename })))
+      .toEqual(['devices', 'devices_pre_installation', 'devices_unscoped_legacy', 'job_recipients', 'jobs', 'recipients'].map(tablename => ({ tablename })))
     expect((await db.query('SELECT indexname FROM pg_indexes WHERE indexname = \'notify_jobs_pending_idx\'')).rows).toHaveLength(1)
   }
   finally { await db.close() }

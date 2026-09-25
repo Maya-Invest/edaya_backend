@@ -15,7 +15,7 @@ export async function installSchemaBeforeTypedGrants(db: PGlite): Promise<void> 
 
 export async function seedAuthorizationPlacement(db: PGlite): Promise<void> {
   await db.exec(`
-    INSERT INTO schools (id, name, time_zone, created_at) VALUES ('school-a', 'A', 'UTC', now()), ('school-b', 'B', 'UTC', now());
+    INSERT INTO schools (id, name, time_zone, finance_currency, created_at) VALUES ('school-a', 'A', 'UTC', 'USD', now()), ('school-b', 'B', 'UTC', 'USD', now());
     INSERT INTO academic_years (id, school_id, name, start_date, end_date, status, created_at) VALUES
       ('year-a', 'school-a', 'A', '2026-01-01', '2026-12-31', 'published', now()),
       ('year-old', 'school-a', 'Old', '2025-01-01', '2025-12-31', 'archived', now()),
@@ -64,9 +64,9 @@ export async function seedAuthorizationRelationships(db: PGlite): Promise<void> 
         ('student-a', 'school-a', 'A', 'Student', 'active', now()), ('student-other', 'school-a', 'Other', 'Student', 'active', now()),
         ('student-b', 'school-b', 'B', 'Student', 'active', now());
       INSERT INTO student_class_enrollments (id, student_id, class_group_id, academic_year_id, enrollment_index, status, enrolled_at, created_at) VALUES
-        ('enrollment-a', 'student-a', 'class-a', 'year-a', 1, 'active', now(), now()),
-        ('enrollment-other', 'student-other', 'class-other', 'year-a', 1, 'active', now(), now()),
-        ('enrollment-b', 'student-b', 'class-b', 'year-b', 1, 'active', now(), now());
+        ('enrollment-a', 'student-a', 'class-a', 'year-a', 1, 'active', '2026-01-01', now()),
+        ('enrollment-other', 'student-other', 'class-other', 'year-a', 1, 'active', '2026-01-01', now()),
+        ('enrollment-b', 'student-b', 'class-b', 'year-b', 1, 'active', '2026-01-01', now());
       INSERT INTO assessments (id, class_group_id, class_subject_id, period_id, title, kind, max_score, coefficient, due_at, created_at) VALUES
         ('assessment-math', 'class-a', 'math-a', 'period-a', 'Math', 'homework', 20, 1, '2026-05-01', now()),
         ('assessment-french', 'class-a', 'french-a', 'period-a', 'French', 'homework', 20, 1, '2026-05-01', now()),

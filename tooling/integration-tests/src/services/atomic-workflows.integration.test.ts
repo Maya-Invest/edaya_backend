@@ -26,7 +26,7 @@ import { createTestApp } from '../utils/test-adapter'
 describeIntegration('atomic workflow safeguards', () => {
   it('rolls back curriculum progress when a later aggregate write fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -84,7 +84,7 @@ describeIntegration('atomic workflow safeguards', () => {
 
   it('rolls back payment and fee lifecycle changes when balance writes fail', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -160,7 +160,7 @@ describeIntegration('atomic workflow safeguards', () => {
 
   it('rolls back report-card publication when the published result cannot be saved', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -218,7 +218,7 @@ describeIntegration('atomic workflow safeguards', () => {
 
   it('rolls back bulk attendance capture when a later roster entry is invalid', async () => {
     const { app, repositories } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -264,7 +264,7 @@ describeIntegration('atomic workflow safeguards', () => {
 
   it('rolls back materialized lesson sessions when a later occurrence save fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await app.setupWorkflow.createAcademicYear({
       id: 'year',
       schoolId: 'school',
@@ -310,7 +310,7 @@ describeIntegration('atomic workflow safeguards', () => {
 
   it('rolls back generated communications deliveries when a later recipient save fails', async () => {
     const { app, repositories, failSaveOnAttempt } = await createTestApp()
-    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC' })
+    await saveSchool(app, { id: 'school', name: 'Edaya', timeZone: 'UTC', financeCurrency: 'XAF' })
     await saveGuardian(app, { id: 'guardian-a', schoolId: 'school', firstName: 'Awa', lastName: 'Ba' })
     await saveGuardian(app, { id: 'guardian-b', schoolId: 'school', firstName: 'Mariama', lastName: 'Ba' })
     await app.accessControlWorkflow.linkActorSubject({ guardianId: 'guardian-a', subjectId: 'subject:guardian-a' })

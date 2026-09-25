@@ -376,7 +376,7 @@ describe('Entity config save gates', () => {
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('assessment preSave rejects completion after results are recorded', async () => {
+  test('assessment preSave allows completion without submitting marks after results are recorded', async () => {
     const { app, repositories } = await createAcademicTestApp()
     await repositories.classGroupRepository.save(new ClassGroup({
       id: 'class-1',
@@ -429,7 +429,7 @@ describe('Entity config save gates', () => {
       dueAt: assessment.dueAt,
       completedAt: new Date('2026-02-02T00:00:00Z'),
       createdAt: assessment.createdAt,
-    }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    }))).resolves.toBeUndefined()
   })
 
   test('enrollment preSave rejects closing an enrollment that is not current active', async () => {

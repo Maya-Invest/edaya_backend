@@ -55,6 +55,7 @@ export async function updateSchool(app: SchoolService, input: { schoolId: string
     name: input.name ?? existing.name,
     timeZone: input.timeZone ?? existing.timeZone,
     ownerSubjectId: input.ownerSubjectId ?? existing.ownerSubjectId,
+    financeCurrency: input.financeCurrency ?? existing.financeCurrency,
     type: input.type ?? existing.type,
     country: input.country ?? existing.country,
     city: input.city ?? existing.city,
@@ -447,6 +448,7 @@ export async function adjustStudentFee(app: SchoolService, input: {
   reason: string
 }) {
   return app.financeWorkflow.adjustStudentCharge({
+    requestId: crypto.randomUUID(),
     chargeId: input.studentFeeId,
     adjustmentAmount: input.adjustmentAmount,
     reason: input.reason,
@@ -458,6 +460,7 @@ export async function cancelStudentFee(app: SchoolService, input: {
   reason: string
 }) {
   return app.financeWorkflow.cancelStudentCharge({
+    requestId: crypto.randomUUID(),
     chargeId: input.studentFeeId,
     reason: input.reason,
   })

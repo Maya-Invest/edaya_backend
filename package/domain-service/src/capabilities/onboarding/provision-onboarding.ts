@@ -21,6 +21,7 @@ import { isStructureTemplateId } from './structure-naming'
 export interface ProvisionOnboardingSchoolInput {
   name: string
   timeZone: string
+  financeCurrency?: string
   city: string
   country: string
   academicYearLabel: string
@@ -302,6 +303,7 @@ async function executeProvision(
         id: schoolId,
         name: input.school.name,
         timeZone: input.school.timeZone,
+        financeCurrency: input.school.financeCurrency,
         city: input.school.city,
         country: input.school.country,
         requestId,

@@ -19,6 +19,7 @@ export interface CreatePlatformUserInput {
 export interface BootstrapPlatformUserInput {
   subjectId: string
   email: string
+  emailVerified: boolean
 }
 
 async function performCreatePlatformUser(
@@ -94,6 +95,8 @@ export async function bootstrapPlatformUserIfAbsent(
   repository: PlatformUserRepository,
   input: BootstrapPlatformUserInput,
 ): Promise<PlatformUser | undefined> {
+  if (input.emailVerified !== true)
+    return undefined
   const existing = await repository.findBySubjectId(input.subjectId)
   if (existing) {
     return existing.isActive ? existing : undefined

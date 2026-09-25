@@ -8,6 +8,7 @@ import type {
   GradeLevelSubject,
   SubjectMatter,
 } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   AcademicPeriod as AcademicPeriodCtor,
@@ -24,8 +25,8 @@ import {
   GradeLevelSubject as GradeLevelSubjectCtor,
   GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor,
   PeriodDefinition as PeriodDefinitionCtor,
-  Subject as SubjectCtor,
   SubjectCategoryEntity as SubjectCategoryCtor,
+  Subject as SubjectCtor,
   SubjectMatter as SubjectMatterCtor,
 } from '@edaya/core'
 import { customStore, defaultStore } from '../lib/store-factory'
@@ -34,7 +35,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createAcademicsEntityStores(db: any): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectCategories' | 'subjectMatters' | 'gradeLevelSubjects' | 'gradeLevelSubjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
+export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectCategories' | 'subjectMatters' | 'gradeLevelSubjects' | 'gradeLevelSubjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
   return {
     academicYears: customStore(
       db,

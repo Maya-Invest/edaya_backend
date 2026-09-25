@@ -61,6 +61,7 @@ export async function seedDevSchoolStructure(
       id: school.id,
       name: school.name,
       timeZone: school.timeZone,
+      financeCurrency: school.financeCurrency,
       city: school.city ?? undefined,
       country: school.country ?? undefined,
       issuingName: school.issuingName ?? undefined,

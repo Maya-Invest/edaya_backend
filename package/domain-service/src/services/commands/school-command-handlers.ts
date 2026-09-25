@@ -6,8 +6,8 @@ import type {
   AssignMatterToClassSubjectInput,
   AssignMatterToGradeLevelSubjectInput,
   ConfigureClassSubjectTimetableInput,
-  ConfigureSubjectInput,
   ConfigureSubjectCategoryInput,
+  ConfigureSubjectInput,
   ConfigureSubjectMatterInput,
   OfferSubjectToClassInput,
   OfferSubjectToGradeLevelInput,
@@ -35,6 +35,7 @@ import type {
   ListClassSubjectAssessmentResultsForPeriodInput,
   PublishReportCardResultInput,
   RecordAssessmentResultInput,
+  RecordAssessmentResultsInput,
   WriteHomeroomReportCommentInput,
   WriteReportCardSectionCommentsInput,
 } from '../workflows/assessments'
@@ -94,6 +95,7 @@ import type {
   UpdateCatalogServiceInput,
   WaiveStudentChargeInput,
 } from '../workflows/finance'
+import type { MarksReviewInput, ReturnMarksInput } from '../workflows/marks-review'
 import type {
   NotificationTemplatesServiceWorkflow,
   ResetSchoolNotificationTemplatesInput,
@@ -257,7 +259,11 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     createReportCardDefinition: payload => workflows.assessments.createReportCardDefinition(payload as CreateReportCardDefinitionInput),
     createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),
     createAssessment: payload => workflows.assessments.createAssessment(payload as CreateAssessmentInput),
+    submitAssessmentMarks: payload => workflows.assessments.submitAssessmentMarks(payload as MarksReviewInput),
+    approveAssessmentMarks: payload => workflows.assessments.approveAssessmentMarks(payload as MarksReviewInput),
+    returnAssessmentMarks: payload => workflows.assessments.returnAssessmentMarks(payload as ReturnMarksInput),
     completeAssessment: payload => workflows.assessments.completeAssessment(payload as CompleteAssessmentInput),
+    recordAssessmentResults: payload => workflows.assessments.recordAssessmentResults(payload as RecordAssessmentResultsInput),
     recordAssessmentResult: payload => workflows.assessments.recordAssessmentResult(payload as RecordAssessmentResultInput),
     recordAssessmentResultCompliance: payload => workflows.assessments.recordAssessmentResultCompliance(payload as RecordAssessmentResultInput),
     listClassSubjectAssessmentResultsForPeriod: payload => workflows.assessments.listClassSubjectAssessmentResultsForPeriod(payload as ListClassSubjectAssessmentResultsForPeriodInput),
@@ -367,8 +373,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     cancelStudentFee: () => workflows.finance.cancelStudentFee(),
     createCatalogService: payload => workflows.finance.createCatalogService(payload as CreateCatalogServiceInput),
     updateCatalogService: payload => workflows.finance.updateCatalogService(payload as UpdateCatalogServiceInput),
-    activateCatalogService: payload => workflows.finance.activateCatalogService(payload as { id: string }),
-    archiveCatalogService: payload => workflows.finance.archiveCatalogService(payload as { id: string }),
+    activateCatalogService: payload => workflows.finance.activateCatalogService(payload as { id: string, requestId: string }),
+    archiveCatalogService: payload => workflows.finance.archiveCatalogService(payload as { id: string, requestId: string }),
     enrollStudentInService: payload => workflows.finance.enrollStudentInService(payload as EnrollStudentInServiceInput),
     enrollStudentsInService: payload => workflows.finance.enrollStudentsInService(payload as EnrollStudentsInServiceInput),
     cancelServiceEnrollment: payload => workflows.finance.cancelServiceEnrollment(payload as CancelServiceEnrollmentInput),

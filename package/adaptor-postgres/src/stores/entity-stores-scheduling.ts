@@ -1,4 +1,5 @@
 import type { ActivitySession, AttendanceRecord, CalendarEvent, LessonSession } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   ActivitySession as ActivitySessionCtor,
@@ -20,7 +21,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createSchedulingEntityStores(db: any): Pick<EntityStores, 'schedules' | 'lessonSessions' | 'activitySessions' | 'attendances' | 'calendarEvents' | 'attendance'> {
+export function createSchedulingEntityStores(db: StoreDatabase): Pick<EntityStores, 'schedules' | 'lessonSessions' | 'activitySessions' | 'attendances' | 'calendarEvents' | 'attendance'> {
   return {
     schedules: defaultStore(db, schema.schedules, ScheduleCtor),
 

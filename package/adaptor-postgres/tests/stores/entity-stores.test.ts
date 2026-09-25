@@ -1,3 +1,4 @@
+import type { StoreDatabase } from '../../src/postgres-store'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createEntityStores } from '../../src/stores/entity-stores'
@@ -24,7 +25,7 @@ function keyDifference(actual: readonly string[], expected: readonly string[]) {
 
 describe('Postgres entity stores', () => {
   test('cover every core entity with a generic or documented specialized store', () => {
-    const genericStoreKeys = Object.keys(createEntityStores({}))
+    const genericStoreKeys = Object.keys(createEntityStores({} as StoreDatabase))
       .map(key => key === 'schoolsStore' ? 'schools' : key)
       .filter(key => !(PARENT_ENTITY_STORE_KEYS as readonly string[]).includes(key))
     const adapterStoreKeys = [

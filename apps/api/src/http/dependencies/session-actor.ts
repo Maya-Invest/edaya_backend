@@ -258,13 +258,14 @@ async function resolvePlatformActorMetadata(
   }
 
   const email = user.email?.trim().toLowerCase();
-  if (!email || !bootstrapEmails.includes(email)) {
+  if (!user.emailVerified || !email || !bootstrapEmails.includes(email)) {
     return null;
   }
 
   const bootstrapped = await bootstrapPlatformUserIfAbsent(repos.platformUsers, {
     subjectId: user.id,
     email,
+    emailVerified: user.emailVerified,
   });
   if (!bootstrapped) {
     return null;
@@ -339,6 +340,7 @@ export function createSessionActorDependency(
         const interactiveContext = {
           subjectId: user.id,
           requestId,
+          academicYearId,
           ...(session.session.id ? { sessionId: session.session.id } : {}),
           authenticatedAt: session.session.createdAt,
           assuranceLevel: session.session.assuranceLevel,
@@ -360,6 +362,10 @@ export function createSessionActorDependency(
           },
         );
         if (identity) {
+          if (academicYearId && (await repos.academicYears.findById(academicYearId))?.schoolId !== identity.schoolId) {
+            c.set("actor", null);
+            return;
+          }
           c.set("actor", createActorFromIdentity(identity, interactiveContext));
           return;
         }
@@ -385,6 +391,10 @@ export function createSessionActorDependency(
           requestId,
         );
         if (identity) {
+          if (academicYearId && (await repos.academicYears.findById(academicYearId))?.schoolId !== identity.schoolId) {
+            c.set("actor", null);
+            return;
+          }
           c.set("actor", createActorFromIdentity(identity, {
             subjectId: `service:${identity.staffMemberId}`,
             requestId,

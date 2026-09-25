@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'bun:test'
-import { findBoundaryViolations } from '../lib/boundaries.ts'
+import { findBoundaryViolations, IMPORT_BOUNDARY_CHECKS } from '../lib/boundaries.ts'
 
 describe('findBoundaryViolations', () => {
   const temporaryDirectories: string[] = []
@@ -24,6 +24,19 @@ describe('findBoundaryViolations', () => {
     mkdirSync(join(filePath, '..'), { recursive: true })
     writeFileSync(filePath, contents)
   }
+
+  test('extracted operations reject broad services and repository types while allowing named picks', () => {
+    const root = createRepoRoot()
+    const path = 'package/domain-service/src/capabilities/documents/assembly/payment.ts'
+    for (const source of ['function run(base: BaseSchoolService) {}', 'const repositories: SchoolRepositories = all', 'function run(base: DocumentAssemblyContext<keyof SchoolRepositories>) {}']) {
+      writeSource(root, path, source)
+      expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
+    }
+    writeSource(root, path, 'function run(base: DocumentAssemblyContext<\'payments\'>) { return base.repositories.payments }')
+    expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root)).toEqual([])
+    writeSource(root, 'package/domain-service/src/services/workflows/finance.ts', 'this.baseService.repositories.payments.list()')
+    expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
+  })
 
   test('reports no violations for clean imports', () => {
     const root = createRepoRoot()

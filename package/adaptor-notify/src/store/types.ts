@@ -20,6 +20,10 @@ export interface NotifyRecipientRow {
 }
 
 export interface NotifyDeviceRow {
+  app_id: string;
+  installation_id: string;
+  profile_kind: string;
+  profile_id: string;
   tenant: string;
   subject_id: string;
   provider: string;

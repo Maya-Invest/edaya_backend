@@ -19,10 +19,10 @@ test("same logical delivery and login are independent across schools, including 
       preferences: { channels: { email: true, push: true } },
     });
     for (const schoolId of ["a", "b"]) {
-      await gateway.registerPushDevice!({ schoolId, subjectId: recipient.subjectId, provider: "fcm", token: `device-${schoolId}` });
+      await gateway.registerPushDevice!({ appId: "guardian", installationId: "device-1", profileKind: "guardian", profileId: "guardian", schoolId, subjectId: recipient.subjectId, provider: "fcm", token: `device-${schoolId}` });
       await gateway.enqueue({ ...input, schoolId });
     }
-    await gateway.unregisterPushDevice!({ schoolId: "a", subjectId: recipient.subjectId, provider: "fcm" });
+    await gateway.unregisterPushDevice!({ appId: "guardian", installationId: "device-1", schoolId: "a", subjectId: recipient.subjectId, provider: "fcm" });
     await drainPendingSchoolNotifications(fixture.runtime);
     expect(fixture.sent.map(message => message.to).sort()).toEqual(["a@example.test", "b@example.test"]);
     expect(fixture.pushes.map(message => message.token)).toEqual(["device-b"]);

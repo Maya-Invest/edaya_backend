@@ -252,6 +252,16 @@ export async function runDevSchoolSeed(
   await runSchoolSeedStep(options?.progress, async () => {
     await seedDevTeachers(teachersPort, seedDataset)
   })
+  if (options?.auth) {
+    await syncDevStaffAuthAndOwner(
+      options.authLinkPort ?? createInProcessAuthLinkSeedPort(
+        requireSeedApplication(application, 'authLinkPort'),
+      ),
+      options.auth,
+      ownerSubjectId,
+    )
+  }
+
   const activitiesCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevActivities(activitiesPort, seedDataset))
   await runSchoolSeedStep(options?.progress, async () => {
@@ -277,16 +287,6 @@ export async function runDevSchoolSeed(
     seedDevFinance(financePort, seedDataset))
   const documentCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevDocuments(documentsPort, seedDataset))
-
-  if (options?.auth) {
-    await syncDevStaffAuthAndOwner(
-      options.authLinkPort ?? createInProcessAuthLinkSeedPort(
-        requireSeedApplication(application, 'authLinkPort'),
-      ),
-      options.auth,
-      ownerSubjectId,
-    )
-  }
 
   const communicationsCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevCommunications(communicationsPort, seedDataset))

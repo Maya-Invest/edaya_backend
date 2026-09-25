@@ -1,4 +1,5 @@
 import type { Announcement } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   Announcement as AnnouncementCtor,
@@ -13,7 +14,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createMessagingEntityStores(db: any): Pick<EntityStores, 'announcements' | 'announcementTargets' | 'messageDeliveries'> {
+export function createMessagingEntityStores(db: StoreDatabase): Pick<EntityStores, 'announcements' | 'announcementTargets' | 'messageDeliveries'> {
   return {
     announcements: customStore(
       db,

@@ -7,6 +7,7 @@ import { buildCatalogSubjectMatters, ciCollegeSubjectMatterCatalog } from '../..
 export const demoCiSchool = {
   id: DEMO_CI_SCHOOL_ID,
   name: 'École Edaya — Cocody',
+  financeCurrency: 'XOF',
   timeZone: 'Africa/Abidjan',
   city: 'Abidjan',
   country: 'Côte d\'Ivoire',

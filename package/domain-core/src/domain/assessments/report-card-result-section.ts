@@ -8,7 +8,7 @@ export const reportCardResultSectionBaseSchema = z.object({
   sectionId: z.string().trim().min(1, 'sectionId must not be blank'),
   sectionKind: z.nativeEnum(ReportCardDefinitionSectionKind),
   name: z.string().trim().min(1, 'name must not be blank'),
-  average: z.number().finite().nonnegative('average must be a finite, non-negative number').transform(v => roundTo2(v)),
+  average: z.number().finite().nonnegative('average must be a finite, non-negative number').transform(v => roundTo2(v)).optional(),
   weight: z.number().finite().nonnegative('weight must be a finite, non-negative number'),
   parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),

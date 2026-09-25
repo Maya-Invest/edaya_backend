@@ -1,6 +1,6 @@
 import { StudentClassEnrollmentStatus } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { buildAppShellCounts } from '../../src/services/queries/app-shell-counts'
+import { buildAppShellCounts } from '../support/app-shell-reference'
 
 describe('buildAppShellCounts', () => {
   test('returns people counts and active enrollment counts grouped by class', async () => {

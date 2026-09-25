@@ -38,10 +38,10 @@ export function createHttpFinanceSeedPort(
       await postCoreCommand(requestOptions, 'recordPayment', record)
     }),
     waiveStudentCharge: record => withSeedPortError('finance.waiveStudentCharge', async () => {
-      await postCoreCommand(requestOptions, 'waiveStudentCharge', record)
+      await postCoreCommand(requestOptions, 'waiveStudentCharge', { ...record, requestId: `seed-waive:${record.chargeId}` })
     }),
     cancelStudentCharge: record => withSeedPortError('finance.cancelStudentCharge', async () => {
-      await postCoreCommand(requestOptions, 'cancelStudentCharge', record)
+      await postCoreCommand(requestOptions, 'cancelStudentCharge', { ...record, requestId: `seed-cancel:${record.chargeId}` })
     }),
     listPaymentAllocations: input => withSeedPortError('finance.listPaymentAllocations', async () => {
       const history = await postCoreQuery(requestOptions, 'getPaymentSettlementHistory', {

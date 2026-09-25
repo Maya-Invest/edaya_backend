@@ -60,11 +60,15 @@ export interface UpdateNotificationContactInput {
 }
 
 export interface RegisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   token: string
   provider: 'fcm' | 'apns'
 }
 
 export interface UnregisterPushDeviceInput {
+  appId: 'teacher' | 'guardian' | 'staff' | 'student'
+  installationId: string
   provider: 'fcm' | 'apns'
 }
 
@@ -478,7 +482,14 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
         )
       }
 
+      if (input.appId !== actor.kind || !input.installationId.trim())
+        throw new BusinessRuleViolationError('PUSH_DEVICE_PROFILE_MISMATCH', 'The app must match the selected profile')
+      const profileId = actor.kind === 'staff' ? actor.staffMemberId : actor.kind === 'teacher' ? actor.teacherId : actor.kind === 'guardian' ? actor.guardianId : actor.studentId
       await gateway.registerPushDevice({
+        appId: input.appId,
+        installationId: input.installationId,
+        profileKind: actor.kind,
+        profileId,
         subjectId: actor.subjectId,
         schoolId: actor.schoolId,
         token: input.token.trim(),
@@ -497,6 +508,8 @@ export class CommunicationsServiceWorkflow extends BaseServiceWorkflow {
       }
 
       await gateway.unregisterPushDevice({
+        appId: input.appId,
+        installationId: input.installationId,
         schoolId: actor.schoolId,
         subjectId: actor.subjectId,
         provider: input.provider,

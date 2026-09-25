@@ -62,10 +62,10 @@ import {
   studentNoteSchema,
   studentSchema,
   StudentStatus,
-  teacherSchema,
-  subjectMatterSchema,
   subjectCategorySchema,
+  subjectMatterSchema,
   subjectSchema,
+  teacherSchema,
 } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -673,31 +673,38 @@ export const createGradeScaleCommandSchema = objectFromSchema(gradeScaleSchema)
 export const createReportCardDefinitionCommandSchema = objectFromSchema(reportCardDefinitionSchema)
   .openapi("CreateReportCardDefinitionCommand");
 
-export const createAssessmentCommandSchema = objectFromSchema(assessmentSchema)
-  .omit({ completedAt: true })
-  .openapi("CreateAssessmentCommand");
+export const createAssessmentCommandSchema = objectFromSchema(assessmentSchema).omit({ marksStatus: true, marksRevision: true, marksReview: true }).omit({ completedAt: true }).openapi("CreateAssessmentCommand");
+
+export const submitAssessmentMarksCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
+  assessmentId: z.string().trim().min(1),
+  expectedRevision: z.number().int().nonnegative(),
+}).openapi("SubmitAssessmentMarksCommand");
+export const approveAssessmentMarksCommandSchema = submitAssessmentMarksCommandSchema.openapi("ApproveAssessmentMarksCommand");
+export const returnAssessmentMarksCommandSchema = submitAssessmentMarksCommandSchema.extend({ reason: z.string().trim().min(1) }).openapi("ReturnAssessmentMarksCommand");
 
 export const completeAssessmentCommandSchema = z.object({
   assessmentId: field.id(),
   completedAt: field.optionalDate(),
 }).openapi("CompleteAssessmentCommand");
 
-export const recordAssessmentResultCommandSchema = objectFromSchema(assessmentResultSchema)
-  .omit({ status: true, notes: true, createdBy: true })
-  .openapi("RecordAssessmentResultCommand");
+export const recordAssessmentResultCommandSchema = objectFromSchema(assessmentResultSchema).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ status: true, notes: true, createdBy: true, createdAt: true }).openapi("RecordAssessmentResultCommand");
 
-export const recordAssessmentResultComplianceCommandSchema = objectFromSchema(assessmentResultSchema)
-  .omit({ score: true, createdBy: true })
-  .extend({
-    status: z.nativeEnum(DeadlineComplianceStatus),
-  })
-  .openapi("RecordAssessmentResultComplianceCommand");
+export const recordAssessmentResultsCommandSchema = z.object({ requestId: z.string().trim().min(1).max(200), assessmentId: z.string().trim().min(1), expectedRevision: z.number().int().nonnegative(), results: z.array(objectFromSchema(assessmentResultSchema).omit({ assessmentId: true, createdBy: true, createdAt: true })).min(1).max(500) }).openapi("RecordAssessmentResultsCommand");
+
+export const recordAssessmentResultComplianceCommandSchema = objectFromSchema(assessmentResultSchema).extend({ requestId: z.string().trim().min(1).max(200), expectedRevision: z.number().int().nonnegative() }).omit({ score: true, designation: true, createdBy: true, createdAt: true }).extend({
+  status: z.nativeEnum(DeadlineComplianceStatus),
+}).openapi("RecordAssessmentResultComplianceCommand");
 
 export const createReportCardDefinitionSectionCommandSchema = objectFromSchema(reportCardDefinitionSectionSchema)
   .openapi("CreateReportCardDefinitionSectionCommand");
 
 export const generateReportCardResultCommandSchema = objectFromSchema(reportCardResultSchema)
   .omit({
+    version: true,
+    sourceAssessments: true,
+    pendingAssessmentIds: true,
+    calculationStale: true,
     classGroupId: true,
     periodId: true,
     sectionResults: true,
@@ -719,11 +726,15 @@ export const generateReportCardResultCommandSchema = objectFromSchema(reportCard
   .openapi("GenerateReportCardResultCommand");
 
 export const writeHomeroomReportCommentCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
+  expectedVersion: z.number().int().nonnegative(),
   id: field.id(),
   teacherComment: field.text(),
 }).openapi("WriteHomeroomReportCommentCommand");
 
 export const writeReportCardSectionCommentsCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
+  expectedVersion: z.number().int().nonnegative(),
   id: field.id(),
   sections: z.array(z.object({
     sectionId: field.id(),
@@ -917,6 +928,7 @@ export const createCatalogServiceCommandSchema = z.object({
 }).openapi("CreateCatalogServiceCommand");
 
 export const updateCatalogServiceCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
   id: field.id(),
   name: optionalText(),
   description: z.string().nullable().optional(),
@@ -927,6 +939,7 @@ export const updateCatalogServiceCommandSchema = z.object({
 }).openapi("UpdateCatalogServiceCommand");
 
 export const catalogServiceIdCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
   id: field.id(),
 }).openapi("CatalogServiceIdCommand");
 
@@ -956,18 +969,21 @@ export const materializeOneTimeChargeCommandSchema = z.object({
 }).openapi("MaterializeOneTimeChargeCommand");
 
 export const adjustStudentChargeCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
   chargeId: field.id(),
   adjustmentAmount: field.positiveNumber(),
   reason: field.text(),
 }).openapi("AdjustStudentChargeCommand");
 
 export const waiveStudentChargeCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
   chargeId: field.id(),
   reason: field.text(),
   waiverAmount: field.optionalNumber(),
 }).openapi("WaiveStudentChargeCommand");
 
 export const cancelStudentChargeCommandSchema = z.object({
+  requestId: z.string().trim().min(1).max(200),
   chargeId: field.id(),
   reason: field.text(),
 }).openapi("CancelStudentChargeCommand");
@@ -1102,11 +1118,15 @@ export const updateNotificationContactCommandSchema = z.object({
 }).openapi("UpdateNotificationContactCommand");
 
 export const registerPushDeviceCommandSchema = z.object({
+  appId: z.enum(["teacher", "guardian", "staff", "student"]),
+  installationId: z.string().trim().min(1).max(128),
   token: z.string().min(1),
   provider: z.enum(["fcm", "apns"]).default("fcm"),
 }).openapi("RegisterPushDeviceCommand");
 
 export const unregisterPushDeviceCommandSchema = z.object({
+  appId: z.enum(["teacher", "guardian", "staff", "student"]),
+  installationId: z.string().trim().min(1).max(128),
   provider: z.enum(["fcm", "apns"]).default("fcm"),
 }).openapi("UnregisterPushDeviceCommand");
 

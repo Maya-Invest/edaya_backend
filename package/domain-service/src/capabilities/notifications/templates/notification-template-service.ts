@@ -10,6 +10,7 @@ import {
 
 } from '@edaya/core'
 import { buildDefaultNotificationTemplateDocument } from './defaults/manifest'
+import { mergeNotificationTemplateCatalogs } from './merge-school-notification-templates'
 import { renderTemplateString } from './render'
 
 export interface RenderNotificationTemplateInput {
@@ -79,7 +80,7 @@ export class NotificationTemplateService {
       return defaults
     }
 
-    return row.catalog
+    return mergeNotificationTemplateCatalogs(defaults, row.catalog)
   }
 
   private async getDefaultDocument(): Promise<SchoolNotificationTemplateCatalog> {

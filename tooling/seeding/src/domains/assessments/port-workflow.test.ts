@@ -14,6 +14,7 @@ describe('assessments seed port workflow', () => {
     const assessments: AssessmentSeedRecord[] = []
     const results: AssessmentResultSeedRecord[] = []
     const port: AssessmentsSeedPort = {
+      finalizeMarks: async () => {},
       createAssessment: async (record) => {
         assessments.push(record)
       },

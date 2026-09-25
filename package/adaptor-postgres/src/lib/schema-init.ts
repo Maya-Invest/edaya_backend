@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 
 /** Tables cleared in dependency-safe order (children before parents where practical). */
@@ -81,7 +82,7 @@ export const CLEAR_TABLE_ORDER = [
   'consortiums',
 ] as const
 
-export async function clearAllTables(db: { execute: (query: unknown) => Promise<unknown> }): Promise<void> {
+export async function clearAllTables(db: { execute: (query: SQL) => Promise<unknown> }): Promise<void> {
   for (const table of CLEAR_TABLE_ORDER) {
     await db.execute(sql.raw(`DELETE FROM ${table}`))
   }

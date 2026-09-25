@@ -80,7 +80,9 @@ export interface ReportCardV1Payload {
   }
 }
 
-function formatNumber(value: number, locale: string): string {
+function formatNumber(value: number | undefined, locale: string): string {
+  if (value === undefined)
+    return '—'
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -135,7 +137,7 @@ function mapSubjectRow(
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
 ): ReportCardV1SubjectRow {
-  const total = section.average * section.weight
+  const total = section.average === undefined ? undefined : section.average * section.weight
   const teacherName = section.classSubjectId
     ? teacherNameByClassSubjectId?.get(section.classSubjectId)
     : undefined

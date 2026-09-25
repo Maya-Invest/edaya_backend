@@ -39,6 +39,10 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
       const payload = validatedJson(c) as Record<string, unknown>;
 
       try {
+        if (queryConfig.methodName === "getAssessmentMarksReview")
+          return c.json(await service.getAssessmentMarksReview({ assessmentId: payload.assessmentId as string }), HttpStatusCodes.OK);
+        if (queryConfig.methodName === "listAssessmentMarksReviews")
+          return c.json(await service.listAssessmentMarksReviews(payload as Parameters<typeof service.listAssessmentMarksReviews>[0]), HttpStatusCodes.OK);
         if (queryConfig.methodName === "getSchoolOverview") {
           const input: GetSchoolOverviewInput = {
             schoolId: payload.schoolId as string,

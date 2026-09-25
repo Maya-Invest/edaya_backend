@@ -1,6 +1,6 @@
 import { AcademicPeriod, Announcement, AnnouncementPriority, AnnouncementTarget, AnnouncementTargetKind, ClassGroup, GuardianStudentLink, IncidentInvolvementRole, IncidentKind, MessageDeliveryRecipientKind, RecordingNotificationGateway, SchoolNotificationTemplates, Student, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, ASSESSMENT_RESULT_RECORDED_EVENT_KEY, INCIDENT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../src/capabilities/notifications'
+import { ANNOUNCEMENT_PUBLISHED_EVENT_KEY, INCIDENT_RECORDED_EVENT_KEY, REPORT_CARD_PUBLISHED_EVENT_KEY } from '../../src/capabilities/notifications'
 import { buildDefaultNotificationTemplateDocument } from '../../src/capabilities/notifications/templates/defaults/manifest'
 import { createReportCardContext } from '../services/workflows/report-card-workflow-context'
 
@@ -58,14 +58,12 @@ describe('templated notifications through authorized workflows', () => {
     expect(gateway.enqueued[0]?.body).toContain('6ème A')
   })
 
-  test('assessment-result notifications render score context for guardians', async () => {
-    const { service, repositories, gateway } = await createContext()
+  test('draft marks do not render notifications for guardians', async () => {
+    const gateway = new RecordingNotificationGateway()
+    const { service, repositories } = await createReportCardContext({ notificationGateway: gateway, marksApproved: false })
     await repositories.assessmentResults.delete('ar1')
-    await service.assessmentsWorkflow.recordAssessmentResult({ id: 'res1', studentId: 'stu1', assessmentId: 'ass1', score: 18 })
-    expect(gateway.enqueued).toHaveLength(2)
-    expect(gateway.enqueued[0]).toMatchObject({ eventKey: ASSESSMENT_RESULT_RECORDED_EVENT_KEY })
-    expect(gateway.enqueued[0]?.body).toContain('Mathematics')
-    expect(gateway.enqueued[0]?.body).toContain('18')
+    await service.assessmentsWorkflow.recordAssessmentResult({ requestId: 'new-mark', expectedRevision: 0, id: 'res1', studentId: 'stu1', assessmentId: 'ass1', score: 18 })
+    expect(gateway.enqueued).toHaveLength(0)
   })
 
   test('persisted academic-report opt-out suppresses guardian notifications', async () => {

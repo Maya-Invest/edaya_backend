@@ -39,12 +39,12 @@ describe('demo finance', () => {
     expect(demoStudentServiceEnrollments.find(row => row.id === 'svc-s7-sports')?.dueDate).toBe(`${seedUpcomingDate(2)}T12:00:00.000Z`)
   })
 
-  it('covers reversed receipts, refunds, unallocated money, and two currencies', () => {
+  it('covers reversed receipts, refunds, unallocated money, in the configured school currency', () => {
     expect(demoPayments.some(row => row.reversePayment)).toBe(true)
     expect(demoPayments.some(row => row.refund?.amount === 20_000)).toBe(true)
-    expect(demoPayments.some(row => row.allocation?.mode === 'account_only' && row.amount === 5_000 && row.accountId?.endsWith(':USD'))).toBe(true)
+    expect(demoPayments.some(row => row.allocation?.mode === 'account_only' && row.amount === 5_000 && row.accountId?.endsWith(':EUR'))).toBe(true)
     expect(demoCatalogServices.some(service => service.currency === 'EUR')).toBe(true)
-    expect(demoCatalogServices.some(service => service.currency === 'USD')).toBe(true)
+    expect(demoCatalogServices.every(service => service.currency === 'EUR')).toBe(true)
     expect(new Set(demoCatalogServices.map(service => service.category))).toContain(CatalogServiceCategory.Tuition)
   })
 

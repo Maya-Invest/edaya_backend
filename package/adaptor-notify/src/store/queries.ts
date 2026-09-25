@@ -93,25 +93,21 @@ export async function deleteCommandRecipient(sql: NotifySql, subjectId: string, 
   await sql.execute("DELETE FROM notify.recipients WHERE subject_id = $1 AND tenant = $2", [subjectId, tenant]);
 }
 
-export async function upsertDevice(
-  sql: NotifySql,
-  row: NotifyDeviceRow,
-): Promise<void> {
-  await sql.execute(
-    `INSERT INTO notify.devices (subject_id, provider, token, tenant, updated_at)
-     VALUES ($1,$2,$3,$4,NOW())
-     ON CONFLICT (tenant, subject_id, provider) DO UPDATE SET token = EXCLUDED.token, updated_at = NOW()`,
-    [row.subject_id, row.provider, row.token, row.tenant],
-  );
+export async function upsertDevice(sql: NotifySql, row: NotifyDeviceRow): Promise<void> {
+  await sql.execute(`INSERT INTO notify.devices (subject_id, provider, token, tenant, app_id, installation_id, profile_kind, profile_id, updated_at)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+    ON CONFLICT (tenant, subject_id, provider, app_id, installation_id)
+    DO UPDATE SET token = EXCLUDED.token, profile_kind = EXCLUDED.profile_kind, profile_id = EXCLUDED.profile_id, updated_at = NOW()`, [row.subject_id, row.provider, row.token, row.tenant, row.app_id, row.installation_id, row.profile_kind, row.profile_id]);
 }
 
-export async function deleteDevice(sql: NotifySql, subjectId: string, provider: string, tenant: string): Promise<void> {
-  await sql.execute("DELETE FROM notify.devices WHERE subject_id = $1 AND provider = $2 AND tenant = $3", [subjectId, provider, tenant]);
+export async function deleteDevice(sql: NotifySql, subjectId: string, provider: string, tenant: string, appId: string, installationId: string, token?: string): Promise<void> {
+  await sql.execute(`DELETE FROM notify.devices WHERE subject_id = $1 AND provider = $2 AND tenant = $3
+    AND app_id = $4 AND installation_id = $5 AND ($6::text IS NULL OR token = $6)`, [subjectId, provider, tenant, appId, installationId, token ?? null]);
 }
 
 export async function listDevices(sql: NotifySql, subjectId: string, tenant: string): Promise<NotifyDeviceRow[]> {
   return sql.query<NotifyDeviceRow>(
-    "SELECT tenant, subject_id, provider, token FROM notify.devices WHERE subject_id = $1 AND tenant = $2",
+    "SELECT tenant, subject_id, provider, token, app_id, installation_id, profile_kind, profile_id FROM notify.devices WHERE subject_id = $1 AND tenant = $2",
     [subjectId, tenant],
   );
 }

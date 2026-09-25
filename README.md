@@ -2,7 +2,7 @@
 
 Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
-Web frontends live in the separate **[edaya_web](../edaya_web)** repo (`@edaya/webapp`, `@edaya/webadmin`).
+Web frontends live in the separate **[edaya_frontend](../edaya_frontend)** repo (`@edaya/webapp`, `@edaya/webadmin`).
 
 Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build).
 
@@ -41,7 +41,7 @@ The codebase follows a **ports-and-adapters** layout: entity types and ports liv
 
 ```mermaid
 flowchart TB
-  subgraph clients["Clients (edaya_web)"]
+  subgraph clients["Clients (edaya_frontend)"]
     Webapp["@edaya/webapp<br/>SvelteKit · Cloudflare"]
   end
 
@@ -154,7 +154,7 @@ cp apps/api/.env.example apps/api/.env
 cp .env.example .env   # optional — seeding, migrations, smoke-test staging
 ```
 
-Web frontends: see **[edaya_web](../edaya_web/README.MD)** (`cp apps/webapp/.env.example apps/webapp/.env` in that repo).
+Web frontends: see **[edaya_frontend](../edaya_frontend/README.md)** (`cp apps/webapp/.env.example apps/webapp/.env` in that repo).
 
 ## Local development
 
@@ -167,7 +167,7 @@ bun repo dev
 | API | http://localhost:9999 |
 | OpenAPI reference | http://localhost:9999/reference |
 
-Webapp (port 5173) runs from **edaya_web** — see [edaya_web README](../edaya_web/README.MD).
+Webapp (port 5173) runs from **edaya_frontend** — see [edaya_frontend README](../edaya_frontend/README.md).
 
 `bun repo dev` starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun repo dev` alone starts the API without the file server.
 
@@ -218,7 +218,7 @@ bun --filter @edaya/core test
 bun --filter @edaya/api lint
 ```
 
-Then `bun run verify` before opening a PR. Webapp tests run from **edaya_web**.
+Then `bun run verify` before opening a PR. Webapp tests run from **edaya_frontend**.
 
 ## Testing
 
@@ -255,4 +255,4 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
 
-Webapp env vars live in the **edaya_web** repo (`apps/webapp/.env` there).
+Webapp env vars live in the **edaya_frontend** repo (`apps/webapp/.env` there).

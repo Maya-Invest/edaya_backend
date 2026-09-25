@@ -31,7 +31,7 @@ async function setupBaselineFixture() {
   const { app, repositories, schoolRepositories, forActor } = await createTestApp()
 
   // Standard Admin setup of tenant school
-  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC' })
+  await saveSchool(app, { id: 'school', name: 'Authority Academy', timeZone: 'UTC', financeCurrency: 'USD' })
   await app.setupWorkflow.createAcademicYear({
     id: 'acad-year',
     schoolId: 'school',

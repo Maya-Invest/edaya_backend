@@ -1,16 +1,20 @@
 import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
-import type { PostgresStore } from './postgres-store'
+import type { RepositoryStore as PostgresStore, StoreDatabase } from './postgres-store'
 import { runMigrations } from './lib/migrate'
 import { clearAllTables } from './lib/schema-init'
+import { asStoreDatabase } from './postgres-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
+import { PostgresAssessmentDependencies } from './stores/assessment-dependencies-store'
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
+import { PostgresDashboardProjections } from './stores/dashboard-projections-store'
 import { createEntityStores } from './stores/entity-stores'
 import { createDocumentNumberSeriesStore } from './stores/entity-stores-documents'
 import { createFamilyFeedbackStores } from './stores/entity-stores-family-feedback'
 import { createFinanceLedgerStores } from './stores/entity-stores-finance-ledger'
+import { PostgresFinanceProjections } from './stores/finance-projections-store'
 import { PostgresPlatformUserStore } from './stores/platform-user-store'
 import { PostgresPrivateFileLifecycleStore } from './stores/private-file-lifecycle-store'
 import { PostgresS2sClientStore } from './stores/s2s-client-store'
@@ -19,6 +23,9 @@ import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
+  public readonly financeProjections: PostgresFinanceProjections
+  public readonly dashboardProjections: PostgresDashboardProjections
+  public readonly assessmentDependencies: PostgresAssessmentDependencies
   public readonly privateFiles: PostgresPrivateFileLifecycleStore
   public readonly attachmentUploads: PostgresAttachmentUploadStore
   public readonly schoolsStore: PostgresStore<School>
@@ -97,7 +104,13 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly familyFeedbackCommentReadAudit: PostgresStore<FamilyFeedbackCommentReadAudit>
   public readonly schools: SchoolRepositories['schools']
 
-  constructor(private readonly db: any) {
+  private readonly db: StoreDatabase
+  constructor(database: unknown) {
+    const db = asStoreDatabase(database)
+    this.db = db
+    this.financeProjections = new PostgresFinanceProjections(db)
+    this.dashboardProjections = new PostgresDashboardProjections(db)
+    this.assessmentDependencies = new PostgresAssessmentDependencies(db)
     this.privateFiles = new PostgresPrivateFileLifecycleStore(db)
     this.attachmentUploads = new PostgresAttachmentUploadStore(db)
     const stores = createEntityStores(db)

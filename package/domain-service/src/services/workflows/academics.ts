@@ -3,8 +3,10 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { AcademicsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, Subject as SubjectEntity, SubjectCategoryEntity as SubjectCategoryRecord, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
+import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
 
+import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { assertClassSubjectGradingMutable } from '../entities/config/academics/class-subject'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 import { removeMirroredClassSubjects, saveGradeLevelSubjectEntity, saveGradeLevelSubjectMatterEntity, syncGradeLevelSubjectMatterToClassSubject, syncGradeLevelSubjectsToClassGroup, syncGradeLevelSubjectToAllClassGroups } from './grade-level-subject-sync'
@@ -156,11 +158,12 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
           createdAt: classSubject.createdAt,
         })
         const scope = await this.baseService.access.curriculum.assertUpdateSubject(next, classSubject)
+        await assertClassSubjectGradingMutable(next, classSubject, this.repositories)
         await this.repositories.classSubjects.forAccess(scope).save(next)
       }
 
       return updated
-    })
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async addCustomClassSubject({

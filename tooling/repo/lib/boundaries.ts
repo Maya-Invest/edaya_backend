@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 
 const IGNORED_DIRS = new Set(['node_modules', 'dist', '.svelte-kit'])
@@ -15,6 +15,16 @@ export interface BoundaryViolation {
 }
 
 export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
+  ...['documents/assembly', 'family-feedback/compute-campaign-aggregates.ts', 'finance/load-finance-reconciliation.ts', 'scheduling/materialize-occurrences.ts'].map(path => ({
+    label: 'extracted business operation imports the broad service or escapes repository dependencies',
+    pattern: /\bBaseSchoolService\b|repositories\s*:\s*SchoolRepositories\b|DocumentAssemblyContext<\s*keyof\s+SchoolRepositories/,
+    searchPath: `package/domain-service/src/capabilities/${path}`,
+  })),
+  ...['finance', 'assessments', 'scheduling', 'family-feedback', 'documents'].map(name => ({
+    label: 'migrated workflow bypasses its explicit repository dependencies',
+    pattern: /this\.baseService\.repositories|this\.base\.repositories/,
+    searchPath: `package/domain-service/src/services/workflows/${name}.ts`,
+  })),
   {
     label: 'runtime imports http',
     pattern: /from ["']@\/http\/(?!bindings)/,
@@ -129,7 +139,7 @@ export function findBoundaryViolations(
     if (!existsSync(searchDirectory)) {
       return []
     }
-    const matches = [...walkFiles(searchDirectory)].flatMap(filePath => (
+    const matches = (statSync(searchDirectory).isFile() ? [searchDirectory] : [...walkFiles(searchDirectory)]).flatMap(filePath => (
       findMatchesInFile(filePath, check.pattern, repoRoot)
     ))
 

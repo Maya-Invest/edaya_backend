@@ -1,24 +1,12 @@
-import type { EventNotificationTemplateEntry, Filter, QueryOptions } from '@edaya/core'
+import type { Filter, QueryOptions } from '@edaya/core'
 import { SchoolNotificationTemplates } from '@edaya/core'
-import { buildDefaultNotificationTemplateDocument, mergeNotificationTemplateCatalogs } from '@edaya/service'
 import * as schema from '../postgres-schema'
-import { PostgresStore } from '../postgres-store'
+import { asStoreDatabase, PostgresStore } from '../postgres-store'
 
 type SchoolNotificationTemplatesRow = typeof schema.schoolNotificationTemplates.$inferSelect
 type SchoolNotificationTemplatesQuery
   = QueryOptions<SchoolNotificationTemplates>
     | Filter<SchoolNotificationTemplates>
-
-function pendingStudentPhotoTemplate(title: string, body: string): EventNotificationTemplateEntry {
-  return {
-    enable_email: true,
-    enable_push: true,
-    enable_sms: false,
-    base_message: { title, body },
-    rich_message: { subject: title, body: `<p>${body}</p>` },
-    simple_message: { body: `${title}: ${body}` },
-  }
-}
 
 export function normalizeSchoolNotificationTemplatesQuery(
   options?: SchoolNotificationTemplatesQuery,
@@ -79,38 +67,20 @@ function storedCatalog(row: SchoolNotificationTemplatesRow) {
     assessmentDueSoon: row.assessmentDueSoon,
     activityReminder: row.activityReminder,
     calendarEventReminder: row.calendarEventReminder,
-    studentPhotoApproved: row.studentPhotoApproved ?? pendingStudentPhotoTemplate(
-      'Photo approved',
-      'The portrait is now published.',
-    ),
-    studentPhotoRejected: row.studentPhotoRejected ?? pendingStudentPhotoTemplate(
-      'Photo not approved',
-      'The school did not approve this portrait.',
-    ),
-    familyFeedbackOpened: row.familyFeedbackOpened ?? pendingStudentPhotoTemplate(
-      'Family feedback — {{studentName}}',
-      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
-    ),
-    familyFeedbackReminder: row.familyFeedbackReminder ?? pendingStudentPhotoTemplate(
-      'Reminder: family feedback — {{studentName}}',
-      '{{teacherName}} · {{subjectName}} · closes {{closesAtLabel}}',
-    ),
-    familyFeedbackPublished: row.familyFeedbackPublished ?? pendingStudentPhotoTemplate(
-      'Family feedback published — {{subjectName}}',
-      'Aggregated results for {{classGroupName}} are available.',
-    ),
-    familyFeedbackPurgeReminder: row.familyFeedbackPurgeReminder ?? pendingStudentPhotoTemplate(
-      'Family feedback comments will be deleted',
-      'Raw answers for this campaign will be deleted on {{purgeAtLabel}}.',
-    ),
+    studentPhotoApproved: row.studentPhotoApproved!,
+    studentPhotoRejected: row.studentPhotoRejected!,
+    familyFeedbackOpened: row.familyFeedbackOpened!,
+    familyFeedbackReminder: row.familyFeedbackReminder!,
+    familyFeedbackPublished: row.familyFeedbackPublished!,
+    familyFeedbackPurgeReminder: row.familyFeedbackPurgeReminder!,
     accountInvitation: row.accountInvitation,
   }
 }
 
-export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates> {
+export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<SchoolNotificationTemplates, SchoolNotificationTemplatesRow> {
   constructor(db: unknown) {
     super(
-      db,
+      asStoreDatabase(db),
       schema.schoolNotificationTemplates,
       (entity: SchoolNotificationTemplates) => packTemplateRow(entity),
       (row: SchoolNotificationTemplatesRow) => new SchoolNotificationTemplates({
@@ -122,36 +92,11 @@ export class PostgresSchoolNotificationTemplatesStore extends PostgresStore<Scho
     )
   }
 
-  override async findById(id: string): Promise<SchoolNotificationTemplates | undefined> {
-    const entity = await super.findById(id)
-    return entity ? this.withDefaults(entity) : undefined
-  }
-
-  override async findByIds(ids: readonly string[]): Promise<SchoolNotificationTemplates[]> {
-    return Promise.all((await super.findByIds(ids)).map(entity => this.withDefaults(entity)))
-  }
-
   override async list(options?: QueryOptions<SchoolNotificationTemplates>): Promise<SchoolNotificationTemplates[]> {
-    return Promise.all((await super.list(normalizeSchoolNotificationTemplatesQuery(options))).map(entity => this.withDefaults(entity)))
+    return super.list(normalizeSchoolNotificationTemplatesQuery(options))
   }
 
   override async count(filter?: Filter<SchoolNotificationTemplates>): Promise<number> {
     return super.count(normalizeSchoolNotificationTemplatesQuery(filter))
-  }
-
-  private withDefaults(entity: SchoolNotificationTemplates): Promise<SchoolNotificationTemplates> {
-    return this.toDomainRow(packTemplateRow(entity))
-  }
-
-  private async toDomainRow(row: SchoolNotificationTemplatesRow): Promise<SchoolNotificationTemplates> {
-    const defaults = await buildDefaultNotificationTemplateDocument()
-    const catalog = mergeNotificationTemplateCatalogs(defaults, storedCatalog(row))
-
-    return new SchoolNotificationTemplates({
-      schoolId: row.id,
-      ...catalog,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })
   }
 }

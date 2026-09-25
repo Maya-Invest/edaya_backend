@@ -146,6 +146,7 @@ export async function bootstrapHttpCoreSession(client: HttpSeedClient): Promise<
       id: context.schoolId,
       name: school?.name,
       timeZone: school?.timeZone,
+      financeCurrency: school?.financeCurrency,
       country: school?.country,
       city: school?.city,
       ownerStaffId: context.minimalStaffId,

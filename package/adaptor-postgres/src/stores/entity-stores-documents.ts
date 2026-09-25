@@ -1,4 +1,5 @@
 import type { DocumentIssuance } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   DocumentAudience,
@@ -12,7 +13,7 @@ import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import { enumValue } from './entity-store-helpers'
 
-export function createDocumentsEntityStores(db: any): Pick<EntityStores, 'documentIssuances'> {
+export function createDocumentsEntityStores(db: StoreDatabase): Pick<EntityStores, 'documentIssuances'> {
   return {
     documentIssuances: customStore(
       db,
@@ -79,6 +80,6 @@ export function createDocumentsEntityStores(db: any): Pick<EntityStores, 'docume
   }
 }
 
-export function createDocumentNumberSeriesStore(db: any) {
+export function createDocumentNumberSeriesStore(db: StoreDatabase) {
   return defaultStore(db, schema.documentNumberSeries, DocumentNumberSeriesCtor)
 }

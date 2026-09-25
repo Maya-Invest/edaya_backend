@@ -9,6 +9,7 @@ export interface SchoolStructureSchoolRecord {
   id: string
   name: string
   timeZone: string
+  financeCurrency?: string
   ownerSubjectId?: string
   type?: SchoolType
   country?: string

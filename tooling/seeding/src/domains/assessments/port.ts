@@ -26,11 +26,14 @@ export interface AssessmentResultSeedRecord {
   id: string
   assessmentId: string
   studentId: string
+  designation?: 'scored' | 'absent' | 'exempt'
   score?: number
   status?: DeadlineComplianceStatus
 }
 
 export interface AssessmentsSeedPort {
+  recordAssessmentResults?: (records: AssessmentResultSeedRecord[]) => Promise<void>
+  finalizeMarks: (assessmentId: string, state: 'draft' | 'submitted' | 'approved') => Promise<void>
   createAssessment: (record: AssessmentSeedRecord) => Promise<void>
   recordAssessmentResult: (record: AssessmentResultSeedRecord) => Promise<void>
 }

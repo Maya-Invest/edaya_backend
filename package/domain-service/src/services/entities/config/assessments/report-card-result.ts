@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
+import { loadReportAssessmentContext } from '../../../../capabilities/academics/report-assessment-context'
 import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 
@@ -12,6 +13,7 @@ export const reportCardResultConfig: EntityConfigFactory<ReportCardResult> = ({ 
     repository: repositories.results,
     tenant: reportCardResultTenant(),
     resource: 'results',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateReportCardResultSave,
@@ -53,6 +55,14 @@ async function validateReportCardResultSave(
     || definition.academicYearId !== period.academicYearId
   ) {
     denyResourceAccess()
+  }
+
+  if (result.status === ReportCardResultStatus.Published) {
+    const context = await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId])
+    if (context.assessments.some(assessment => assessment.marksStatus !== 'approved'))
+      throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_APPROVED', 'Every applicable evaluation requires approval before publication')
+    if (context.assessments.some(assessment => !result.sourceAssessments.some(source => source.assessmentId === assessment.id && source.revision === assessment.marksRevision)))
+      throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the report from the current approved revisions')
   }
 
   const published = await repositories.results.findOne({

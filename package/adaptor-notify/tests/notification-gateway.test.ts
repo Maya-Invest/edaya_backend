@@ -57,12 +57,7 @@ describe("createNotifyNotificationGateway", () => {
       }),
     });
 
-    await expect(gateway.registerPushDevice?.({
-      subjectId: "s1",
-      schoolId: "sch",
-      token: "tok",
-      provider: "fcm",
-    })).rejects.toThrow("NOTIFY_STORAGE_FAILED");
+    await expect(gateway.registerPushDevice?.({ appId: "guardian", installationId: "device-1", profileKind: "guardian", profileId: "g1", subjectId: "s1", schoolId: "sch", token: "tok", provider: "fcm" })).rejects.toThrow("NOTIFY_STORAGE_FAILED");
   });
 
   test("enqueues and sends email when prefs allow", async () => {
@@ -124,12 +119,7 @@ describe("createNotifyNotificationGateway", () => {
       email: "g2@school.edu",
       preferences: { allowsNotifications: true, channels: { email: false, push: true } },
     });
-    await gateway.registerPushDevice?.({
-      subjectId: "sub_push",
-      schoolId: "sch_1",
-      provider: "fcm",
-      token: "fcm-token-1",
-    });
+    await gateway.registerPushDevice?.({ appId: "guardian", installationId: "device-1", profileKind: "guardian", profileId: "g2", subjectId: "sub_push", schoolId: "sch_1", provider: "fcm", token: "fcm-token-1" });
     await gateway.enqueue({
       idempotencyKey: "delivery-push",
       schoolId: "sch_1",

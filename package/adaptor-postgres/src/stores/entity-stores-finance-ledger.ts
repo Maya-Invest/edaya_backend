@@ -1,4 +1,5 @@
 import type { Allocation, StudentAccountEntry } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import {
   AccountEntryDirection,
   AccountEntrySourceKind,
@@ -10,7 +11,7 @@ import { customStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import { enumValue } from './entity-store-helpers'
 
-export function createFinanceLedgerStores(db: any) {
+export function createFinanceLedgerStores(db: StoreDatabase) {
   return {
     allocations: customStore(
       db,

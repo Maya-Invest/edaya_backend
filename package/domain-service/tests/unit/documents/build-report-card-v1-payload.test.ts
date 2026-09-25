@@ -23,6 +23,25 @@ describe('buildReportCardV1Payload', () => {
     lastName: 'Kouassi',
   })
 
+  test('formats no-score sections distinctly from zero while retaining comments', () => {
+    const result = new ReportCardResult({
+      id: 'rc-empty',
+      assessmentResultCount: 1,
+      attendanceSummary: new AttendanceSummary({ presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }),
+      reportCardDefinitionId: 'def-1',
+      studentId: student.id,
+      classGroupId: 'cg-1',
+      periodId: 'per-1',
+      sectionResults: [
+        new ReportCardResultSection({ sectionId: 'absent', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Math', classSubjectId: 'cs1', weight: 1, comment: 'Excused absence' }),
+        new ReportCardResultSection({ sectionId: 'zero', sectionKind: ReportCardDefinitionSectionKind.Subject, name: 'Physics', classSubjectId: 'cs2', weight: 1, average: 0 }),
+      ],
+    })
+    const payload = buildReportCardV1Payload({ school, student, result, periodLabel: 'Term 1' })
+    expect(payload.subjects[0]).toMatchObject({ average: '—', total: '—', appreciation: 'Excused absence' })
+    expect(payload.subjects[1]).toMatchObject({ average: '0,00', total: '0,00' })
+  })
+
   test('flattens subject and bilan rows and formats totals', () => {
     const result = new ReportCardResult({
       id: 'rc-1',

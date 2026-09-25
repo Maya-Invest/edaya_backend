@@ -1409,6 +1409,10 @@
             "type": "string",
             "minLength": 1
           },
+          "financeCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
           "ownerSubjectId": {
             "type": "string",
             "nullable": true,
@@ -1577,6 +1581,10 @@
           "timeZone": {
             "type": "string",
             "minLength": 1
+          },
+          "financeCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
           },
           "type": {
             "type": "string",
@@ -2315,6 +2323,10 @@
               "timeZone": {
                 "type": "string",
                 "minLength": 1
+              },
+              "financeCurrency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
               },
               "city": {
                 "type": "string",
@@ -3478,6 +3490,10 @@
             "type": "string",
             "minLength": 1
           },
+          "financeCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
           "ownerSubjectId": {
             "type": "string",
             "nullable": true,
@@ -3644,6 +3660,10 @@
           "timeZone": {
             "type": "string",
             "minLength": 1
+          },
+          "financeCurrency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
           },
           "ownerSubjectId": {
             "type": "string",
@@ -4992,6 +5012,31 @@
         },
         "required": [
           "staffId"
+        ]
+      },
+      "UpdateTeacherSelfProfileCommand": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
         ]
       },
       "Guardian": {
@@ -10651,6 +10696,89 @@
           "completedAt": {
             "nullable": true
           },
+          "marksStatus": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "approved"
+            ],
+            "default": "draft"
+          },
+          "marksRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "marksReview": {
+            "type": "object",
+            "properties": {
+              "rosterStudentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "markEditorSubjectIds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "default": {}
+              },
+              "editedBySubjectIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "submittedBy": {
+                "type": "string"
+              },
+              "submittedAt": {},
+              "approvedBy": {
+                "type": "string"
+              },
+              "approvedAt": {},
+              "history": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "submit",
+                        "approve",
+                        "return"
+                      ]
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "subjectId": {
+                      "type": "string"
+                    },
+                    "at": {},
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "action",
+                    "revision",
+                    "subjectId",
+                    "at"
+                  ]
+                },
+                "default": []
+              }
+            },
+            "default": {}
+          },
           "createdAt": {}
         },
         "required": [
@@ -10758,6 +10886,71 @@
           "maxScore"
         ]
       },
+      "SubmitAssessmentMarksCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "assessmentId",
+          "expectedRevision"
+        ]
+      },
+      "ApproveAssessmentMarksCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "assessmentId",
+          "expectedRevision"
+        ]
+      },
+      "ReturnAssessmentMarksCommand": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubmitAssessmentMarksCommand"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "reason"
+            ]
+          }
+        ]
+      },
       "CompleteAssessmentCommand": {
         "type": "object",
         "properties": {
@@ -10794,6 +10987,14 @@
             "nullable": true,
             "minimum": 0
           },
+          "designation": {
+            "type": "string",
+            "enum": [
+              "scored",
+              "absent",
+              "exempt"
+            ]
+          },
           "status": {
             "type": "string",
             "nullable": true,
@@ -10822,6 +11023,86 @@
           "assessmentId"
         ]
       },
+      "RecordAssessmentResultsResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AssessmentResult"
+        }
+      },
+      "RecordAssessmentResultsCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "studentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "score": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": 0
+                },
+                "designation": {
+                  "type": "string",
+                  "enum": [
+                    "scored",
+                    "absent",
+                    "exempt"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    "met",
+                    "late",
+                    "missed",
+                    "excused"
+                  ]
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true,
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "studentId"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "requestId",
+          "assessmentId",
+          "expectedRevision",
+          "results"
+        ]
+      },
       "RecordAssessmentResultCommand": {
         "type": "object",
         "properties": {
@@ -10842,12 +11123,30 @@
             "nullable": true,
             "minimum": 0
           },
-          "createdAt": {}
+          "designation": {
+            "type": "string",
+            "enum": [
+              "scored",
+              "absent",
+              "exempt"
+            ]
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
         },
         "required": [
           "id",
           "studentId",
-          "assessmentId"
+          "assessmentId",
+          "requestId",
+          "expectedRevision"
         ]
       },
       "RecordAssessmentResultComplianceCommand": {
@@ -10879,13 +11178,23 @@
             "nullable": true,
             "minLength": 1
           },
-          "createdAt": {}
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
         },
         "required": [
           "id",
           "studentId",
           "assessmentId",
-          "status"
+          "status",
+          "requestId",
+          "expectedRevision"
         ]
       },
       "AssessmentResultCommandListResponse": {
@@ -10920,6 +11229,42 @@
           "id": {
             "type": "string",
             "minLength": 1
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "sourceAssessments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assessmentId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "assessmentId",
+                "revision"
+              ]
+            },
+            "default": []
+          },
+          "pendingAssessmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "calculationStale": {
+            "type": "boolean",
+            "default": false
           },
           "reportCardDefinitionId": {
             "type": "string",
@@ -11131,6 +11476,15 @@
       "WriteHomeroomReportCommentCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
           "id": {
             "type": "string",
             "minLength": 1
@@ -11141,8 +11495,54 @@
           }
         },
         "required": [
+          "requestId",
+          "expectedVersion",
           "id",
           "teacherComment"
+        ]
+      },
+      "WriteReportCardSectionCommentsCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sectionId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "comment": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "sectionId"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedVersion",
+          "id",
+          "sections"
         ]
       },
       "PublishReportCardResultCommand": {
@@ -12999,6 +13399,11 @@
       "UpdateCatalogServiceCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "id": {
             "type": "string",
             "minLength": 1
@@ -13024,18 +13429,25 @@
           }
         },
         "required": [
+          "requestId",
           "id"
         ]
       },
       "CatalogServiceIdCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "id": {
             "type": "string",
             "minLength": 1
           }
         },
         "required": [
+          "requestId",
           "id"
         ]
       },
@@ -13469,6 +13881,11 @@
       "AdjustStudentChargeCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "chargeId": {
             "type": "string",
             "minLength": 1
@@ -13484,6 +13901,7 @@
           }
         },
         "required": [
+          "requestId",
           "chargeId",
           "adjustmentAmount",
           "reason"
@@ -13492,6 +13910,11 @@
       "WaiveStudentChargeCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "chargeId": {
             "type": "string",
             "minLength": 1
@@ -13505,6 +13928,7 @@
           }
         },
         "required": [
+          "requestId",
           "chargeId",
           "reason"
         ]
@@ -13512,6 +13936,11 @@
       "CancelStudentChargeCommand": {
         "type": "object",
         "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "chargeId": {
             "type": "string",
             "minLength": 1
@@ -13522,6 +13951,7 @@
           }
         },
         "required": [
+          "requestId",
           "chargeId",
           "reason"
         ]
@@ -16189,6 +16619,20 @@
       "RegisterPushDeviceCommand": {
         "type": "object",
         "properties": {
+          "appId": {
+            "type": "string",
+            "enum": [
+              "teacher",
+              "guardian",
+              "staff",
+              "student"
+            ]
+          },
+          "installationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
           "token": {
             "type": "string",
             "minLength": 1
@@ -16203,12 +16647,28 @@
           }
         },
         "required": [
+          "appId",
+          "installationId",
           "token"
         ]
       },
       "UnregisterPushDeviceCommand": {
         "type": "object",
         "properties": {
+          "appId": {
+            "type": "string",
+            "enum": [
+              "teacher",
+              "guardian",
+              "staff",
+              "student"
+            ]
+          },
+          "installationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
           "provider": {
             "type": "string",
             "enum": [
@@ -16217,7 +16677,11 @@
             ],
             "default": "fcm"
           }
-        }
+        },
+        "required": [
+          "appId",
+          "installationId"
+        ]
       },
       "SchoolNotificationTemplates": {
         "type": "object",
@@ -17299,6 +17763,193 @@
         "required": [
           "schoolId"
         ]
+      },
+      "AssessmentMarksReviewResponse": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "firstName",
+                "lastName"
+              ]
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssessmentResult"
+            }
+          },
+          "missingStudentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedActions": {
+            "type": "object",
+            "properties": {
+              "submit": {
+                "type": "boolean"
+              },
+              "approve": {
+                "type": "boolean"
+              },
+              "return": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "submit",
+              "approve",
+              "return"
+            ]
+          }
+        },
+        "required": [
+          "assessment",
+          "students",
+          "results",
+          "missingStudentIds",
+          "allowedActions"
+        ]
+      },
+      "GetAssessmentMarksReviewQuery": {
+        "type": "object",
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "assessmentId"
+        ]
+      },
+      "AssessmentMarksReviewsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Assessment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "completeness": {
+                      "type": "object",
+                      "properties": {
+                        "eligible": {
+                          "type": "integer"
+                        },
+                        "completed": {
+                          "type": "integer"
+                        },
+                        "missing": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "eligible",
+                        "completed",
+                        "missing"
+                      ]
+                    },
+                    "allowedActions": {
+                      "type": "object",
+                      "properties": {
+                        "submit": {
+                          "type": "boolean"
+                        },
+                        "approve": {
+                          "type": "boolean"
+                        },
+                        "return": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "submit",
+                        "approve",
+                        "return"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "completeness",
+                    "allowedActions"
+                  ]
+                }
+              ]
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ]
+      },
+      "ListAssessmentMarksReviewsQuery": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "approved"
+            ]
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
       },
       "CountResponse": {
         "type": "object",
@@ -28205,6 +28856,136 @@
         }
       }
     },
+    "/core/commands/update-teacher-self-profile": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "update-teacher-self-profile",
+        "operationId": "commands.updateTeacherSelfProfile",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "updateTeacherSelfProfile",
+        "x-edaya-command-public-name": "update-teacher-self-profile",
+        "x-edaya-request-schema": "UpdateTeacherSelfProfileCommand",
+        "x-edaya-response-schema": "Teacher",
+        "requestBody": {
+          "description": "update-teacher-self-profile payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeacherSelfProfileCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed update-teacher-self-profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Teacher"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/link-actor-subject": {
       "post": {
         "tags": [
@@ -35095,6 +35876,396 @@
         }
       }
     },
+    "/core/commands/submit-assessment-marks": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "submit-assessment-marks",
+        "operationId": "commands.submitAssessmentMarks",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "submitAssessmentMarks",
+        "x-edaya-command-public-name": "submit-assessment-marks",
+        "x-edaya-request-schema": "SubmitAssessmentMarksCommand",
+        "x-edaya-response-schema": "Assessment",
+        "requestBody": {
+          "description": "submit-assessment-marks payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAssessmentMarksCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed submit-assessment-marks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/approve-assessment-marks": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "approve-assessment-marks",
+        "operationId": "commands.approveAssessmentMarks",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "approveAssessmentMarks",
+        "x-edaya-command-public-name": "approve-assessment-marks",
+        "x-edaya-request-schema": "ApproveAssessmentMarksCommand",
+        "x-edaya-response-schema": "Assessment",
+        "requestBody": {
+          "description": "approve-assessment-marks payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveAssessmentMarksCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed approve-assessment-marks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/return-assessment-marks": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "return-assessment-marks",
+        "operationId": "commands.returnAssessmentMarks",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "returnAssessmentMarks",
+        "x-edaya-command-public-name": "return-assessment-marks",
+        "x-edaya-request-schema": "ReturnAssessmentMarksCommand",
+        "x-edaya-response-schema": "Assessment",
+        "requestBody": {
+          "description": "return-assessment-marks payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnAssessmentMarksCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed return-assessment-marks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/complete-assessment": {
       "post": {
         "tags": [
@@ -35124,6 +36295,136 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/record-assessment-results": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "record-assessment-results",
+        "operationId": "commands.recordAssessmentResults",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "recordAssessmentResults",
+        "x-edaya-command-public-name": "record-assessment-results",
+        "x-edaya-request-schema": "RecordAssessmentResultsCommand",
+        "x-edaya-response-schema": "RecordAssessmentResultsResponse",
+        "requestBody": {
+          "description": "record-assessment-results payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAssessmentResultsCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed record-assessment-results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordAssessmentResultsResponse"
                 }
               }
             }
@@ -35770,6 +37071,136 @@
         "responses": {
           "200": {
             "description": "Executed write-homeroom-report-comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCardResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/write-report-card-section-comments": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "write-report-card-section-comments",
+        "operationId": "commands.writeReportCardSectionComments",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "writeReportCardSectionComments",
+        "x-edaya-command-public-name": "write-report-card-section-comments",
+        "x-edaya-request-schema": "WriteReportCardSectionCommentsCommand",
+        "x-edaya-response-schema": "ReportCardResult",
+        "requestBody": {
+          "description": "write-report-card-section-comments payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteReportCardSectionCommentsCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed write-report-card-section-comments",
             "content": {
               "application/json": {
                 "schema": {
@@ -46824,6 +48255,266 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-assessment-marks-review": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-assessment-marks-review",
+        "operationId": "queries.getAssessmentMarksReview",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getAssessmentMarksReview",
+        "x-edaya-query-public-name": "get-assessment-marks-review",
+        "x-edaya-request-schema": "GetAssessmentMarksReviewQuery",
+        "x-edaya-response-schema": "AssessmentMarksReviewResponse",
+        "requestBody": {
+          "description": "get-assessment-marks-review payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetAssessmentMarksReviewQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-assessment-marks-review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentMarksReviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/list-assessment-marks-reviews": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "list-assessment-marks-reviews",
+        "operationId": "queries.listAssessmentMarksReviews",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "listAssessmentMarksReviews",
+        "x-edaya-query-public-name": "list-assessment-marks-reviews",
+        "x-edaya-request-schema": "ListAssessmentMarksReviewsQuery",
+        "x-edaya-response-schema": "AssessmentMarksReviewsResponse",
+        "requestBody": {
+          "description": "list-assessment-marks-reviews payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAssessmentMarksReviewsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved list-assessment-marks-reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentMarksReviewsResponse"
                 }
               }
             }

@@ -2,9 +2,9 @@ import type { BaseRepositoryInterface } from '@edaya/core'
 import { Subject, SubjectMatter } from '@edaya/core'
 import { CORE_ENTITY_KEYS } from '@edaya/service'
 import { expect, it } from 'bun:test'
-import { describeWithSeededSchool } from '../support/seeded-route-test-context'
+import { describeWithLightSchool } from '../support/seeded-route-test-context'
 
-describeWithSeededSchool('trusted school repository scope', (getContext) => {
+describeWithLightSchool('trusted school repository scope', (getContext) => {
   it('provides a working SQL scope for every managed entity, including custom stores', async () => {
     const { application } = getContext()
     const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
@@ -20,9 +20,9 @@ describeWithSeededSchool('trusted school repository scope', (getContext) => {
   it('scopes indirect HTTP list/count/findOne before pagination and ignores foreign IDs', async () => {
     const { application, app, authHeaders } = getContext()
     const repos = application.repositories
-    const subject = (await repos.subjects.list({ $limit: 1 }))[0]!
+    const school = (await repos.schools.list({ $limit: 1 }))[0]!
     await repos.subjects.save(new Subject({ id: 'scope-foreign-subject', schoolId: 'other-school', name: 'Foreign' }))
-    await repos.subjects.save(new Subject({ id: 'scope-local-subject', schoolId: subject.schoolId, name: 'Local' }))
+    await repos.subjects.save(new Subject({ id: 'scope-local-subject', schoolId: school.id, name: 'Local' }))
     for (const [id, subjectId] of [['0-foreign-matter', 'scope-foreign-subject'], ['1-local-matter', 'scope-local-subject'], ['2-local-matter', 'scope-local-subject']]) {
       await repos.subjectMatters.save(new SubjectMatter({ id: id!, subjectId: subjectId!, name: 'Scope test', sequenceOrder: 1 }))
     }
@@ -39,7 +39,7 @@ describeWithSeededSchool('trusted school repository scope', (getContext) => {
     expect(one.status).toBe(200)
     expect(await one.json()).toMatchObject({ id: '1-local-matter' })
     expect((await app.request('/core/entities/subject-matters/0-foreign-matter', { headers })).status).toBe(404)
-    const scoped = repos.subjectMatters.forSchool!(subject.schoolId)
+    const scoped = repos.subjectMatters.forSchool!(school.id)
     expect((await scoped.findByIds(['0-foreign-matter', '1-local-matter'])).map(row => row.id)).toEqual(['1-local-matter'])
   })
 

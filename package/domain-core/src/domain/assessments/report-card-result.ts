@@ -17,6 +17,10 @@ export enum ReportCardResultStatus {
 
 export const reportCardResultBaseSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
+  version: z.number().int().nonnegative().default(0),
+  sourceAssessments: z.array(z.object({ assessmentId: z.string(), revision: z.number().int().nonnegative() })).default([]),
+  pendingAssessmentIds: z.array(z.string()).default([]),
+  calculationStale: z.boolean().default(false),
   reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
@@ -82,6 +86,10 @@ export class ReportCardResult {
   }
 
   get id() { return this.data.id }
+  get version() { return this.data.version }
+  get sourceAssessments() { return this.data.sourceAssessments }
+  get pendingAssessmentIds() { return this.data.pendingAssessmentIds }
+  get calculationStale() { return this.data.calculationStale }
   get reportCardDefinitionId() { return this.data.reportCardDefinitionId }
   get studentId() { return this.data.studentId }
   get classGroupId() { return this.data.classGroupId }
@@ -112,6 +120,10 @@ export class ReportCardResult {
     aggregation?: ReportCardResultData['aggregation']
   }): ReportCardResult {
     return new ReportCardResult({
+      version: this.version,
+      sourceAssessments: this.sourceAssessments,
+      pendingAssessmentIds: this.pendingAssessmentIds,
+      calculationStale: this.calculationStale,
       id: this.id,
       reportCardDefinitionId: this.reportCardDefinitionId,
       studentId: this.studentId,

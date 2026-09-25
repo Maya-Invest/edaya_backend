@@ -126,15 +126,18 @@ describe('portal actions use current relationships and publication', () => {
     ] })]
   }
 
-  test.each([guardian, student])('$kind sees recorded grades immediately and published linked cards, including their attachments', async (actor) => {
+  test.each([guardian, student])('$kind sees approved grades and published linked cards, including their attachments', async (actor) => {
     const card = await reportCards()
     const access = new AccessPolicies(actor, fixture.repositories)
     for (const [id, ownerKind, ownerId] of [['card-file', AttachmentOwnerKind.ReportCard, 'card'], ['grade-file', AttachmentOwnerKind.AssessmentResult, '1-math'], ['unrelated-file', AttachmentOwnerKind.AssessmentResult, '3-other']] as const)
       await fixture.repositories.attachments.save(new Attachment({ id, schoolId: 'school-a', ownerKind, ownerId, fileName: id, storageKey: id }))
     expect(await fixture.repositories.results.forAccess(await access.entity('results').readScope()).count()).toBe(0)
-    expect(await fixture.repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(2)
+    expect(await fixture.repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(0)
     const unpublishedFiles = fixture.repositories.attachments.forAccess(await access.entity('attachments').readScope())
-    expect((await unpublishedFiles.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual(['grade-file'])
+    expect((await unpublishedFiles.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual([])
+    await fixture.db.exec('UPDATE assessments SET marks_status = \'approved\'')
+    expect(await fixture.repositories.assessmentResults.forAccess(await access.grades.readScope()).count()).toBe(2)
+    expect((await unpublishedFiles.list()).map(row => row.id)).toEqual(['grade-file'])
     await fixture.repositories.results.save(card.copyWith({ status: ReportCardResultStatus.Published, publishedAt: new Date() }))
     const unrelated = (await fixture.repositories.results.findById('unrelated-card'))!
     await fixture.repositories.results.save(unrelated.copyWith({ status: ReportCardResultStatus.Published, publishedAt: new Date() }))

@@ -37,7 +37,7 @@ const intent = (id: string) => ({ idempotencyKey: id, schoolId: 'outbox-school',
 beforeAll(async () => {
   await runMigrations(handles[0]!.db, { driver: 'node-postgres' })
   for (const runtime of runtimes) runtime.resolveSchoolRecipient = async () => ({ schoolId: 'outbox-school', recipient, email: 'fixture@example.test', preferences: { channels: { email: true, push: true } } })
-  await gateway.registerPushDevice!({ schoolId: 'outbox-school', subjectId: recipient.subjectId, provider: 'fcm', token: 'synthetic-device' })
+  await gateway.registerPushDevice!({ schoolId: 'outbox-school', subjectId: recipient.subjectId, appId: 'guardian', installationId: 'native-installation', profileKind: 'guardian', profileId: recipient.id, provider: 'fcm', token: 'synthetic-device' })
 })
 afterAll(async () => {
   await Promise.all(handles.map(handle => handle.dispose()))
@@ -83,10 +83,10 @@ test('independent workers preserve identical delivery IDs and device registratio
     item.resolveSchoolRecipient = async request => ({ schoolId: request.schoolId, recipient, email: 'fixture@example.test', preferences: { channels: { email: true, push: true } } })
   const beforeEmails = emails
   const beforePushes = pushes
-  await gateway.registerPushDevice!({ schoolId: 'other-outbox-school', subjectId: recipient.subjectId, provider: 'fcm', token: 'other-synthetic-device' })
+  await gateway.registerPushDevice!({ schoolId: 'other-outbox-school', subjectId: recipient.subjectId, appId: 'guardian', installationId: 'native-installation', profileKind: 'guardian', profileId: recipient.id, provider: 'fcm', token: 'other-synthetic-device' })
   await gateway.enqueue(intent('shared-logical-delivery'))
   await createNotifyNotificationGateway({ runtime: runtimes[1]! }).enqueue({ ...intent('shared-logical-delivery'), schoolId: 'other-outbox-school' })
-  await gateway.unregisterPushDevice!({ schoolId: 'outbox-school', subjectId: recipient.subjectId, provider: 'fcm' })
+  await gateway.unregisterPushDevice!({ schoolId: 'outbox-school', subjectId: recipient.subjectId, appId: 'guardian', installationId: 'native-installation', provider: 'fcm' })
   await Promise.all(runtimes.map(item => drainPendingSchoolNotifications(item)))
   expect(emails - beforeEmails).toBe(2)
   expect(pushes - beforePushes).toBe(1)

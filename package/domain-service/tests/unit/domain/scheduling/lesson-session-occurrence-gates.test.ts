@@ -23,6 +23,7 @@ function lessonSession(overrides: Record<string, unknown> = {}) {
 
 function repositories(overrides: Record<string, unknown> = {}) {
   return {
+    assessments: { count: mock(async () => 0) },
     classSubjects: {
       findById: mock(async () => ({ id: 'cs-1', classGroupId: 'class-1' })),
     },
@@ -87,6 +88,13 @@ describe('validateLessonSessionSave', () => {
     }), existing, repositories())).rejects.toMatchObject({
       code: 'OCCURRENCE_IMMUTABLE',
     } satisfies Partial<BusinessRuleViolationError>)
+  })
+
+  test('rejects timing changes when an associated marks sheet is submitted', async () => {
+    const existing = lessonSession()
+    await expect(validateLessonSessionSave(existing.copyWith({
+      startsAt: new Date('2026-06-01T09:30:00.000Z'),
+    }), existing, repositories({ assessments: { count: mock(async () => 1) } }))).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
   })
 
   test('allows non-timing updates to completed sessions when status and window are unchanged', async () => {

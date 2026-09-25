@@ -1,5 +1,5 @@
 import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
-import type { PostgresStore } from '../postgres-store'
+import type { RepositoryStore as PostgresStore } from '../postgres-store'
 import type { ConsortiumRow } from './consortium-row'
 
 export interface EntityStores {

@@ -1,9 +1,9 @@
 /* eslint dot-notation: "off" -- Dynamic table columns require bracket access under noPropertyAccessFromIndexSignature. */
 import type { AccessTarget, AuthorityScope, CoreEntityKey, GrantScope, ResourceAccessClause, ResourceAccessScope } from '@edaya/core'
-import type { SQL, SQLWrapper } from 'drizzle-orm'
+import type { SQLWrapper } from 'drizzle-orm'
 import type { PgTable } from 'drizzle-orm/pg-core'
 import { ActivityEnrollmentStatus, AttachmentOwnerKind } from '@edaya/core'
-import { and, eq, getTableColumns, getTableName, inArray, or, sql } from 'drizzle-orm'
+import { and, eq, getTableColumns, getTableName, inArray, is, or, SQL, sql } from 'drizzle-orm'
 import * as s from '../postgres-schema'
 import { schoolScope } from './school-scope'
 
@@ -149,6 +149,11 @@ function compileClause(table: PgTable, clause: ResourceAccessClause, schoolId: s
       : targetPredicate(table, clause.target, schoolId, clause.academicYearId, new Set(), proposed),
     clause.academicYearId ? yearPredicate(table, clause.academicYearId, schoolId, new Set(), proposed) : undefined,
     clause.publishedOnly ? publicationPredicate(table, schoolId, value) : undefined,
+    clause.approvedMarksOnly
+      ? getTableName(table) === 'assessment_results'
+        ? exists(s.assessments, schoolId, and(sql`${s.assessments.id} = ${value('assessmentId')}`, eq(s.assessments.marksStatus, 'approved'))!)
+        : sql`false`
+      : undefined,
     clause.noteVisibility === 'staff' ? sql`${value('visibility')} <> 'admin_only'` : undefined,
     clause.noteVisibility === 'guardian' ? sql`${value('visibility')} = 'guardian_visible'` : undefined,
     clause.authorStaffId ? sql`${value('authorStaffId')} = ${clause.authorStaffId}` : undefined,
@@ -162,7 +167,7 @@ function values(table: PgTable, proposed?: Record<string, unknown>): (field: str
   return (field) => {
     if (!columns[field])
       throw new Error(`Unknown access field ${getTableName(table)}.${field}`)
-    return proposed ? sql`${sql.param(proposed[field] ?? null, columns[field])}::${sql.raw(columns[field]!.getSQLType())}` : columns[field]!
+    return proposed ? is(proposed[field], SQL) ? proposed[field] as SQL : sql`${sql.param(proposed[field] ?? null, columns[field])}::${sql.raw(columns[field]!.getSQLType())}` : columns[field]!
   }
 }
 

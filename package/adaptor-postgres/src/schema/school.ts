@@ -18,6 +18,7 @@ export const schools = pgTable('schools', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   timeZone: text('time_zone').notNull(),
+  financeCurrency: text('finance_currency'),
   ownerSubjectId: text('owner_subject_id'),
   consortiumId: text('consortium_id'),
   pendingOwnerStaffId: text('pending_owner_staff_id'),

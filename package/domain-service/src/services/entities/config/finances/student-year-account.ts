@@ -1,6 +1,8 @@
 import type { StudentYearAccount } from '@edaya/core'
+import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { BusinessRuleViolationError } from '@edaya/core'
+import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 
@@ -23,7 +25,9 @@ function accountTenant(): EntityTenantResolver<StudentYearAccount> {
 export async function validateStudentYearAccountSave(
   entity: StudentYearAccount,
   existing: StudentYearAccount | undefined,
+  repositories: SchoolRepositories,
 ): Promise<void> {
+  await assertSchoolCurrency(repositories, entity.schoolId, entity.currency)
   if (entity.availableBalance.amount < 0) {
     throw new BusinessRuleViolationError('NEGATIVE_AVAILABLE_FUNDS', `Account ${entity.id} available funds cannot be negative`)
   }

@@ -51,10 +51,10 @@ export function createInProcessFinanceSeedPort(
       })
     }),
     waiveStudentCharge: record => withSeedPortError('finance.waiveStudentCharge', async () => {
-      await service.financeWorkflow.waiveStudentCharge(record)
+      await service.financeWorkflow.waiveStudentCharge({ ...record, requestId: `seed-waive:${record.chargeId}` })
     }),
     cancelStudentCharge: record => withSeedPortError('finance.cancelStudentCharge', async () => {
-      await service.financeWorkflow.cancelStudentCharge(record)
+      await service.financeWorkflow.cancelStudentCharge({ ...record, requestId: `seed-cancel:${record.chargeId}` })
     }),
     listPaymentAllocations: input => withSeedPortError('finance.listPaymentAllocations', async () => {
       const history = await service.financeWorkflow.getPaymentSettlementHistory({ accountId: input.accountId })

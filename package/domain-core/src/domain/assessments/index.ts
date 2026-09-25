@@ -1,5 +1,6 @@
 export * from './assessment'
 export * from './assessment-result'
+export * from './marks-review'
 export * from './report-card-aggregation-config'
 export * from './report-card-comment-rules'
 export * from './report-card-definition'

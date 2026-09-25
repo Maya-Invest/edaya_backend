@@ -28,6 +28,9 @@ try {
   })
 
   if (changed.length > 0) {
+    console.error('Generated API artifacts differ from the server:')
+    for (const path of changed)
+      console.error(`  ${path}`)
     process.exitCode = 1
   }
   else {

@@ -23,6 +23,7 @@ export {
 export { PostgresAtomicExecution, type PostgresTransactionalDb, transactionContext } from './lib/transaction'
 export * as schema from './postgres-schema'
 export { PostgresSchoolRepositories } from './postgres-school-repositories'
-export { PostgresStore } from './postgres-store'
+export { asStoreDatabase, PostgresStore, type StoreDatabase } from './postgres-store'
 export { PostgresCommandJournal } from './stores/command-journal-store'
+export { PostgresDashboardProjections } from './stores/dashboard-projections-store'
 export { DURABLE_WORK_MAX_ATTEMPTS, PostgresDurableWork } from './stores/durable-work-store'

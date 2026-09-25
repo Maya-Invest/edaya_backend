@@ -11,6 +11,8 @@ export const PERMISSION_SCOPE_OVERRIDES: Partial<Record<Permission, ScopeType>> 
   [Permission.QUERY_CLASS_CURRICULUM_READ]: 'class_group',
   [Permission.ATTENDANCE_READ]: 'class_group',
   [Permission.GRADE_READ]: 'class_group',
+  [Permission.GRADE_VALIDATE]: 'class_group',
+  [Permission.GRADE_UNLOCK]: 'class_group',
   [Permission.TIMETABLE_READ]: 'class_group',
   [Permission.TIMETABLE_CREATE]: 'class_group',
   [Permission.TIMETABLE_UPDATE]: 'class_group',

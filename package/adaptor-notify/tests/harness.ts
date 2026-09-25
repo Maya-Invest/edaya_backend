@@ -32,6 +32,7 @@ export async function createTestNotifyRuntime(options: {
   await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0013_notification_schema.sql", import.meta.url), "utf8"));
   await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0016_notification_tenants.sql", import.meta.url), "utf8"));
   await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0020_notification_copy_types.sql", import.meta.url), "utf8"));
+  await pglite.exec(readFileSync(new URL("../../adaptor-postgres/drizzle/0033_push_installations.sql", import.meta.url), "utf8"));
   const sent: Array<{ to: string; subject: string }> = [];
   const sentSms: Array<{ to: string; body: string }> = [];
   const pushes: Array<{ token: string; title: string; data: Record<string, string> }> = [];

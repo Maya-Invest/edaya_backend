@@ -1,4 +1,5 @@
 import type { Resource, StaffAssignment, StaffMember, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
   Attachment as AttachmentCtor,
@@ -25,7 +26,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createSchoolEntityStores(db: any): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
+export function createSchoolEntityStores(db: StoreDatabase): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
   return {
     consortiums: customStore(
       db,

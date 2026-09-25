@@ -136,6 +136,9 @@ export function createFcmHttpV1Transport(serviceAccountJson: string): FcmTranspo
         }),
       });
       if (!response.ok) {
+        const failure = await response.json() as { error?: { details?: Array<{ errorCode?: string }> } };
+        if (failure.error?.details?.some(detail => detail.errorCode === "UNREGISTERED"))
+          throw new Error("FCM_TOKEN_UNREGISTERED");
         throw new Error(`FCM send failed: ${response.status}`);
       }
       const body = await response.json() as { name?: string };

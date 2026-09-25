@@ -47,7 +47,7 @@ Add new exclusions only with justification in the sprint plan or PR description.
 1. Prefer **behavior-focused** filenames — see [§4 of the coverage plan](../sprints/unit-test-coverage-plan.md#4-test-file-naming-conventions).
 2. Do **not** duplicate integration HTTP tests; unit-test branches, policy strategies, and domain invariants.
 3. Reuse shared fixtures: `AuthFixtures`, `describeMatrix`, `policy-fixtures.ts`, `workflow-test-context.ts`.
-4. Authorization entities that only wire `operationModule` belong in operation matrices, not new entity auth tests.
+4. Entity configurations that only wire managed-entity policies belong in the shared operation matrices. Test custom authorization behavior through the production policy and HTTP dependency.
 
 ## Temporary below-target files
 

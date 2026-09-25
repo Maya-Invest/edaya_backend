@@ -1007,6 +1007,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/update-teacher-self-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** update-teacher-self-profile */
+        post: operations["commands.updateTeacherSelfProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/link-actor-subject": {
         parameters: {
             query?: never;
@@ -1908,6 +1925,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/submit-assessment-marks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** submit-assessment-marks */
+        post: operations["commands.submitAssessmentMarks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/approve-assessment-marks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** approve-assessment-marks */
+        post: operations["commands.approveAssessmentMarks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/return-assessment-marks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** return-assessment-marks */
+        post: operations["commands.returnAssessmentMarks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/complete-assessment": {
         parameters: {
             query?: never;
@@ -1919,6 +1987,23 @@ export interface paths {
         put?: never;
         /** complete-assessment */
         post: operations["commands.completeAssessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/record-assessment-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** record-assessment-results */
+        post: operations["commands.recordAssessmentResults"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2004,6 +2089,23 @@ export interface paths {
         put?: never;
         /** write-homeroom-report-comment */
         post: operations["commands.writeHomeroomReportComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/write-report-card-section-comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** write-report-card-section-comments */
+        post: operations["commands.writeReportCardSectionComments"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3449,6 +3551,40 @@ export interface paths {
         put?: never;
         /** reset-school-notification-templates */
         post: operations["commands.resetSchoolNotificationTemplates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-assessment-marks-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-assessment-marks-review */
+        post: operations["queries.getAssessmentMarksReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/list-assessment-marks-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list-assessment-marks-reviews */
+        post: operations["queries.listAssessmentMarksReviews"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11419,6 +11555,7 @@ export interface components {
             id: string;
             name: string;
             timeZone: string;
+            financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
@@ -11467,6 +11604,7 @@ export interface components {
         OnboardingRegisterSchoolRequest: {
             name: string;
             timeZone: string;
+            financeCurrency?: string;
             /** @enum {string|null} */
             type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
@@ -11627,6 +11765,7 @@ export interface components {
             school: {
                 name: string;
                 timeZone: string;
+                financeCurrency?: string;
                 city: string;
                 country: string;
                 academicYearLabel: string;
@@ -11873,6 +12012,7 @@ export interface components {
             id: string;
             name: string;
             timeZone: string;
+            financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
@@ -11921,6 +12061,7 @@ export interface components {
         UpdateSchoolConfigurationCommand: {
             name?: string;
             timeZone?: string;
+            financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
@@ -12272,6 +12413,12 @@ export interface components {
             /** @enum {string|null} */
             profileRole?: "directeur" | "deputy_director" | "studies_director" | "educateur" | "cpe" | "secretary" | "accountant" | "it_admin" | null;
             staffId: string;
+        };
+        UpdateTeacherSelfProfileCommand: {
+            firstName: string;
+            lastName: string;
+            email?: string | null;
+            phone?: string | null;
         };
         Guardian: {
             id: string;
@@ -13439,6 +13586,37 @@ export interface components {
             endsAt?: unknown;
             dueAt?: unknown;
             completedAt?: unknown;
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            marksStatus: "draft" | "submitted" | "approved";
+            /** @default 0 */
+            marksRevision: number;
+            /** @default {} */
+            marksReview: {
+                /** @default [] */
+                rosterStudentIds: string[];
+                /** @default {} */
+                markEditorSubjectIds: {
+                    [key: string]: string;
+                };
+                /** @default [] */
+                editedBySubjectIds: string[];
+                submittedBy?: string;
+                submittedAt?: unknown;
+                approvedBy?: string;
+                approvedAt?: unknown;
+                /** @default [] */
+                history: {
+                    /** @enum {string} */
+                    action: "submit" | "approve" | "return";
+                    revision: number;
+                    subjectId: string;
+                    at: unknown;
+                    reason?: string;
+                }[];
+            };
             createdAt?: unknown;
         };
         CreateAssessmentCommand: {
@@ -13464,6 +13642,19 @@ export interface components {
             dueAt?: unknown;
             createdAt?: unknown;
         };
+        SubmitAssessmentMarksCommand: {
+            requestId: string;
+            assessmentId: string;
+            expectedRevision: number;
+        };
+        ApproveAssessmentMarksCommand: {
+            requestId: string;
+            assessmentId: string;
+            expectedRevision: number;
+        };
+        ReturnAssessmentMarksCommand: components["schemas"]["SubmitAssessmentMarksCommand"] & {
+            reason: string;
+        };
         CompleteAssessmentCommand: {
             assessmentId: string;
             completedAt?: string | null;
@@ -13473,18 +13664,39 @@ export interface components {
             studentId: string;
             assessmentId: string;
             score?: number | null;
+            /** @enum {string} */
+            designation?: "scored" | "absent" | "exempt";
             /** @enum {string|null} */
             status?: "met" | "late" | "missed" | "excused" | null;
             notes?: string | null;
             createdBy?: string | null;
             createdAt?: unknown;
         };
+        RecordAssessmentResultsResponse: components["schemas"]["AssessmentResult"][];
+        RecordAssessmentResultsCommand: {
+            requestId: string;
+            assessmentId: string;
+            expectedRevision: number;
+            results: {
+                id: string;
+                studentId: string;
+                score?: number | null;
+                /** @enum {string} */
+                designation?: "scored" | "absent" | "exempt";
+                /** @enum {string|null} */
+                status?: "met" | "late" | "missed" | "excused" | null;
+                notes?: string | null;
+            }[];
+        };
         RecordAssessmentResultCommand: {
             id: string;
             studentId: string;
             assessmentId: string;
             score?: number | null;
-            createdAt?: unknown;
+            /** @enum {string} */
+            designation?: "scored" | "absent" | "exempt";
+            requestId: string;
+            expectedRevision: number;
         };
         RecordAssessmentResultComplianceCommand: {
             id: string;
@@ -13493,7 +13705,8 @@ export interface components {
             /** @enum {string} */
             status: "met" | "late" | "missed" | "excused";
             notes?: string | null;
-            createdAt?: unknown;
+            requestId: string;
+            expectedRevision: number;
         };
         AssessmentResultCommandListResponse: components["schemas"]["AssessmentResult"][];
         ListClassSubjectAssessmentResultsForPeriodCommand: {
@@ -13503,6 +13716,17 @@ export interface components {
         ReportCardResultSection: Record<string, never>;
         ReportCardResult: {
             id: string;
+            /** @default 0 */
+            version: number;
+            /** @default [] */
+            sourceAssessments: {
+                assessmentId: string;
+                revision: number;
+            }[];
+            /** @default [] */
+            pendingAssessmentIds: string[];
+            /** @default false */
+            calculationStale: boolean;
             reportCardDefinitionId: string;
             studentId: string;
             classGroupId: string;
@@ -13556,8 +13780,19 @@ export interface components {
             periodId: string;
         };
         WriteHomeroomReportCommentCommand: {
+            requestId: string;
+            expectedVersion: number;
             id: string;
             teacherComment: string;
+        };
+        WriteReportCardSectionCommentsCommand: {
+            requestId: string;
+            expectedVersion: number;
+            id: string;
+            sections: {
+                sectionId: string;
+                comment?: string | null;
+            }[];
         };
         PublishReportCardResultCommand: {
             id: string;
@@ -14027,6 +14262,7 @@ export interface components {
             status?: string;
         };
         UpdateCatalogServiceCommand: {
+            requestId: string;
             id: string;
             name?: string;
             description?: string | null;
@@ -14036,6 +14272,7 @@ export interface components {
             billingTerms?: components["schemas"]["OneTimeBillingTermsCommandValue"];
         };
         CatalogServiceIdCommand: {
+            requestId: string;
             id: string;
         };
         StudentServiceEnrollment: {
@@ -14148,16 +14385,19 @@ export interface components {
             enrollmentId: string;
         };
         AdjustStudentChargeCommand: {
+            requestId: string;
             chargeId: string;
             adjustmentAmount: number;
             reason: string;
         };
         WaiveStudentChargeCommand: {
+            requestId: string;
             chargeId: string;
             reason: string;
             waiverAmount?: number;
         };
         CancelStudentChargeCommand: {
+            requestId: string;
             chargeId: string;
             reason: string;
         };
@@ -14796,6 +15036,9 @@ export interface components {
             notificationPhone?: string | null;
         };
         RegisterPushDeviceCommand: {
+            /** @enum {string} */
+            appId: "teacher" | "guardian" | "staff" | "student";
+            installationId: string;
             token: string;
             /**
              * @default fcm
@@ -14804,6 +15047,9 @@ export interface components {
             provider: "fcm" | "apns";
         };
         UnregisterPushDeviceCommand: {
+            /** @enum {string} */
+            appId: "teacher" | "guardian" | "staff" | "student";
+            installationId: string;
             /**
              * @default fcm
              * @enum {string}
@@ -15105,6 +15351,49 @@ export interface components {
             schoolId: string;
             /** @enum {string} */
             templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "student_photo.approved" | "student_photo.rejected" | "family_feedback.opened" | "family_feedback.reminder" | "family_feedback.published" | "family_feedback.purge_reminder" | "account_invitation";
+        };
+        AssessmentMarksReviewResponse: {
+            assessment: components["schemas"]["Assessment"];
+            students: {
+                id: string;
+                firstName: string;
+                lastName: string;
+            }[];
+            results: components["schemas"]["AssessmentResult"][];
+            missingStudentIds: string[];
+            allowedActions: {
+                submit: boolean;
+                approve: boolean;
+                return: boolean;
+            };
+        };
+        GetAssessmentMarksReviewQuery: {
+            assessmentId: string;
+        };
+        AssessmentMarksReviewsResponse: {
+            items: (components["schemas"]["Assessment"] & {
+                completeness: {
+                    eligible: number;
+                    completed: number;
+                    missing: number;
+                };
+                allowedActions: {
+                    submit: boolean;
+                    approve: boolean;
+                    return: boolean;
+                };
+            })[];
+            total: number;
+            offset: number;
+            limit: number;
+        };
+        ListAssessmentMarksReviewsQuery: {
+            /** @enum {string} */
+            status?: "draft" | "submitted" | "approved";
+            classGroupId?: string;
+            periodId?: string;
+            offset?: number;
+            limit?: number;
         };
         CountResponse: {
             count: number;
@@ -19870,6 +20159,84 @@ export interface operations {
             };
         };
     };
+    "commands.updateTeacherSelfProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description update-teacher-self-profile payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateTeacherSelfProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed update-teacher-self-profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Teacher"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.linkActorSubject": {
         parameters: {
             query?: never;
@@ -24004,6 +24371,240 @@ export interface operations {
             };
         };
     };
+    "commands.submitAssessmentMarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description submit-assessment-marks payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitAssessmentMarksCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed submit-assessment-marks */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assessment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.approveAssessmentMarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description approve-assessment-marks payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveAssessmentMarksCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed approve-assessment-marks */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assessment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.returnAssessmentMarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description return-assessment-marks payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReturnAssessmentMarksCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed return-assessment-marks */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assessment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.completeAssessment": {
         parameters: {
             query?: never;
@@ -24025,6 +24626,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Assessment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.recordAssessmentResults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description record-assessment-results payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RecordAssessmentResultsCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed record-assessment-results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordAssessmentResultsResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -24409,6 +25088,84 @@ export interface operations {
         };
         responses: {
             /** @description Executed write-homeroom-report-comment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCardResult"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.writeReportCardSectionComments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description write-report-card-section-comments payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WriteReportCardSectionCommentsCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed write-report-card-section-comments */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -31045,6 +31802,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchoolNotificationTemplates"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getAssessmentMarksReview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-assessment-marks-review payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetAssessmentMarksReviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-assessment-marks-review */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentMarksReviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.listAssessmentMarksReviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description list-assessment-marks-reviews payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ListAssessmentMarksReviewsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved list-assessment-marks-reviews */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentMarksReviewsResponse"];
                 };
             };
             /** @description Invalid request payload */

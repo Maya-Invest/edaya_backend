@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { Assessment, AssessmentKind, BusinessRuleViolationError, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardDefinition, ReportCardResultStatus, School } from '@edaya/core'
+import { Assessment, AssessmentKind, BusinessRuleViolationError, DeadlineComplianceStatus, RecordingNotificationGateway, ReportCardAggregationSource, ReportCardDefinition, ReportCardResultStatus, School } from '@edaya/core'
 import {
   describe,
   expect,
@@ -92,6 +92,8 @@ describe('SchoolService assessment workflows', () => {
     })
 
     const result = await service.assessmentsWorkflow.writeHomeroomReportComment({
+      requestId: 'homeroom-comment',
+      expectedVersion: 1,
       id: 'rc1',
       teacherComment: 'Bon début d\'année.',
     })
@@ -112,6 +114,8 @@ describe('SchoolService assessment workflows', () => {
     expect(math?.sectionId).toBeTruthy()
 
     const updated = await service.assessmentsWorkflow.writeReportCardSectionComments({
+      requestId: 'section-comment',
+      expectedVersion: 1,
       id: generated.id,
       sections: [{ sectionId: math!.sectionId, comment: 'Solide en calcul.' }],
     })
@@ -160,19 +164,21 @@ describe('SchoolService assessment workflows', () => {
     expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === REPORT_CARD_PUBLISHED_EVENT_KEY)).toBe(true)
   })
 
-  test('recordAssessmentResult enqueues guardian and student notifications', async () => {
+  test('draft recordAssessmentResult does not disclose marks to families', async () => {
     const gateway = new RecordingNotificationGateway()
-    const { repositories, service } = await createReportCardContext({ notificationGateway: gateway })
+    const { repositories, service } = await createReportCardContext({ notificationGateway: gateway, marksApproved: false })
 
     await repositories.assessmentResults.delete('ar1')
     await service.assessmentsWorkflow.recordAssessmentResult({
+      requestId: 'new-mark',
+      expectedRevision: 0,
       id: 'ar-new',
       studentId: 'stu1',
       assessmentId: 'ass1',
       score: 92,
     })
 
-    expect(gateway.enqueued).toHaveLength(2)
+    expect(gateway.enqueued).toHaveLength(0)
     expect(gateway.enqueued.map(entry => entry.idempotencyKey).sort()).toEqual((await repositories.messageDeliveries.list()).map(entry => entry.id).sort())
     expect(gateway.enqueued.every(entry => entry.schoolId === 'sch1' && entry.kind === 'event' && entry.eventKey === ASSESSMENT_RESULT_RECORDED_EVENT_KEY)).toBe(true)
   })
@@ -190,7 +196,7 @@ describe('SchoolService assessment workflows', () => {
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
 
-  test('publishReportCardResult rejects already published report cards', async () => {
+  test('publishReportCardResult returns the existing logical publication without creating another', async () => {
     const { service } = await createReportCardContext({
       existingReportCard: {
         id: 'rc-existing',
@@ -205,7 +211,7 @@ describe('SchoolService assessment workflows', () => {
       studentId: 'stu1',
       periodId: 'per1',
       reportCardDefinitionId: 'def1',
-    })).rejects.toBeInstanceOf(BusinessRuleViolationError)
+    })).resolves.toMatchObject({ id: 'rc-existing', status: ReportCardResultStatus.Published })
   })
 
   test('createGradeScale and completeAssessment persist assessment catalog entities', async () => {
@@ -257,18 +263,21 @@ describe('SchoolService assessment workflows', () => {
     expect(results[0]?.studentId).toBe('stu1')
   })
 
-  test('recordAssessmentResultCompliance delegates to recordAssessmentResult', async () => {
-    const { repositories, service } = await createReportCardContext()
+  test('recordAssessmentResultCompliance records compliance without inventing a numeric mark', async () => {
+    const { repositories, service } = await createReportCardContext({ marksApproved: false })
 
     await repositories.assessmentResults.delete('ar1')
     const result = await service.assessmentsWorkflow.recordAssessmentResultCompliance({
+      requestId: 'compliance',
+      expectedRevision: 0,
       id: 'ar-compliance',
       studentId: 'stu1',
       assessmentId: 'ass1',
-      score: 88,
+      status: DeadlineComplianceStatus.Late,
     })
 
-    expect(result.score).toBe(88)
+    expect(result.score).toBeUndefined()
+    expect(result.status).toBe(DeadlineComplianceStatus.Late)
   })
 
   test('generateReportCardResult uses the default definition when none is provided', async () => {
@@ -313,6 +322,8 @@ describe('SchoolService assessment workflows', () => {
     const school = (await repositories.schools.findById('sch1'))!
     await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
     await expect(service.assessmentsWorkflow.writeHomeroomReportComment({
+      requestId: 'homeroom-comment',
+      expectedVersion: 1,
       id: 'rc1',
       teacherComment: 'Needs improvement',
     })).rejects.toBeInstanceOf(AuthorizationError)

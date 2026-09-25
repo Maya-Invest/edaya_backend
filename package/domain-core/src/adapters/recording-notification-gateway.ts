@@ -3,13 +3,15 @@ import type {
   NotificationDeliveryStatusQuery,
   NotificationEnqueueInput,
   NotificationGatewayPort,
+  RegisterPushDeviceInput,
+  UnregisterPushDeviceInput,
 } from '../ports/gateways/notification-gateway'
 
 export class RecordingNotificationGateway implements NotificationGatewayPort {
   readonly enqueued: NotificationEnqueueInput[] = []
   readonly cancelled: string[] = []
-  readonly registeredPushDevices: Array<{ subjectId: string, schoolId: string, token: string, provider: 'fcm' | 'apns' }> = []
-  readonly unregisteredPushDevices: Array<{ subjectId: string, schoolId: string, provider: 'fcm' | 'apns' }> = []
+  readonly registeredPushDevices: RegisterPushDeviceInput[] = []
+  readonly unregisteredPushDevices: UnregisterPushDeviceInput[] = []
   readonly statusLookups: NotificationDeliveryStatusQuery[][] = []
   private readonly enqueuedKeys = new Set<string>()
   private readonly statusLookupResults = new Map<string, NotificationDeliveryStatusLookup>()
@@ -31,20 +33,11 @@ export class RecordingNotificationGateway implements NotificationGatewayPort {
     this.enqueuedKeys.delete(JSON.stringify([schoolId, idempotencyKey]))
   }
 
-  async registerPushDevice(input: {
-    subjectId: string
-    schoolId: string
-    token: string
-    provider: 'fcm' | 'apns'
-  }): Promise<void> {
+  async registerPushDevice(input: RegisterPushDeviceInput): Promise<void> {
     this.registeredPushDevices.push(input)
   }
 
-  async unregisterPushDevice(input: {
-    schoolId: string
-    subjectId: string
-    provider: 'fcm' | 'apns'
-  }): Promise<void> {
+  async unregisterPushDevice(input: UnregisterPushDeviceInput): Promise<void> {
     this.unregisteredPushDevices.push(input)
   }
 

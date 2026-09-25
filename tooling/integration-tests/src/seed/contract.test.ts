@@ -1,3 +1,4 @@
+import { createSystemActorMetadata } from '@edaya/authorization'
 import { MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
 import { devSeedDataset } from '@edaya/fixtures'
 import {
@@ -200,7 +201,7 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     const { application } = getContext()
 
     const referenceDate = parseSeedDate(resolveSeedReferenceDate())
-    const overview = await buildSchoolOverview(application.repositories, {
+    const overview = await buildSchoolOverview(application.repositories.dashboardProjections, await application.forActor(createSystemActorMetadata({ systemId: 'fixture-seed', schoolId: SEED_SCHOOL_ID, requestId: 'overview-test', reason: 'Fixture verification' })).baseService.access.overview.scopes(), {
       schoolId: SEED_SCHOOL_ID,
       academicYearId: devSeedDataset.entities.academicYear?.id ?? '',
       academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
@@ -213,14 +214,18 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     expect(overview.kpis.overdueFeeCount).toBeGreaterThan(0)
     expect(overview.kpis.openIncidentCount).toBeGreaterThan(0)
     expect(overview.kpis.pendingJustificationCount).toBeGreaterThan(0)
-    expect(overview.kpis.incompleteGradingClassCount).toBeGreaterThan(0)
+    // This period's sheets are complete: submission filled missing roster rows
+    // with explicit absences. Other periods retain unfinished Draft examples.
+    expect(overview.kpis.incompleteGradingClassCount).toBe(0)
+    const sheets = await application.repositories.assessments.list()
+    expect(new Set(sheets.map(sheet => sheet.marksStatus))).toEqual(new Set(['draft', 'submitted', 'approved']))
     expect(overview.upcoming.length).toBeGreaterThanOrEqual(3)
 
     const actionKeys = overview.actionItems.map(item => item.key)
     expect(actionKeys).toContain('overdue_fees')
     expect(actionKeys).toContain('pending_justifications')
     expect(actionKeys).toContain('high_severity_incidents')
-    expect(actionKeys).toContain('incomplete_grading')
+    expect(actionKeys).not.toContain('incomplete_grading')
 
     expect(overview.upcoming.some(item => item.kind === 'calendar')).toBe(true)
     expect(overview.upcoming.some(item => item.kind === 'fee_due')).toBe(true)

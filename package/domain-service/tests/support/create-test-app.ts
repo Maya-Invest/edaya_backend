@@ -159,7 +159,7 @@ export async function createTestApp(actor?: ActorMetadata, options: { owner?: bo
     assuranceLevel: ActorAssuranceLevel.Strong,
   })
   if (defaultActor.kind === 'staff') {
-    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
+    await nativeRepositories.schools.save(new School({ id: defaultActor.schoolId, name: 'Fixture school', timeZone: 'UTC', financeCurrency: 'USD', ...((options.owner ?? !actor) ? { ownerSubjectId: defaultActor.subjectId } : {}) }))
     await nativeRepositories.staffMembers.save(new StaffMember({ id: defaultActor.staffMemberId, schoolId: defaultActor.schoolId, firstName: 'Fixture', lastName: 'Staff', accountKind: defaultActor.accountKind, ...(defaultActor.accountKind === 'human' ? { subjectId: defaultActor.subjectId } : { serviceId: 'fixture-service' }) }))
   }
   const durableWork = new PostgresDurableWork(connection)

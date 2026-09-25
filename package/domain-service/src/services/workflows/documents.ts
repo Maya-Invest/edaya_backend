@@ -21,6 +21,7 @@ import { clearSchoolIssuanceAsset, completeSchoolIssuanceAssetUpload, createScho
 import { documentNumberLockKey, documentRenderOutbox, persistRequestedIssuance } from '../../capabilities/documents/persist-requested-issuance'
 import { grantAttachmentDownload } from '../../capabilities/files/grant-attachment-download'
 import { schoolCommandScope } from '../commands/school-command-scope'
+import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
 
 function fail(code: string, message: string): never {
@@ -101,6 +102,12 @@ export interface BatchIssuanceItemResult {
 }
 
 export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
+  private readonly repositories
+  constructor(base: BaseSchoolService) {
+    super(base)
+    this.repositories = pickWorkflowRepositories('documents', base.repositories)
+  }
+
   async listDocumentTemplates() {
     return documentTemplatesVisibleTo(this.baseService.actor.kind).map(entry => ({
       templateKey: entry.templateKey,
@@ -117,7 +124,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
 
   async listDocumentIssuances(input: ListDocumentIssuancesInput = {}): Promise<DocumentIssuanceProjection[]> {
     const scope = await this.baseService.access.documents.readScope()
-    const rows = await this.baseService.repositories.documentIssuances.forAccess(scope).list({
+    const rows = await this.repositories.documentIssuances.forAccess(scope).list({
       ...(input.studentId ? { studentId: input.studentId } : {}),
       ...(input.academicYearId ? { academicYearId: input.academicYearId } : {}),
       ...(input.classGroupId ? { classGroupId: input.classGroupId } : {}),
@@ -256,7 +263,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
       }),
       execute: async () => {
         const retried = issuance.copyWith({ status: DocumentIssuanceStatus.Requested, failureCode: undefined, updatedAt: new Date() })
-        await this.baseService.repositories.documentIssuances.forSchool!(issuance.schoolId).save(retried)
+        await this.repositories.documentIssuances.forSchool!(issuance.schoolId).save(retried)
         return retried
       },
       replay: async stored => this.requireIssuance(stored.id),
@@ -313,7 +320,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
           voidReason: input.reason,
           updatedAt: new Date(),
         })
-        await this.baseService.repositories.documentIssuances.forSchool!(issuance.schoolId).save(voided)
+        await this.repositories.documentIssuances.forSchool!(issuance.schoolId).save(voided)
         return voided
       },
       replay: async stored => this.requireIssuance(stored.id),
@@ -392,7 +399,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
 
   private async requireIssuance(id: string): Promise<DocumentIssuance> {
     const scope = await this.baseService.access.documents.readScope()
-    const issuance = await this.baseService.repositories.documentIssuances.forAccess(scope).findById(id)
+    const issuance = await this.repositories.documentIssuances.forAccess(scope).findById(id)
     if (!issuance)
       denyResourceAccess()
     return issuance

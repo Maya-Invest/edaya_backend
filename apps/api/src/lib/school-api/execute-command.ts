@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import type { PublishAnnouncementInput, SchoolCommandKey, SchoolService } from "@edaya/service";
 import type { AppBindings } from "@/http/bindings";
 import { dispatchDocumentRender, dispatchSchoolCommand } from "@edaya/service";
-import { scheduleBackgroundTask } from "@/lib/school-api/schedule-background-task";
+import { scheduleBackgroundApplicationTask, scheduleBackgroundTask } from "@/lib/school-api/schedule-background-task";
 
 const DOCUMENT_NUDGE_COMMANDS = new Set<SchoolCommandKey>([
   "publishReportCardResult",
@@ -15,17 +15,7 @@ const DOCUMENT_NUDGE_COMMANDS = new Set<SchoolCommandKey>([
 ]);
 
 function nudgeDocumentRender(c: Context<AppBindings>): void {
-  const application = c.get("schoolApp");
-  const run = Promise.resolve()
-    .then(() => dispatchDocumentRender(application))
-    .catch((error) => {
-      c.var.logger?.error?.({ err: error }, "document render nudge failed");
-    });
-  if (c.env.RUNTIME === "worker") {
-    c.executionCtx.waitUntil(run);
-    return;
-  }
-  void run;
+  scheduleBackgroundApplicationTask(c, application => dispatchDocumentRender(application));
 }
 
 export async function executeSchoolCommand(

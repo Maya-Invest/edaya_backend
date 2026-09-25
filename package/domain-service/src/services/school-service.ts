@@ -1,5 +1,6 @@
 import type { SchoolCommandHandlerMap } from './commands/school-command-handlers'
 import type { AppShellCounts, GetAppShellCountsInput } from './queries/app-shell-counts'
+import type { MarksQueueInput } from './queries/marks-review'
 import type { GetSchoolOverviewInput, SchoolOverview } from './queries/school-overview'
 import type { ClassGroupTimetable, GetClassGroupTimetableInput, GetTeacherTimetableInput, TeacherTimetable } from './queries/timetable'
 import type { ServiceArgs } from './service-args'
@@ -9,7 +10,7 @@ import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/cor
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 
-import { buildAppShellCounts } from './queries/app-shell-counts'
+import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 import { buildSchoolOverview } from './queries/school-overview'
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
@@ -78,6 +79,9 @@ export class SchoolService {
       familyFeedback: this.familyFeedbackWorkflow,
     })
   }
+
+  async getAssessmentMarksReview(input: { assessmentId: string }) { return getAssessmentMarksReview(this.baseService, input) }
+  async listAssessmentMarksReviews(input: MarksQueueInput) { return listAssessmentMarksReviews(this.baseService, input) }
 
   async getOverdueFeeCount(schoolId: string): Promise<number> {
     this.checkActorSchool(schoolId)
@@ -211,13 +215,13 @@ export class SchoolService {
       if (!(error instanceof AuthorizationError))
         throw error
     }
-    return buildSchoolOverview(await this.baseService.access.overview.repositories(), input, { pendingStudentPhotoCount })
+    return buildSchoolOverview(this.baseService.repositories.dashboardProjections, await this.baseService.access.overview.scopes(), input, { pendingStudentPhotoCount })
   }
 
   async getAppShellCounts(input: GetAppShellCountsInput): Promise<AppShellCounts> {
     this.checkActorSchool(input.schoolId)
     await this.baseService.access.overview.assertContext(input)
-    return buildAppShellCounts(await this.baseService.access.overview.repositories(), input)
+    return this.baseService.repositories.dashboardProjections.appShell(input, await this.baseService.access.overview.scopes())
   }
 
   async getClassGroupTimetable(input: GetClassGroupTimetableInput): Promise<ClassGroupTimetable> {

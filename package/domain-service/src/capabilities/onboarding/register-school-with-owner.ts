@@ -17,6 +17,7 @@ export interface RegisterSchoolOwnerSession {
 export interface RegisterSchoolWithOwnerInput {
   name: string
   timeZone: string
+  financeCurrency?: string
   type?: SchoolType
   country?: string
   city?: string
@@ -97,6 +98,7 @@ export async function registerSchoolWithOwner(
       id: schoolId,
       name: input.name,
       timeZone: input.timeZone,
+      financeCurrency: input.financeCurrency,
       ownerSubjectId: subjectId,
       ...(input.type ? { type: input.type } : {}),
       ...(input.country ? { country: input.country } : {}),

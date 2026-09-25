@@ -59,17 +59,16 @@ export async function seedDevAssessments(
     options?.onProgress?.()
 
     const scores = resultScores[assessment.id] ?? {}
-    for (const [studentId, score] of Object.entries(scores)) {
-      if (score === undefined) {
-        continue
+    const records = Object.entries(scores).flatMap(([studentId, score]) => score === undefined ? [] : [{ id: `ar-${assessment.id}-${studentId}`, assessmentId: assessment.id, studentId, score }])
+    if (port.recordAssessmentResults) {
+      await port.recordAssessmentResults(records)
+      for (const _record of records) options?.onProgress?.()
+    }
+    else {
+      for (const record of records) {
+        await port.recordAssessmentResult(record)
+        options?.onProgress?.()
       }
-      await port.recordAssessmentResult({
-        id: `ar-${assessment.id}-${studentId}`,
-        assessmentId: assessment.id,
-        studentId,
-        score,
-      })
-      options?.onProgress?.()
     }
   }
 
@@ -80,6 +79,14 @@ export async function seedDevAssessments(
 
   for (const submission of homeworkSubmissions) {
     await port.recordAssessmentResult(assessmentResultSeedRecord(submission))
+    options?.onProgress?.()
+  }
+  let unpublishedIndex = 0
+  for (const assessment of [...inClassAssessments, ...homeworkAssessments]) {
+    const published = dataset.extensions?.reportCardResults?.some(result => result.periodId === assessment.periodId && result.classGroupId === assessment.classGroupId && result.narrativeStatus === 'published')
+    // Published source periods must be fully approved; open periods demonstrate all three states.
+    const state = published ? 'approved' : (['draft', 'submitted', 'approved'] as const)[unpublishedIndex++ % 3]!
+    await port.finalizeMarks(assessment.id, state)
     options?.onProgress?.()
   }
 }
@@ -98,5 +105,5 @@ export function countDevAssessmentSeedOperations(dataset: FixtureDataset): numbe
   }
   total += homeworkAssessments.length
   total += homeworkSubmissions.length
-  return total
+  return total + inClassAssessments.length + homeworkAssessments.length
 }

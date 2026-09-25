@@ -1,8 +1,11 @@
+/* eslint-disable dot-notation -- SQL result and filter dictionaries have explicit index signatures. */
 import type { Filter } from '@edaya/core'
+import type { SQL } from 'drizzle-orm'
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core'
 import { DomainValidationError } from '@edaya/core'
 import { and, eq, getTableColumns, gt, gte, inArray, isNotNull, isNull, lt, lte, ne, not, notInArray, or, sql } from 'drizzle-orm'
 
-function buildFieldConditions(column: any, fieldFilter: any): any[] {
+function buildFieldConditions(column: PgColumn, fieldFilter: unknown): SQL[] {
   if (fieldFilter === null)
     return [isNull(column)]
   if (
@@ -14,9 +17,9 @@ function buildFieldConditions(column: any, fieldFilter: any): any[] {
     return [eq(column as never, fieldFilter)]
   }
 
-  const conditions: any[] = []
+  const conditions: SQL[] = []
   for (const op of Object.keys(fieldFilter)) {
-    const val = fieldFilter[op]
+    const val = (fieldFilter as Record<string, unknown>)[op]
     switch (op) {
       case '$eq':
         conditions.push(eq(column as never, val))
@@ -66,39 +69,39 @@ function buildFieldConditions(column: any, fieldFilter: any): any[] {
   return conditions
 }
 
-function buildLogicalConditions(table: any, filter: any, depth: number): any[] {
-  const conditions: any[] = []
+function buildLogicalConditions(table: PgTable, filter: Record<string, unknown>, depth: number): SQL[] {
+  const conditions: SQL[] = []
 
-  if (filter.$and !== undefined) {
-    if (!Array.isArray(filter.$and))
+  if (filter['$and'] !== undefined) {
+    if (!Array.isArray(filter['$and']))
       throw new DomainValidationError('$and requires an array')
-    const sub = filter.$and.map((f: any) => buildWhereClause(table, f, depth + 1) ?? sql`true`)
+    const sub = filter['$and'].map((f: unknown) => buildWhereClause(table, f as Filter<unknown>, depth + 1) ?? sql`true`)
     if (sub.length > 0) {
-      conditions.push(and(...sub))
+      conditions.push(and(...sub)!)
     }
   }
-  if (filter.$or !== undefined) {
-    if (!Array.isArray(filter.$or))
+  if (filter['$or'] !== undefined) {
+    if (!Array.isArray(filter['$or']))
       throw new DomainValidationError('$or requires an array')
-    const sub = filter.$or.map((f: any) => buildWhereClause(table, f, depth + 1) ?? sql`true`)
-    conditions.push(sub.length ? or(...sub) : sql`false`)
+    const sub = filter['$or'].map((f: unknown) => buildWhereClause(table, f as Filter<unknown>, depth + 1) ?? sql`true`)
+    conditions.push(sub.length ? or(...sub)! : sql`false`)
   }
-  if (filter.$not !== undefined) {
-    const sub = buildWhereClause(table, filter.$not, depth + 1)
+  if (filter['$not'] !== undefined) {
+    const sub = buildWhereClause(table, filter['$not'] as Filter<unknown>, depth + 1)
     conditions.push(not(sub ?? sql`true`))
   }
 
   return conditions
 }
 
-export function buildWhereClause<T>(table: any, filter: Filter<T> | undefined, depth = 0): any {
+export function buildWhereClause<T>(table: PgTable, filter: Filter<T> | undefined, depth = 0): SQL | undefined {
   if (filter === undefined) {
     return undefined
   }
   if (!filter || typeof filter !== 'object' || Array.isArray(filter) || depth > 16)
     throw new DomainValidationError('Filter must be an object with at most 16 nested levels')
 
-  const conditions: any[] = [...buildLogicalConditions(table, filter, depth)]
+  const conditions: SQL[] = [...buildLogicalConditions(table, filter, depth)]
 
   for (const key of Object.keys(filter)) {
     if (key.startsWith('$')) {

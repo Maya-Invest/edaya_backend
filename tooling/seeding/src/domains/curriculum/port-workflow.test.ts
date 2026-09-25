@@ -5,7 +5,7 @@ import type {
   SubjectMatterSeedRecord,
   SubjectSeedRecord,
 } from './port'
-import { SubjectCategory, SubjectColor } from '@edaya/core'
+import { SubjectColor } from '@edaya/core'
 import { demoDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { buildFixtureCurriculumPlan } from '../../support/curriculum-plan'
@@ -43,7 +43,7 @@ describe('curriculum seed port workflow', () => {
     if (!firstSubject) {
       throw new Error('Expected seeded subjects')
     }
-    expect(Object.values(SubjectCategory)).toContain(firstSubject.category)
+    expect(firstSubject.category).toBe(String(fixtureSubjects[0]!.category))
     expect(Object.values(SubjectColor)).toContain(firstSubject.color)
     expect(seededMatters).toHaveLength(fixtureSubjectMatters.length)
     expect(offerings).toHaveLength(curriculumPlan.gradeLevelSubjects.length)

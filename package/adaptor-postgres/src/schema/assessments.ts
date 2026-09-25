@@ -17,6 +17,9 @@ export const assessments = pgTable('assessments', {
   endsAt: timestamp('ends_at', { mode: 'date' }),
   dueAt: timestamp('due_at', { mode: 'date' }),
   completedAt: timestamp('completed_at', { mode: 'date' }),
+  marksStatus: text('marks_status').notNull().default('draft'),
+  marksRevision: integer('marks_revision').notNull().default(0),
+  marksReview: jsonb('marks_review').notNull().default({}),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('assessments', table))
 
@@ -27,6 +30,7 @@ export const assessmentResults = pgTable('assessment_results', {
   studentId: text('student_id').notNull(),
   assessmentId: text('assessment_id').notNull(),
   score: numeric('score', { precision: 8, scale: 2 }),
+  designation: text('designation'),
   status: text('status'),
   notes: text('notes'),
   createdBy: text('created_by'),
@@ -81,6 +85,10 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
 
 export const reportCardResults = pgTable('report_card_results', {
   id: text('id').primaryKey(),
+  version: integer('version').notNull().default(0),
+  sourceAssessments: jsonb('source_assessments').notNull().default([]),
+  pendingAssessmentIds: jsonb('pending_assessment_ids').notNull().default([]),
+  calculationStale: boolean('calculation_stale').notNull().default(false),
   studentId: text('student_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
   periodId: text('period_id').notNull(),
@@ -88,10 +96,10 @@ export const reportCardResults = pgTable('report_card_results', {
   sectionResults: jsonb('section_results').notNull(),
   attendanceSummary: jsonb('attendance_summary').notNull(),
   assessmentResultCount: integer('assessment_result_count').notNull(),
-  overallAverage: integer('overall_average'),
+  overallAverage: numeric('overall_average', { precision: 8, scale: 2 }),
   rank: integer('rank'),
   classSize: integer('class_size'),
-  passThreshold: integer('pass_threshold'),
+  passThreshold: numeric('pass_threshold', { precision: 8, scale: 2 }),
   teacherComment: text('teacher_comment'),
   principalComment: text('principal_comment'),
   status: text('status').notNull(),

@@ -1,4 +1,4 @@
-import type { FixtureCatalogService, FixtureDataset, FixturePayment } from '@edaya/fixtures'
+import type { FixtureDataset, FixturePayment } from '@edaya/fixtures'
 import type { FinanceSeedPort } from './port'
 import { studentYearAccountId } from '@edaya/core'
 
@@ -14,28 +14,14 @@ function isoDate(value: string | undefined): string | undefined {
   return value.includes('T') ? value : `${value}T12:00:00.000Z`
 }
 
-function catalogCurrency(catalogs: readonly FixtureCatalogService[], catalogServiceId: string): string | undefined {
-  return catalogs.find(catalog => catalog.id === catalogServiceId)?.currency
-}
-
-function inferPaymentAccountId(dataset: FixtureDataset, payment: FixturePayment): string | undefined {
+function paymentAccountId(dataset: FixtureDataset, payment: FixturePayment): string | undefined {
   if (payment.accountId)
     return payment.accountId
   if (!payment.studentId || !payment.academicYearId)
     return undefined
-  const catalogs = dataset.entities.catalogServices ?? []
-  const enrollments = (dataset.entities.studentServiceEnrollments ?? [])
-    .filter(enrollment => enrollment.studentId === payment.studentId)
-  const currencies = new Set(
-    enrollments
-      .map(enrollment => catalogCurrency(catalogs, enrollment.catalogServiceId))
-      .filter((currency): currency is string => Boolean(currency)),
-  )
-  const currency = currencies.size === 1
-    ? [...currencies][0]
-    : catalogs.find(catalog => catalog.academicYearId === payment.academicYearId)?.currency
+  const currency = dataset.entities.school?.financeCurrency
   if (!currency)
-    return undefined
+    throw new Error('Seed school must configure financeCurrency')
   return studentYearAccountId(dataset.schoolId, payment.studentId, payment.academicYearId, currency)
 }
 
@@ -107,7 +93,7 @@ export async function seedDevFinance(
       allocation: payment.allocation,
     })
     recordedPayments += 1
-    const accountId = inferPaymentAccountId(dataset, payment)
+    const accountId = paymentAccountId(dataset, payment)
     if (payment.reverseCausedAllocations && accountId) {
       const allocations = await port.listPaymentAllocations({ accountId, paymentId: payment.id })
       const chargeIds = payment.reverseCausedAllocations === true

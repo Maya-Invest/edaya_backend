@@ -1,0 +1,66 @@
+import type { School } from '@edaya/core'
+import type { AssembledDocumentSource, AssembleDocumentInput, DocumentAssemblyContext } from './shared'
+import {
+  DOCUMENT_FAILURES,
+  DocumentSourceType,
+  ReportCardResultStatus,
+} from '@edaya/core'
+
+import { buildReportCardV1Payload } from '../build-report-card-v1-payload'
+import { catalogLangFromLocale, catalogSubjectName } from '../catalog-label'
+import { fail } from './shared'
+
+export async function assembleReportDocument(
+  base: DocumentAssemblyContext<never, 'reportCards'>,
+  input: AssembleDocumentInput,
+  school: School,
+  locale: string,
+  timeZone: string,
+  title: string,
+  branding: Record<string, unknown>,
+): Promise<AssembledDocumentSource> {
+  const context = await base.access.reportCards.documentContext(input.sourceId)
+  if (context.result.status !== ReportCardResultStatus.Published || !context.period.isPublished)
+    fail(DOCUMENT_FAILURES.SOURCE_UNPUBLISHED, 'Report documents require a published result and academic period')
+  const catalogLang = catalogLangFromLocale(locale)
+  const subjectNameByClassSubjectId = new Map(context.subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.code)]))
+  const peerAverages = [...context.peerResults].sort((a, b) => a.id.localeCompare(b.id)).map(entry => entry.overallAverage).filter((value): value is number => value !== undefined)
+  const formatAverage = (value: number) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} / 20`
+  const payload = buildReportCardV1Payload({
+    result: context.result,
+    student: context.student,
+    school: context.school,
+    periodLabel: context.period.name,
+    classLabel: context.classGroup.name,
+    schoolYear: context.academicYear.name,
+    locale,
+    subjectNameByClassSubjectId,
+    teacherNameByClassSubjectId: context.teacherNameByClassSubjectId,
+    homeroomTeacherName: context.homeroomTeacherName,
+    classResults: peerAverages.length
+      ? {
+          classAverage: formatAverage(peerAverages.reduce((sum, value) => sum + value, 0) / peerAverages.length),
+          lowestAverage: formatAverage(Math.min(...peerAverages)),
+          highestAverage: formatAverage(Math.max(...peerAverages)),
+        }
+      : undefined,
+  })
+  const publishedAt = context.result.publishedAt?.toISOString() ?? ''
+  return {
+    academicYearId: context.academicYear.id,
+    sourceType: DocumentSourceType.ReportCardResult,
+    sourceId: context.result.id,
+    sourceVersion: `${publishedAt}:${context.period.id}:${context.result.reportCardDefinitionId}`,
+    studentId: context.student.id,
+    classGroupId: context.classGroup.id,
+    portraitRequired: false,
+    snapshot: {
+      facts: { kind: input.templateKey, documentTitle: title, ...payload, schoolCode: school.schoolCode, schoolAddress: school.postalAddress, schoolPhone: school.phone, schoolEmail: school.email },
+      sourceVersion: `${publishedAt}:${context.period.id}`,
+      locale: input.locale,
+      timeZone,
+      portraitAttachmentId: context.student.photoAttachmentId,
+      ...branding,
+    },
+  }
+}

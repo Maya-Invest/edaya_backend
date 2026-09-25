@@ -48,12 +48,7 @@ afterAll(async () => {
 })
 
 test('finance-only reset preserves identity, school, academic and journal rows', async () => {
-  await repos.schools.save(new School({
-    id: actor.schoolId,
-    name: 'Reset school',
-    timeZone: 'UTC',
-    ownerSubjectId: actor.subjectId,
-  }))
+  await repos.schools.save(new School({ financeCurrency: 'USD', id: actor.schoolId, name: 'Reset school', timeZone: 'UTC', ownerSubjectId: actor.subjectId }))
   await repos.staffMembers.save(new StaffMember({
     id: actor.staffMemberId,
     schoolId: actor.schoolId,
