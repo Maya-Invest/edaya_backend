@@ -1,6 +1,6 @@
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { noOpFileStorage, noOpNotificationGateway, School, StaffMember } from '@edaya/core'
-import { minimalDataset } from '@edaya/fixtures'
+import { bootstrapSeedDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { seedMinimalSchool } from '@edaya/seeding'
 import { SchoolApplication } from '@edaya/service'
@@ -40,7 +40,8 @@ describe('seed mutation admission', () => {
     expect(await repositories.staffMembers.count()).toBe(1)
     expect(await repositories.guardians.count()).toBe(1)
     expect(await repositories.accountInvitations.count()).toBe(0)
-    expect((await repositories.guardians.findById(minimalDataset.entities.guardians![0]!.id))?.schoolId).toBe(minimalDataset.entities.school!.id)
+    const bootstrap = bootstrapSeedDataset()
+    expect((await repositories.guardians.findById(bootstrap.entities.guardians![0]!.id))?.schoolId).toBe(bootstrap.entities.school!.id)
   })
 
   test('auth-link adapter initializes only its selected linked owner and preserves school settings', async () => {

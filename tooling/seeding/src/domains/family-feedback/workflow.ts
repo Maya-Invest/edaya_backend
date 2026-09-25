@@ -5,14 +5,8 @@ export interface DevFamilyFeedbackSeedCounts {
   campaigns: number
 }
 
-function moderatorStaffIdForDataset(dataset: FixtureDataset): string | undefined {
-  if (dataset.purpose === 'demo-ci') {
-    return 'ci-st5'
-  }
-  if (dataset.purpose === 'demo') {
-    return 'st5'
-  }
-  return undefined
+function moderatorStaffIdForDataset(_dataset: FixtureDataset): string {
+  return 'ci-st5'
 }
 
 export async function seedDevFamilyFeedback(

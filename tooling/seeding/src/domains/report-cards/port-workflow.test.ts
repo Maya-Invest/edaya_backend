@@ -5,13 +5,13 @@ import type {
   ReportCardSectionSeedRecord,
   ReportCardsSeedPort,
 } from './port'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevReportCards } from './workflow'
 
 describe('report-cards seed port workflow', () => {
   test('seeds scales, definitions, sections, and generated or published results', async () => {
-    const results = demoDataset.extensions?.reportCardResults ?? []
+    const results = demoCiDataset.extensions?.reportCardResults ?? []
     const publishedCount = results.filter(
       result => result.narrativeStatus === 'published' && result.publishedAt,
     ).length
@@ -39,7 +39,7 @@ describe('report-cards seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevReportCards(port, demoDataset)
+    const counts = await seedDevReportCards(port, demoCiDataset)
 
     expect(counts).toEqual({
       gradeScales: scales.length,
@@ -47,8 +47,8 @@ describe('report-cards seed port workflow', () => {
       sections: sections.length,
       results: generated.length,
     })
-    expect(scales).toHaveLength(demoDataset.entities.gradeScales?.length ?? 0)
-    expect(definitions).toHaveLength(demoDataset.extensions?.reportCardDefinitionFixtures?.length ?? 0)
+    expect(scales).toHaveLength(demoCiDataset.entities.gradeScales?.length ?? 0)
+    expect(definitions).toHaveLength(demoCiDataset.extensions?.reportCardDefinitionFixtures?.length ?? 0)
     expect(published).toHaveLength(publishedCount)
     expect(generated[0]?.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)
   })

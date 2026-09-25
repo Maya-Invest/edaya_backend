@@ -8,4 +8,4 @@ export const DEMO_CI_SCHOOL_ID = 'sch-edaya-ci-cocody' as const
 
 export const DEMO_CI_ACADEMIC_YEAR_ID = '2025-ci' as const
 
-export const SEED_SCHOOL_ID = DEMO_CENTRAL_SCHOOL_ID
+export const SEED_SCHOOL_ID = DEMO_CI_SCHOOL_ID

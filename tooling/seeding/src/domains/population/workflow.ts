@@ -69,14 +69,6 @@ async function seedPopulationFromDataset(
   }
 }
 
-/** Auth-linked students and guardians only — for fast integration test fixtures. */
-export async function seedIntegrationLightPopulation(
-  port: PopulationSeedPort,
-  dataset: FixtureDataset,
-): Promise<void> {
-  await seedPopulationFromDataset(port, dataset)
-}
-
 export async function seedDevPopulation(
   port: PopulationSeedPort,
   dataset: FixtureDataset,

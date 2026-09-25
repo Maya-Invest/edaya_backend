@@ -1,5 +1,5 @@
 import type { FamilyFeedbackSeedPort } from './port'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevFamilyFeedback } from './workflow'
 
@@ -9,32 +9,32 @@ describe('family feedback seed workflow', () => {
     const assigned: string[] = []
     const port: FamilyFeedbackSeedPort = {
       listSubjectAssignments: async () => [{ id: 'ta-subject-1', teacherId: 't1' }],
-      listStaffMembers: async () => [{ id: 'st5' }, { id: 'st1' }],
+      listStaffMembers: async () => [{ id: 'ci-st5' }, { id: 'ci-st4' }],
       listCampaigns: async () => created.map(id => ({ id, status: 'draft' })),
       createCampaign: async (record) => {
         expect(record.teacherAssignmentId).toBe('ta-subject-1')
         expect(record.moderatorStaffId).toBeUndefined()
-        expect(record.academicYearId).toBe(demoDataset.entities.academicYear?.id)
-        expect(record.academicPeriodId).toBe(demoDataset.entities.academicPeriods?.[0]?.id)
+        expect(record.academicYearId).toBe(demoCiDataset.entities.academicYear?.id)
+        expect(record.academicPeriodId).toBe(demoCiDataset.entities.academicPeriods?.[0]?.id)
         created.push(record.id)
       },
       assignModerator: async (record) => {
-        expect(record.id).toBe(`ff-campaign-${demoDataset.schoolId}`)
-        expect(record.moderatorStaffId).toBe('st5')
+        expect(record.id).toBe(`ff-campaign-${demoCiDataset.schoolId}`)
+        expect(record.moderatorStaffId).toBe('ci-st5')
         assigned.push(record.moderatorStaffId)
       },
     }
 
-    expect(await seedDevFamilyFeedback(port, demoDataset)).toEqual({ campaigns: 1 })
-    expect(await seedDevFamilyFeedback(port, demoDataset)).toEqual({ campaigns: 0 })
+    expect(await seedDevFamilyFeedback(port, demoCiDataset)).toEqual({ campaigns: 1 })
+    expect(await seedDevFamilyFeedback(port, demoCiDataset)).toEqual({ campaigns: 0 })
     expect(created).toHaveLength(1)
-    expect(assigned).toEqual(['st5'])
+    expect(assigned).toEqual(['ci-st5'])
   })
 
   test('skips when no subject assignments exist', async () => {
     const port: FamilyFeedbackSeedPort = {
       listSubjectAssignments: async () => [],
-      listStaffMembers: async () => [{ id: 'st5' }],
+      listStaffMembers: async () => [{ id: 'ci-st5' }],
       listCampaigns: async () => [],
       createCampaign: async () => {
         throw new Error('must not create a campaign without a subject assignment')
@@ -44,6 +44,6 @@ describe('family feedback seed workflow', () => {
       },
     }
 
-    expect(await seedDevFamilyFeedback(port, demoDataset)).toEqual({ campaigns: 0 })
+    expect(await seedDevFamilyFeedback(port, demoCiDataset)).toEqual({ campaigns: 0 })
   })
 })

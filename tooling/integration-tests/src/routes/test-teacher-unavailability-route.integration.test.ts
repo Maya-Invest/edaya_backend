@@ -1,6 +1,6 @@
 import { DayOfWeek, Teacher, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
+import { DEMO_CI_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import { expect, it } from 'bun:test'
 import { createInProcessSchoolClient } from '../support/in-process-school-client'
 import { describeWithLightSchool } from '../support/seeded-route-test-context'
@@ -15,13 +15,13 @@ describeWithLightSchool('teacher unavailability routes', (getContext) => {
     const input = {
       id: 'route-teacher-unavailability',
       teacherId: 't1',
-      academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
+      academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
       recurrence: TeacherUnavailabilityRecurrence.Weekly,
       dayOfWeek: DayOfWeek.Tuesday,
       startTime: '08:30',
       endTime: '11:00',
-      effectiveFrom: '2025-09-01T00:00:00.000Z',
-      effectiveUntil: '2025-12-31T00:00:00.000Z',
+      effectiveFrom: '2026-09-14T00:00:00.000Z',
+      effectiveUntil: '2026-12-31T00:00:00.000Z',
       reason: 'Contract teaching hours',
       isActive: true,
     }

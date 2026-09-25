@@ -30,7 +30,7 @@ const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
 function teacherClassSubjectAssignments() {
   return STAFF_TEACHING_WRITE_TEST_PERMISSIONS.map(permission => ({
     permission,
-    scopes: [{ kind: "class_group" as const, classGroupId: "6a" }],
+    scopes: [{ kind: "class_group" as const, classGroupId: "ci-6a" }],
     academicYearId: TEST_ACADEMIC_YEAR_ID,
   }));
 }
@@ -90,7 +90,7 @@ describe("service account routes", () => {
       displayName: "Teacher Integration",
       permissionAssignments: [
         { permission: Permission.QUERY_WORKSPACE_READ, scopes: [{ kind: "school" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
-        { permission: Permission.GRADE_READ, scopes: [{ kind: "class_group" as const, classGroupId: "6a" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
+        { permission: Permission.GRADE_READ, scopes: [{ kind: "class_group" as const, classGroupId: "ci-6a" }], academicYearId: TEST_ACADEMIC_YEAR_ID },
       ],
     });
 
@@ -229,12 +229,12 @@ describe("service account routes", () => {
     });
     await seedDevSchoolAndAuthLinks(application, runtime);
 
-    const staffAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "st3")!;
+    const staffAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "ci-st3")!;
     const teacherStaffId = staffAccount.staffId;
     await grantServiceAccountCreate(application, teacherStaffId, [
       Permission.SERVICE_ACCOUNT_CREATE,
       ...STAFF_TEACHING_WRITE_TEST_PERMISSIONS,
-    ], [{ kind: "class_group", classGroupId: "6a" }]);
+    ], [{ kind: "class_group", classGroupId: "ci-6a" }]);
 
     const accessToken = await signInWithBearerThroughApp(app, {
       email: staffAccount.email,

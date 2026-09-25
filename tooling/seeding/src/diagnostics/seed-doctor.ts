@@ -133,7 +133,7 @@ export async function runHttpSeedDoctor(
       'warn',
       'demo-school-missing',
       `School data exists (${schools.length} school(s)) but expected demo school ${context.schoolId} is absent.`,
-      'Check `SEED_DATASET` / `SEED_SCHOOL_ID`, then reseed.',
+      'Check `SEED_SCHOOL_ID`, then reseed.',
     ))
   }
   else {

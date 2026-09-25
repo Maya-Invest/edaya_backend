@@ -3,7 +3,7 @@ import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-conte
 import type { ProfilePicturesSeedPort } from './port'
 import { readFile } from 'node:fs/promises'
 import { AttachmentOwnerKind } from '@edaya/core'
-import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { demoCiSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   buildSeedProfileAttachmentId,
   createRandomProfilePictureAllocator,
@@ -67,7 +67,7 @@ async function seedProfilePhotoForOwner(
     mimeType: SEED_PROFILE_PHOTO_MIME_TYPE,
     sizeBytes: body.byteLength,
     body,
-    uploadedById: demoSchoolOwnerStaffId,
+    uploadedById: demoCiSchoolOwnerStaffId,
   })
 
   await setPhotoUrl(uploaded.photoUrl)

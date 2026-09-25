@@ -1,6 +1,6 @@
 import type { AuthProvisioner } from '../../support/types'
 import type { AuthLinkSeedPort } from './port'
-import { demoSchoolOwnerStaffId } from '@edaya/fixtures'
+import { demoCiSchoolOwnerStaffId } from '@edaya/fixtures'
 import {
   DEV_AUTH_GUARDIAN_ACCOUNTS,
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -9,9 +9,6 @@ import {
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import { assignDevSchoolOwnerSubjectId, syncDevStaffAuthAndOwner } from '../../bootstrap/dev-staff-auth-seed'
-
-/* eslint-disable-next-line dot-notation -- process.env index signature */
-process.env['SEED_DATASET'] = 'demo'
 
 function subjectIdForEmail(email: string): string {
   return `subject:${email}`
@@ -130,7 +127,7 @@ function createMemoryPort(): {
 describe('auth-link seed port workflow', () => {
   test('a mismatched persisted owner is reported and left unchanged', async () => {
     const memory = createMemoryPort()
-    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoSchoolOwnerStaffId)
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoCiSchoolOwnerStaffId)
     if (!owner) {
       throw new Error('Dev auth fixtures must include the school owner')
     }
@@ -138,7 +135,7 @@ describe('auth-link seed port workflow', () => {
     memory.state.staff.set(owner.staffId, 'persisted-owner')
 
     await expect(syncDevStaffAuthAndOwner(memory.port, createAuthProvisioner())).rejects.toThrow(
-      'Persisted school owner persisted-owner does not match fixture owner subject:k.yann@school.edu',
+      'Persisted school owner persisted-owner does not match fixture owner subject:a.kone@ecole-ci.edaya.dev',
     )
     expect(memory.state.ownerSubjectId).toBe('persisted-owner')
     expect(memory.state.staff.get(owner.staffId)).toBe('persisted-owner')
@@ -166,7 +163,7 @@ describe('auth-link seed port workflow', () => {
     expect(memory.replacedGuardians).toEqual([DEV_AUTH_GUARDIAN_ACCOUNTS[0]?.guardianId])
     expect(memory.replacedTeachers).toEqual([DEV_AUTH_TEACHER_ACCOUNTS[0]?.teacherId])
 
-    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoSchoolOwnerStaffId)
+    const owner = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === demoCiSchoolOwnerStaffId)
     expect(memory.state.ownerSubjectId).toBe(owner ? subjectIdForEmail(owner.email) : undefined)
 
     const second = await syncDevStaffAuthAndOwner(memory.port, auth)

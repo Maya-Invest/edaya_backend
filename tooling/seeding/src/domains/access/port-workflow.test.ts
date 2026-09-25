@@ -5,7 +5,6 @@ import type {
   StaffAssignmentSeedRecord,
   StaffPermissionAssignmentSeedRecord,
 } from './port'
-import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import {
@@ -13,9 +12,6 @@ import {
   runDevAccessRolesSeedWithPort,
   runDevAccessSeedWithPort,
 } from '../../orchestration/run-dev-access-seed'
-
-/* eslint-disable-next-line dot-notation -- process.env index signature */
-process.env['SEED_DATASET'] = 'demo'
 
 function createMemoryPort(
   schoolExists = true,
@@ -63,13 +59,9 @@ describe('access seed port workflow', () => {
       return
     }
     expect(result.permissionAssignments).toBeGreaterThan(0)
-    expect(result.staffAssignments).toBe(
-      2 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
-    )
+    expect(result.staffAssignments).toBe(2)
     expect(memory.permissionAssignments.length).toBe(result.permissionAssignments)
-    expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(
-      demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0,
-    )
+    expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(0)
   })
 
   test('binds staff to invite permission-profile fragments after grants', async () => {
@@ -82,13 +74,13 @@ describe('access seed port workflow', () => {
 
     await runDevAccessAssignmentsSeedWithPort(memory.port)
 
-    expect(memory.profileBindings.filter(binding => binding.staffId === 'st5').map(binding => binding.profileId))
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st5').map(binding => binding.profileId))
       .toEqual(['pp-director', 'pp-director-cg'])
-    expect(memory.profileBindings.filter(binding => binding.staffId === 'st8').map(binding => binding.profileId))
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st8').map(binding => binding.profileId))
       .toEqual(['pp-director', 'pp-director-cg'])
-    expect(memory.profileBindings.filter(binding => binding.staffId === 'st3').map(binding => binding.profileId))
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st3').map(binding => binding.profileId))
       .toEqual(['pp-coordinator'])
-    expect(memory.profileBindings.filter(binding => binding.staffId === 'st7').map(binding => binding.profileId))
+    expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st7').map(binding => binding.profileId))
       .toEqual(['pp-educator'])
     expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director-cg')?.scopes).toEqual([
       { kind: 'all', grain: 'class_group' },

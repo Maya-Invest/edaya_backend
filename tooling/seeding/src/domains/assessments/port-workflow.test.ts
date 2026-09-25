@@ -4,7 +4,7 @@ import type {
   AssessmentsSeedPort,
 } from './port'
 import { AssessmentKind, DeadlineComplianceStatus } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { describe, expect, test } from 'bun:test'
 import { seedDevAssessments } from './workflow'
@@ -23,13 +23,13 @@ describe('assessments seed port workflow', () => {
       },
     }
 
-    await seedDevAssessments(port, demoDataset)
+    await seedDevAssessments(port, demoCiDataset)
 
-    const expected = resolveExpectedCounts(demoDataset)
+    const expected = resolveExpectedCounts(demoCiDataset)
     expect(assessments).toHaveLength(expected.assessments ?? 0)
     expect(results).toHaveLength(expected['assessment-results'] ?? 0)
 
-    const inClass = assessments.find(record => record.id === 'e1')
+    const inClass = assessments.find(record => record.id === 'ci-asm-6a-t1-math')
     expect(inClass?.startsAt).toBeDefined()
     expect(inClass?.endsAt).toBeDefined()
     expect(inClass?.dueAt).toBeUndefined()

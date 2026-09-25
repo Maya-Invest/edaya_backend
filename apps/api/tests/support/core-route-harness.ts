@@ -21,7 +21,7 @@ import type { ServiceAccountPermissionAssignmentInput } from "@edaya/authorizati
 import { Permission, permissionScope, StaffPermissionAssignment } from "@edaya/core";
 import type { GrantScope } from "@edaya/core";
 import { resolveDevSeedContext } from "@edaya/fixtures/meta/resolve-dev-seed-context";
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
+import { DEMO_CI_ACADEMIC_YEAR_ID, SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import {
 
   createInProcessAuthLinkSeedPort,
@@ -54,8 +54,6 @@ import {
 } from "./embedded-local-files";
 import type { EmbeddedLocalFilesServer } from "./embedded-local-files";
 
-// eslint-disable-next-line node/no-process-env -- route tests pin the demo fixture dataset
-process.env.SEED_DATASET = process.env.SEED_DATASET ?? "demo";
 setDefaultTimeout(120_000);
 const identityAccounts = new Map<string, { subjectId: string; name?: string }>();
 const activeTestRuntimes = new Set<ApiRuntime>();
@@ -70,7 +68,7 @@ export { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
 export { createSessionActorDependency };
 export const apiPgliteEnv = pgliteEnv;
 export const createApiPgliteTestEnv = createPgliteTestEnv;
-export const TEST_ACADEMIC_YEAR_ID = DEMO_CENTRAL_ACADEMIC_YEAR_ID;
+export const TEST_ACADEMIC_YEAR_ID = DEMO_CI_ACADEMIC_YEAR_ID;
 
 export interface AuthenticatedRouteContext {
   app: Hono<AppBindings>;
@@ -356,7 +354,7 @@ export async function provisionServiceAccountForTests(
     requestId: "service-account-test",
     authenticatedAt: new Date(),
     assuranceLevel: ActorAssuranceLevel.Verified,
-    academicYearId: DEMO_CENTRAL_ACADEMIC_YEAR_ID,
+    academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
   });
   return createServiceAccount(application.repositories, actor, input, application.atomicExecution);
 }

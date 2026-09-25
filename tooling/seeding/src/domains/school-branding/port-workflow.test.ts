@@ -1,5 +1,5 @@
 import type { SchoolBrandingSeedPort, SchoolIssuingIdentitySeedRecord, UploadSchoolIssuanceAssetInput } from './port'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { SEED_ISSUANCE_ASSETS, SEED_PUBLIC_BRANDING_PURPOSES } from '@edaya/fixtures/shared/issuance-assets'
 import { describe, expect, test } from 'bun:test'
 import { seedDevSchoolBranding } from './workflow'
@@ -28,18 +28,18 @@ function createMemoryPort(): {
 describe('school branding seed workflow', () => {
   test('uploads restricted assets then allowlists logo and crest with issuing identity', async () => {
     const memory = createMemoryPort()
-    const result = await seedDevSchoolBranding(memory.port, demoDataset)
+    const result = await seedDevSchoolBranding(memory.port, demoCiDataset)
 
     expect(result.assets).toBe(SEED_ISSUANCE_ASSETS.length)
     expect(memory.uploads.map(upload => upload.purpose)).toEqual(SEED_ISSUANCE_ASSETS.map(asset => asset.purpose))
     expect(memory.identity).toHaveLength(1)
     expect(memory.identity[0]).toMatchObject({
-      schoolId: demoDataset.schoolId,
-      issuingName: demoDataset.entities.school?.issuingName,
-      schoolCode: demoDataset.entities.school?.schoolCode,
+      schoolId: demoCiDataset.schoolId,
+      issuingName: demoCiDataset.entities.school?.issuingName,
+      schoolCode: demoCiDataset.entities.school?.schoolCode,
       publicBrandingPurposes: [...SEED_PUBLIC_BRANDING_PURPOSES],
     })
-    expect(memory.uploads.every(upload => upload.schoolId === demoDataset.schoolId)).toBe(true)
+    expect(memory.uploads.every(upload => upload.schoolId === demoCiDataset.schoolId)).toBe(true)
     expect(memory.uploads.find(upload => upload.purpose === 'school.stamp')?.fileName).toBe('stamp.jpg')
   })
 })

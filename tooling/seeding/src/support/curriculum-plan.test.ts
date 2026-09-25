@@ -1,4 +1,4 @@
-import { demoCiDataset, demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { buildFixtureCurriculumPlan, classSubjectMatterSeedId } from './curriculum-plan'
 
@@ -29,18 +29,5 @@ describe('buildFixtureCurriculumPlan', () => {
       entry => entry.subjectId === 'ci-subj-fr' && entry.gradeLevelId === 'ci-gl-6',
     )
     expect(frenchGradeLevelSubject?.periodsPerWeek).toBe(4)
-  })
-
-  test('central demo exposes multiple math chapters for 6a', () => {
-    const plan = buildFixtureCurriculumPlan(demoDataset.entities)
-    const mathMatters = (demoDataset.entities.subjectMatters ?? [])
-      .filter(matter => matter.subjectId === 'subj-math')
-
-    expect(mathMatters.map(matter => matter.name)).toContain('Introduction to algebra')
-
-    const mathLinks = plan.gradeLevelSubjectMatters.filter(
-      link => link.subjectMatterId.startsWith('sm-math-'),
-    )
-    expect(mathLinks.length).toBeGreaterThanOrEqual(mathMatters.length)
   })
 })

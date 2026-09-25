@@ -78,7 +78,7 @@ export function buildDevDemoLoginAccounts(): DevDemoLoginAccount[] {
   })
 }
 
-/** Dev login picker accounts for the webapp `/login` page (honours current `SEED_DATASET`). */
+/** Dev login picker accounts for the webapp `/login` page. */
 export function getDevDemoLoginAccounts(): DevDemoLoginAccount[] {
   return buildDevDemoLoginAccounts()
 }

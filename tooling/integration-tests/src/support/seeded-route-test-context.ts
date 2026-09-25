@@ -5,7 +5,7 @@ import type { AppBindings } from '@/http/types'
 import type { ApiSchoolApplication } from '@/lib/school-api/application'
 import type { ApiRuntime } from '@/runtime'
 import { MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
-import { DEMO_CENTRAL_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
+import { DEMO_CI_ACADEMIC_YEAR_ID } from '@edaya/fixtures/shared/ids'
 import {
   createInProcessAuthLinkSeedPort,
   runDevAccessSeed,
@@ -176,7 +176,7 @@ export async function provisionSeededRouteTestContext(
       return {
         'content-type': 'application/json',
         'authorization': `Bearer ${accessToken}`,
-        'x-academic-year-id': DEMO_CENTRAL_ACADEMIC_YEAR_ID,
+        'x-academic-year-id': DEMO_CI_ACADEMIC_YEAR_ID,
       }
     },
   }

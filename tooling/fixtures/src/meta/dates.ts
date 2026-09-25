@@ -71,12 +71,12 @@ export function seedUpcomingDate(offsetDays: number, fromDate: string = SEED_REF
   return seedDateOffset(offsetDays, fromDate)
 }
 
-export function seedReferenceDateForDataset(datasetId: string): string {
-  return datasetId === 'demo-ci' ? DEMO_CI_SEED_REFERENCE_DATE : SEED_REFERENCE_DATE
+export function seedReferenceDateForDataset(_datasetId?: string): string {
+  return DEMO_CI_SEED_REFERENCE_DATE
 }
 
-export function dashboardAcademicPeriodIdForDataset(datasetId: string): string {
-  return datasetId === 'demo-ci' ? DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID : SEED_DASHBOARD_ACADEMIC_PERIOD_ID
+export function dashboardAcademicPeriodIdForDataset(_datasetId?: string): string {
+  return DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID
 }
 
 /** Resolves the narrative reference date, allowing runtime override via env. */
@@ -85,5 +85,5 @@ export function resolveSeedReferenceDate(datasetId?: string): string {
   if (override) {
     return override
   }
-  return datasetId ? seedReferenceDateForDataset(datasetId) : SEED_REFERENCE_DATE
+  return seedReferenceDateForDataset(datasetId)
 }

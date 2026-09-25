@@ -56,29 +56,9 @@
       "types": "./src/shared/builders/people.ts",
       "import": "./src/shared/builders/people.ts"
     },
-    "./integration/narrative": {
-      "types": "./src/datasets/integration/narrative.ts",
-      "import": "./src/datasets/integration/narrative.ts"
-    },
-    "./datasets/bulk": {
-      "types": "./src/datasets/bulk/index.ts",
-      "import": "./src/datasets/bulk/index.ts"
-    },
-    "./datasets/demo": {
-      "types": "./src/datasets/demo/index.ts",
-      "import": "./src/datasets/demo/index.ts"
-    },
     "./datasets/demo-ci": {
       "types": "./src/datasets/demo-ci/index.ts",
       "import": "./src/datasets/demo-ci/index.ts"
-    },
-    "./datasets/integration": {
-      "types": "./src/datasets/integration/index.ts",
-      "import": "./src/datasets/integration/index.ts"
-    },
-    "./datasets/minimal": {
-      "types": "./src/datasets/minimal/index.ts",
-      "import": "./src/datasets/minimal/index.ts"
     },
     "./shared/attachment-assets": {
       "types": "./src/shared/attachment-assets.ts",

@@ -1,5 +1,4 @@
 import type { GrantScope } from '@edaya/core'
-/* eslint-disable dot-notation -- staffAccessRoleIds is Record<string, string> for tsc */
 import type { DevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import type {
   AccessRolePresetRecord,
@@ -209,23 +208,12 @@ function buildStaffRoleAssignmentRecords(context: DevSeedContext): readonly Staf
     [Permission.ATTENDANCE_RECORD]: [{ kind: 'all', grain: 'class_group' }],
   }
 
-  if (context.datasetId === 'demo-ci') {
-    const roles = context.staffAccessRoleIds
-    return [
-      createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!, scopesByPermissionForRole(context, roles['ci-st3']!)),
-      createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!, scopesByPermissionForRole(context, roles['ci-st8']!)),
-      createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!, scopesByPermissionForRole(context, roles['ci-st5']!)),
-      createStaffRoleAssignment(context, 'ci-st7', roles['ci-st7']!, schoolDisciplineAndAttendanceGrants),
-    ]
-  }
-
   const roles = context.staffAccessRoleIds
   return [
-    createStaffRoleAssignment(context, 'st3', roles['st3']!, scopesByPermissionForRole(context, roles['st3']!)),
-    createStaffRoleAssignment(context, 'st8', roles['st8']!, scopesByPermissionForRole(context, roles['st8']!)),
-    createStaffRoleAssignment(context, 'st5', roles['st5']!, scopesByPermissionForRole(context, roles['st5']!)),
-    createStaffRoleAssignment(context, 'st6', 'role-educator', schoolDisciplineAndAttendanceGrants),
-    createStaffRoleAssignment(context, 'st7', roles['st7']!, schoolDisciplineAndAttendanceGrants),
+    createStaffRoleAssignment(context, 'ci-st3', roles['ci-st3']!, scopesByPermissionForRole(context, roles['ci-st3']!)),
+    createStaffRoleAssignment(context, 'ci-st8', roles['ci-st8']!, scopesByPermissionForRole(context, roles['ci-st8']!)),
+    createStaffRoleAssignment(context, 'ci-st5', roles['ci-st5']!, scopesByPermissionForRole(context, roles['ci-st5']!)),
+    createStaffRoleAssignment(context, 'ci-st7', roles['ci-st7']!, schoolDisciplineAndAttendanceGrants),
   ]
 }
 
@@ -233,16 +221,9 @@ function buildBaseStaffAssignmentRecords(context: DevSeedContext): readonly Staf
   const academicYearId = context.dataset.entities.academicYear?.id
     ?? (() => { throw new Error('Seed dataset must include academicYear for access seeding') })()
 
-  if (context.datasetId === 'demo-ci') {
-    return [
-      { id: 'sa-ci-st3-6a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
-      { id: 'sa-ci-st3-5a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-5a' },
-    ]
-  }
-
   return [
-    { id: 'sa-st3-6a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '6a' },
-    { id: 'sa-st3-5a', staffId: 'st3', academicYearId, responsibility: 'Homeroom', classGroupId: '5a' },
+    { id: 'sa-ci-st3-6a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-6a' },
+    { id: 'sa-ci-st3-5a', staffId: 'ci-st3', academicYearId, responsibility: 'Professeur principal', classGroupId: 'ci-5a' },
   ]
 }
 

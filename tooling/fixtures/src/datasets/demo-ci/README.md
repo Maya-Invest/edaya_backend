@@ -93,4 +93,4 @@ bun repo dev          # terminal 1
 bun repo seed    # terminal 2, once API is ready
 ```
 
-Pour le bulk ivoirien (1000 élèves) : `SEED_DATASET=ci`. Pour Ottawa : `SEED_DATASET=central` dans `apps/api/.env`.
+`bun repo seed` loads this dataset. Route tests seed a slice of it (structure plus auth-linked guardians). Auth bootstrap seeds the school, owner, and one guardian.

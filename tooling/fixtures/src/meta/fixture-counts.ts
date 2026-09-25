@@ -1,10 +1,7 @@
 import type { StudentClassEnrollmentInput } from '@edaya/core'
 import type { FixtureDataset } from '../datasets/types'
 import { AnnouncementTargetKind, MessageDeliveryRecipientKind } from '@edaya/core'
-import { demoDataset } from '../datasets/demo'
-import { DEMO_CI_SCHOOL_ID } from '../shared/ids'
 import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from './dev-auth-fixtures'
-import { DEV_CI_AUTH_GUARDIAN_ACCOUNTS, DEV_CI_AUTH_STAFF_ACCOUNTS } from './dev-auth-fixtures-ci'
 
 export type ExpectedFixtureCounts = ReturnType<typeof resolveExpectedCounts>
 
@@ -205,9 +202,8 @@ function countAttachments(dataset: FixtureDataset): number {
 }
 
 export function countMessageDeliveriesMinimum(dataset: FixtureDataset): number {
-  const ci = dataset.schoolId === DEMO_CI_SCHOOL_ID
-  const guardianAccounts = ci ? DEV_CI_AUTH_GUARDIAN_ACCOUNTS : DEV_AUTH_GUARDIAN_ACCOUNTS
-  const staffAccounts = ci ? DEV_CI_AUTH_STAFF_ACCOUNTS : DEV_AUTH_STAFF_ACCOUNTS
+  const guardianAccounts = DEV_AUTH_GUARDIAN_ACCOUNTS
+  const staffAccounts = DEV_AUTH_STAFF_ACCOUNTS
   const guardians = new Set((dataset.entities.guardians ?? [])
     .filter(guardian => guardian.hasAccess !== false && guardianAccounts.some(account => account.guardianId === guardian.id))
     .map(guardian => guardian.id))
@@ -261,7 +257,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'resources': countArray(entities.resources),
     'schedules': countSchedulingSlots(dataset),
     'lesson-sessions': countLessonSessions(dataset),
-    'staff-assignments': 5 + (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
+    'staff-assignments': 2 + (dataset.extensions?.classSubjectStaffAssignments?.length ?? 0),
     'resource-assignments': countResourceAssignments(dataset),
     'class-subject-progress': countClassSubjectProgress(dataset),
     'assessments': countAssessments(dataset),

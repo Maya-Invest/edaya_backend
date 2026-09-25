@@ -1,10 +1,10 @@
 import { createSystemActorMetadata } from '@edaya/authorization'
 import { MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
-import { devSeedDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import {
+  DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
   parseSeedDate,
   resolveSeedReferenceDate,
-  SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
 } from '@edaya/fixtures/meta/dates'
 import {
   DEV_AUTH_STAFF_ACCOUNTS,
@@ -77,21 +77,21 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
   it('materializes only linked recipients and preserves explicit inbox history', async () => {
     const { application } = getContext()
-    const guardian = await application.repositories.guardians.findById('g1')
-    const delivery = await application.repositories.messageDeliveries.findOne({ sourceKey: 'ann-parent-meeting', recipientId: 'g1' })
+    const guardian = await application.repositories.guardians.findById('ci-g1')
+    const delivery = await application.repositories.messageDeliveries.findOne({ sourceKey: 'ci-ann-parent-meeting', recipientId: 'ci-g1' })
     expect(guardian?.subjectId).toBeTruthy()
     expect(delivery?.subjectId).toBe(guardian!.subjectId)
-    expect(delivery?.recipientId).toBe('g1')
+    expect(delivery?.recipientId).toBe('ci-g1')
     expect(delivery?.status).toBe(MessageDeliveryStatus.Read)
     expect(delivery?.readAt).toBeTruthy()
     const beforeCount = await application.repositories.messageDeliveries.count()
     await createInProcessCommunicationsSeedPort(application).recordDelivery({
       id: 'duplicate-seed-id',
       schoolId: SEED_SCHOOL_ID,
-      announcementId: 'ann-parent-meeting',
+      announcementId: 'ci-ann-parent-meeting',
       subjectId: guardian!.subjectId!,
       recipientKind: MessageDeliveryRecipientKind.Guardian,
-      recipientId: 'g1',
+      recipientId: 'ci-g1',
       title: delivery!.title,
       body: delivery!.body,
       status: MessageDeliveryStatus.Sent,
@@ -102,9 +102,9 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     expect(retained?.status).toBe(MessageDeliveryStatus.Read)
     expect(retained?.readAt).toEqual(delivery!.readAt)
     expect(await application.repositories.messageDeliveries.findById('duplicate-seed-id')).toBeUndefined()
-    expect(await application.repositories.messageDeliveries.findById('md-parent-st3-read')).toBeUndefined()
+    expect(await application.repositories.messageDeliveries.findById('ci-md-staff-read')).toBeUndefined()
     const deliveries = await application.repositories.messageDeliveries.list()
-    expect(deliveries.some(record => record.announcementId === 'ann-rentree' && record.recipientId === 'g1')).toBe(true)
+    expect(deliveries.some(record => record.announcementId === 'ci-ann-rentree' && record.recipientId === 'ci-g1')).toBe(true)
     expect(deliveries.some(record => record.recipientKind === MessageDeliveryRecipientKind.Student)).toBe(false)
   })
 
@@ -121,8 +121,8 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
 
   it('seeds population targets with class distribution and staff assignments', async () => {
     const { app, seedResult, authHeaders } = getContext()
-    expect(seedResult.students).toBe(countStudents(devSeedDataset))
-    expect(seedResult.guardians).toBe(countGuardians(devSeedDataset))
+    expect(seedResult.students).toBe(countStudents(demoCiDataset))
+    expect(seedResult.guardians).toBe(countGuardians(demoCiDataset))
 
     const headers = await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL)
     const [studentsCountResponse, guardiansCountResponse, enrollmentsCountResponse, staffAssignmentsResponse, studentsResponse, guardiansResponse] = await Promise.all([
@@ -154,7 +154,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       app.request(createAppRequest('/core/entities/guardians/list', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ $limit: countGuardians(devSeedDataset) }),
+        body: JSON.stringify({ $limit: countGuardians(demoCiDataset) }),
       })),
     ])
 
@@ -174,13 +174,13 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       await staffAssignmentsResponse.json(),
     )
 
-    expect(studentsCount).toBe(countStudents(devSeedDataset))
-    expect(guardiansCount).toBeGreaterThanOrEqual(countGuardians(devSeedDataset))
-    expect(enrollmentsCount).toBe(countStudents(devSeedDataset))
-    expect(students.some(student => student.id === 's30')).toBe(true)
-    expect(guardians.some(guardian => guardian.id === 'g9')).toBe(true)
+    expect(studentsCount).toBe(countStudents(demoCiDataset))
+    expect(guardiansCount).toBeGreaterThanOrEqual(countGuardians(demoCiDataset))
+    expect(enrollmentsCount).toBe(countStudents(demoCiDataset))
+    expect(students.some(student => student.id === 'ci-s30')).toBe(true)
+    expect(guardians.some(guardian => guardian.id === 'ci-g9')).toBe(true)
 
-    for (const [classGroupId, studentIds] of Object.entries(buildClassStudentIds(devSeedDataset))) {
+    for (const [classGroupId, studentIds] of Object.entries(buildClassStudentIds(demoCiDataset))) {
       for (const studentId of studentIds) {
         const enrollmentResponse = await app.request(createAppRequest('/core/entities/enrollments/one', {
           method: 'POST',
@@ -191,8 +191,8 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
       }
     }
 
-    expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-6a' && assignment.classGroupId === '6a')).toBe(true)
-    expect(staffAssignments.some(assignment => assignment.id === 'sa-st3-5a' && assignment.classGroupId === '5a')).toBe(true)
+    expect(staffAssignments.some(assignment => assignment.id === 'sa-ci-st3-6a' && assignment.classGroupId === 'ci-6a')).toBe(true)
+    expect(staffAssignments.some(assignment => assignment.id === 'sa-ci-st3-5a' && assignment.classGroupId === 'ci-5a')).toBe(true)
   })
 })
 
@@ -203,8 +203,8 @@ describeWithSeededSchoolData('dev seed contract — dashboard', (getContext) => 
     const referenceDate = parseSeedDate(resolveSeedReferenceDate())
     const overview = await buildSchoolOverview(application.repositories.dashboardProjections, await application.forActor(createSystemActorMetadata({ systemId: 'fixture-seed', schoolId: SEED_SCHOOL_ID, requestId: 'overview-test', reason: 'Fixture verification' })).baseService.access.overview.scopes(), {
       schoolId: SEED_SCHOOL_ID,
-      academicYearId: devSeedDataset.entities.academicYear?.id ?? '',
-      academicPeriodId: SEED_DASHBOARD_ACADEMIC_PERIOD_ID,
+      academicYearId: demoCiDataset.entities.academicYear?.id ?? '',
+      academicPeriodId: DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
       referenceDate,
     })
 

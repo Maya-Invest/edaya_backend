@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
-import { demoDataset } from "@edaya/fixtures";
+import { demoCiDataset } from "@edaya/fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, StaffMember } from "@edaya/core";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
@@ -28,7 +28,7 @@ describe("serializeCommandResult", () => {
   });
 
   it("flattens linkActorSubject responses", () => {
-    const guardianFixture = demoDataset.entities.guardians![0]!;
+    const guardianFixture = demoCiDataset.entities.guardians![0]!;
     const guardian = new Guardian({
       id: "g9",
       schoolId: SEED_SCHOOL_ID,

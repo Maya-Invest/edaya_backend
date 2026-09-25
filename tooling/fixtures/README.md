@@ -11,12 +11,8 @@ assets/profile-pictures/     Binary profile photo pool (pic####.jpg)
 data/onboarding/             Country onboarding templates (JSON source files)
 test/                        Package tests (mirrors src layout)
 src/
-  datasets/                  Purpose-driven typed fixture sets (*Input from @edaya/core)
-    minimal/                 Auth smoke — school, owner staff, primary guardian
-    integration/             Fast integration tests — students g1–g6 / s1–s6
-    demo/                    Full dev school — school.ts, people.ts, domains/
-    demo-ci/                 Collège ivoirien (Abidjan) — French labels
-    bulk/                    demo + procedural 1000-student population
+  datasets/                  The seed dataset (*Input from @edaya/core)
+    demo-ci/                 Collège ivoirien (Abidjan) — the only seed dataset
   onboarding/                Structure templates (CI primaire / collège / lycée)
   meta/                      Dates, manifest, validation harness, dev login
   shared/                    Cross-scenario helpers (ids, builders, profile pictures)
@@ -28,25 +24,16 @@ Records use `satisfies *Input` from `@edaya/core` so schema changes fail at comp
 
 | Dataset | Import | Purpose |
 |---------|--------|---------|
-| `minimalDataset` | `@edaya/fixtures` | Better Auth / register-school smoke (`st8`, `g1`) |
-| `integrationDataset` | `@edaya/fixtures` | Six auth-linked guardian/student pairs for fast tests |
-| `demoDataset` | `@edaya/fixtures` | Full dev school structure and domain entities |
-| `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan) — labels en français |
-| `bulkDataset` | `@edaya/fixtures` | `demoDataset` merged with 1000-student bulk population |
-
-Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
+| `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan). `bun repo seed` loads it in full. |
+| `bootstrapSeedDataset()` | `@edaya/fixtures` | School, owner `ci-st8`, guardian `ci-g1` |
+| `routeSeedDataset()` | `@edaya/fixtures` | Structure plus auth-linked guardians `ci-g1`–`ci-g6` and their students |
 
 ## Package exports
 
 | Import | Contents |
 |--------|----------|
-| `@edaya/fixtures` | `minimalDataset`, `integrationDataset`, `demoDataset`, `demoCiDataset`, `bulkDataset`, `FixtureDataset` types, `demoSchoolOwnerStaffId`, `demoCiSchoolOwnerStaffId` |
-| `@edaya/fixtures/datasets/minimal` | `minimalDataset` only |
-| `@edaya/fixtures/datasets/integration` | `integrationDataset` only |
-| `@edaya/fixtures/datasets/demo` | `demoDataset` only |
+| `@edaya/fixtures` | `demoCiDataset`, `bootstrapSeedDataset`, `routeSeedDataset`, `FixtureDataset` types, `demoCiSchoolOwnerStaffId` |
 | `@edaya/fixtures/datasets/demo-ci` | `demoCiDataset` only |
-| `@edaya/fixtures/datasets/bulk` | `bulkDataset` only |
-| `demoDataset.extensions.classSubjectStaffAssignments` | `@edaya/fixtures` | Class-subject teacher assignments for access seeding |
 | `@edaya/fixtures/onboarding` | CI structure templates, registry, country resolver |
 | `@edaya/fixtures/demo-login` | Dev login account helpers |
 | `@edaya/fixtures/meta/dev-auth-fixtures` | Auth accounts separate from `FixtureDataset` |
@@ -54,7 +41,7 @@ Sprint plan: `edaya_backend/docs/sprints/fixture-typed-datasets-plan.md`
 
 ## Related packages
 
-- `@edaya/seeding` — loads `devSeedDataset` (`demoDataset`) through HTTP or in-process ports by default
+- `@edaya/seeding` — loads `demoCiDataset` through HTTP or in-process ports. Tests pass `bootstrapSeedDataset()` or `routeSeedDataset()` when they do not need every domain.
 - `apps/api` — consumes `@edaya/fixtures/onboarding` for onboarding routes
 
 See `tooling/seeding/README.md` for seed commands and `src/meta/entity-manifest.ts` for entity coverage.

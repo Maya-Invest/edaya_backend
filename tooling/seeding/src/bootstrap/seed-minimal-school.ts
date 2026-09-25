@@ -1,11 +1,11 @@
 import type { SeedApplication } from '../support/types'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { minimalDataset } from '@edaya/fixtures'
+import { bootstrapSeedDataset } from '@edaya/fixtures'
 import { DEV_AUTH_GUARDIAN_ACCOUNTS, DEV_AUTH_STAFF_ACCOUNTS } from '@edaya/fixtures/meta/dev-auth-fixtures'
 
 /** Seeds the minimal school + staff + guardian fixtures used by Better Auth integration tests. */
 export async function seedMinimalSchool(application: SeedApplication): Promise<void> {
-  const { school, staffMembers, guardians } = minimalDataset.entities
+  const { school, staffMembers, guardians } = bootstrapSeedDataset().entities
   const staffMember = staffMembers?.[0]
   const guardian = guardians?.[0]
 

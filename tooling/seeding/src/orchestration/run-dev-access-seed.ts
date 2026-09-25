@@ -8,9 +8,7 @@ import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromPreset } from '@edaya/authorization'
 import { defaultScopesForProfileGrain } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
-import { DEMO_CENTRAL_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/adapters/in-process'
 import { createInProcessAuthLinkSeedPort } from '../domains/auth-link/adapters/in-process'
@@ -171,8 +169,8 @@ export async function runDevAccessAssignmentsSeedWithPort(
     accessRoleRecords,
     staffRoleAssignmentRecords,
   ) + baseStaffAssignmentRecords.length + (
-    options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID
-      ? (demoDataset.extensions?.classSubjectStaffAssignments?.length ?? 0)
+    options?.includeClassSubjectStaffAssignments !== false
+      ? (context.dataset.extensions?.classSubjectStaffAssignments?.length ?? 0)
       : 0
   )
 
@@ -194,9 +192,17 @@ export async function runDevAccessAssignmentsSeedWithPort(
     }
 
     let classSubjectStaffAssignments = 0
-    if (options?.includeClassSubjectStaffAssignments !== false && context.schoolId === DEMO_CENTRAL_SCHOOL_ID) {
-      for (const assignment of demoDataset.extensions?.classSubjectStaffAssignments ?? []) {
-        await port.saveStaffAssignment(assignment)
+    if (options?.includeClassSubjectStaffAssignments !== false) {
+      for (const assignment of context.dataset.extensions?.classSubjectStaffAssignments ?? []) {
+        await port.saveStaffAssignment({
+          id: assignment.id,
+          staffId: assignment.staffId,
+          academicYearId: assignment.academicYearId,
+          responsibility: assignment.responsibility,
+          classGroupId: assignment.classGroupId ?? undefined,
+          classSubjectId: assignment.classSubjectId ?? undefined,
+          lessonSessionId: assignment.lessonSessionId ?? undefined,
+        })
         classSubjectStaffAssignments += 1
         tick()
       }

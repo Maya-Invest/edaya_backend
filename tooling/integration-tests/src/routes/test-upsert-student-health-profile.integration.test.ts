@@ -12,7 +12,7 @@ describeWithLightSchool('upsert student health profile command', (getContext) =>
 
     const created = await client.commands.upsertStudentHealthProfile({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'A+',
       allergies: 'Pollen',
       medicalConditions: 'Asthme',
@@ -24,7 +24,7 @@ describeWithLightSchool('upsert student health profile command', (getContext) =>
 
     expect(created).toMatchObject({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'A+',
       allergies: 'Pollen',
       medicalConditions: 'Asthme',
@@ -32,7 +32,7 @@ describeWithLightSchool('upsert student health profile command', (getContext) =>
 
     const updated = await client.commands.upsertStudentHealthProfile({
       id: 'route-shp-s2',
-      studentId: 's2',
+      studentId: 'ci-s2',
       bloodType: 'O+',
       allergies: 'Pollen, peanuts',
       medicalConditions: 'Asthme',
@@ -66,7 +66,7 @@ describeWithLightSchool('upsert student health profile command', (getContext) =>
     try {
       await client.commands.upsertStudentHealthProfile({
         id: 'route-shp-skew',
-        studentId: 's4',
+        studentId: 'ci-s4',
         bloodType: 'B+',
         allergies: null,
         medicalConditions: null,

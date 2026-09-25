@@ -6,7 +6,7 @@ import type {
   SubjectSeedRecord,
 } from './port'
 import { SubjectColor } from '@edaya/core'
-import { demoDataset } from '@edaya/fixtures'
+import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { buildFixtureCurriculumPlan } from '../../support/curriculum-plan'
 import { seedDevCurriculum } from './workflow'
@@ -32,11 +32,11 @@ describe('curriculum seed port workflow', () => {
       },
     }
 
-    await seedDevCurriculum(port, demoDataset)
+    await seedDevCurriculum(port, demoCiDataset)
 
-    const curriculumPlan = buildFixtureCurriculumPlan(demoDataset.entities)
-    const fixtureSubjects = demoDataset.entities.subjects ?? []
-    const fixtureSubjectMatters = demoDataset.entities.subjectMatters ?? []
+    const curriculumPlan = buildFixtureCurriculumPlan(demoCiDataset.entities)
+    const fixtureSubjects = demoCiDataset.entities.subjects ?? []
+    const fixtureSubjectMatters = demoCiDataset.entities.subjectMatters ?? []
 
     expect(seededSubjects).toHaveLength(fixtureSubjects.length)
     const firstSubject = seededSubjects[0]
