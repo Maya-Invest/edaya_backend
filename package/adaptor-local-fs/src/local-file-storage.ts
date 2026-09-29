@@ -99,7 +99,8 @@ export function createLocalFileStorage(config: LocalFileStorageConfig): FileStor
         headers: {
           ...internalHeaders(config.secret),
           "Content-Type": input.contentType,
-          "X-Storage-Key": input.key,
+          "X-Storage-Key": encodeURIComponent(input.key),
+          "X-Storage-Key-Encoding": "uri",
         },
         body,
       });

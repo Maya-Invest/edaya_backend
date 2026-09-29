@@ -40,6 +40,6 @@
   },
   "overrides": {
     "@maya-invest/edaya-api-client": "workspace:*",
-    "@maya-invest/edaya-identity-client": "file:../edaya_identity/package/identity-client"
+    "@maya-invest/edaya-identity-client": "workspace:*"
   }
 }

@@ -1,8 +1,7 @@
 import type { HttpSeedClient } from '../../transport/http/client'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { splitDisplayName } from '@edaya/fixtures/shared/people'
-import { isTransientHttpStatus } from '../../transport/http/client'
-import { HttpAuthProvisioner } from '../auth/http-provisioner'
+import { HttpAuthProvisioner, signInSeedAccount } from '../auth/http-provisioner'
 
 async function probeCoreAccess(client: HttpSeedClient): Promise<'authorized' | 'unauthorized'> {
   const { response } = await client.jsonRequest('/core/entities/schools/list', {
@@ -42,31 +41,9 @@ async function waitForCoreAccess(client: HttpSeedClient): Promise<'authorized' |
   return last
 }
 
-async function trySignIn(client: HttpSeedClient, email: string, password: string): Promise<boolean> {
-  client.clearCookies()
-  const response = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
-  })
-
-  if (response.ok) {
-    return true
-  }
-
-  const message = await response.text()
-  if (isTransientHttpStatus(response.status)) {
-    throw new Error(
-      `Staff sign-in failed with transient HTTP ${response.status} after retries: ${message}`,
-    )
-  }
-
-  return false
+async function trySignIn(client: HttpSeedClient, email: string, _password: string): Promise<boolean> {
+  await signInSeedAccount(client, email)
+  return true
 }
 
 /** Sign in with the dev owner account that will register the school. */

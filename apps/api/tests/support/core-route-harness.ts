@@ -82,7 +82,7 @@ export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
   autoCleanup?: boolean;
   withEmbeddedLocalFiles?: boolean;
-  /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs edaya_identity running). */
+  /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs apps/identity running). */
   identity?: "test" | "live";
   env?: Record<string, unknown>;
 }
@@ -119,7 +119,7 @@ function testDirectoryFetch(input: RequestInfo | URL): Promise<Response> {
     const subjectId = decodeURIComponent(url.pathname.slice(IDENTITY_DIRECTORY_BY_ID_PREFIX.length));
     for (const [email, account] of identityAccounts) {
       if (account.subjectId === subjectId) {
-        return Promise.resolve(Response.json({ email }));
+        return Promise.resolve(Response.json({ email, identifiers: [{ kind: "email", value: email }] }));
       }
     }
     return Promise.resolve(new Response(null, { status: 404 }));

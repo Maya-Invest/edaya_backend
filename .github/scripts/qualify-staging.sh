@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="${RELEASE_ROOT:?RELEASE_ROOT must contain the four sibling checkouts}"
+ROOT="${RELEASE_ROOT:?RELEASE_ROOT must contain the three product checkouts}"
 BACKEND="$ROOT/edaya_backend"
-IDENTITY="$ROOT/edaya_identity"
+IDENTITY="$BACKEND"
 WEB="$ROOT/edaya_frontend"
 MOBILE="$ROOT/edaya_mobile"
 mkdir -p "$ROOT/release"
 test "$(bun --version)" = 1.3.14
-for repo in "$IDENTITY" "$BACKEND" "$WEB"; do
+for repo in "$BACKEND" "$WEB"; do
   (cd "$repo" && bun install --frozen-lockfile && bun run verify)
 done
-(cd "$IDENTITY" && bun repo openapi generate && bun --filter @maya-invest/edaya-identity-client build && git diff --exit-code -- package/identity-client/src tooling/repo/fixtures)
 (cd "$BACKEND" && bun repo openapi generate && git diff --exit-code -- package/api-client/src tooling/repo/fixtures && bun test ./.github/scripts/staging-target.test.mjs ./.github/scripts/observe-staging.test.mjs && bun run test:integration && bun run test:integration:native)
 node "$BACKEND/.github/scripts/rehearse-staging.mjs"
 (cd "$MOBILE" && dart pub get --enforce-lockfile && EDAYA_OPENAPI_SPEC="$BACKEND/tooling/repo/fixtures/openapi.json" bash scripts/generate-api-bindings.sh && git diff --exit-code -- packages/edaya_api_client/spec packages/edaya_api_client/lib/src/generated && dart run melos run verify)

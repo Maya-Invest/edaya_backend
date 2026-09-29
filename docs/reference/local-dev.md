@@ -1,40 +1,38 @@
 # Local development
 
-Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_web](../../edaya_web/README.MD)** repo.
+Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_frontend](../../edaya_frontend/README.MD)** repo.
 
-The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. Identity login targets the sibling identity service; school requests carry its access JWT as a Bearer token.
+The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. Identity login targets the backend’s separate identity service; school requests carry its access JWT as a Bearer token.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ (repo `packageManager`: `bun@1.3.14`)
-- **edaya_identity** checked out as a sibling directory, then `bun install` in both repositories
-- **edaya_web** checked out as a sibling directory for the webapp UI
+- Run `bun install` in this backend workspace (includes identity)
+- **edaya_frontend** checked out as a sibling directory for the webapp UI
 
 ## First-time setup
 
 ```sh
 # API — persisted school PGlite under repo-root `.data/`
 cp apps/api/.env.example apps/api/.env
+cp apps/identity/.env.example apps/identity/.env
 
 # Ops & seeding (remote URLs, Neon connection strings, smoke credentials)
 cp .env.example .env
 
-# Webapp — in edaya_web
-cd ../edaya_web
+# Webapp — in edaya_frontend
+cd ../edaya_frontend
 cp apps/webapp/.env.example apps/webapp/.env
 ```
 
 ## Start identity + API + webapp
 
 ```sh
-# Terminal 1 — Identity on http://localhost:9900 (from edaya_identity/)
-cd edaya_identity && bun repo dev
+# Terminal 1 — Identity :9900, school API :9999, files :9200
+cd edaya_backend && bun dev
 
-# Terminal 2 — School API on http://localhost:9999, files on :9200 (from edaya_backend/)
-cd edaya_backend && bun repo dev
-
-# Terminal 3 — Webapp on http://localhost:5173 (from edaya_web/)
-cd edaya_web && bun --filter @edaya/webapp dev
+# Terminal 2 — Webapp :5173
+cd edaya_frontend && bun --filter @edaya/webapp dev
 ```
 
 ## URLs
@@ -53,7 +51,7 @@ cd edaya_web && bun --filter @edaya/webapp dev
 - **API base URL** — `PUBLIC_API_URL` targets the school API (`http://localhost:9999` locally).
 - **Bootstrap** — The webapp obtains an identity access token, then loads `/core/authorization/effective-grants`.
 
-See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for the completed mock → API migration (edaya_web).
+See [webapp-migration-plan.md](../sprints/archive/webapp-migration-plan.md) for the completed mock → API migration (edaya_frontend).
 
 ## API runtimes
 
@@ -205,7 +203,7 @@ bun --filter @edaya/api check
 bun --filter @edaya/api test
 ```
 
-Webapp tests run from **edaya_web** (`bun --filter @edaya/webapp test`).
+Webapp tests run from **edaya_frontend** (`bun --filter @edaya/webapp test`).
 
 Before opening a pull request, run `bun run verify`. For integration coverage (HTTP routes, PGlite services), also run `bun run test:integration`. See [repo-cli.md](./repo-cli.md) and [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
 
@@ -237,3 +235,9 @@ bun repo seed --scope doctor                                                    
 
 - **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.
 - **401 after login** — Verify the JWT issuer/audience match `IDENTITY_ISSUER` and `API_ORIGIN`.
+
+## Account authentication
+
+Use email OTP locally with `AUTH_DEV_OTP_PEEK=true` in `apps/identity/.env`. Password endpoints are absent. Telegram/WhatsApp require real delivery configuration; never use customer numbers for fixture tests. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
+
+See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun --filter @edaya/identity-migrate migrate`. Keep the identity database separate from the school database.

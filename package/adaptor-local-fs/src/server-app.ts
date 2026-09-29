@@ -25,8 +25,8 @@ function contentDisposition(
   if (!fileName) {
     return disposition;
   }
-  const safeName = fileName.replace(/"/g, "");
-  return `${disposition ?? "attachment"}; filename="${safeName}"`;
+  const safeName = fileName.replace(/[^\u0020-\u007E]/g, "-").replace(/["\\]/g, "");
+  return `${disposition ?? "attachment"}; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
 export function createLocalFileStorageApp(config: LocalFileStorageConfig): Hono {
@@ -132,12 +132,17 @@ export function createLocalFileStorageApp(config: LocalFileStorageConfig): Hono 
       return c.text("Unauthorized", 401);
     }
 
-    const key = c.req.header("x-storage-key");
-    if (!key) {
+    const rawKey = c.req.header("x-storage-key");
+    if (!rawKey) {
       return c.text("Missing X-Storage-Key", 400);
     }
 
     try {
+      // HTTP headers cannot carry arbitrary Unicode. Retain compatibility with
+      // local clients sending unencoded ASCII keys.
+      const key = c.req.header("x-storage-key-encoding") === "uri"
+        ? decodeURIComponent(rawKey)
+        : rawKey;
       const contentType = c.req.header("content-type") ?? "application/octet-stream";
       const body = new Uint8Array(await c.req.arrayBuffer());
       const result = await store.putObject({ key, body, contentType });

@@ -24,12 +24,6 @@ jobs:
       - name: Checkout backend
         uses: actions/checkout@v5
 
-      - name: Checkout identity client
-        uses: ./.github/actions/checkout-identity-client
-        with:
-          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
-          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
-
       - name: Resolve channel
         id: meta
         run: |
@@ -68,3 +62,5 @@ jobs:
 
           bun --filter @maya-invest/edaya-api-client build
           node .github/scripts/publish-client.mjs package/api-client "$CHANNEL"
+          bun --filter @maya-invest/edaya-identity-client build
+          node .github/scripts/publish-client.mjs package/identity-client "$CHANNEL"

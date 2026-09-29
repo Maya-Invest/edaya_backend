@@ -1,0 +1,108 @@
+export const identityOpenApi = {
+  openapi: '3.1.0',
+  info: {
+    title: 'Edaya Identity machine API',
+    version: '1.0.0',
+    description: 'JWKS and private directory. Login remains Better Auth /auth/* and is not part of this client.',
+  },
+  paths: {
+    '/.well-known/jwks.json': {
+      get: {
+        operationId: 'getJwks',
+        summary: 'Public signing keys',
+        responses: {
+          200: {
+            description: 'JWK Set',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/Jwks' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/internal/directory/by-contact': {
+      get: {
+        operationId: 'lookupDirectoryByContact',
+        summary: 'Does this login identifier have an account?',
+        parameters: [
+          {
+            name: 'channel',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', enum: ['email', 'phone'] },
+          },
+          {
+            name: 'value',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Lookup',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/DirectoryLookup' },
+              },
+            },
+          },
+          401: { description: 'Missing or invalid directory secret' },
+        },
+      },
+    },
+    '/internal/directory/by-id/{subjectId}': {
+      get: {
+        operationId: 'resolveDirectoryById',
+        summary: 'Login contact for a subject',
+        parameters: [
+          {
+            name: 'subjectId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Contact',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/DirectoryContact' },
+              },
+            },
+          },
+          404: { description: 'Unknown subject' },
+        },
+      },
+    },
+  },
+  components: {
+    schemas: {
+      Jwks: {
+        type: 'object',
+        required: ['keys'],
+        properties: {
+          keys: { type: 'array', items: { type: 'object' } },
+        },
+      },
+      DirectoryLookup: {
+        type: 'object',
+        required: ['exists'],
+        properties: {
+          exists: { type: 'boolean' },
+          id: { type: 'string' },
+        },
+      },
+      DirectoryContact: {
+        type: 'object',
+        properties: {
+          email: { type: 'string' },
+          phone: { type: 'string' },
+        },
+      },
+    },
+  },
+} as const

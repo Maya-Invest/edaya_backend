@@ -10,10 +10,6 @@ on:
         type: choice
         options: [staging, production]
         default: staging
-      identity_ref:
-        description: Identity revision for coordinated staging release
-        type: string
-        default: dev
       web_ref:
         description: Web revision for coordinated staging release
         type: string
@@ -75,6 +71,8 @@ jobs:
           filters: |
             api_deploy:
               - apps/api/**
+              - apps/identity/**
+              - tooling/identity-migrate/**
               - package/**
               - package.json
               - bun.lock
@@ -127,6 +125,7 @@ jobs:
     secrets:
       STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
       IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
 
   publish-api-dev-image:
@@ -159,7 +158,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.channel == 'staging'
     uses: ./.github/workflows/release-staging.yml
     with:
-      identity_ref: ${{ inputs.identity_ref }}
       web_ref: ${{ inputs.web_ref }}
       mobile_ref: ${{ inputs.mobile_ref }}
       reset_data: ${{ inputs.reset_data }}

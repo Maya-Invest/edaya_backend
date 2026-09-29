@@ -15,11 +15,19 @@ function loadApiEnv(): void {
   }
 }
 
+const identityProcessEnv = { ...process.env }
 loadApiEnv()
 
-console.log('School API on :9999. Start sibling edaya_identity separately (`bun repo dev` in that checkout, port 9900).')
+console.log('Identity on :9900, school API on :9999, local files on :9200.')
 
 const children = [
+  Bun.spawn(['bun', '--filter', '@edaya/identity', 'dev'], {
+    cwd: repoRoot,
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
+    env: identityProcessEnv,
+  }),
   Bun.spawn(['bun', '--filter', '@edaya/api', 'dev'], {
     cwd: repoRoot,
     stdin: 'inherit',

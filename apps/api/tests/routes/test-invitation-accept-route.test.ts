@@ -19,7 +19,10 @@ const identityClient: IdentityClient = {
   directory: createDirectoryClient({
     baseUrl: issuer,
     secret: "test",
-    fetch: (async () => new Response(null, { status: 404 })) as unknown as typeof fetch,
+    fetch: (async () => Response.json({ identifiers: [
+      { kind: "email", value: "staff@school.edu" },
+      { kind: "phone", value: "+2250102030405" },
+    ] })) as unknown as typeof fetch,
   }),
   verifyAccessToken: token => verifyIdentityToken(token, { issuer, audience, jwks: keys.jwks }),
 };
@@ -84,10 +87,10 @@ async function tokenFor(email?: string) {
 }
 
 describe("invitation accept route", () => {
-  it("accepts a matching identity JWT", async () => {
+  it("accepts a verified directory alias even when the JWT email differs", async () => {
     const invitationToken = "accept-token-123";
     const { app, acceptAccountInvitation } = createInvitationApp(invitationToken);
-    const jwt = await tokenFor("staff@school.edu");
+    const jwt = await tokenFor("primary@school.edu");
     const response = await app.request(`/public/invitations/${invitationToken}/accept`, {
       method: "POST",
       headers: { authorization: `Bearer ${jwt}` },

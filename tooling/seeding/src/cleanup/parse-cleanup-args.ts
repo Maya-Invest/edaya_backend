@@ -6,7 +6,7 @@ export interface CleanupOptions {
 }
 
 export const IDENTITY_AUTH_WIPE_HINT
-  = 'Better Auth lives in edaya_identity. From that repo run `bun repo db wipe local --yes` or `bun repo db wipe staging --yes`.'
+  = 'Account authentication lives in apps/identity. Run `bun --filter @edaya/identity-migrate wipe local --yes` or `bun --filter @edaya/identity-migrate wipe staging --yes`.'
 
 export function parseCleanupArgs(argv: string[]): CleanupOptions {
   const args = argv.slice(2)

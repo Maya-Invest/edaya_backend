@@ -14,6 +14,11 @@ import {
 import { classNameFromLabel } from '../../../src/onboarding/registry'
 
 describe('demo-ci dataset (Côte d\'Ivoire)', () => {
+  it('provides published reports for both guardian profiles and an eligible grading roster', () => {
+    const reports = demoCiDataset.extensions.reportCardResults
+    expect(reports.filter(result => result.narrativeStatus === 'published').map(result => result.studentId)).toEqual(['ci-s1', 'ci-s4'])
+    expect(reports.some(result => result.classGroupId === 'ci-6a' && result.narrativeStatus === 'generated')).toBe(true)
+  })
   it('assembles a French Ivorian collège school shell', () => {
     expect(demoCiDataset.purpose).toBe('demo-ci')
     expect(demoCiDataset.entities.school?.country).toBe('Côte d\'Ivoire')

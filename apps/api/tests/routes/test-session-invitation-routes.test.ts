@@ -19,7 +19,11 @@ const identityClient: IdentityClient = {
   directory: createDirectoryClient({
     baseUrl: issuer,
     secret: "test",
-    fetch: (async () => new Response(null, { status: 404 })) as unknown as typeof fetch,
+    fetch: (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const value = url.endsWith("unverified") ? undefined : url.endsWith("other") ? "other@school.edu" : "guardian@school.edu";
+      return Response.json({ identifiers: value ? [{ kind: "email", value }] : [] });
+    }) as unknown as typeof fetch,
   }),
   verifyAccessToken: token => verifyIdentityToken(token, { issuer, audience, jwks: keys.jwks }),
 };
@@ -95,7 +99,7 @@ function createApp(options: {
 
 async function tokenFor(options: { email?: string; emailVerified?: boolean } = {}) {
   return signTestIdentityToken(keys, {
-    sub: "identity-user-1",
+    sub: options.emailVerified === false ? "unverified" : options.email === "other@school.edu" ? "other" : "identity-user-1",
     email: options.email ?? "guardian@school.edu",
     email_verified: options.emailVerified ?? true,
     iss: issuer,
@@ -112,10 +116,10 @@ describe("session invitation routes", () => {
     expect(accept.status).toBe(401);
   });
 
-  it("lists pending guardian email invitations for a verified identity", async () => {
+  it("lists pending guardian email invitations for all verified Account aliases", async () => {
     const { app } = createApp();
     const response = await app.request("/public/me/invitations", {
-      headers: { authorization: `Bearer ${await tokenFor()}` },
+      headers: { authorization: `Bearer ${await tokenFor({ email: "primary@school.edu" })}` },
     });
     const body = await response.json() as { invitations: Array<{ id: string; schoolName: string; inviteeName: string; token?: string; targetId?: string }> };
     expect(response.status).toBe(200);

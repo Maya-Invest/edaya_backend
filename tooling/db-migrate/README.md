@@ -1,6 +1,6 @@
 # @edaya/db-migrate
 
-Database migration CLI for the EDAYA school schema (Neon / Hyperdrive / PGlite). Identity migrations run from `edaya_identity`.
+Database migration CLI for the EDAYA school schema (Neon / Hyperdrive / PGlite). Account and auth-provider migrations run through `@edaya/identity-migrate` in this backend workspace.
 
 | Area | Schema source | SQL migrations |
 |------|---------------|----------------|

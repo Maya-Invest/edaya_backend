@@ -1,12 +1,14 @@
-import { ActorAssuranceLevel, bootstrapPlatformUserIfAbsent, createGuardianActorMetadata, createPlatformActorMetadata, createS2sActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseBearerS2sKey, parseInteractiveActorKind, resolveInteractiveActorIdentity, subjectHasSchoolInteractiveIdentity } from "@edaya/authorization";
-
 import type { SchoolRepositories } from "@edaya/service";
-import { randomUUID } from "node:crypto";
-
-import type { AppBindings } from "@/http/types";
-import type { Context } from "hono";
-import type { DependencyModule } from "@/http/dependency-injection";
 import type { IdentityClaims, IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { Context } from "hono";
+
+import type { DependencyModule } from "@/http/dependency-injection";
+import type { AppBindings } from "@/http/types";
+
+import { randomUUID } from "node:crypto";
+import { ActorAssuranceLevel, bootstrapPlatformUserIfAbsent, createGuardianActorMetadata, createPlatformActorMetadata, createS2sActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata, hashApiKey, parseBearerApiKey, parseBearerS2sKey, parseInteractiveActorKind, resolveInteractiveActorIdentity, subjectHasSchoolInteractiveIdentity } from "@edaya/authorization";
+import { HTTPException } from "hono/http-exception";
+import { accountRequiresPrivilegedTotp } from "@/lib/account-security-policy";
 import { platformBootstrapEmails } from "@/runtime/shared/env/derived";
 
 export interface AuthSession {
@@ -157,8 +159,8 @@ function sessionFromIdentityClaims(claims: IdentityClaims): AuthenticatedSession
     },
     session: {
       ...(claims.sid ? { id: claims.sid } : {}),
-      createdAt: new Date(),
-      assuranceLevel: resolveAssuranceFromEmailVerified(claims.email_verified),
+      createdAt: new Date((claims.auth_time ?? 0) * 1000),
+      assuranceLevel: claims.amr?.includes("totp") && claims.mfa_time !== undefined ? ActorAssuranceLevel.Strong : (claims.email_verified || claims.phone_verified) ? ActorAssuranceLevel.Verified : ActorAssuranceLevel.Standard,
     },
   };
 }
@@ -336,6 +338,11 @@ export function createSessionActorDependency(
 
       if (session) {
         const { user } = session;
+        if (c.env?.REQUIRE_PRIVILEGED_TOTP === true && session.session.assuranceLevel !== ActorAssuranceLevel.Strong
+          && (await accountRequiresPrivilegedTotp(repos, user.id)
+            || (user.emailVerified && platformBootstrapEmails(c.env).includes(user.email?.toLowerCase() ?? "")))) {
+          throw new HTTPException(403, { message: "Authenticator enrollment or reauthentication required" });
+        }
         const actorKind = parseInteractiveActorKind(c.req.header("x-actor-kind"));
         const interactiveContext = {
           subjectId: user.id,

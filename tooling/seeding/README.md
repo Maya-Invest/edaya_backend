@@ -46,7 +46,7 @@ Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_
 ```sh
 bun repo seed clean --yes && bun repo seed              # local school fresh start
 bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
-# Identity users: from edaya_identity, `bun repo db wipe local --yes` (or staging)
+# Account/auth data: `bun --filter @edaya/identity-migrate wipe local --yes` (or staging)
 # or
 bun repo seed --clean
 bun repo seed --staging --clean

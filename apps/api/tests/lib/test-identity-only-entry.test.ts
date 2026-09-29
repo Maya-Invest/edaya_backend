@@ -13,10 +13,11 @@ const issuer = "https://identity.example.test";
 const audience = "https://school.example.test";
 const keys = await createTestIdentityKeys();
 const identityClient = {
+  directory: { resolveBySubjectId: async () => ({ identifiers: [{ kind: "email", value: "guardian@example.test" }] }) },
   verifyAccessToken: (token: string) => verifyIdentityToken(token, { issuer, audience, jwks: keys.jwks }),
-} as IdentityClient;
+} as unknown as IdentityClient;
 
-async function headers(aud = audience, expSeconds = 900) {
+async function headers(aud = audience, expSeconds = 300) {
   const token = await signTestIdentityToken(keys, { sub: "verified-subject", email: "guardian@example.test", email_verified: true, iss: issuer, aud, expSeconds });
   return new Headers({ "authorization": `Bearer ${token}`, "x-school-id": "forged-school", "x-actor-id": "forged-owner", "x-actor-kind": "staff" });
 }
@@ -113,18 +114,19 @@ describe("identity-only admitted entry", () => {
     expect(await entry!.acceptInvitationById("unknown")).toBeNull();
   });
 
-  it("hides session invitations when email is not verified", async () => {
+  it("hides session invitations when the Account has no verified matching identifier", async () => {
     const f = fixture();
     const token = await signTestIdentityToken(keys, { sub: "verified-subject", email: "guardian@example.test", email_verified: false, iss: issuer, aud: audience });
     const entry = await admitIdentityOnlyEntry({
       headers: new Headers({ authorization: `Bearer ${token}` }),
-      identityClient,
+      identityClient: { ...identityClient, directory: { resolveBySubjectId: async () => ({ identifiers: [] }) } } as unknown as IdentityClient,
       schoolApp: f.schoolApp,
       selectedActor: null,
     });
     expect(await entry!.listMyInvitations()).toEqual([]);
     expect(f.findPendingByContact).not.toHaveBeenCalled();
     expect(await entry!.acceptInvitationById("inv-guardian")).toBeNull();
+    await expect(entry!.acceptInvitation("valid-credential")).rejects.toMatchObject({ code: "INVITATION_CONTACT_MISMATCH" });
     expect(f.forActor).not.toHaveBeenCalled();
   });
 });

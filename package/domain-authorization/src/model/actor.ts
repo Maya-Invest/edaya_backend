@@ -4,9 +4,9 @@ import { AuthorizationError, AuthorizationErrorCode } from './errors'
 
 /**
  * Interactive assurance for human sessions:
- * - `standard` — email not verified
- * - `verified` — email verified (link or OTP)
- * - `strong` — reserved for future 2FA (unused)
+ * - `standard` — no verified primary authentication
+ * - `verified` — email or phone OTP completed
+ * - `strong` — primary OTP and account-wide authenticator completed
  * - `service` — service-account API keys
  */
 export enum ActorAssuranceLevel {

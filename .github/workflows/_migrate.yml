@@ -12,6 +12,8 @@ on:
         required: false
       PRODUCTION_DATABASE_URL:
         required: false
+      PRODUCTION_AUTH_DATABASE_URL:
+        required: false
       IDENTITY_CHECKOUT_TOKEN:
         required: false
 
@@ -22,12 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
-      - name: Checkout identity client
-        uses: ./.github/actions/checkout-identity-client
-        with:
-          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
-          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -42,6 +38,7 @@ jobs:
           MIGRATE_TARGET: ${{ inputs.migrate_target }}
           STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
         run: |
           missing=
           case "$MIGRATE_TARGET" in
@@ -51,6 +48,7 @@ jobs:
               ;;
             production)
               [ -z "$PRODUCTION_DATABASE_URL" ] && missing=PRODUCTION_DATABASE_URL
+              [ -z "$PRODUCTION_AUTH_DATABASE_URL" ] && missing=PRODUCTION_AUTH_DATABASE_URL
               ;;
             *) echo "Unknown migration target" >&2; exit 1 ;;
           esac
@@ -63,5 +61,11 @@ jobs:
         env:
           STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
           MIGRATE_TARGET: ${{ inputs.migrate_target }}
         run: bun repo db migrate "$MIGRATE_TARGET"
+
+      - name: Migrate Account and auth provider schemas
+        env:
+          AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
+        run: bun --filter @edaya/identity-migrate migrate

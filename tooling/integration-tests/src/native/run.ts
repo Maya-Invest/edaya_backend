@@ -1,9 +1,11 @@
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
+import { startTestIdentity } from './identity-server'
+import { nativeTestExitCode } from './test-result'
 
 // Always create a new local cluster. Never load a project DATABASE_URL or reset
 // a database that this process did not create.
@@ -11,6 +13,7 @@ const seedSuite = process.argv.includes('--seed')
 const directory = mkdtempSync(join(tmpdir(), 'edaya-rc-postgres-'))
 const data = join(directory, 'data')
 let started = false
+let identity: Awaited<ReturnType<typeof startTestIdentity>> | undefined
 
 function run(command: string, args: string[]) {
   const result = spawnSync(command, args, { stdio: 'inherit' })
@@ -37,10 +40,13 @@ async function main() {
     run('initdb', ['-D', data, '-A', 'trust', '-U', 'edaya_rc', '--no-locale', '--encoding=UTF8'])
     run('pg_ctl', ['-D', data, '-l', join(directory, 'server.log'), '-o', `-h 127.0.0.1 -p ${port} -k ${directory}`, '-w', 'start'])
     started = true
+    if (seedSuite)
+      identity = await startTestIdentity()
+    const reportPath = join(directory, 'results.xml')
     const exitCode = await new Promise<number>((resolve, reject) => {
-      const child = spawn('bun', ['test', seedSuite ? 'src/seed' : 'src/native', '--parallel=1', ...process.argv.slice(2).filter(arg => arg !== '--seed')], {
+      const child = spawn('bun', ['test', seedSuite ? 'src/seed' : 'src/native', '--parallel=1', '--reporter=junit', `--reporter-outfile=${reportPath}`, ...process.argv.slice(2).filter(arg => arg !== '--seed')], {
         stdio: 'inherit',
-        env: { ...process.env, EDAYA_NATIVE_SEED: seedSuite ? '1' : '', EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres` },
+        env: { ...process.env, EDAYA_NATIVE_SEED: seedSuite ? '1' : '', ...(identity ? { EDAYA_TEST_IDENTITY_URL: identity.origin } : {}), EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres` },
       })
       const interrupt = () => child.kill('SIGINT')
       process.once('SIGINT', interrupt)
@@ -50,16 +56,17 @@ async function main() {
         resolve(code ?? 130)
       })
     })
-    process.exitCode = exitCode
+    return nativeTestExitCode(exitCode, readFileSync(reportPath, 'utf8'))
   }
   finally {
+    await identity?.close()
     if (started)
       run('pg_ctl', ['-D', data, '-m', 'immediate', '-w', 'stop'])
     rmSync(directory, { recursive: true, force: true })
   }
 }
 
-void main().catch((error) => {
+void main().then(code => process.exit(code)).catch((error) => {
   console.error(error)
-  process.exitCode = 1
+  process.exit(1)
 })

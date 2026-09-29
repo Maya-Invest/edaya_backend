@@ -219,7 +219,10 @@ function buildTrimesterResults(
   return results
 }
 
-/** Trimestre 1 — generated but unpublished (conseils de classe en décembre). */
+/** Published guardian examples; the remaining students stay eligible for grading. */
 export const demoCiReportCardResults = [
-  ...buildTrimesterResults('ci-2025-t1', 't1', '2026-12-15', undefined),
+  ...buildTrimesterResults('ci-2025-t1', 't1', '2026-12-15', undefined).map(result =>
+    ['ci-s1', 'ci-s4'].includes(result.studentId)
+      ? { ...result, narrativeStatus: 'published' as const, publishedAt: '2026-12-16' }
+      : result),
 ] as const satisfies readonly FixtureReportCardResult[]

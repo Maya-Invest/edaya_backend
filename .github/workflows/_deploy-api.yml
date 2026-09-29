@@ -1,4 +1,4 @@
-name: Deploy API Worker
+name: Deploy backend Workers
 
 on:
   workflow_call:
@@ -24,12 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Checkout identity client
-        uses: ./.github/actions/checkout-identity-client
-        with:
-          ref: ${{ vars.IDENTITY_REF || ((github.head_ref || github.ref_name) == 'staging' && 'staging' || (github.head_ref || github.ref_name) == 'main' && 'main' || 'dev') }}
-          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN || github.token }}
-
       - name: Setup Bun and Turbo cache
         uses: ./.github/actions/ci-bun-turbo
 
@@ -42,3 +36,9 @@ jobs:
             production) bun run deploy:production ;;
             *) echo "Use the staging release coordinator" >&2; exit 1 ;;
           esac
+
+      - name: Deploy Identity Worker
+        working-directory: apps/identity
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: bun run deploy:production

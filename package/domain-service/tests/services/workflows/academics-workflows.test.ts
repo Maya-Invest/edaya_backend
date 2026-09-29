@@ -24,6 +24,14 @@ async function createContext({ existingProgress = false, matterCompletedPercenta
 }
 
 describe('SchoolService academics workflows', () => {
+  test('deleting a catalog chapter preserves existing teaching progress', async () => {
+    const { service, repositories } = await createContext({ existingProgress: true })
+    await expect(service.baseService.entities.subjectMatters.delete('sm-csm1')).rejects.toThrow('Curriculum with recorded progress cannot be deleted')
+    expect(await repositories.subjectMatters.findById('sm-csm1')).toBeDefined()
+    expect(await repositories.classSubjectMatters.findById('csm1')).toBeDefined()
+    expect(await repositories.classSubjectProgress.findById('existing-progress')).toBeDefined()
+  })
+
   test('recordLessonSessionProgress records progress and updates aggregates through managed services', async () => {
     const { repositories, service } = await createContext()
 

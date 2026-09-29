@@ -17,7 +17,7 @@
   ],
   "alias": {
     "@/runtime/resolve-api-runtime": "./src/runtime/worker/resolve-api-runtime.ts",
-    "@maya-invest/edaya-identity-client": "../../../edaya_identity/package/identity-client/src/index.ts"
+    "@maya-invest/edaya-identity-client": "../../package/identity-client/src/index.ts"
   },
   "dev": {
     "port": 9999

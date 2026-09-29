@@ -82,6 +82,22 @@ describe("createLocalFileStorageApp", () => {
     rmSync(rootDir, { recursive: true, force: true });
   });
 
+  it("round trips Unicode document keys through the internal HTTP transport", async () => {
+    const storage = createLocalFileStorage({ baseUrl, rootDir, secret });
+    const key = "school-1/generated/Certificat-de-scolarité-2026—2027-100%.pdf";
+    const body = new TextEncoder().encode("%PDF-test");
+    await storage.putObject({ key, body, contentType: "application/pdf" });
+    const stored = await storage.readObject(key, { maxBytes: 100 });
+    expect(stored?.body).toEqual(body);
+    const download = await storage.createPresignedDownload(key, { fileName: "Certificat-école—2027.pdf" });
+    const response = await fetch(download.downloadUrl);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-disposition")).toContain("filename*=UTF-8''Certificat-%C3%A9cole%E2%80%942027.pdf");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(body);
+    await storage.deleteObject(key);
+    expect(await storage.headObject(key)).toBeNull();
+  });
+
   it("supports presigned upload and download", async () => {
     const storage = createLocalFileStorage({ baseUrl, rootDir, secret });
     const key = "school-1/uploads/staff/staff-1/att-1/photo.jpg";

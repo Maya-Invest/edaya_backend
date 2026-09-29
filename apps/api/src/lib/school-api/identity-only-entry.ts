@@ -31,22 +31,15 @@ export async function admitIdentityOnlyEntry(input: {
   const requestId = randomUUID();
   const { schoolApp, selectedActor } = input;
 
-  function sessionEmail(): string | undefined {
-    return normalizeInvitationEmail(session.user.email);
+  async function verifiedIdentifiers() {
+    const contact = await input.identityClient.directory.resolveBySubjectId(session.user.id);
+    return contact?.identifiers ?? [];
   }
 
-  function isVerifiedEmailSession(): boolean {
-    return session.user.emailVerified === true && sessionEmail() !== undefined;
-  }
-
-  function isSessionGuardianEmailInvite(invitation: AccountInvitation): boolean {
-    if (invitation.kind !== AccountInvitationKind.Guardian)
-      return false;
-    if (invitation.contactChannel !== AccountInvitationContactChannel.Email)
-      return false;
-    if (!isVerifiedEmailSession())
-      return false;
-    return normalizeInvitationEmail(invitation.contactValue) === sessionEmail();
+  async function matchingContact(invitation: AccountInvitation): Promise<string | undefined> {
+    const kind = invitation.contactChannel === AccountInvitationContactChannel.Email ? "email" : "phone";
+    const target = kind === "email" ? normalizeInvitationEmail(invitation.contactValue) : invitation.contactValue.trim().replace(/[ ().-]/g, "");
+    return (await verifiedIdentifiers()).find(i => i.kind === kind && (kind === "email" ? normalizeInvitationEmail(i.value) : i.value) === target)?.value;
   }
 
   function invitationAcceptanceService(invitation: AccountInvitation) {
@@ -68,30 +61,33 @@ export async function admitIdentityOnlyEntry(input: {
       const invitation = await schoolApp.repositories.accountInvitations.findByTokenHash(hashInvitationToken(token));
       if (!invitation)
         return null;
+      const contactValue = await matchingContact(invitation);
+      if (!contactValue) {
+        throw new BusinessRuleViolationError("INVITATION_CONTACT_MISMATCH", "Sign in using an Account with the verified invitation contact");
+      }
       return invitationAcceptanceService(invitation).accountInvitationWorkflow.acceptAccountInvitation({
         token,
         subjectId: session.user.id,
-        contactValue: invitation.contactChannel === AccountInvitationContactChannel.Email ? session.user.email : session.user.phone,
+        contactValue,
       });
     },
     async listMyInvitations() {
-      const email = sessionEmail();
-      if (!isVerifiedEmailSession() || !email)
-        return [];
-      return schoolApp.repositories.accountInvitations.findPendingByContact({
+      const emails = (await verifiedIdentifiers()).filter(i => i.kind === "email");
+      const groups = await Promise.all(emails.map(i => schoolApp.repositories.accountInvitations.findPendingByContact({
         contactChannel: AccountInvitationContactChannel.Email,
-        contactValue: email,
+        contactValue: i.value,
         kind: AccountInvitationKind.Guardian,
-      });
+      })));
+      return [...new Map(groups.flat().map(invitation => [invitation.id, invitation])).values()];
     },
     async acceptInvitationById(invitationId: string) {
       const invitation = await schoolApp.repositories.accountInvitations.findById(invitationId);
-      if (!invitation || !isSessionGuardianEmailInvite(invitation))
+      if (!invitation || invitation.kind !== AccountInvitationKind.Guardian || invitation.contactChannel !== AccountInvitationContactChannel.Email || !await matchingContact(invitation))
         return null;
       return invitationAcceptanceService(invitation).accountInvitationWorkflow.acceptAccountInvitationById({
         invitationId: invitation.id,
         subjectId: session.user.id,
-        contactValue: session.user.email,
+        contactValue: await matchingContact(invitation),
       });
     },
   });

@@ -170,7 +170,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (existsSync(resolve(repoRoot, relativePath))) {
       violations.push({
         label: 'school identity extract',
-        message: `${relativePath} must live in edaya_identity, not the school API`,
+        message: `${relativePath} must live in apps/identity, not the school API`,
       })
     }
   }

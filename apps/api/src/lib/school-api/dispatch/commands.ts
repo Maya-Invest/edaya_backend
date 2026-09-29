@@ -28,6 +28,10 @@ function unwrapDomainEntity(entity: unknown): unknown {
 }
 
 export function serializeCommandResult(result: unknown): unknown {
+  if (Array.isArray(result)) {
+    return result.map(serializeCommandResult);
+  }
+
   if (!result || typeof result !== "object") {
     return result;
   }

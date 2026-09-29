@@ -8,7 +8,7 @@ const root = resolve(process.env.RELEASE_ROOT || "..");
 const output = resolve(root, "release");
 const privateDir = resolve(root, ".release-private");
 const backend = resolve(root, "edaya_backend");
-const identity = resolve(root, "edaya_identity");
+const identity = resolve(root, "edaya_backend");
 const mobile = resolve(root, "edaya_mobile");
 const web = resolve(root, "edaya_frontend");
 const options = releaseOptions(process.env);
@@ -25,6 +25,7 @@ const identitySecrets = parseSecrets("STAGING_IDENTITY_SECRETS");
 for (const key of ["IDENTITY_DIRECTORY_SECRET", "R2_ENDPOINT", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "FCM_SERVICE_ACCOUNT_JSON"]) {
   if (!apiSecrets?.[key]) throw new Error(`Missing API secret ${key}`);
 }
+if (!identitySecrets?.ACCOUNT_SECURITY_KEYS) throw new Error("Durable Account encryption keys are required");
 if (!identitySecrets?.BETTER_AUTH_SECRET || identitySecrets.BETTER_AUTH_SECRET.length < 32
   || identitySecrets.IDENTITY_DIRECTORY_SECRET !== apiSecrets.IDENTITY_DIRECTORY_SECRET) throw new Error("Identity signing and shared directory secrets are required and must match");
 if (!process.env.CLOUDFLARE_API_TOKEN) throw new Error("Missing Cloudflare staging deployment token");
@@ -97,14 +98,15 @@ try {
   });
   assertHyperdrive(await cloud(`/hyperdrive/configs/${staging.identityHyperdrive}`), staging.identityDatabase, "edaya_identity");
   mark(options.reset ? "Resetting and migrating staging schemas" : "Migrating staging without resetting data");
-  command("bun", ["tooling/db-migrate/scripts/staging-release.ts"], identity);
+  command("bun", ["tooling/identity-migrate/scripts/staging-release.ts"], identity);
   command("bun", ["tooling/db-migrate/scripts/staging-release.ts"], backend);
   mark("Enabling identity and provisioning verified fixture accounts");
   deployWorker(identity, "identity", false);
   await waitHttp(`${staging.urls.identity}/`, 200);
   const accounts = resolve(privateDir, "accounts.json");
   command("bun", ["tooling/seeding/scripts/export-identity-fixtures.ts", accounts], backend);
-  command("bun", ["repo", "seed", "staging", accounts], identity, { ...identitySecrets });
+  command("bun", ["apps/identity/src/entries/staging-fixtures.ts", "staging", accounts, `${accounts}.sessions.json`], identity, { ...identitySecrets });
+  testEnv.SEED_AUTH_SESSIONS_FILE = `${accounts}.sessions.json`;
   deployWorker(backend, "api", false);
   await waitHttp(`${staging.urls.api}/reference`, 200);
   if (options.reset) {

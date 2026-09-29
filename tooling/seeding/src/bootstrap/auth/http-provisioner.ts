@@ -1,258 +1,71 @@
-/* eslint-disable dot-notation -- Explicit seeding process option */
+/* eslint-disable dot-notation -- Process environment uses an index signature. */
 import type { AuthAccountInput, AuthProvisioner, EnsureUserOptions } from '../../support/types'
 import type { HttpSeedClient } from '../../transport/http/client'
+import { readFileSync } from 'node:fs'
 import process from 'node:process'
-import { isStagingSeedApiUrl } from '../../support/resolve-seed-env'
-import { isTransientHttpStatus } from '../../transport/http/client'
 
-/** Must match identity `x-edaya-seed-provision` header. */
-const SEED_AUTH_PROVISION_HEADER = 'x-edaya-seed-provision'
+const sessions = new WeakMap<HttpSeedClient, Map<string, { cookie: string, subjectId: string }>>()
 
-const seedProvisionHeaders = {
-  'content-type': 'application/json',
-  [SEED_AUTH_PROVISION_HEADER]: '1',
-} as const
-
-interface AuthUserResponse {
-  user?: {
-    id?: string
+/** Local fixtures exercise OTP. Remote seeding requires operator-authenticated sessions, including MFA. */
+export async function signInSeedAccount(client: HttpSeedClient, email: string): Promise<{ subjectId: string }> {
+  const cache = sessions.get(client) ?? new Map<string, { cookie: string, subjectId: string }>()
+  sessions.set(client, cache)
+  const existing = cache.get(email)
+  if (existing) {
+    client.clearCookies()
+    for (const pair of existing.cookie.split('; ')) client.absorbCookies(new Response(null, { headers: { 'set-cookie': pair } }))
+    return { subjectId: existing.subjectId }
   }
-}
-
-interface AuthAttemptResult {
-  subjectId?: string
-  status: number
-  code?: string
-}
-
-const MAX_ENSURE_USER_ATTEMPTS = 4
-const TRANSIENT_RETRY_DELAY_MS = 1500
-
-async function readAuthUserId(response: Response): Promise<string | undefined> {
-  const bodyText = await response.text()
-  if (!bodyText.trim()) {
-    return undefined
+  const host = new URL(client.origin).hostname
+  let response: Response
+  if (!['localhost', '127.0.0.1', '[::1]'].includes(host)) {
+    const file = process.env['SEED_AUTH_SESSIONS_FILE']
+    if (!file)
+      throw new Error('Remote passwordless seeding requires SEED_AUTH_SESSIONS_FILE with operator-authenticated renewal credentials')
+    const manifest = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+    const credential = manifest[email]
+    if (!credential || !/^[\w-]+$/.test(credential))
+      throw new Error('Missing opaque fixture renewal credential')
+    client.absorbCookies(new Response(null, { headers: { 'set-cookie': `__Host-edaya_session=${credential}` } }))
+    response = await client.request('/auth/edaya/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
   }
-
-  const body = JSON.parse(bodyText) as AuthUserResponse
-  return body.user?.id
-}
-
-function readAuthErrorCode(message: string): string | undefined {
-  try {
-    const body = JSON.parse(message) as { code?: string }
-    return body.code
+  else {
+    const send = await client.request('/auth/edaya/otp/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'email', value: email, channel: 'email' }) })
+    if (!send.ok)
+      throw new Error(`Seed OTP delivery failed (${send.status})`)
+    const { challenge } = await send.json() as { challenge: string }
+    let otp: string
+    const mailbox = process.env['EDAYA_TEST_OTP_FILE']
+    if (mailbox) {
+      const messages = readFileSync(mailbox, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as { channel: string, destination: string, code: string })
+      const delivery = messages.reverse().find(message => message.channel === 'email' && message.destination === email.trim().toLowerCase())
+      if (!delivery) throw new Error('Required seed OTP delivery missing')
+      otp = delivery.code
+    }
+    else {
+      const peek = await client.request(`/auth/edaya/dev/last-otp?email=${encodeURIComponent(email)}`)
+      if (!peek.ok)
+        throw new Error('Local seed requires captured delivery or AUTH_DEV_OTP_PEEK=true on identity')
+      otp = (await peek.json() as { otp: string }).otp
+    }
+    response = await client.request('/auth/edaya/otp/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, code: otp }) })
   }
-  catch {
-    return undefined
-  }
+  if (!response.ok)
+    throw new Error(`Seed authentication failed (${response.status})`)
+  const body = await response.json() as { user?: { id: string } }
+  if (!body.user?.id)
+    throw new Error('Seed authentication requires completed MFA')
+  cache.set(email, { subjectId: body.user.id, cookie: client.cookieHeader() ?? '' })
+  return { subjectId: body.user.id }
 }
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 export class HttpAuthProvisioner implements AuthProvisioner {
   constructor(private readonly client: HttpSeedClient) {}
-
   async ensureUser(account: AuthAccountInput, options?: EnsureUserOptions): Promise<{ subjectId: string }> {
-    if (options?.preserveSession) {
-      return this.client.withCookieSnapshot(() => this.ensureUser(account))
-    }
-
-    if (isStagingSeedApiUrl(this.client.origin) || process.env['SEED_PROVISIONED_IDENTITY'] === 'true') {
-      const existing = await this.signIn(account)
-      if (!existing.subjectId) {
-        throw new Error('Staging identity account is not provisioned; run the administrative identity fixture command first')
-      }
-      return { subjectId: existing.subjectId }
-    }
-
-    const attempts: string[] = []
-
-    // Demo seed accounts are treated as email-verified (prod-identical assurance).
-    // Mark in Central Identity before password sign-in.
-    await this.markVerifiedByEmail(account.email)
-
-    for (let round = 0; round < MAX_ENSURE_USER_ATTEMPTS; round++) {
-      const signInResult = await this.signIn(account)
-      if (signInResult.subjectId) {
-        await this.markVerified(signInResult.subjectId, account.email)
-        return { subjectId: signInResult.subjectId }
-      }
-
-      if (isTransientHttpStatus(signInResult.status)) {
-        attempts.push(formatSignInFailure(signInResult))
-        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
-        continue
-      }
-
-      attempts.push(formatSignInFailure(signInResult))
-
-      const signUpResult = await this.signUp(account, attempts)
-
-      // Sign-up with requireEmailVerification may not auto-sign-in; mark verified then sign in.
-      await this.markVerifiedByEmail(account.email, signUpResult.subjectId)
-
-      if (signUpResult.subjectId) {
-        const afterSignUp = await this.signIn(account)
-        if (afterSignUp.subjectId) {
-          return { subjectId: afterSignUp.subjectId }
-        }
-        return { subjectId: signUpResult.subjectId }
-      }
-
-      if (isTransientHttpStatus(signUpResult.status)) {
-        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
-        continue
-      }
-
-      const retryResult = await this.signIn(account)
-      if (retryResult.subjectId) {
-        await this.markVerified(retryResult.subjectId, account.email)
-        return { subjectId: retryResult.subjectId }
-      }
-
-      if (isTransientHttpStatus(retryResult.status)) {
-        attempts.push(`retry ${formatSignInFailure(retryResult)}`)
-        await sleep(TRANSIENT_RETRY_DELAY_MS * (round + 1))
-        continue
-      }
-
-      attempts.push(`retry ${formatSignInFailure(retryResult)}`)
-      break
-    }
-
-    throw new Error(
-      `Identity could not provision or sign in ${account.email} (${attempts.join('; ')})`,
-    )
+    return options?.preserveSession ? this.client.withCookieSnapshot(() => signInSeedAccount(this.client, account.email)) : signInSeedAccount(this.client, account.email)
   }
 
-  private async markVerifiedByEmail(email: string, subjectId?: string): Promise<void> {
-    if (subjectId) {
-      await this.markVerified(subjectId, email)
-      return
-    }
-
-    const response = await this.client.request('/dev/seed/mark-email-verified', {
-      method: 'POST',
-      headers: { ...seedProvisionHeaders },
-      body: JSON.stringify({ email }),
-    })
-    if (response.ok || response.status === 404) {
-      return
-    }
-    throw new Error(`Identity mark-email-verified failed: HTTP ${response.status}`)
-  }
-
-  private async markVerified(subjectId: string, email: string): Promise<void> {
-    const response = await this.client.request('/dev/seed/mark-email-verified', {
-      method: 'POST',
-      headers: { ...seedProvisionHeaders },
-      body: JSON.stringify({ subjectId, email }),
-    })
-    if (response.ok) {
-      return
-    }
-
-    throw new Error(`Identity mark-email-verified failed: HTTP ${response.status}`)
-  }
-
-  async lookupSubjectIdByEmail(email: string, password: string): Promise<string | undefined> {
-    const result = await this.signIn({ email, password, name: email })
-    return result.subjectId
-  }
-
-  private async signIn(account: AuthAccountInput): Promise<AuthAttemptResult> {
-    const response = await this.client.request('/auth/sign-in/email', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: account.email,
-        password: account.password,
-      }),
-    })
-
-    if (!response.ok) {
-      const message = await response.text()
-      return {
-        status: response.status,
-        code: readAuthErrorCode(message),
-      }
-    }
-
-    const subjectId = await readAuthUserId(response)
-    return {
-      status: response.status,
-      ...(subjectId ? { subjectId } : {}),
-    }
-  }
-
-  private async signUp(
-    account: AuthAccountInput,
-    attempts: string[],
-  ): Promise<AuthAttemptResult> {
-    const response = await this.client.request('/auth/sign-up/email', {
-      method: 'POST',
-      headers: { ...seedProvisionHeaders },
-      body: JSON.stringify({
-        email: account.email,
-        password: account.password,
-        name: account.name,
-      }),
-    })
-
-    if (!response.ok) {
-      const message = await response.text()
-      if (response.status === 422 && isUserAlreadyExistsMessage(message)) {
-        attempts.push('sign-up skipped (user already exists)')
-        return { status: response.status, code: 'USER_ALREADY_EXISTS' }
-      }
-
-      attempts.push(`sign-up ${response.status}${readAuthErrorCode(message) ? ` ${readAuthErrorCode(message)}` : ''}`)
-      return {
-        status: response.status,
-        code: readAuthErrorCode(message),
-      }
-    }
-
-    const subjectId = await readAuthUserId(response)
-    return {
-      status: response.status,
-      ...(subjectId ? { subjectId } : {}),
-    }
-  }
+  async lookupSubjectIdByEmail(email: string, _password: string): Promise<string | undefined> { return (await signInSeedAccount(this.client, email)).subjectId }
 }
-
-function isUserAlreadyExistsMessage(message: string): boolean {
-  return message.includes('USER_ALREADY_EXISTS')
-    || message.includes('User already exists')
-}
-
-function formatSignInFailure(result: AuthAttemptResult): string {
-  if (result.code) {
-    return `sign-in ${result.status} ${result.code}`
-  }
-
-  return `sign-in ${result.status}`
-}
-
-export async function signInViaHttp(
-  client: HttpSeedClient,
-  input: { email: string, password: string },
-): Promise<void> {
-  const response = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  })
-
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(`Sign-in failed for ${input.email}: ${response.status} ${message}`)
-  }
+export async function signInViaHttp(client: HttpSeedClient, input: { email: string, password?: string }): Promise<void> {
+  await signInSeedAccount(client, input.email)
 }

@@ -76,19 +76,32 @@ describe('grade level subject inheritance through native policies', () => {
     expect((await repositories.classSubjects.list()).every(entry => entry.gradeLevelSubjectId === 'gls-math')).toBe(true)
     expect((await repositories.classSubjectMatters.list())).toHaveLength(2)
 
-    await repositories.classGroups.save(new ClassGroup({
+    await service.setupWorkflow.createClassGroup({
       id: '6c',
       schoolId: 'sch1',
       academicYearId: 'ay1',
       gradeLevelId: 'gl-6',
       name: '6C',
-    }))
-    await service.academicsWorkflow.syncGradeLevelSubjectsToClassGroup('6c')
+    })
 
     expect((await repositories.classSubjects.list())).toHaveLength(3)
+    expect((await repositories.classSubjectMatters.list())).toHaveLength(3)
     expect((await repositories.classSubjects.findById('cs-6a-math'))?.coefficient).toBe(3)
     expect((await repositories.classSubjects.findById('cs-6a-math'))?.periodsPerWeek).toBe(5)
     expect((await repositories.classSubjects.findById('cs-6a-math'))?.isOffered).toBe(true)
+
+    await service.baseService.entities.subjectMatters.delete('sm-math')
+    expect(await repositories.gradeLevelSubjectMatters.list()).toHaveLength(0)
+    expect(await repositories.classSubjectMatters.list()).toHaveLength(0)
+    await service.setupWorkflow.createClassGroup({
+      id: '6d',
+      schoolId: 'sch1',
+      academicYearId: 'ay1',
+      gradeLevelId: 'gl-6',
+      name: '6D',
+    })
+    expect(await repositories.classSubjects.list()).toHaveLength(4)
+    expect(await repositories.classSubjectMatters.list()).toHaveLength(0)
   })
 
   it('defaults optional grade level subjects to isOffered false on sync', async () => {

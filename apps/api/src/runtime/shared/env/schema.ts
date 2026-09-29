@@ -28,6 +28,7 @@ export const EnvSchema = z.object({
   PORT: z.coerce.number().default(9999),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DATABASE_URL: z.string(),
+  REQUIRE_PRIVILEGED_TOTP: envBooleanSchema.optional(),
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),

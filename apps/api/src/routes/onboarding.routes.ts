@@ -1,22 +1,23 @@
+import { ActorAssuranceLevel } from "@edaya/authorization";
+import type { StructureTemplateDefinition } from "@edaya/service";
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
+import type { AppRouteHandler } from "@/http/types";
+import { randomUUID } from "node:crypto";
+import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
+import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
+import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
+import { createRoute, z } from "@hono/zod-openapi";
+import * as HttpStatusCodes from "stoker/http-status-codes";
+import { jsonContent } from "stoker/openapi/helpers";
+import { createMessageObjectSchema } from "stoker/openapi/schemas";
 import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
 import { conflictResponse, routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import type { AppRouteHandler } from "@/http/types";
-import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
-import type { StructureTemplateDefinition } from "@edaya/service";
-import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
-import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
 import { schoolResponseSchema } from "@/lib/school-api/schemas/entities";
-import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
-import { createRoute, z } from "@hono/zod-openapi";
-import { randomUUID } from "node:crypto";
-import * as HttpStatusCodes from "stoker/http-status-codes";
-import { jsonContent } from "stoker/openapi/helpers";
-import { createMessageObjectSchema } from "stoker/openapi/schemas";
+import { resolveInviteBaseUrl, shouldAllowPublicSchoolRegistration } from "@/runtime/shared/env/derived";
 
 const commandMessageSchema = createMessageObjectSchema();
 
@@ -241,6 +242,10 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
     ));
+  }
+
+  if (c.env.REQUIRE_PRIVILEGED_TOTP === true && session.session.assuranceLevel !== ActorAssuranceLevel.Strong) {
+    return c.json({ message: "Authenticator enrollment required before creating a school" }, 403);
   }
 
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();

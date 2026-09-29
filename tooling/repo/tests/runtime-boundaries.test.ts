@@ -137,7 +137,7 @@ describe('findRuntimeBoundaryViolations', () => {
 
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'school identity extract',
-        message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in edaya_identity, not the school API',
+        message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in apps/identity, not the school API',
       }])
     }
     finally {

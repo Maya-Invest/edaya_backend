@@ -10,7 +10,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "> Starting identity on :9900"
-(cd /edaya_identity && bun --filter @edaya/identity start) &
+(cd /app && bun --filter @edaya/identity start) &
 
 echo "> Starting API + local file server for seed bake..."
 bun --filter @edaya/local-files-server start &

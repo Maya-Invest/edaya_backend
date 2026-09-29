@@ -11,8 +11,14 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 ```text
 edaya_backend/
 ├── apps/
+│   ├── identity/                         @edaya/identity — Account authentication (separate DB/Worker)
 │   └── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
 ├── package/
+│   ├── domain-account/                   @edaya/account — durable Account/security policy and auth ports
+│   ├── adaptor-account/                  @edaya/adaptor-account — Account persistence and cryptography
+│   ├── adaptor-auth-better-auth/         @edaya/adaptor-auth-better-auth — replaceable OTP provider
+│   ├── adaptor-auth/                     @edaya/adaptor-auth — disposable provider schema/migrations
+│   ├── identity-client/                  @maya-invest/edaya-identity-client — JWT and directory SDK
 │   ├── domain-core/                      @edaya/core — entities, ports, registry
 │   ├── domain-authorization/             @edaya/authorization — grants, policy, operations
 │   ├── domain-service/                   @edaya/service — workflows, entity configs, notifications, cron
@@ -33,7 +39,7 @@ edaya_backend/
     └── api-dev-container/                scripts only (no package.json) — Apple Container API image
 ```
 
-**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Identity and Better Auth live in sibling `edaya_identity`. `tooling/db-migrate` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Account authentication and its replaceable Better Auth adapter live in this workspace. Flutter apps live in `edaya_mobile`; the former identity repository is no longer a build dependency. `tooling/db-migrate` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 

@@ -1,6 +1,7 @@
 import type { HttpSeedClient } from '../transport/http/client'
 import { resolveExpectedCounts } from '@edaya/fixtures/meta/fixture-counts'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
+import { signInSeedAccount } from '../bootstrap/auth/http-provisioner'
 import { postEntityCount, postEntityList } from '../transport/http/core-entity'
 import { isServiceAccountApiKeyValid } from '../transport/http/verify-service-account'
 import {
@@ -65,14 +66,8 @@ export async function runHttpSeedDoctor(
 
   findings.push(finding('ok', 'api-reachable', `API at ${client.origin} is reachable.`))
 
-  const signInResponse = await client.request('/auth/sign-in/email', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      email: context.minimalStaffEmail,
-      password: context.authPassword,
-    }),
-  })
+  const signInResponse = await signInSeedAccount(client, context.minimalStaffEmail)
+    .then(() => ({ ok: true, status: 200 }), () => ({ ok: false, status: 401 }))
 
   if (!signInResponse.ok) {
     findings.push(finding(

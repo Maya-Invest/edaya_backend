@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import { demoCiDataset } from "@edaya/fixtures";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian, StaffMember } from "@edaya/core";
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, AttendanceRecord, AttendanceStatus, Guardian, StaffMember } from "@edaya/core";
 import { dispatchCoreCommand, serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 
 describe("serializeCommandResult", () => {
@@ -25,6 +25,14 @@ describe("serializeCommandResult", () => {
     expect(serialized.subjectId).toBe("auth-user-1");
     expect(serialized.firstName).toBe("Paul");
     expect(serialized).not.toHaveProperty("data");
+  });
+
+  it("serializes bulk attendance as the declared flat response list", () => {
+    const attendance = new AttendanceRecord({ id: "record-1", studentId: "student-1", attendanceId: "day-1", date: new Date("2026-09-28"), status: AttendanceStatus.Present });
+    const serialized = serializeCommandResult([attendance]);
+    expect(serialized).toEqual([attendance.data]);
+    expect(serialized).not.toEqual([{ data: attendance.data }]);
+    expect(serializeCommandResult([])).toEqual([]);
   });
 
   it("flattens linkActorSubject responses", () => {

@@ -7,10 +7,10 @@ const root = resolve(process.env.RELEASE_ROOT || "..");
 const mobile = resolve(root, "edaya_mobile");
 const mode = process.argv[2];
 if (mode === "identity") {
-  const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve(root, "edaya_identity"), encoding: "utf8" }).trim();
+  const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: resolve(root, "edaya_backend"), encoding: "utf8" }).trim();
   const version = `0.0.0-staging.${sha}`;
   const source = JSON.parse(execFileSync("npm", ["view", `@maya-invest/edaya-identity-client@${version}`, "edayaSourceCommit", "--json"], { encoding: "utf8" }));
-  if (source !== sha) throw new Error("Publish the matching identity client from its own repository before releasing");
+  if (source !== sha) throw new Error("Publish the matching identity client from the backend repository before releasing");
   recordClient("identity", version, sha, "verified-published");
   console.log(`Verified identity client ${version}`);
 } else if (mode === "signing") {

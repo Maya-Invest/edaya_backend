@@ -3,10 +3,6 @@ name: Full-stack staging release
 on:
   workflow_dispatch:
     inputs:
-      identity_ref:
-        description: Identity ref (resolved once)
-        type: string
-        default: dev
       web_ref:
         description: Web ref (resolved once)
         type: string
@@ -21,9 +17,6 @@ on:
         default: false
   workflow_call:
     inputs:
-      identity_ref:
-        type: string
-        required: true
       web_ref:
         type: string
         required: true
@@ -59,14 +52,6 @@ jobs:
         with:
           path: edaya_backend
           ref: ${{ github.sha }}
-          persist-credentials: false
-      - name: Checkout identity candidate
-        uses: actions/checkout@v5
-        with:
-          repository: Maya-Invest/edaya_identity
-          ref: ${{ inputs.identity_ref }}
-          path: edaya_identity
-          token: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
           persist-credentials: false
       - name: Checkout web candidate
         uses: actions/checkout@v5

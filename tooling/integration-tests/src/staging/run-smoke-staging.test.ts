@@ -51,7 +51,7 @@ describe('runSmokeStaging', () => {
 
   it('passes tier-1 checks against a mocked healthy staging API', async () => {
     process.env.SMOKE_STAGING_LOAD_ENV_FILE = '0'
-    process.env.SEED_STAGING_API_URL = 'https://api-staging.test'
+    process.env.SEED_STAGING_API_URL = 'http://localhost:9999'
     process.env.SEED_STAGING_APP_ORIGIN = 'https://app-staging.test'
 
     const fetchImpl: HttpFetch = async (input, init) => {
@@ -81,11 +81,15 @@ describe('runSmokeStaging', () => {
         return new Response(null, { status: 204 })
       }
 
-      if (url.endsWith('/auth/sign-in/email') && method === 'POST') {
+      if (url.endsWith('/auth/edaya/otp/start'))
+        return Response.json({ challenge: 'mock-challenge' })
+      if (url.includes('/auth/edaya/dev/last-otp'))
+        return Response.json({ otp: '123456' })
+      if (url.endsWith('/auth/edaya/otp/verify') && method === 'POST') {
         return new Response(JSON.stringify({ user: { id: 'user-1' } }), {
           status: 200,
           headers: {
-            'set-cookie': 'better-auth.session_token=session-token; Path=/; HttpOnly',
+            'set-cookie': 'edaya_session=session-token; Path=/; HttpOnly',
           },
         })
       }

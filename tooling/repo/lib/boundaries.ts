@@ -94,11 +94,21 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     pattern: /from ["']@edaya\/adaptor-auth/,
     searchPath: 'apps/api/src',
   },
+  ...['domain-core', 'domain-authorization', 'domain-service', 'adaptor-postgres', 'adaptor-notify', 'adaptor-docs', 'adaptor-r2', 'adaptor-local-fs', 'api-client'].map(name => ({
+    label: 'school packages import provider authentication internals',
+    pattern: /from ["'](?:@edaya\/adaptor-auth|better-auth)/,
+    searchPath: `package/${name}/src`,
+  })),
   {
-    label: 'school packages import adaptor-auth',
-    pattern: /from ["']@edaya\/adaptor-auth/,
-    searchPath: 'package',
+    label: 'Account domain imports a framework or adapter',
+    pattern: /from ["'](?:@edaya\/adaptor-|better-auth|hono|drizzle-orm|@\/)/,
+    searchPath: 'package/domain-account/src',
   },
+  ...['domain-account', 'adaptor-account', 'adaptor-auth-better-auth'].map(name => ({
+    label: 'Account package imports application composition',
+    pattern: /from ["'](?:.*\/apps\/|@\/)/,
+    searchPath: `package/${name}/src`,
+  })),
 ]
 
 function* walkFiles(directory: string): Generator<string> {
