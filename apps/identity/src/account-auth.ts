@@ -3,11 +3,41 @@ import type { Environment } from "./env";
 import type { IdentitySigningKeys } from "./jwt-keys";
 import { AuthError } from "@edaya/account";
 import { z } from "zod";
-import { getLastAuthOtpForTests, isDevOtpPeekEnabled } from "./email";
+import { assertAuthRequest, authCookieName, authCredential } from "./request-policy";
 import { resolveAllowlistedApiOrigin } from "./env";
 import { signIdentityAccessToken } from "./jwt-keys";
+import { createWhatsAppWebhook } from "./whatsapp-webhook";
 
-const startSchema = z.object({ kind: z.enum(["email", "phone"]), value: z.string().max(254), channel: z.enum(["email", "telegram", "whatsapp"]), recoveryEligible: z.boolean().optional() }).strict();
+const authPostPaths = new Set([
+  "otp/start",
+  "identifiers/start",
+  "otp/status",
+  "otp/resend",
+  "otp/verify",
+  "totp/verify",
+  "totp/enroll",
+  "totp/confirm",
+  "recovery",
+  "identifiers/unlink",
+  "security",
+  "totp/disable",
+  "session",
+  "access-token",
+  "sign-out",
+  "sign-out-all",
+].map(path => `/auth/edaya/${path}`));
+
+/** Unknown authentication routes fail before runtime/database initialization. */
+export function isAccountAuthRoute(request: Request) {
+  const path = new URL(request.url).pathname;
+  return path === "/auth/edaya/whatsapp/webhook"
+    || (request.method === "GET" && path === "/auth/edaya/methods")
+    || (request.method === "POST" && authPostPaths.has(path));
+}
+
+const startSchema = z.object({ kind: z.enum(["email", "phone"]), value: z.string().max(254), channel: z.enum(["email", "telegram", "whatsapp"]).optional(), locale: z.enum(["fr", "en"]).optional(), requestId: z.string().uuid().optional(), recoveryEligible: z.boolean().optional() }).strict();
+const statusSchema = z.object({ challenge: z.string().min(1).max(128) }).strict();
+const resendSchema = statusSchema.extend({ action: z.enum(["resend", "sms"]), requestId: z.string().uuid() }).strict();
 const verifySchema = z.object({ challenge: z.string().min(1).max(128), code: z.string().max(128) }).strict();
 const enrollmentSchema = z.object({ challenge: z.string().max(128).optional() }).strict();
 const tokenSchema = z.object({ resource: z.string().url() }).strict();
@@ -21,16 +51,11 @@ function sessionDto(session: AuthSession) {
 }
 export function createAccountAuthHandler(service: AccountService, env: Environment, keys: IdentitySigningKeys) {
   const secure = new URL(env.BETTER_AUTH_URL).protocol === "https:";
-  const cookieName = secure ? "__Host-edaya_session" : "edaya_session";
+  const cookieName = authCookieName(env);
+  const webhook = createWhatsAppWebhook(service, env);
   const cookie = (value: string, maxAge: number) => `${cookieName}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
   function json(value: unknown, status = 200, extra: Record<string, string> = {}) {
     return Response.json(value, { status, headers: { "cache-control": "no-store", ...extra } });
-  }
-  function credential(request: Request) {
-    const bearer = request.headers.get("authorization")?.match(/^Bearer ([\w-]+)$/)?.[1];
-    if (bearer)
-      return bearer;
-    return request.headers.get("cookie")?.split(";").map(v => v.trim()).find(v => v.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1) ?? "";
   }
   function outcome(result: AuthOutcome | {
     state: "linked";
@@ -45,35 +70,25 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
     const url = new URL(request.url);
     const path = url.pathname;
     try {
+      if (path === "/auth/edaya/whatsapp/webhook")
+        return webhook(request);
       if (request.method === "GET" && path === "/auth/edaya/methods") {
         return json({ methods: [
           { key: "email_otp", kind: "email", channels: ["email"] },
-          { key: "phone_otp", kind: "phone", channels: [env.TELEGRAM_GATEWAY_TOKEN ? "telegram" : null, env.WHATSAPP_ACCESS_TOKEN ? "whatsapp" : null].filter(Boolean) },
+          { key: "phone_otp", kind: "phone", available: env.PHONE_AUTH_MODE !== "disabled", countries: env.PHONE_AUTH_MODE !== "disabled" ? ["CI"] : [], prefixes: env.PHONE_AUTH_MODE !== "disabled" ? env.PHONE_SMS_ROUTES.map(route => route.prefix) : [] },
         ] });
       }
-      if (request.method === "GET" && path === "/auth/edaya/dev/last-otp" && isDevOtpPeekEnabled(env)) {
-        if (!url.searchParams.get("email")?.trim())
-          return json({ message: "Email is required" }, 400);
-        const otp = getLastAuthOtpForTests(url.searchParams.get("email") ?? "");
-        return otp ? json({ otp }) : json({ code: "not_found" }, 404);
-      }
-      if (request.method !== "POST" || !path.startsWith("/auth/edaya/"))
+      if (request.method !== "POST" || !authPostPaths.has(path))
         return json({ code: "not_found" }, 404);
-      const origin = request.headers.get("origin");
-      const trusted = env.TRUSTED_ORIGINS.split(",").map(v => v.trim());
-      if (origin && origin !== new URL(env.BETTER_AUTH_URL).origin && !trusted.includes(origin))
-        throw new AuthError("untrusted_origin", 403);
-      // Cookie requests require Origin; native clients use an explicit bearer renewal credential.
-      if (!origin && request.headers.has("cookie"))
-        throw new AuthError("origin_required", 403);
-      if (!request.headers.get("content-type")?.startsWith("application/json"))
-        throw new AuthError("json_required", 415);
+      assertAuthRequest(request, env);
       const body: unknown = await request.json();
-      const renewal = credential(request);
+      const renewal = authCredential(request, env);
       const ip = env.RUNTIME === "worker" ? request.headers.get("cf-connecting-ip") ?? "unknown" : "local";
       switch (path) {
         case "/auth/edaya/otp/start": return json(await service.begin({ ...startSchema.parse(body), ip }));
         case "/auth/edaya/identifiers/start": return json(await service.begin({ ...startSchema.parse(body), ip, credential: renewal || "invalid" }));
+        case "/auth/edaya/otp/status": return json(await service.status(statusSchema.parse(body).challenge, renewal));
+        case "/auth/edaya/otp/resend": return json(await service.resend({ ...resendSchema.parse(body), ip, credential: renewal }));
         case "/auth/edaya/otp/verify": {
           const input = verifySchema.parse(body);
           return outcome(await service.verify(input.challenge, input.code, renewal), request);
@@ -123,7 +138,7 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
     }
     catch (error) {
       if (error instanceof AuthError)
-        return json({ code: error.code, message: error.code.replaceAll("_", " ") }, error.status);
+        return json({ code: error.code, message: error.code.replaceAll("_", " "), ...error.details }, error.status);
       if (error instanceof z.ZodError || error instanceof SyntaxError)
         return json({ code: "invalid_request" }, 400);
       // Provider/database failures must not disclose secrets or SQL statements.

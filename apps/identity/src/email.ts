@@ -16,24 +16,6 @@ interface AuthEmailLogger {
   warn: (obj: object, msg?: string) => void;
   error: (obj: object, msg?: string) => void;
 }
-const testOtpByEmail = new Map<string, string>();
-const testVerificationUrlsByEmail = new Map<string, string>();
-export function resetAuthOtpMailerForTests(): void {
-  testOtpByEmail.clear();
-  testVerificationUrlsByEmail.clear();
-}
-export function getLastAuthOtpForTests(email: string): string | undefined {
-  return testOtpByEmail.get(email.trim().toLowerCase());
-}
-export function getLastAuthVerificationUrlForTests(email: string): string | undefined {
-  return testVerificationUrlsByEmail.get(email.trim().toLowerCase());
-}
-export function isDevOtpPeekEnabled(env: Pick<Environment, "NODE_ENV" | "AUTH_DEV_OTP_PEEK" | "AUTH_EMAIL_LOG_OTP">): boolean {
-  if (env.NODE_ENV === "production") {
-    return false;
-  }
-  return env.AUTH_DEV_OTP_PEEK === true || env.AUTH_EMAIL_LOG_OTP === true;
-}
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -117,9 +99,6 @@ function parseFromAddress(value: string): {
   return name ? { email, name } : { email };
 }
 function shouldLogAuthEmailInDev(env: Environment): boolean {
-  if (env.AUTH_EMAIL_LOG_OTP === false) {
-    return false;
-  }
   return env.NODE_ENV === "development";
 }
 function useCloudflareEmail(env: Environment): boolean {
@@ -143,9 +122,6 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger) {
   async function sendAuthVerificationOtp(input: AuthOtpDeliveryInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();
     const copy = formatOtpEmail(input);
-    if (env.NODE_ENV === "test" || isDevOtpPeekEnabled(env)) {
-      testOtpByEmail.set(normalizedEmail, input.otp);
-    }
     if (env.NODE_ENV === "test") {
       return;
     }
@@ -159,14 +135,11 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger) {
     if (env.NODE_ENV === "production") {
       throw new Error("Auth OTP email delivery is not configured for production");
     }
-    log.info({ email: normalizedEmail, otp: input.otp, type: input.type, delivery: "log" }, "Auth OTP (set EMAIL_TRANSPORT=cloudflare for real email delivery)");
+    log.info({ email: normalizedEmail, type: input.type, delivery: "log" }, "Auth delivery omitted locally; use dev:test for captured OTP access");
   }
   async function sendAuthVerificationEmail(input: AuthVerificationEmailInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();
     const copy = formatVerificationLinkEmail(input);
-    if (env.NODE_ENV === "test" || isDevOtpPeekEnabled(env)) {
-      testVerificationUrlsByEmail.set(normalizedEmail, input.url);
-    }
     if (env.NODE_ENV === "test") {
       return;
     }
@@ -181,7 +154,7 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger) {
       log.warn({ email: normalizedEmail }, "Auth verification email delivery is not configured for production");
       return;
     }
-    log.info({ email: normalizedEmail, url: input.url, delivery: "log" }, "Auth verification email (set EMAIL_TRANSPORT=cloudflare for real email delivery)");
+    log.info({ email: normalizedEmail, delivery: "log" }, "Auth verification email (set EMAIL_TRANSPORT=cloudflare for real email delivery)");
   }
   return {
     sendAuthVerificationOtp,

@@ -1,5 +1,23 @@
 export type IdentifierKind = 'email' | 'phone'
-export type OtpChannel = 'email' | 'telegram' | 'whatsapp'
+export type OtpChannel = 'email' | 'whatsapp' | 'sms'
+export type DeliveryStatus = 'pending' | 'accepted' | 'uncertain' | 'failed' | 'sent' | 'delivered' | 'read'
+export interface DeliveryResult {
+  status: 'accepted' | 'uncertain' | 'failed'
+  messageId?: string
+}
+export interface DeliveryReceipt {
+  id: string
+  messageId: string
+  destination: string
+  status: 'sent' | 'delivered' | 'read' | 'failed'
+  timestamp: number
+  attemptId?: string
+}
+export interface RecipientCooldown {
+  count: number
+  lastSentAt: number
+  nextResendAt: number
+}
 export interface Identifier {
   id: string
   kind: IdentifierKind
@@ -50,6 +68,11 @@ export interface AuthChallenge {
   attempts: number
   consumed: boolean
   recoveryEligible: boolean
+  superseded?: boolean
+  locale?: 'fr' | 'en'
+  nextResendAt?: number
+  delivery?: DeliveryStatus
+  messageId?: string
 }
 export interface PendingAuth {
   digest: string
@@ -74,7 +97,7 @@ export type AuthOutcome = {
   challenge: string
 }
 export class AuthError extends Error {
-  constructor(readonly code: string, readonly status = 400) {
+  constructor(readonly code: string, readonly status = 400, readonly details?: Record<string, unknown>) {
     super(code)
     this.name = 'AuthError'
   }

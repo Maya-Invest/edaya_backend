@@ -13,7 +13,8 @@ export function createBetterAuthAdapter(database: unknown, options: {
   generation: string
   delivery: OtpDeliveryPort
 }): AuthenticationProviderPort {
-  const channel = new AsyncLocalStorage<OtpChannel>()
+  const context = new AsyncLocalStorage<{ channel: OtpChannel, attemptId?: string }>()
+  const preparation = new AsyncLocalStorage<{ code?: string }>()
   const hashOtp = (value: string) => createHmac('sha256', options.secret).update(`edaya:otp:${value}`).digest('hex')
   const auth = betterAuth({
     secret: options.secret,
@@ -22,14 +23,19 @@ export function createBetterAuthAdapter(database: unknown, options: {
     emailAndPassword: { enabled: false },
     session: { storeSessionInDatabase: true, cookieCache: { enabled: false } },
     plugins: [
-      emailOTP({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, storeOTP: { hash: async otp => hashOtp(otp) }, sendVerificationOTP: async ({ email, otp }) => options.delivery.send({ channel: 'email', destination: email, code: otp }) }),
+      emailOTP({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, storeOTP: { hash: async otp => hashOtp(otp) }, sendVerificationOTP: async ({ email, otp }) => { await options.delivery.send({ channel: 'email', destination: email, code: otp, attemptId: context.getStore()?.attemptId }) } }),
       phoneNumber({ otpLength: 6, expiresIn: 300, allowedAttempts: 5, sendOTP: async ({ phoneNumber: destination, code }, ctx) => {
         if (!ctx)
           throw new Error('Phone verification context required')
         // Replace provider plaintext within the enclosing transaction, before delivery or commit.
         await ctx.context.internalAdapter.updateVerificationByIdentifier(destination, { value: `${hashOtp(`${destination}:${code}`)}:0` })
-        const selected = channel.getStore()
-        if (selected !== 'telegram' && selected !== 'whatsapp')
+        const prepared = preparation.getStore()
+        if (prepared) {
+          prepared.code = code
+          return
+        }
+        const selected = context.getStore()?.channel
+        if (selected !== 'sms' && selected !== 'whatsapp')
           throw new Error('Phone delivery channel is required')
         await options.delivery.send({ channel: selected, destination, code })
       }, verifyOTP: async ({ phoneNumber: destination, code }, ctx) => {
@@ -50,8 +56,15 @@ export function createBetterAuthAdapter(database: unknown, options: {
   })
   return {
     generation: options.generation,
+    async preparePhoneOtp(value) {
+      const prepared: { code?: string } = {}
+      await preparation.run(prepared, () => auth.api.sendPhoneNumberOTP({ body: { phoneNumber: value } }))
+      if (!prepared.code)
+        throw new Error('Phone OTP preparation failed')
+      return prepared.code
+    },
     async sendOtp(input) {
-      await channel.run(input.channel, async () => {
+      await context.run({ channel: input.channel, attemptId: input.attemptId }, async () => {
         if (input.kind === 'email')
           await auth.api.sendVerificationOTP({ body: { email: input.value, type: 'sign-in' } })
         else

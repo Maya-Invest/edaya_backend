@@ -11,10 +11,11 @@
     "deploy:production": "wrangler deploy --env prod",
     "check": "tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix",
+    "lint": "eslint src tests testing",
+    "lint:fix": "eslint src tests testing --fix",
     "test": "NODE_ENV=test bun test ./tests --timeout 120000",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "dev:test": "NODE_ENV=test bun --no-env-file src/entries/testing.ts"
   },
   "dependencies": {
     "@edaya/adaptor-auth": "workspace:*",

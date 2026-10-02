@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { IDENTITY_DIRECTORY_SECRET_HEADER } from "@maya-invest/edaya-identity-client";
+import { isAccountAuthRoute } from "./account-auth";
 import { toIdentityRequest } from "./auth-request";
 import { resolveCorsOrigin } from "./cors";
 import { lookupDirectoryByContact, resolveDirectoryById } from "./directory";
@@ -15,7 +16,7 @@ export interface IdentityAppEnv {
     runtime: IdentityRuntime;
   };
 }
-export function createIdentityApp() {
+export function createIdentityApp(configure?: (app: Hono<IdentityAppEnv>) => void) {
   const app = new Hono<IdentityAppEnv>();
   app.use(cors({
     origin: (origin, c) => resolveCorsOrigin(origin, c.env) ?? "",
@@ -29,7 +30,10 @@ export function createIdentityApp() {
     credentials: true,
   }));
   app.use(bodyLimit({ maxSize: 1024 * 1024 }));
+  configure?.(app);
   app.use(async (c, next) => {
+    if (c.req.path.startsWith("/auth/") && !isAccountAuthRoute(c.req.raw))
+      return c.json({ code: "not_found" }, 404, { "cache-control": "no-store" });
     const runtime = await resolveIdentityRuntime(c.env);
     c.set("runtime", runtime);
     await next();

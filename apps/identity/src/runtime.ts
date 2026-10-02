@@ -1,15 +1,16 @@
+import type { OtpDeliveryPort, PrivilegedAccountPolicyPort } from "@edaya/account";
 import type { Environment } from "./env";
 import type { IdentitySigningKeys } from "./jwt-keys";
-import type { OtpDeliveryPort, PrivilegedAccountPolicyPort } from "@edaya/account";
+import { createHash } from "node:crypto";
 import { AccountService } from "@edaya/account";
 import { createAccountRepository, createAccountSecurity } from "@edaya/adaptor-account";
 import { createBetterAuthAdapter } from "@edaya/adaptor-auth-better-auth";
-import { createHash } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { createAccountAuthHandler } from "./account-auth";
-import { createOtpDelivery } from "./otp-delivery";
 import { createAuthDatabase } from "./database";
 import { ensureIdentitySigningKeys } from "./jwt-keys";
+import { createOtpDelivery } from "./otp-delivery";
+import { smsRoute } from "./phone-config";
 
 export interface IdentityRuntime {
   env: Environment;
@@ -57,7 +58,8 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
       ? JSON.parse(env.ACCOUNT_SECURITY_KEYS) as Record<string, string>
       : { v1: createHash("sha256").update(`local-account-key:${env.BETTER_AUTH_SECRET}`).digest("base64") };
     const security = createAccountSecurity(keyring, env.ACCOUNT_SECURITY_KEY_VERSION);
-    const provider = createBetterAuthAdapter(db, { secret: env.BETTER_AUTH_SECRET, baseUrl: env.BETTER_AUTH_URL, generation: env.AUTH_PROVIDER_GENERATION, delivery: options.delivery ?? createOtpDelivery(env) });
+    const delivery = options.delivery ?? createOtpDelivery(env);
+    const provider = createBetterAuthAdapter(db, { secret: env.BETTER_AUTH_SECRET, baseUrl: env.BETTER_AUTH_URL, generation: env.AUTH_PROVIDER_GENERATION, delivery });
     const accounts = new AccountService(repository, provider, security, options.privilegedPolicy ?? { async requiresTotp(accountId) {
       if (!env.REQUIRE_PRIVILEGED_TOTP)
         return false;
@@ -75,13 +77,14 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
       if (typeof result.requiresTotp !== "boolean")
         throw new Error("Invalid account security policy");
       return result.requiresTotp;
-    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || env.AUTH_DEV_OTP_PEEK === true));
+    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && env.NODE_ENV === "test", { mode: env.PHONE_AUTH_MODE, supports: phone => !!smsRoute(env.PHONE_SMS_ROUTES, phone), delivery });
     const auth = {
       handler: createAccountAuthHandler(accounts, env, keys),
       async purgeExpiredCredentials() {
         const now = Date.now();
-        for (const table of ["session", "challenge", "pending", "quota"])
+        for (const table of ["session", "pending", "quota", "otp_cooldown", "otp_request", "otp_receipt"])
           await db.execute(sql`DELETE FROM ${sql.identifier("identity")}.${sql.identifier(table)} WHERE expires_at<=${now}`);
+        await db.execute(sql`DELETE FROM identity.challenge WHERE expires_at<=${now - 3600000}`);
       },
     };
     return {

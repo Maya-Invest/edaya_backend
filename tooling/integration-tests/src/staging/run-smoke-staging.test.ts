@@ -83,7 +83,7 @@ describe('runSmokeStaging', () => {
 
       if (url.endsWith('/auth/edaya/otp/start'))
         return Response.json({ challenge: 'mock-challenge' })
-      if (url.includes('/auth/edaya/dev/last-otp'))
+      if (url.includes('/auth/edaya/testing/otp'))
         return Response.json({ otp: '123456' })
       if (url.endsWith('/auth/edaya/otp/verify') && method === 'POST') {
         return new Response(JSON.stringify({ user: { id: 'user-1' } }), {

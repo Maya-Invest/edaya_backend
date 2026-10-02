@@ -77,21 +77,6 @@ describe("FIRST_PARTY_API_ORIGINS", () => {
       FIRST_PARTY_API_ORIGINS: "http://localhost:9999",
     })).toThrow(/must use HTTPS/);
   });
-  test("rejects AUTH_DEV_OTP_PEEK in production", () => {
-    expect(() => parse({
-      NODE_ENV: "production",
-      IDENTITY_DIRECTORY_SECRET: "production-directory-secret",
-      FIRST_PARTY_API_ORIGINS: "https://school.api.edayaplus.com",
-      AUTH_DEV_OTP_PEEK: true,
-    })).toThrow(/AUTH_DEV_OTP_PEEK is not allowed in production/);
-  });
-  test("accepts AUTH_DEV_OTP_PEEK outside production", () => {
-    const env = parse({
-      FIRST_PARTY_API_ORIGINS: "http://localhost:9999",
-      AUTH_DEV_OTP_PEEK: true,
-    });
-    expect(env.AUTH_DEV_OTP_PEEK).toBe(true);
-  });
 });
 test("preserves Cloudflare email and KV bindings", () => {
   const EMAIL = { send: async () => { } };

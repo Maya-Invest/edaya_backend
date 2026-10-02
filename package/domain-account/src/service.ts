@@ -1,11 +1,11 @@
-import type { Account, AuthOutcome, AuthSession, IdentifierKind, OtpChannel, PendingAuth } from './model'
-import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, PrivilegedAccountPolicyPort } from './ports'
+import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth } from './model'
+import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
 import { AuthError, normalizeIdentifier } from './model'
 
 const FIVE_MINUTES = 300000
 /** Owns Account policy. Provider sessions and identities never confer business access. */
 export class AccountService {
-  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false) { }
+  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort) { }
   // Expected failures commit attempt counters; infrastructure failures roll back.
   private async atomic<T>(work: () => Promise<T>): Promise<T> {
     const result = await this.repository.transaction(async () => {
@@ -26,13 +26,22 @@ export class AccountService {
   async begin(input: {
     kind: IdentifierKind
     value: string
-    channel: OtpChannel
+    channel?: OtpChannel | 'telegram'
     ip: string
+    locale?: 'fr' | 'en'
+    requestId?: string
     credential?: string
     recoveryEligible?: boolean
   }) {
     const value = normalizeIdentifier(input.kind, input.value)
-    if ((input.kind === 'email') !== (input.channel === 'email'))
+    if (input.channel === 'telegram')
+      throw new AuthError('unsupported_channel')
+    if (input.kind === 'phone') {
+      if (input.channel && input.channel !== 'whatsapp')
+        throw new AuthError('unsupported_channel')
+      return this.requestPhone({ ...input, value })
+    }
+    if (input.channel && input.channel !== 'email')
       throw new AuthError('invalid_channel')
     return this.atomic(async () => {
       const now = this.now()
@@ -42,21 +51,160 @@ export class AccountService {
         || !await this.repository.quota(`cooldown:${input.kind}:${value}`, this.localFixtures ? 10000 : 1, 60, now)) {
         throw new AuthError('rate_limited', 429)
       }
-      const attempts = await this.repository.supersede(input.kind, value)
+      const attempts = await this.repository.supersede(input.kind, value, now)
       if (attempts >= 5)
         throw new AuthError('attempts_exhausted', 429)
       const id = this.crypto.token()
-      const challenge = { id, kind: input.kind, value, channel: input.channel, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
+      const challenge = { id, kind: input.kind, value, channel: 'email' as const, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
       await this.repository.saveChallenge(challenge)
       try {
-        await this.provider.sendOtp({ kind: input.kind, value, channel: input.channel })
+        await this.provider.sendOtp({ kind: input.kind, value, channel: 'email', attemptId: id })
       }
       catch {
         challenge.consumed = true
         await this.repository.saveChallenge(challenge)
         throw new AuthError('delivery_unavailable', 503)
       }
-      return { state: 'primary_required' as const, challenge: id, expiresAt: challenge.expiresAt, resendAfter: 60 }
+      return { ...this.primaryStatus(challenge), resendAfter: 60 }
+    })
+  }
+
+  private primaryStatus(challenge: AuthChallenge) {
+    const now = this.now()
+    const lifecycle = challenge.superseded ? 'superseded' : challenge.consumed ? 'completed' : challenge.attempts >= 5 ? 'exhausted' : challenge.expiresAt <= now ? 'expired' : 'pending'
+    const replaceable = !challenge.consumed && !challenge.superseded && challenge.attempts < 5 && now < challenge.expiresAt + 3600000
+    return { state: 'primary_required' as const, challenge: challenge.id, lifecycle, channel: challenge.channel, delivery: challenge.delivery === 'pending' && now - challenge.createdAt > 10000 ? 'uncertain' : challenge.delivery ?? 'accepted', expiresAt: challenge.expiresAt, nextResendAt: challenge.nextResendAt ?? challenge.createdAt + 60000, serverNow: now, actions: { resend: replaceable, sms: replaceable && challenge.channel === 'whatsapp' } }
+  }
+
+  private async authorizeChallenge(challenge: AuthChallenge, credential?: string) {
+    if (challenge.purpose === 'link') {
+      const session = await this.requireRecent(credential ?? '')
+      if (session.digest !== challenge.sessionDigest || session.accountId !== challenge.accountId)
+        throw new AuthError('invalid_challenge', 403)
+    }
+  }
+
+  async status(challengeId: string, credential?: string) {
+    const challenge = await this.repository.challenge(challengeId)
+    if (!challenge || this.now() >= challenge.expiresAt + 3600000)
+      throw new AuthError('challenge_expired')
+    await this.authorizeChallenge(challenge, credential)
+    const result = this.primaryStatus(challenge)
+    if (challenge.kind === 'phone') {
+      const cooldown = await this.repository.cooldown(challenge.value)
+      if (cooldown)
+        result.nextResendAt = Math.max(result.nextResendAt, cooldown.nextResendAt)
+    }
+    return result
+  }
+
+  async resend(input: { challenge: string, action: 'resend' | 'sms', ip: string, requestId: string, credential?: string }) {
+    const previous = await this.repository.challenge(input.challenge)
+    if (!previous)
+      throw new AuthError('challenge_expired')
+    if (previous.kind === 'phone')
+      return this.requestPhone(input)
+    await this.authorizeChallenge(previous, input.credential)
+    if (input.action !== 'resend' || previous.consumed || previous.attempts >= 5 || this.now() >= previous.expiresAt + 3600000)
+      throw new AuthError('challenge_expired')
+    return this.begin({ kind: 'email', value: previous.value, channel: 'email', ip: input.ip, credential: previous.purpose === 'link' ? input.credential : undefined, recoveryEligible: previous.recoveryEligible })
+  }
+
+  private async requestPhone(input: { value?: string, challenge?: string, action?: 'resend' | 'sms', ip: string, requestId?: string, credential?: string, recoveryEligible?: boolean, locale?: 'fr' | 'en' }) {
+    const phone = this.phone
+    if (!phone || phone.mode === 'disabled' || !this.provider.preparePhoneOtp)
+      throw new AuthError('phone_auth_unavailable', 503)
+    const requestId = input.requestId ?? this.crypto.token()
+    const prepared = await this.atomic(async () => {
+      const now = this.now()
+      const previous = input.challenge ? await this.repository.challenge(input.challenge) : null
+      if (input.challenge && (!previous || previous.kind !== 'phone'))
+        throw new AuthError('invalid_challenge')
+      const value = previous?.value ?? normalizeIdentifier('phone', input.value ?? '')
+      if (!phone.supports(value))
+        throw new AuthError('phone_country_unsupported')
+      // The first release accepts only Ivorian mobile numbers (01, 05, 07).
+      if (!/^\+225(?:01|05|07)\d{8}$/.test(value))
+        throw new AuthError('invalid_identifier')
+      const session = previous?.purpose === 'login' ? null : input.credential ? await this.requireRecent(input.credential) : null
+      if (previous)
+        await this.authorizeChallenge(previous, input.credential)
+      const selected: OtpChannel = input.action === 'sms' ? 'sms' : previous?.channel ?? (phone.mode === 'sms_only' ? 'sms' : 'whatsapp')
+      const fingerprint = await this.crypto.digest(JSON.stringify([value, previous?.id ?? null, input.action ?? 'start', session?.digest ?? null, selected, previous?.recoveryEligible ?? input.recoveryEligible === true, previous?.locale ?? input.locale ?? 'fr']))
+      const replay = await this.repository.deliveryRequest(requestId)
+      if (replay) {
+        if (replay.fingerprint !== fingerprint)
+          throw new AuthError('idempotency_conflict', 409)
+        const challenge = await this.repository.challenge(replay.challenge)
+        if (!challenge)
+          throw new AuthError('challenge_expired')
+        return { challenge }
+      }
+      if (previous && (previous.consumed || previous.attempts >= 5 || now >= previous.expiresAt + 3600000))
+        throw new AuthError(previous.attempts >= 5 ? 'attempts_exhausted' : 'challenge_expired')
+      if (input.action === 'sms' && previous?.channel !== 'whatsapp')
+        throw new AuthError('unsupported_channel')
+      const cooldown = await this.repository.cooldown(value)
+      if (cooldown && now < cooldown.nextResendAt)
+        throw new AuthError('rate_limited', 429, { nextResendAt: cooldown.nextResendAt, serverNow: now })
+      if (await this.repository.challengeAttempts('phone', value, now) >= 5)
+        throw new AuthError('attempts_exhausted', 429)
+      if (!await this.repository.reserveSendQuota(input.ip, value, now, this.localFixtures))
+        throw new AuthError('rate_limited', 429)
+      const attempts = await this.repository.supersede('phone', value, now)
+      const count = cooldown && now - cooldown.lastSentAt < 3600000 ? cooldown.count + 1 : 1
+      const nextResendAt = now + (count === 1 ? 60 : count === 2 ? 120 : 300) * 1000
+      const challenge: AuthChallenge = { id: this.crypto.token(), kind: 'phone', value, channel: selected, purpose: previous?.purpose ?? (session ? 'link' : 'login'), ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: previous?.recoveryEligible ?? input.recoveryEligible === true, locale: previous?.locale ?? input.locale ?? 'fr', nextResendAt, delivery: 'pending' }
+      // The provider stores only the hash; the plaintext lives in this request.
+      const code = await this.provider.preparePhoneOtp!(value)
+      await this.repository.saveChallenge(challenge)
+      await this.repository.saveCooldown(value, { count, lastSentAt: now, nextResendAt })
+      await this.repository.saveDeliveryRequest(requestId, fingerprint, challenge.id, challenge.expiresAt + 3600000)
+      return { challenge, code }
+    })
+    if (!prepared.code)
+      return this.primaryStatus(prepared.challenge)
+    let result
+    try {
+      result = await phone.delivery.send({ channel: prepared.challenge.channel, destination: prepared.challenge.value, code: prepared.code, locale: prepared.challenge.locale, attemptId: prepared.challenge.id }) ?? { status: 'accepted' as const }
+    }
+    catch {
+      result = { status: 'uncertain' as const }
+    }
+    // Network IO never holds the authentication transaction open.
+    return this.atomic(async () => {
+      const challenge = (await this.repository.challenge(prepared.challenge.id))!
+      if (challenge.delivery === 'pending')
+        challenge.delivery = result.status
+      if (result.messageId) {
+        challenge.messageId = result.messageId
+        for (const receipt of await this.repository.receipts(result.messageId))
+          this.applyReceipt(challenge, receipt)
+      }
+      await this.repository.saveChallenge(challenge)
+      return this.primaryStatus(challenge)
+    })
+  }
+
+  private applyReceipt(challenge: AuthChallenge, receipt: DeliveryReceipt) {
+    if (challenge.channel !== 'whatsapp' || challenge.value !== receipt.destination || (challenge.messageId && challenge.messageId !== receipt.messageId) || (receipt.attemptId && receipt.attemptId !== challenge.id))
+      return
+    const rank = { pending: 0, uncertain: 0, accepted: 1, failed: 1, sent: 2, delivered: 3, read: 4 }
+    const current = challenge.delivery ?? 'pending'
+    if (receipt.status === 'failed' ? rank[current] < 3 : rank[receipt.status] > rank[current] && !(current === 'failed' && receipt.status === 'sent'))
+      challenge.delivery = receipt.status
+    challenge.messageId = receipt.messageId
+  }
+
+  async recordReceipt(receipt: DeliveryReceipt) {
+    return this.atomic(async () => {
+      if (!await this.repository.saveReceipt(receipt, this.now() + 3600000))
+        return
+      const challenge = receipt.attemptId ? await this.repository.challenge(receipt.attemptId) : await this.repository.challengeByMessage(receipt.messageId)
+      if (!challenge)
+        return
+      this.applyReceipt(challenge, receipt)
+      await this.repository.saveChallenge(challenge)
     })
   }
 

@@ -238,6 +238,20 @@ bun repo seed --scope doctor                                                    
 
 ## Account authentication
 
-Use email OTP locally with `AUTH_DEV_OTP_PEEK=true` in `apps/identity/.env`. Password endpoints are absent. Telegram/WhatsApp require real delivery configuration; never use customer numbers for fixture tests. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
+Use the dedicated `bun run dev:test` server for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
 
 See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun --filter @edaya/identity-migrate migrate`. Keep the identity database separate from the school database.
+
+## Test-only OTP access
+
+From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9900`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. No `.env` files are changed or loaded by the test entry. Normal environment settings, provider credentials and database URLs are ignored; only explicit `EDAYA_TEST_*` configuration is used. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
+
+Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_AUTH_URL=http://127.0.0.1:9900 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
+
+Send a code through the normal form, select **Show test code**, optionally **Copy**, and manually enter it before verifying. Reveal creates no message, OTP guess or session. Login and contact linking use the same controls. Codes are transient and clear on replacement, expiry, completion, reset, departure or backgrounding. French and English are supported.
+
+Stop with Ctrl-C: the server clears captured codes and closes its database. The optional CI mailbox (`EDAYA_TEST_OTP_FILE`, permissions 0600), clock (`EDAYA_TEST_CLOCK_FILE`) and privileged policy (`EDAYA_TEST_POLICY_FILE`) remain private fixtures; delete mailbox files after shutdown and never upload them. The integration start/stop scripts use disposable school configuration and clean the private fixtures on stop.
+
+Only the testing entry exposes `GET /auth/edaya/testing/capabilities` and `POST /auth/edaya/testing/otp` with `{challenge}`. Both return `Cache-Control: no-store`; pending challenges only, with original recent session authorization for linking. The normal application returns 404 for these routes and the removed `/auth/edaya/dev/last-otp` route in every environment. No migration or hosted testing deployment is required.
+
+For a complete disposable school/Identity/files stack, run `.github/scripts/ci-start-local-apis.sh start` from the web or mobile checkout. Its optional `EDAYA_CI_API_PID_DIR` selects the fixture directory (default `/tmp/edaya-ci-apis`). To seed it, run from the backend with `SEED_ENV_FILE=/tmp/edaya-ci-apis/school.env SEED_API_URL=http://127.0.0.1:9999 SEED_AUTH_URL=http://127.0.0.1:9900 EDAYA_TEST_OTP_FILE=/tmp/edaya-ci-apis/otp.jsonl bun --no-env-file repo seed --skip-profile-photos --skip-attachments`. Use the matching Identity issuer and school API origin from the disposable configuration. Run the same script with `stop` when finished. Never attach the private mailbox or disposable environment file as an artifact.

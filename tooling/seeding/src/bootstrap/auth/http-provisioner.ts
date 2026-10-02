@@ -39,13 +39,14 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
     if (mailbox) {
       const messages = readFileSync(mailbox, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as { channel: string, destination: string, code: string })
       const delivery = messages.reverse().find(message => message.channel === 'email' && message.destination === email.trim().toLowerCase())
-      if (!delivery) throw new Error('Required seed OTP delivery missing')
+      if (!delivery)
+        throw new Error('Required seed OTP delivery missing')
       otp = delivery.code
     }
     else {
-      const peek = await client.request(`/auth/edaya/dev/last-otp?email=${encodeURIComponent(email)}`)
+      const peek = await client.request('/auth/edaya/testing/otp', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge }) })
       if (!peek.ok)
-        throw new Error('Local seed requires captured delivery or AUTH_DEV_OTP_PEEK=true on identity')
+        throw new Error('Local seed requires captured delivery or the dedicated Identity dev:test server')
       otp = (await peek.json() as { otp: string }).otp
     }
     response = await client.request('/auth/edaya/otp/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, code: otp }) })

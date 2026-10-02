@@ -1,11 +1,14 @@
-import type { Account, AccountSecurity, AuthChallenge, AuthSession, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence } from './model'
+import type { Account, AccountSecurity, AuthChallenge, AuthSession, DeliveryReceipt, DeliveryResult, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RecipientCooldown } from './model'
 
 export interface AuthenticationProviderPort {
   readonly generation: string
+  /** Prepare a hashed phone OTP in the current transaction. No network delivery. */
+  preparePhoneOtp?: (value: string) => Promise<string>
   sendOtp: (input: {
     kind: IdentifierKind
     value: string
     channel: OtpChannel
+    attemptId?: string
   }) => Promise<void>
   verifyOtp: (input: {
     kind: IdentifierKind
@@ -18,7 +21,14 @@ export interface OtpDeliveryPort {
     channel: OtpChannel
     destination: string
     code: string
-  }) => Promise<void>
+    locale?: 'fr' | 'en'
+    attemptId?: string
+  }) => Promise<DeliveryResult | void>
+}
+export interface PhoneAuthPort {
+  mode: 'disabled' | 'sms_only' | 'whatsapp_first'
+  supports: (phone: string) => boolean
+  delivery: OtpDeliveryPort
 }
 export interface AccountRepositoryPort {
   transaction: <T>(work: () => Promise<T>) => Promise<T>
@@ -29,7 +39,16 @@ export interface AccountRepositoryPort {
   saveSecurity: (id: string, security: AccountSecurity) => Promise<void>
   challenge: (id: string) => Promise<AuthChallenge | null>
   saveChallenge: (challenge: AuthChallenge) => Promise<void>
-  supersede: (kind: IdentifierKind, value: string) => Promise<number>
+  challengeAttempts: (kind: IdentifierKind, value: string, now: number) => Promise<number>
+  challengeByMessage: (messageId: string) => Promise<AuthChallenge | null>
+  supersede: (kind: IdentifierKind, value: string, now?: number) => Promise<number>
+  cooldown: (value: string) => Promise<RecipientCooldown | null>
+  saveCooldown: (value: string, cooldown: RecipientCooldown) => Promise<void>
+  deliveryRequest: (id: string) => Promise<{ fingerprint: string, challenge: string } | null>
+  saveDeliveryRequest: (id: string, fingerprint: string, challenge: string, expiresAt: number) => Promise<void>
+  receipts: (messageId: string) => Promise<DeliveryReceipt[]>
+  saveReceipt: (receipt: DeliveryReceipt, expiresAt: number) => Promise<boolean>
+  reserveSendQuota: (ip: string, recipient: string, now: number, fixtures: boolean) => Promise<boolean>
   resetChallengeAttempts: (kind: IdentifierKind, value: string) => Promise<void>
   pending: (digest: string) => Promise<PendingAuth | null>
   savePending: (pending: PendingAuth) => Promise<void>

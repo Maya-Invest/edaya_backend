@@ -27,7 +27,8 @@
     "dev": "bun tooling/repo/dev/start-local-dev.ts",
     "dev:container": "bash tooling/api-dev-container/run.sh",
     "dev:container:down": "bash tooling/api-dev-container/run.sh down",
-    "dev:container:logs": "bash tooling/api-dev-container/run.sh logs"
+    "dev:container:logs": "bash tooling/api-dev-container/run.sh logs",
+    "dev:test": "bun --filter @edaya/identity dev:test"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

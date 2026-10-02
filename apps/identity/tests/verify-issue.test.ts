@@ -2,7 +2,6 @@ import { afterAll, expect, test } from "bun:test";
 import { verifyIdentityToken } from "@maya-invest/edaya-identity-client";
 import { totpCode } from "@edaya/adaptor-account";
 import { createIdentityApp } from "../src/app";
-import { getLastAuthOtpForTests } from "../src/email";
 import { parseEnv } from "../src/env";
 import { attachIdentityRuntime, createIdentityRuntime } from "../src/runtime";
 
@@ -10,7 +9,10 @@ const issuer = "http://localhost:9900";
 const origin = "http://localhost:5173";
 const audience = "http://localhost:9999";
 const env = parseEnv({ NODE_ENV: "test", LOG_LEVEL: "silent", AUTH_DATABASE_URL: "pglite:memory", BETTER_AUTH_SECRET: "test-secret-placeholder-key-32chars", BETTER_AUTH_URL: issuer, FIRST_PARTY_API_ORIGINS: audience, TRUSTED_ORIGINS: origin, IDENTITY_DIRECTORY_SECRET: "test-directory-secret" }, "test");
-const runtimePromise = createIdentityRuntime(env).then((runtime) => {
+const delivered = new Map<string, string>();
+const runtimePromise = createIdentityRuntime(env, { delivery: { async send(message) {
+  delivered.set(message.destination, message.code);
+} } }).then((runtime) => {
   attachIdentityRuntime(env, runtime);
   return runtime;
 });
@@ -27,7 +29,7 @@ async function login(native = false) {
   const { challenge } = await started.json() as {
     challenge: string;
   };
-  return request("/auth/edaya/otp/verify", { challenge, code: getLastAuthOtpForTests(email) }, native ? { "x-edaya-client": "native" } : {});
+  return request("/auth/edaya/otp/verify", { challenge, code: delivered.get(email) }, native ? { "x-edaya-client": "native" } : {});
 }
 test("browser cookies and native opaque credentials have the same Account contract", async () => {
   const browser = await login();

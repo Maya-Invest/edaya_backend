@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
-const apiEnvFile = resolve(repoRoot, "apps/api/.env");
+const apiEnvFile = process.env["EDAYA_LOCAL_ENV_FILE"] ?? resolve(repoRoot, "apps/api/.env");
 
 if (existsSync(apiEnvFile)) {
   dotenvExpand.expand(dotenv.config({ path: apiEnvFile }));

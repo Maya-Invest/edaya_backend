@@ -1,5 +1,6 @@
 import process from "node:process";
 import { z } from "zod";
+import { smsRoutesSchema, templatesSchema } from "./phone-config";
 
 const envBoolean = z.preprocess((value) => {
   if (typeof value !== "string") {
@@ -123,30 +124,37 @@ const RawEnvSchema = z.object({
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
   ACCOUNT_SECURITY_KEY_VERSION: z.string().regex(/^[\w-]+$/).default("v1"),
-  TELEGRAM_GATEWAY_TOKEN: z.string().optional(),
+  PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
+  PHONE_SMS_ROUTES: smsRoutesSchema.default([]),
+  AFRICAS_TALKING_USERNAME: z.string().min(1).optional(),
+  AFRICAS_TALKING_API_KEY: z.string().min(1).optional(),
+  AFRICAS_TALKING_SENDER_ID: z.string().min(1).optional(),
+  AFRICAS_TALKING_SANDBOX: envBoolean.default(false),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().regex(/^\d+$/).optional(),
-  WHATSAPP_AUTH_TEMPLATE: z.string().optional(),
+  WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().regex(/^\d+$/).optional(),
+  WHATSAPP_APP_SECRET: z.string().min(1).optional(),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().min(1).optional(),
+  WHATSAPP_AUTH_TEMPLATES: templatesSchema.optional(),
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/).optional(),
-  WHATSAPP_TEMPLATE_LANGUAGE: z.string().default("en_US"),
   REQUIRE_EMAIL_VERIFICATION: envBoolean.optional(),
-  AUTH_EMAIL_LOG_OTP: envBoolean.optional(),
-  AUTH_DEV_OTP_PEEK: envBoolean.optional(),
   EMAIL_FROM: z.string().default("EDAYA <noreply@edayaplus.com>"),
   EMAIL_TRANSPORT: z.enum(["log", "cloudflare"]).optional(),
 }).superRefine((env, ctx) => {
+  const required = env.PHONE_AUTH_MODE === "disabled" ? [] : ["AFRICAS_TALKING_USERNAME", "AFRICAS_TALKING_API_KEY", "AFRICAS_TALKING_SENDER_ID", ...(env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [])];
+  for (const key of required) {
+    if (!env[key as keyof typeof env])
+      ctx.addIssue({ code: "custom", path: [key], message: `${key} is required for phone authentication` });
+  }
+  if (env.PHONE_AUTH_MODE !== "disabled" && !env.PHONE_SMS_ROUTES.length)
+    ctx.addIssue({ code: "custom", path: ["PHONE_SMS_ROUTES"], message: "At least one SMS route is required" });
+  if (env.NODE_ENV === "production" && env.AFRICAS_TALKING_SANDBOX)
+    ctx.addIssue({ code: "custom", path: ["AFRICAS_TALKING_SANDBOX"], message: "SMS sandbox is not allowed in production" });
   if (env.SCHOOL_API_ORIGIN !== undefined && env.SCHOOL_API_ORIGIN.trim() !== "") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["SCHOOL_API_ORIGIN"],
       message: "SCHOOL_API_ORIGIN was removed; set FIRST_PARTY_API_ORIGINS instead",
-    });
-  }
-  if (env.AUTH_DEV_OTP_PEEK === true && env.NODE_ENV === "production") {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["AUTH_DEV_OTP_PEEK"],
-      message: "AUTH_DEV_OTP_PEEK is not allowed in production",
     });
   }
   if (env.NODE_ENV === "production" && env.IDENTITY_DIRECTORY_SECRET === "local-directory-secret") {

@@ -1,10 +1,10 @@
 import { Buffer } from "node:buffer";
-import { afterAll, beforeAll, expect, test } from "bun:test";
 import { AccountService } from "@edaya/account";
 import { createAccountRepository, createAccountSecurity, runAccountMigrations, totpCode } from "@edaya/adaptor-account";
 import { runMigrations } from "@edaya/adaptor-auth";
 import { createBetterAuthAdapter } from "@edaya/adaptor-auth-better-auth";
 import { PGlite } from "@electric-sql/pglite";
+import { afterAll, beforeAll, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 
@@ -13,11 +13,12 @@ const db = drizzle(database);
 const { repository, db: transactionalDb } = createAccountRepository(db);
 const security = createAccountSecurity({ v1: Buffer.alloc(32, 7).toString("base64") }, "v1");
 const delivered = new Map<string, string>();
-const adapter = createBetterAuthAdapter(transactionalDb, { secret: "test-only-secret-with-at-least-32-characters", baseUrl: "http://localhost:9900", generation: "better-auth:test", delivery: { async send(input) {
+const delivery = { async send(input: { destination: string; code: string }) {
   delivered.set(input.destination, input.code);
-} } });
+} };
+const adapter = createBetterAuthAdapter(transactionalDb, { secret: "test-only-secret-with-at-least-32-characters", baseUrl: "http://localhost:9900", generation: "better-auth:test", delivery });
 let now = Date.now();
-const service = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now);
+const service = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, false, { mode: "whatsapp_first", supports: phone => phone.startsWith("+225"), delivery });
 beforeAll(async () => {
   await runMigrations(db, { driver: "pglite" });
   await runAccountMigrations(db, "pglite");
@@ -46,10 +47,10 @@ test("real provider aliases belong to one Account; another Account cannot claim 
   await expect(service.verify(conflict.challenge, delivered.get("alias@example.com")!, other.credential)).rejects.toMatchObject({ code: "identifier_unavailable" });
 });
 test("real phone OTP verifies only the normalized phone identifier", async () => {
-  const challenge = await service.begin({ kind: "phone", value: "+1 (514) 555-0123", channel: "telegram", ip: "phone" });
-  const stored = await db.execute(sql`SELECT value FROM auth.verification WHERE identifier='+15145550123'`);
+  const challenge = await service.begin({ kind: "phone", value: "+225 (07) 1234-5678", channel: "whatsapp", ip: "phone" });
+  const stored = await db.execute(sql`SELECT value FROM auth.verification WHERE identifier='+2250712345678'`);
   expect(stored.rows[0]?.value).toMatch(/^[a-f0-9]{64}:0$/);
-  const result = await service.verify(challenge.challenge, delivered.get("+15145550123")!);
+  const result = await service.verify(challenge.challenge, delivered.get("+2250712345678")!);
   if (result.state !== "complete")
     throw new Error("Expected complete login");
   expect(result.account.identifiers.map(i => i.kind)).toEqual(["phone"]);
@@ -61,21 +62,27 @@ test("concurrent OTP consumption succeeds once", async () => {
 });
 test("failed verification attempts persist", async () => {
   const challenge = await service.begin({ kind: "email", value: "wrong@example.com", channel: "email", ip: "wrong" });
-  for (let i = 0; i < 5; i++)
+  for (let i = 0;
+    i < 5;
+    i++)
     await expect(service.verify(challenge.challenge, "abcdef")).rejects.toMatchObject({ code: "invalid_code" });
   await expect(service.verify(challenge.challenge, delivered.get("wrong@example.com")!)).rejects.toMatchObject({ code: "attempts_exhausted" });
 });
 test("successful OTP proofs reset attempts, while resends preserve failed attempts", async () => {
   const repeated = new AccountService(repository, adapter, security, { requiresTotp: async () => false }, () => now, true);
   const value = "repeated-proof@example.com";
-  for (let index = 0; index < 7; index++) {
+  for (let index = 0;
+    index < 7;
+    index++) {
     const challenge = await repeated.begin({ kind: "email", value, channel: "email", ip: value });
     const complete = await repeated.verify(challenge.challenge, delivered.get(value)!);
     expect(complete.state).toBe("complete");
   }
   const valueWithFailures = "resend-budget@example.com";
   const first = await repeated.begin({ kind: "email", value: valueWithFailures, channel: "email", ip: valueWithFailures });
-  for (let index = 0; index < 4; index++)
+  for (let index = 0;
+    index < 4;
+    index++)
     await expect(repeated.verify(first.challenge, "abcdef")).rejects.toMatchObject({ code: "invalid_code" });
   const resend = await repeated.begin({ kind: "email", value: valueWithFailures, channel: "email", ip: valueWithFailures });
   await expect(repeated.verify(first.challenge, delivered.get(valueWithFailures)!)).rejects.toMatchObject({ code: "challenge_expired" });

@@ -1,4 +1,4 @@
-import type { Account, AccountRepositoryPort, AccountSecurity, AuthChallenge, AuthSession, IdentifierKind, PendingAuth } from '@edaya/account'
+import type { Account, AccountRepositoryPort, AccountSecurity, AuthChallenge, AuthSession, DeliveryReceipt, IdentifierKind, PendingAuth, RecipientCooldown } from '@edaya/account'
 import type { SQL } from 'drizzle-orm'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { sql } from 'drizzle-orm'
@@ -91,15 +91,52 @@ export function createAccountRepository(database: unknown): {
       }>(sql`SELECT data FROM identity.challenge WHERE id=${id}`))[0]?.data ?? null
     },
     async saveChallenge(c) { await db.execute(sql`INSERT INTO identity.challenge (id,kind,value,expires_at,data) VALUES (${c.id},${c.kind},${c.value},${c.expiresAt},${JSON.stringify(c)}::jsonb) ON CONFLICT (id) DO UPDATE SET data=excluded.data`) },
-    async supersede(kind, value) {
+    async challengeAttempts(kind, value, now) {
+      const records = await query<{ data: AuthChallenge }>(sql`SELECT data FROM identity.challenge WHERE kind=${kind} AND value=${value} AND expires_at>${now}`)
+      return Math.max(0, ...records.map(r => r.data.attempts))
+    },
+    async challengeByMessage(messageId) {
+      return (await query<{ data: AuthChallenge }>(sql`SELECT data FROM identity.challenge WHERE data->>'messageId'=${messageId} LIMIT 1`))[0]?.data ?? null
+    },
+    async supersede(kind, value, now = Date.now()) {
       const records = await query<{
         data: AuthChallenge
-      }>(sql`SELECT data FROM identity.challenge WHERE kind=${kind} AND value=${value} AND expires_at>${Date.now()}`)
+      }>(sql`SELECT data FROM identity.challenge WHERE kind=${kind} AND value=${value} AND expires_at>${now - 3600000}`)
       for (const { data } of records) {
         data.consumed = true
+        data.superseded = true
         await repository.saveChallenge(data)
       }
-      return Math.max(0, ...records.map(r => r.data.attempts))
+      return Math.max(0, ...records.filter(r => r.data.expiresAt > now).map(r => r.data.attempts))
+    },
+    async cooldown(value) {
+      return (await query<{ data: RecipientCooldown }>(sql`SELECT data FROM identity.otp_cooldown WHERE value=${value}`))[0]?.data ?? null
+    },
+    async saveCooldown(value, data) {
+      await db.execute(sql`INSERT INTO identity.otp_cooldown (value,expires_at,data) VALUES (${value},${data.lastSentAt + 3600000},${JSON.stringify(data)}::jsonb) ON CONFLICT (value) DO UPDATE SET expires_at=excluded.expires_at,data=excluded.data`)
+    },
+    async deliveryRequest(id) {
+      return (await query<{ fingerprint: string, challenge: string }>(sql`SELECT fingerprint,challenge FROM identity.otp_request WHERE id=${id}`))[0] ?? null
+    },
+    async saveDeliveryRequest(id, fingerprint, challenge, expiresAt) {
+      await db.execute(sql`INSERT INTO identity.otp_request (id,fingerprint,challenge,expires_at) VALUES (${id},${fingerprint},${challenge},${expiresAt})`)
+    },
+    async receipts(messageId) {
+      return (await query<{ data: DeliveryReceipt }>(sql`SELECT data FROM identity.otp_receipt WHERE message_id=${messageId}`)).map(r => r.data)
+    },
+    async saveReceipt(receipt, expiresAt) {
+      return (await query(sql`INSERT INTO identity.otp_receipt (id,message_id,expires_at,data) VALUES (${receipt.id},${receipt.messageId},${expiresAt},${JSON.stringify(receipt)}::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id`)).length > 0
+    },
+    async reserveSendQuota(ip, recipient, now, fixtures) {
+      const limits = [{ key: `send:ip:${ip}`, maximum: fixtures ? 10000 : 20, seconds: 600 }, { key: `send:recipient:phone:${recipient}`, maximum: fixtures ? 10000 : 5, seconds: 3600 }]
+      for (const limit of limits) {
+        const [record] = await query<{ count: number, expires_at: number }>(sql`SELECT count,expires_at FROM identity.quota WHERE key=${limit.key}`)
+        if (record && Number(record.expires_at) > now && record.count >= limit.maximum)
+          return false
+      }
+      for (const limit of limits)
+        await repository.quota(limit.key, limit.maximum, limit.seconds, now)
+      return true
     },
     async resetChallengeAttempts(kind, value) {
       await db.execute(sql`UPDATE identity.challenge SET data=jsonb_set(data,'{attempts}','0'::jsonb) WHERE kind=${kind} AND value=${value}`)

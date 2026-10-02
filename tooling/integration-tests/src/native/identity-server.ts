@@ -1,6 +1,5 @@
-import identityApp from '../../../../apps/identity/src/app'
 import { parseEnv } from '../../../../apps/identity/src/env'
-import { attachIdentityRuntime, createIdentityRuntime } from '../../../../apps/identity/src/runtime'
+import { createTestingIdentity } from '../../../../apps/identity/testing/composition'
 
 /** Disposable real identity service owned by the native test runner, never a project database. */
 export async function startTestIdentity() {
@@ -15,16 +14,14 @@ export async function startTestIdentity() {
       BETTER_AUTH_URL: origin,
       FIRST_PARTY_API_ORIGINS: 'http://localhost:9999',
       IDENTITY_DIRECTORY_SECRET: 'test-directory-secret',
-      AUTH_DEV_OTP_PEEK: true,
       EMAIL_TRANSPORT: 'log',
       LOG_LEVEL: 'silent',
     }, 'test')
-    const runtime = await createIdentityRuntime(env)
-    attachIdentityRuntime(env, runtime)
-    fetchIdentity = request => identityApp.fetch(request, env)
+    const test = await createTestingIdentity(env)
+    fetchIdentity = request => test.app.fetch(request, env)
     return { origin, async close() {
       server.stop(true)
-      await runtime.close()
+      await test.close()
     } }
   }
   catch (error) {
