@@ -1,5 +1,5 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
-import type { SqlExecutor } from '../../../db-migrate/scripts/lib/reset-finance-tables'
+import type { SqlExecutor } from '../../../repo/db/school/lib/reset-finance-tables'
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
 import { AcademicYear, Attachment, AttachmentOwnerKind, CatalogServiceStatus, Guardian, noOpFileStorage, noOpNotificationGateway, PaymentMethod, School, StaffMember, Student } from '@edaya/core'
@@ -7,8 +7,8 @@ import { SchoolApplication } from '@edaya/service'
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { sql } from 'drizzle-orm'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
-import { assertLoopbackNativeFinanceResetUrl } from '../../../db-migrate/scripts/lib/assert-finance-reset-target'
-import { captureFinancePreservationDigest, FINANCE_RESET_TABLES, resetFinanceTables } from '../../../db-migrate/scripts/lib/reset-finance-tables'
+import { assertLoopbackNativeFinanceResetUrl } from '../../../repo/db/school/lib/assert-finance-reset-target'
+import { captureFinancePreservationDigest, FINANCE_RESET_TABLES, resetFinanceTables } from '../../../repo/db/school/lib/reset-finance-tables'
 
 const url = assertLoopbackNativeFinanceResetUrl(process.env.EDAYA_NATIVE_TEST_URL ?? '')
 

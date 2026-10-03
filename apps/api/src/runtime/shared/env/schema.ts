@@ -33,9 +33,12 @@ export const EnvSchema = z.object({
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
   STAGING_NOTIFICATION_EMAILS: z.string().default(""),
-  IDENTITY_ISSUER: z.string().url().default("http://localhost:9900"),
-  IDENTITY_DIRECTORY_URL: z.string().url().default("http://localhost:9900"),
-  IDENTITY_DIRECTORY_SECRET: z.string().min(1).default("local-directory-secret"),
+  AUTH_DATABASE_URL: z.string().default("pglite:.data/identity"),
+  BETTER_AUTH_SECRET: z.string().min(32).optional(),
+  ACCOUNT_SECURITY_KEYS: z.string().optional(),
+  ACCOUNT_SECURITY_KEY_VERSION: z.string().default("v1"),
+  AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
+  PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
   /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */
   EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp"]).optional(),
@@ -79,32 +82,21 @@ export const EnvSchema = z.object({
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
   /** Local one-shot cron (`bun cron:local`): comma-separated job keys; default runs heartbeat tick */
   CRON_JOB_KEYS: z.string().optional(),
-}).superRefine((env, ctx) => {
-  if (env.NODE_ENV === "production" && env.IDENTITY_DIRECTORY_SECRET === "local-directory-secret") {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["IDENTITY_DIRECTORY_SECRET"],
-      message: "Production requires an explicit identity directory secret",
-    });
-  }
-});
-
-export interface IdentityServiceBinding {
-  fetch: typeof fetch;
-}
+}).catchall(z.any());
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;
   EMAIL?: CloudflareEmailBinding;
   BROWSER?: BrowserRunBinding;
-  IDENTITY?: IdentityServiceBinding;
+  HYPERDRIVE_AUTH?: { connectionString?: string };
+  AUTH_KV?: unknown;
 };
 
 export function parseEnv(data: Record<string, unknown>) {
   const { data: env, error } = EnvSchema.safeParse(data);
 
   if (error) {
-    const errorMessage = `❌ Invalid env - ${Object.entries(error.flatten().fieldErrors).map(([key, errors]) => `${key}: ${errors.join(",")}`).join(" | ")}`;
+    const errorMessage = `❌ Invalid env - ${Object.entries(error.flatten().fieldErrors).map(([key, errors]) => `${key}: ${errors?.join(",")}`).join(" | ")}`;
     throw new Error(errorMessage);
   }
 
@@ -151,6 +143,6 @@ export function parseRuntimeEnv(
     ...(cronJobs ? { CRON_JOBS: cronJobs } : {}),
     ...(email ? { EMAIL: email } : {}),
     ...(browser ? { BROWSER: browser } : {}),
-    ...(source.IDENTITY ? { IDENTITY: source.IDENTITY as IdentityServiceBinding } : {}),
+
   };
 }

@@ -1,8 +1,8 @@
 import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
-import type { ClientBindingsDocument } from "@edaya/client-codegen";
-import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@edaya/client-codegen";
+import type { ClientBindingsDocument } from "@maya-invest/edaya-api-client/contract";
+import { CLIENT_BINDINGS_OPENAPI_EXTENSION } from "@maya-invest/edaya-api-client/contract";
 
 export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 

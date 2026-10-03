@@ -58,7 +58,7 @@ src/
 - **`lib/school-api/routes/`** — Route factories that generate the bulk of `/core/*` endpoints from `registry.ts` (commands, queries, entities). Shared helpers live in `entity-handlers.ts` and `shared.ts`.
 - **`lib/graphql/`** — Supported second contract. Schema and resolvers are derived from the same registry as REST. Mounted in `app.ts` via `mountGraphQLRoute`. The typed client is REST-only; production web/mobile use REST. GraphiQL (`/graphiql`) is off in production unless `GRAPHQL_GRAPHIQL=true`. Vite proxies `/graphql` for local exploration.
 - **`routes/onboarding.routes.ts`** — Thin HTTP for school registration. Orchestration lives in `@edaya/service` (`capabilities/onboarding`). Template catalogs stay in `@edaya/fixtures/onboarding`.
-- **`runtime/`** — Env parsing, database handles, identity-client wiring, Hyperdrive resolution, and the Node process runtime registry.
+- **`runtime/`** — Env parsing, database handles, Account composition, Hyperdrive resolution, and the Node process runtime registry.
 - **`http/dependencies/`** — Request-scoped dependency injection: env → school runtime → auth → session actor. Worker runtimes are resolved per request and closed in `onRequestComplete`.
 - **`cron/`** — Worker `scheduled()` heartbeat and queue consumer.
 - **`app-router.ts`** — REST composition point: index, effective grants, onboarding, system routes, generated core routes. Identity `/auth/*` is not mounted here.

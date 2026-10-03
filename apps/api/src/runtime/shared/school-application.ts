@@ -1,7 +1,7 @@
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
-import type { DirectoryClient } from "@maya-invest/edaya-identity-client";
+import type { DirectoryClient } from "../../identity/server/index";
 import type { Environment } from "@/runtime/shared/env/schema";
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { SQL } from "drizzle-orm";

@@ -1,4 +1,6 @@
 export const staging = Object.freeze({
+  zoneName: "edayaplus.com",
+  apiWorker: "edaya-api-staging",
   account: "ca013c820d015639e8769dc09e2566ec",
   databaseHost: "ep-holy-mouse-awj7ghpf.c-12.us-east-1.aws.neon.tech",
   schoolDatabase: "neondb",
@@ -9,8 +11,7 @@ export const staging = Object.freeze({
   queue: "edaya-cron-jobs-staging",
   bucket: "edaya-files-staging",
   urls: {
-    identity: "https://staging.identity.api.edayaplus.com",
-    api: "https://staging.school.api.edayaplus.com",
+    api: "https://staging.api.edayaplus.com",
     webapp: "https://staging.app.edayaplus.com",
     webadmin: "https://staging.admin.edayaplus.com",
   },

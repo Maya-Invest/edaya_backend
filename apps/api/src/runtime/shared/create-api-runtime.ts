@@ -10,7 +10,7 @@ import {
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { NormalizedDeliveryEvent } from "@edaya/core";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
-import { createSchoolIdentityClient } from "@/runtime/shared/adapters/identity-client";
+import { composeIdentity } from "@/identity/composition";
 import { applyInProcessNotifyDeliveryEvent } from "@/runtime/shared/adapters/notify-delivery-sink";
 import { isNotifyConfigured } from "@/runtime/shared/adapters/notification-gateway";
 import { resolveEmailTransport } from "@/runtime/shared/adapters/email-transport";
@@ -18,7 +18,7 @@ import { resolveSmsTransport } from "@/runtime/shared/adapters/sms-transport";
 import { createAppLogger } from "@/runtime/shared/adapters/pino-logger";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime, DatabaseHandle } from "@/runtime/types";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../../identity/server/index";
 
 export interface InitSchoolApplicationExtras {
   identityClient: IdentityClient;
@@ -36,6 +36,8 @@ export interface CreateApiRuntimeOptions {
 }
 
 export async function createApiRuntime(options: CreateApiRuntimeOptions): Promise<ApiRuntime> {
+  let schoolApplicationPromise: Promise<ApiSchoolApplication> | undefined;
+  let closing: Promise<void> | undefined;
   let schoolApp: ApiSchoolApplication | null = null;
   let resolvedSchoolHandle: DatabaseHandle | null = null;
   let notifyRuntime: NotifyRuntime | undefined;
@@ -91,9 +93,14 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     return notifyRuntime;
   }
 
-  const identityClient = options.identityClient ?? createSchoolIdentityClient(options.env);
+  const identity = composeIdentity(options.env, getSchoolApplication);
+  const identityClient = options.identityClient ?? identity.client;
 
-  async function getSchoolApplication() {
+  function getSchoolApplication(): Promise<ApiSchoolApplication> {
+    return schoolApplicationPromise ??= initializeSchoolApplication();
+  }
+
+  async function initializeSchoolApplication() {
     if (!schoolApp) {
       const handle = await getResolvedSchoolHandle();
       const runtime = await getNotifyRuntime();
@@ -117,13 +124,15 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
         await drainPendingSchoolNotifications(runtime);
     },
     getSchoolApplication,
+    getIdentityRuntime: identity.resolve,
     getIdentityClient() {
       return identityClient;
     },
-    close: async () => {
-      if (resolvedSchoolHandle) {
-        await resolvedSchoolHandle.dispose();
-      }
-    },
+    close: () => closing ??= (async () => {
+      const results = await Promise.allSettled([identity.close(), resolvedSchoolHandle?.dispose()]);
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length)
+        throw new AggregateError(failures.map(r => (r as PromiseRejectedResult).reason), "API cleanup failed");
+    })(),
   };
 }

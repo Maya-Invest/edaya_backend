@@ -15,8 +15,9 @@
     "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
-    "test": "NODE_ENV=test bun test ./tests '--path-ignore-patterns=dist/**' --timeout 120000",
-    "build": "tsup"
+    "test": "NODE_ENV=test bun test ./tests ./src/identity/tests --timeout 120000",
+    "build": "tsup",
+    "dev:test": "NODE_ENV=test bun --no-env-file src/identity/entries/testing.ts"
   },
   "dependencies": {
     "@edaya/adaptor-docs": "workspace:*",
@@ -25,14 +26,12 @@
     "@edaya/adaptor-postgres": "workspace:*",
     "@edaya/adaptor-r2": "workspace:*",
     "@edaya/authorization": "workspace:*",
-    "@edaya/client-codegen": "workspace:*",
     "@edaya/core": "workspace:*",
     "@edaya/service": "workspace:*",
     "@electric-sql/pglite": "^0.4.6",
     "@hono/graphql-server": "^0.7.0",
     "@hono/node-server": "^1.14.1",
     "@hono/zod-openapi": "^0.16.4",
-    "@maya-invest/edaya-identity-client": "*",
     "@scalar/hono-api-reference": "^0.8.8",
     "dotenv": "^16.5.0",
     "dotenv-expand": "^11.0.7",
@@ -44,7 +43,14 @@
     "pino": "^9.6.0",
     "pino-pretty": "^11.3.0",
     "stoker": "^1.4.2",
-    "zod": "^3.24.4"
+    "zod": "^3.24.4",
+    "@maya-invest/edaya-api-client": "workspace:*",
+    "@edaya/adaptor-auth": "workspace:*",
+    "jose": "^6.1.3",
+    "postgres": "^3.4.5",
+    "@edaya/adaptor-account": "workspace:*",
+    "@edaya/account": "workspace:*",
+    "@edaya/adaptor-auth-better-auth": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260610.0",
@@ -54,6 +60,7 @@
     "@types/node": "^25.9.2",
     "@types/pg": "^8.15.5",
     "typescript": "^6.0.2",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.99.0",
+    "@edaya/repo": "workspace:*"
   }
 }

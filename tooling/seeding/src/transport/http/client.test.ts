@@ -61,10 +61,10 @@ describe('HttpSeedClient.request', () => {
     expect(capturedHeaders?.get('origin')).toBe('http://localhost:5173')
   })
 
-  it('paces API-origin requests on staging.school.api.edayaplus.com', async () => {
+  it('paces API-origin requests on staging.api.edayaplus.com', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
-      baseUrl: 'https://staging.school.api.edayaplus.com',
+      baseUrl: 'https://staging.api.edayaplus.com',
       fetch: async () => {
         requestCount += 1
         return new Response(null, { status: 200 })
@@ -83,7 +83,7 @@ describe('HttpSeedClient.request', () => {
   it('does not pace non-API presigned storage uploads on staging', async () => {
     let requestCount = 0
     const client = new HttpSeedClient({
-      baseUrl: 'https://staging.school.api.edayaplus.com',
+      baseUrl: 'https://staging.api.edayaplus.com',
       fetch: async () => {
         requestCount += 1
         return new Response(null, { status: 200 })
@@ -125,7 +125,7 @@ describe('HttpSeedClient.request', () => {
     let identityCalls = 0
     const client = new HttpSeedClient({
       baseUrl: 'http://localhost:9999',
-      authUrl: 'http://localhost:9900',
+
       fetch: async (input) => {
         if (String(input).includes('/auth/sign-in/email')) {
           identityCalls += 1
@@ -150,7 +150,7 @@ describe('HttpSeedClient.request', () => {
     for (const response of [{ body: null, status: 503 }, { body: '<html>unavailable</html>', status: 502 }, { body: 'invalid', status: 200 }]) {
       let calls = 0
       const client = new HttpSeedClient({
-        baseUrl: 'https://staging.school.api.edayaplus.com',
+        baseUrl: 'https://staging.api.edayaplus.com',
         fetch: async () => {
           calls++
           return new Response(response.body, { status: response.status })

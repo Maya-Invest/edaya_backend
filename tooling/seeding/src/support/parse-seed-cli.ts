@@ -48,7 +48,7 @@ function readFlagValue(argv: readonly string[], flag: string): string | undefine
 function parseCleanInvocation(flagArgs: readonly string[]): SeedCliInvocation {
   if (flagArgs.includes('--auth')) {
     throw new Error(
-      'Account authentication lives in apps/identity. Run `bun --filter @edaya/identity-migrate wipe local --yes` or `bun --filter @edaya/identity-migrate wipe staging --yes`.',
+      'Account authentication lives in apps/api/src/identity. Run `bun repo identity-wipe local --yes` or `bun repo identity-wipe staging --yes`.',
     )
   }
 

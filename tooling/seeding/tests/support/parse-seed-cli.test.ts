@@ -48,7 +48,7 @@ describe('parseSeedCliArgs', () => {
       target: 'staging',
       yes: true,
     })
-    expect(() => parseSeedCliArgs(['bun', 'seed.ts', 'clean', '--auth'])).toThrow(/apps\/identity/)
+    expect(() => parseSeedCliArgs(['bun', 'seed.ts', 'clean', '--auth'])).toThrow(/apps\/api\/src\/identity/)
   })
 
   it('returns help when requested', () => {

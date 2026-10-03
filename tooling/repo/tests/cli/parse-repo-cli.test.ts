@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import process from 'node:process'
 import { describe, expect, it } from 'bun:test'
 import { parseRepoCliArgs } from '../../cli/parse-repo-cli'
 import { resolveRepoCommandScript } from '../../cli/registry'
@@ -59,9 +60,39 @@ describe('parseRepoCliArgs', () => {
     })
   })
 
+  it('forwards generator and identity arguments to the relocated scripts', () => {
+    for (const command of ['codegen', 'identity-migrate', 'identity-wipe'] as const) {
+      expect(parseRepoCliArgs(['bun', 'repo', command, 'staging', '--yes'])).toEqual({
+        kind: 'run',
+        command,
+        forwardArgs: ['staging', '--yes'],
+      })
+    }
+    expect(resolveRepoCommandScript('codegen')).toEndWith(join('repo', 'codegen', 'bin', 'edaya-codegen.ts'))
+    expect(resolveRepoCommandScript('identity-migrate')).toEndWith(join('repo', 'db', 'identity', 'migrate.ts'))
+    expect(resolveRepoCommandScript('identity-wipe')).toEndWith(join('repo', 'db', 'identity', 'wipe.ts'))
+  })
+
   it('rejects unknown commands', () => {
     expect(() => parseRepoCliArgs(['bun', 'repo', 'foobar']))
       .toThrow(/Unknown repo command/)
+  })
+
+  it('identity help exits before starting a database command, even with --yes', () => {
+    for (const command of ['identity-migrate', 'identity-wipe']) {
+      const result = Bun.spawnSync([
+        process.execPath,
+        '--no-env-file',
+        join(import.meta.dirname, '../../cli/main.ts'),
+        command,
+        '--help',
+        '--yes',
+      ], {
+        env: { ...process.env, AUTH_DATABASE_URL: 'invalid-for-help-check' },
+      })
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout.toString()).toContain(`Usage: bun repo ${command}`)
+    }
   })
 })
 

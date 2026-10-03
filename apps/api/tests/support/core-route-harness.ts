@@ -1,3 +1,7 @@
+import { createTestingIdentity } from "../../src/identity/testing/composition";
+import { parseEnv as parseIdentityEnv } from "../../src/identity/env";
+import { attachIdentityRuntime } from "../../src/identity/runtime";
+import { dispatchAuthentication } from "../../src/identity/http";
 import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
 import { buildSchoolApplication } from "@/runtime/shared/school-application";
 import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
@@ -33,16 +37,13 @@ import type { AuthProvisioner } from "@edaya/seeding";
 import {
   createTestIdentityKeys,
   signTestIdentityToken,
-} from "@maya-invest/edaya-identity-client/testing";
-import type { TestIdentityKeys } from "@maya-invest/edaya-identity-client/testing";
+} from "../../src/identity/server/testing";
+import type { TestIdentityKeys } from "../../src/identity/server/testing";
 import {
-  createDirectoryClient,
-  IDENTITY_DIRECTORY_BY_CONTACT_PATH,
-  IDENTITY_DIRECTORY_BY_ID_PREFIX,
 
   verifyIdentityToken,
-} from "@maya-invest/edaya-identity-client";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+} from "../../src/identity/server/index";
+import type { IdentityClient } from "../../src/identity/server/index";
 import { Hono } from "hono";
 import { onTestFinished, setDefaultTimeout } from "bun:test";
 import { createPgliteTestEnv, pgliteEnv } from "./pglite-env";
@@ -82,49 +83,13 @@ export interface CoreRouteTestAppOptions {
   sessionActor?: ReturnType<typeof createSessionActorDependency>;
   autoCleanup?: boolean;
   withEmbeddedLocalFiles?: boolean;
-  /** `live` verifies JWTs and directory against IDENTITY_ISSUER (needs apps/identity running). */
+  /** `live` composes real Account and provider fixtures in this API runtime. */
   identity?: "test" | "live";
   env?: Record<string, unknown>;
 }
 
 function subjectForEmail(email: string): string {
   return identityAccounts.get(email)?.subjectId ?? `identity:${email.toLowerCase()}`;
-}
-
-function findIdentityAccountByEmail(email: string) {
-  const needle = email.toLowerCase();
-  for (const [storedEmail, account] of identityAccounts) {
-    if (storedEmail.toLowerCase() === needle) {
-      return { email: storedEmail, ...account };
-    }
-  }
-  return undefined;
-}
-
-function testDirectoryFetch(input: RequestInfo | URL): Promise<Response> {
-  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
-  if (url.pathname === IDENTITY_DIRECTORY_BY_CONTACT_PATH) {
-    const channel = url.searchParams.get("channel");
-    const value = url.searchParams.get("value") ?? "";
-    if (channel === "phone") {
-      return Promise.resolve(Response.json({ exists: false }));
-    }
-    const account = findIdentityAccountByEmail(value);
-    if (!account) {
-      return Promise.resolve(Response.json({ exists: false }));
-    }
-    return Promise.resolve(Response.json({ exists: true, id: account.subjectId }));
-  }
-  if (url.pathname.startsWith(IDENTITY_DIRECTORY_BY_ID_PREFIX)) {
-    const subjectId = decodeURIComponent(url.pathname.slice(IDENTITY_DIRECTORY_BY_ID_PREFIX.length));
-    for (const [email, account] of identityAccounts) {
-      if (account.subjectId === subjectId) {
-        return Promise.resolve(Response.json({ email, identifiers: [{ kind: "email", value: email }] }));
-      }
-    }
-    return Promise.resolve(new Response(null, { status: 404 }));
-  }
-  return Promise.resolve(new Response(null, { status: 404 }));
 }
 
 export const testIdentityProvisioner: AuthProvisioner = {
@@ -139,15 +104,23 @@ export const testIdentityProvisioner: AuthProvisioner = {
 };
 
 const testIdentityClient: IdentityClient = {
-  directory: createDirectoryClient({
-    baseUrl: pgliteEnv.IDENTITY_DIRECTORY_URL,
-    secret: pgliteEnv.IDENTITY_DIRECTORY_SECRET,
-    fetch: testDirectoryFetch as unknown as typeof fetch,
-  }),
+  directory: {
+    async lookupByContact(channel, value) {
+      const account = channel === "email" ? identityAccounts.get(value.trim().toLowerCase()) : undefined;
+      return account ? { exists: true, id: account.subjectId } : { exists: false };
+    },
+    async resolveBySubjectId(id) {
+      for (const [email, account] of identityAccounts) {
+        if (account.subjectId === id)
+          return { email, identifiers: [{ kind: "email", value: email }] };
+      }
+      return undefined;
+    },
+  },
   async verifyAccessToken(token) {
     const keys = await loadTestIdentityKeys();
     return verifyIdentityToken(token, {
-      issuer: pgliteEnv.IDENTITY_ISSUER,
+      issuer: pgliteEnv.API_ORIGIN,
       audience: pgliteEnv.API_ORIGIN,
       jwks: keys.jwks,
     });
@@ -214,12 +187,7 @@ export async function createCoreRouteTestApp(
   let embeddedLocalFiles: EmbeddedLocalFilesServer | undefined;
   let restoreLocalFilesUrl: (() => void) | undefined;
   const identity = options.identity ?? "test";
-  const identityEnv = identity === "live"
-    ? {
-        // eslint-disable-next-line node/no-process-env -- live identity uses the host directory secret
-        IDENTITY_DIRECTORY_SECRET: process.env.IDENTITY_DIRECTORY_SECRET ?? "local-directory-secret",
-      }
-    : {};
+  const identityEnv = {};
   let nativeDatabase: { url: string; drop: () => Promise<void> } | undefined;
   // The test runner creates this loopback cluster; never read a project DATABASE_URL.
   // eslint-disable-next-line node/no-process-env -- explicit disposable native test runner
@@ -262,6 +230,10 @@ export async function createCoreRouteTestApp(
     onTestFinished(() => embeddedLocalFiles?.stop());
   }
 
+  const authEnv = parseIdentityEnv({ ...env, RUNTIME: "test", BETTER_AUTH_URL: env.API_ORIGIN, FIRST_PARTY_API_ORIGINS: env.API_ORIGIN, BETTER_AUTH_SECRET: "disposable-seed-fixture-secret-32-characters", AUTH_DATABASE_URL: "pglite:memory" }, "test");
+  const accountFixture = identity === "live" ? await createTestingIdentity(authEnv) : undefined;
+  if (accountFixture)
+    attachIdentityRuntime(env, accountFixture.runtime);
   const identityClientExtras = identity === "live" ? {} : { identityClient: testIdentityClient };
   const nativeHandle = nativeDatabase ? await createPostgresSchoolDatabase(nativeDatabase.url) : undefined;
   if (nativeHandle)
@@ -298,6 +270,17 @@ export async function createCoreRouteTestApp(
       }
     };
   }
+  if (accountFixture) {
+    const close = runtime.close.bind(runtime);
+    runtime.close = async () => {
+      try {
+        await close();
+      }
+      finally {
+        await accountFixture.close();
+      }
+    };
+  }
   if (options.autoCleanup !== false) {
     registerTestRuntimeCleanup(runtime);
   }
@@ -305,9 +288,13 @@ export async function createCoreRouteTestApp(
   const app = new Hono<AppBindings>();
   app.use(async (c, next) => {
     c.env = env;
+    c.set("apiRuntime", runtime);
+    if (accountFixture && c.req.path.startsWith("/auth/edaya/testing/"))
+      return accountFixture.app.fetch(c.req.raw, authEnv);
     await next();
   });
   app.use(pinoLogger());
+  app.use(dispatchAuthentication);
   app.use(createCoreRouteTestDependencies(
     runtime,
     options.sessionActor ?? createSessionActorDependency(),
@@ -386,7 +373,7 @@ export async function signInWithBearerThroughApp(
     sub: subjectForEmail(input.email),
     email: input.email,
     email_verified: true,
-    iss: pgliteEnv.IDENTITY_ISSUER,
+    iss: pgliteEnv.API_ORIGIN,
     aud: pgliteEnv.API_ORIGIN,
   });
 }

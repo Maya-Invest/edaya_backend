@@ -11,6 +11,10 @@ on:
         description: Mobile ref (resolved once)
         type: string
         default: dev
+      validate_only:
+        description: Qualify and build without publication or live changes
+        type: boolean
+        default: false
       reset_data:
         description: Reset and reseed staging databases
         type: boolean
@@ -23,6 +27,9 @@ on:
       mobile_ref:
         type: string
         required: true
+      validate_only:
+        type: boolean
+        default: false
       reset_data:
         type: boolean
         default: false
@@ -44,6 +51,7 @@ jobs:
     env:
       RELEASE_ROOT: ${{ github.workspace }}
       RELEASE_TARGET: staging
+      VALIDATE_ONLY: ${{ inputs.validate_only && 'true' || 'false' }}
       RESET_DATA: ${{ inputs.reset_data && 'true' || 'false' }}
       CLOUDFLARE_ACCOUNT_ID: ca013c820d015639e8769dc09e2566ec
       CI: 'true'
@@ -53,6 +61,17 @@ jobs:
           path: edaya_backend
           ref: ${{ github.sha }}
           persist-credentials: false
+      - name: Check configuration before cross-repository checkout
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
+          STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
+          STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
+          STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
+        run: node edaya_backend/.github/scripts/staging-preflight.mjs --configuration-only
       - name: Checkout web candidate
         uses: actions/checkout@v5
         with:
@@ -91,28 +110,41 @@ jobs:
           dart pub global activate melos 8.0.0
           echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
           echo "$(pg_config --bindir)" >> "$GITHUB_PATH"
-      - name: Record the four immutable candidate commits
+      - name: Read-only infrastructure and credential preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
+          STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
+          STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
+          STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
+        run: |
+          cd edaya_backend
+          bun install --frozen-lockfile
+          node .github/scripts/staging-preflight.mjs
+      - name: Record the three immutable candidate commits
         run: node edaya_backend/.github/scripts/staging-manifest.mjs
       - name: Qualify candidate before publication or staging changes
         run: bash edaya_backend/.github/scripts/qualify-staging.sh
       - name: Publish or reuse matching API client
+        if: ${{ !inputs.validate_only }}
         working-directory: edaya_backend
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: node .github/scripts/publish-client.mjs package/api-client staging
-      - name: Require matching published identity client
-        env:
-          NODE_AUTH_TOKEN: ${{ github.token }}
-        run: node edaya_backend/.github/scripts/staging-artifacts.mjs identity
       - name: Verify web against the exact published API client and build staging assets
         working-directory: edaya_frontend
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
-          PUBLIC_AUTH_URL: https://staging.identity.api.edayaplus.com
-          PUBLIC_API_URL: https://staging.school.api.edayaplus.com
+          PUBLIC_API_URL: https://staging.api.edayaplus.com
           PUBLIC_APP_ENV: staging
+          PUBLIC_TEST_OTP_ACCESS: 'false'
         run: |
-          API_CLIENT_VERSION="0.0.0-staging.$(git -C ../edaya_backend rev-parse HEAD)" node .github/scripts/ci-use-published-api-client.mjs
+          if [ "$VALIDATE_ONLY" = false ]; then
+            API_CLIENT_VERSION="0.0.0-staging.$(git -C ../edaya_backend rev-parse HEAD)" node .github/scripts/ci-use-published-api-client.mjs
+          fi
           bun install
           bun run verify
           bun --filter @edaya/webapp deploy:staging:dry-run
@@ -149,6 +181,7 @@ jobs:
       - name: Record prepared artifacts
         run: node edaya_backend/.github/scripts/staging-manifest.mjs
       - name: Deploy, bootstrap, smoke-test, and observe staging
+        if: ${{ !inputs.validate_only }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
@@ -156,6 +189,8 @@ jobs:
           STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
           STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
           STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
         run: node edaya_backend/.github/scripts/staging-deploy.mjs
       - name: Collect browser evidence even when qualification fails
         if: always()

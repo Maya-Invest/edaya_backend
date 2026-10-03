@@ -1,7 +1,7 @@
 import type { ActorMetadata } from "@edaya/authorization";
 import type { AccountInvitation } from "@edaya/core";
 import type { SchoolService } from "@edaya/service";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../../identity/server/index";
 import type { ApiSchoolApplication } from "./application";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError } from "@edaya/core";

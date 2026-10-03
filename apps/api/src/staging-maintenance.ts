@@ -4,7 +4,7 @@ export function stagingSwitch(bindings: Record<string, unknown>, key: "STAGING_M
   if (value === undefined || value === "false" || value === false) {
     return false;
   }
-  if ((value !== "true" && value !== true) || bindings.API_ORIGIN !== "https://staging.school.api.edayaplus.com") {
+  if ((value !== "true" && value !== true) || bindings.API_ORIGIN !== "https://staging.api.edayaplus.com") {
     throw new Error(`${key} requires a boolean and the exact staging origin`);
   }
   return true;

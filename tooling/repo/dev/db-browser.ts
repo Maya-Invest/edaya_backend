@@ -6,7 +6,7 @@ import process from 'node:process'
 const target = process.argv[2]
 if (target !== 'school') {
   console.error('Usage: bun tooling/repo/dev/db-browser.ts school')
-  console.error('Identity tables live in the separate apps/identity database (.data/identity).')
+  console.error('Identity tables live in the separate apps/api/src/identity database (.data/identity).')
   process.exit(1)
 }
 

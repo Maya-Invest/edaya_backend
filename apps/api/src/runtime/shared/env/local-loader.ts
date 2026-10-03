@@ -17,6 +17,7 @@ function normalizeLocalDataPaths(env: Environment): Environment {
   return {
     ...env,
     DATABASE_URL: resolveRepoLocalDatabaseUrl(env.DATABASE_URL),
+    AUTH_DATABASE_URL: resolveRepoLocalDatabaseUrl(env.AUTH_DATABASE_URL),
   };
 }
 

@@ -1,4 +1,4 @@
-name: Deploy backend Workers
+name: Deploy unified API Worker
 
 on:
   workflow_call:
@@ -36,9 +36,3 @@ jobs:
             production) bun run deploy:production ;;
             *) echo "Use the staging release coordinator" >&2; exit 1 ;;
           esac
-
-      - name: Deploy Identity Worker
-        working-directory: apps/identity
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: bun run deploy:production

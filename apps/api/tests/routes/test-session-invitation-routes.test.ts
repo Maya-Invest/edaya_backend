@@ -5,26 +5,21 @@ import { ActorAssuranceLevel, createGuardianActorMetadata } from "@edaya/authori
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Guardian } from "@edaya/core";
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { hashInvitationToken } from "@edaya/service";
-import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
-import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
+import { verifyIdentityToken } from "../../src/identity/server/index";
+import type { IdentityClient } from "../../src/identity/server/index";
+import { createTestIdentityKeys, signTestIdentityToken } from "../../src/identity/server/testing";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 
-const issuer = "http://localhost:9900";
+const issuer = "http://localhost:9999";
 const audience = "http://localhost:9999";
 const keys = await createTestIdentityKeys();
 const baseEnv = parseEnv({ RUNTIME: "in-memory", NODE_ENV: "test", DATABASE_URL: "pglite" });
 const identityClient: IdentityClient = {
-  directory: createDirectoryClient({
-    baseUrl: issuer,
-    secret: "test",
-    fetch: (async (input: RequestInfo | URL) => {
-      const url = String(input);
-      const value = url.endsWith("unverified") ? undefined : url.endsWith("other") ? "other@school.edu" : "guardian@school.edu";
-      return Response.json({ identifiers: value ? [{ kind: "email", value }] : [] });
-    }) as unknown as typeof fetch,
-  }),
+  directory: { lookupByContact: async () => undefined, async resolveBySubjectId(subjectId) {
+    const value = subjectId === "unverified" ? undefined : subjectId === "other" ? "other@school.edu" : "guardian@school.edu";
+    return value ? { identifiers: [{ kind: "email" as const, value }] } : undefined;
+  } },
   verifyAccessToken: token => verifyIdentityToken(token, { issuer, audience, jwks: keys.jwks }),
 };
 

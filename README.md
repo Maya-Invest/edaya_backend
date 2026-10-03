@@ -11,14 +11,12 @@ Built with [Bun](https://bun.sh) workspaces and [Turborepo](https://turbo.build)
 ```text
 edaya_backend/
 ├── apps/
-│   ├── identity/                         @edaya/identity — Account authentication (separate DB/Worker)
 │   └── api/                              @edaya/api — Hono API + scheduled cron (Node + Worker)
 ├── package/
 │   ├── domain-account/                   @edaya/account — durable Account/security policy and auth ports
 │   ├── adaptor-account/                  @edaya/adaptor-account — Account persistence and cryptography
 │   ├── adaptor-auth-better-auth/         @edaya/adaptor-auth-better-auth — replaceable OTP provider
 │   ├── adaptor-auth/                     @edaya/adaptor-auth — disposable provider schema/migrations
-│   ├── identity-client/                  @maya-invest/edaya-identity-client — JWT and directory SDK
 │   ├── domain-core/                      @edaya/core — entities, ports, registry
 │   ├── domain-authorization/             @edaya/authorization — grants, policy, operations
 │   ├── domain-service/                   @edaya/service — workflows, entity configs, notifications, cron
@@ -27,23 +25,25 @@ edaya_backend/
 │   ├── adaptor-docs/                     @edaya/adaptor-docs — in-process PDF rendering
 │   ├── adaptor-r2/                       @edaya/adaptor-r2 — R2 file storage adapter
 │   ├── adaptor-local-fs/                 @edaya/adaptor-local-fs — local dev file storage adapter
-│   └── api-client/                       @maya-invest/edaya-api-client — typed school API SDK
+│   └── api-client/                       @maya-invest/edaya-api-client — typed authentication and school API SDK
 └── tooling/
-    ├── repo/                             @edaya/repo — CI, OpenAPI codegen, dev tools
-    ├── client-codegen/                   @edaya/client-codegen — OpenAPI client generator
-    ├── fixtures/                         @edaya/fixtures
-    ├── seeding/                          @edaya/seeding
-    ├── db-migrate/                       @edaya/db-migrate — school-schema CLI
-    ├── local-files-server/               @edaya/local-files-server — local upload HTTP service
-    ├── integration-tests/                @edaya/integration-tests (+ smoke/)
-    └── api-dev-container/                scripts only (no package.json) — Apple Container API image
+    ├── repo/                             @edaya/repo — CLI, CI, client generation, migrations, dev services
+    │   ├── codegen/                      OpenAPI client generator and runtime templates
+    │   ├── db/school/                    school migration and guarded reset commands
+    │   ├── db/identity/                  Account/provider migration and guarded wipe commands
+    │   └── dev/local-files.ts            local upload HTTP service
+    ├── fixtures/                         @edaya/fixtures — shared seed data and test helpers
+    ├── seeding/                          @edaya/seeding — seed workflows and HTTP orchestration
+    ├── integration-tests/                @edaya/integration-tests — integration and smoke suites
+    ├── test-support/                     shared Bun preload (no package.json)
+    └── api-dev-container/                container scripts (no package.json)
 ```
 
-**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Account authentication and its replaceable Better Auth adapter live in this workspace. Flutter apps live in `edaya_mobile`; the former identity repository is no longer a build dependency. `tooling/db-migrate` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
+**Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Account authentication and its replaceable Better Auth adapter live in this workspace. Flutter apps live in `edaya_mobile`; the former identity repository is no longer a build dependency. `tooling/repo/db/school` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
 
 ## Solution architecture
 
-The codebase follows a **ports-and-adapters** layout: entity types and ports live in `@edaya/core`; authorization in `@edaya/authorization`; school orchestration (`SchoolService`) in `@edaya/service`; portable Postgres persistence in `@edaya/adaptor-postgres`; migration CLI in `@edaya/db-migrate`; the API verifies central identity JWTs and uses the identity directory client. Web clients consume the API through `@maya-invest/edaya-api-client`.
+The codebase follows a **ports-and-adapters** layout: entity types and ports live in `@edaya/core`; authorization in `@edaya/authorization`; school orchestration (`SchoolService`) in `@edaya/service`; portable Postgres persistence in `@edaya/adaptor-postgres`; migration CLI in `tooling/repo/db/school`; the API verifies access JWTs and resolves the Account directory in process. Web clients consume the API through `@maya-invest/edaya-api-client`.
 
 ```mermaid
 flowchart TB
@@ -54,6 +54,7 @@ flowchart TB
   subgraph api_layer["API"]
     API["@edaya/api<br/>Hono · Node + Worker"]
     Client["@maya-invest/edaya-api-client"]
+    Account["Account composition<br/>src/identity"]
     WorkerHost["runtime + http/di<br/>Hyperdrive · DI · request cache"]
   end
 
@@ -62,11 +63,13 @@ flowchart TB
     Authz["@edaya/authorization"]
     Service["@edaya/service"]
     PG["@edaya/adaptor-postgres"]
-    DbMigrate["@edaya/db-migrate"]
+    DbMigrate["repo migration commands"]
   end
 
   Webapp --> Client
   Client -->|Browser HTTP / Vite proxy| API
+  API --> Account
+  Account --> AccountDB[(Separate Account Postgres / PGlite)]
   API --> WorkerHost
   API --> Service
   API --> Authz
@@ -81,9 +84,9 @@ flowchart TB
 
 ### Request flow
 
-1. **Web clients** — Browser SPAs call identity for `/auth/*`, then call the school API with the issued Bearer JWT through `@maya-invest/edaya-api-client`.
+1. **Web clients** — Browser SPAs call `/auth/edaya/*` on the API, then call school routes on that same origin with the issued Bearer JWT through `@maya-invest/edaya-api-client`.
 2. **API** — Hono middleware resolves env, session, and a cached runtime (`getApiRuntime`).
-3. **Runtime** — Opens only the school Postgres DB, runs school migrations, wires the central identity JWT/directory client, and builds `SchoolApplication`.
+3. **Runtime** — Lazily opens the separate Account or school database as needed. Auth dispatch precedes school dependencies; typed in-process JWT/directory ports serve school requests. Worker handles close after required work.
 4. **Service** — `SchoolApplication.forActor(actor)` returns `SchoolService` for commands, queries, and entity CRUD with authorization.
 
 ### API runtimes
@@ -137,13 +140,14 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 
 | Package | Path | Role |
 |---------|------|------|
-| `@edaya/repo` | `tooling/repo` | Repo CLI (`bun repo`), CI checks, OpenAPI tooling |
-| `@edaya/client-codegen` | `tooling/client-codegen` | OpenAPI → typed client generator |
-| `@edaya/fixtures` | `tooling/fixtures` | Shared dev seed IDs, fixture records, and minimal seed helpers |
-| `@edaya/seeding` | `tooling/seeding` | HTTP seed orchestration (via `bun repo seed`) |
-| `@edaya/db-migrate` | `tooling/db-migrate` | School + auth migration CLI (Neon / Hyperdrive) |
-| `@edaya/local-files-server` | `tooling/local-files-server` | Local-dev file storage HTTP service |
-| `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, notify smoke |
+| `@edaya/repo` | `tooling/repo` | Repo CLI, CI checks, OpenAPI client generator, school and identity migration commands, local file server |
+| `@edaya/fixtures` | `tooling/fixtures` | Shared seed IDs, fixture records, assets, and minimal test helpers |
+| `@edaya/seeding` | `tooling/seeding` | Seed workflows and HTTP orchestration (`bun repo seed`) |
+| `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, and notification smoke |
+
+The generator's shared contract lives in `package/api-client/src/contract`, exposed as `@maya-invest/edaya-api-client/contract`. The API imports this dependency-free contract; generation code remains in tooling. Tooling uses the root TypeScript and Bun/Node type dependencies.
+
+See [backend tooling audit](docs/reference/backend-tooling-audit.md) for the consolidation decisions and validation.
 
 `tooling/api-dev-container/` is a Docker/Apple Container helper (no workspace `package.json`). Invoke via `bun repo dev-container` / root `dev:container*` scripts.
 
@@ -175,7 +179,7 @@ bun repo dev
 
 Webapp (port 5173) runs from **edaya_frontend** — see [edaya_frontend README](../edaya_frontend/README.md).
 
-`bun repo dev` starts the API **and** `@edaya/local-files-server` (required for uploads). Running `cd apps/api && bun repo dev` alone starts the API without the file server.
+`bun repo dev` starts identity, the school API, and the local file server (required for uploads). Run `bun --filter @edaya/api dev` to start only the API.
 
 **worker smoke** (Miniflare — optional, hits remote Neon/R2):
 
@@ -255,8 +259,6 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 | `DATABASE_URL` | `pglite:.data/school` (local), `pglite` (in-memory tests); Postgres via Hyperdrive on `worker` |
 | `API_ORIGIN` | JWT audience and public school API origin |
 | `IDENTITY_ISSUER` | Central identity JWT issuer; JWKS is resolved at `/.well-known/jwks.json` |
-| `IDENTITY_DIRECTORY_URL` | Central identity internal directory base URL |
-| `IDENTITY_DIRECTORY_SECRET` | Shared directory credential (secret) |
 | `TRUSTED_ORIGINS` | School API CORS origins |
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.

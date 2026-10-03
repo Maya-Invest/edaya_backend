@@ -35,10 +35,10 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env
 |----------|---------|---------|
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-09-17` |
 | `SEED_API_URL` | School API for `bun repo seed` | `http://localhost:9999` |
-| `SEED_AUTH_URL` | Central identity API for auth provisioning | `http://localhost:9900` |
+| `SEED_API_URL` | Central identity API for auth provisioning | `http://localhost:9999` |
 | `SEED_APP_ORIGIN` | Local identity `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.school.api.edayaplus.com` |
-| `SEED_STAGING_AUTH_URL` | Staging Central Identity API | `https://staging.identity.api.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.edayaplus.com` |
+| `SEED_STAGING_API_URL` | Staging Central Identity API | `https://staging.api.edayaplus.com` |
 | `SEED_STAGING_APP_ORIGIN` | Staging identity `Origin` header | `https://staging.app.edayaplus.com` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
@@ -46,7 +46,7 @@ Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_
 ```sh
 bun repo seed clean --yes && bun repo seed              # local school fresh start
 bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
-# Account/auth data: `bun --filter @edaya/identity-migrate wipe local --yes` (or staging)
+# Account/auth data: `bun repo identity-wipe local --yes` (or staging)
 # or
 bun repo seed --clean
 bun repo seed --staging --clean
@@ -62,7 +62,7 @@ After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding
 
 ### Profile photos
 
-Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`@edaya/local-files-server`** on port **9200**, started automatically by `bun repo dev`.
+Profile photo seed uploads fixture JPEGs through the API file-storage flow. Local dev requires **`bun tooling/repo/dev/local-files.ts`** on port **9200**, started automatically by `bun repo dev`.
 
 | Situation | Behavior |
 |-----------|----------|

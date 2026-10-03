@@ -24,5 +24,6 @@ jobs:
 
   publish-api-client:
     needs: verify
+    if: github.ref_name != 'staging'
     uses: ./.github/workflows/_publish-api-client.yml
     secrets: inherit

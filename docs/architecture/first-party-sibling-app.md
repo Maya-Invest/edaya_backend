@@ -27,4 +27,4 @@ Mint keys with `POST /core/s2s-clients` (`schoolId`, `clientId` such as `childre
 
 ## Identity
 
-Identity JWTs keep `sub = auth.user.id` and `aud` as an opaque API origin. Adding a sibling app is a vars change on identity (`FIRST_PARTY_API_ORIGINS`), not a school registry. School verifies JWTs and calls the directory through `@maya-invest/edaya-identity-client`.
+Access JWTs use the durable Account ID as `sub` and the canonical Edaya API origin as both issuer and audience. Auth session transport and school token transport share that origin. Adding a sibling machine integration uses existing S2S keys and explicit grants, not a second authentication origin. School JWT verification and Account directory resolution run in process; provider dependencies stay inside API Identity composition.

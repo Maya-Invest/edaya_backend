@@ -7,6 +7,7 @@ export interface BoundaryCheck {
   label: string
   pattern: RegExp
   searchPath: string
+  excludePath?: string
 }
 
 export interface BoundaryViolation {
@@ -31,13 +32,13 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
     searchPath: 'apps/api/src/runtime',
   },
   {
-    label: 'api imports db-migrate tooling',
-    pattern: /from ["']@edaya\/db-migrate/,
+    label: 'api imports repository tooling',
+    pattern: /from ["'](?:@edaya\/(?:repo|client-codegen|db-migrate|identity-migrate)|[^"']*tooling\/repo\/)/,
     searchPath: 'apps/api/src',
   },
   {
     label: 'core imports identity client',
-    pattern: /from ["']@maya-invest\/edaya-identity-client/,
+    pattern: /from ["'](?:@maya-invest\/edaya-identity-client|[^"']*apps\/api\/src\/identity)/,
     searchPath: 'package/domain-core/src',
   },
   {
@@ -78,21 +79,22 @@ export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
   ...['package/domain-core', 'package/domain-authorization', 'package/domain-service'].map(
     (searchPath): BoundaryCheck => ({
       label: 'domain package imports identity client',
-      pattern: /from ["']@maya-invest\/edaya-identity-client/,
+      pattern: /from ["'](?:@maya-invest\/edaya-identity-client|[^"']*apps\/api\/src\/identity)/,
       searchPath,
     }),
   ),
   ...['package/domain-core', 'package/adaptor-postgres', 'package/adaptor-notify', 'package/adaptor-docs', 'package/adaptor-r2', 'package/adaptor-local-fs'].map(
     (searchPath): BoundaryCheck => ({
       label: 'package imports identity client',
-      pattern: /from ["']@maya-invest\/edaya-identity-client/,
+      pattern: /from ["'](?:@maya-invest\/edaya-identity-client|[^"']*apps\/api\/src\/identity)/,
       searchPath,
     }),
   ),
   {
     label: 'school imports adaptor-auth',
-    pattern: /from ["']@edaya\/adaptor-auth/,
+    pattern: /from ["'](?:@edaya\/(?:adaptor-auth|adaptor-account|account)|better-auth)/,
     searchPath: 'apps/api/src',
+    excludePath: 'apps/api/src/identity',
   },
   ...['domain-core', 'domain-authorization', 'domain-service', 'adaptor-postgres', 'adaptor-notify', 'adaptor-docs', 'adaptor-r2', 'adaptor-local-fs', 'api-client'].map(name => ({
     label: 'school packages import provider authentication internals',
@@ -149,7 +151,7 @@ export function findBoundaryViolations(
     if (!existsSync(searchDirectory)) {
       return []
     }
-    const matches = (statSync(searchDirectory).isFile() ? [searchDirectory] : [...walkFiles(searchDirectory)]).flatMap(filePath => (
+    const matches = (statSync(searchDirectory).isFile() ? [searchDirectory] : [...walkFiles(searchDirectory)]).filter(filePath => !check.excludePath || !filePath.startsWith(`${resolve(repoRoot, check.excludePath)}/`)).flatMap(filePath => (
       findMatchesInFile(filePath, check.pattern, repoRoot)
     ))
 

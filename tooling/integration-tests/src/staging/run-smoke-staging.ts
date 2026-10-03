@@ -248,7 +248,6 @@ export async function runSmokeStaging(): Promise<SmokeStagingResult> {
   const staffPassword = env.staffPassword
   const client = new HttpSeedClient({
     baseUrl: env.apiUrl,
-    authUrl: env.authUrl,
     appOrigin: env.appOrigin,
   })
   const checks: SmokeCheckResult[] = []

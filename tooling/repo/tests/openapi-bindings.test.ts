@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { describe, expect, it } from 'bun:test'
 import {
   extractClientBindingsFromOpenApi,
   X_EDAYA_KIND,
-} from '@edaya/client-codegen'
-import { describe, expect, it } from 'bun:test'
+} from '../codegen/src/index'
 
 const openApiPath = resolve(
   import.meta.dirname,

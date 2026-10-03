@@ -1,5 +1,5 @@
 import type { SchoolRepositories } from "@edaya/service";
-import type { IdentityClaims, IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClaims, IdentityClient } from "../../identity/server/index";
 import type { Context } from "hono";
 
 import type { DependencyModule } from "@/http/dependency-injection";

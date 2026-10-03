@@ -43,12 +43,12 @@ export function jsonEventReader(consume) {
 }
 
 export async function observeStaging(root) {
-  const observations = [], events = { identity: [], api: [] }, tails = [];
+  const observations = [], events = { api: [] }, tails = [];
   let failure;
   let stopping = false;
   const save = () => writeFileSync(resolve(root, "release/observation.json"), JSON.stringify({ observations, events, complete: false }, null, 2));
   try {
-    for (const [app, repo, worker] of [["identity", "edaya_backend", "edaya-identity-staging"], ["api", "edaya_backend", "edaya-api-staging"]]) {
+    for (const [app, repo, worker] of [["api", "edaya_backend", "edaya-api-staging"]]) {
       const cwd = resolve(root, repo, "apps", app);
       const child = spawn(resolve(cwd, "node_modules/.bin/wrangler"), ["tail", worker, "--format", "json"], { cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
       tails.push(child);
@@ -63,20 +63,22 @@ export async function observeStaging(root) {
       child.on("error", () => { failure = new Error("Could not start Worker tail"); });
       child.on("exit", () => { if (!stopping) failure = new Error("Worker tail disconnected during observation"); });
     }
-    for (let minute = 0; minute <= 30; minute++) {
+    for (let minute = 0; minute <= 65; minute++) {
       if (minute) await new Promise(done => setTimeout(done, 60000));
       if (failure) throw failure;
       for (const [app, base] of Object.entries(staging.urls)) {
-        const path = app === "api" ? "/reference" : app === "identity" ? "/" : "/login";
+        const path = app === "api" ? "/reference" : "/login";
         const response = await fetch(`${base}${path}`, { signal: AbortSignal.timeout(10000) });
         if (response.status !== 200) throw new Error(`HTTP ${response.status} from ${app} during observation`);
       }
+      const methods = await fetch(`${staging.urls.api}/auth/edaya/methods`, { signal: AbortSignal.timeout(10000) });
+      if (!methods.ok || (await methods.json()).methods.some(method => method.kind === "phone" && method.available)) throw new Error("Email-only Account availability failed");
       observations.push({ minute, at: new Date().toISOString(), http: "passed" });
       save();
     }
     if (failure) throw failure;
-    if (events.identity.filter(event => event.scheduled).length < 1 || events.api.filter(event => event.scheduled).length < 5) throw new Error("Observation did not capture the required scheduled executions");
-    if ([...events.identity, ...events.api].some(event => event.warnings)) throw new Error("Worker warnings require review before acceptance");
+    if (events.api.filter(event => event.scheduled).length < 1) throw new Error("Observation did not capture the required scheduled executions");
+    if (events.api.some(event => event.warnings)) throw new Error("Worker warnings require review before acceptance");
     writeFileSync(resolve(root, "release/observation.json"), JSON.stringify({ observations, events, complete: true }, null, 2));
   } finally {
     stopping = true;

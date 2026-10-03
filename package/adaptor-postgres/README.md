@@ -2,7 +2,7 @@
 
 Portable Postgres persistence for EDAYA: Drizzle schema, SQL migrations, and repository implementations.
 
-Migration apply scripts for Neon / Hyperdrive live in `@edaya/db-migrate`. Identity migrations live in `edaya_identity`.
+Migration apply scripts for Neon / Hyperdrive live in `tooling/repo/db/school`. Identity migration commands live in `tooling/repo/db/identity`.
 
 ## Scripts
 
@@ -23,7 +23,7 @@ bun repo db generate
 bun repo db browser school
 ```
 
-Apply migrations with `@edaya/db-migrate` (`bun repo db migrate staging`, `bun repo db migrate production`).
+Apply migrations with `tooling/repo/db/school` (`bun repo db migrate staging`, `bun repo db migrate production`).
 
 ## Runtime usage
 

@@ -1,0 +1,30 @@
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
+import type { ClientBindingsDocument } from '@maya-invest/edaya-api-client/contract'
+import { DEFAULT_BINDINGS_BANNER } from './banners'
+
+export function formatClientBindingsTypeScript(
+	clientBindings: ClientBindingsDocument,
+	options: { banner?: string } = {},
+): string {
+	const banner = options.banner ?? DEFAULT_BINDINGS_BANNER
+	const formatted = JSON.stringify(clientBindings, null, 2)
+		.split('\n')
+		.map((line, index) => (index === 0 ? line : `  ${line}`))
+		.join('\n')
+
+	return `${banner}
+export const clientBindings = ${formatted} as const
+
+export type ClientBindings = typeof clientBindings
+`
+}
+
+export function writeClientBindingsTypeScript(
+	clientBindings: ClientBindingsDocument,
+	outputPath: string,
+	options: { banner?: string } = {},
+): void {
+	mkdirSync(dirname(outputPath), { recursive: true })
+	writeFileSync(outputPath, formatClientBindingsTypeScript(clientBindings, options))
+}

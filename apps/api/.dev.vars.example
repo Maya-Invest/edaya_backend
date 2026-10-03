@@ -11,16 +11,17 @@
 # LOG_LEVEL=info
 # RUNTIME=worker
 # API_ORIGIN=http://localhost:9999
-# IDENTITY_ISSUER=http://localhost:9900
-# IDENTITY_DIRECTORY_URL=http://localhost:9900
 # TRUSTED_ORIGINS=http://localhost:5173,http://localhost:4173
 # ALLOW_PUBLIC_SCHOOL_REGISTRATION=true
 
-# --- Required secret ---
-IDENTITY_DIRECTORY_SECRET=local-directory-secret
+# --- Account secrets (preserve the existing values) ---
+BETTER_AUTH_SECRET=REPLACE_WITH_EXISTING_AT_LEAST_32_CHARACTER_SECRET
+ACCOUNT_SECURITY_KEYS={"v1":"REPLACE_WITH_BASE64_32_BYTE_KEY"}
+ACCOUNT_SECURITY_KEY_VERSION=v1
 
 # --- Hyperdrive local origin (wrangler dev only; must match --env Neon branch) ---
 CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgresql://user:password@host/neondb?sslmode=require
+CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://edaya_identity:password@host/edaya_identity?sslmode=require
 
 # --- R2 (required on RUNTIME=worker; also used by `bun repo smoke-test r2`) ---
 # R2_BUCKET_NAME=edaya-files-staging

@@ -4,7 +4,7 @@ import { createPgliteSchoolDatabase } from "@/runtime/shared/school-database";
 import { runStartupMigrations } from "@/runtime/shared/run-startup-migrations";
 import type { Environment } from "@/runtime/shared/env/schema";
 import type { ApiRuntime } from "@/runtime/types";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../../identity/server/index";
 
 export async function buildInMemoryApiRuntime(
   env: Environment,

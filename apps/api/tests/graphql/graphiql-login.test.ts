@@ -17,10 +17,10 @@ describe("GraphiQL login route", () => {
       body: JSON.stringify({ email: "not-an-email", password: "" }),
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
   });
 
-  it("exposes login helpers in the GraphiQL page", async () => {
+  it("exposes manual header guidance in the GraphiQL page", async () => {
     const app = createRouter();
     app.use(async (c, next) => {
       c.env = { ...c.env, ENABLE_GRAPHQL: true };
@@ -31,9 +31,9 @@ describe("GraphiQL login route", () => {
     const response = await app.request("/graphiql");
     const html = await response.text();
 
-    expect(html).toContain("/graphiql/login");
-    expect(html).toContain("graphiql-login-form");
-    expect(html).toContain("identityAccessToken");
+    expect(html).not.toContain("/graphiql/login");
+    expect(html).not.toContain("graphiql-login-form");
+    expect(html).toContain("Authorization: Bearer");
     expect(html).toContain("limit: 50");
     expect(html).toContain("offset: 0");
   });

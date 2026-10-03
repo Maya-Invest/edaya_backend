@@ -43,7 +43,7 @@ The initial Postgres adapter serializes account authentication mutations with a 
 - `package/adaptor-account`: durable Account schema, migrations, transaction coordination and cryptography.
 - `package/adaptor-auth-better-auth`: private email/phone primary-authentication implementation.
 - `apps/identity`: stable HTTP contract, opaque browser/native sessions, JWT issuance and delivery adapters.
-- `tooling/identity-migrate`: Account and provider migrations, explicit guarded reset tools.
+- `tooling/repo/db/identity`: Account and provider migrations, explicit guarded reset tools.
 - SvelteKit and Flutter: passwordless login, verified contact linking, authenticator enrollment and recovery. The web Account security route is available before school onboarding.
 
 The previous identity checkout is retained as a reference; builds and deployment workflows no longer depend on it. The web client contains a pinned generated API artifact so its checkout builds independently. All three repositories share a release-contract fingerprint.

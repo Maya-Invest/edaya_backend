@@ -21,8 +21,8 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 | Concern | `in-memory` | `local` | `worker` |
 |---------|-------------|---------|----------|
 | School DB | PGlite ephemeral (`pglite`) | PGlite persisted (`pglite:.data/school`) | Postgres (Hyperdrive binding or `DATABASE_URL`) |
-| Identity | fixture client | HTTP identity client | issuer JWKS + HTTP/service-binding directory |
-| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/local-files-server` | R2 (`@edaya/adaptor-r2`) |
+| Account | Ephemeral fixtures | Separate Account PGlite, in-process ports | Separate Account Hyperdrive, request-scoped in-process ports |
+| File storage | in-memory `FileStoragePort` | `@edaya/adaptor-local-fs` + `tooling/repo/dev/local-files.ts` | R2 (`@edaya/adaptor-r2`) |
 | Notifications | no-op | in-process notify (API injects log email + log SMS) | in-process notify (API injects Cloudflare email + unimplemented SMS) + FCM |
 | Invitation delivery | no-op | in-process notify | in-process notify |
 | Document rendering | not configured | Chrome, Gotenberg (`GOTENBERG_URL`), or stub | Browser Run (`BROWSER`) or Gotenberg |
@@ -52,7 +52,7 @@ Positive requirements only (fail when the profile cannot boot):
 `bun repo dev` starts:
 
 1. `@edaya/api` — `RUNTIME=local`, PGlite + local-fs client
-2. `@edaya/local-files-server` — HTTP file service on port 9200
+2. `bun tooling/repo/dev/local-files.ts` — HTTP file service on port 9200
 
 Vendor smoke (Postgres via Hyperdrive, R2) uses **`bun --filter @edaya/api dev:worker`** with `apps/api/.dev.vars` — not `bun repo dev`.
 
@@ -76,9 +76,9 @@ Cron does not use file storage (`noOpFileStorage`).
 | Package | Role |
 |---------|------|
 | `@edaya/adaptor-postgres` | School persistence (PGlite + Postgres drivers) |
-| `@maya-invest/edaya-identity-client` | Central Identity JWT verification and directory access |
+| typed in-process Account ports | In-process JWT verification and Account directory access |
 | `@edaya/adaptor-local-fs` | Local dev `FileStoragePort` + Hono upload app |
-| `@edaya/local-files-server` | Dev-only file HTTP service (`tooling/local-files-server`) |
+| `bun tooling/repo/dev/local-files.ts` | Dev-only file HTTP service (`tooling/repo/dev/local-files.ts`) |
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
 | `@edaya/adaptor-notify` | In-process email/push adapters on the school API |
 | `@edaya/adaptor-docs` | In-process PDF rendering (templates + inner PdfRenderer) |

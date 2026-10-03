@@ -9,9 +9,6 @@ const env = parseEnv({
   LOG_LEVEL: "silent",
   DATABASE_URL: "pglite",
   API_ORIGIN: "http://localhost:9999",
-  IDENTITY_ISSUER: "http://localhost:9900",
-  IDENTITY_DIRECTORY_URL: "http://localhost:9900",
-  IDENTITY_DIRECTORY_SECRET: "synthetic-directory-secret",
   TRUSTED_ORIGINS: "http://localhost:5173",
 });
 

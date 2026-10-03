@@ -15,19 +15,11 @@ function loadApiEnv(): void {
   }
 }
 
-const identityProcessEnv = { ...process.env }
 loadApiEnv()
 
-console.log('Identity on :9900, school API on :9999, local files on :9200.')
+console.log('API and authentication on :9999, local files on :9200.')
 
 const children = [
-  Bun.spawn(['bun', '--filter', '@edaya/identity', 'dev'], {
-    cwd: repoRoot,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-    env: identityProcessEnv,
-  }),
   Bun.spawn(['bun', '--filter', '@edaya/api', 'dev'], {
     cwd: repoRoot,
     stdin: 'inherit',
@@ -35,7 +27,7 @@ const children = [
     stderr: 'inherit',
     env: process.env,
   }),
-  Bun.spawn(['bun', '--filter', '@edaya/local-files-server', 'dev'], {
+  Bun.spawn(['bun', '--watch', 'tooling/repo/dev/local-files.ts'], {
     cwd: repoRoot,
     stdin: 'inherit',
     stdout: 'inherit',

@@ -207,7 +207,7 @@ export async function runHttpSeedDoctor(
           'warn',
           'profile-photos-unavailable',
           `Local file storage is not reachable at ${resolveLocalFilesUrl()}; profile photos were not checked.`,
-          'Start `bun repo dev` (API + @edaya/local-files-server), then run `bun repo seed --scope profile-pictures`.',
+          'Start `bun repo dev` (API + local file server), then run `bun repo seed --scope profile-pictures`.',
         ))
       }
       else {

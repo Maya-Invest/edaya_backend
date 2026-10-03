@@ -9,11 +9,9 @@ cleanup() {
 }
 trap cleanup SIGTERM SIGINT EXIT
 
-echo "> Starting identity on :9900"
-(cd /app && bun --filter @edaya/identity start) &
 
 echo "> Starting local file server on :9200"
-bun --filter @edaya/local-files-server start &
+bun tooling/repo/dev/local-files.ts &
 
 echo "> Starting API on :9999 (pre-seeded PGlite at .data/school)"
 bun apps/api/src/entries/local.ts &

@@ -32,6 +32,14 @@ if (parsed.command === 'dev-container') {
   process.exit(await runDevContainer(parsed.forwardArgs))
 }
 
+if ((parsed.command === 'identity-migrate' || parsed.command === 'identity-wipe')
+  && parsed.forwardArgs.some(arg => arg === '--help' || arg === '-h')) {
+  console.log(parsed.command === 'identity-migrate'
+    ? 'Usage: bun repo identity-migrate\nSet AUTH_DATABASE_URL (or STAGING_AUTH_DATABASE_URL / PRODUCTION_AUTH_DATABASE_URL).'
+    : 'Usage: bun repo identity-wipe <local|staging> [--yes]\nStop identity before wiping its local database.')
+  process.exit(0)
+}
+
 const scriptPath = resolveRepoCommandScript(parsed.command)
 const exitCode = await runBunScript(scriptPath, parsed.forwardArgs)
 process.exit(exitCode)

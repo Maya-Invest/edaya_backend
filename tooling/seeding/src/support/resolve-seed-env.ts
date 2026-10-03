@@ -2,10 +2,10 @@
 import process from 'node:process'
 
 export const DEFAULT_LOCAL_API_URL = 'http://localhost:9999'
-export const DEFAULT_LOCAL_AUTH_URL = 'http://localhost:9900'
+export const DEFAULT_LOCAL_AUTH_URL = DEFAULT_LOCAL_API_URL
 export const DEFAULT_LOCAL_APP_ORIGIN = 'http://localhost:5173'
-export const DEFAULT_STAGING_API_URL = 'https://staging.school.api.edayaplus.com'
-export const DEFAULT_STAGING_AUTH_URL = 'https://staging.identity.api.edayaplus.com'
+export const DEFAULT_STAGING_API_URL = 'https://staging.api.edayaplus.com'
+export const DEFAULT_STAGING_AUTH_URL = DEFAULT_STAGING_API_URL
 export const DEFAULT_STAGING_APP_ORIGIN = 'https://staging.app.edayaplus.com'
 
 export type SeedHttpTarget = 'local' | 'staging'
@@ -21,7 +21,7 @@ export function resolveLocalSeedApiUrl(): string {
 }
 
 export function resolveLocalSeedAuthUrl(): string {
-  return normalizeUrl(process.env['SEED_AUTH_URL']?.trim() || DEFAULT_LOCAL_AUTH_URL)
+  return resolveLocalSeedApiUrl()
 }
 
 /** Staging API base URL (`bun repo seed --staging`, `bun repo smoke-test staging`). */
@@ -31,7 +31,7 @@ export function resolveStagingSeedApiUrl(): string {
 }
 
 export function resolveStagingSeedAuthUrl(): string {
-  return normalizeUrl(process.env['SEED_STAGING_AUTH_URL']?.trim() || DEFAULT_STAGING_AUTH_URL)
+  return resolveStagingSeedApiUrl()
 }
 
 /** Trusted webapp `Origin` for local identity sign-in. */
@@ -67,7 +67,7 @@ export function isStagingSeedApiUrl(apiUrl: string): boolean {
 
   try {
     const hostname = new URL(trimmed).hostname.toLowerCase()
-    return hostname === 'staging.school.api.edayaplus.com'
+    return hostname === 'staging.api.edayaplus.com'
       || hostname === 'staging.api.school.edayaplus.com'
       || hostname === 'staging.api.edayaplus.com'
       || hostname.startsWith('staging.school.api.')

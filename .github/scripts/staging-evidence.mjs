@@ -12,7 +12,7 @@ const evidence = {
   generatedAt: summary.generatedAt,
   provisioningMode: summary.provisioningMode,
   matrix: summary.matrix,
-  excludedModules: ["Auth", "Onboarding", "Outils & imports", ...(summary.excludedModules || [])],
+  excludedModules: [...new Set(summary.excludedModules || [])],
   blockers: (summary.blockers || []).map(({ module, action, status, source }) => ({ module, action, status, source })),
 };
 writeFileSync(resolve(output, "browser-integration.json"), `${JSON.stringify(evidence, null, 2)}\n`);

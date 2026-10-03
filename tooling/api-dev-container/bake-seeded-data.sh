@@ -9,14 +9,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "> Starting identity on :9900"
-(cd /app && bun --filter @edaya/identity start) &
 
 echo "> Starting API + local file server for seed bake..."
-bun --filter @edaya/local-files-server start &
+bun tooling/repo/dev/local-files.ts &
 bun apps/api/src/entries/local.ts &
 
-bash tooling/api-dev-container/wait-for-url.sh http://127.0.0.1:9900/ 120
 bash tooling/api-dev-container/wait-for-url.sh http://127.0.0.1:9999/reference 120
 
 echo "> Running full demo seed..."

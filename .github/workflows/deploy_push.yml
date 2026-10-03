@@ -18,6 +18,10 @@ on:
         description: Mobile revision for coordinated staging release
         type: string
         default: dev
+      validate_only:
+        description: Validate staging without publication or live changes
+        type: boolean
+        default: false
       reset_data:
         description: Reset and reseed staging data (destructive)
         type: boolean
@@ -63,6 +67,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Reject validation outside staging
+        if: github.event_name == 'workflow_dispatch' && inputs.validate_only
+        run: |
+          echo "validate_only is available only for the coordinated staging workflow" >&2
+          exit 1
+
       - name: Detect deploy changes
         uses: dorny/paths-filter@v4
         id: filter
@@ -71,8 +81,7 @@ jobs:
           filters: |
             api_deploy:
               - apps/api/**
-              - apps/identity/**
-              - tooling/identity-migrate/**
+              - tooling/repo/db/identity/**
               - package/**
               - package.json
               - bun.lock
@@ -136,6 +145,7 @@ jobs:
 
   publish-api-client:
     needs: [gate, verify]
+    if: needs.gate.outputs.channel == 'production'
     uses: ./.github/workflows/_publish-api-client.yml
     secrets: inherit
 
@@ -161,4 +171,5 @@ jobs:
       web_ref: ${{ inputs.web_ref }}
       mobile_ref: ${{ inputs.mobile_ref }}
       reset_data: ${{ inputs.reset_data }}
+      validate_only: ${{ inputs.validate_only }}
     secrets: inherit

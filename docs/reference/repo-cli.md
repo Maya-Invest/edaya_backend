@@ -12,7 +12,7 @@ Implementation: `tooling/repo/cli/` — thin subprocess dispatch, no domain impo
 
 | Task | Command |
 |------|---------|
-| Start API + local files | `bun repo dev` |
+| Start identity + API + local files | `bun repo dev` |
 | Full local seed | `bun repo seed` |
 | Pre-PR check (verify job) | `bun run verify` |
 | PR CI locally (verify + integration) | `bun repo verify --full` |
@@ -37,6 +37,9 @@ bun repo
 │   └── test-naming
 ├── smoke-test <staging|notify|r2>
 ├── openapi <export|generate>
+├── codegen <generate|check> [options]
+├── identity-migrate
+├── identity-wipe <local|staging> [--yes]
 ├── deploy api <staging|production>
 ├── doctor
 └── verify [--full]
@@ -46,7 +49,7 @@ bun repo
 
 ### `bun repo dev`
 
-Starts `@edaya/api` and `@edaya/local-files-server` (watch mode). Loads `apps/api/.env`.
+Starts `@edaya/identity`, `@edaya/api`, and the local file server in watch mode. Loads `apps/api/.env` for the school API and files; identity loads its own environment.
 
 ### `bun repo dev-container`
 
@@ -59,7 +62,7 @@ bun repo dev-container down
 bun repo dev-container logs
 ```
 
-Root alias: `bun run api-dev-container`.
+Root alias: `bun run dev:container`.
 
 ### `bun repo seed`
 
@@ -90,7 +93,15 @@ bun repo db browser school    # stop bun repo dev first
 
 `db reset` drops `drizzle`, `notify`, and `public` schemas, then re-applies school + notify migrations. After staging reset, run `bun repo seed --staging`. Identity users are wiped from `edaya_identity` (`bun repo db wipe staging`).
 
-Migrate / reset implementation: `tooling/db-migrate/scripts/`.
+Migrate / reset implementation: `tooling/repo/db/school/`. Identity commands live in `tooling/repo/db/identity/`:
+
+```sh
+bun repo identity-migrate                 # AUTH_DATABASE_URL or staging/production variants
+bun repo identity-wipe local --yes        # stop identity before deleting local data
+bun repo identity-wipe staging --yes      # guarded staging identity cleanup
+```
+
+These commands keep school and identity databases separate. The low-level generator is available through `bun repo codegen generate|check --input <file|url> ...`; `bun repo openapi generate` remains the usual repository workflow.
 
 ## Validation
 

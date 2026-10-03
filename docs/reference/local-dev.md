@@ -15,7 +15,6 @@ The webapp is a **static SPA** (`ssr = false`) that calls the API from the brows
 ```sh
 # API — persisted school PGlite under repo-root `.data/`
 cp apps/api/.env.example apps/api/.env
-cp apps/identity/.env.example apps/identity/.env
 
 # Ops & seeding (remote URLs, Neon connection strings, smoke credentials)
 cp .env.example .env
@@ -28,7 +27,7 @@ cp apps/webapp/.env.example apps/webapp/.env
 ## Start identity + API + webapp
 
 ```sh
-# Terminal 1 — Identity :9900, school API :9999, files :9200
+# Terminal 1 — Unified API :9999, files :9200
 cd edaya_backend && bun dev
 
 # Terminal 2 — Webapp :5173
@@ -41,13 +40,13 @@ cd edaya_frontend && bun --filter @edaya/webapp dev
 |---------|-----|
 | Webapp | http://localhost:5173 |
 | School API | http://localhost:9999 |
-| Central Identity | http://localhost:9900 |
+| Account authentication | http://localhost:9999 |
 | OpenAPI reference | http://localhost:9999/reference |
 | GraphiQL (entity API) | http://localhost:9999/graphiql |
 
 ## How the webapp reaches the API
 
-- **Browser client** — Identity login runs against `PUBLIC_AUTH_URL` (`http://localhost:9900`); school requests use the returned Bearer JWT and never use identity cookies.
+- **Browser client** — Identity login runs against `PUBLIC_API_URL` (`http://localhost:9999`); school requests use the returned Bearer JWT and never use identity cookies.
 - **API base URL** — `PUBLIC_API_URL` targets the school API (`http://localhost:9999` locally).
 - **Bootstrap** — The webapp obtains an identity access token, then loads `/core/authorization/effective-grants`.
 
@@ -66,11 +65,11 @@ Central Identity is a separate process/Worker with its own database. Tests use `
 
 ## API database (local profile)
 
-`RUNTIME=local` uses `DATABASE_URL=pglite:.data/school`. Identity runs separately on port 9900 with its own database.
+`RUNTIME=local` uses `DATABASE_URL=pglite:.data/school`. Account authentication shares the API process and uses its separate database.
 
 ## File storage (local dev)
 
-`bun repo dev` starts the API and **`@edaya/local-files-server`** together. Uploads persist under repo-root `.data/files/` (gitignored).
+`bun repo dev` starts identity, the school API, and the local file server together. Uploads persist under repo-root `.data/files/` (gitignored).
 
 | Variable | Default |
 |----------|---------|
@@ -100,10 +99,9 @@ See [api-runtimes.md](./api-runtimes.md).
 |---------|----------------------|---------|------------|
 | **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
-| **File storage** | `@edaya/local-files-server` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
+| **File storage** | `bun tooling/repo/dev/local-files.ts` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
 | **Notify** | In-process `@edaya/adaptor-notify` (API injects log email + log SMS) | Cloudflare Email + unimplemented SMS + optional FCM on the API Worker | Same as staging |
 | **Documents** | In-process `@edaya/adaptor-docs` (Chrome if installed, Gotenberg if `GOTENBERG_URL`, else stub) | API Worker `BROWSER` binding (Browser Run); optional `GOTENBERG_URL` for `wrangler dev` | Same as staging |
-| **Identity directory** | `IDENTITY_DIRECTORY_SECRET` in `.env` | Wrangler secret | Wrangler secret |
 
 **Wrangler secret templates** (from `apps/api/`):
 
@@ -136,7 +134,7 @@ Opens automatically at `http://127.0.0.1:8192`.
 
 ## Dev database seed
 
-Seeding targets both local deployments: identity at `http://localhost:9900` and the school API at `http://localhost:9999`. Each service owns its database. After starting both, run `bun repo seed` in another terminal to load demo data.
+Seeding targets both local deployments: the unified API at `http://localhost:9999`. Each service owns its database. After starting the API, run `bun repo seed` in another terminal to load demo data.
 
 ### Fresh clone or after wiping `.data/`
 
@@ -219,7 +217,7 @@ Before opening a pull request, run `bun run verify`. For integration coverage (H
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
 | `bun repo seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun repo dev`, `rm -rf .data`, restart, `bun repo seed` |
-| `POST /auth/sign-in/email` → 401 `Invalid email or password` | Identity database empty or identity service unavailable | Start `edaya_identity` on port 9900, then run the full seed |
+| `POST /auth/edaya/otp/start` fails | Identity database empty or identity service unavailable | Start the unified API on port 9999, then run the full seed |
 | Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
 | `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun repo dev` |
 | Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; set `PUBLIC_API_URL` to the school API origin (`http://localhost:9999`) |
@@ -240,13 +238,13 @@ bun repo seed --scope doctor                                                    
 
 Use the dedicated `bun run dev:test` server for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
 
-See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun --filter @edaya/identity-migrate migrate`. Keep the identity database separate from the school database.
+See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun repo identity-migrate`. Keep the identity database separate from the school database.
 
 ## Test-only OTP access
 
-From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9900`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. No `.env` files are changed or loaded by the test entry. Normal environment settings, provider credentials and database URLs are ignored; only explicit `EDAYA_TEST_*` configuration is used. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
+From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9999`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. No `.env` files are changed or loaded by the test entry. Normal environment settings, provider credentials and database URLs are ignored; only explicit `EDAYA_TEST_*` configuration is used. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
 
-Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_AUTH_URL=http://127.0.0.1:9900 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
+Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_API_URL=http://127.0.0.1:9999 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
 
 Send a code through the normal form, select **Show test code**, optionally **Copy**, and manually enter it before verifying. Reveal creates no message, OTP guess or session. Login and contact linking use the same controls. Codes are transient and clear on replacement, expiry, completion, reset, departure or backgrounding. French and English are supported.
 
@@ -254,4 +252,4 @@ Stop with Ctrl-C: the server clears captured codes and closes its database. The 
 
 Only the testing entry exposes `GET /auth/edaya/testing/capabilities` and `POST /auth/edaya/testing/otp` with `{challenge}`. Both return `Cache-Control: no-store`; pending challenges only, with original recent session authorization for linking. The normal application returns 404 for these routes and the removed `/auth/edaya/dev/last-otp` route in every environment. No migration or hosted testing deployment is required.
 
-For a complete disposable school/Identity/files stack, run `.github/scripts/ci-start-local-apis.sh start` from the web or mobile checkout. Its optional `EDAYA_CI_API_PID_DIR` selects the fixture directory (default `/tmp/edaya-ci-apis`). To seed it, run from the backend with `SEED_ENV_FILE=/tmp/edaya-ci-apis/school.env SEED_API_URL=http://127.0.0.1:9999 SEED_AUTH_URL=http://127.0.0.1:9900 EDAYA_TEST_OTP_FILE=/tmp/edaya-ci-apis/otp.jsonl bun --no-env-file repo seed --skip-profile-photos --skip-attachments`. Use the matching Identity issuer and school API origin from the disposable configuration. Run the same script with `stop` when finished. Never attach the private mailbox or disposable environment file as an artifact.
+For a complete disposable school/Identity/files stack, run `.github/scripts/ci-start-local-apis.sh start` from the web or mobile checkout. Its optional `EDAYA_CI_API_PID_DIR` selects the fixture directory (default `/tmp/edaya-ci-apis`). To seed it, run from the backend with `SEED_ENV_FILE=/tmp/edaya-ci-apis/school.env SEED_API_URL=http://127.0.0.1:9999 EDAYA_TEST_OTP_FILE=/tmp/edaya-ci-apis/otp.jsonl bun --no-env-file repo seed --skip-profile-photos --skip-attachments`. Use the matching Identity issuer and school API origin from the disposable configuration. Run the same script with `stop` when finished. Never attach the private mailbox or disposable environment file as an artifact.

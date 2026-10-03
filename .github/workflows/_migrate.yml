@@ -68,4 +68,4 @@ jobs:
       - name: Migrate Account and auth provider schemas
         env:
           AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
-        run: bun --filter @edaya/identity-migrate migrate
+        run: bun repo identity-migrate

@@ -1,56 +1,13 @@
-# Central identity (v1)
+# Account authentication in the Edaya API
 
-School API authenticates **users** with a signed JWT from the `edaya_identity` service and **machines** with school `sk_live_` staff keys or `s2s_live_` S2S keys. This repo does not run Better Auth.
+One API owns authentication and school HTTP operations. Production uses `https://api.edayaplus.com`, staging `https://staging.api.edayaplus.com`, and local development `http://localhost:9999`. Updated clients and fresh login are required at cutover. There are no compatibility aliases for old issuers or audiences.
 
-## Hosts
+`apps/api/src/identity` composes the existing Account domain, Account persistence and replaceable Better Auth provider. Account and school data remain in separate databases. Public `/auth/edaya/*` contracts and `/.well-known/jwks.json` are documented in the main OpenAPI reference. Directory resolution, JWT verification and privileged-account MFA policy use typed in-process ports; private HTTP directory/policy routes and the Identity service binding are removed.
 
-| Surface | Production | Staging | Local |
-|---|---|---|---|
-| Identity | `https://identity.api.edayaplus.com` | `https://staging.identity.api.edayaplus.com` | `http://localhost:9900` |
-| School API | `https://school.api.edayaplus.com` | `https://staging.school.api.edayaplus.com` | `http://localhost:9999` |
-| Staff webapp | `https://app.edayaplus.com` | `https://staging.app.edayaplus.com` | Vite |
-| Operator admin | `https://admin.edayaplus.com` | `https://staging.admin.edayaplus.com` | Vite |
+Auth dispatch runs before school dependencies. Login and ordinary session operations do not open the school database. Privileged MFA policy opens school repositories only when required. Browser auth uses credentialed fetch and host-only HttpOnly cookies; native auth uses the opaque renewal credential. School requests require an access JWT or the existing machine key, never session cookies. JWT issuer and audience are the canonical API origin. Local loopback/emulator aliases normalize to that origin; foreign and retired origins fail verification.
 
-Auth cookies are host-only on the identity host. Web `credentials: 'include'` only to identity. School fetches use Bearer and omit cookies.
+Only `@maya-invest/edaya-api-client` is published. Its generated `auth` namespace and `createAuthClient(transport)` use a session transport independent of token exchange. The package contains no server signing or provider dependencies. Dart contracts live in `edaya_api_client`; `edaya_auth` consumes them as the session/renewal adapter. The API client does not depend on the auth adapter.
 
-## Credentials (XOR)
+Staging advertises phone verification unavailable. Failed availability discovery also yields email-only forms. Email OTP, authenticators, recovery and email account linking remain available. Provider-enabled OTP capture is confined to the explicit disposable local testing entry.
 
-1. `Authorization: Bearer <JWT>` — identity assertion. School verifies JWKS (`iss`, `aud`, `exp`, `sub`, at least one of `email` | `phone`). Platform operators also send `X-Actor-Kind: platform` when the same `sub` has a school profile.
-2. `Authorization: Bearer sk_live_…` — school staff service account.
-3. `Authorization: Bearer s2s_live_…` — per-school machine key minted by a platform operator ([platform-actors-and-s2s-keys.md](../architecture/platform-actors-and-s2s-keys.md)).
-4. Cookie on `/core`, both credentials, or unknown prefix → 401.
-
-JWT `aud` is this API's `API_ORIGIN`. Identity mints that value only when the caller requests `{ "resource": "<API origin>" }` from an allowlisted first-party origin. Callers cannot invent a different audience.
-
-## School package
-
-`@maya-invest/edaya-identity-client` (file-link `../edaya_identity/package/identity-client` or GitHub Packages). School does not import `@edaya/adaptor-auth` or Better Auth.
-
-- `verifyIdentityToken(jwt)` — handwritten JWKS verify
-- Directory HTTP — `GET /internal/directory/by-contact?channel=email|phone&value=` and `GET /internal/directory/by-id/:subjectId`
-
-Login, OTP, cookies, and native sign-in stay on identity `/auth/*` (Better Auth client / mobile `edaya_auth`).
-
-## Invitation accept
-
-Match the invite `contactChannel` to the JWT claim (`email` or `phone`). Missing or mismatched claim fails. Phone claims are empty until phone OTP ships. Preview uses the directory for both channels (`hasAccountForPhone` returns `exists: false` until identity stores phones).
-
-## Local topology
-
-`bun repo dev` in this repo starts the school API (`:9999`) and local files (`:9200`) only. Start identity separately:
-
-```sh
-cd ../edaya_identity && bun repo dev   # :9900
-```
-
-Share `IDENTITY_DIRECTORY_SECRET=local-directory-secret` with identity. School `bun repo seed clean` wipes school `.data` only; wipe identity users from `edaya_identity` with `bun repo db wipe local --yes`.
-
-## CI
-
-Backend CI checks out `Maya-Invest/edaya_identity` as a sibling before `bun install` (secret `IDENTITY_CHECKOUT_TOKEN`). School `_migrate.yml` applies the school schema only.
-
-## Deploy
-
-Deploy identity (Worker + migrations + published or file-linked client) **before** school/frontend/mobile. Runbook: [edaya_identity/docs/deploy.md](../../edaya_identity/docs/deploy.md). Rollback is revert; there is no compatibility flag.
-
-Removed from this repo: `ALLOW_LEGACY_COOKIE_BUSINESS_AUTH`, `COOKIE_DOMAIN`, school `AUTH_KV` / `HYPERDRIVE_AUTH` / `BETTER_AUTH_*`, `/auth` routes, opaque `edaya_at_` tokens.
+Run `bun repo dev` for the API and local files. Use `bun run dev:test` only with disposable fixture configuration. Account migrations and guarded wipes remain in `tooling/repo/db/identity`; school migrations remain in `tooling/repo/db/school`. See [staging-release.md](staging-release.md) for validation and the later rollout boundary.

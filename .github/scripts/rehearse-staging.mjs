@@ -9,7 +9,6 @@ import { resolve } from "node:path";
 
 const root = resolve(process.env.RELEASE_ROOT || "..");
 const backend = resolve(root, "edaya_backend");
-const identity = resolve(root, "edaya_backend");
 const directory = mkdtempSync(resolve(tmpdir(), "edaya-staging-rehearsal-"));
 mkdirSync(resolve(root, "release"), { recursive: true });
 const children = [];
@@ -37,7 +36,7 @@ const start = (name, cwd, args, extra) => {
 let started = false;
 let succeeded = false;
 try {
-  const pgPort = await port(), authPort = await port(), apiPort = await port(), filePort = await port();
+  const pgPort = await port(), apiPort = await port(), filePort = await port();
   run("initdb", ["-D", resolve(directory, "postgres"), "-A", "trust", "-U", "edaya_rehearsal", "--no-locale", "--encoding=UTF8"]);
   run("pg_ctl", ["-D", resolve(directory, "postgres"), "-l", resolve(directory, "postgres.log"), "-o", `-h 127.0.0.1 -p ${pgPort} -k ${directory}`, "-w", "start"]);
   started = true;
@@ -45,21 +44,19 @@ try {
   run("psql", ["-v", "ON_ERROR_STOP=1"], backend, pgEnv, "CREATE ROLE edaya_identity LOGIN PASSWORD 'rehearsal-only';\nCREATE DATABASE edaya_identity OWNER edaya_identity;\nCREATE DATABASE neondb;\n");
   const schoolDb = `postgres://edaya_rehearsal@127.0.0.1:${pgPort}/neondb`;
   const authDb = `postgres://edaya_identity:rehearsal-only@127.0.0.1:${pgPort}/edaya_identity`;
-  const authUrl = `http://127.0.0.1:${authPort}`, apiUrl = `http://127.0.0.1:${apiPort}`, filesUrl = `http://127.0.0.1:${filePort}`;
-  const common = { NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", EMAIL_TRANSPORT: "log", IDENTITY_DIRECTORY_SECRET: "disposable-directory-secret", TRUSTED_ORIGINS: "http://localhost:4173", WEBAPP_ORIGIN: "http://localhost:4173" };
-  const identityEnv = { ...common, PORT: String(authPort), AUTH_DATABASE_URL: authDb, BETTER_AUTH_SECRET: "disposable-identity-secret-for-rehearsal-only", BETTER_AUTH_URL: authUrl, FIRST_PARTY_API_ORIGINS: apiUrl, REQUIRE_EMAIL_VERIFICATION: "true", AUTH_EMAIL_LOG_OTP: "false", AUTH_DEV_OTP_PEEK: "true" };
-  const schoolEnv = { ...common, PORT: String(apiPort), DATABASE_URL: schoolDb, API_ORIGIN: apiUrl, IDENTITY_ISSUER: authUrl, IDENTITY_DIRECTORY_URL: authUrl, LOCAL_FILES_URL: filesUrl, LOCAL_FILES_PORT: String(filePort), LOCAL_FILES_ROOT: resolve(directory, "files"), LOCAL_FILES_SECRET: "disposable-file-secret", RUN_MIGRATIONS_ON_STARTUP: "false", ALLOW_PUBLIC_SCHOOL_REGISTRATION: "true" };
-  const releaseEnv = { RELEASE_TARGET: "staging", RESET_DATA: "true", STAGING_MAINTENANCE_CONFIRMED: "true", STAGING_DATABASE_HOST: "127.0.0.1", STAGING_DATABASE_URL: schoolDb, STAGING_AUTH_DATABASE_URL: authDb };
-  run("bun", ["tooling/db-migrate/scripts/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv });
-  run("bun", ["tooling/identity-migrate/scripts/staging-release.ts"], identity, { ...identityEnv, ...releaseEnv });
+  const apiUrl = `http://127.0.0.1:${apiPort}`, filesUrl = `http://127.0.0.1:${filePort}`;
+  const common = { NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", EMAIL_TRANSPORT: "log", TRUSTED_ORIGINS: "http://localhost:4173", WEBAPP_ORIGIN: "http://localhost:4173" };
+  const schoolEnv = { ...common, PORT: String(apiPort), DATABASE_URL: schoolDb, AUTH_DATABASE_URL: authDb, BETTER_AUTH_SECRET: "disposable-account-secret-for-rehearsal-only", API_ORIGIN: apiUrl, LOCAL_FILES_URL: filesUrl, LOCAL_FILES_PORT: String(filePort), LOCAL_FILES_ROOT: resolve(directory, "files"), LOCAL_FILES_SECRET: "disposable-file-secret", RUN_MIGRATIONS_ON_STARTUP: "false", ALLOW_PUBLIC_SCHOOL_REGISTRATION: "true" };
+  const releaseEnv = { EDAYA_DISPOSABLE_POSTGRES: "true", RELEASE_TARGET: "staging", RESET_DATA: "true", STAGING_MAINTENANCE_CONFIRMED: "true", STAGING_DATABASE_HOST: "127.0.0.1", STAGING_DATABASE_URL: schoolDb, STAGING_AUTH_DATABASE_URL: authDb };
+  run("bun", ["tooling/repo/db/school/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv });
+  run("bun", ["tooling/repo/db/identity/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv });
   const accounts = resolve(directory, "accounts.json");
   run("bun", ["tooling/seeding/scripts/export-identity-fixtures.ts", accounts], backend);
-  run("bun", ["apps/identity/src/entries/staging-fixtures.ts", "staging", accounts, `${accounts}.sessions.json`], identity, { ...identityEnv, STAGING_AUTH_DATABASE_URL: authDb, STAGING_DATABASE_HOST: "127.0.0.1" });
-  start("identity", resolve(identity, "apps/identity"), ["src/entries/local.ts"], identityEnv);
+  run("bun", ["apps/api/src/identity/entries/staging-fixtures.ts", "staging", accounts, `${accounts}.sessions.json`], backend, { ...schoolEnv, STAGING_AUTH_DATABASE_URL: authDb, STAGING_DATABASE_HOST: "127.0.0.1" });
   start("school", resolve(backend, "apps/api"), ["tests/support/native-bootstrap-server.ts"], { ...schoolEnv, EDAYA_DISPOSABLE_POSTGRES: "true" });
-  start("files", backend, ["--filter", "@edaya/local-files-server", "start"], schoolEnv);
-  await wait(`${authUrl}/`); await wait(`${apiUrl}/reference`);
-  run("bun", ["repo", "seed"], backend, { ...schoolEnv, SEED_API_URL: apiUrl, SEED_AUTH_URL: authUrl, SEED_APP_ORIGIN: "http://localhost:4173", SEED_PROVISIONED_IDENTITY: "true" });
+  start("files", backend, ["tooling/repo/dev/local-files.ts"], schoolEnv);
+  await wait(`${apiUrl}/reference`);
+  run("bun", ["repo", "seed"], backend, { ...schoolEnv, SEED_API_URL: apiUrl, SEED_APP_ORIGIN: "http://localhost:4173", SEED_PROVISIONED_IDENTITY: "true", SEED_AUTH_SESSIONS_FILE: `${accounts}.sessions.json` });
   // Prove a no-reset retry leaves both databases byte-for-byte equivalent at the data level.
   const dataSnapshot = (database, schemas) => {
     const result = spawnSync("pg_dump", ["--data-only", "--inserts", "--no-owner", "--no-privileges", ...schemas.flatMap(schema => ["--schema", schema])], { env: { ...env, ...pgEnv, PGDATABASE: database }, encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
@@ -69,9 +66,9 @@ try {
     return createHash("sha256").update(stable).digest("hex");
   };
   const before = [dataSnapshot("neondb", ["school", "notify"]), dataSnapshot("edaya_identity", ["auth", "identity"])];
-  run("bun", ["tooling/db-migrate/scripts/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv, RESET_DATA: "false" });
-  run("bun", ["tooling/identity-migrate/scripts/staging-release.ts"], identity, { ...identityEnv, ...releaseEnv, RESET_DATA: "false" });
-  run("bun", ["apps/identity/src/entries/staging-fixtures.ts", "staging", accounts], identity, { ...identityEnv, ...releaseEnv });
+  run("bun", ["tooling/repo/db/school/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv, RESET_DATA: "false" });
+  run("bun", ["tooling/repo/db/identity/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv, RESET_DATA: "false" });
+  run("bun", ["apps/api/src/identity/entries/staging-fixtures.ts", "staging", accounts], backend, { ...schoolEnv, ...releaseEnv });
   const after = [dataSnapshot("neondb", ["school", "notify"]), dataSnapshot("edaya_identity", ["auth", "identity"])];
   if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("No-reset retry changed existing fixture data");
   writeFileSync(resolve(root, "release/bootstrap-rehearsal.json"), JSON.stringify({ passed: true, at: new Date().toISOString(), databases: "disposable native PostgreSQL", separateIdentityRole: true, emailVerificationRequired: true, provisionedIdentityOnly: true, attachments: true, documentFixtures: true, explicitResetScripts: true, noResetPreservesData: true, idempotentIdentityFixtures: true }, null, 2));

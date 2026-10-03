@@ -1,3 +1,4 @@
+import { dispatchAuthentication } from "@/identity/http";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -25,6 +26,7 @@ export default function createApp() {
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
       "Content-Type",
+      "x-edaya-client",
       "Authorization",
       "X-Academic-Year-Id",
       "X-Actor-Kind",
@@ -41,6 +43,7 @@ export default function createApp() {
     }
     return bodyLimit({ maxSize: 1024 * 1024 })(c, next);
   });
+  app.use(dispatchAuthentication);
   app.use(dependenciesInjection);
 
   app.use(serveEmojiFavicon("📝"));

@@ -24,6 +24,13 @@ const runtimeRegistry = createRuntimeRegistry<Environment, ApiRuntime>({
   cacheKey: env => [
     env.RUNTIME,
     env.DATABASE_URL,
+    env.AUTH_DATABASE_URL,
+    env.API_ORIGIN,
+    env.BETTER_AUTH_SECRET,
+    env.PHONE_AUTH_MODE,
+    env.REQUIRE_PRIVILEGED_TOTP,
+    env.ACCOUNT_SECURITY_KEYS,
+    env.ACCOUNT_SECURITY_KEY_VERSION,
     runMigrationsOnStartup(env),
   ].join(":"),
   workerErrorMessage: "getApiRuntime() must not be used on the worker runtime; use resolveApiRuntime(c) per request.",

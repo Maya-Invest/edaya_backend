@@ -6,6 +6,7 @@
       "name": "@edaya/solution",
       "devDependencies": {
         "@antfu/eslint-config": "^9.0.0",
+        "@types/bun": "^1.3.14",
         "@types/node": "^25.9.2",
         "eslint": "^9.39.0",
         "eslint-plugin-format": "^0.1.2",
@@ -18,20 +19,23 @@
       "name": "@edaya/api",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/account": "workspace:*",
+        "@edaya/adaptor-account": "workspace:*",
+        "@edaya/adaptor-auth": "workspace:*",
+        "@edaya/adaptor-auth-better-auth": "workspace:*",
         "@edaya/adaptor-docs": "workspace:*",
         "@edaya/adaptor-local-fs": "workspace:*",
         "@edaya/adaptor-notify": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
         "@edaya/authorization": "workspace:*",
-        "@edaya/client-codegen": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/service": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
         "@hono/graphql-server": "^0.7.0",
         "@hono/node-server": "^1.14.1",
         "@hono/zod-openapi": "^0.16.4",
-        "@maya-invest/edaya-identity-client": "*",
+        "@maya-invest/edaya-api-client": "workspace:*",
         "@scalar/hono-api-reference": "^0.8.8",
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
@@ -39,47 +43,21 @@
         "graphql": "^16.9.0",
         "hono": "^4.7.9",
         "hono-pino": "^0.3.0",
+        "jose": "^6.1.3",
         "pg": "^8.16.3",
         "pino": "^9.6.0",
         "pino-pretty": "^11.3.0",
+        "postgres": "^3.4.5",
         "stoker": "^1.4.2",
         "zod": "^3.24.4",
       },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20260610.0",
         "@edaya/fixtures": "workspace:*",
+        "@edaya/repo": "workspace:*",
         "@edaya/seeding": "workspace:*",
         "@types/bun": "^1.3.14",
         "@types/node": "^25.9.2",
-        "@types/pg": "^8.15.5",
-        "typescript": "^6.0.2",
-        "wrangler": "^4.99.0",
-      },
-    },
-    "apps/identity": {
-      "name": "@edaya/identity",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/account": "workspace:*",
-        "@edaya/adaptor-account": "workspace:*",
-        "@edaya/adaptor-auth": "workspace:*",
-        "@edaya/adaptor-auth-better-auth": "workspace:*",
-        "@electric-sql/pglite": "^0.4.6",
-        "@hono/node-server": "^1.14.1",
-        "@maya-invest/edaya-identity-client": "workspace:*",
-        "dotenv": "^16.5.0",
-        "drizzle-orm": "^0.39.0",
-        "hono": "^4.7.9",
-        "jose": "^6.1.3",
-        "pg": "^8.16.3",
-        "pino": "^9.6.0",
-        "pino-pretty": "^11.3.0",
-        "postgres": "^3.4.5",
-        "zod": "^3.24.4",
-      },
-      "devDependencies": {
-        "@cloudflare/workers-types": "^4.20260610.0",
-        "@types/bun": "^1.3.14",
         "@types/pg": "^8.15.5",
         "typescript": "^6.0.2",
         "wrangler": "^4.99.0",
@@ -233,49 +211,6 @@
         "@types/bun": "^1.3.14",
       },
     },
-    "package/identity-client": {
-      "name": "@maya-invest/edaya-identity-client",
-      "version": "0.0.0",
-      "dependencies": {
-        "jose": "^6.1.3",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-      },
-    },
-    "tooling/client-codegen": {
-      "name": "@edaya/client-codegen",
-      "version": "0.0.1",
-      "bin": {
-        "edaya-codegen": "./bin/edaya-codegen.ts",
-      },
-      "dependencies": {
-        "openapi-typescript": "^7.13.0",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-      },
-    },
-    "tooling/db-migrate": {
-      "name": "@edaya/db-migrate",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/adaptor-notify": "workspace:*",
-        "@edaya/adaptor-postgres": "workspace:*",
-        "@edaya/core": "workspace:*",
-        "@electric-sql/pglite": "^0.4.6",
-        "drizzle-orm": "^0.39.0",
-        "postgres": "^3.4.4",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "dotenv": "^16.5.0",
-        "dotenv-expand": "^11.0.7",
-        "drizzle-kit": "^0.30.4",
-      },
-    },
     "tooling/fixtures": {
       "name": "@edaya/fixtures",
       "version": "0.0.1",
@@ -284,33 +219,12 @@
         "@edaya/core": "workspace:*",
         "@edaya/service": "workspace:*",
       },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "@types/node": "^25.9.2",
-        "typescript": "^6.0.2",
-      },
-    },
-    "tooling/identity-migrate": {
-      "name": "@edaya/identity-migrate",
-      "dependencies": {
-        "@edaya/adaptor-account": "workspace:*",
-        "@edaya/adaptor-auth": "workspace:*",
-        "@electric-sql/pglite": "^0.4.6",
-        "dotenv": "^16.5.0",
-        "drizzle-orm": "^0.39.0",
-        "postgres": "^3.4.4",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
-      },
     },
     "tooling/integration-tests": {
       "name": "@edaya/integration-tests",
       "version": "0.0.1",
       "dependencies": {
         "@maya-invest/edaya-api-client": "workspace:*",
-        "@maya-invest/edaya-identity-client": "*",
       },
       "devDependencies": {
         "@edaya/adaptor-notify": "workspace:*",
@@ -319,45 +233,30 @@
         "@edaya/authorization": "workspace:*",
         "@edaya/core": "workspace:*",
         "@edaya/fixtures": "workspace:*",
+        "@edaya/repo": "workspace:*",
         "@edaya/seeding": "workspace:*",
         "@edaya/service": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
-        "@types/bun": "^1.3.14",
-        "dotenv": "^16.5.0",
-        "dotenv-expand": "^11.0.7",
         "drizzle-orm": "^0.39.0",
         "hono": "^4.7.9",
-        "jose": "6.2.5",
-        "zod": "^3.24.4",
-      },
-    },
-    "tooling/local-files-server": {
-      "name": "@edaya/local-files-server",
-      "version": "0.0.1",
-      "dependencies": {
-        "@edaya/adaptor-local-fs": "workspace:*",
-        "dotenv": "^16.5.0",
-        "dotenv-expand": "^11.0.7",
-        "hono": "^4.7.9",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
       },
     },
     "tooling/repo": {
       "name": "@edaya/repo",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/adaptor-account": "workspace:*",
+        "@edaya/adaptor-auth": "workspace:*",
+        "@edaya/adaptor-local-fs": "workspace:*",
+        "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
-        "@edaya/client-codegen": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
+        "@maya-invest/edaya-api-client": "workspace:*",
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
+        "drizzle-orm": "^0.39.0",
+        "openapi-typescript": "^7.13.0",
+        "postgres": "^3.4.4",
       },
     },
     "tooling/seeding": {
@@ -369,20 +268,14 @@
         "@edaya/fixtures": "workspace:*",
         "@edaya/service": "workspace:*",
         "@maya-invest/edaya-api-client": "workspace:*",
-        "@maya-invest/edaya-identity-client": "*",
         "dotenv": "^16.5.0",
         "dotenv-expand": "^11.0.7",
         "postgres": "^3.4.4",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.3.14",
-        "typescript": "^6.0.2",
       },
     },
   },
   "overrides": {
     "@maya-invest/edaya-api-client": "workspace:*",
-    "@maya-invest/edaya-identity-client": "workspace:*",
   },
   "packages": {
     "@antfu/eslint-config": ["@antfu/eslint-config@9.2.0", "", { "dependencies": { "@antfu/install-pkg": "^1.1.0", "@clack/prompts": "^1.7.0", "@e18e/eslint-plugin": "^0.5.1", "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2", "@eslint/markdown": "^8.0.3", "@stylistic/eslint-plugin": "^5.10.0", "@typescript-eslint/eslint-plugin": "^8.65.0", "@typescript-eslint/parser": "^8.65.0", "@vitest/eslint-plugin": "^1.6.23", "ansis": "^4.3.1", "cac": "^7.0.0", "eslint-config-flat-gitignore": "^2.3.0", "eslint-flat-config-utils": "^3.2.0", "eslint-merge-processors": "^2.0.0", "eslint-plugin-antfu": "^3.2.3", "eslint-plugin-command": "^3.5.3", "eslint-plugin-import-lite": "^0.6.0", "eslint-plugin-jsdoc": "^63.2.0", "eslint-plugin-jsonc": "^3.3.0", "eslint-plugin-n": "^18.2.2", "eslint-plugin-no-only-tests": "^3.4.0", "eslint-plugin-perfectionist": "^5.10.0", "eslint-plugin-pnpm": "^1.6.1", "eslint-plugin-regexp": "^3.1.1", "eslint-plugin-toml": "^1.4.0", "eslint-plugin-unicorn": "^72.0.0", "eslint-plugin-unused-imports": "^4.4.1", "eslint-plugin-vue": "^10.10.0", "eslint-plugin-yml": "^3.6.0", "eslint-processor-vue-blocks": "^2.0.0", "globals": "^17.7.0", "local-pkg": "^1.2.1", "parse-gitignore": "^2.0.0", "toml-eslint-parser": "^1.0.3", "vue-eslint-parser": "^10.4.1", "yaml-eslint-parser": "^2.1.0" }, "peerDependencies": { "@angular-eslint/eslint-plugin": "^21.1.0", "@angular-eslint/eslint-plugin-template": "^21.1.0", "@angular-eslint/template-parser": "^21.1.0", "@eslint-react/eslint-plugin": "^5.6.0", "@next/eslint-plugin-next": ">=15.0.0", "@prettier/plugin-xml": "^3.4.1", "@unocss/eslint-plugin": ">=0.50.0", "astro-eslint-parser": ">=1.0.2", "eslint": "^9.10.0 || ^10.0.0", "eslint-plugin-astro": ">=1.2.0", "eslint-plugin-format": ">=0.1.0", "eslint-plugin-jsx-a11y": ">=6.10.2", "eslint-plugin-react-refresh": "^0.5.0", "eslint-plugin-solid": "^0.14.3", "eslint-plugin-svelte": ">=2.35.1", "eslint-plugin-vuejs-accessibility": "^2.4.1", "prettier-plugin-astro": "^0.14.0", "prettier-plugin-slidev": "^1.0.5", "svelte-eslint-parser": ">=0.37.0" }, "optionalPeers": ["@angular-eslint/eslint-plugin", "@angular-eslint/eslint-plugin-template", "@angular-eslint/template-parser", "@eslint-react/eslint-plugin", "@next/eslint-plugin-next", "@prettier/plugin-xml", "@unocss/eslint-plugin", "astro-eslint-parser", "eslint-plugin-astro", "eslint-plugin-format", "eslint-plugin-jsx-a11y", "eslint-plugin-react-refresh", "eslint-plugin-solid", "eslint-plugin-svelte", "eslint-plugin-vuejs-accessibility", "prettier-plugin-astro", "prettier-plugin-slidev", "svelte-eslint-parser"], "bin": { "eslint-config": "./bin/index.mjs" } }, "sha512-v/j0Pjn6Sj9CxHT8n4nIKI8lg4O/+P4G+Zdbg7u/3J6JaLayxRXsX2Twx0fjpUtoyxW5mdYd67QycVfr1ahirA=="],
@@ -513,21 +406,11 @@
 
     "@edaya/authorization": ["@edaya/authorization@workspace:package/domain-authorization"],
 
-    "@edaya/client-codegen": ["@edaya/client-codegen@workspace:tooling/client-codegen"],
-
     "@edaya/core": ["@edaya/core@workspace:package/domain-core"],
-
-    "@edaya/db-migrate": ["@edaya/db-migrate@workspace:tooling/db-migrate"],
 
     "@edaya/fixtures": ["@edaya/fixtures@workspace:tooling/fixtures"],
 
-    "@edaya/identity": ["@edaya/identity@workspace:apps/identity"],
-
-    "@edaya/identity-migrate": ["@edaya/identity-migrate@workspace:tooling/identity-migrate"],
-
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:tooling/integration-tests"],
-
-    "@edaya/local-files-server": ["@edaya/local-files-server@workspace:tooling/local-files-server"],
 
     "@edaya/repo": ["@edaya/repo@workspace:tooling/repo"],
 
@@ -706,8 +589,6 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@maya-invest/edaya-api-client": ["@maya-invest/edaya-api-client@workspace:package/api-client"],
-
-    "@maya-invest/edaya-identity-client": ["@maya-invest/edaya-identity-client@workspace:package/identity-client"],
 
     "@noble/ciphers": ["@noble/ciphers@2.4.0", "", {}, "sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw=="],
 

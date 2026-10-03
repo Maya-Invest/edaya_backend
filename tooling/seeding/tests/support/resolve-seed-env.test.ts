@@ -22,11 +22,11 @@ afterEach(() => {
 })
 
 describe('resolve-seed-env', () => {
-  it('resolves separate local school and identity URLs', () => {
+  it('derives auth from the selected local API origin', () => {
     process.env.SEED_API_URL = 'http://localhost:8888'
     process.env.SEED_AUTH_URL = 'http://localhost:9901'
     expect(resolveLocalSeedApiUrl()).toBe('http://localhost:8888')
-    expect(resolveLocalSeedAuthUrl()).toBe('http://localhost:9901')
+    expect(resolveLocalSeedAuthUrl()).toBe('http://localhost:8888')
   })
 
   it('defaults local URLs when unset', () => {
@@ -43,7 +43,7 @@ describe('resolve-seed-env', () => {
     process.env.SEED_STAGING_AUTH_URL = 'https://identity.example.com/'
     process.env.SEED_STAGING_APP_ORIGIN = 'https://app.example.com/'
     expect(resolveStagingSeedApiUrl()).toBe('https://api.example.com')
-    expect(resolveStagingSeedAuthUrl()).toBe('https://identity.example.com')
+    expect(resolveStagingSeedAuthUrl()).toBe('https://api.example.com')
     expect(resolveStagingAppOrigin()).toBe('https://app.example.com')
   })
 
@@ -57,11 +57,11 @@ describe('resolve-seed-env', () => {
   })
 
   it('detects staging API hostnames', () => {
-    expect(isStagingSeedApiUrl('https://staging.school.api.edayaplus.com')).toBe(true)
+    expect(isStagingSeedApiUrl('https://staging.api.edayaplus.com')).toBe(true)
     expect(isStagingSeedApiUrl('https://staging.api.school.edayaplus.com')).toBe(true)
     expect(isStagingSeedApiUrl('https://staging.api.edayaplus.com')).toBe(true)
     expect(isStagingSeedApiUrl('https://api-staging.example.com')).toBe(true)
-    expect(isStagingSeedApiUrl('https://school.api.edayaplus.com')).toBe(false)
+    expect(isStagingSeedApiUrl('https://api.edayaplus.com')).toBe(false)
     expect(isStagingSeedApiUrl('https://api.edayaplus.com')).toBe(false)
     expect(isStagingSeedApiUrl('http://localhost:9999')).toBe(false)
   })

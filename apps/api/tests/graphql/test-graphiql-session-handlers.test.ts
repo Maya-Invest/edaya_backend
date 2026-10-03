@@ -1,17 +1,13 @@
 import { handleGraphiQLSession } from "@/lib/graphql/graphiql-session";
-import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
-import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
+import { verifyIdentityToken } from "../../src/identity/server/index";
+import { createTestIdentityKeys, signTestIdentityToken } from "../../src/identity/server/testing";
 import { describe, expect, test } from "bun:test";
 import { createTestStaffActor } from "../support/staff-actor-fixture";
 
-const issuer = "http://localhost:9900";
+const issuer = "http://localhost:9999";
 const audience = "http://localhost:9999";
 const keys = await createTestIdentityKeys();
-const directory = createDirectoryClient({
-  baseUrl: issuer,
-  secret: "test",
-  fetch: (async () => new Response(null, { status: 404 })) as unknown as typeof fetch,
-});
+const directory = { lookupByContact: async () => undefined, resolveBySubjectId: async () => undefined };
 
 function createContext(options: {
   nodeEnv?: string;

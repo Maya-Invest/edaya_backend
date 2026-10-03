@@ -16,17 +16,19 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
     for (const pair of existing.cookie.split('; ')) client.absorbCookies(new Response(null, { headers: { 'set-cookie': pair } }))
     return { subjectId: existing.subjectId }
   }
-  const host = new URL(client.origin).hostname
+  const identityUrl = new URL(client.identityOrigin)
+  const host = identityUrl.hostname
+  const file = process.env['SEED_AUTH_SESSIONS_FILE']
   let response: Response
-  if (!['localhost', '127.0.0.1', '[::1]'].includes(host)) {
-    const file = process.env['SEED_AUTH_SESSIONS_FILE']
+  if (file || !['localhost', '127.0.0.1', '[::1]'].includes(host)) {
     if (!file)
       throw new Error('Remote passwordless seeding requires SEED_AUTH_SESSIONS_FILE with operator-authenticated renewal credentials')
     const manifest = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
     const credential = manifest[email]
     if (!credential || !/^[\w-]+$/.test(credential))
       throw new Error('Missing opaque fixture renewal credential')
-    client.absorbCookies(new Response(null, { headers: { 'set-cookie': `__Host-edaya_session=${credential}` } }))
+    const cookieName = identityUrl.protocol === 'https:' ? '__Host-edaya_session' : 'edaya_session'
+    client.absorbCookies(new Response(null, { headers: { 'set-cookie': `${cookieName}=${credential}` } }))
     response = await client.request('/auth/edaya/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
   }
   else {

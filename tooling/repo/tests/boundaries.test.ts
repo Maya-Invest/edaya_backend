@@ -58,6 +58,17 @@ describe('findBoundaryViolations', () => {
     ], root)).toEqual([])
   })
 
+  test('API runtime accepts the lightweight client contract and rejects repository tooling', () => {
+    const root = createRepoRoot()
+    const sourcePath = 'apps/api/src/client-bindings.ts'
+    for (const specifier of ['@edaya/repo', '@edaya/client-codegen', '../../../tooling/repo/codegen/src/index']) {
+      writeSource(root, sourcePath, `import { bindings } from '${specifier}'\n`)
+      expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
+    }
+    writeSource(root, sourcePath, `import { bindings } from '@maya-invest/edaya-api-client/contract'\n`)
+    expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root)).toEqual([])
+  })
+
   test('reports runtime imports of http layer', () => {
     const root = createRepoRoot()
     writeSource(root, 'apps/api/src/runtime/local/build-runtime.ts', `import { app } from '@/http/app'\n`)
@@ -76,17 +87,17 @@ describe('findBoundaryViolations', () => {
 
   test('reports core imports of the identity client', () => {
     const root = createRepoRoot()
-    writeSource(root, 'package/domain-core/src/index.ts', `import { verifyIdentityToken } from '@maya-invest/edaya-identity-client'\n`)
+    writeSource(root, 'package/domain-core/src/index.ts', `import { verifyIdentityToken } from '../../../apps/api/src/identity/server/index'\n`)
 
     expect(findBoundaryViolations([
       {
         label: 'core imports identity client',
-        pattern: /from ["']@maya-invest\/edaya-identity-client/,
+        pattern: /from ["'][^"']*apps\/api\/src\/identity/,
         searchPath: 'package/domain-core/src',
       },
     ], root)).toEqual([{
       label: 'core imports identity client',
-      matches: ['package/domain-core/src/index.ts:1:import { verifyIdentityToken } from \'@maya-invest/edaya-identity-client\''],
+      matches: ['package/domain-core/src/index.ts:1:import { verifyIdentityToken } from \'../../../apps/api/src/identity/server/index\''],
     }])
   })
 

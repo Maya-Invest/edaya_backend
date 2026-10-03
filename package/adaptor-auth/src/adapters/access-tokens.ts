@@ -19,7 +19,7 @@ function digest(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
 
-/** Rate-limit buckets and Better Auth session revocation. Access JWTs are signed in apps/identity. */
+/** Rate-limit buckets and Better Auth session revocation. Access JWTs are signed in apps/api/src/identity. */
 export function createAccessTokenStore(database: unknown) {
   const db = database as { execute: (query: SQL) => Promise<unknown> }
   return {

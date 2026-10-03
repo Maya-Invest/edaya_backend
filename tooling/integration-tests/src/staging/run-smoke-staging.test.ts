@@ -18,8 +18,8 @@ describe('loadSmokeStagingEnv', () => {
     delete process.env.SEED_STAGING_APP_ORIGIN
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
-    expect(env.apiUrl).toBe('https://staging.school.api.edayaplus.com')
-    expect(env.authUrl).toBe('https://staging.identity.api.edayaplus.com')
+    expect(env.apiUrl).toBe('https://staging.api.edayaplus.com')
+    expect(env.authUrl).toBe('https://staging.api.edayaplus.com')
     expect(env.appOrigin).toBe('https://staging.app.edayaplus.com')
   })
 
@@ -30,15 +30,16 @@ describe('loadSmokeStagingEnv', () => {
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
     expect(env.apiUrl).toBe('https://api-staging.example.com')
-    expect(env.authUrl).toBe('https://identity-staging.example.com')
+    expect(env.authUrl).toBe('https://api-staging.example.com')
     expect(env.appOrigin).toBe('https://app-staging.example.com')
   })
 
-  it('uses the school profile seeding API key by default', () => {
+  it('uses the Cocody school profile seeding API key by default', () => {
     delete process.env.SEED_SCHOOL_ID
 
     const env = loadSmokeStagingEnv({ loadEnvFile: false })
-    expect(env.serviceAccountApiKey).toBe('sk_live_dev_edaya_central_seeding_integration_key')
+    expect(env.schoolId).toBe('sch-edaya-ci-cocody')
+    expect(env.serviceAccountApiKey).toBe('sk_live_dev_edaya_ci_cocody_seeding_integration_key')
   })
 })
 
@@ -134,6 +135,6 @@ describe('runSmokeStaging', () => {
     expect(result.checks.find(check => check.id === 'S7')?.status).toBe('passed')
 
     // Ensure mocked client path still works for direct usage.
-    expect(client.origin).toBe('https://api-staging.test')
+    expect(client.origin).toBe('http://localhost:9999')
   })
 })

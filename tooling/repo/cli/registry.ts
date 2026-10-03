@@ -9,5 +9,11 @@ export function resolveRepoCommandScript(command: RepoBunSpawnCommand): string {
       return paths.seed
     case 'doctor':
       return paths.doctor
+    case 'codegen':
+      return paths.codegen
+    case 'identity-migrate':
+      return paths.identityMigrate
+    case 'identity-wipe':
+      return paths.identityWipe
   }
 }

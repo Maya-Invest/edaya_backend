@@ -1,13 +1,11 @@
 /* eslint-disable node/no-process-env */
 const GRAPHIQL_ENDPOINT = "/graphql";
 const DEFAULT_WEBAPP_ORIGIN = "http://localhost:5173";
-const DEFAULT_DEV_EMAIL = "c.moreau@school.edu";
 
 export interface GraphiQLOptions {
   endpointPath?: string;
   devApiKey?: string;
   webappOrigin?: string;
-  defaultEmail?: string;
 }
 
 export function isGraphiQLEnabled(nodeEnv = process.env.NODE_ENV): boolean {
@@ -28,7 +26,6 @@ export function resolveGraphiQLDevApiKey(): string | undefined {
 export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
   const endpointPath = options.endpointPath ?? GRAPHIQL_ENDPOINT;
   const webappOrigin = options.webappOrigin ?? DEFAULT_WEBAPP_ORIGIN;
-  const defaultEmail = options.defaultEmail ?? DEFAULT_DEV_EMAIL;
   const initialHeaders = options.devApiKey
     ? { Authorization: `Bearer ${options.devApiKey}` }
     : {};
@@ -144,132 +141,18 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
       import { explorerPlugin } from '@graphiql/plugin-explorer';
       import 'graphiql/setup-workers/esm.sh';
 
-      const webappOrigin = ${JSON.stringify(webappOrigin)};
-      const defaultEmail = ${JSON.stringify(defaultEmail)};
-
-      function renderSignedIn(banner, session, actor) {
-        if (session && !actor) {
-          banner.innerHTML =
-            '<p id="auth-status">Better Auth session is active for '
-            + (session.email ?? session.userId)
-            + ', but no linked school actor was found.</p>'
-            + '<p>Run <code>bun repo seed --scope auth:link</code> from the repo root, or sign in with a seeded staff account such as '
-            + '<code>c.moreau@school.edu</code>.</p>'
-            + '<button type="button" id="graphiql-logout">Sign out</button>';
-          banner.style.background = '#fde8e8';
-          banner.style.color = '#7a1212';
-          document.getElementById('graphiql-logout')?.addEventListener('click', signOut);
-          return;
-        }
-
-        const label = session?.email ?? session?.name ?? actor?.actorId ?? 'signed in';
-        banner.innerHTML =
-          '<p id="auth-status">Actor ready: ' + actor.kind + ' (' + label + ')</p>'
-          + '<button type="button" id="graphiql-logout">Sign out</button>';
-        banner.style.background = '#e6f4ea';
-        banner.style.color = '#1e4620';
-        document.getElementById('graphiql-logout')?.addEventListener('click', signOut);
-      }
-
-      function renderSignedOut(banner, errorMessage) {
-        banner.innerHTML =
-          '<p id="auth-status">Sign in to run authenticated entity queries.</p>'
-          + '<form id="graphiql-login-form">'
-          + '<input id="graphiql-email" type="email" autocomplete="username" placeholder="Email" required />'
-          + '<input id="graphiql-password" type="password" autocomplete="current-password" placeholder="Password" required />'
-          + '<button type="submit">Sign in</button>'
-          + '</form>'
-          + '<p id="auth-error"></p>'
-          + '<p>Or <a href="' + webappOrigin + '" target="_blank" rel="noreferrer">open the webapp</a>, '
-          + 'or set <code>Authorization: Bearer &lt;service-account-key&gt;</code> in Headers.</p>';
-        banner.style.background = '#fff8e1';
-        banner.style.color = '#5c4a00';
-
-        const emailInput = document.getElementById('graphiql-email');
-        if (emailInput instanceof HTMLInputElement && defaultEmail) {
-          emailInput.value = defaultEmail;
-        }
-
-        const error = document.getElementById('auth-error');
-        if (error instanceof HTMLElement && errorMessage) {
-          error.textContent = errorMessage;
-        }
-
-        document.getElementById('graphiql-login-form')?.addEventListener('submit', signIn);
-      }
-
-      let identityAccessToken = null;
-
-      function authHeaders(init) {
-        const headers = new Headers(init && init.headers ? init.headers : undefined);
-        if (!headers.has('Authorization') && identityAccessToken) {
-          headers.set('Authorization', 'Bearer ' + identityAccessToken);
-        }
-        return headers;
-      }
-
-      async function updateAuthBanner(errorMessage) {
-        const banner = document.getElementById('auth-banner');
-        if (!banner) return;
-
-        try {
-          const response = await fetch('/graphiql/session', {
-            credentials: 'omit',
-            headers: authHeaders(),
-          });
-          const data = await response.json();
-          if (data?.session) {
-            renderSignedIn(banner, data.session, data.actor);
-            return;
-          }
-        } catch {
-          // fall through to unsigned state
-        }
-
-        renderSignedOut(banner, errorMessage);
-      }
-
-      async function signIn(event) {
-        event.preventDefault();
-        const email = document.getElementById('graphiql-email')?.value;
-        const password = document.getElementById('graphiql-password')?.value;
-        const error = document.getElementById('auth-error');
-
-        if (error) error.textContent = '';
-
-        try {
-          const response = await fetch('/graphiql/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'omit',
-            body: JSON.stringify({ email, password }),
-          });
-
-          if (!response.ok) {
-            identityAccessToken = null;
-            const payload = await response.json().catch(() => ({}));
-            await updateAuthBanner(payload.message ?? 'Sign-in failed');
-            return;
-          }
-
-          const payload = await response.json().catch(() => ({}));
-          identityAccessToken = payload.accessToken ?? null;
-          await updateAuthBanner();
-        } catch (err) {
-          identityAccessToken = null;
-          await updateAuthBanner(err instanceof Error ? err.message : 'Sign-in failed');
-        }
-      }
-
-      async function signOut() {
-        identityAccessToken = null;
-        await fetch('/graphiql/logout', { method: 'POST', credentials: 'omit' });
-        await updateAuthBanner();
-      }
+      const banner = document.getElementById('auth-banner');
+      const login = document.createElement('a');
+      login.href = ${JSON.stringify(webappOrigin)};
+      login.target = '_blank';
+      login.rel = 'noreferrer';
+      login.textContent = 'Open the webapp to sign in';
+      banner.textContent = 'Set Authorization: Bearer <access-token or service-account-key> in Headers. ';
+      banner.appendChild(login);
 
       const fetcher = createGraphiQLFetcher({
         url: ${JSON.stringify(endpointPath)},
-        fetch: (url, options) => fetch(url, { ...options, credentials: 'omit', headers: authHeaders(options) }),
+        fetch: (url, options) => fetch(url, { ...options, credentials: 'omit', headers: options?.headers }),
       });
       const plugins = [HISTORY_PLUGIN, explorerPlugin()];
 
@@ -280,11 +163,10 @@ export function renderGraphiQLPage(options: GraphiQLOptions = {}): string {
           shouldPersistHeaders: true,
           initialHeaders: ${initialHeadersJson},
           defaultEditorToolsVisibility: true,
-          defaultQuery: '# Sign in above, or set Authorization in Headers.\\n\\n# Paginated list (default API limit = 50 when offset/limit omitted on REST).\\nquery ListStudentsPage1 {\\n  students(filter: {\\n    limit: 50\\n    offset: 0\\n    orderBy: [{ field: "lastName", direction: asc }, { field: "firstName", direction: asc }]\\n  }) {\\n    id\\n    firstName\\n    lastName\\n  }\\n}\\n',
+          defaultQuery: '# Set Authorization in Headers.\\n\\n# Paginated list (default API limit = 50 when offset/limit omitted on REST).\\nquery ListStudentsPage1 {\\n  students(filter: {\\n    limit: 50\\n    offset: 0\\n    orderBy: [{ field: "lastName", direction: asc }, { field: "firstName", direction: asc }]\\n  }) {\\n    id\\n    firstName\\n    lastName\\n  }\\n}\\n',
         });
       }
 
-      updateAuthBanner();
       const container = document.getElementById('graphiql');
       const root = ReactDOM.createRoot(container);
       root.render(React.createElement(App));

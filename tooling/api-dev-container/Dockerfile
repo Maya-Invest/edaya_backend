@@ -15,13 +15,12 @@ RUN bun install --frozen-lockfile || bun install
 
 COPY tooling/api-dev-container/container.api.env apps/api/.env
 COPY tooling/api-dev-container/container.root.env .env
-COPY tooling/api-dev-container/container.identity.env apps/identity/.env
 
 RUN chmod +x tooling/api-dev-container/bake-seeded-data.sh \
   && tooling/api-dev-container/bake-seeded-data.sh
 
 RUN chmod +x tooling/api-dev-container/entrypoint.sh
 
-EXPOSE 9900 9999 9200
+EXPOSE 9999 9200
 
 ENTRYPOINT ["/app/tooling/api-dev-container/entrypoint.sh"]

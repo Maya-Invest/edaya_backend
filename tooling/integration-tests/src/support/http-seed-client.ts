@@ -8,7 +8,6 @@ export function createHttpClientForApp(app: Hono<AppBindings>): HttpSeedClient {
 
   return new HttpSeedClient({
     baseUrl: apiPgliteEnv.API_ORIGIN,
-    authUrl: apiPgliteEnv.IDENTITY_ISSUER,
     fetch: async (input, init) => {
       const url = new URL(input.toString())
       if (url.origin !== apiOrigin) {

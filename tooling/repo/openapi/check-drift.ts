@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
-import { checkClientArtifacts } from '@edaya/client-codegen'
+import { checkClientArtifacts } from '../codegen/src/index'
 import { exportOpenApi } from './export.ts'
 import {
   repoRoot,

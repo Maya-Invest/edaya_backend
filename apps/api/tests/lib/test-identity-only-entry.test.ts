@@ -1,12 +1,12 @@
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ActorMetadata } from "@edaya/authorization";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import type { IdentityClient } from "../../src/identity/server/index";
 import { admitIdentityOnlyEntry } from "@/lib/school-api/identity-only-entry";
 import { createGuardianActorMetadata, createStaffActorMetadata } from "@edaya/authorization";
 import { AccountInvitationContactChannel, AccountInvitationKind } from "@edaya/core";
 import { hashInvitationToken } from "@edaya/service";
-import { verifyIdentityToken } from "@maya-invest/edaya-identity-client";
-import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
+import { verifyIdentityToken } from "../../src/identity/server/index";
+import { createTestIdentityKeys, signTestIdentityToken } from "../../src/identity/server/testing";
 import { describe, expect, it, mock } from "bun:test";
 
 const issuer = "https://identity.example.test";

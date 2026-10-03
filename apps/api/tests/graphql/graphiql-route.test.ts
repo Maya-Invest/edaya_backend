@@ -31,6 +31,6 @@ describe("GraphiQL", () => {
     expect(html).toContain("/graphql");
     expect(html).toContain("credentials: 'omit'");
     expect(html).toContain("auth-banner");
-    expect(html).toContain("/graphiql/session");
+    expect(html).toContain("Open the webapp to sign in");
   });
 });

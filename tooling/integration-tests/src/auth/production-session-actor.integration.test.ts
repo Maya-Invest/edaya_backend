@@ -1,8 +1,7 @@
-import type { IdentityClient } from '@maya-invest/edaya-identity-client'
+import type { IdentityClient } from '../../../../apps/api/src/identity/server/index'
 import type { AppBindings } from '@/http/types'
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
 import { AcademicYear, Permission, School, StaffPermissionAssignment } from '@edaya/core'
-import { createDirectoryClient } from '@maya-invest/edaya-identity-client'
 import { expect, test } from 'bun:test'
 import { Hono } from 'hono'
 import { createSessionActorDependency } from '@/http/dependencies/session-actor'
@@ -26,7 +25,7 @@ describeIntegration('production session actor', () => {
       scopes: [{ kind: 'all', grain: 'class_group' }],
     }))
     const identityClient: IdentityClient = {
-      directory: createDirectoryClient({ baseUrl: 'https://identity.invalid', secret: 'test', fetch: Object.assign(async () => new Response(null, { status: 404 }), { preconnect: fetch.preconnect }) }),
+      directory: { lookupByContact: async () => undefined, resolveBySubjectId: async () => undefined },
       verifyAccessToken: async () => ({ sub: subjectId, email: 'operator@example.invalid', email_verified: emailVerified, iss: 'https://identity.invalid', aud: 'school', exp: 9999999999, iat: 1 }),
     }
     const app = new Hono<AppBindings>()

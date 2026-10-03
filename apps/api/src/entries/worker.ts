@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { maintenanceResponse, stagingSwitch } from "@/staging-maintenance";
 
+import { runIndependentJobs } from "@/identity/jobs";
 import app from "@/app";
 import type { CronJobDispatchQueueBody } from "@/cron/cron-job-dispatch-payload";
 import { runCronQueueBatch } from "@/cron/run-cron-queue-consumer";
@@ -26,13 +27,15 @@ export default {
 
     ctx.waitUntil((async () => {
       try {
-        await runtime.getSchoolApplication();
-        await runtime.drainNotifications?.();
         const asOf = new Date(controller.scheduledTime);
-        await runCronHeartbeatWithRuntime(runtime, {
-          asOf,
-          requestIdPrefix: `worker-cron:${asOf.toISOString()}`,
-        }, logger);
+        await runIndependentJobs([
+          async () => (await runtime.getIdentityRuntime!()).auth.purgeExpiredCredentials(),
+          async () => {
+            await runtime.getSchoolApplication();
+            await runtime.drainNotifications?.();
+            await runCronHeartbeatWithRuntime(runtime, { asOf, requestIdPrefix: `worker-cron:${asOf.toISOString()}` }, logger);
+          },
+        ]);
       }
       catch (error) {
         logger.error({ event: "cron.tick", err: error, cron: controller.cron }, "cron heartbeat failed");

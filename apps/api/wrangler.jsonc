@@ -1,39 +1,29 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // Worker runtime only (`RUNTIME=worker`): optional `bun dev:worker` and deploy.
-  // Local dev (`bun dev`) uses `.env` + PGlite/SQLite/local-files — not this file.
-  // See docs/reference/runtime-boundaries.md.
   "name": "edaya-api",
   "main": "src/entries/worker.ts",
   "compatibility_date": "2026-03-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.txt", "**/*.html", "**/*.css"],
+      "globs": [
+        "**/*.txt",
+        "**/*.html",
+        "**/*.css"
+      ],
       "fallthrough": true
     }
   ],
   "alias": {
-    "@/runtime/resolve-api-runtime": "./src/runtime/worker/resolve-api-runtime.ts",
-    "@maya-invest/edaya-identity-client": "../../package/identity-client/src/index.ts"
+    "@/runtime/resolve-api-runtime": "./src/runtime/worker/resolve-api-runtime.ts"
   },
   "dev": {
     "port": 9999
   },
-  //
-  // [env.*.vars]     — worker non-secrets (see staging / production blocks below)
-  // [env.*] bindings — HYPERDRIVE (school), IDENTITY (optional service binding), CRON_JOBS
-  // Secrets          — IDENTITY_DIRECTORY_SECRET,
-  //                    FCM_SERVICE_ACCOUNT_JSON (stringified service-account JSON),
-  //                    STAGING_NOTIFICATION_EMAILS (optional allowlist; empty cancels staging school delivery),
-  //                    R2_ENDPOINT, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-  // Bindings         — HYPERDRIVE, IDENTITY, CRON_JOBS, EMAIL, BROWSER
-  //                    (Browser Run Quick Actions; enable in the Cloudflare dashboard after deploy)
-  // .dev.vars only   — CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE
-  //                    GOTENBERG_URL (optional; Miniflare does not implement quickAction)
-  // Local .env only  — PORT, DATABASE_URL, LOCAL_FILES_*, CRON_JOB_KEYS, GRAPHQL_*
   "observability": {
     "logs": {
       "enabled": true,
@@ -41,19 +31,16 @@
     }
   },
   "env": {
-    // Staging (`wrangler deploy --env staging`):
     "staging": {
       "name": "edaya-api-staging",
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
           "id": "c6b9a94e449647d78f7c49591ba301e6"
-        }
-      ],
-      "services": [
+        },
         {
-          "binding": "IDENTITY",
-          "service": "edaya-identity-staging"
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "e08656297f69446c8eea3d1ded0268d5"
         }
       ],
       "send_email": [
@@ -68,15 +55,17 @@
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "API_ORIGIN": "https://staging.school.api.edayaplus.com",
+        "PHONE_AUTH_MODE": "disabled",
+        "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
+        "AFRICAS_TALKING_SANDBOX": "false",
         "STAGING_MAINTENANCE": "false",
         "STAGING_PAUSE_JOBS": "false",
-        "IDENTITY_ISSUER": "https://staging.identity.api.edayaplus.com",
-        "IDENTITY_DIRECTORY_URL": "https://staging.identity.api.edayaplus.com",
         "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
         "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
-        "EMAIL_TRANSPORT": "cloudflare",
+        "REQUIRE_EMAIL_VERIFICATION": "true",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
+        "EMAIL_TRANSPORT": "cloudflare",
+        "API_ORIGIN": "https://staging.api.edayaplus.com",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
         "PROFILE_PHOTO_MAX_BYTES": "1048576",
@@ -85,7 +74,7 @@
       },
       "routes": [
         {
-          "pattern": "staging.school.api.edayaplus.com",
+          "pattern": "staging.api.edayaplus.com",
           "custom_domain": true
         }
       ],
@@ -109,22 +98,29 @@
             "retry_delay": 60
           }
         ]
-      }
+      },
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
+        }
+      ]
     },
-    // Production (`wrangler deploy --env prod`):
     "prod": {
       "name": "edaya-api-prod",
       "vars": {
         "NODE_ENV": "production",
         "LOG_LEVEL": "info",
         "RUNTIME": "worker",
-        "API_ORIGIN": "https://school.api.edayaplus.com",
-        "IDENTITY_ISSUER": "https://identity.api.edayaplus.com",
-        "IDENTITY_DIRECTORY_URL": "https://identity.api.edayaplus.com",
+        "PHONE_AUTH_MODE": "disabled",
+        "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
+        "AFRICAS_TALKING_SANDBOX": "false",
         "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
         "WEBAPP_ORIGIN": "https://app.edayaplus.com",
-        "EMAIL_TRANSPORT": "cloudflare",
+        "REQUIRE_EMAIL_VERIFICATION": "true",
         "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
+        "EMAIL_TRANSPORT": "cloudflare",
+        "API_ORIGIN": "https://api.edayaplus.com",
         "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
         "ACCOUNT_INVITATIONS_ENABLED": "true",
         "PROFILE_PHOTO_MAX_BYTES": "1048576",
@@ -135,12 +131,10 @@
         {
           "binding": "HYPERDRIVE",
           "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
-        }
-      ],
-      "services": [
+        },
         {
-          "binding": "IDENTITY",
-          "service": "edaya-identity"
+          "binding": "HYPERDRIVE_AUTH",
+          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
         }
       ],
       "send_email": [
@@ -153,7 +147,7 @@
       },
       "routes": [
         {
-          "pattern": "school.api.edayaplus.com",
+          "pattern": "api.edayaplus.com",
           "custom_domain": true
         }
       ],
@@ -177,8 +171,13 @@
             "retry_delay": 60
           }
         ]
-      }
+      },
+      "kv_namespaces": [
+        {
+          "binding": "AUTH_KV",
+          "id": "5381bed94af74b478886d49ef52f1a52"
+        }
+      ]
     }
-
   }
 }

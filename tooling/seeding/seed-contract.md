@@ -6,7 +6,7 @@ This inventory captures the seeding port architecture and the domain commands us
 
 CLI seeding (`bun repo seed`) always targets a **running API**:
 
-1. Provision Central Identity users through `SEED_AUTH_URL`
+1. Provision Central Identity users through `SEED_API_URL`
 2. Bootstrap an owner session (`register-school` on a fresh database)
 3. Seed access roles, provision the seeding service account (profile API key from `@edaya/fixtures`)
 4. Load demo data through `/core/*` entity routes and commands

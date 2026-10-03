@@ -36,7 +36,7 @@ describe('findRuntimeBoundaryViolations', () => {
     writeFile(root, 'apps/api/wrangler.jsonc', VALID_WRANGLER)
     writeFile(root, 'apps/api/src/runtime/shared/adapters/file-storage.ts', 'switch (env.RUNTIME) {}\n')
     writeFile(root, 'apps/api/src/runtime/local/school-database.ts', 'export async function createSchoolDatabase() {}\n')
-    writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "@edaya/local-files-server"]\n')
+    writeFile(root, 'tooling/repo/dev/start-local-dev.ts', 'const filters = ["@edaya/api", "local file server"]\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/notification-gateway.ts', 'env.RUNTIME === "in-memory"\n')
     writeFile(root, 'apps/api/src/runtime/shared/adapters/document-renderer.ts', 'env.RUNTIME === "in-memory"\n')
   }
@@ -137,7 +137,7 @@ describe('findRuntimeBoundaryViolations', () => {
 
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
         label: 'school identity extract',
-        message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in apps/identity, not the school API',
+        message: 'apps/api/src/runtime/shared/adapters/better-auth.ts must live in apps/api/src/identity, not school runtime adapters',
       }])
     }
     finally {

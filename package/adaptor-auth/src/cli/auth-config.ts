@@ -1,6 +1,6 @@
 /**
  * Better Auth config for `auth@1.7.3 generate` only.
- * Runtime wiring (secrets, baseURL) lives in `apps/identity`.
+ * Runtime wiring (secrets, baseURL) lives in `apps/api/src/identity`.
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'

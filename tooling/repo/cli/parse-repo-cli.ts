@@ -1,4 +1,4 @@
-export type RepoBunSpawnCommand = 'dev' | 'seed' | 'doctor'
+export type RepoBunSpawnCommand = 'dev' | 'seed' | 'doctor' | 'codegen' | 'identity-migrate' | 'identity-wipe'
 
 export type RepoSpawnCommand = RepoBunSpawnCommand | 'dev-container'
 
@@ -21,6 +21,9 @@ const COMMANDS = new Set<RepoCliCommand>([
   'dev-container',
   'seed',
   'doctor',
+  'codegen',
+  'identity-migrate',
+  'identity-wipe',
   'db',
   'check',
   'smoke-test',

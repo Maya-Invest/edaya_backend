@@ -16,6 +16,8 @@
     "openapi/export.ts",
     "openapi/update.ts",
     "openapi/check-drift.ts",
-    "dev/r2-configure-cors.ts"
+    "dev/r2-configure-cors.ts",
+    "codegen",
+    "db"
   ]
 }

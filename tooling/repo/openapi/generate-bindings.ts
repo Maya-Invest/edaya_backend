@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { resolve } from 'node:path'
-import { generateClientArtifacts, isOpenApiUrl } from '@edaya/client-codegen'
+import { generateClientArtifacts, isOpenApiUrl } from '../codegen/src/index'
 import {
   resolveArgvPath,
   trackedApiClientDirPath,

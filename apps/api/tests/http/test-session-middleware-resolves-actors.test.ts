@@ -1,21 +1,17 @@
 import type { AppBindings } from "@/http/types";
 import { createDependenciesInjection } from "@/http/dependencies";
 import { createSessionActorDependency, resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
-import { createTestIdentityKeys, signTestIdentityToken } from "@maya-invest/edaya-identity-client/testing";
-import { createDirectoryClient, verifyIdentityToken } from "@maya-invest/edaya-identity-client";
-import type { IdentityClient } from "@maya-invest/edaya-identity-client";
+import { createTestIdentityKeys, signTestIdentityToken } from "../../src/identity/server/testing";
+import { verifyIdentityToken } from "../../src/identity/server/index";
+import type { IdentityClient } from "../../src/identity/server/index";
 import { describe, expect, it, mock } from "bun:test";
 import { Hono } from "hono";
 
-const issuer = "http://localhost:9900";
+const issuer = "http://localhost:9999";
 const audience = "http://localhost:9999";
 const keys = await createTestIdentityKeys();
 const identityClient: IdentityClient = {
-  directory: createDirectoryClient({
-    baseUrl: issuer,
-    secret: "test",
-    fetch: (async () => new Response(null, { status: 404 })) as unknown as typeof fetch,
-  }),
+  directory: { lookupByContact: async () => undefined, resolveBySubjectId: async () => undefined },
   verifyAccessToken: token => verifyIdentityToken(token, {
     issuer,
     audience,

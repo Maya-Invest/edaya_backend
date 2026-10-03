@@ -33,7 +33,7 @@ runtime/
       document-renderer.ts
       invitation-delivery.ts
       notify-delivery-sink.ts
-      identity-client.ts
+      ../../identity/composition.ts
       auth-contact-resolver.ts
       pino-logger.ts
     create-api-runtime.ts

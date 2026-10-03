@@ -170,7 +170,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (existsSync(resolve(repoRoot, relativePath))) {
       violations.push({
         label: 'school identity extract',
-        message: `${relativePath} must live in apps/identity, not the school API`,
+        message: `${relativePath} must live in apps/api/src/identity, not school runtime adapters`,
       })
     }
   }
@@ -246,10 +246,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
       })
     }
 
-    if (/\bBETTER_AUTH_|\bHYPERDRIVE_AUTH\b|\bAUTH_KV\b|\bALLOW_LEGACY_COOKIE_BUSINESS_AUTH\b|\bCOOKIE_DOMAIN\b/.test(wrangler)) {
+    if (/\bALLOW_LEGACY_COOKIE_BUSINESS_AUTH\b|\bCOOKIE_DOMAIN\b/.test(wrangler)) {
       violations.push({
         label: 'wrangler identity extract',
-        message: 'apps/api/wrangler.jsonc must not bind Better Auth, AUTH Hyperdrive, AUTH_KV, COOKIE_DOMAIN, or ALLOW_LEGACY_COOKIE_BUSINESS_AUTH',
+        message: 'apps/api/wrangler.jsonc must not configure COOKIE_DOMAIN or ALLOW_LEGACY_COOKIE_BUSINESS_AUTH',
       })
     }
 
