@@ -131,7 +131,7 @@ describe("renderDocument", () => {
       columns: ["Libellé", "Montant"],
       rows: [{ cells: ["Scolarité", "60 000 XOF"] }],
     };
-    const skipped = new Set(["report-card.v1", "logbook.v1"]);
+    const skipped = new Set(["report-card.v1", "annual-report-card.v1", "logbook.v1"]);
     for (const template of listTemplateDefinitions()) {
       if (skipped.has(template.key)) {
         continue;

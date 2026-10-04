@@ -261,9 +261,11 @@ export class TeacherCorrectionsWorkflow {
       // The document renderer reads the revision, while family reads retain the last ready snapshot.
       revision.version = stored.version
       await this.repositories.teacherCorrections.saveState(revision)
-      const previous = (await this.repositories.documentIssuances.forSchool!(this.actor.schoolId).list({ sourceId: record.id, templateKey: REPORT_CARD_TEMPLATE_KEY, status: DocumentIssuanceStatus.Ready })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
-      const assembled = await assembleDocumentSource(this.base, { templateKey: REPORT_CARD_TEMPLATE_KEY, sourceId: record.id, locale: previous?.locale ?? 'fr' })
-      const issuance = await persistRequestedIssuance(this.base, { requestId: `comment-revision:${record.id}:${stored.version}`, templateKey: REPORT_CARD_TEMPLATE_KEY, locale: previous?.locale ?? 'fr', assembled, replacesIssuanceId: previous?.id, deferReplacement: true })
+      const documents = await this.repositories.documentIssuances.forSchool!(this.actor.schoolId).list({ sourceId: record.id, status: DocumentIssuanceStatus.Ready })
+      const templateKey = documents.some(document => document.templateKey === 'annual-report-card.v1') ? 'annual-report-card.v1' : REPORT_CARD_TEMPLATE_KEY
+      const previous = documents.filter(document => document.templateKey === templateKey).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+      const assembled = await assembleDocumentSource(this.base, { templateKey, sourceId: record.id, locale: previous?.locale ?? 'fr' })
+      const issuance = await persistRequestedIssuance(this.base, { requestId: `comment-revision:${record.id}:${stored.version}`, templateKey, locale: previous?.locale ?? 'fr', assembled, replacesIssuanceId: previous?.id, deferReplacement: true })
       await this.repositories.teacherCorrections.saveState({ ...revision, payload: { ...revision.payload, issuanceId: issuance.id } })
       return issuance.id
     }

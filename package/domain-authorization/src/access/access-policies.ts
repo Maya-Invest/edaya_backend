@@ -7,6 +7,7 @@ import { AuthorizationError } from '../model/errors'
 import { assertHumanOnlyPermission, assertPermissionAssurance } from '../permissions/permission-assurance'
 import { s2sMayExercise } from '../s2s/access-class'
 import { CommunicationsAccessPolicy, DELIVERY_WRITER_SYSTEM_IDS } from './communications-policies'
+import { ConversationAccessPolicy } from './conversation-policies'
 import { assertCurriculumPlacements } from './curriculum-placements'
 import { DisciplineAccessPolicy } from './discipline-policies'
 import { DocumentAccessPolicy } from './document-policies'
@@ -441,6 +442,7 @@ export class AccessPolicies {
     },
   }
 
+  readonly conversations = new ConversationAccessPolicy(this)
   readonly teacherCorrections = new TeacherCorrectionsAccessPolicy(this)
   readonly discipline = new DisciplineAccessPolicy(this)
 

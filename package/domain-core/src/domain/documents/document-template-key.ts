@@ -1,5 +1,6 @@
 export const DOCUMENT_TEMPLATE_KEYS = [
   'report-card.v1',
+  'annual-report-card.v1',
   'logbook.v1',
   'schooling-certificate.v1',
   'enrollment-record.v1',

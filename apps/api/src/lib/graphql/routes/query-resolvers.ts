@@ -256,6 +256,12 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
       return service.getTeacherFamilyFeedbackResult({ id: payload.id as string });
     }
 
+    if (queryConfig.methodName === "listConversationRecipients")
+      return await service.listConversationRecipients(payload as Parameters<typeof service.listConversationRecipients>[0]);
+    if (queryConfig.methodName === "listConversations")
+      return await service.listConversations(payload as Parameters<typeof service.listConversations>[0]);
+    if (queryConfig.methodName === "getConversation")
+      return await service.getConversation(payload as Parameters<typeof service.getConversation>[0]);
     if (queryConfig.methodName === "getTeacherCorrection")
       return await service.getTeacherCorrection(payload as unknown as Parameters<typeof service.getTeacherCorrection>[0]);
     if (queryConfig.methodName === "listTeacherCorrections")

@@ -3,6 +3,9 @@ import { sql } from 'drizzle-orm'
 
 /** Tables cleared in dependency-safe order (children before parents where practical). */
 export const CLEAR_TABLE_ORDER = [
+  'conversation_reads',
+  'conversation_messages',
+  'conversations',
   'teacher_corrections',
   'teacher_workflow_states',
   'family_feedback_comment_read_audit',

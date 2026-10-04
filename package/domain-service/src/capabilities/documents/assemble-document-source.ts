@@ -5,6 +5,7 @@ import {
   DOCUMENT_FAILURES,
 } from '@edaya/core'
 import { assembleAccountDocument } from './assembly/account-document'
+import { assembleAnnualReportCard } from './assembly/annual-report-card'
 import { assembleAnnualTranscript } from './assembly/annual-transcript'
 import { assembleAttendanceSheet } from './assembly/attendance-sheet'
 import { assembleClassOperational } from './assembly/class-operational'
@@ -61,6 +62,8 @@ export async function assembleDocumentSource(base: DocumentAssemblyContext<'docu
   }
 
   switch (input.templateKey) {
+    case 'annual-report-card.v1':
+      return assembleAnnualReportCard(base, input, school, locale, timeZone, titles, branding)
     case 'report-card.v1':
       return assembleReportDocument(base, input, school, locale, timeZone, titles, branding)
     case 'annual-transcript.v1':

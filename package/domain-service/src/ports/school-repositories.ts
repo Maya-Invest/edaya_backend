@@ -4,6 +4,7 @@ import type { CronJobSchedulePort } from './platform/cron-job-schedule'
 export interface SchoolRepositories extends CoreEntityRepositories {
   readonly financeProjections: FinanceProjectionPort
   readonly dashboardProjections: DashboardProjectionPort
+  readonly conversations: import('@edaya/core').ConversationsPort
   readonly teacherCorrections: TeacherCorrectionsPort
   readonly marksCorrections: MarksCorrectionsPort
   readonly assessmentDependencies: AssessmentDependenciesPort

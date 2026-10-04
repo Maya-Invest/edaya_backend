@@ -57,6 +57,7 @@ import {
   subjectResponseSchema,
   teacherResponseSchema,
 } from "./entities";
+import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
 import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
@@ -492,6 +493,10 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   materializeDeliveries: messageDeliveryCommandListResponseSchema,
   applyDeliveryEvent: messageDeliveryResponseSchema,
   markDeliveryRead: messageDeliveryResponseSchema,
+  startConversation: conversationResponseSchema,
+  replyConversation: conversationResponseSchema,
+  resolveConversation: conversationResponseSchema,
+  markConversationRead: markConversationReadResponseSchema,
   updateNotificationContact: z.union([
     staffMemberResponseSchema,
     guardianResponseSchema,

@@ -1,6 +1,6 @@
 import type { NotificationDispatchRequest, NotificationRecipientProfile } from '@edaya/core'
 import type { BaseSchoolService } from '../../../services/base-school-service'
-import { AuthorizationError } from '@edaya/authorization'
+import { ActorAssuranceLevel, AuthorizationError, createAccessPolicies, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata, denyResourceAccess } from '@edaya/authorization'
 import { buildGuardianRecipientProfile, buildStaffRecipientProfile, buildStudentRecipientProfile, buildTeacherRecipientProfile } from './build-recipient-profile'
 import { enrichRecipientProfile } from './resolve-notification-contact'
 
@@ -10,6 +10,15 @@ export async function resolveNotificationDispatchRecipient(base: BaseSchoolServi
   try {
     profile = await base.atomicExecution.execute(async () => {
       const recipient = await base.access.notifications.recipient(request)
+      if (request.eventKey === 'conversation.message') {
+        const { conversationId: id } = request.metadata
+        const placement = id ? await base.repositories.conversations.placement(request.schoolId, id) : undefined
+        if (!placement || recipient.kind === 'student')
+          denyResourceAccess()
+        const context = { schoolId: request.schoolId, subjectId: request.subjectId, requestId: request.deliveryId, authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }
+        const actor = recipient.kind === 'guardian' ? createGuardianActorMetadata({ ...context, guardianId: recipient.profile.id }) : recipient.kind === 'teacher' ? createTeacherActorMetadata({ ...context, teacherId: recipient.profile.id }) : createStaffActorMetadata({ ...context, staffMemberId: recipient.profile.id })
+        await createAccessPolicies({ actor, repositories: base.repositories }).conversations.assertRead(placement)
+      }
       switch (recipient.kind) {
         case 'staff': return buildStaffRecipientProfile(recipient.profile)
         case 'guardian': return buildGuardianRecipientProfile(recipient.profile, recipient.links)

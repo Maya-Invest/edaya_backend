@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://edaya.local/templates/annual-report-card.v1/schema.json",
+  "title": "annual-report-card.v1 payload",
+  "type": "object",
+  "required": [
+    "studentName",
+    "periodLabel",
+    "schoolName",
+    "subjects",
+    "periods"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "republicLabel": {
+      "type": "string"
+    },
+    "ministryLabel": {
+      "type": "string"
+    },
+    "crestUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "documentTitle": {
+      "type": "string"
+    },
+    "schoolYear": {
+      "type": "string"
+    },
+    "periodLabel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schoolName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schoolCode": {
+      "type": "string"
+    },
+    "schoolStatus": {
+      "type": "string"
+    },
+    "schoolAddress": {
+      "type": "string"
+    },
+    "schoolPhone": {
+      "type": "string"
+    },
+    "schoolCity": {
+      "type": "string"
+    },
+    "schoolEmail": {
+      "type": "string"
+    },
+    "logoUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primaryColor": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
+    "studentName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "matricule": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "classLabel": {
+      "type": "string"
+    },
+    "birthDate": {
+      "type": "string"
+    },
+    "classSize": {
+      "type": "string"
+    },
+    "birthPlace": {
+      "type": "string"
+    },
+    "orderNumber": {
+      "type": "string"
+    },
+    "nationality": {
+      "type": "string"
+    },
+    "repeating": {
+      "type": "string"
+    },
+    "regime": {
+      "type": "string"
+    },
+    "boarding": {
+      "type": "string"
+    },
+    "studentStatus": {
+      "type": "string"
+    },
+    "photoUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "periodAverages"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subject",
+              "bilan",
+              "totals"
+            ]
+          },
+          "average": {
+            "type": "string"
+          },
+          "coefficient": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "string"
+          },
+          "appreciation": {
+            "type": "string"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "periodAverages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "attendance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "absenceHoursTotal": {
+          "type": "string"
+        },
+        "absenceHoursJustified": {
+          "type": "string"
+        },
+        "absenceHoursUnjustified": {
+          "type": "string"
+        },
+        "conductAverage": {
+          "type": "string"
+        },
+        "conductRank": {
+          "type": "string"
+        },
+        "educatorName": {
+          "type": "string"
+        }
+      }
+    },
+    "semesterAverage": {
+      "type": "string"
+    },
+    "semesterRank": {
+      "type": "string"
+    },
+    "classResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "classAverage": {
+          "type": "string"
+        },
+        "lowestAverage": {
+          "type": "string"
+        },
+        "highestAverage": {
+          "type": "string"
+        },
+        "distribution": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "count"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "count": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "council": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mentions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "checked"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checked": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "appreciation": {
+          "type": "string"
+        },
+        "homeroomTeacherName": {
+          "type": "string"
+        },
+        "principalName": {
+          "type": "string"
+        },
+        "principalStampUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "motto": {
+      "type": "string"
+    },
+    "notice": {
+      "type": "string"
+    },
+    "watermark": {
+      "type": "boolean"
+    },
+    "stampUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signatureUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "date": {
+      "type": "string"
+    },
+    "periods": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label",
+          "weight",
+          "average"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "string"
+          },
+          "average": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

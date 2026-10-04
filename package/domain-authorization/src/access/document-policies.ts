@@ -1,12 +1,14 @@
 import type { DocumentIssuance, DocumentTemplateKey } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
 import {
+  assertAnnualReportCardSources,
   BusinessRuleViolationError,
   DocumentAudience,
   DocumentIssuanceStatus,
   DocumentSourceType,
   EnrollmentEndReason,
   Permission,
+  reportCardAcademicVersion,
   ReportCardResultStatus,
   StudentClassEnrollmentStatus,
 } from '@edaya/core'
@@ -23,6 +25,7 @@ export interface DocumentIssueTarget {
 
 const FAMILY_TEMPLATES = new Set<DocumentTemplateKey>([
   'report-card.v1',
+  'annual-report-card.v1',
   'schooling-certificate.v1',
   'enrollment-record.v1',
   'student-id-card.v1',
@@ -86,6 +89,8 @@ export class DocumentAccessPolicy {
       return denied('Document belongs to another school')
     if (issuance.status === DocumentIssuanceStatus.Preview && actor.kind !== 'staff' && actor.kind !== 'system')
       return denied('Preview documents are staff-only')
+    if (issuance.templateKey === 'annual-report-card.v1')
+      await this.assertAnnualSource(issuance.sourceId, issuance)
     if (actor.kind === 'guardian' || actor.kind === 'student') {
       if (!FAMILY_TEMPLATES.has(issuance.templateKey) || !issuance.isFamilyCurrent || !issuance.studentId)
         return denied('This document is not available for family download')
@@ -144,11 +149,12 @@ export class DocumentAccessPolicy {
   private async assertIssuePermission(target: DocumentIssueTarget): Promise<void> {
     switch (target.templateKey) {
       case 'report-card.v1':
+      case 'annual-report-card.v1':
       case 'annual-transcript.v1':
         if (!target.studentId)
           return denied('Student is required')
         await this.access.assertResources(
-          target.templateKey === 'report-card.v1' ? Permission.REPORT_CARD_PUBLISH : [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ],
+          target.templateKey !== 'annual-transcript.v1' ? Permission.REPORT_CARD_PUBLISH : [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ],
           'students',
           [target.studentId],
         )
@@ -219,6 +225,8 @@ export class DocumentAccessPolicy {
 
   private async assertSourceLifecycle(target: DocumentIssueTarget): Promise<void> {
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
+    if (target.templateKey === 'annual-report-card.v1')
+      await this.assertAnnualSource(target.sourceId)
     if (target.templateKey === 'report-card.v1') {
       const result = await facts.one('results', target.sourceId)
       const period = await facts.one('academicPeriods', result.periodId)
@@ -229,6 +237,35 @@ export class DocumentAccessPolicy {
       const enrollment = await facts.one('enrollments', target.sourceId)
       if (enrollment.status !== StudentClassEnrollmentStatus.Closed || enrollment.endReason !== EnrollmentEndReason.Withdrawn)
         throw new BusinessRuleViolationError('DOCUMENT_SOURCE_MISSING', 'Radiation requires a completed withdrawal')
+    }
+  }
+
+  private async assertAnnualSource(resultId: string, issuance?: DocumentIssuance): Promise<void> {
+    const facts = new AccessFacts(this.access.actor, this.access.repositories)
+    const annual = await facts.one('results', resultId)
+    const annualPeriod = await facts.one('academicPeriods', annual.periodId)
+    const contributors = []
+    const definition = await facts.one('definitions', annual.reportCardDefinitionId)
+    for (const periodId of annual.aggregation?.sourcePeriodIds ?? []) {
+      const reports = await facts.list('results', { studentId: annual.studentId, periodId, status: ReportCardResultStatus.Published })
+      if (reports.length !== 1)
+        throw new BusinessRuleViolationError('DOCUMENT_SOURCE_UNPUBLISHED', 'Each annual source period must have one published report')
+      const result = reports[0]!
+      const period = await facts.one('academicPeriods', periodId)
+      const sourceDefinition = await facts.one('definitions', result.reportCardDefinitionId)
+      const classGroup = await facts.one('classGroups', result.classGroupId)
+      if (sourceDefinition.gradeScaleId !== definition.gradeScaleId || sourceDefinition.academicYearId !== annualPeriod.academicYearId || classGroup.academicYearId !== annualPeriod.academicYearId)
+        return denied('Annual report sources have incompatible academic placement')
+      contributors.push({ result, period })
+    }
+    await assertAnnualReportCardSources(annual, annualPeriod, contributors)
+    if (issuance) {
+      if (issuance.studentId !== annual.studentId || issuance.academicYearId !== annualPeriod.academicYearId)
+        return denied('Annual document source does not match its student and year')
+      const sources = [annual, ...contributors.map(entry => entry.result)]
+      const versions = await Promise.all(sources.map(async result => ({ result, version: await reportCardAcademicVersion(result) })))
+      if (issuance.snapshot.academicSources?.length !== sources.length || versions.some(({ result, version }) => !issuance.snapshot.academicSources?.some(source => source.resultId === result.id && source.periodId === result.periodId && source.sourceVersion === version)))
+        throw new BusinessRuleViolationError('DOCUMENT_SOURCE_CHANGED', 'Annual document sources changed; issue a replacement')
     }
   }
 

@@ -147,3 +147,7 @@ The local dataset importer uses the explicit `fixture-seed` system identity. It 
 ### Delayed notification authority
 
 `access.notifications.recipient` admits only the school-bound `notify-adapter` system actor. It resolves the immutable delivery tuple and current source eligibility without manufacturing a guardian or student actor. The shared dispatcher invokes it before each channel attempt, projects current contacts from that exact profile, and cancels denied deliveries. No school contact or channel preferences are copied into provider subscriber state. Email and FCM are transports on this same dispatch path. Authentication and invitation destinations remain explicit command facts; their emails are not school authorization state.
+
+## Guardian conversations
+
+ConversationAccessPolicy authorizes current selected profiles and produces conversation-ID scopes before SQL page/count/content reads. Teacher eligibility follows active family enrollments and effective subject/homeroom assignments; original assignment IDs prevent replacements inheriting history. Guardians retain history while family access remains valid, but cannot reply after teaching ends. School enquiry read/reply and teacher oversight use separate school-wide permissions. Oversight cannot reply or change participant read positions. Notification dispatch revalidates the exact profile and conversation relationship.

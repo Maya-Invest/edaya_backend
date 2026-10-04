@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { renderDocument } from "../src/services/render-document";
 import { getTemplateDefinition, listTemplateDefinitions } from "../src/templates/registry";
 import { createRecordingPdfRenderer } from "./recording-renderer";
-import { renderDocument } from "../src/services/render-document";
 
 const LETTER_PAYLOAD = {
   schoolName: "Collège Edaya Cocody",
@@ -29,6 +29,7 @@ describe("official template catalog A–E", () => {
   test("registers every Plan 04 template", () => {
     expect(listTemplateDefinitions().map(template => template.key).sort()).toEqual([
       "account-statement.v1",
+      "annual-report-card.v1",
       "annual-transcript.v1",
       "attendance-sheet.v1",
       "class-roster.v1",

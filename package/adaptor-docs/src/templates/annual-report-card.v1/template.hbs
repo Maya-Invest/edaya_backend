@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="{{locale}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{studentName}} — {{periodLabel}}</title>
+    <style>
+      :root {
+        --brand: {{primaryColor}};
+      }
+      {{{styles}}}
+    </style>
+  </head>
+  <body class="{{#if watermark}}watermarked{{/if}}">
+    {{#if watermark}}<div class="watermark">{{labels.preview}}</div>{{/if}}
+
+    <header class="doc-header">
+      <div class="branding">
+        {{#if crestUrl}}
+          <img class="crest" src="{{crestUrl}}" alt="" />
+        {{/if}}
+        {{#if republicLabel}}
+          <p class="republic">{{republicLabel}}</p>
+        {{/if}}
+        {{#if ministryLabel}}
+          <p class="ministry">{{ministryLabel}}</p>
+        {{/if}}
+      </div>
+      <div class="title-block">
+        <p class="title-main">{{#if documentTitle}}{{documentTitle}}{{else}}{{labels.documentTitle}}{{/if}}</p>
+        <p class="title-period">{{periodLabel}}</p>
+      </div>
+      <div class="school-year">
+        {{#if schoolYear}}
+          <p class="year-label">{{labels.schoolYear}}</p>
+          <p class="year-value">{{schoolYear}}</p>
+          {{#if date}}<p class="issued-date">{{labels.date}} · {{date}}</p>{{/if}}
+        {{/if}}
+      </div>
+    </header>
+
+    <section class="school-block">
+      {{#if logoUrl}}
+        <img class="school-logo" src="{{logoUrl}}" alt="" />
+      {{/if}}
+      <div class="school-main">
+        <p class="school-name">{{schoolName}}</p>
+        <div class="meta-row">
+          {{#if schoolCode}}<span><span class="lbl">{{labels.code}}</span> {{schoolCode}}</span>{{/if}}
+          {{#if schoolStatus}}<span><span class="lbl">{{labels.status}}</span> {{schoolStatus}}</span>{{/if}}
+          {{#if schoolCity}}<span><span class="lbl">{{labels.city}}</span> {{schoolCity}}</span>{{/if}}
+        </div>
+        <div class="meta-row">
+          {{#if schoolAddress}}<span><span class="lbl">{{labels.postalAddress}}</span> {{schoolAddress}}</span>{{/if}}
+          {{#if schoolPhone}}<span><span class="lbl">{{labels.phone}}</span> {{schoolPhone}}</span>{{/if}}
+          {{#if schoolEmail}}<span><span class="lbl">{{labels.email}}</span> {{schoolEmail}}</span>{{/if}}
+        </div>
+      </div>
+    </section>
+
+    <section class="student-block{{#unless photoUrl}} no-photo{{/unless}}">
+      <div class="student-text">
+        <p class="student-name">{{studentName}}</p>
+        <div class="student-fields">
+          {{#if matricule}}<div class="field"><span class="lbl">{{labels.matricule}}</span> {{matricule}}</div>{{/if}}
+          {{#if gender}}<div class="field"><span class="lbl">{{labels.gender}}</span> {{gender}}</div>{{/if}}
+          {{#if classLabel}}<div class="field"><span class="lbl">{{labels.class}}</span> {{classLabel}}</div>{{/if}}
+          {{#if birthDate}}<div class="field"><span class="lbl">{{labels.birthDate}}</span> {{birthDate}}</div>{{/if}}
+          {{#if classSize}}<div class="field"><span class="lbl">{{labels.classSize}}</span> {{classSize}}</div>{{/if}}
+          {{#if birthPlace}}<div class="field"><span class="lbl">{{labels.birthPlace}}</span> {{birthPlace}}</div>{{/if}}
+          {{#if orderNumber}}<div class="field"><span class="lbl">{{labels.orderNumber}}</span> {{orderNumber}}</div>{{/if}}
+          {{#if nationality}}<div class="field"><span class="lbl">{{labels.nationality}}</span> {{nationality}}</div>{{/if}}
+          {{#if repeating}}<div class="field"><span class="lbl">{{labels.repeating}}</span> {{repeating}}</div>{{/if}}
+          {{#if regime}}<div class="field"><span class="lbl">{{labels.regime}}</span> {{regime}}</div>{{/if}}
+          {{#if boarding}}<div class="field"><span class="lbl">{{labels.boarding}}</span> {{boarding}}</div>{{/if}}
+          {{#if studentStatus}}<div class="field"><span class="lbl">{{labels.studentStatus}}</span> {{studentStatus}}</div>{{/if}}
+        </div>
+      </div>
+      {{#if photoUrl}}
+        <div class="photo-slot">
+          <img src="{{photoUrl}}" alt="" />
+        </div>
+      {{/if}}
+    </section>
+
+    <table class="report-layout grades">
+      <colgroup>
+        <col class="col-discipline" />
+        {{#each periods}}<col class="col-period" />{{/each}}
+        <col class="col-moy" /><col class="col-coef" /><col class="col-total" /><col class="col-rank" /><col class="col-appr" /><col class="col-teacher" />
+      </colgroup>
+      <thead>
+        <tr class="identity-header"><td colspan="{{columnCount}}">{{studentName}} · {{classLabel}} · {{schoolYear}} · {{documentTitle}}</td></tr>
+        <tr>
+          <th class="col-discipline">{{labels.disciplines}}</th>
+          {{#each periods}}<th class="col-period">{{label}}<br /><span class="scale">/ 20</span></th>{{/each}}
+          <th class="col-moy">{{labels.annualAverage}}<br /><span class="scale">/ 20</span></th>
+          <th class="col-coef">{{labels.coef}}</th>
+          <th class="col-total">{{labels.total}}</th>
+          <th class="col-rank">{{labels.rank}}</th>
+          <th class="col-appr">{{labels.appreciations}}</th>
+          <th class="col-teacher">{{labels.teachers}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each subjects}}
+          <tr class="row-{{kind}}">
+            <td class="col-discipline">{{name}}</td>
+            {{#each periodAverages}}<td class="num">{{this}}</td>{{/each}}
+            <td class="num annual-average">{{average}}</td>
+            <td class="num">{{coefficient}}</td>
+            <td class="num">{{total}}</td>
+            <td class="num">{{rank}}</td>
+            <td>{{appreciation}}</td>
+            <td>{{teacherName}}</td>
+          </tr>
+        {{/each}}
+      <tr class="notes-row"><td colspan="{{columnCount}}"><p class="grade-note">{{labels.periodWeights}}: {{#each periods}}{{label}} × {{weight}}{{#unless @last}} · {{/unless}}{{/each}}. {{labels.missingGrade}}</p></td></tr>
+      <tr class="closing-row"><td colspan="{{columnCount}}">
+    <section class="period-recap">
+      {{#each periods}}<div><strong>{{label}}</strong><span>{{average}} / 20</span></div>{{/each}}
+    </section>
+    <section class="summary-row">
+      <div class="summary-card">
+        <h3>{{labels.attendance}}</h3>
+        {{#if attendance}}
+          <dl>
+            {{#if attendance.absenceHoursTotal}}
+              <div><dt>{{labels.absenceTotal}}</dt><dd>{{attendance.absenceHoursTotal}}</dd></div>
+            {{/if}}
+            {{#if attendance.absenceHoursJustified}}
+              <div><dt>{{labels.absenceJustified}}</dt><dd>{{attendance.absenceHoursJustified}}</dd></div>
+            {{/if}}
+            {{#if attendance.absenceHoursUnjustified}}
+              <div><dt>{{labels.absenceUnjustified}}</dt><dd>{{attendance.absenceHoursUnjustified}}</dd></div>
+            {{/if}}
+            {{#if attendance.conductAverage}}
+              <div><dt>{{labels.conduct}}</dt><dd>{{attendance.conductAverage}}</dd></div>
+            {{/if}}
+            {{#if attendance.conductRank}}
+              <div><dt>{{labels.rank}}</dt><dd>{{attendance.conductRank}}</dd></div>
+            {{/if}}
+            {{#if attendance.educatorName}}
+              <div><dt>{{labels.educator}}</dt><dd>{{attendance.educatorName}}</dd></div>
+            {{/if}}
+          </dl>
+        {{/if}}
+      </div>
+      <div class="summary-card summary-average">
+        <h3>{{labels.annualMean}}</h3>
+        {{#if semesterAverage}}
+          <p class="big-average">{{semesterAverage}}</p>
+        {{/if}}
+        {{#if semesterRank}}
+          <p class="rank-line">{{labels.rank}} · {{semesterRank}}</p>
+        {{/if}}
+      </div>
+      <div class="summary-card">
+        <h3>{{labels.classResults}}</h3>
+        {{#if classResults}}
+          <dl>
+            {{#if classResults.classAverage}}
+              <div><dt>{{labels.classAverage}}</dt><dd>{{classResults.classAverage}}</dd></div>
+            {{/if}}
+            {{#if classResults.lowestAverage}}
+              <div><dt>{{labels.lowestAverage}}</dt><dd>{{classResults.lowestAverage}}</dd></div>
+            {{/if}}
+            {{#if classResults.highestAverage}}
+              <div><dt>{{labels.highestAverage}}</dt><dd>{{classResults.highestAverage}}</dd></div>
+            {{/if}}
+          </dl>
+          {{#if classResults.distribution}}
+            <table class="dist">
+              <tbody>
+                {{#each classResults.distribution}}
+                  <tr>
+                    <td>{{label}}</td>
+                    <td class="num">{{count}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          {{/if}}
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="council-block">
+      <div class="council-mentions">
+        <h3>{{labels.councilMentions}}</h3>
+        {{#if council.mentions}}
+          <ul class="mentions">
+            {{#each council.mentions}}
+              <li>
+                <span class="check {{#if checked}}checked{{/if}}"></span>
+                {{label}}
+              </li>
+            {{/each}}
+          </ul>
+        {{/if}}
+      </div>
+      <div class="council-appreciation">
+        <h3>{{labels.councilAppreciation}}</h3>
+        <p class="appreciation-text">{{#if council.appreciation}}{{council.appreciation}}{{/if}}</p>
+        {{#if council.homeroomTeacherName}}
+          <p class="homeroom">
+            <span class="lbl">{{labels.homeroomTeacher}}</span>
+            {{council.homeroomTeacherName}}
+          </p>
+        {{/if}}
+      </div>
+      <div class="council-sign">
+        <h3>{{labels.principal}}</h3>
+        {{#if council.principalStampUrl}}
+          <img class="stamp" src="{{council.principalStampUrl}}" alt="" />
+        {{/if}}
+        {{#if signatureUrl}}<img class="principal-signature" src="{{signatureUrl}}" alt="" />{{/if}}
+        {{#if council.principalName}}
+          <p class="principal-name">{{council.principalName}}</p>
+        {{/if}}
+        {{#if council.signedAt}}
+          <p class="signed-at">{{council.signedAt}}</p>
+        {{/if}}
+      </div>
+    </section>
+
+    <footer class="doc-footer">
+      {{#if motto}}
+        <p class="motto">{{motto}}</p>
+      {{/if}}
+      {{#if notice}}
+        <p class="notice">{{notice}}</p>
+      {{/if}}
+      <p class="generated">{{labels.generatedBy}}</p>
+    </footer>
+      </td></tr></tbody>
+    </table>
+  </body>
+</html>

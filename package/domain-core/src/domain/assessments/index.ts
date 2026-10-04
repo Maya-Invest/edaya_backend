@@ -1,3 +1,4 @@
+export * from './annual-report-card-sources'
 export * from './assessment'
 export * from './assessment-result'
 export * from './marks-review'

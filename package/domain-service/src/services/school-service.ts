@@ -19,6 +19,7 @@ import { AccountInvitationServiceWorkflow } from './workflows/account-invitation
 import { AssessmentsServiceWorkflow } from './workflows/assessments'
 import { BehaviorServiceWorkflow } from './workflows/behavior'
 import { CommunicationsServiceWorkflow } from './workflows/communications'
+import { ConversationsWorkflow } from './workflows/conversations'
 import { DocumentsServiceWorkflow } from './workflows/documents'
 import { FamilyFeedbackServiceWorkflow } from './workflows/family-feedback'
 import { FinanceServiceWorkflow } from './workflows/finance'
@@ -46,6 +47,7 @@ export class SchoolService {
   readonly documentsWorkflow: DocumentsServiceWorkflow
   readonly familyFeedbackWorkflow: FamilyFeedbackServiceWorkflow
   readonly teacherCorrectionsWorkflow: TeacherCorrectionsWorkflow
+  readonly conversationsWorkflow: ConversationsWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -65,7 +67,9 @@ export class SchoolService {
     this.documentsWorkflow = new DocumentsServiceWorkflow(this.baseService)
     this.familyFeedbackWorkflow = new FamilyFeedbackServiceWorkflow(this.baseService)
     this.teacherCorrectionsWorkflow = new TeacherCorrectionsWorkflow(this.baseService)
+    this.conversationsWorkflow = new ConversationsWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
+      conversations: this.conversationsWorkflow,
       teacherCorrections: this.teacherCorrectionsWorkflow,
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
@@ -83,6 +87,10 @@ export class SchoolService {
       familyFeedback: this.familyFeedbackWorkflow,
     })
   }
+
+  listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
+  listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }
+  getConversation(input: Parameters<ConversationsWorkflow['detail']>[0]) { return this.conversationsWorkflow.detail(input) }
 
   async getTeacherAttendanceCall(input: Parameters<TeacherCorrectionsWorkflow['getAttendanceCall']>[0]) { return this.teacherCorrectionsWorkflow.getAttendanceCall(input) }
   async getTeacherWorkflowState(input: Parameters<TeacherCorrectionsWorkflow['getWorkflowState']>[0]) { return this.teacherCorrectionsWorkflow.getWorkflowState(input) }

@@ -6,6 +6,7 @@ import Handlebars from "handlebars";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const templateKeys = [
   "report-card.v1",
+  "annual-report-card.v1",
   "logbook.v1",
   "schooling-certificate.v1",
   "enrollment-record.v1",

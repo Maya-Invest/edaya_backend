@@ -50,6 +50,11 @@ export class NotificationDeliveryAccessPolicy {
         denied('Notification source metadata does not match its persisted source')
     }
     switch (request.eventKey) {
+      case 'conversation.message': {
+        const { conversationId, sequence } = request.metadata
+        requireSource(conversationId, sequence)
+        return
+      }
       case 'assessment.result_recorded': {
         requireSource(assessmentResultId, marksRevision)
         const result = await facts.one('assessmentResults', assessmentResultId!)

@@ -1,5 +1,5 @@
-import Handlebars from "handlebars/runtime";
 import type { TemplateAssets } from "./load-assets";
+import Handlebars from "handlebars/runtime";
 
 interface ReportCardLocaleLabels {
   readonly documentTitle: string;
@@ -67,6 +67,7 @@ interface LogbookLocaleLabels {
 }
 
 interface GenericPayload {
+  periods?: unknown;
   readonly schoolName?: unknown;
   readonly primaryColor?: unknown;
   readonly documentTitle?: unknown;
@@ -256,11 +257,34 @@ const LETTER_LABELS = {
   },
 } as const satisfies Record<string, LetterLocaleLabels>;
 
-function resolveLabels(templateKey: string, locale: string): ReportCardLocaleLabels | LogbookLocaleLabels | LetterLocaleLabels {
+function resolveLabels(templateKey: string, locale: string): ReportCardLocaleLabels | LogbookLocaleLabels | LetterLocaleLabels | (ReportCardLocaleLabels & Record<string, string>) {
   if (templateKey === "logbook.v1") {
     return Object.hasOwn(LOGBOOK_LABELS, locale)
       ? LOGBOOK_LABELS[locale as keyof typeof LOGBOOK_LABELS]
       : LOGBOOK_LABELS.en;
+  }
+  if (templateKey === "annual-report-card.v1") {
+    const base = locale === "fr" ? REPORT_CARD_LABELS.fr : REPORT_CARD_LABELS.en;
+    return {
+      ...base,
+      ...(locale === "fr"
+        ? {
+            annualAverage: "Moy. annuelle",
+            annualMean: "Moyenne annuelle",
+            periodWeights: "Poids des périodes",
+            missingGrade: "— : moyenne indisponible ; les moyennes manquantes ne comptent pas comme zéro.",
+            date: "Émis le",
+            preview: "BROUILLON",
+          }
+        : {
+            annualAverage: "Annual avg",
+            annualMean: "Annual average",
+            periodWeights: "Period weights",
+            missingGrade: "—: average unavailable; missing averages do not count as zero.",
+            date: "Issued",
+            preview: "DRAFT",
+          }),
+    };
   }
   if (templateKey === "report-card.v1") {
     return Object.hasOwn(REPORT_CARD_LABELS, locale)
@@ -296,5 +320,6 @@ export function compileTemplateHtml(input: CompileTemplateInput): string {
     schoolName,
     documentTitle,
     subjects,
+    columnCount: 7 + (Array.isArray(payload.periods) ? payload.periods.length : 0),
   });
 }

@@ -101,6 +101,8 @@ export async function deliverNotification(
       metadata: {
         ...input.metadata,
         deliveryId,
+        recipientId: recipient.id,
+        recipientKind: recipient.kind,
       },
     })
   }

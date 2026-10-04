@@ -8,6 +8,7 @@ import { asStoreDatabase } from './postgres-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
 import { PostgresAssessmentDependencies } from './stores/assessment-dependencies-store'
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
+import { PostgresConversations } from './stores/conversations-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { PostgresDashboardProjections } from './stores/dashboard-projections-store'
 import { createEntityStores } from './stores/entity-stores'
@@ -27,6 +28,7 @@ import { PostgresTeacherCorrections } from './stores/teacher-corrections-store'
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly financeProjections: PostgresFinanceProjections
   public readonly dashboardProjections: PostgresDashboardProjections
+  public readonly conversations: PostgresConversations
   public readonly teacherCorrections: PostgresTeacherCorrections
   public readonly marksCorrections: PostgresMarksCorrections
   public readonly assessmentDependencies: PostgresAssessmentDependencies
@@ -114,6 +116,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.db = db
     this.financeProjections = new PostgresFinanceProjections(db)
     this.dashboardProjections = new PostgresDashboardProjections(db)
+    this.conversations = new PostgresConversations(db)
     this.teacherCorrections = new PostgresTeacherCorrections(db)
     this.marksCorrections = new PostgresMarksCorrections(db)
     this.assessmentDependencies = new PostgresAssessmentDependencies(db)

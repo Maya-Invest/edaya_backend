@@ -1,13 +1,14 @@
+import type { RenderFormat, TemplateCatalogEntry } from "../types";
+import type { TemplateAssets } from "./load-assets";
 import { readFileSync } from "node:fs";
 import Ajv from "ajv";
-import type { RenderFormat, TemplateCatalogEntry } from "../types";
-import { compileTemplateHtml } from "./compile-html";
-import type { TemplateAssets } from "./load-assets";
 import { ACCOUNT_STATEMENT_V1_ASSETS } from "./account-statement.v1/assets";
+import { ANNUAL_REPORT_CARD_V1_ASSETS } from "./annual-report-card.v1/assets";
 import { ANNUAL_TRANSCRIPT_V1_ASSETS } from "./annual-transcript.v1/assets";
 import { ATTENDANCE_SHEET_V1_ASSETS } from "./attendance-sheet.v1/assets";
 import { CLASS_ROSTER_V1_ASSETS } from "./class-roster.v1/assets";
 import { CLASS_TIMETABLE_V1_ASSETS } from "./class-timetable.v1/assets";
+import { compileTemplateHtml } from "./compile-html";
 import { CONVOCATION_V1_ASSETS } from "./convocation.v1/assets";
 import { ENROLLMENT_RECORD_V1_ASSETS } from "./enrollment-record.v1/assets";
 import { INCIDENT_REPORT_V1_ASSETS } from "./incident-report.v1/assets";
@@ -83,6 +84,7 @@ function createTemplateDefinition(assets: TemplateAssets): TemplateDefinition {
 
 const TEMPLATES: readonly TemplateDefinition[] = [
   createTemplateDefinition(REPORT_CARD_V1_ASSETS),
+  createTemplateDefinition(ANNUAL_REPORT_CARD_V1_ASSETS),
   createTemplateDefinition(LOGBOOK_V1_ASSETS),
   createTemplateDefinition(SCHOOLING_CERTIFICATE_V1_ASSETS),
   createTemplateDefinition(ENROLLMENT_RECORD_V1_ASSETS),

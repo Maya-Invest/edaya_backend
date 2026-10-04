@@ -50,7 +50,7 @@ export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: 
     ...(options.preview || issuance.status === 'preview' ? { watermark: true } : {}),
   }
   // Report-card templates read the stamp from council; letter schemas reject unknown root fields.
-  if (stampUrl && issuance.templateKey === 'report-card.v1') {
+  if (stampUrl && (issuance.templateKey === 'report-card.v1' || issuance.templateKey === 'annual-report-card.v1')) {
     payload.council = {
       ...asFacts(payload.council),
       principalStampUrl: stampUrl,
@@ -84,7 +84,7 @@ export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: 
       payload,
       options: {
         paper: issuance.templateKey === 'student-id-card.v1' ? 'A4' : 'A4',
-        orientation: issuance.templateKey === 'class-timetable.v1' || issuance.templateKey === 'teacher-timetable.v1' ? 'landscape' : 'portrait',
+        orientation: issuance.templateKey === 'annual-report-card.v1' || issuance.templateKey === 'class-timetable.v1' || issuance.templateKey === 'teacher-timetable.v1' ? 'landscape' : 'portrait',
         signatures: issuance.templateKey === 'report-card.v1' || issuance.templateKey === 'logbook.v1' ? signatures : undefined,
       },
     },

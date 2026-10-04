@@ -135,7 +135,11 @@ export async function loadPriorReportCardResults(
   const publishedByPeriodId = new Map<string, ReportCardResult>()
   const missingOrDraftPeriodIds: string[] = []
   const reports = sourcePeriodIds.length ? await repositories.results.list({ studentId, periodId: { $in: [...sourcePeriodIds] }, status: ReportCardResultStatus.Published }) : []
-  for (const report of reports) publishedByPeriodId.set(report.periodId, report)
+  for (const report of reports) {
+    if (publishedByPeriodId.has(report.periodId))
+      throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_SOURCES_AMBIGUOUS', 'Each period must have one published report for this student')
+    publishedByPeriodId.set(report.periodId, report)
+  }
   for (const periodId of sourcePeriodIds) {
     if (!publishedByPeriodId.has(periodId))
       missingOrDraftPeriodIds.push(periodId)
@@ -154,8 +158,13 @@ export async function loadReportAggregationContext(
   repositories: AggregationRepositories,
   studentId: string,
   aggregation: ReportCardAggregation,
+  target?: AcademicPeriod,
 ): Promise<ReportAggregationContext> {
+  if (new Set(aggregation.sourcePeriodIds).size !== aggregation.sourcePeriodIds.length || (target && aggregation.sourcePeriodIds.includes(target.id)))
+    throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_PERIODS_INVALID', 'Contributing periods must be distinct and exclude the target')
   const periods = await repositories.academicPeriods.findByIds(aggregation.sourcePeriodIds)
+  if (target && (periods.length !== aggregation.sourcePeriodIds.length || periods.some(period => period.schoolId !== target.schoolId || period.academicYearId !== target.academicYearId)))
+    throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_PERIODS_INVALID', 'Contributing periods must belong to the same school and academic year')
   const publishedPeriods = periods.filter(period => period.isPublished)
   const publishedIds = new Set(publishedPeriods.map(period => period.id))
   const unpublishedPeriodIds = aggregation.sourcePeriodIds.filter(id => !publishedIds.has(id))
@@ -166,7 +175,8 @@ export async function loadReportAggregationContext(
     publishedPeriods,
     priorResultsByPeriodId: prior.publishedByPeriodId,
     readiness: {
-      canPublish: unpublishedPeriodIds.length === 0 && prior.missingOrDraftPeriodIds.length === 0,
+      canPublish: unpublishedPeriodIds.length === 0 && prior.missingOrDraftPeriodIds.length === 0
+        && [...prior.publishedByPeriodId.values()].every(result => !result.calculationStale && !result.pendingCorrectionIds?.length && !result.pendingAssessmentIds?.length),
       unpublishedPeriodIds,
       missingOrDraftReportCardPeriodIds: prior.missingOrDraftPeriodIds,
     },

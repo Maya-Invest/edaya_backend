@@ -1,7 +1,9 @@
 import { Buffer } from "node:buffer";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import process from "node:process";
 import { listTemplateDefinitions } from "../src/templates/registry";
+import { EXAMPLE_ANNUAL_RENDER_REQUEST } from "../tests/annual-example";
 import { EXAMPLE_LOGBOOK_RENDER_REQUEST, EXAMPLE_RENDER_REQUEST } from "../tests/examples";
 
 const brandingDir = resolve(import.meta.dir, "../../../tooling/fixtures/assets/branding");
@@ -31,6 +33,7 @@ const assets = {
 };
 
 const ASSET_SLOTS: Record<string, readonly (keyof typeof assets)[]> = {
+  "annual-report-card.v1": ["logoUrl", "crestUrl", "stampUrl", "signatureUrl", "photoUrl"],
   "report-card.v1": ["logoUrl", "crestUrl", "stampUrl", "signatureUrl", "photoUrl"],
   "logbook.v1": ["logoUrl"],
   "schooling-certificate.v1": ["logoUrl", "stampUrl", "signatureUrl"],
@@ -88,6 +91,25 @@ function payloadValue(record: Record<string, unknown>, key: string): unknown {
 
 function payloadFor(key: string): unknown {
   const selected = assetsFor(key);
+  if (key === "annual-report-card.v1") {
+    const annual = EXAMPLE_ANNUAL_RENDER_REQUEST.payload;
+    return { ...annual, ...identity, ...selected, council: { ...asObject(annual.council), principalStampUrl: assets.stampUrl } };
+  }
+  if (key === "annual-transcript.v1") {
+    const annual = EXAMPLE_ANNUAL_RENDER_REQUEST.payload;
+    const periods = annual.periods as Array<{ label: string; average: string }>;
+    return {
+      ...identity,
+      ...selected,
+      studentName: annual.studentName,
+      classLabel: annual.classLabel,
+      schoolYear: annual.schoolYear,
+      date: annual.date,
+      matricule: annual.matricule,
+      columns: ["Période", "Moyenne / 20"],
+      rows: periods.map(period => ({ cells: [period.label, period.average] })),
+    };
+  }
   if (key === "report-card.v1") {
     const bulletin = asObject(EXAMPLE_RENDER_REQUEST.payload);
     const council = { ...asObject(payloadValue(bulletin, "council")), principalStampUrl: assets.stampUrl };
@@ -111,7 +133,10 @@ function payloadFor(key: string): unknown {
 mkdirSync(outDir, { recursive: true });
 
 const written: string[] = [];
+const requestedKeys = process.argv.slice(2);
 for (const template of listTemplateDefinitions()) {
+  if (requestedKeys.length && !requestedKeys.includes(template.key))
+    continue;
   const html = template.compileHtml("fr", payloadFor(template.key));
   const file = resolve(outDir, `${template.key}.html`);
   writeFileSync(file, html);
@@ -119,5 +144,5 @@ for (const template of listTemplateDefinitions()) {
   console.log(template.key, html.length);
 }
 
-writeFileSync(resolve(outDir, "index.json"), `${JSON.stringify(written.map(path => path.split("/").at(-1)), null, 2)}\n`);
+writeFileSync(resolve(outDir, "index.json"), `${JSON.stringify(listTemplateDefinitions().map(template => `${template.key}.html`), null, 2)}\n`);
 console.log(`wrote ${written.length} html files to ${outDir}`);

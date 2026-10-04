@@ -63,6 +63,7 @@ import type {
   UnregisterPushDeviceInput,
   UpdateNotificationContactInput,
 } from '../workflows/communications'
+import type { ConversationsWorkflow } from '../workflows/conversations'
 import type {
   CorrectDocumentIssuanceInput,
   DocumentsServiceWorkflow,
@@ -179,6 +180,7 @@ import type {
 } from '../workflows/timetable-generation'
 
 export interface SchoolWorkflowHandlers {
+  readonly conversations: ConversationsWorkflow
   readonly teacherCorrections: TeacherCorrectionsWorkflow
   readonly setup: SetupServiceWorkflow
   readonly accessControl: AccessControlServiceWorkflow
@@ -202,6 +204,10 @@ export type SchoolCommandHandlerMap = {
 
 export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): SchoolCommandHandlerMap {
   return {
+    startConversation: payload => workflows.conversations.start(payload as Parameters<ConversationsWorkflow['start']>[0]),
+    replyConversation: payload => workflows.conversations.reply(payload as Parameters<ConversationsWorkflow['reply']>[0]),
+    resolveConversation: payload => workflows.conversations.resolve(payload as Parameters<ConversationsWorkflow['resolve']>[0]),
+    markConversationRead: payload => workflows.conversations.markRead(payload as Parameters<ConversationsWorkflow['markRead']>[0]),
     requestTeacherCorrection: payload => workflows.teacherCorrections.request(payload as z.input<typeof requestTeacherCorrectionSchema>),
     reviseTeacherCorrection: payload => workflows.teacherCorrections.revise(payload as z.input<typeof reviseTeacherCorrectionSchema>),
     approveTeacherCorrection: payload => workflows.teacherCorrections.decide('approve', payload as z.input<typeof decideTeacherCorrectionSchema>),

@@ -2,7 +2,7 @@ import type { LoggerPort } from "@edaya/core";
 import type { CronHeartbeatSummary, CronJobDispatcherPort, CronJobKey } from "@edaya/service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ApiRuntime } from "@/runtime/types";
-import { computeNextRunAt, createInlineCronJobDispatcher, dispatchDocumentRender, dispatchPrivateFileCleanup, runCronJobs, tickCronSchedules } from "@edaya/service";
+import { computeNextRunAt, createInlineCronJobDispatcher, dispatchConversationNotifications, dispatchDocumentRender, dispatchPrivateFileCleanup, runCronJobs, tickCronSchedules } from "@edaya/service";
 import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-dispatcher";
 
 export interface RunScheduledCronOptions {
@@ -41,6 +41,7 @@ export async function runCronHeartbeat(
 
   await dispatchPrivateFileCleanup(application);
   await dispatchDocumentRender(application);
+  await dispatchConversationNotifications(application);
   logger?.info({
     event: "cron.tick",
     asOf: options.asOf.toISOString(),
@@ -78,5 +79,6 @@ export async function runScheduledCronWithRuntime(
   });
   await dispatchPrivateFileCleanup(application);
   await dispatchDocumentRender(application);
+  await dispatchConversationNotifications(application);
   return summary;
 }

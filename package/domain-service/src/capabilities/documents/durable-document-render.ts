@@ -116,7 +116,7 @@ async function bindArtifact(application: Pick<SchoolApplication, 'forActor'>, wo
       failureCode: undefined,
       updatedAt: new Date(),
     }))
-    if (!preview && current.templateKey === 'report-card.v1') {
+    if (!preview && (current.templateKey === 'report-card.v1' || current.templateKey === 'annual-report-card.v1')) {
       const state = await base.repositories.teacherCorrections.state(work.schoolId, 'report_comments', current.sourceId)
       if (state?.payload['issuanceId'] === current.id && state.payload['snapshot']) {
         await base.repositories.teacherCorrections.saveState({ ...state, payload: { ...state.payload, visibleSnapshot: state.payload['snapshot'], documentStatus: 'ready' } })

@@ -6,7 +6,7 @@ import type { MarksReviewInput } from './marks-review'
 import type { ReportAggregationContext } from './report-card-aggregation'
 import type { HomeroomCommentInput, SectionCommentsInput } from './report-comments'
 import { denyResourceAccess } from '@edaya/authorization'
-import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
+import { Assessment as AssessmentEntity, AssessmentResult as AssessmentResultEntity, AttendanceJustificationStatus, AttendanceStatus, AttendanceSummary, BusinessRuleViolationError, DOCUMENT_FAILURES, GradeScale as GradeScaleEntity, normalizeDate, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardDefinition, ReportCardDefinitionSection as ReportCardDefinitionSectionEntity, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, roundTo2 } from '@edaya/core'
 import { academicStateLock, assertMarksRevision, enrollmentEffectiveAt } from '../../capabilities/academics/marks-state'
 import { loadReportAssessmentContext, scopeReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import { preserveReportComments } from '../../capabilities/academics/report-comments'
@@ -209,9 +209,18 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
 
       await this.baseService.access.reportCards.assertGenerate(student.id)
       await this.requireReportCardResources(input.periodId, input.reportCardDefinitionId, student.schoolId)
-      await this.requireReportCardNotPublished(input.studentId, input.periodId)
+      const regeneratingAnnual = await this.requireReportCardNotPublished(input.studentId, input.periodId)
+      if (regeneratingAnnual)
+        await this.baseService.access.reportCards.assertPublish(student.id)
       const reportCard = await this.buildReportCardResult(input)
-      await this.baseService.entities.results.save(reportCard)
+      if (regeneratingAnnual) {
+        // Only this authorized workflow may reopen an obsolete annual calculation.
+        // Ordinary published grades remain immutable; issued snapshots retain their history.
+        await this.repositories.results.save(reportCard)
+      }
+      else {
+        await this.baseService.entities.results.save(reportCard)
+      }
       return reportCard
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
@@ -228,9 +237,13 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const student = await this.requireStudent(input.studentId)
     this.checkActorSchool(student.schoolId)
     const period = await this.requirePeriod(input.periodId)
+    const currentResult = await this.repositories.results.findOne({ studentId: input.studentId, periodId: input.periodId })
+    const annualRevision = currentResult?.aggregation?.source === ReportCardAggregationSource.ReportCards
+      ? `${input.id}:annual:${currentResult.status === ReportCardResultStatus.Published ? currentResult.version - 1 : currentResult.version}`
+      : input.id
     let issuanceId: string | undefined
     return this.baseService.commandExecution.execute({
-      scope: await schoolCommandScope(this.baseService.actor, 'publishReportCardResult', input.id),
+      scope: await schoolCommandScope(this.baseService.actor, 'publishReportCardResult', annualRevision),
       input,
       resultMode: 'ordinary',
       lockKeys: [
@@ -266,6 +279,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           const issuance = await new DocumentsServiceWorkflow(this.baseService).enqueueBulletinForPublishedResult({
             resultId: published.id,
             studentId: published.studentId,
+            requestId: published.aggregation?.source === ReportCardAggregationSource.ReportCards ? `bulletin:${published.id}:annual:${published.version}` : undefined,
           })
           issuanceId = issuance.id
         }
@@ -309,11 +323,21 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     }
   }
 
-  private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<void> {
+  private async requireReportCardNotPublished(studentId: string, periodId: string): Promise<boolean> {
     const reportCard = await this.repositories.results.findOne({ studentId, periodId })
     if (reportCard?.status === ReportCardResultStatus.Published) {
+      if (reportCard.aggregation?.source === ReportCardAggregationSource.ReportCards) {
+        const sources = await loadReportAggregationContext(this.repositories, studentId, reportCard.aggregation)
+        const versions = await Promise.all([...sources.priorResultsByPeriodId.values()].map(async source => ({ source, version: await reportCardAcademicVersion(source) })))
+        if (sources.readiness.canPublish && versions.some(({ source, version }) =>
+          reportCard.aggregation!.sourceReportVersions?.find(entry => entry.periodId === source.periodId)?.sourceVersion !== version,
+        )) {
+          return true
+        }
+      }
       throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${studentId} and period ${periodId} is immutable`)
     }
+    return false
   }
 
   private async buildReportCardResult({
@@ -326,7 +350,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
   }: GenerateReportCardResultInput, publishing = false): Promise<ReportCardResult> {
     const period = await this.requirePeriod(periodId)
     const existing = await this.repositories.results.findOne({ studentId, periodId })
-    const resolvedAggregation = aggregation ?? existing?.aggregation
+    let resolvedAggregation = aggregation ?? existing?.aggregation
     let context = await loadReportAssessmentContext(this.repositories, period.schoolId, studentId, resolvedAggregation?.sourcePeriodIds ?? [periodId])
     const enrollment = this.requireEnrollmentForPeriod({
       enrollments: context.enrollments,
@@ -341,7 +365,18 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
           academicYearId: period.academicYearId,
         })
     context = await scopeReportAssessmentContext(this.repositories, context, definition.id, classGroup.id)
-    const aggregationContext = resolvedAggregation ? await loadReportAggregationContext(this.repositories, studentId, resolvedAggregation) : undefined
+    const aggregationContext = resolvedAggregation ? await loadReportAggregationContext(this.repositories, studentId, resolvedAggregation, period) : undefined
+    if (resolvedAggregation?.source === ReportCardAggregationSource.ReportCards) {
+      resolvedAggregation = {
+        ...resolvedAggregation,
+        sourceReportVersions: await Promise.all([...aggregationContext!.priorResultsByPeriodId.values()].map(async source => ({
+          periodId: source.periodId,
+          resultId: source.id,
+          version: source.version,
+          sourceVersion: await reportCardAcademicVersion(source),
+        }))),
+      }
+    }
     const { sectionResults, overallAverage, assessmentResultCount, attendanceSummary, canPublish } = await this.buildReportCardResults({
       studentId,
       periodId,
@@ -378,14 +413,14 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       attendanceSummary: resolvedAttendanceSummary,
       assessmentResultCount: assessmentResultCount ?? periodAssessmentResults.length,
       overallAverage,
-      rank: existing?.rank,
+      rank: existing?.status === ReportCardResultStatus.Published && !publishing ? undefined : existing?.rank,
       classSize: existing?.classSize,
       passThreshold: existing?.passThreshold,
       teacherComment: existing?.teacherComment,
       principalComment: existing?.principalComment,
-      status: canPublish ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,
+      status: canPublish && publishing ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,
       generatedAt: existing?.generatedAt ?? generatedAt,
-      publishedAt: existing?.publishedAt,
+      publishedAt: publishing ? existing?.publishedAt : undefined,
       aggregation: resolvedAggregation,
     })
   }

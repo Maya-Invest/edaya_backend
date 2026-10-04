@@ -1,7 +1,7 @@
-import type { Context } from "hono";
 import type { PublishAnnouncementInput, SchoolCommandKey, SchoolService } from "@edaya/service";
+import type { Context } from "hono";
 import type { AppBindings } from "@/http/bindings";
-import { dispatchDocumentRender, dispatchSchoolCommand } from "@edaya/service";
+import { dispatchConversationNotifications, dispatchDocumentRender, dispatchSchoolCommand } from "@edaya/service";
 import { scheduleBackgroundApplicationTask, scheduleBackgroundTask } from "@/lib/school-api/schedule-background-task";
 
 const DOCUMENT_NUDGE_COMMANDS = new Set<SchoolCommandKey>([
@@ -41,6 +41,8 @@ export async function executeSchoolCommand(
   }
 
   const result = await dispatchSchoolCommand(service.commands, methodName, payload);
+  if (methodName === "startConversation" || methodName === "replyConversation")
+    scheduleBackgroundApplicationTask(c, application => dispatchConversationNotifications(application));
   if (DOCUMENT_NUDGE_COMMANDS.has(methodName)) {
     nudgeDocumentRender(c);
   }

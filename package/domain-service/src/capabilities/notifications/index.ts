@@ -1,6 +1,7 @@
 import './register-notification-triggers'
 import './register-workflow-notification-handlers'
 
+export * from './conversation-notifications'
 export * from './delivery/build-recipient-profile'
 export * from './delivery/deliver-notification'
 export * from './delivery/recipient-resolvers'
@@ -30,4 +31,5 @@ export * from './templates/seed-school-notification-templates'
 export * from './templates/variables'
 export * from './triggers/activity-reminder'
 export * from './triggers/assessment-due-soon'
+
 export * from './triggers/calendar-event-reminder'
