@@ -1,6 +1,8 @@
 import type { DocumentAudience, DocumentSourceType, DocumentTemplateKey, Permission } from '@edaya/core'
 import { DocumentAudience as Audience, DOCUMENT_TEMPLATE_KEYS, Permission as P, DocumentSourceType as Source } from '@edaya/core'
 
+export const REPORT_CARD_TEMPLATE_KEY = 'report-card.v1' as const
+
 export type DocumentLocale = 'fr' | 'en'
 export type DocumentAssetSlot = 'portrait' | 'logo' | 'crest' | 'stamp' | 'signature'
 export type DocumentAssetRequirement = 'optional' | 'blocking'

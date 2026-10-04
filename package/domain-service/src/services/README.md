@@ -39,3 +39,9 @@ src/
 | Actor ↔ subject linking | `services/account-linking/` |
 
 Workflows extend `BaseServiceWorkflow` and receive a `BaseSchoolService` for repositories, authorization, and gateways.
+
+## Teacher correction lifecycle
+
+TeacherCorrectionsWorkflow uses typed adapters for submitted attendance, published report comments, explicitly validated logbooks and incidents after staff takeover/formal decisions. Initial attendance is a command-owned private draft; complete-roster submission makes records and family alerts official. Arrival events append within the active occurrence and preserve the original call/evidence. Logbook saves are atomic with chapter progress; reviewed reductions recompute cumulative summaries. Incident edits preserve sanctions/resolution and flag their consequences for staff review; follow-ups remain immediate. Report comment approval preserves immutable original results and report facts, requests a durable replacement, and exposes the revised comments/document to families only after rendering succeeds. Failed rendering retains the prior document and supports retry.
+
+Requests have immutable revisions and versioned decisions; author subject identity prevents self-review across profiles. Review scopes are applied before queue counts and pagination. Generic single/batch/offline writes enforce the same lifecycle boundaries. Migration 0035 preserves existing rows: legacy attendance rows count as submitted, and existing incident status/sanctions count as staff decisions. Legacy logbooks remain editable until explicit validation. Existing mark corrections retain their history; pending requests may target independent students in one assessment.

@@ -15,16 +15,10 @@ const HYGIENE_STEPS: VerifyStep[] = [
   { label: 'repo check test-naming', run: () => runBunScript(paths.checkTestNaming) },
 ]
 
-/** Matches root `bun run verify` Turbo portion (after hygiene). */
-const QUALITY_STEPS: VerifyStep[] = [
-  { label: 'turbo quality', run: () => runRepoCommand(['bun', 'run', 'quality']) },
-  { label: 'turbo build', run: () => runRepoCommand(['bun', 'run', 'build']) },
-  { label: 'turbo test', run: () => runRepoCommand(['bun', 'x', 'turbo', 'run', 'test', '--concurrency=2', '--', '--dots']) },
-]
-
-/** PR blocking integration job (`_integration.yml`). */
+/** Full local gate uses the same unit and complete integration entry points as CI. */
 const FULL_STEPS: VerifyStep[] = [
-  { label: 'test:integration', run: () => runRepoCommand(['bun', 'run', 'test:integration']) },
+  { label: 'unit verification', run: () => runRepoCommand(['bun', 'run', 'verify']) },
+  { label: 'full backend integration', run: () => runRepoCommand(['bash', '.github/scripts/run-backend-integration.sh']) },
 ]
 
 async function runSteps(steps: readonly VerifyStep[]): Promise<number> {
@@ -39,21 +33,7 @@ async function runSteps(steps: readonly VerifyStep[]): Promise<number> {
 }
 
 export async function runVerify(options: { full?: boolean } = {}): Promise<number> {
-  const hygiene = await runSteps(HYGIENE_STEPS)
-  if (hygiene !== 0) {
-    return hygiene
-  }
-
-  if (!options.full) {
-    return 0
-  }
-
-  const quality = await runSteps(QUALITY_STEPS)
-  if (quality !== 0) {
-    return quality
-  }
-
-  return runSteps(FULL_STEPS)
+  return runSteps(options.full ? FULL_STEPS : HYGIENE_STEPS)
 }
 
 export async function dispatchVerifyCommand(forwardArgs: readonly string[]): Promise<number> {
@@ -84,7 +64,7 @@ export function verifyCliUsage(): string {
     ...HYGIENE_STEPS.map((step, index) => `  ${index + 1}. ${step.label}`),
     '',
     '  --full   Local PR CI gate: hygiene + quality + build + unit tests + integration',
-    '           (matches `_verify.yml` + `_integration.yml`; omits informational coverage)',
+    '           (all unit/tooling tests + service/HTTP, seed and native PostgreSQL; requires pg_config)',
     '',
     'Root `bun run verify` is hygiene + quality/build/unit only (no integration).',
   ].join('\n')

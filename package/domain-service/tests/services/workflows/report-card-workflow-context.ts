@@ -1,9 +1,9 @@
-import type { NotificationGatewayPort, ReportCardResultInput } from '@edaya/core'
+import type { DocumentRendererPort, NotificationGatewayPort, ReportCardResultInput } from '@edaya/core'
 import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, ClassSubject, GradeScale, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Student, Subject } from '@edaya/core'
 import { createStudentTransitionContext } from './student-workflow-context'
 
-export async function createReportCardContext({ existingReportCard, notificationGateway = noOpNotificationGateway, academicPeriodPublished = true, marksApproved = true }: { existingReportCard?: Partial<ReportCardResultInput> & { id: string }, notificationGateway?: NotificationGatewayPort, academicPeriodPublished?: boolean, marksApproved?: boolean } = {}) {
-  const fixture = await createStudentTransitionContext({ notificationGateway })
+export async function createReportCardContext({ existingReportCard, notificationGateway = noOpNotificationGateway, academicPeriodPublished = true, marksApproved = true, documentRenderer }: { documentRenderer?: DocumentRendererPort, existingReportCard?: Partial<ReportCardResultInput> & { id: string }, notificationGateway?: NotificationGatewayPort, academicPeriodPublished?: boolean, marksApproved?: boolean } = {}) {
+  const fixture = await createStudentTransitionContext({ notificationGateway, documentRenderer })
   const { repositories } = fixture
   for (const id of ['per1', 'per-t1', 'per-unpublished']) await repositories.academicPeriods.save(new AcademicPeriod({ id, schoolId: 'sch1', academicYearId: 'ay1', name: id, type: AcademicPeriodType.Trimester, isPublished: academicPeriodPublished && id !== 'per-unpublished', startDate: new Date('2026-01-01'), endDate: new Date('2026-03-31') }))
   await repositories.subjects.save(new Subject({ id: 'subject-math', schoolId: 'sch1', name: 'Math' }))

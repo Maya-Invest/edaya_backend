@@ -2,21 +2,21 @@ name: Unit test coverage
 
 on:
   workflow_call:
-    secrets:
-      IDENTITY_CHECKOUT_TOKEN:
-        required: false
 
 permissions:
-  actions: write
   contents: read
 
 jobs:
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Setup Bun and Turbo cache
         uses: ./.github/actions/ci-bun-turbo
@@ -25,7 +25,7 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload lcov
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lcov
           path: |

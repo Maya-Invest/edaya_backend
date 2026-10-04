@@ -55,3 +55,7 @@ apps/api/secrets.staging.json
 .ci/
 
 **/coverage/*
+
+# Sanitized local/CI test evidence
+.ci-evidence/
+__pycache__/

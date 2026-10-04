@@ -12,6 +12,18 @@ const object = value => value !== null && typeof value === "object" && !Array.is
 const nonempty = value => typeof value === "string" && value.trim().length > 0;
 const base64 = value => nonempty(value) && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value);
 
+export function configurationPreflight(env) {
+  const { errors } = validateConfiguration(env);
+  const report = { target: "staging", phase: "configuration", endpoint: staging.databaseHost, status: errors.length ? "blocked" : "passed", checked: [], errors, createdAt: new Date().toISOString() };
+  if (env.RELEASE_ROOT) {
+    const output = resolve(env.RELEASE_ROOT, "release");
+    mkdirSync(output, { recursive: true });
+    writeFileSync(resolve(output, "preflight.json"), `${JSON.stringify(report, null, 2)}\n`);
+  }
+  if (errors.length) throw new Error(`Staging configuration blocked:\n${errors.join("\n")}`);
+  return report;
+}
+
 // Errors name fields and resources only. Never include URLs, payloads or provider diagnostics.
 export function validateConfiguration(env) {
   const errors = [];
@@ -127,8 +139,7 @@ export async function runPreflight(env, { request = fetch, databaseCheck, signin
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     if (process.argv.includes("--configuration-only")) {
-      const { errors } = validateConfiguration(process.env);
-      if (errors.length) throw new Error(`Staging configuration blocked:\n${errors.join("\n")}`);
+      configurationPreflight(process.env);
       console.log("Staging configuration preflight passed");
     } else {
       await runPreflight(process.env);

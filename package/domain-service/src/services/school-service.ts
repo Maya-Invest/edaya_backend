@@ -9,8 +9,8 @@ import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from
 import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
-
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
+
 import { buildSchoolOverview } from './queries/school-overview'
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
@@ -26,6 +26,7 @@ import { NotificationTemplatesServiceWorkflow } from './workflows/notification-t
 import { SchedulingServiceWorkflow } from './workflows/scheduling'
 import { SetupServiceWorkflow } from './workflows/setup'
 import { StudentServiceWorkflow } from './workflows/student'
+import { TeacherCorrectionsWorkflow } from './workflows/teacher-corrections'
 import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation'
 
 export class SchoolService {
@@ -44,6 +45,7 @@ export class SchoolService {
   readonly notificationTemplatesWorkflow: NotificationTemplatesServiceWorkflow
   readonly documentsWorkflow: DocumentsServiceWorkflow
   readonly familyFeedbackWorkflow: FamilyFeedbackServiceWorkflow
+  readonly teacherCorrectionsWorkflow: TeacherCorrectionsWorkflow
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
@@ -62,7 +64,9 @@ export class SchoolService {
     this.notificationTemplatesWorkflow = new NotificationTemplatesServiceWorkflow(this.baseService)
     this.documentsWorkflow = new DocumentsServiceWorkflow(this.baseService)
     this.familyFeedbackWorkflow = new FamilyFeedbackServiceWorkflow(this.baseService)
+    this.teacherCorrectionsWorkflow = new TeacherCorrectionsWorkflow(this.baseService)
     this.commands = createSchoolCommandHandlers({
+      teacherCorrections: this.teacherCorrectionsWorkflow,
       setup: this.setupWorkflow,
       accessControl: this.accessControlWorkflow,
       accountInvitation: this.accountInvitationWorkflow,
@@ -79,6 +83,11 @@ export class SchoolService {
       familyFeedback: this.familyFeedbackWorkflow,
     })
   }
+
+  async getTeacherAttendanceCall(input: Parameters<TeacherCorrectionsWorkflow['getAttendanceCall']>[0]) { return this.teacherCorrectionsWorkflow.getAttendanceCall(input) }
+  async getTeacherWorkflowState(input: Parameters<TeacherCorrectionsWorkflow['getWorkflowState']>[0]) { return this.teacherCorrectionsWorkflow.getWorkflowState(input) }
+  async listTeacherCorrections(input: Parameters<TeacherCorrectionsWorkflow['list']>[0]) { return this.teacherCorrectionsWorkflow.list(input) }
+  async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
 
   async getAssessmentMarksReview(input: { assessmentId: string }) { return getAssessmentMarksReview(this.baseService, input) }
   async listAssessmentMarksReviews(input: MarksQueueInput) { return listAssessmentMarksReviews(this.baseService, input) }

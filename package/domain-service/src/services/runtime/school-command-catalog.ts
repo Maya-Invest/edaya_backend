@@ -56,6 +56,20 @@ export type SchoolCommandKey
     | 'createReportCardDefinitionSection'
     | 'createAssessment'
     | 'submitAssessmentMarks'
+    | 'saveTeacherAttendanceDraft'
+    | 'submitTeacherAttendance'
+    | 'recordTeacherAttendanceArrival'
+    | 'reviseAssessmentMarksCorrection'
+    | 'requestTeacherCorrection'
+    | 'reviseTeacherCorrection'
+    | 'approveTeacherCorrection'
+    | 'rejectTeacherCorrection'
+    | 'withdrawTeacherCorrection'
+    | 'saveTeacherLogbook'
+    | 'validateTeacherLogbook'
+    | 'editTeacherIncident'
+    | 'takeOverTeacherIncident'
+    | 'appendIncidentFollowUp'
     | 'requestAssessmentMarksCorrection'
     | 'approveAssessmentMarksCorrection'
     | 'rejectAssessmentMarksCorrection'
@@ -238,6 +252,20 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'createReportCardDefinitionSection',
   'createAssessment',
   'submitAssessmentMarks',
+  'saveTeacherAttendanceDraft',
+  'submitTeacherAttendance',
+  'recordTeacherAttendanceArrival',
+  'reviseAssessmentMarksCorrection',
+  'requestTeacherCorrection',
+  'reviseTeacherCorrection',
+  'approveTeacherCorrection',
+  'rejectTeacherCorrection',
+  'withdrawTeacherCorrection',
+  'saveTeacherLogbook',
+  'validateTeacherLogbook',
+  'editTeacherIncident',
+  'takeOverTeacherIncident',
+  'appendIncidentFollowUp',
   'requestAssessmentMarksCorrection',
   'approveAssessmentMarksCorrection',
   'rejectAssessmentMarksCorrection',

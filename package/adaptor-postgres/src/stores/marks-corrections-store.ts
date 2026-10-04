@@ -49,10 +49,15 @@ export class PostgresMarksCorrections implements MarksCorrectionsPort {
     const predicate = sql`${compileResourceAccess(assessments, scope)}
       and c.status=${input.status ?? 'pending'}
       ${input.classGroupId ? sql`and ${assessments.classGroupId}=${input.classGroupId}` : sql``}
-      ${input.periodId ? sql`and ${assessments.periodId}=${input.periodId}` : sql``}`
+      ${input.periodId ? sql`and ${assessments.periodId}=${input.periodId}` : sql``}
+      ${input.teacherSubjectId ? sql`and c.payload->>'authorSubjectId'=${input.teacherSubjectId}` : sql``}
+      ${input.studentId ? sql`and exists(select 1 from jsonb_array_elements(c.payload->'changes') change where change->>'studentId'=${input.studentId})` : sql``}
+      ${input.from ? sql`and (c.payload->>'createdAt')::timestamptz>=${input.from}` : sql``}
+      ${input.to ? sql`and (c.payload->>'createdAt')::timestamptz<=${input.to}` : sql``}
+      ${input.search ? sql`and (c.payload->>'reason' ilike ${`%${input.search}%`} or ${assessments.title} ilike ${`%${input.search}%`} or exists(select 1 from teachers t where t.subject_id=c.payload->>'authorSubjectId' and concat(t.first_name,' ',t.last_name) ilike ${`%${input.search}%`}) or exists(select 1 from students s join jsonb_array_elements(c.payload->'changes') change on change->>'studentId'=s.id where concat(s.first_name,' ',s.last_name) ilike ${`%${input.search}%`}))` : sql``}`
     const executor = this.executor()
     const [page, count] = await Promise.all([
-      executor.execute(sql`select c.payload from assessment_marks_corrections c join ${assessments} on ${assessments.id}=c.assessment_id where ${predicate} order by c.id limit ${input.limit} offset ${input.offset}`),
+      executor.execute(sql`select c.payload from assessment_marks_corrections c join ${assessments} on ${assessments.id}=c.assessment_id where ${predicate} order by c.payload->>'createdAt',c.id limit ${input.limit} offset ${input.offset}`),
       executor.execute(sql`select count(*) as total from assessment_marks_corrections c join ${assessments} on ${assessments.id}=c.assessment_id where ${predicate}`),
     ])
     return { items: page.rows.map(row => marksCorrectionSchema.parse(row.payload)), total: Number(count.rows[0]?.total ?? 0) }

@@ -15,6 +15,7 @@ export const REPORT_CARD_PUBLISHED_EVENT_KEY = 'report_card.published'
 export interface ReportCardPublishedPayload {
   result: ReportCardResult
   student: Student
+  revisionId?: string
 }
 
 export async function handleReportCardPublished(
@@ -60,7 +61,7 @@ export async function handleReportCardPublished(
     schoolId: student.schoolId,
     kind: 'event',
     eventKey: REPORT_CARD_PUBLISHED_EVENT_KEY,
-    idempotencyKeyPrefix: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:${result.id}`,
+    idempotencyKeyPrefix: `${REPORT_CARD_PUBLISHED_EVENT_KEY}:${result.id}${payload.revisionId ? `:${payload.revisionId}` : ''}`,
     ...content,
     recipients,
     metadata: {

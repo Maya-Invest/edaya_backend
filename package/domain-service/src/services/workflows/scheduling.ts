@@ -178,6 +178,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     status,
     createdAt,
   }: RecordAttendanceInput): Promise<AttendanceRecord> {
+    if (this.baseService.actor.kind === 'teacher')
+      throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
     return this.baseService.atomicExecution.execute(async () => {
       const lessonSession = await this.requireLessonSession(lessonSessionId)
       const classGroup = await this.requireClassGroup(lessonSession.classGroupId)
@@ -213,6 +215,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     status,
     createdAt,
   }: RecordDailyAttendanceInput): Promise<AttendanceRecord> {
+    if (this.baseService.actor.kind === 'teacher')
+      throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
     return this.baseService.atomicExecution.execute(async () => {
       const classGroup = await this.requireClassGroup(classGroupId)
       this.requireDailyAttendanceMode(classGroup)
@@ -245,6 +249,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceByStudent,
     createdAt,
   }: RecordLessonSessionAttendanceInput): Promise<AttendanceRecord[]> {
+    if (this.baseService.actor.kind === 'teacher')
+      throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
     return this.baseService.atomicExecution.execute(async () => {
       const lessonSession = await this.requireLessonSession(lessonSessionId)
       const classGroup = await this.requireClassGroup(lessonSession.classGroupId)
@@ -282,6 +288,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceByStudent,
     createdAt,
   }: RecordClassDailyAttendanceInput): Promise<AttendanceRecord[]> {
+    if (this.baseService.actor.kind === 'teacher')
+      throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
     return this.baseService.atomicExecution.execute(async () => {
       const classGroup = await this.requireClassGroup(classGroupId)
       this.requireDailyAttendanceMode(classGroup)

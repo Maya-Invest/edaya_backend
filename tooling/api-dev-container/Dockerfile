@@ -11,7 +11,7 @@ COPY apps ./apps
 COPY package ./package
 COPY tooling ./tooling
 
-RUN bun install --frozen-lockfile || bun install
+RUN bun install --frozen-lockfile
 
 COPY tooling/api-dev-container/container.api.env apps/api/.env
 COPY tooling/api-dev-container/container.root.env .env

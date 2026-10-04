@@ -1,4 +1,4 @@
-import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, DecideMarksCorrectionInput, GradeScale, GradeScaleInput, RejectMarksCorrectionInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, RequestMarksCorrectionInput, StudentClassEnrollment } from '@edaya/core'
+import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, AssessmentResultInput, DecideMarksCorrectionInput, GradeScale, GradeScaleInput, RejectMarksCorrectionInput, ReportCardAggregation, ReportCardDefinitionInput, ReportCardDefinitionSection, ReportCardDefinitionSectionInput, RequestMarksCorrectionInput, ReviseMarksCorrectionInput, StudentClassEnrollment } from '@edaya/core'
 import type { ReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -115,6 +115,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     return new MarksReviewWorkflow(this.baseService).transition('submit', input)
   }
 
+  async reviseAssessmentMarksCorrection(input: ReviseMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).revise(input) }
   async requestAssessmentMarksCorrection(input: RequestMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).request(input) }
   async approveAssessmentMarksCorrection(input: DecideMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).decide('approve', input) }
   async rejectAssessmentMarksCorrection(input: RejectMarksCorrectionInput) { return new MarksCorrectionsWorkflow(this.baseService).decide('reject', input) }

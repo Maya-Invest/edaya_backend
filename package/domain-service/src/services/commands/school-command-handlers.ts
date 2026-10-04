@@ -1,4 +1,5 @@
-import type { AttachmentInput, DecideMarksCorrectionInput, RejectMarksCorrectionInput, RequestMarksCorrectionInput, StaffPermissionAssignmentInput } from '@edaya/core'
+import type { appendIncidentFollowUpSchema, AttachmentInput, attendanceArrivalSchema, attendanceCallSchema, DecideMarksCorrectionInput, decideTeacherCorrectionSchema, editTeacherIncidentSchema, RejectMarksCorrectionInput, rejectTeacherCorrectionSchema, RequestMarksCorrectionInput, requestTeacherCorrectionSchema, ReviseMarksCorrectionInput, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StaffPermissionAssignmentInput, takeOverTeacherIncidentSchema, validateTeacherLogbookSchema } from '@edaya/core'
+import type { z } from 'zod'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
@@ -168,6 +169,7 @@ import type {
   UpsertStudentHealthProfileInput,
   WithdrawStudentPhotoSubmissionInput,
 } from '../workflows/student'
+import type { TeacherCorrectionsWorkflow } from '../workflows/teacher-corrections'
 import type {
   GenerateClassGroupTimetableInput,
   GenerateSchoolTimetableInput,
@@ -177,6 +179,7 @@ import type {
 } from '../workflows/timetable-generation'
 
 export interface SchoolWorkflowHandlers {
+  readonly teacherCorrections: TeacherCorrectionsWorkflow
   readonly setup: SetupServiceWorkflow
   readonly accessControl: AccessControlServiceWorkflow
   readonly accountInvitation: AccountInvitationServiceWorkflow
@@ -199,6 +202,19 @@ export type SchoolCommandHandlerMap = {
 
 export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): SchoolCommandHandlerMap {
   return {
+    requestTeacherCorrection: payload => workflows.teacherCorrections.request(payload as z.input<typeof requestTeacherCorrectionSchema>),
+    reviseTeacherCorrection: payload => workflows.teacherCorrections.revise(payload as z.input<typeof reviseTeacherCorrectionSchema>),
+    approveTeacherCorrection: payload => workflows.teacherCorrections.decide('approve', payload as z.input<typeof decideTeacherCorrectionSchema>),
+    rejectTeacherCorrection: payload => workflows.teacherCorrections.decide('reject', payload as z.input<typeof rejectTeacherCorrectionSchema>),
+    withdrawTeacherCorrection: payload => workflows.teacherCorrections.decide('withdraw', payload as z.input<typeof decideTeacherCorrectionSchema>),
+    saveTeacherLogbook: payload => workflows.teacherCorrections.saveLogbook(payload as z.input<typeof saveTeacherLogbookSchema>),
+    validateTeacherLogbook: payload => workflows.teacherCorrections.validateLogbook(payload as z.input<typeof validateTeacherLogbookSchema>),
+    editTeacherIncident: payload => workflows.teacherCorrections.editIncident(payload as z.input<typeof editTeacherIncidentSchema>),
+    takeOverTeacherIncident: payload => workflows.teacherCorrections.takeOverIncident(payload as z.input<typeof takeOverTeacherIncidentSchema>),
+    appendIncidentFollowUp: payload => workflows.teacherCorrections.appendFollowUp(payload as z.input<typeof appendIncidentFollowUpSchema>),
+    saveTeacherAttendanceDraft: payload => workflows.teacherCorrections.attendanceCall('save', payload as z.input<typeof attendanceCallSchema>),
+    submitTeacherAttendance: payload => workflows.teacherCorrections.attendanceCall('submit', payload as z.input<typeof attendanceCallSchema>),
+    recordTeacherAttendanceArrival: payload => workflows.teacherCorrections.recordArrival(payload as z.input<typeof attendanceArrivalSchema>),
     // setup
     registerSchool: payload => workflows.setup.registerSchool(payload as RegisterSchoolInput),
     updateSchoolConfiguration: payload => workflows.setup.updateSchoolConfiguration(payload as UpdateSchoolConfigurationInput),
@@ -260,6 +276,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),
     createAssessment: payload => workflows.assessments.createAssessment(payload as CreateAssessmentInput),
     submitAssessmentMarks: payload => workflows.assessments.submitAssessmentMarks(payload as MarksReviewInput),
+    reviseAssessmentMarksCorrection: payload => workflows.assessments.reviseAssessmentMarksCorrection(payload as ReviseMarksCorrectionInput),
     requestAssessmentMarksCorrection: payload => workflows.assessments.requestAssessmentMarksCorrection(payload as RequestMarksCorrectionInput),
     approveAssessmentMarksCorrection: payload => workflows.assessments.approveAssessmentMarksCorrection(payload as DecideMarksCorrectionInput),
     rejectAssessmentMarksCorrection: payload => workflows.assessments.rejectAssessmentMarksCorrection(payload as RejectMarksCorrectionInput),

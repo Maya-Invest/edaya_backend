@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { ClaimedDurableWork, DocumentIssuance } from '@edaya/core'
 import type { SchoolApplication } from '../../services/school-application'
 import { createSystemActorMetadata } from '@edaya/authorization'
@@ -13,7 +14,9 @@ import {
   resourceAccessScope,
 } from '@edaya/core'
 import { validateAttachmentSave } from '../../services/entities/config/school/attachment'
+import { hydrateReportRevision } from '../academics/report-comment-revisions'
 import { buildStorageKey } from '../files/build-storage-key'
+import { REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../notifications'
 import { DurableWorkFailure, runDurableWorkBatch } from '../scheduling-jobs/durable-work'
 import { assembleDocumentSource, assembleInputFromIssuance } from './assemble-document-source'
 import { documentArtifactFileName } from './document-projection'
@@ -113,6 +116,21 @@ async function bindArtifact(application: Pick<SchoolApplication, 'forActor'>, wo
       failureCode: undefined,
       updatedAt: new Date(),
     }))
+    if (!preview && current.templateKey === 'report-card.v1') {
+      const state = await base.repositories.teacherCorrections.state(work.schoolId, 'report_comments', current.sourceId)
+      if (state?.payload['issuanceId'] === current.id && state.payload['snapshot']) {
+        await base.repositories.teacherCorrections.saveState({ ...state, payload: { ...state.payload, visibleSnapshot: state.payload['snapshot'], documentStatus: 'ready' } })
+        if (current.replacesIssuanceId) {
+          const prior = await base.repositories.documentIssuances.findById(current.replacesIssuanceId)
+          if (prior)
+            await base.repositories.documentIssuances.save(prior.copyWith({ status: DocumentIssuanceStatus.Superseded, replacedByIssuanceId: current.id, updatedAt: new Date() }))
+        }
+        const result = hydrateReportRevision(state.payload['snapshot'])
+        const student = await base.repositories.students.findById(result.studentId)
+        if (student)
+          await runWorkflowNotifications(base, REPORT_CARD_PUBLISHED_EVENT_KEY, { result, student, revisionId: current.id })
+      }
+    }
   }, { lockKeys: [`document-issuance:${issuance.id}`] })
 }
 

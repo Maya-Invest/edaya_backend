@@ -1,6 +1,6 @@
-import type { Permission } from './permission'
 import type { PermissionProfileScopeGrain } from './permission-scopes'
 import { z } from 'zod'
+import { Permission } from './permission'
 import { permissionScope } from './permission-scopes'
 
 const identifier = z.string().trim().min(1)
@@ -34,6 +34,10 @@ export const grantScopesSchema = z.array(grantScopeSchema).min(1).superRefine((s
 export function validatePermissionScopes(permission: Permission, scopes: readonly GrantScope[]): void {
   const parsed = grantScopesSchema.parse(scopes)
   const grain = permissionScope(permission)
+  // Existing school-wide grants stay valid; reviewers may also be delegated a narrower class scope.
+  const reviewPermission = [Permission.ATTENDANCE_VALIDATE, Permission.CLASS_LOGBOOK_VALIDATE, Permission.DISCIPLINE_VALIDATE, Permission.REPORT_CARD_PUBLISH].includes(permission)
+  if (reviewPermission && parsed.every(scope => scope.kind === 'school' || scope.kind === 'class_group' || (scope.kind === 'all' && scope.grain === 'class_group')))
+    return
   if (grain === 'platform')
     throw new Error('Platform actions cannot be delegated through staff grants')
   if (parsed.some(scope => grain === undefined ? scope.kind !== 'school' : (scope.kind === 'all' ? scope.grain !== grain : scope.kind !== grain)))

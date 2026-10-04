@@ -2,6 +2,7 @@ import { AuthorizationError, createTeacherActorMetadata } from '@edaya/authoriza
 import { AttendanceStatus, LessonSession, noOpNotificationGateway, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { testFileStorage } from '../../support/test-file-storage'
 
@@ -16,7 +17,7 @@ describe('teacher attendance and logbook writes use current subject and homeroom
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
-    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    service = new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, commandJournal: new PostgresCommandJournal(), notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     lesson = new LessonSession({ id: 'lesson', schoolId: 'school-a', classGroupId: 'class-a', classSubjectId: 'math-a', displayLabel: 'Math', startsAt, endsAt })
     await fixture.repositories.lessonSessions.save(lesson)
   })
@@ -24,19 +25,22 @@ describe('teacher attendance and logbook writes use current subject and homeroom
     await fixture.db.close()
   })
 
-  test('subject teacher records lesson attendance, but unrelated students and removed assignments are denied', async () => {
-    const input = { id: 'attendance', studentId: 'student-a', lessonSessionId: 'lesson', status: AttendanceStatus.Present }
-    expect((await service.schedulingWorkflow.recordAttendance(input)).lessonSessionId).toBe('lesson')
-    await expect(service.schedulingWorkflow.recordAttendance({ ...input, id: 'other', studentId: 'student-other' })).rejects.toThrow()
-    await fixture.repositories.teacherAssignments.delete('teaching')
-    await expect(service.schedulingWorkflow.recordAttendance({ ...input, id: 'revoked' })).rejects.toBeInstanceOf(AuthorizationError)
+  test('subject teacher submits a private complete call; unrelated students and removed assignments are denied', async () => {
+    const input = { requestId: 'draft', expectedVersion: 0, anchor: { kind: 'lesson' as const, lessonSessionId: 'lesson' }, entries: [{ studentId: 'student-a', status: 'present' as const }] }
+    await service.teacherCorrectionsWorkflow.attendanceCall('save', input)
+    expect(await fixture.repositories.attendance.count()).toBe(0)
+    await expect(service.schedulingWorkflow.recordAttendance({ id: 'legacy', studentId: 'student-a', lessonSessionId: 'lesson', status: AttendanceStatus.Present })).rejects.toMatchObject({ code: 'ATTENDANCE_CALL_COMMAND_REQUIRED' })
+    await expect(service.teacherCorrectionsWorkflow.attendanceCall('save', { ...input, requestId: 'other', expectedVersion: 1, entries: [{ studentId: 'student-other', status: 'present' }] })).rejects.toBeInstanceOf(AuthorizationError)
+    await service.teacherCorrectionsWorkflow.attendanceCall('submit', { ...input, requestId: 'finish', expectedVersion: 1 })
     expect(await fixture.repositories.attendance.count()).toBe(1)
+    await fixture.repositories.teacherAssignments.delete('teaching')
+    await expect(service.getTeacherAttendanceCall({ anchor: input.anchor })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('homeroom assignment cannot record subject lesson attendance', async () => {
+  test('homeroom assignment cannot submit subject lesson attendance', async () => {
     await fixture.repositories.teacherAssignments.delete('teaching')
     await fixture.repositories.teacherAssignments.save(new TeacherAssignment({ id: 'homeroom', teacherId: 'teacher-a', academicYearId: 'year-a', classGroupId: 'class-a', kind: TeacherAssignmentKind.Homeroom }))
-    await expect(service.schedulingWorkflow.recordAttendance({ id: 'attendance', studentId: 'student-a', lessonSessionId: 'lesson', status: AttendanceStatus.Present })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.teacherCorrectionsWorkflow.attendanceCall('submit', { requestId: 'denied', expectedVersion: 0, anchor: { kind: 'lesson', lessonSessionId: 'lesson' }, entries: [{ studentId: 'student-a', status: 'present' }] })).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.attendance.count()).toBe(0)
   })
 

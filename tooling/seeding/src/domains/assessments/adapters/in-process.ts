@@ -79,7 +79,7 @@ export function createInProcessAssessmentsSeedPort(
       const mark = (await teacher.getAssessmentMarksReview({ assessmentId })).results[0]
       if (!mark)
         throw new Error('Seed correction requires a mark')
-      const correction = await teacher.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: `seed-correction:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision, reason: 'Verify the recorded mark comment', changes: [{ resultId: mark.id, proposed: { score: mark.score ?? null, designation: mark.designation ?? 'scored', notes: 'Comment checked against the original assessment' } }] })
+      const correction = await teacher.assessmentsWorkflow.requestAssessmentMarksCorrection({ requestId: `seed-correction:${assessmentId}`, assessmentId, expectedRevision: submitted.marksRevision, reason: 'Verify the recorded mark comment', changes: [{ resultId: mark.id, proposed: { score: mark.score ?? null, designation: mark.designation ?? 'scored', status: mark.status ?? null, notes: 'Comment checked against the original assessment' } }] })
       if (state === 'correction-pending')
         return
       const context = resolveDevSeedContext()

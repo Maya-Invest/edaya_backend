@@ -42,7 +42,7 @@ function localeTag(locale: DocumentLocale): string {
   return locale === 'en' ? 'en-GB' : 'fr-FR'
 }
 
-export async function assembleDocumentSource(base: DocumentAssemblyContext<'academicPeriods' | 'academicYears' | 'allocations' | 'classGroups' | 'enrollments' | 'incidents' | 'lessonSessions' | 'payments' | 'results' | 'schools' | 'studentCharges' | 'studentIncidentInvolvements' | 'studentYearAccounts' | 'students' | 'teachers', 'logbooks' | 'reportCards'>, input: AssembleDocumentInput): Promise<AssembledDocumentSource> {
+export async function assembleDocumentSource(base: DocumentAssemblyContext<'documentIssuances' | 'teacherCorrections' | 'academicPeriods' | 'academicYears' | 'allocations' | 'classGroups' | 'enrollments' | 'incidents' | 'lessonSessions' | 'payments' | 'results' | 'schools' | 'studentCharges' | 'studentIncidentInvolvements' | 'studentYearAccounts' | 'students' | 'teachers', 'logbooks' | 'reportCards'>, input: AssembleDocumentInput): Promise<AssembledDocumentSource> {
   const catalog = getDocumentTemplateCatalogEntry(input.templateKey)
   if (!catalog.locales.includes(input.locale))
     fail(DOCUMENT_FAILURES.LOCALE_UNSUPPORTED, `Locale ${input.locale} is not admitted for ${input.templateKey}`)

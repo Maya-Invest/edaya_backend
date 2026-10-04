@@ -6,5 +6,5 @@ export interface MarksCorrectionsPort {
   save: (correction: MarksCorrection) => Promise<void>
   forAssessment: (schoolId: string, assessmentId: string) => Promise<MarksCorrection[]>
   pendingForMarks: (schoolId: string, resultIds: readonly string[]) => Promise<string[]>
-  list: (scope: ResourceAccessScope, input: { status?: MarksCorrection['status'], classGroupId?: string, periodId?: string, offset: number, limit: number }) => Promise<{ items: MarksCorrection[], total: number }>
+  list: (scope: ResourceAccessScope, input: { status?: MarksCorrection['status'], classGroupId?: string, periodId?: string, teacherSubjectId?: string, studentId?: string, search?: string, from?: Date, to?: Date, offset: number, limit: number }) => Promise<{ items: MarksCorrection[], total: number }>
 }

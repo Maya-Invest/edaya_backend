@@ -48,7 +48,7 @@ export async function signInSeedAccount(client: HttpSeedClient, email: string): 
     else {
       const peek = await client.request('/auth/edaya/testing/otp', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge }) })
       if (!peek.ok)
-        throw new Error('Local seed requires captured delivery or the dedicated Identity dev:test server')
+        throw new Error('Local seed requires captured delivery or the unified API fixture server')
       otp = (await peek.json() as { otp: string }).otp
     }
     response = await client.request('/auth/edaya/otp/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ challenge, code: otp }) })

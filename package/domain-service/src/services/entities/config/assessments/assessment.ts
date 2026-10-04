@@ -42,8 +42,7 @@ async function validateAssessmentSave(
     throw new BusinessRuleViolationError('MARKS_STATE_COMMAND_REQUIRED', 'Marks review state is managed by review commands')
   }
   if (existing && existing.marksStatus !== 'draft') {
-    const scoringFields = ['classGroupId', 'classSubjectId', 'periodId', 'kind', 'maxScore', 'coefficient', 'lessonSessionId', 'startsAt', 'endsAt', 'dueAt'] as const
-    if (scoringFields.some(field => JSON.stringify(existing.data[field]) !== JSON.stringify(assessment.data[field])))
+    if (JSON.stringify(existing.data) !== JSON.stringify(assessment.data))
       assertMarksDraft(existing)
   }
   const [classGroup, classSubject, period, lessonSession] = await Promise.all([

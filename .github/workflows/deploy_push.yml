@@ -44,9 +44,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  actions: write
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
   verify:
@@ -54,9 +52,35 @@ jobs:
     uses: ./.github/workflows/_verify.yml
     secrets: inherit
 
+  integration:
+    if: (github.event_name == 'push' && github.ref_name == 'main') || (github.event_name == 'workflow_dispatch' && inputs.channel == 'production')
+    uses: ./.github/workflows/_integration.yml
+
+  qualification:
+    name: Full validation
+    needs: [gate, verify, integration]
+    if: always() && ((github.event_name == 'push' && github.ref_name == 'main') || (github.event_name == 'workflow_dispatch' && inputs.channel == 'production'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GATE_RESULT: ${{ needs.gate.result }}
+      VERIFY_RESULT: ${{ needs.verify.result }}
+      INTEGRATION_RESULT: ${{ needs.integration.result }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Require every qualification job to succeed
+        run: python3 .github/scripts/ci_support.py gate gate="$GATE_RESULT" verify="$VERIFY_RESULT" integration="$INTEGRATION_RESULT"
+
   gate:
     if: github.event_name != 'workflow_dispatch' || inputs.channel != 'staging'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     outputs:
       channel: ${{ steps.plan.outputs.channel }}
       run_migrate: ${{ steps.plan.outputs.run_migrate }}
@@ -65,7 +89,7 @@ jobs:
       migrate_target: ${{ steps.plan.outputs.migrate_target }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Reject validation outside staging
         if: github.event_name == 'workflow_dispatch' && inputs.validate_only
@@ -74,20 +98,23 @@ jobs:
           exit 1
 
       - name: Detect deploy changes
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         if: github.event_name == 'push'
         with:
           filters: |
             api_deploy:
               - apps/api/**
-              - tooling/repo/db/identity/**
+              - tooling/repo/**
+              - scripts/**
+              - release-contract.json
               - package/**
               - package.json
               - bun.lock
               - turbo.json
               - .github/workflows/**
               - .github/actions/**
+              - .github/scripts/**
             api_dev_image:
               - .dockerignore
               - apps/**
@@ -126,34 +153,38 @@ jobs:
           echo "migrate_target=${MIGRATE_TARGET}" >> "$GITHUB_OUTPUT"
 
   migrate:
-    needs: [gate, verify]
+    needs: [gate, qualification]
     if: needs.gate.outputs.channel == 'production' && needs.gate.outputs.run_migrate == 'true'
     uses: ./.github/workflows/_migrate.yml
     with:
       migrate_target: ${{ needs.gate.outputs.migrate_target }}
     secrets:
-      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
       PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
-      IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
 
   publish-api-dev-image:
-    needs: [gate, verify]
+    permissions:
+      contents: read
+      packages: write
+    needs: [gate, qualification]
     if: needs.gate.outputs.channel == 'production' && needs.gate.outputs.run_publish_api_dev == 'true'
     uses: ./.github/workflows/_publish-api-dev-image.yml
     secrets: inherit
 
   publish-api-client:
-    needs: [gate, verify]
+    permissions:
+      contents: read
+      packages: write
+    needs: [gate, qualification]
     if: needs.gate.outputs.channel == 'production'
     uses: ./.github/workflows/_publish-api-client.yml
     secrets: inherit
 
   deploy-api:
-    needs: [gate, verify, migrate]
+    needs: [gate, qualification, migrate]
     if: >-
       always() &&
-      needs.verify.result == 'success' &&
+      needs.qualification.result == 'success' &&
       needs.gate.outputs.channel == 'production' &&
       needs.gate.outputs.deploy_api == 'true' &&
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
@@ -162,9 +193,12 @@ jobs:
       channel: ${{ needs.gate.outputs.channel }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
 
   staging-release:
+    permissions:
+      actions: read
+      contents: read
+      packages: write
     if: github.event_name == 'workflow_dispatch' && inputs.channel == 'staging'
     uses: ./.github/workflows/release-staging.yml
     with:

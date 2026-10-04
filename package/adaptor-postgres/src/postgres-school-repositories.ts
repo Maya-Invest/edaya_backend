@@ -22,10 +22,12 @@ import { PostgresS2sClientStore } from './stores/s2s-client-store'
 import { PostgresSchoolNotificationTemplatesStore } from './stores/school-notification-templates-store'
 import { PostgresServiceApiKeyStore } from './stores/service-api-key-store'
 import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permission-assignment-store'
+import { PostgresTeacherCorrections } from './stores/teacher-corrections-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly financeProjections: PostgresFinanceProjections
   public readonly dashboardProjections: PostgresDashboardProjections
+  public readonly teacherCorrections: PostgresTeacherCorrections
   public readonly marksCorrections: PostgresMarksCorrections
   public readonly assessmentDependencies: PostgresAssessmentDependencies
   public readonly privateFiles: PostgresPrivateFileLifecycleStore
@@ -112,6 +114,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.db = db
     this.financeProjections = new PostgresFinanceProjections(db)
     this.dashboardProjections = new PostgresDashboardProjections(db)
+    this.teacherCorrections = new PostgresTeacherCorrections(db)
     this.marksCorrections = new PostgresMarksCorrections(db)
     this.assessmentDependencies = new PostgresAssessmentDependencies(db)
     this.privateFiles = new PostgresPrivateFileLifecycleStore(db)

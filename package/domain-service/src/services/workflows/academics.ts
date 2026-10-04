@@ -4,8 +4,9 @@ import type { AcademicsWorkflowRepositories } from '../runtime/workflow-reposito
 import type { SyncClassSubjectOptions } from './grade-level-subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
 import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
-
 import { academicStateLock } from '../../capabilities/academics/marks-state'
+
+import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
 import { assertClassSubjectGradingMutable } from '../entities/config/academics/class-subject'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -319,6 +320,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     recordedAt,
   }: RecordLessonSessionProgressInput): Promise<ClassSubjectProgress> {
     return this.baseService.atomicExecution.execute(async () => {
+      await assertTeacherWorkflowWrite(this.baseService.actor, 'classSubjectProgress', { lessonSessionId }, undefined, this.baseService.repositories)
       const matter = await this.requireClassSubjectMatter(classSubjectMatterId)
       const classSubject = await this.requireClassSubject(matter.classSubjectId)
       const lessonSession = await this.repositories.lessonSessions.findById(lessonSessionId)
@@ -370,7 +372,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
       await this.repositories.classSubjectMatters.forAccess(scopes.matter).save(updatedMatter)
       await this.repositories.classSubjects.forAccess(scopes.subject).save(updatedSubject)
       return snapshot
-    })
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   private async requireGradeLevelSubject(gradeLevelSubjectId: string): Promise<GradeLevelSubject> {

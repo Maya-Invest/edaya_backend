@@ -12,3 +12,5 @@ export * from './school-notification-templates-repository'
 export * from './school-repositories'
 
 export * from './service-api-key-repository'
+
+export * from './teacher-corrections'

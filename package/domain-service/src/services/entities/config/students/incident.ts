@@ -13,6 +13,7 @@ export const incidentConfig: EntityConfigFactory<Incident> = ({ repositories, at
     repository: repositories.incidents,
     tenant: directSchoolTenant(),
     resource: 'incidents',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateIncidentSave,

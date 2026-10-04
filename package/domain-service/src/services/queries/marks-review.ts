@@ -8,6 +8,11 @@ export interface MarksQueueInput {
   status?: MarksCorrection['status']
   classGroupId?: string
   periodId?: string
+  teacherSubjectId?: string
+  studentId?: string
+  search?: string
+  from?: Date
+  to?: Date
   offset?: number
   limit?: number
 }
@@ -68,7 +73,7 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
     corrections,
     allowedActions: {
       submit: assessment.marksStatus === 'draft' && roster.length > 0 && !missingStudentIds.length && editable,
-      requestCorrection: assessment.marksStatus === 'submitted' && !history.some(row => row.status === 'pending') && results.some(row => !published.has(row.id)) && editable,
+      requestCorrection: assessment.marksStatus === 'submitted' && results.some(row => !published.has(row.id) && !history.some(correction => correction.status === 'pending' && correction.changes.some(change => change.resultId === row.id))) && editable,
     },
   }
 }

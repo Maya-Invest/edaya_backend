@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { zodDate } from '../shared/utils'
+import { DeadlineComplianceStatus } from './assessment-result'
 
 export const marksStatusSchema = z.enum(['draft', 'submitted'])
 export type MarksStatus = z.infer<typeof marksStatusSchema>
@@ -23,6 +24,7 @@ export const markCorrectionValuesSchema = z.object({
   score: z.number().finite().nonnegative().nullable(),
   designation: z.enum(['scored', 'absent', 'exempt']),
   notes: z.string().trim().min(1).nullable(),
+  status: z.nativeEnum(DeadlineComplianceStatus).nullable().optional(),
 }).strict()
 export const requestMarksCorrectionSchema = z.object({
   requestId: z.string().trim().min(1).max(200),
@@ -48,6 +50,7 @@ export const marksCorrectionSchema = z.object({
   reason: z.string(),
   createdAt: zodDate(),
   changes: z.array(z.object({ resultId: z.string(), studentId: z.string(), revision: z.number().int().nonnegative(), before: markCorrectionValuesSchema, proposed: markCorrectionValuesSchema })),
+  revisions: z.array(z.object({ version: z.number().int().nonnegative(), reason: z.string(), changes: z.array(z.object({ resultId: z.string(), studentId: z.string(), revision: z.number().int().nonnegative(), before: markCorrectionValuesSchema, proposed: markCorrectionValuesSchema })), at: zodDate() })).default([]),
   decidedBy: z.string().optional(),
   decidedAt: zodDate().optional(),
   rejectionReason: z.string().optional(),
@@ -56,3 +59,6 @@ export type MarksCorrection = z.infer<typeof marksCorrectionSchema>
 export type RequestMarksCorrectionInput = z.infer<typeof requestMarksCorrectionSchema>
 export type DecideMarksCorrectionInput = z.infer<typeof decideMarksCorrectionSchema>
 export type RejectMarksCorrectionInput = z.infer<typeof rejectMarksCorrectionSchema>
+
+export const reviseMarksCorrectionSchema = requestMarksCorrectionSchema.extend({ correctionId: z.string().min(1), expectedVersion: z.number().int().nonnegative() })
+export type ReviseMarksCorrectionInput = z.infer<typeof reviseMarksCorrectionSchema>

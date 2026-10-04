@@ -23,6 +23,7 @@ export interface PersistRequestedIssuanceInput {
   assembled: AssembledDocumentSource
   preview?: boolean
   replacesIssuanceId?: string
+  deferReplacement?: boolean
 }
 
 export function documentNumberLockKey(schoolId: string, kind: string, academicYearId: string): string {
@@ -102,7 +103,7 @@ export async function persistRequestedIssuance(base: BaseSchoolService, input: P
   })
   await store.save(issuance)
   await retainIssuanceSnapshotAssets(base, issuance.id, issuance.snapshot)
-  if (input.replacesIssuanceId) {
+  if (input.replacesIssuanceId && !input.deferReplacement) {
     const prior = await store.findById(input.replacesIssuanceId)
     if (prior)
       await store.save(prior.copyWith({ status: DocumentIssuanceStatus.Superseded, replacedByIssuanceId: issuance.id, updatedAt: new Date() }))

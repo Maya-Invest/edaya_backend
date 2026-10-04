@@ -58,6 +58,7 @@ import {
   teacherResponseSchema,
 } from "./entities";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
+import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
 const familyFeedbackCampaignCommandResponseSchema = z.object({
   id: z.string().min(1),
@@ -365,6 +366,20 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   createReportCardDefinitionSection: sectionResponseSchema,
   createAssessment: assessmentResponseSchema,
   submitAssessmentMarks: assessmentResponseSchema,
+  saveTeacherAttendanceDraft: teacherWorkflowStateResponseSchema,
+  submitTeacherAttendance: teacherWorkflowStateResponseSchema,
+  recordTeacherAttendanceArrival: teacherWorkflowStateResponseSchema,
+  requestTeacherCorrection: teacherCorrectionResponseSchema,
+  reviseTeacherCorrection: teacherCorrectionResponseSchema,
+  approveTeacherCorrection: teacherCorrectionResponseSchema,
+  rejectTeacherCorrection: teacherCorrectionResponseSchema,
+  withdrawTeacherCorrection: teacherCorrectionResponseSchema,
+  saveTeacherLogbook: teacherWorkflowStateResponseSchema,
+  validateTeacherLogbook: teacherWorkflowStateListResponseSchema,
+  editTeacherIncident: teacherWorkflowStateResponseSchema,
+  takeOverTeacherIncident: teacherWorkflowStateResponseSchema,
+  appendIncidentFollowUp: teacherWorkflowStateResponseSchema,
+  reviseAssessmentMarksCorrection: marksCorrectionResponseSchema,
   requestAssessmentMarksCorrection: marksCorrectionResponseSchema,
   approveAssessmentMarksCorrection: marksCorrectionResponseSchema,
   rejectAssessmentMarksCorrection: marksCorrectionResponseSchema,

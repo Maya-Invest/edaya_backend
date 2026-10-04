@@ -22,6 +22,7 @@ import { NotificationDeliveryAccessPolicy } from './notification-delivery-polici
 import { SCHOOL_OWNER_ACTIONS } from './owner-authority'
 import { familyPolicy, teacherPolicy } from './portal-policies'
 import { ReportCardAccessPolicy } from './report-card-policies'
+import { TeacherCorrectionsAccessPolicy } from './teacher-corrections-policies'
 
 export type ActionSelection = Permission | readonly Permission[]
 const knownActions = new Set<string>(Object.values(P))
@@ -357,9 +358,15 @@ export class AccessPolicies {
   }
 
   private async assertTeacherComments(after: CoreEntityMap['results'], before: CoreEntityMap['results']): Promise<void> {
-    const facts = this.facts()
-    const teaching = await facts.teaching()
     assertDraftReportCardForTeacherComment(before)
+    await this.assertReportCommentProposal(after, before)
+  }
+
+  async assertReportCommentProposal(after: CoreEntityMap['results'], before: CoreEntityMap['results']): Promise<void> {
+    await this.assertResources(P.REPORT_CARD_PUBLISH, 'results', [before.id])
+    if (this.actor.kind !== 'teacher')
+      return
+    const teaching = await this.facts().teaching()
     assertCommentOnlyReportCardUpdate(before, after)
     for (const change of collectCommentChanges(before, after)) {
       if (change.kind === 'subject') {
@@ -434,6 +441,7 @@ export class AccessPolicies {
     },
   }
 
+  readonly teacherCorrections = new TeacherCorrectionsAccessPolicy(this)
   readonly discipline = new DisciplineAccessPolicy(this)
 
   async assertIntegrationCaller(systemIds: readonly string[]): Promise<void> {

@@ -256,6 +256,14 @@ export function createCoreQueryResolver(queryConfig: CoreQueryConfig) {
       return service.getTeacherFamilyFeedbackResult({ id: payload.id as string });
     }
 
+    if (queryConfig.methodName === "getTeacherCorrection")
+      return await service.getTeacherCorrection(payload as unknown as Parameters<typeof service.getTeacherCorrection>[0]);
+    if (queryConfig.methodName === "listTeacherCorrections")
+      return await service.listTeacherCorrections(payload as unknown as Parameters<typeof service.listTeacherCorrections>[0]);
+    if (queryConfig.methodName === "getTeacherAttendanceCall")
+      return await service.getTeacherAttendanceCall(payload as unknown as Parameters<typeof service.getTeacherAttendanceCall>[0]);
+    if (queryConfig.methodName === "getTeacherWorkflowState")
+      return await service.getTeacherWorkflowState(payload as unknown as Parameters<typeof service.getTeacherWorkflowState>[0]);
     const count = await service[queryConfig.methodName](payload.schoolId as string);
     return { count };
   });

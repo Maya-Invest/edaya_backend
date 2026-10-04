@@ -1,14 +1,14 @@
 import type { AppShellCounts, ClassGroupTimetable, GetAppShellCountsInput, GetClassGroupTimetableInput, GetSchoolOverviewInput, GetTeacherTimetableInput, ResolveTimetableSpaceInput, TeacherTimetable } from "@edaya/service";
+import type { SchoolApiRoutePair } from "./shared";
 import type { AppRouteHandler } from "@/http/types";
-import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
-import { coreQueries } from "@/lib/school-api/registry";
-import { queryRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { createRoute } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
-import { coreRouteErrorResponses, validatedJson } from "./shared";
-import type { SchoolApiRoutePair } from "./shared";
+import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
+import { queryRouteOperation } from "@/lib/school-api/openapi/client-extensions";
+import { coreQueries } from "@/lib/school-api/registry";
 import { schoolApiPath } from "./paths";
+import { coreRouteErrorResponses, validatedJson } from "./shared";
 
 export function buildQueryRoutes(): SchoolApiRoutePair[] {
   const pairs: SchoolApiRoutePair[] = [];
@@ -265,6 +265,14 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(await service.getTeacherFamilyFeedbackResult({ id: payload.id as string }) as never, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getTeacherCorrection")
+          return c.json(await service.getTeacherCorrection(payload as unknown as Parameters<typeof service.getTeacherCorrection>[0]) as never, HttpStatusCodes.OK);
+        if (queryConfig.methodName === "listTeacherCorrections")
+          return c.json(await service.listTeacherCorrections(payload as unknown as Parameters<typeof service.listTeacherCorrections>[0]) as never, HttpStatusCodes.OK);
+        if (queryConfig.methodName === "getTeacherAttendanceCall")
+          return c.json(await service.getTeacherAttendanceCall(payload as unknown as Parameters<typeof service.getTeacherAttendanceCall>[0]) as never, HttpStatusCodes.OK);
+        if (queryConfig.methodName === "getTeacherWorkflowState")
+          return c.json(await service.getTeacherWorkflowState(payload as unknown as Parameters<typeof service.getTeacherWorkflowState>[0]) as never, HttpStatusCodes.OK);
         const count = await service[queryConfig.methodName](payload.schoolId as string);
         return c.json({ count }, HttpStatusCodes.OK);
       }

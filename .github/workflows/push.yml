@@ -2,9 +2,7 @@ name: Branch push
 
 on:
   push:
-    branches-ignore:
-      - main
-      - staging
+    branches-ignore: [main, staging]
   workflow_dispatch:
 
 concurrency:
@@ -12,18 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  actions: write
-  contents: write
-  packages: write
+  contents: read
 
-  
 jobs:
   verify:
     uses: ./.github/workflows/_verify.yml
-    secrets: inherit
-
-  publish-api-client:
-    needs: verify
-    if: github.ref_name != 'staging'
-    uses: ./.github/workflows/_publish-api-client.yml
-    secrets: inherit

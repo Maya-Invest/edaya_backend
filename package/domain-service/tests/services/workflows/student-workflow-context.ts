@@ -1,13 +1,13 @@
-import type { NotificationGatewayPort } from '@edaya/core'
-import { AcademicYear, ClassGroup, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
+import type { DocumentRendererPort, NotificationGatewayPort } from '@edaya/core'
+import { AcademicYear, ClassGroup, createInMemoryFileStorage, EnrollmentEndReason, GradeLevel, Guardian, GuardianStudentLink, noOpNotificationGateway, School, Student, StudentClassEnrollment, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 import { testFileStorage } from '../../support/test-file-storage'
 
-export async function createStudentTransitionContext({ activeEnrollmentId = 'enr1', existingEnrollmentClassGroupId = 'cg1', studentStatus = StudentStatus.Active, nextClassGroupId = 'cg2', sourceGradeOrder = 1, nextGradeOrder = 2, targetCapacity = 30, targetActiveEnrollmentCount = 0, existingSuccessor = false, notificationGateway = noOpNotificationGateway }: { notificationGateway?: NotificationGatewayPort, activeEnrollmentId?: string, existingEnrollmentClassGroupId?: string, studentStatus?: StudentStatus, nextClassGroupId?: string, sourceGradeOrder?: number, nextGradeOrder?: number, targetCapacity?: number, targetActiveEnrollmentCount?: number, existingSuccessor?: boolean } = {}) {
+export async function createStudentTransitionContext({ activeEnrollmentId = 'enr1', existingEnrollmentClassGroupId = 'cg1', studentStatus = StudentStatus.Active, nextClassGroupId = 'cg2', sourceGradeOrder = 1, nextGradeOrder = 2, targetCapacity = 30, targetActiveEnrollmentCount = 0, existingSuccessor = false, notificationGateway = noOpNotificationGateway, documentRenderer }: { documentRenderer?: DocumentRendererPort, notificationGateway?: NotificationGatewayPort, activeEnrollmentId?: string, existingEnrollmentClassGroupId?: string, studentStatus?: StudentStatus, nextClassGroupId?: string, sourceGradeOrder?: number, nextGradeOrder?: number, targetCapacity?: number, targetActiveEnrollmentCount?: number, existingSuccessor?: boolean } = {}) {
   const actor = createTestStaffActor('sch1', 'user1')
-  const fixture = await createTestApp(actor, { owner: true, notificationGateway })
+  const fixture = await createTestApp(actor, { owner: true, notificationGateway, documentRenderer, ...(documentRenderer ? { fileStorage: createInMemoryFileStorage() } : {}) })
   const repositories = fixture.schoolRepositories
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Current', startDate: new Date('2025-09-01'), endDate: new Date('2026-06-30'), status: 'published' }))
   await repositories.academicYears.save(new AcademicYear({ id: 'ay2', schoolId: 'sch1', name: 'Next', startDate: new Date('2026-07-01'), endDate: new Date('2027-06-30') }))

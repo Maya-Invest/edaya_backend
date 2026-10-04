@@ -1,5 +1,6 @@
 export * from './schema/academics'
 export * from './schema/assessments'
+export * from './schema/corrections'
 export * from './schema/documents'
 export * from './schema/family-feedback'
 export * from './schema/finances'

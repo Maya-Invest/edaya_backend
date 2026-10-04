@@ -8,7 +8,7 @@ import { candidateRepositories, candidateCommits, assertReleaseMutationAllowed }
 import { clientName, publicationStatus, candidatePublicationRecord } from "./client-publication.mjs";
 import { recordClient } from "./record-client.mjs";
 import { reusableApks } from "./staging-apk-provenance.mjs";
-import { validateConfiguration, runPreflight } from "./staging-preflight.mjs";
+import { validateConfiguration, runPreflight, configurationPreflight } from "./staging-preflight.mjs";
 import { staging } from "./staging-target.mjs";
 const temps = [];
 const temporary = () => { const path = mkdtempSync(resolve(tmpdir(), "edaya-release-test-")); temps.push(path); return path; };
@@ -118,8 +118,11 @@ describe("validation cannot mutate staging", () => {
     expect(workflow.match(/validate_only:/g)).toHaveLength(2);
     for (const name of ["Publish or reuse matching API client", "Deploy, bootstrap, smoke-test, and observe staging"]) expect(workflow).toContain(`- name: ${name}\n        if: \${{ !inputs.validate_only }}`);
     expect(readFileSync(resolve(import.meta.dir, "../workflows/deploy_push.yml"), "utf8")).toContain("validate_only: ${{ inputs.validate_only }}");
-    expect(readFileSync(resolve(import.meta.dir, "../workflows/deploy_push.yml"), "utf8")).toContain("publish-api-client:\n    needs: [gate, verify]\n    if: needs.gate.outputs.channel == 'production'");
-    expect(readFileSync(resolve(import.meta.dir, "../workflows/push.yml"), "utf8")).toContain("publish-api-client:\n    needs: verify\n    if: github.ref_name != 'staging'");
+    const dispatch = Bun.YAML.parse(readFileSync(resolve(import.meta.dir, "../workflows/deploy_push.yml"), "utf8"));
+    expect(dispatch.jobs["publish-api-client"].needs).toContain("qualification");
+    expect(dispatch.jobs["publish-api-client"].if).toContain("'production'");
+    expect(dispatch.jobs.qualification.needs).toEqual(["gate", "verify", "integration"]);
+    expect(readFileSync(resolve(import.meta.dir, "../workflows/push.yml"), "utf8")).not.toContain("publish-api-client:");
   });
 });
 
@@ -196,4 +199,15 @@ test('unclaimed Custom Domain is eligible while scheme and wildcard routes owned
     if (pattern) await expect(action).rejects.toThrow('Cloudflare.apiDomain: verification failed');
     else expect((await action).checked).toContain('Cloudflare.apiDomain');
   }
+});
+
+test('configuration failures preserve sanitized evidence before consumer checkouts or toolchains exist', () => {
+  const root = temporary();
+  expect(() => configurationPreflight({ RELEASE_ROOT: root, STAGING_API_SECRETS: '{"private":"never-upload-this"}' })).toThrow('STAGING_AUTH_DATABASE_URL');
+  const evidence = readFileSync(resolve(root, 'release/preflight.json'), 'utf8');
+  const report = JSON.parse(evidence);
+  expect(report.phase).toBe('configuration');
+  expect(report.status).toBe('blocked');
+  expect(evidence).not.toContain('never-upload-this');
+  expect(evidence).not.toContain('private-token');
 });

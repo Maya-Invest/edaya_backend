@@ -1,6 +1,7 @@
 export * from './academics'
 export * from './access'
 export * from './assessments'
+export * from './corrections'
 export * from './documents'
 export * from './family-feedback'
 export * from './finances'
@@ -12,4 +13,5 @@ export * from './school'
 export * from './school-life'
 export * from './shared'
 export * from './students'
+
 export * from './value-objects'

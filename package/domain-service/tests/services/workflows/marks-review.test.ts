@@ -218,6 +218,30 @@ describe('evaluation marks review', () => {
     expect((await f.service.getAssessmentMarksReview({ assessmentId: 'ass1' })).corrections.map(row => row.status).sort()).toEqual(['rejected', 'withdrawn'])
   })
 
+  test('independent student requests can be revised and approved without blocking each other', async () => {
+    const f = await fixture()
+    const assessment = (await f.repositories.assessments.findById('ass1'))!
+    await f.repositories.assessments.save(new Assessment({ ...assessment.data, kind: AssessmentKind.Homework, dueAt: assessment.startsAt, startsAt: undefined, endsAt: undefined }))
+    const student = (await f.repositories.students.findById('stu1'))!
+    const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
+    await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
+    await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+    await f.edit()
+    await f.service.assessmentsWorkflow.recordAssessmentResult({ requestId: 'second-mark', expectedRevision: 1, id: 'ar2', studentId: 'stu2', assessmentId: 'ass1', score: 65 })
+    await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit-two', expectedRevision: 2 })
+    const first = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...correctionInput(), expectedRevision: 3 })
+    const second = await f.service.assessmentsWorkflow.requestAssessmentMarksCorrection({ ...correctionInput(), requestId: 'second-request', expectedRevision: 3, changes: [{ resultId: 'ar2', proposed: { score: 70, designation: 'scored', notes: null, status: DeadlineComplianceStatus.Late } }] })
+    const revised = await f.service.assessmentsWorkflow.reviseAssessmentMarksCorrection({ ...correctionInput(88), requestId: 'revise-first', expectedRevision: 3, correctionId: first.id, expectedVersion: 0 })
+    expect(revised.revisions).toHaveLength(1)
+    expect(revised.revisions[0]!.changes[0]!.proposed.score).toBe(85)
+    await expect(f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'stale-review', correctionId: first.id, expectedVersion: 0 })).rejects.toMatchObject({ code: 'MARKS_CORRECTION_VERSION_CONFLICT' })
+    await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'approve-first', correctionId: first.id, expectedVersion: revised.version })
+    await f.reviewer.assessmentsWorkflow.approveAssessmentMarksCorrection({ requestId: 'approve-second', correctionId: second.id, expectedVersion: second.version })
+    expect((await f.repositories.assessmentResults.findById('ar1'))!.score).toBe(88)
+    expect((await f.repositories.assessmentResults.findById('ar2'))!.score).toBe(70)
+    expect((await f.repositories.assessmentResults.findById('ar2'))!.status).toBe(DeadlineComplianceStatus.Late)
+  })
+
   test('publication locks only the included student and leaves another student correctable', async () => {
     const f = await fixture()
     const student = (await f.repositories.students.findById('stu1'))!

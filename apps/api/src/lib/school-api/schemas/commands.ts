@@ -1,4 +1,4 @@
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, grantScopesSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, rejectMarksCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, teacherSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, grantScopesSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -1136,3 +1136,31 @@ export const saveFamilyFeedbackThemeDraftCommandSchema = z.object({
   id: field.id(),
   themes: field.text(),
 }).openapi("SaveFamilyFeedbackThemeDraftCommand");
+
+export const requestTeacherCorrectionCommandSchema = requestTeacherCorrectionSchema.openapi("RequestTeacherCorrectionCommand");
+
+export const reviseTeacherCorrectionCommandSchema = reviseTeacherCorrectionSchema.openapi("ReviseTeacherCorrectionCommand");
+
+export const approveTeacherCorrectionCommandSchema = decideTeacherCorrectionSchema.openapi("ApproveTeacherCorrectionCommand");
+
+export const rejectTeacherCorrectionCommandSchema = rejectTeacherCorrectionSchema.openapi("RejectTeacherCorrectionCommand");
+
+export const withdrawTeacherCorrectionCommandSchema = decideTeacherCorrectionSchema.openapi("WithdrawTeacherCorrectionCommand");
+
+export const saveTeacherLogbookCommandSchema = saveTeacherLogbookSchema.openapi("SaveTeacherLogbookCommand");
+
+export const validateTeacherLogbookCommandSchema = validateTeacherLogbookSchema.openapi("ValidateTeacherLogbookCommand");
+
+export const editTeacherIncidentCommandSchema = editTeacherIncidentSchema.openapi("EditTeacherIncidentCommand");
+
+export const takeOverTeacherIncidentCommandSchema = takeOverTeacherIncidentSchema.openapi("TakeOverTeacherIncidentCommand");
+
+export const appendIncidentFollowUpCommandSchema = appendIncidentFollowUpSchema.openapi("AppendIncidentFollowUpCommand");
+
+export const saveTeacherAttendanceDraftCommandSchema = attendanceCallSchema.openapi("SaveTeacherAttendanceDraftCommand");
+
+export const submitTeacherAttendanceCommandSchema = attendanceCallSchema.openapi("SubmitTeacherAttendanceCommand");
+
+export const recordTeacherAttendanceArrivalCommandSchema = attendanceArrivalSchema.openapi("RecordTeacherAttendanceArrivalCommand");
+
+export const reviseAssessmentMarksCorrectionCommandSchema = reviseMarksCorrectionSchema.openapi("ReviseAssessmentMarksCorrectionCommand");
