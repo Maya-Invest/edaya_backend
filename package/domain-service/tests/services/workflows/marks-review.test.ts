@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
-import { Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, GradeLevelSubject, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, GradeLevelSubject, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createReportCardContext } from './report-card-workflow-context'
 
@@ -146,7 +146,9 @@ describe('evaluation marks review', () => {
     await f.repositories.classGroups.save(new ClassGroup({ ...(await f.repositories.classGroups.findById('cg1'))!.data, id: 'cg-destination', name: 'Destination' }))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-destination', classGroupId: 'cg-destination' }))
     await f.service.studentWorkflow.transferStudent({ enrollmentId: 'enr1', nextEnrollmentId: 'enr-transfer', nextClassGroupId: 'cg-destination', effectiveAt: new Date('2026-02-15') })
-    const input = { ...reportInput, aggregation: { source: ReportCardAggregationSource.Assessments, sourcePeriodIds: ['per1', 'per-t1'] } }
+    const sourcePeriod = (await f.repositories.academicPeriods.findById('per1'))!
+    await f.repositories.academicPeriods.save(new AcademicPeriod({ ...sourcePeriod.data, id: 'per-aggregate', name: 'Aggregate', type: AcademicPeriodType.Other }))
+    const input = { ...reportInput, periodId: 'per-aggregate', aggregation: { source: ReportCardAggregationSource.Assessments, sourcePeriodIds: ['per1', 'per-t1'] } }
     const draft = await f.service.assessmentsWorkflow.generateReportCardResult(input)
     expect(draft.classGroupId).toBe('cg-destination')
     expect(draft.sourceMarks.map(row => row.resultId)).toEqual(['ar1'])
