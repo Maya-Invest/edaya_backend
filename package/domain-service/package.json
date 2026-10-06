@@ -16,7 +16,10 @@
     "test:coverage": "bun test --coverage",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
-    "preview:timetable": "bun scripts/preview-timetable.ts"
+    "preview:timetable": "bun scripts/preview-timetable.ts",
+    "benchmark:timetable": "bun scripts/benchmark-timetable.ts",
+    "benchmark:timetable:solver": "bun scripts/benchmark-timetable-solver.ts",
+    "benchmark:timetable:baseline": "bun scripts/prepare-timetable-baseline.ts"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

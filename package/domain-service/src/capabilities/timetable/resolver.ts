@@ -1,4 +1,4 @@
-import type { AcademicYear, ClassGroup, PeriodDefinition } from '@edaya/core'
+import type { AcademicYear, CalendarEvent, ClassGroup, PeriodDefinition } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type {
   OccupiedInterval,
@@ -19,6 +19,7 @@ import {
   DayOfWeek,
   normalizeDate,
 } from '@edaya/core'
+import { TimetableOccupancyIndex } from './occupancy-index'
 import { WEEKLY_TEMPLATE_WEEK_KEY } from './types'
 
 const TEMPLATE_REFERENCE_MONDAY = normalizeDate(new Date('2026-01-05T00:00:00.000Z'))
@@ -132,7 +133,9 @@ export function countSessionPeriodSlots(
 function groupCellsByDate(cells: readonly ResolvedTimetableCell[]): Map<string, ResolvedTimetableCell[]> {
   const grouped = new Map<string, ResolvedTimetableCell[]>()
   for (const cell of cells) {
-    grouped.set(cell.date, [...(grouped.get(cell.date) ?? []), cell])
+    const day = grouped.get(cell.date) ?? []
+    day.push(cell)
+    grouped.set(cell.date, day)
   }
   for (const [date, dayCells] of grouped) {
     grouped.set(date, dayCells.sort((left, right) =>
@@ -175,9 +178,9 @@ function blockIsAvailable(
   block: readonly ResolvedTimetableCell[],
   classGroupId: string,
   teacherIds: readonly string[],
-  occupied: readonly OccupiedInterval[],
+  occupied: TimetableOccupancyIndex,
 ): boolean {
-  return block.every(cell => cellIsAvailable(cell, classGroupId, teacherIds, occupied))
+  return block.every(cell => occupied.isAvailable(cell, classGroupId, teacherIds))
 }
 
 function sortCandidateBlocks(
@@ -191,35 +194,37 @@ function sortCandidateBlocks(
     || left[0]!.periodDefinitionId.localeCompare(right[0]!.periodDefinitionId))
 }
 
-function candidateBlocks(
-  weekCells: readonly ResolvedTimetableCell[],
-  subject: TimetableSubjectDemand,
-  classGroupId: string,
-  occupied: readonly OccupiedInterval[],
-  preferredIds: Set<string>,
-  placements: readonly TimetablePlacement[],
-  minDayGapSameSubject: number,
-  blockSize?: number,
-): ResolvedTimetableCell[][] {
-  const minSpan = subject.minPeriodSpan
-  const maxSpan = subject.maxPeriodSpan
-  return sortCandidateBlocks(
-    buildCandidateBlocks(weekCells, minSpan, maxSpan)
-      .filter(block => blockSize === undefined || block.length === blockSize)
-      .filter(block => blockIsAvailable(block, classGroupId, subject.teacherIds, occupied))
-      .filter(block => !violatesSameSubjectDayGap(placements, subject.classSubjectId, block[0]!.date, minDayGapSameSubject)),
-    preferredIds,
-  )
+class CandidateBlockCache {
+  private readonly blocksBySpan = new Map<string, ResolvedTimetableCell[][]>()
+
+  constructor(private readonly weekCells: readonly ResolvedTimetableCell[], private readonly preferredIds: Set<string>) {}
+
+  get(subject: TimetableSubjectDemand): ResolvedTimetableCell[][] {
+    const key = `${subject.minPeriodSpan}:${subject.maxPeriodSpan}`
+    let blocks = this.blocksBySpan.get(key)
+    if (!blocks) {
+      blocks = sortCandidateBlocks(buildCandidateBlocks(this.weekCells, subject.minPeriodSpan, subject.maxPeriodSpan), this.preferredIds)
+      this.blocksBySpan.set(key, blocks)
+    }
+    return blocks
+  }
 }
 
 interface PlacementSearchContext {
-  weekCells: readonly ResolvedTimetableCell[]
+  candidates: CandidateBlockCache
   subject: TimetableSubjectDemand
   classGroupId: string
-  occupied: readonly OccupiedInterval[]
+  occupied: TimetableOccupancyIndex
   preferredIds: Set<string>
   placements: readonly TimetablePlacement[]
   minDayGapSameSubject: number
+}
+
+function candidateBlocks(context: PlacementSearchContext, blockSize?: number): ResolvedTimetableCell[][] {
+  return context.candidates.get(context.subject)
+    .filter(block => blockSize === undefined || block.length === blockSize)
+    .filter(block => blockIsAvailable(block, context.classGroupId, context.subject.teacherIds, context.occupied))
+    .filter(block => !violatesSameSubjectDayGap(context.placements, context.subject.classSubjectId, block[0]!.date, context.minDayGapSameSubject))
 }
 
 const PLACEMENT_SCORE_SLOT_WEIGHT = 1_000_000
@@ -236,8 +241,8 @@ function estimateGreedyPlaceableSlots(
   context: PlacementSearchContext,
   remaining: number,
 ): number {
-  let occupied = [...context.occupied]
-  let placements = [...context.placements]
+  const occupied = context.occupied.fork()
+  const placements = context.placements.filter(placement => placement.classSubjectId === context.subject.classSubjectId)
   let slotsPlaced = 0
   let slotsRemaining = remaining
 
@@ -245,16 +250,7 @@ function estimateGreedyPlaceableSlots(
     const maxBlockSize = Math.min(context.subject.maxPeriodSpan, slotsRemaining)
     let placedBlock = false
     for (let blockSize = maxBlockSize; blockSize >= context.subject.minPeriodSpan; blockSize--) {
-      const block = candidateBlocks(
-        context.weekCells,
-        context.subject,
-        context.classGroupId,
-        occupied,
-        context.preferredIds,
-        placements,
-        context.minDayGapSameSubject,
-        blockSize,
-      )[0]
+      const block = candidateBlocks({ ...context, occupied, placements }, blockSize)[0]
       if (!block) {
         continue
       }
@@ -263,8 +259,8 @@ function estimateGreedyPlaceableSlots(
         displayLabel: context.subject.displayLabel,
         teacherIds: context.subject.teacherIds,
       }, block)
-      placements = [...placements, placement]
-      occupied = [...occupied, ...placementOccupiedIntervals(context.classGroupId, placement)]
+      placements.push(placement)
+      occupied.add(placementOccupiedIntervals(context.classGroupId, placement))
       slotsPlaced += placementSlotCount(placement)
       slotsRemaining -= placementSlotCount(placement)
       placedBlock = true
@@ -289,7 +285,7 @@ function scorePlacementCandidate(
   }, block)
   const futureSlots = estimateGreedyPlaceableSlots({
     ...context,
-    occupied: [...context.occupied, ...placementOccupiedIntervals(context.classGroupId, placement)],
+    occupied: context.occupied.fork(placementOccupiedIntervals(context.classGroupId, placement)),
     placements: [...context.placements, placement],
   }, remaining - block.length)
   const totalPlaceable = block.length + futureSlots
@@ -309,16 +305,7 @@ function choosePlacementBlock(
   let bestCandidateIndex = Number.POSITIVE_INFINITY
 
   for (let blockSize = maxBlockSize; blockSize >= context.subject.minPeriodSpan; blockSize--) {
-    const candidates = candidateBlocks(
-      context.weekCells,
-      context.subject,
-      context.classGroupId,
-      context.occupied,
-      context.preferredIds,
-      context.placements,
-      context.minDayGapSameSubject,
-      blockSize,
-    )
+    const candidates = candidateBlocks(context, blockSize)
     for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
       const block = candidates[candidateIndex]!
       const score = scorePlacementCandidate(block, remaining, context)
@@ -398,6 +385,16 @@ export async function resolveTimetableSpace(
     repositories.periodDefinitions.list({ academicYearId: input.academicYearId }),
     repositories.calendarEvents.list({ academicYearId: input.academicYearId }),
   ])
+  return buildTimetableSpace(classGroup, periods, events, input, options)
+}
+
+export function buildTimetableSpace(
+  classGroup: ClassGroup,
+  periods: readonly PeriodDefinition[],
+  events: readonly CalendarEvent[],
+  input: ResolveTimetableSpaceInput,
+  options: { excludeBreakSlots?: boolean } = {},
+): ResolvedTimetableCell[] {
   const nonSchoolDates = new Set<string>()
   for (const event of events) {
     if (!calendarEventBlocksTimetable(event) || !calendarEventAppliesToClass(event, classGroup)) {
@@ -517,6 +514,13 @@ export async function resolveWeeklyTemplateSpace(
   options: { excludeBreakSlots?: boolean } = {},
 ): Promise<ResolvedTimetableCell[]> {
   const periods = await repositories.periodDefinitions.list({ academicYearId })
+  return buildWeeklyTemplateSpace(periods, options)
+}
+
+export function buildWeeklyTemplateSpace(
+  periods: readonly PeriodDefinition[],
+  options: { excludeBreakSlots?: boolean } = {},
+): ResolvedTimetableCell[] {
   const teachingPeriods = periods
     .filter(period => period.isTeachingSlot
       && (!(options.excludeBreakSlots ?? true) || !period.isBreak))
@@ -586,7 +590,7 @@ function teachingDateKeysInWeek(
 export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTimetableResult {
   const rangeStartKey = dateKey(normalizeDate(input.startDate))
   const rangeEndKey = dateKey(normalizeDate(input.endDate))
-  const occupied = [...input.occupiedIntervals]
+  const occupied = new TimetableOccupancyIndex(input.occupiedIntervals)
   const placements: TimetablePlacement[] = []
   const placedBySubjectWeek: Record<string, Record<string, number>> = {}
   const weeks = weekKeysInRange(input.startDate, input.endDate)
@@ -618,7 +622,7 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
           periodDefinitionId: templateCell.periodDefinitionId,
           ...times,
         }
-        if (!cellIsAvailable(cell, input.classGroupId, templatePlacement.teacherIds, occupied)) {
+        if (!occupied.isAvailable(cell, input.classGroupId, templatePlacement.teacherIds)) {
           blockAvailable = false
           break
         }
@@ -633,7 +637,7 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
         teacherIds: templatePlacement.teacherIds,
       }, concreteCells)
       placements.push(placement)
-      occupied.push(...placementOccupiedIntervals(input.classGroupId, placement))
+      occupied.add(placementOccupiedIntervals(input.classGroupId, placement))
       const byWeek = placedBySubjectWeek[placement.classSubjectId] ?? {}
       byWeek[currentWeekKey] = (byWeek[currentWeekKey] ?? 0) + placementSlotCount(placement)
       placedBySubjectWeek[placement.classSubjectId] = byWeek
@@ -670,67 +674,41 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
   return { placements, unmetWorkloads }
 }
 
-function cellIsAvailable(
-  cell: ResolvedTimetableCell,
-  classGroupId: string,
-  teacherIds: readonly string[],
-  occupied: readonly OccupiedInterval[],
-): boolean {
-  return !occupied.some(interval =>
-    ((interval.layer === 'class_group' && interval.layerKey === classGroupId)
-      || (interval.layer === 'teacher' && teacherIds.includes(interval.layerKey)))
-    && occurrenceOverlaps(cell.startsAt, cell.endsAt, interval.startsAt, interval.endsAt))
-}
-
 export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult {
-  const occupied = [...input.occupiedIntervals]
+  const occupied = new TimetableOccupancyIndex(input.occupiedIntervals)
   const placements: TimetablePlacement[] = []
   const unmetWorkloads: UnmetTimetableWorkload[] = []
   const preferredIds = new Set(input.options.preferredPeriodDefinitionIds)
   const cellsByWeek = new Map<string, ResolvedTimetableCell[]>()
   for (const cell of input.cells) {
-    cellsByWeek.set(cell.weekKey, [...(cellsByWeek.get(cell.weekKey) ?? []), cell])
+    const week = cellsByWeek.get(cell.weekKey) ?? []
+    week.push(cell)
+    cellsByWeek.set(cell.weekKey, week)
   }
 
   for (const currentWeekKey of [...cellsByWeek.keys()].sort()) {
     const weekCells = cellsByWeek.get(currentWeekKey)!
-    const subjects = [...input.subjects].sort((left, right) => {
-      const leftCount = candidateBlocks(
-        weekCells,
-        left,
-        input.classGroupId,
-        occupied,
-        preferredIds,
-        placements,
-        input.options.minDayGapSameSubject,
-      ).length
-      const rightCount = candidateBlocks(
-        weekCells,
-        right,
-        input.classGroupId,
-        occupied,
-        preferredIds,
-        placements,
-        input.options.minDayGapSameSubject,
-      ).length
-      return leftCount - rightCount
-        || right.periodsPerWeek - left.periodsPerWeek
-        || left.classSubjectId.localeCompare(right.classSubjectId)
+    const candidates = new CandidateBlockCache(weekCells, preferredIds)
+    const contextFor = (subject: TimetableSubjectDemand): PlacementSearchContext => ({
+      candidates,
+      subject,
+      classGroupId: input.classGroupId,
+      occupied,
+      preferredIds,
+      placements,
+      minDayGapSameSubject: input.options.minDayGapSameSubject,
     })
+    const availableCounts = new Map(input.subjects.map(subject => [subject.classSubjectId, candidateBlocks(contextFor(subject)).length]))
+    const subjects = [...input.subjects].sort((left, right) =>
+      availableCounts.get(left.classSubjectId)! - availableCounts.get(right.classSubjectId)!
+      || right.periodsPerWeek - left.periodsPerWeek
+      || left.classSubjectId.localeCompare(right.classSubjectId))
 
     for (const subject of subjects) {
       const existingCount = input.existingWorkloadByClassSubjectAndWeek?.[subject.classSubjectId]?.[currentWeekKey] ?? 0
       const slotsToPlace = Math.max(0, subject.periodsPerWeek - existingCount)
       let slotsPlaced = 0
-      const placementContext: PlacementSearchContext = {
-        weekCells,
-        subject,
-        classGroupId: input.classGroupId,
-        occupied,
-        preferredIds,
-        placements,
-        minDayGapSameSubject: input.options.minDayGapSameSubject,
-      }
+      const placementContext = contextFor(subject)
       while (slotsPlaced < slotsToPlace) {
         const remaining = slotsToPlace - slotsPlaced
         const block = choosePlacementBlock(placementContext, remaining)
@@ -744,7 +722,7 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
         }, block)
         placements.push(placement)
         const nextOccupied = placementOccupiedIntervals(input.classGroupId, placement)
-        occupied.push(...nextOccupied)
+        occupied.add(nextOccupied)
         placementContext.occupied = occupied
         placementContext.placements = placements
         slotsPlaced += placementSlotCount(placement)

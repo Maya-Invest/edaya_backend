@@ -28,7 +28,8 @@ import {
   TimetableGenerationMode,
 } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
-import { resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
+import { BaseSchoolService } from '../../../src/services/base-school-service'
+import { resolveTimetableSpace, resolveWeeklyTemplateSpace, solveTimetable, spreadWeeklyTemplate, TimetableGenerationServiceWorkflow, WEEKLY_TEMPLATE_WEEK_KEY } from '../../../src/services/workflows/timetable-generation'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
@@ -710,6 +711,52 @@ async function createWorkflowContext(
 }
 
 describe('timetable generation workflow', () => {
+  for (const generationMode of [TimetableGenerationMode.Weekly, TimetableGenerationMode.Free]) {
+    test(`${generationMode} generation reads shared class-request data once`, async () => {
+      const { service } = await createWorkflowContext([])
+      const base = service.timetableGenerationWorkflow.baseService
+      const calls = new Map<string, Array<{ kind?: unknown, [key: string]: unknown }>>()
+      const repositories = new Proxy(base.repositories, {
+        get(target, resource) {
+          const store = Reflect.get(target, resource)
+          return new Proxy(store, {
+            get(storeTarget, property) {
+              const method = Reflect.get(storeTarget, property)
+              if (property !== 'list')
+                return method
+              return (...args: unknown[]) => {
+                const entries = calls.get(String(resource)) ?? []
+                entries.push((args[0] ?? {}) as Record<string, unknown>)
+                calls.set(String(resource), entries)
+                return Reflect.apply(method, storeTarget, args)
+              }
+            },
+          })
+        },
+      })
+      const workflow = new TimetableGenerationServiceWorkflow(new BaseSchoolService({ ...base, repositories }))
+      await workflow.generateClassGroupTimetable({ classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd, options: { generationMode } })
+      expect(calls.get('periodDefinitions')).toHaveLength(1)
+      expect(calls.get('teacherAssignments')?.filter(query => query.kind === TeacherAssignmentKind.Subject && Object.keys(query).length === 2)).toHaveLength(1)
+      expect(calls.get('teacherUnavailabilities')).toHaveLength(1)
+      // One read for discard, then one school-wide snapshot after the deletes.
+      expect(calls.get('lessonSessions')).toHaveLength(2)
+      expect(calls.get('activitySessions')?.[0]).toMatchObject({ classGroupId: 'class-1', startsAt: { $lt: new Date('2026-09-12T00:00:00Z') }, endsAt: { $gt: weekStart } })
+    })
+  }
+
+  test('a failed later class rolls back its replacement while earlier and unselected classes retain their sessions', async () => {
+    const { service, repositories } = await createWorkflowContext([])
+    await repositories.classGroups.save(new ClassGroup({ id: 'class-3', schoolId: 'school-1', academicYearId: 'year-1', gradeLevelId: 'grade-1', name: 'C' }))
+    const retained = ['class-2', 'class-3'].map(classGroupId => new LessonSession({ id: `old-${classGroupId}`, schoolId: 'school-1', classGroupId, classSubjectId: 'class-subject-2', displayLabel: 'Old draft', startsAt: new Date('2026-09-11T10:00:00Z'), endsAt: new Date('2026-09-11T11:00:00Z'), timetableGenerated: TimetableGenerated.Draft }))
+    await repositories.lessonSessions.batchSave(retained)
+    const first = await service.timetableGenerationWorkflow.generateClassGroupTimetable({ classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd })
+    await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({ classGroupId: 'class-2', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd, options: { enforceWorkloadFulfillment: true }, placementParameters: { periodsPerWeekByClassSubjectId: { 'class-subject-2': 100 } } })).rejects.toMatchObject({ code: 'TIMETABLE_WORKLOAD_UNSATISFIED' })
+    expect(await repositories.lessonSessions.findByIds([...first.sessions.map(row => row.id), ...retained.map(row => row.id)])).toHaveLength(first.sessions.length + retained.length)
+    expect(await repositories.lessonSessions.list({ classGroupId: 'class-2' })).toHaveLength(1)
+    expect(await repositories.lessonSessions.list({ classGroupId: 'class-3' })).toHaveLength(1)
+  })
+
   test('fails strictly when a class subject has no teacher', async () => {
     const { service } = await createWorkflowContext([], { unassignedFirstSubject: true })
     await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({
@@ -774,6 +821,23 @@ describe('timetable generation workflow', () => {
     await repositories.staffPermissionAssignments.delete('create')
     await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable(input)).rejects.toThrow()
     expect(await repositories.lessonSessions.count()).toBe(generated.sessions.length)
+  })
+
+  test('both generation modes reject an existing class in another school without replacing its timetable', async () => {
+    const { service, repositories } = await createWorkflowContext()
+    await repositories.schools.save(new School({ id: 'foreign-school', name: 'Other school', timeZone: 'UTC' }))
+    await repositories.academicYears.save(new AcademicYear({ id: 'foreign-year', schoolId: 'foreign-school', name: '2026', startDate: weekStart, endDate: weekEnd, status: 'published' }))
+    await repositories.gradeLevels.save(new GradeLevel({ id: 'foreign-grade', schoolId: 'foreign-school', name: 'Grade 1', label: 'G1', order: 1 }))
+    await repositories.classGroups.save(new ClassGroup({ id: 'foreign-class', schoolId: 'foreign-school', academicYearId: 'foreign-year', gradeLevelId: 'foreign-grade', name: 'Other class' }))
+    await repositories.subjects.save(new Subject({ id: 'foreign-subject', schoolId: 'foreign-school', name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
+    await repositories.classSubjects.save(new ClassSubject({ id: 'foreign-class-subject', classGroupId: 'foreign-class', subjectId: 'foreign-subject', periodsPerWeek: 1 }))
+    const existing = new LessonSession({ id: 'foreign-draft', schoolId: 'foreign-school', classGroupId: 'foreign-class', classSubjectId: 'foreign-class-subject', displayLabel: 'Existing draft', startsAt: new Date('2026-09-07T08:00:00Z'), endsAt: new Date('2026-09-07T09:00:00Z'), timetableGenerated: TimetableGenerated.Draft })
+    await repositories.lessonSessions.save(existing)
+    for (const generationMode of [TimetableGenerationMode.Weekly, TimetableGenerationMode.Free]) {
+      await expect(service.timetableGenerationWorkflow.generateClassGroupTimetable({ classGroupId: 'foreign-class', academicYearId: 'foreign-year', startDate: weekStart, endDate: weekEnd, options: { generationMode } })).rejects.toThrow()
+      expect((await repositories.lessonSessions.findById(existing.id))?.data).toEqual(existing.data)
+    }
+    expect(await repositories.lessonSessions.count()).toBe(1)
   })
 
   test('generates sequential school drafts without double-booking a shared teacher', async () => {
