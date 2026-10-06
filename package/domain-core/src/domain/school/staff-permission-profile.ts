@@ -1,16 +1,15 @@
 import { z } from 'zod'
 import { Permission } from '../permissions/permission'
-import { permissionMatchesProfileGrain, permissionProfileScopeGrainSchema } from '../permissions/permission-scopes'
+import { permissionScope } from '../permissions/permission-scopes'
 import { parseDomain, zodDate } from '../shared/utils'
 
 function refineStaffPermissionProfile(
   data: {
     permissions?: Permission[]
-    scopeGrain?: z.infer<typeof permissionProfileScopeGrainSchema>
   },
   ctx: z.RefinementCtx,
 ) {
-  if (data.permissions === undefined || data.scopeGrain === undefined)
+  if (data.permissions === undefined)
     return
 
   const seen = new Set<Permission>()
@@ -24,10 +23,10 @@ function refineStaffPermissionProfile(
       continue
     }
     seen.add(permission)
-    if (!permissionMatchesProfileGrain(permission, data.scopeGrain)) {
+    if (permissionScope(permission) === 'platform') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Permission ${permission} does not match profile grain ${data.scopeGrain}`,
+        message: 'Platform permissions cannot be included in staff profiles',
         path: ['permissions', index],
       })
     }
@@ -39,7 +38,6 @@ export const staffPermissionProfileBaseSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
   description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  scopeGrain: permissionProfileScopeGrainSchema,
   permissions: z.array(z.nativeEnum(Permission)).default([]),
   sourceKey: z.string().trim().min(1, 'sourceKey must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   createdAt: zodDate().default(() => new Date()),
@@ -75,7 +73,6 @@ export class StaffPermissionProfile {
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
   get description() { return this.data.description }
-  get scopeGrain() { return this.data.scopeGrain }
   get permissions() { return this.data.permissions }
   get sourceKey() { return this.data.sourceKey }
   get createdAt() { return this.data.createdAt }

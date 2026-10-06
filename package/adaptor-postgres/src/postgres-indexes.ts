@@ -45,6 +45,10 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_permission_assignments_academic_year_id_idx').on(col(table, 'academicYearId')),
         index('staff_permission_assignments_source_profile_id_idx').on(col(table, 'sourceProfileId')),
       ]
+    case 'staff_permission_scope_defaults':
+      return [uniqueIndex('staff_permission_scope_defaults_staff_year_uidx').on(col(table, 'schoolId'), col(table, 'staffId'), col(table, 'academicYearId'))]
+    case 'staff_manual_permission_assignments':
+      return [index('staff_manual_permission_assignments_staff_year_idx').on(col(table, 'schoolId'), col(table, 'staffId'), col(table, 'academicYearId'))]
     case 'staff_permission_profiles':
       return [
         index('staff_permission_profiles_school_id_idx').on(col(table, 'schoolId')),
@@ -57,7 +61,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
         index('staff_permission_profile_bindings_school_id_idx').on(col(table, 'schoolId')),
         index('staff_permission_profile_bindings_staff_id_idx').on(col(table, 'staffId')),
         index('staff_permission_profile_bindings_profile_id_idx').on(col(table, 'profileId')),
-        uniqueIndex('staff_permission_profile_bindings_staff_profile_uidx').on(col(table, 'staffId'), col(table, 'profileId')),
+        uniqueIndex('staff_permission_profile_bindings_staff_profile_uidx').on(col(table, 'staffId'), col(table, 'profileId'), col(table, 'academicYearId')),
         uniqueIndex('staff_permission_profile_bindings_sort_uidx').on(
           col(table, 'staffId'),
           col(table, 'academicYearId'),

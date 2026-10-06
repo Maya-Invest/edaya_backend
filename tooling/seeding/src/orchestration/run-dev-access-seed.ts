@@ -7,7 +7,7 @@ import type { AuthLinkSeedPort } from '../domains/auth-link/port'
 import type { SeedProgressReporter } from '../support/seed-progress'
 import type { AuthProvisioner, SeedApplication } from '../support/types'
 import { ASSIGNMENT_SCOPED_PERMISSIONS, permissionRowsFromPreset } from '@edaya/authorization'
-import { defaultScopesForProfileGrain } from '@edaya/core'
+import { presetScopeSelections } from '@edaya/core'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { syncDevStaffAuthAndOwner } from '../bootstrap/dev-staff-auth-seed'
 import { createInProcessAccessSeedPort } from '../domains/access/adapters/in-process'
@@ -79,7 +79,7 @@ function countStaffPermissionAssignments(
 }
 
 function matchesRoleSourceKey(sourceKey: string | undefined, roleId: string): boolean {
-  return sourceKey === roleId || sourceKey?.startsWith(`${roleId}:`) === true
+  return sourceKey === roleId
 }
 
 async function seedStaffPermissionProfileBindings(
@@ -103,7 +103,8 @@ async function seedStaffPermissionProfileBindings(
         staffId: assignment.staffId,
         profileId: profile.id,
         academicYearId: assignment.academicYearId,
-        scopes: defaultScopesForProfileGrain(profile.scopeGrain),
+        customScopes: presetScopeSelections(profile.permissions),
+        useDefaultScopes: false,
       })
     }
   }

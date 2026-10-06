@@ -1,3 +1,4 @@
+import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
 import {
   academicPeriodResponseSchema,
@@ -40,10 +41,11 @@ import {
   schoolResponseSchema,
   sectionResponseSchema,
   staffAssignmentResponseSchema,
+  staffManualPermissionAssignmentResponseSchema,
   staffMemberResponseSchema,
-  staffPermissionAssignmentResponseSchema,
   staffPermissionProfileBindingResponseSchema,
   staffPermissionProfileResponseSchema,
+  staffPermissionScopeDefaultsResponseSchema,
   studentChargeResponseSchema,
   studentDisciplinaryActionResponseSchema,
   studentHealthProfileResponseSchema,
@@ -83,6 +85,11 @@ const familyFeedbackCampaignCommandResponseSchema = z.object({
   moderatorStaffId: z.string().optional(),
   themeDraft: z.string().optional(),
 }).openapi("FamilyFeedbackCampaignCommandResponse");
+
+const permissionResolutionReportSchema = z.object({
+  changes: z.array(z.object({ staffId: z.string(), staffName: z.string(), academicYearId: z.string(), permission: z.nativeEnum(Permission), change: z.enum(["added", "changed", "removed"]), beforeScopes: z.array(grantScopeSchema), afterScopes: z.array(grantScopeSchema) })),
+  warnings: z.array(permissionResolutionWarningSchema.extend({ staffId: z.string(), staffName: z.string(), academicYearId: z.string(), assignmentId: z.string() })),
+}).openapi("PermissionResolutionReport");
 
 export const resolveIncidentWithOutcomesResponseSchema = z.object({
   incident: incidentResponseSchema,
@@ -284,11 +291,14 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
       entity: teacherResponseSchema,
     }),
   ]).openapi("UnlinkActorSubjectResponse"),
-  assignStaffPermission: staffPermissionAssignmentResponseSchema,
-  configurePermissionProfile: staffPermissionProfileResponseSchema,
-  applyStaffPermissionProfile: staffPermissionProfileBindingResponseSchema,
-  reorderStaffPermissionProfiles: z.array(staffPermissionProfileBindingResponseSchema).openapi("ReorderStaffPermissionProfilesResponse"),
+  assignStaffPermission: staffManualPermissionAssignmentResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("AssignStaffPermissionResponse"),
+  configureStaffPermissionScopeDefaults: staffPermissionScopeDefaultsResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ConfigureStaffPermissionScopeDefaultsResponse"),
+  removeStaffPermission: z.object({ assignmentId: z.string(), resolution: permissionResolutionReportSchema }).openapi("RemoveStaffPermissionResponse"),
+  configurePermissionProfile: staffPermissionProfileResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ConfigurePermissionProfileResponse"),
+  applyStaffPermissionProfile: staffPermissionProfileBindingResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ApplyStaffPermissionProfileResponse"),
+  reorderStaffPermissionProfiles: z.object({ bindings: z.array(staffPermissionProfileBindingResponseSchema), resolution: permissionResolutionReportSchema }).openapi("ReorderStaffPermissionProfilesResponse"),
   removeStaffPermissionProfile: z.object({
+    resolution: permissionResolutionReportSchema,
     staffId: z.string().min(1),
     profileId: z.string().min(1),
   }).openapi("RemoveStaffPermissionProfileResponse"),

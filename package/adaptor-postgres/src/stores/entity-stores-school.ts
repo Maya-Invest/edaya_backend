@@ -8,9 +8,11 @@ import {
   ResourceKind,
   School as SchoolCtor,
   StaffAssignment as StaffAssignmentCtor,
+  StaffManualPermissionAssignment as StaffManualPermissionAssignmentCtor,
   StaffMember as StaffMemberCtor,
   StaffPermissionProfileBinding as StaffPermissionProfileBindingCtor,
   StaffPermissionProfile as StaffPermissionProfileCtor,
+  StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsCtor,
   TeacherAssignment as TeacherAssignmentCtor,
   TeacherAssignmentKind,
   TeacherAssignmentStatus,
@@ -26,7 +28,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createSchoolEntityStores(db: StoreDatabase): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
+export function createSchoolEntityStores(db: StoreDatabase): Pick<EntityStores, 'consortiums' | 'schoolsStore' | 'staffMembers' | 'staffAssignments' | 'staffPermissionProfiles' | 'staffPermissionProfileBindings' | 'staffManualPermissionAssignments' | 'staffPermissionScopeDefaults' | 'teachers' | 'teacherAssignments' | 'teacherUnavailabilities' | 'attachments' | 'resources' | 'resourceAssignments'> {
   return {
     consortiums: customStore(
       db,
@@ -129,6 +131,8 @@ export function createSchoolEntityStores(db: StoreDatabase): Pick<EntityStores, 
       }),
     ),
 
+    staffPermissionScopeDefaults: defaultStore(db, schema.staffPermissionScopeDefaults, StaffPermissionScopeDefaultsCtor),
+    staffManualPermissionAssignments: defaultStore(db, schema.staffManualPermissionAssignments, StaffManualPermissionAssignmentCtor),
     staffPermissionProfiles: defaultStore(db, schema.staffPermissionProfiles, StaffPermissionProfileCtor),
     staffPermissionProfileBindings: defaultStore(db, schema.staffPermissionProfileBindings, StaffPermissionProfileBindingCtor),
 

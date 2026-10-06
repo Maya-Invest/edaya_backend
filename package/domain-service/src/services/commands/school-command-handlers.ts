@@ -1,4 +1,4 @@
-import type { appendIncidentFollowUpSchema, AttachmentInput, attendanceArrivalSchema, attendanceCallSchema, DecideMarksCorrectionInput, decideTeacherCorrectionSchema, editTeacherIncidentSchema, RejectMarksCorrectionInput, rejectTeacherCorrectionSchema, RequestMarksCorrectionInput, requestTeacherCorrectionSchema, ReviseMarksCorrectionInput, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StaffPermissionAssignmentInput, takeOverTeacherIncidentSchema, validateTeacherLogbookSchema } from '@edaya/core'
+import type { appendIncidentFollowUpSchema, AttachmentInput, attendanceArrivalSchema, attendanceCallSchema, DecideMarksCorrectionInput, decideTeacherCorrectionSchema, editTeacherIncidentSchema, RejectMarksCorrectionInput, rejectTeacherCorrectionSchema, RequestMarksCorrectionInput, requestTeacherCorrectionSchema, ReviseMarksCorrectionInput, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, takeOverTeacherIncidentSchema, validateTeacherLogbookSchema } from '@edaya/core'
 import type { z } from 'zod'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
@@ -244,7 +244,9 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     assignStaffToClass: payload => workflows.setup.assignStaffToClass(payload as AssignStaffInput),
     assignStaffToClassSubject: payload => workflows.setup.assignStaffToClassSubject(payload as AssignStaffInput),
     assignStaffToLessonSession: payload => workflows.setup.assignStaffToLessonSession(payload as AssignStaffInput),
-    assignStaffPermission: payload => workflows.accessControl.assignStaffPermission(payload as StaffPermissionAssignmentInput),
+    configureStaffPermissionScopeDefaults: payload => workflows.accessControl.configureStaffPermissionScopeDefaults(payload as Parameters<typeof workflows.accessControl.configureStaffPermissionScopeDefaults>[0]),
+    removeStaffPermission: payload => workflows.accessControl.removeStaffPermission(payload as { assignmentId: string }),
+    assignStaffPermission: payload => workflows.accessControl.assignStaffPermission(payload as Parameters<typeof workflows.accessControl.assignStaffPermission>[0]),
     configurePermissionProfile: payload => workflows.accessControl.configurePermissionProfile(payload as ConfigurePermissionProfileInput),
     applyStaffPermissionProfile: payload => workflows.accessControl.applyStaffPermissionProfile(payload as ApplyStaffPermissionProfileInput),
     reorderStaffPermissionProfiles: payload => workflows.accessControl.reorderStaffPermissionProfiles(payload as ReorderStaffPermissionProfilesInput),

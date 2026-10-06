@@ -38,3 +38,13 @@ Database restore cannot undo external emails, pushes or provider read events. Re
 ## v1 durable notification follow-on
 
 The v1 sequence adds `0013_notification_schema`, `0014_command_journal`, `0015_cron_occurrences` and `0016_notification_tenants`. Apply them through the same paused, matched cutover. The [cron protocol](../reference/cron-runtimes.md) requires draining legacy full-authority queue messages before enabling the reference-only consumer. The [notification protocol](notification-router.md) preserves application delivery/provider history while namespacing transport keys. It quarantines unscoped legacy device tokens until clients register in the current authenticated school. Include each required school's real push registration/delivery in cutover evidence; never populate school scope by guessing from an unscoped token. Reconcile uncertain provider attempts before resuming dispatch and retain a matching application/data/queue recovery snapshot.
+
+## Permission profile scope cutover
+
+`0037_permission_scope_defaults` requires an empty permission catalog and grant table. It refuses existing permission data; reset the local database and reseed for this coordinated cutover. No scope-grain compatibility fields or split preset profiles remain in the runtime API. Deploy matching generated web and mobile clients.
+
+Profiles contain permission sets only. Each staff/profile/year binding saves mixed `customScopes` and `useDefaultScopes`; manual permission assignments save the same source fields plus their status and validity dates. Staff default selections are saved independently for each academic year. Generation unions compatible custom selections with defaults when enabled, keeping custom selections intact. An explicit school or all-target selection is required for broad access; an empty or incompatible selection creates no grant.
+
+Runtime policies continue reading generated `staffPermissionAssignments`. Those rows record the profile binding or manual source that generated them. Missing or invalid targets withdraw the generated grant and persist warnings on the saved source. Repairing selections regenerates access. The first profile claims a permission even when unresolved, so a lower-priority profile cannot silently broaden it. Profile removal and reordering are year-specific. Deleting the catalog profile freezes unique effective grants as explicit manual sources in each year.
+
+Profile edits, profile assignment edits, manual assignment edits and staff default changes support a non-writing preview of generated grant changes and warnings. Saves validate target school/year and delegation and reconcile sources, warnings and grants atomically under the school permission-state lock.

@@ -1,7 +1,8 @@
+import type { StaffPermissionAssignmentInput } from '@edaya/core'
 import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { AccessPolicies, createStaffActorMetadata } from '@edaya/authorization'
-import { Permission } from '@edaya/core'
+import { Permission, StaffPermissionAssignment } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -62,9 +63,15 @@ describe('typed staff grants coordinated migration', () => {
     await grant('grades', 'GRADE_READ', '*')
     await grant('exams', 'EXAM_CONFIG_READ', 'class-a:math-a,class-other:*')
     await migrate()
-    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0010').sort())
+    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0010' && name < '0037').sort())
       await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
+    // Current repositories require the clean-cutover schema. Recreate these explicit
+    // fixture grants after clearing the old permission rows; no legacy source migrates.
+    const converted = await db.query<StaffPermissionAssignmentInput>(`SELECT id, staff_id AS "staffId", school_id AS "schoolId", academic_year_id AS "academicYearId", permission, scopes FROM staff_permission_assignments`)
+    await db.exec('DELETE FROM staff_permission_assignments')
+    await db.exec(readFileSync(resolve(migrationDirectory, '0037_permission_scope_defaults.sql'), 'utf8'))
     const repositories = new PostgresSchoolRepositories(drizzle(db))
+    for (const row of converted.rows) await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment(row))
     const access = new AccessPolicies(createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'migrated-grants', authenticatedAt: new Date() }), repositories)
     const grades = repositories.assessmentResults.forAccess(await access.grades.readScope())
     expect((await grades.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual(['1-math', '2-french', '3-other'])

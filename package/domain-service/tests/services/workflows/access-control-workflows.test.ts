@@ -165,11 +165,12 @@ describe('SchoolService access-control workflows', () => {
       schoolId: 'sch1',
       academicYearId: 'ay1',
       permission: Permission.ACCESS_CONTROL_READ,
-      scopes: [{ kind: 'school' }],
+      customScopes: [{ kind: 'school' }],
     })
 
     expect(assignment.permission).toBe(Permission.ACCESS_CONTROL_READ)
-    expect((await repositories.staffPermissionAssignments.findById('spa1'))?.data).toEqual(assignment.data)
+    expect((await repositories.staffManualPermissionAssignments.findById('spa1'))?.permission).toBe(assignment.permission)
+    expect((await repositories.staffPermissionAssignments.findById('mpg:spa1'))?.permission).toBe(assignment.permission)
   })
 
   test('relinkActorSubject replaces an existing auth subject', async () => {

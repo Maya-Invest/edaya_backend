@@ -21,6 +21,8 @@ export const CLEAR_TABLE_ORDER = [
   'command_receipts',
   'cron_job_schedules',
   'staff_permission_profile_bindings',
+  'staff_manual_permission_assignments',
+  'staff_permission_scope_defaults',
   'staff_permission_assignments',
   'service_api_keys',
   's2s_clients',

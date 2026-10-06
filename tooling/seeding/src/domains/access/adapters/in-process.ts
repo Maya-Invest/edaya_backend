@@ -1,6 +1,6 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AccessSeedPort } from '../port'
-import { StaffAssignment, StaffPermissionAssignment } from '@edaya/core'
+import { StaffAssignment } from '@edaya/core'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
 
@@ -10,7 +10,7 @@ export function createInProcessAccessSeedPort(application: SeedApplication): Acc
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await application.repositories.schools.findById(schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment(record))
+      await service.accessControlWorkflow.assignStaffPermission({ ...record, customScopes: record.scopes, useDefaultScopes: false })
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       await service.baseService.entities.staffAssignments.save(new StaffAssignment({
@@ -23,7 +23,7 @@ export function createInProcessAccessSeedPort(application: SeedApplication): Acc
       return rows.map(row => ({
         id: row.id,
         sourceKey: row.sourceKey,
-        scopeGrain: row.scopeGrain,
+        permissions: row.permissions,
       }))
     }),
     applyStaffPermissionProfile: record => withSeedPortError('access.applyStaffPermissionProfile', async () => {

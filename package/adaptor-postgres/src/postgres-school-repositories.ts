@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { RepositoryStore as PostgresStore, StoreDatabase } from './postgres-store'
@@ -52,6 +52,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   public readonly schoolNotificationTemplates: PostgresSchoolNotificationTemplatesStore
   public readonly staffPermissionAssignments: PostgresStore<StaffPermissionAssignment>
   public readonly staffPermissionProfiles: PostgresStore<StaffPermissionProfile>
+  public readonly staffPermissionScopeDefaults: PostgresStore<StaffPermissionScopeDefaults>
+  public readonly staffManualPermissionAssignments: PostgresStore<StaffManualPermissionAssignment>
   public readonly staffPermissionProfileBindings: PostgresStore<StaffPermissionProfileBinding>
   public readonly attachments: PostgresStore<Attachment>
   public readonly resources: PostgresStore<Resource>
@@ -132,6 +134,8 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.staffMembers = stores.staffMembers
     this.staffAssignments = stores.staffAssignments
     this.staffPermissionProfiles = stores.staffPermissionProfiles
+    this.staffPermissionScopeDefaults = stores.staffPermissionScopeDefaults
+    this.staffManualPermissionAssignments = stores.staffManualPermissionAssignments
     this.staffPermissionProfileBindings = stores.staffPermissionProfileBindings
     this.teachers = stores.teachers
     this.teacherAssignments = stores.teacherAssignments

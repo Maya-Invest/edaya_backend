@@ -1,5 +1,4 @@
 import type { ScopeType } from './scope-type'
-import { z } from 'zod'
 import { Permission } from './permission'
 
 /** Catalog scope grain per permission (tenant-wide when omitted). */
@@ -49,38 +48,4 @@ export const PERMISSION_SCOPE_OVERRIDES: Partial<Record<Permission, ScopeType>> 
 
 export function permissionScope(permission: Permission): ScopeType | undefined {
   return PERMISSION_SCOPE_OVERRIDES[permission]
-}
-
-/** Profile templates are school-wide or one catalog grain; platform is never allowed. */
-export const permissionProfileScopeGrainSchema = z.enum([
-  'school',
-  'grade_level',
-  'grade_level_subject',
-  'class_group',
-  'class_subject',
-  'activity',
-  'student',
-])
-
-export type PermissionProfileScopeGrain = z.infer<typeof permissionProfileScopeGrainSchema>
-
-export const PERMISSION_PROFILE_GRAIN_ORDER: readonly PermissionProfileScopeGrain[] = [
-  'school',
-  'class_group',
-  'class_subject',
-  'student',
-  'grade_level',
-  'grade_level_subject',
-  'activity',
-]
-
-export function profileGrainForPermission(permission: Permission): PermissionProfileScopeGrain | undefined {
-  const grain = permissionScope(permission)
-  if (grain === 'platform')
-    return undefined
-  return grain ?? 'school'
-}
-
-export function permissionMatchesProfileGrain(permission: Permission, grain: PermissionProfileScopeGrain): boolean {
-  return profileGrainForPermission(permission) === grain
 }

@@ -41,10 +41,12 @@ import type {
   School,
   SchoolNotificationTemplates,
   StaffAssignment,
+  StaffManualPermissionAssignment,
   StaffMember,
   StaffPermissionAssignment,
   StaffPermissionProfile,
   StaffPermissionProfileBinding,
+  StaffPermissionScopeDefaults,
   Student,
   StudentCharge,
   StudentClassEnrollment,
@@ -78,6 +80,8 @@ export interface CoreEntityMap {
   staffPermissionAssignments: StaffPermissionAssignment
   staffPermissionProfiles: StaffPermissionProfile
   staffPermissionProfileBindings: StaffPermissionProfileBinding
+  staffManualPermissionAssignments: StaffManualPermissionAssignment
+  staffPermissionScopeDefaults: StaffPermissionScopeDefaults
   attachments: Attachment
   resources: Resource
   resourceAssignments: ResourceAssignment
@@ -155,6 +159,8 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'staffPermissionAssignments',
   'staffPermissionProfiles',
   'staffPermissionProfileBindings',
+  'staffManualPermissionAssignments',
+  'staffPermissionScopeDefaults',
   'attachments',
   'resources',
   'resourceAssignments',

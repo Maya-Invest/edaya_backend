@@ -25,6 +25,8 @@ export type SchoolCommandKey
     | 'assignStaffToClass'
     | 'assignStaffToClassSubject'
     | 'assignStaffToLessonSession'
+    | 'configureStaffPermissionScopeDefaults'
+    | 'removeStaffPermission'
     | 'assignStaffPermission'
     | 'configurePermissionProfile'
     | 'applyStaffPermissionProfile'
@@ -225,6 +227,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'assignStaffToClass',
   'assignStaffToClassSubject',
   'assignStaffToLessonSession',
+  'configureStaffPermissionScopeDefaults',
+  'removeStaffPermission',
   'assignStaffPermission',
   'configurePermissionProfile',
   'applyStaffPermissionProfile',

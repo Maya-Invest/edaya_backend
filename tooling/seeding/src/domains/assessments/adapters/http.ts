@@ -6,7 +6,7 @@ import { Permission } from '@edaya/core'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { HttpAuthProvisioner } from '../../../bootstrap/auth/http-provisioner'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand, postCoreQuery, postEntityFindById, postEntitySave } from '../../../transport/http/core-entity'
+import { postCoreCommand, postCoreQuery, postEntityFindById } from '../../../transport/http/core-entity'
 
 export interface CreateHttpAssessmentsSeedPortOptions {
   client: HttpSeedClient
@@ -62,7 +62,7 @@ export function createHttpAssessmentsSeedPort(
         throw new Error('Seed reviewer must differ from the editor')
       await postCoreCommand(requestOptions, 'linkActorSubject', { subjectId, staffMemberId: account.staffId })
       const group = await postEntityFindById(requestOptions, 'classGroups', submitted.classGroupId) as { academicYearId: string }
-      await postEntitySave(requestOptions, 'staffPermissionAssignments', { id: `seed-review:${submitted.classGroupId}`, schoolId: context.schoolId, staffId: account.staffId, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: submitted.classGroupId }] })
+      await postCoreCommand(requestOptions, 'assignStaffPermission', { id: `seed-review:${submitted.classGroupId}`, schoolId: context.schoolId, staffId: account.staffId, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, useDefaultScopes: false, customScopes: [{ kind: 'class_group', classGroupId: submitted.classGroupId }] })
       await options.client.withCookieSnapshot(async () => {
         await auth.ensureUser({ email: account.email, name: account.name, password: context.authPassword })
         await postCoreCommand({ client: options.client, actor: { schoolId: context.schoolId, actorId: account.staffId, academicYearId: group.academicYearId } }, state === 'correction-approved' ? 'approveAssessmentMarksCorrection' : 'rejectAssessmentMarksCorrection', { requestId: `seed-decision:${assessmentId}`, correctionId: correction.id, expectedVersion: correction.version, ...(state === 'correction-rejected' ? { reason: 'Keep the original comment' } : {}) })

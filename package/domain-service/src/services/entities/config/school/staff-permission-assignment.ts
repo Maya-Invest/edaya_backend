@@ -22,7 +22,7 @@ async function validateCustomGrantSave(
   existing: StaffPermissionAssignment | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
-  if (entity.sourceProfileId || existing?.sourceProfileId) {
+  if (entity.sourceProfileId || existing?.sourceProfileId || entity.sourceManualAssignmentId || existing?.sourceManualAssignmentId) {
     throw new BusinessRuleViolationError(
       'PROFILE_BOUND_GRANT_LOCKED',
       'Profile-bound grants cannot be edited directly',
@@ -44,7 +44,7 @@ async function validateCustomGrantSave(
 }
 
 async function validateCustomGrantDelete(entity: StaffPermissionAssignment): Promise<void> {
-  if (entity.sourceProfileId) {
+  if (entity.sourceProfileId || entity.sourceManualAssignmentId) {
     throw new BusinessRuleViolationError(
       'PROFILE_BOUND_GRANT_LOCKED',
       'Profile-bound grants cannot be removed directly',

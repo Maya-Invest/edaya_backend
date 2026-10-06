@@ -260,6 +260,13 @@
       "when": 1791072001000,
       "tag": "0036_guardian_messaging",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791244800000,
+      "tag": "0037_permission_scope_defaults",
+      "breakpoints": true
     }
   ]
 }

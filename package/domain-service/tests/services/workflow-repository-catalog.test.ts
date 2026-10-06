@@ -6,6 +6,8 @@ describe('workflow repository catalog', () => {
   test('pickWorkflowRepositories returns only the declared keys', () => {
     const repositories = {
       staffMembers: { id: 'staff-repo' },
+      staffManualPermissionAssignments: { id: 'manual-repo' },
+      staffPermissionScopeDefaults: { id: 'default-repo' },
       guardians: { id: 'guardian-repo' },
       guardianLinks: { id: 'guardian-link-repo' },
       students: { id: 'student-repo' },
@@ -23,10 +25,12 @@ describe('workflow repository catalog', () => {
       'academicYears',
       'guardianLinks',
       'guardians',
+      'staffManualPermissionAssignments',
       'staffMembers',
       'staffPermissionAssignments',
       'staffPermissionProfileBindings',
       'staffPermissionProfiles',
+      'staffPermissionScopeDefaults',
       'students',
       'teachers',
     ])

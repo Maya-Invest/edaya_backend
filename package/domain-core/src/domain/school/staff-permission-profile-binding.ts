@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { grantScopesSchema } from '../permissions/grant-scope'
+import { permissionResolutionWarningSchema, permissionScopeSelectionsSchema } from '../permissions/permission-selections'
 import { parseDomain, zodDate } from '../shared/utils'
 
 export const staffPermissionProfileBindingBaseSchema = z.object({
@@ -8,7 +8,9 @@ export const staffPermissionProfileBindingBaseSchema = z.object({
   staffId: z.string().trim().min(1, 'staffId must not be blank'),
   profileId: z.string().trim().min(1, 'profileId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
-  scopes: grantScopesSchema,
+  customScopes: permissionScopeSelectionsSchema,
+  useDefaultScopes: z.boolean().default(true),
+  warnings: z.array(permissionResolutionWarningSchema).default([]),
   sortOrder: z.number().int().nonnegative(),
   createdAt: zodDate().default(() => new Date()),
   updatedAt: zodDate().optional(),
@@ -38,7 +40,9 @@ export class StaffPermissionProfileBinding {
   get staffId() { return this.data.staffId }
   get profileId() { return this.data.profileId }
   get academicYearId() { return this.data.academicYearId }
-  get scopes() { return this.data.scopes }
+  get customScopes() { return this.data.customScopes }
+  get useDefaultScopes() { return this.data.useDefaultScopes }
+  get warnings() { return this.data.warnings }
   get sortOrder() { return this.data.sortOrder }
   get createdAt() { return this.data.createdAt }
   get updatedAt() { return this.data.updatedAt }

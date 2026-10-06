@@ -2,7 +2,7 @@ import type { SchoolRepositories } from '../../ports/school-repositories'
 
 export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears', 'staffPermissionProfiles'],
-  accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'staffPermissionProfiles', 'staffPermissionProfileBindings', 'staffPermissionAssignments', 'academicYears'],
+  accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'staffPermissionProfiles', 'staffPermissionProfileBindings', 'staffPermissionAssignments', 'staffPermissionScopeDefaults', 'staffManualPermissionAssignments', 'academicYears'],
   academics: [
     'assessments',
     'lessonSessions',

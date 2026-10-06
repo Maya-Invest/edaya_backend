@@ -1,7 +1,7 @@
-import type { PermissionProfileScopeGrain } from '@edaya/core'
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { AccessSeedPort, StaffAssignmentSeedRecord } from '../port'
+import { Permission } from '@edaya/core'
 import { SeedPortError, withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand, postEntityFindById, postEntityList } from '../../../transport/http/core-entity'
 
@@ -40,23 +40,6 @@ function recordString(row: Record<string, unknown>, key: string): string | undef
   return typeof value === 'string' ? value : undefined
 }
 
-const PROFILE_GRAINS = new Set<PermissionProfileScopeGrain>([
-  'school',
-  'class_group',
-  'class_subject',
-  'student',
-  'grade_level',
-  'grade_level_subject',
-  'activity',
-])
-
-function asProfileGrain(value: string | undefined): PermissionProfileScopeGrain | undefined {
-  if (!value || !PROFILE_GRAINS.has(value as PermissionProfileScopeGrain)) {
-    return undefined
-  }
-  return value as PermissionProfileScopeGrain
-}
-
 export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOptions): AccessSeedPort {
   const requestOptions: CoreHttpRequestOptions = {
     client: options.client,
@@ -68,7 +51,7 @@ export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOption
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await postEntityFindById(requestOptions, 'schools', schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await postCoreCommand(requestOptions, 'assignStaffPermission', record)
+      await postCoreCommand(requestOptions, 'assignStaffPermission', { ...record, customScopes: record.scopes, useDefaultScopes: false })
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       const { command, payload } = staffAssignmentCommand(record)
@@ -78,14 +61,15 @@ export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOption
       const rows = asRecordList(await postEntityList(requestOptions, 'staffPermissionProfiles', { schoolId }))
       return rows.flatMap((row) => {
         const id = recordString(row, 'id')
-        const scopeGrain = asProfileGrain(recordString(row, 'scopeGrain'))
-        if (!id || !scopeGrain) {
+        const selected = row as { permissions?: unknown }
+        const permissions = Array.isArray(selected.permissions) ? selected.permissions.filter((value): value is Permission => Object.values(Permission).includes(value as Permission)) : []
+        if (!id) {
           return []
         }
         return [{
           id,
           sourceKey: recordString(row, 'sourceKey'),
-          scopeGrain,
+          permissions,
         }]
       })
     }),

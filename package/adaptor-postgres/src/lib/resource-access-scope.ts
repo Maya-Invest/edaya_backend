@@ -21,6 +21,8 @@ const tables: Record<CoreEntityKey, PgTable> = {
   accountInvitations: s.accountInvitations,
   staffPermissionAssignments: s.staffPermissionAssignments,
   staffPermissionProfiles: s.staffPermissionProfiles,
+  staffPermissionScopeDefaults: s.staffPermissionScopeDefaults,
+  staffManualPermissionAssignments: s.staffManualPermissionAssignments,
   staffPermissionProfileBindings: s.staffPermissionProfileBindings,
   attachments: s.attachments,
   resources: s.resources,

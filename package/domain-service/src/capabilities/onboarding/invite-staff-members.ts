@@ -3,8 +3,8 @@ import type { OnboardingSchoolApplication } from './onboarding-application'
 import type { OnboardingStaffInviteRoleKey } from './staff-invite-roles'
 import { randomUUID } from 'node:crypto'
 import { AuthorizationError, AuthorizationErrorCode } from '@edaya/authorization'
-import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, defaultScopesForProfileGrain, StaffMember } from '@edaya/core'
-import { ensureSchoolPermissionProfiles, inviteRoleSourceKeys } from '../access-control/seed-staff-permission-profiles'
+import { AccountInvitationContactChannel, AccountInvitationKind, BusinessRuleViolationError, presetScopeSelections, StaffMember } from '@edaya/core'
+import { ensureSchoolPermissionProfiles } from '../access-control/seed-staff-permission-profiles'
 import { getStaffInvitePermissionPreset } from './default-access-roles'
 import { ACCESS_ROLE_ID_BY_INVITE_ROLE, isOnboardingStaffInviteRoleKey } from './staff-invite-roles'
 
@@ -212,7 +212,7 @@ export async function inviteStaffMembers(
         profileRole: invite.role,
       }))
 
-      for (const sourceKey of inviteRoleSourceKeys(preset.id)) {
+      for (const sourceKey of [preset.id]) {
         const profile = profilesBySourceKey.get(sourceKey)
         if (!profile) {
           throw new BusinessRuleViolationError(
@@ -224,7 +224,8 @@ export async function inviteStaffMembers(
           staffId,
           profileId: profile.id,
           academicYearId: academicYear.id,
-          scopes: defaultScopesForProfileGrain(profile.scopeGrain),
+          customScopes: presetScopeSelections(profile.permissions),
+          useDefaultScopes: false,
         })
       }
       permissionAssignmentsEnsured += (await application.repositories.staffPermissionAssignments.list({ staffId })).length

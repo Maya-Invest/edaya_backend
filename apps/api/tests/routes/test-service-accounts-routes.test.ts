@@ -19,6 +19,9 @@ import {
 import { SEED_SCHOOL_ID } from "@edaya/fixtures/shared/ids";
 import { Permission } from "@edaya/core";
 
+// Each case installs migrations and seeds a fresh embedded database. Match the API suite setup budget.
+const DATABASE_SETUP_TIMEOUT = 120_000;
+
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
   Permission.CLASS_LOGBOOK_CREATE,
   Permission.ATTENDANCE_RECORD,
@@ -63,7 +66,7 @@ describe("service account routes", () => {
 
     const persisted = await application.repositories.schools.findById(SEED_SCHOOL_ID);
     expect(persisted?.id).toBe(SEED_SCHOOL_ID);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("returns 401 when the API key is invalid", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
@@ -79,7 +82,7 @@ describe("service account routes", () => {
     }));
 
     expect(response.status).toBe(401);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("returns only the service account itself when it lacks staff directory permission", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
@@ -106,7 +109,7 @@ describe("service account routes", () => {
     expect(response.status).toBe(200);
     const listed = await response.json() as Array<{ id: string }>;
     expect(listed.map(row => row.id)).toEqual([staffMember.id]);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("lists service accounts for verified human staff", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
@@ -132,7 +135,7 @@ describe("service account routes", () => {
 
     const accounts = await response.json() as Array<{ serviceId: string }>;
     expect(accounts.some(account => account.serviceId === "listed-bot")).toBe(true);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("creates a service account through the HTTP API and returns the API key once", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
@@ -177,7 +180,7 @@ describe("service account routes", () => {
     }));
 
     expect(listResponse.status).toBe(200);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("creates a service account with a caller-provided API key", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
@@ -220,7 +223,7 @@ describe("service account routes", () => {
     }));
 
     expect(listResponse.status).toBe(200);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("returns 403 when the creator delegates permissions they do not hold", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
@@ -257,7 +260,7 @@ describe("service account routes", () => {
     }));
 
     expect(response.status).toBe(403);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("returns 403 when the service account lacks permission for a protected command", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
@@ -285,7 +288,7 @@ describe("service account routes", () => {
     }));
 
     expect(response.status).toBe(403);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("returns 403 when a human requests direct delivery materialization", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
@@ -307,7 +310,7 @@ describe("service account routes", () => {
     }));
 
     expect(response.status).toBe(403);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("updates a service account through the HTTP API", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
@@ -339,7 +342,7 @@ describe("service account routes", () => {
     const body = await response.json() as { displayName: string; serviceId: string };
     expect(body.serviceId).toBe("updatable-bot");
     expect(body.displayName).toBe("Renamed Integration Bot");
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("rejects a combined first-party and service credential header", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
@@ -362,5 +365,5 @@ describe("service account routes", () => {
     }));
 
     expect(response.status).toBe(401);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 });

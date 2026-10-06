@@ -161,6 +161,8 @@ export const staffPermissionAssignments = pgTable('staff_permission_assignments'
   startsAt: timestamp('starts_at', { mode: 'date' }),
   endsAt: timestamp('ends_at', { mode: 'date' }),
   sourceProfileId: text('source_profile_id'),
+  sourceManualAssignmentId: text('source_manual_assignment_id'),
+  sourceProfileBindingId: text('source_profile_binding_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
 }, table => ({
@@ -173,7 +175,6 @@ export const staffPermissionProfiles = pgTable('staff_permission_profiles', {
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),
   description: text('description'),
-  scopeGrain: text('scope_grain').notNull(),
   permissions: jsonb('permissions').$type<string[]>().notNull(),
   sourceKey: text('source_key'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
@@ -186,7 +187,9 @@ export const staffPermissionProfileBindings = pgTable('staff_permission_profile_
   staffId: text('staff_id').notNull(),
   profileId: text('profile_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
-  scopes: jsonb('scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  customScopes: jsonb('custom_scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  useDefaultScopes: boolean('use_default_scopes').notNull().default(true),
+  warnings: jsonb('warnings').$type<import('@edaya/core').PermissionResolutionWarning[]>().notNull().default([]),
   sortOrder: integer('sort_order').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
@@ -308,3 +311,29 @@ export const s2sClients = pgTable('s2s_clients', {
   revokedAt: timestamp('revoked_at', { mode: 'date' }),
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
 }, table => definePerformanceIndexes('s2s_clients', table))
+
+export const staffPermissionScopeDefaults = pgTable('staff_permission_scope_defaults', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  scopes: jsonb('scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_permission_scope_defaults', table))
+
+export const staffManualPermissionAssignments = pgTable('staff_manual_permission_assignments', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  staffId: text('staff_id').notNull(),
+  academicYearId: text('academic_year_id').notNull(),
+  permission: text('permission').notNull(),
+  customScopes: jsonb('custom_scopes').$type<import('@edaya/core').GrantScope[]>().notNull(),
+  useDefaultScopes: boolean('use_default_scopes').notNull().default(true),
+  status: text('status').notNull().default('active'),
+  startsAt: timestamp('starts_at', { mode: 'date' }),
+  endsAt: timestamp('ends_at', { mode: 'date' }),
+  warnings: jsonb('warnings').$type<import('@edaya/core').PermissionResolutionWarning[]>().notNull().default([]),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull(),
+}, table => definePerformanceIndexes('staff_manual_permission_assignments', table))

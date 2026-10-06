@@ -1,4 +1,4 @@
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, grantScopesSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -237,26 +237,30 @@ export const assignStaffToLessonSessionCommandSchema = objectFromSchema(staffAss
   })
   .openapi("AssignStaffToLessonSessionCommand");
 
-export const staffPermissionAssignmentConfigCommandSchema = objectFromSchema(staffPermissionAssignmentSchema)
-  .openapi("StaffPermissionAssignmentConfigCommand");
+export const staffPermissionAssignmentConfigCommandSchema = staffManualPermissionAssignmentBaseSchema.omit({ warnings: true, createdAt: true, updatedAt: true }).extend({ previewOnly: z.boolean().optional() }).openapi("StaffPermissionAssignmentConfigCommand");
 
 export const configurePermissionProfileCommandSchema = objectFromSchema(staffPermissionProfileSchema)
   .omit({ sourceKey: true, createdAt: true, updatedAt: true })
+  .extend({ previewOnly: z.boolean().optional() })
   .openapi("ConfigurePermissionProfileCommand");
 
 export const applyStaffPermissionProfileCommandSchema = z.object({
   staffId: field.id(),
   profileId: field.id(),
   academicYearId: field.id().optional(),
-  scopes: grantScopesSchema,
+  customScopes: permissionScopeSelectionsSchema,
+  useDefaultScopes: z.boolean(),
+  previewOnly: z.boolean().optional(),
 }).openapi("ApplyStaffPermissionProfileCommand");
 
 export const reorderStaffPermissionProfilesCommandSchema = z.object({
+  academicYearId: field.id(),
   staffId: field.id(),
   profileIds: z.array(field.id()).min(1),
 }).openapi("ReorderStaffPermissionProfilesCommand");
 
 export const removeStaffPermissionProfileCommandSchema = z.object({
+  academicYearId: field.id(),
   staffId: field.id(),
   profileId: field.id(),
 }).openapi("RemoveStaffPermissionProfileCommand");
@@ -1164,3 +1168,11 @@ export const submitTeacherAttendanceCommandSchema = attendanceCallSchema.openapi
 export const recordTeacherAttendanceArrivalCommandSchema = attendanceArrivalSchema.openapi("RecordTeacherAttendanceArrivalCommand");
 
 export const reviseAssessmentMarksCorrectionCommandSchema = reviseMarksCorrectionSchema.openapi("ReviseAssessmentMarksCorrectionCommand");
+
+export const configureStaffPermissionScopeDefaultsCommandSchema = z.object({
+  staffId: field.id(),
+  academicYearId: field.id(),
+  scopes: permissionScopeSelectionsSchema,
+  previewOnly: z.boolean().optional(),
+}).openapi("ConfigureStaffPermissionScopeDefaultsCommand");
+export const removeStaffPermissionCommandSchema = z.object({ assignmentId: field.id() }).openapi("RemoveStaffPermissionCommand");

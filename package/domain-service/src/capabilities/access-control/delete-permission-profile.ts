@@ -1,5 +1,6 @@
 import type { StaffPermissionProfile } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import { StaffManualPermissionAssignment } from '@edaya/core'
 import { resolveStaffProfileGrants } from './resolve-staff-profile-grants'
 
 const pendingCatalogDeleteStaffIds = new WeakMap<object, string[]>()
@@ -18,12 +19,29 @@ export async function preparePermissionProfileCatalogDelete(
       .filter(binding => binding.profileId !== profile.id)
       .map(binding => binding.profileId)
     const remaining = await repositories.staffPermissionProfiles.findByIds(remainingIds)
-    const remainingPermissions = new Set(remaining.flatMap(candidate => candidate.permissions))
+    const remainingProfiles = new Map(remaining.map(candidate => [candidate.id, candidate]))
     const stamped = (await repositories.staffPermissionAssignments.list({ staffId }))
       .filter(grant => grant.sourceProfileId === profile.id)
     for (const grant of stamped) {
-      if (remainingPermissions.has(grant.permission))
-        await repositories.staffPermissionAssignments.delete(grant.id)
+      const claimedInYear = staffBindings.some(binding => binding.profileId !== profile.id
+        && binding.academicYearId === grant.academicYearId
+        && remainingProfiles.get(binding.profileId)?.permissions.includes(grant.permission))
+      if (!claimedInYear) {
+        await repositories.staffManualPermissionAssignments.save(new StaffManualPermissionAssignment({
+          id: `frozen:${grant.id}`,
+          staffId,
+          schoolId: grant.schoolId,
+          academicYearId: grant.academicYearId,
+          permission: grant.permission,
+          customScopes: grant.scopes,
+          useDefaultScopes: false,
+          status: grant.status,
+          startsAt: grant.startsAt,
+          endsAt: grant.endsAt,
+          createdAt: grant.createdAt,
+        }))
+      }
+      await repositories.staffPermissionAssignments.delete(grant.id)
     }
   }
 }

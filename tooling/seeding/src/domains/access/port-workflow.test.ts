@@ -5,6 +5,7 @@ import type {
   StaffAssignmentSeedRecord,
   StaffPermissionAssignmentSeedRecord,
 } from './port'
+import { Permission } from '@edaya/core'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { describe, expect, test } from 'bun:test'
 import {
@@ -64,25 +65,25 @@ describe('access seed port workflow', () => {
     expect(memory.staffAssignments.filter(assignment => assignment.classSubjectId)).toHaveLength(0)
   })
 
-  test('binds staff to invite permission-profile fragments after grants', async () => {
+  test('binds staff to combined permission profiles after grants', async () => {
     const memory = createMemoryPort(true, [
-      { id: 'pp-director', sourceKey: 'role-director', scopeGrain: 'school' },
-      { id: 'pp-director-cg', sourceKey: 'role-director:class_group', scopeGrain: 'class_group' },
-      { id: 'pp-coordinator', sourceKey: 'role-coordinator', scopeGrain: 'school' },
-      { id: 'pp-educator', sourceKey: 'role-educator', scopeGrain: 'class_group' },
+      { id: 'pp-director', sourceKey: 'role-director', permissions: [Permission.STAFF_READ, Permission.GRADE_READ] },
+      { id: 'pp-coordinator', sourceKey: 'role-coordinator', permissions: [Permission.STAFF_READ, Permission.GRADE_READ] },
+      { id: 'pp-educator', sourceKey: 'role-educator', permissions: [Permission.GRADE_READ] },
     ])
 
     await runDevAccessAssignmentsSeedWithPort(memory.port)
 
     expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st5').map(binding => binding.profileId))
-      .toEqual(['pp-director', 'pp-director-cg'])
+      .toEqual(['pp-director'])
     expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st8').map(binding => binding.profileId))
-      .toEqual(['pp-director', 'pp-director-cg'])
+      .toEqual(['pp-director'])
     expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st3').map(binding => binding.profileId))
       .toEqual(['pp-coordinator'])
     expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st7').map(binding => binding.profileId))
       .toEqual(['pp-educator'])
-    expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director-cg')?.scopes).toEqual([
+    expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director')?.customScopes).toEqual([
+      { kind: 'school' },
       { kind: 'all', grain: 'class_group' },
     ])
   })

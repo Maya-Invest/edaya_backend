@@ -1,7 +1,7 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AssessmentsSeedPort } from '../port'
 import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AssessmentResult, Permission, StaffPermissionAssignment } from '@edaya/core'
+import { AssessmentResult, Permission } from '@edaya/core'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
@@ -31,7 +31,7 @@ export function createInProcessAssessmentsSeedPort(
       if (!staff.subjectId)
         await service.accessControlWorkflow.linkActorSubject({ staffMemberId: staff.id, subjectId })
       for (const permission of [Permission.GRADE_INPUT, Permission.GRADE_UPDATE, Permission.GRADE_READ]) {
-        await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: `seed-editor:${group.id}:${permission}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission, scopes: [{ kind: 'class_group', classGroupId: group.id }] }))
+        await service.accessControlWorkflow.assignStaffPermission({ id: `seed-editor:${group.id}:${permission}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission, customScopes: [{ kind: 'class_group', classGroupId: group.id }], useDefaultScopes: false })
       }
       return application.forActor(createStaffActorMetadata({ schoolId: group.schoolId, staffMemberId: staff.id, subjectId, academicYearId: group.academicYearId, requestId: `seed-editor:${assessmentId}`, authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
     }
@@ -90,7 +90,7 @@ export function createInProcessAssessmentsSeedPort(
       const subjectId = staff.subjectId ?? `fixture-reviewer:${staff.id}`
       if (!staff.subjectId)
         await service.accessControlWorkflow.linkActorSubject({ staffMemberId: staff.id, subjectId })
-      await service.baseService.entities.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: `seed-review:${group.id}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, scopes: [{ kind: 'class_group', classGroupId: group.id }] }))
+      await service.accessControlWorkflow.assignStaffPermission({ id: `seed-review:${group.id}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission: Permission.GRADE_VALIDATE, customScopes: [{ kind: 'class_group', classGroupId: group.id }], useDefaultScopes: false })
       const reviewer = application.forActor(createStaffActorMetadata({ schoolId: group.schoolId, staffMemberId: staff.id, subjectId, academicYearId: group.academicYearId, requestId: `seed-review:${assessmentId}`, authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
       const decision = { requestId: `seed-decision:${assessmentId}`, correctionId: correction.id, expectedVersion: correction.version }
       if (state === 'correction-approved')

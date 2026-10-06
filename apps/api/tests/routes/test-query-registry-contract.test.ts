@@ -160,6 +160,8 @@ describe("core route registry contracts", () => {
       "schoolId",
       "academicYearId",
       "status",
+      "sourceProfileBindingId",
+      "sourceManualAssignmentId",
     ]));
 
     expect(fieldsFor("resources")).toContain("kind");

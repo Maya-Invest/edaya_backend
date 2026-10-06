@@ -1,4 +1,4 @@
-import type { GrantScope, Permission, PermissionProfileScopeGrain } from '@edaya/core'
+import type { GrantScope, Permission } from '@edaya/core'
 
 export interface StaffPermissionAssignmentSeedRecord {
   id: string
@@ -24,14 +24,15 @@ export interface StaffAssignmentSeedRecord {
 export interface PermissionProfileSeedRecord {
   id: string
   sourceKey?: string
-  scopeGrain: PermissionProfileScopeGrain
+  permissions: readonly Permission[]
 }
 
 export interface ApplyStaffPermissionProfileSeedRecord {
   staffId: string
   profileId: string
   academicYearId: string
-  scopes: GrantScope[]
+  customScopes: GrantScope[]
+  useDefaultScopes: boolean
 }
 
 export interface AccessSeedPort {
