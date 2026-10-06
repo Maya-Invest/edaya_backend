@@ -136,6 +136,31 @@
           }
         }
       }
+    },
+    "reporterTeachers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "teacherId",
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "signatureUrl": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
     }
   }
 }

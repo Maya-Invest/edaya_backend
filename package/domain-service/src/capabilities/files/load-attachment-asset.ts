@@ -12,6 +12,7 @@ export interface AttachmentAssetRequest {
   /** Fixed by the consuming capability's authoritative resource, never an arbitrary URL/key. */
   ownerKind: AttachmentOwnerKind
   ownerId: string
+  verifyChecksum?: boolean
   maxBytes: number
   allowedMimeTypes: readonly string[]
 }
@@ -52,6 +53,12 @@ export async function loadAttachmentAsset(base: BaseSchoolService, request: Atta
   }
   if (stored.contentType !== attachment.mimeType) {
     throw new BusinessRuleViolationError('ATTACHMENT_MIME_TYPE_MISMATCH', 'Attachment object type does not match its record')
+  }
+  if (request.verifyChecksum) {
+    const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(stored.body))
+    const checksum = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
+    if (!attachment.checksum || checksum !== attachment.checksum)
+      throw new BusinessRuleViolationError('ATTACHMENT_CONTENT_INVALID', 'Attachment content no longer matches its accepted checksum')
   }
   return stored
 }

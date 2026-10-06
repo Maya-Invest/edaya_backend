@@ -1,10 +1,11 @@
-import type { AcademicPeriod, DocumentRendererPort, ReportCardResult } from '@edaya/core'
+import type { AcademicPeriod, DocumentIssuanceSnapshot, DocumentRendererPort, ReportCardResult } from '@edaya/core'
 import type { SchoolService } from '../../services/school-service'
 import { Attachment, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
 import { validateAttachmentSave } from '../../services/entities/config/school/attachment'
 import { buildStorageKey } from '../files/build-storage-key'
 import { buildReportCardV1Payload } from './build-report-card-v1-payload'
 import { catalogLangFromLocale, catalogSubjectName } from './catalog-label'
+import { captureTeacherSignatures, freezeDocumentTeachers, freezeTeachersBySubject, hydrateTeacherSignatures } from './document-teachers'
 
 export interface RenderReportCardDocumentInput {
   resultId: string
@@ -26,7 +27,7 @@ function readyDocument(context: DocumentContext) {
   return attachment?.storageKey ? { attachmentId: attachment.id, storageKey: attachment.storageKey } : undefined
 }
 
-function documentSource(context: DocumentContext, locale: string) {
+function documentSource(context: DocumentContext, locale: string, captured?: DocumentIssuanceSnapshot['teacherSignatures']) {
   const { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, homeroomTeacherName, peerResults } = context
   const catalogLang = catalogLangFromLocale(locale)
   const subjectNameByClassSubjectId = new Map(subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.code)]))
@@ -43,6 +44,8 @@ function documentSource(context: DocumentContext, locale: string) {
     locale,
     subjectNameByClassSubjectId,
     teacherNameByClassSubjectId,
+    teachersByClassSubjectId: freezeTeachersBySubject(context.teachersByClassSubjectId, captured),
+    homeroomTeachers: freezeDocumentTeachers(context.homeroomTeachers, captured),
     homeroomTeacherName,
     classResults: peerAverages.length
       ? {
@@ -99,7 +102,7 @@ export async function renderReportCardDocument(
   const source = initial.source
   const currentContext = async () => {
     const current = await load()
-    if (current.result.sectionResults.length === 0 || documentSource(current, locale).signature !== source.signature)
+    if (current.result.sectionResults.length === 0 || documentSource(current, locale, captureTeacherSignatures(source.payload as unknown as Record<string, unknown>)).signature !== source.signature)
       throw new BusinessRuleViolationError('REPORT_DOCUMENT_SOURCE_CHANGED', 'Report document source changed; request a new rendering')
     return current
   }
@@ -111,7 +114,8 @@ export async function renderReportCardDocument(
     return repositories.attachments.forAccess(scope)
   }
 
-  const rendered = await documentEffect('REPORT_DOCUMENT_RENDER_UNAVAILABLE', () => input.renderer.render({ templateKey: 'report-card.v1', locale: locale.toLowerCase().startsWith('en') ? 'en' : 'fr', payload: source.payload }))
+  const payload = await hydrateTeacherSignatures(base, source.payload as unknown as Record<string, unknown>, () => access.reportCards.documentContext(input.resultId), captureTeacherSignatures(source.payload as unknown as Record<string, unknown>))
+  const rendered = await documentEffect('REPORT_DOCUMENT_RENDER_UNAVAILABLE', () => input.renderer.render({ templateKey: 'report-card.v1', locale: locale.toLowerCase().startsWith('en') ? 'en' : 'fr', payload }))
   const attachmentId = crypto.randomUUID()
   const fileName = locale.toLowerCase().startsWith('en') ? `report-card-${input.resultId}.pdf` : `bulletin-${input.resultId}.pdf`
   const storageKey = buildStorageKey({ schoolId: initial.schoolId, purpose: 'generated/report-card', ownerKind: AttachmentOwnerKind.ReportCard, ownerId: input.resultId, attachmentId, fileName })

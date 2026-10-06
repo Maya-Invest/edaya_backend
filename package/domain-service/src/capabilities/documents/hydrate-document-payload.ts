@@ -3,6 +3,7 @@ import type { BaseSchoolService } from '../../services/base-school-service'
 import { BusinessRuleViolationError, DOCUMENT_FAILURES, DOCUMENT_ISSUANCE_MAX_BYTES } from '@edaya/core'
 import { loadPublishedStudentPortrait } from '../files/load-published-student-portrait'
 import { bytesToDataUri } from './bytes-to-data-uri'
+import { hydrateTeacherSignatures } from './document-teachers'
 import { loadSchoolIssuanceAssets } from './load-school-issuance-assets'
 
 export interface HydratedDocumentRender {
@@ -21,7 +22,13 @@ function assetDataUri(asset: { body: Uint8Array, contentType?: string }, fallbac
 }
 
 export async function hydrateDocumentPayload(base: BaseSchoolService, issuance: DocumentIssuance, options: { preview?: boolean } = {}): Promise<HydratedDocumentRender> {
-  const facts = asFacts(issuance.snapshot.facts)
+  const facts = await hydrateTeacherSignatures(base, asFacts(issuance.snapshot.facts), () => base.access.documents.assertIssue({
+    templateKey: issuance.templateKey,
+    sourceId: issuance.sourceId,
+    studentId: issuance.studentId,
+    classGroupId: issuance.classGroupId,
+    academicYearId: issuance.academicYearId,
+  }), issuance.snapshot.teacherSignatures ?? [])
   const assets = await loadSchoolIssuanceAssets(base, issuance.schoolId, issuance.snapshot)
   const logoUrl = assets.logo ? assetDataUri(assets.logo) : undefined
   const crestUrl = assets.crest ? assetDataUri(assets.crest) : undefined

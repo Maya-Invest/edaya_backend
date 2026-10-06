@@ -15,6 +15,7 @@ export interface AttachmentUploadPolicy {
   readonly purpose: string
   readonly assertSave: (attachment: Attachment, existing: Attachment | undefined) => Promise<ResourceAccessScope>
   readonly allowedMimeTypes?: readonly string[]
+  readonly validateContent?: (bytes: Uint8Array) => void
   readonly maxBytes?: number
 }
 

@@ -479,3 +479,7 @@ body {
   color: #8b95a3;
   font-size: 6.5pt;
 }
+
+.teacher-pair { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; break-inside: avoid; page-break-inside: avoid; margin: 2px 0; }
+.teacher-pair span { overflow-wrap: anywhere; }
+.teacher-signature { display: block; max-width: 76px; max-height: 28px; width: auto; height: auto; object-fit: contain; }

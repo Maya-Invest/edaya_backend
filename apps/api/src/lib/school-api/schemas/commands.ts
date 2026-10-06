@@ -1176,3 +1176,12 @@ export const configureStaffPermissionScopeDefaultsCommandSchema = z.object({
   previewOnly: z.boolean().optional(),
 }).openapi("ConfigureStaffPermissionScopeDefaultsCommand");
 export const removeStaffPermissionCommandSchema = z.object({ assignmentId: field.id() }).openapi("RemoveStaffPermissionCommand");
+
+export const createTeacherSignatureUploadCommandSchema = z.object({
+  attachmentId: z.string().trim().min(1).optional(),
+  fileName: z.string().trim().min(1),
+  mimeType: z.literal("image/png"),
+  sizeBytes: z.number().int().positive().max(1_048_576),
+}).strict().openapi("CreateTeacherSignatureUploadCommand");
+export const completeTeacherSignatureUploadCommandSchema = z.object({ attachmentId: z.string().trim().min(1) }).strict().openapi("CompleteTeacherSignatureUploadCommand");
+export const clearTeacherSignatureCommandSchema = z.object({ requestId: z.string().trim().min(1), attachmentId: z.string().trim().min(1) }).strict().openapi("ClearTeacherSignatureCommand");

@@ -348,6 +348,7 @@ export class AccessPolicies {
       denied('Teachers may update only their own profile')
     if (after.code !== before.code
       || after.photoUrl !== before.photoUrl
+      || after.signatureAttachmentId !== before.signatureAttachmentId
       || after.notificationEmail !== before.notificationEmail
       || after.notificationPhone !== before.notificationPhone
       || after.subjectId !== before.subjectId

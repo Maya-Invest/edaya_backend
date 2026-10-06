@@ -1,4 +1,5 @@
 import type {
+  DocumentTeacher,
   ReportCardResult,
   ReportCardResultSection,
   School,
@@ -27,12 +28,14 @@ export interface ReportCardDocumentContext {
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>
   /** Subject teachers keyed by class subject id. */
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>
   classResults?: {
     classAverage?: string
     lowestAverage?: string
     highestAverage?: string
   }
   homeroomTeacherName?: string
+  homeroomTeachers?: readonly DocumentTeacher[]
   principalName?: string
 }
 
@@ -45,6 +48,7 @@ export interface ReportCardV1SubjectRow {
   rank?: string
   appreciation?: string
   teacherName?: string
+  teachers?: readonly DocumentTeacher[]
 }
 
 export interface ReportCardV1Payload {
@@ -76,6 +80,7 @@ export interface ReportCardV1Payload {
   council?: {
     appreciation?: string
     homeroomTeacherName?: string
+    homeroomTeachers?: readonly DocumentTeacher[]
     principalName?: string
   }
 }
@@ -136,6 +141,7 @@ function mapSubjectRow(
   classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
 ): ReportCardV1SubjectRow {
   const total = section.average === undefined ? undefined : section.average * section.weight
   const teacherName = section.classSubjectId
@@ -152,6 +158,9 @@ function mapSubjectRow(
       : {}),
     ...(section.comment ? { appreciation: section.comment } : {}),
     ...(teacherName ? { teacherName } : {}),
+    ...(kind === 'subject' && section.classSubjectId && teachersByClassSubjectId?.get(section.classSubjectId)?.length
+      ? { teachers: teachersByClassSubjectId.get(section.classSubjectId) }
+      : {}),
   }
 }
 
@@ -161,6 +170,7 @@ function flattenSections(
   classSize?: number,
   subjectNameByClassSubjectId?: ReadonlyMap<string, string>,
   teacherNameByClassSubjectId?: ReadonlyMap<string, string>,
+  teachersByClassSubjectId?: ReadonlyMap<string, readonly DocumentTeacher[]>,
 ): ReportCardV1SubjectRow[] {
   const rows: ReportCardV1SubjectRow[] = []
 
@@ -173,6 +183,7 @@ function flattenSections(
         classSize,
         subjectNameByClassSubjectId,
         teacherNameByClassSubjectId,
+        teachersByClassSubjectId,
       ))
       continue
     }
@@ -186,6 +197,7 @@ function flattenSections(
           classSize,
           subjectNameByClassSubjectId,
           teacherNameByClassSubjectId,
+          teachersByClassSubjectId,
         ))
       }
     }
@@ -198,6 +210,7 @@ function flattenSections(
         classSize,
         subjectNameByClassSubjectId,
         teacherNameByClassSubjectId,
+        teachersByClassSubjectId,
       ))
     }
   }
@@ -218,6 +231,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     input.result.classSize,
     input.subjectNameByClassSubjectId,
     input.teacherNameByClassSubjectId,
+    input.teachersByClassSubjectId,
   )
 
   if (subjects.length === 0) {
@@ -267,11 +281,12 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
       absenceHoursUnjustified: String(Math.max(0, attendance.absenceCount - attendance.excusedAbsenceCount)),
     },
     ...(input.classResults ? { classResults: input.classResults } : {}),
-    ...(appreciation || input.homeroomTeacherName || input.principalName
+    ...(appreciation || input.homeroomTeacherName || input.homeroomTeachers?.length || input.principalName
       ? {
           council: {
             ...(appreciation ? { appreciation } : {}),
             ...(input.homeroomTeacherName ? { homeroomTeacherName: input.homeroomTeacherName } : {}),
+            ...(input.homeroomTeachers?.length ? { homeroomTeachers: input.homeroomTeachers } : {}),
             ...(input.principalName ? { principalName: input.principalName } : {}),
           },
         }

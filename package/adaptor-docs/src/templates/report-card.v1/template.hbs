@@ -100,7 +100,7 @@
             <td class="num">{{total}}</td>
             <td class="num">{{rank}}</td>
             <td>{{appreciation}}</td>
-            <td>{{teacherName}}</td>
+            <td>{{#if teachers}}{{#each teachers}}<div class="teacher-pair"><span>{{name}}</span>{{#if signatureUrl}}<img class="teacher-signature" src="{{signatureUrl}}" alt="{{../../labels.signature}}" />{{/if}}</div>{{/each}}{{else}}{{teacherName}}{{/if}}</td>
           </tr>
         {{/each}}
       </tbody>
@@ -188,11 +188,17 @@
       <div class="council-appreciation">
         <h3>{{labels.councilAppreciation}}</h3>
         <p class="appreciation-text">{{#if council.appreciation}}{{council.appreciation}}{{/if}}</p>
+        {{#if council.homeroomTeachers}}
+          <div class="homeroom"><span class="lbl">{{labels.homeroomTeacher}}</span>
+            {{#each council.homeroomTeachers}}<div class="teacher-pair"><span>{{name}}</span>{{#if signatureUrl}}<img class="teacher-signature" src="{{signatureUrl}}" alt="{{../labels.signature}}" />{{/if}}</div>{{/each}}
+          </div>
+        {{else}}
         {{#if council.homeroomTeacherName}}
           <p class="homeroom">
             <span class="lbl">{{labels.homeroomTeacher}}</span>
             {{council.homeroomTeacherName}}
           </p>
+        {{/if}}
         {{/if}}
       </div>
       <div class="council-sign">

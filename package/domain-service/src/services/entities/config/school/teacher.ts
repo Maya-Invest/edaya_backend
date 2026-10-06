@@ -26,9 +26,11 @@ export const teacherConfig: EntityConfigFactory<Teacher> = (input) => {
 
 async function validateTeacherSave(
   teacher: Teacher,
-  _existing: Teacher | undefined,
+  existing: Teacher | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (teacher.signatureAttachmentId !== existing?.signatureAttachmentId)
+    throw new BusinessRuleViolationError('TEACHER_SIGNATURE_COMMAND_REQUIRED', 'Signatures require the teacher signature commands')
   await assertUniquePersonCode({
     code: teacher.code,
     schoolId: teacher.schoolId,

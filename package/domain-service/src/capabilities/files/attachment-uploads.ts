@@ -219,6 +219,7 @@ export async function completeAttachmentUpload(base: BaseSchoolService, input: A
   const pngAlias = detected?.mime === 'image/apng' && intent.attachment.mimeType === 'image/png'
   if (!detected || (detected.mime !== intent.attachment.mimeType && !pngAlias))
     fail('ATTACHMENT_CONTENT_INVALID', 'Uploaded content does not match the admitted type')
+  policy?.validateContent?.(stored.body)
   const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(stored.body))
   const checksum = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
   const storageKey = [encodeURIComponent(base.actor.schoolId), 'accepted', encodeURIComponent(input.id), checksum, sanitizeFileName(intent.attachment.fileName)].join('/')

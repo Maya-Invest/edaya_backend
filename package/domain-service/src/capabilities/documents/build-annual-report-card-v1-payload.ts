@@ -59,6 +59,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
     rank: section.rank === undefined ? undefined : `${section.rank} / ${input.result.classSize ?? '—'}`,
     appreciation: section.comment,
     teacherName: kind === 'subject' ? input.teacherNameByClassSubjectId?.get(section.classSubjectId!) : undefined,
+    teachers: kind === 'subject' ? input.teachersByClassSubjectId?.get(section.classSubjectId!) : undefined,
     periodAverages,
   })
   const walk = (nodes: readonly ReportCardResultSection[]) => {
@@ -86,6 +87,8 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
       rows.push({
         name: input.subjectNameByClassSubjectId?.get(section.classSubjectId!) ?? section.name,
         kind: 'subject',
+        teacherName: input.teacherNameByClassSubjectId?.get(section.classSubjectId!),
+        teachers: input.teachersByClassSubjectId?.get(section.classSubjectId!),
         average: '—',
         coefficient: '—',
         total: '—',

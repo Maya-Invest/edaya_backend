@@ -20,6 +20,8 @@ export interface AssembleDocumentInput {
   classGroupId?: string
   teacherId?: string
   staffFields?: { recipient?: string, date?: string, location?: string, reason?: string }
+  legacyTeacherNamesOnly?: boolean
+  teacherSignatures?: DocumentIssuanceSnapshot['teacherSignatures']
   preview?: boolean
 }
 

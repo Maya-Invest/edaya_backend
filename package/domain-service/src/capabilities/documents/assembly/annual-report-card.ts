@@ -1,5 +1,5 @@
-/* eslint-disable dot-notation -- TypeScript requires bracket access for snapshot payload index signatures. */
 import type { School } from '@edaya/core'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for snapshot payload index signatures. */
 import type { AssembledDocumentSource, AssembleDocumentInput, DocumentAssemblyContext } from './shared'
 import { DocumentSourceType, reportCardAcademicVersion } from '@edaya/core'
 import { digestCommandRequest } from '../../../services/commands/command-execution'
@@ -7,6 +7,7 @@ import { applyReportCommentRevision } from '../../academics/report-comment-revis
 import { buildAnnualReportCardV1Payload } from '../build-annual-report-card-v1-payload'
 import { catalogLangFromLocale, catalogSubjectName } from '../catalog-label'
 import { formatDocumentDate } from '../document-format'
+import { captureTeacherSignatures, freezeDocumentTeachers, freezeTeachersBySubject } from '../document-teachers'
 
 export async function assembleAnnualReportCard(
   base: DocumentAssemblyContext<'teacherCorrections', 'reportCards'>,
@@ -49,6 +50,8 @@ export async function assembleAnnualReportCard(
     subjectIdByClassSubjectId,
     subjectNameByClassSubjectId,
     teacherNameByClassSubjectId: annual.teacherNameByClassSubjectId,
+    teachersByClassSubjectId: input.legacyTeacherNamesOnly ? undefined : freezeTeachersBySubject(annual.teachersByClassSubjectId, input.teacherSignatures),
+    homeroomTeachers: input.legacyTeacherNamesOnly ? undefined : freezeDocumentTeachers(annual.homeroomTeachers, input.teacherSignatures),
     homeroomTeacherName: annual.homeroomTeacherName,
     periods: contributors.map(context => ({ period: context.period, result: context.result })),
     classResults: averages.length
@@ -90,6 +93,7 @@ export async function assembleAnnualReportCard(
         schoolPhone: school.phone,
         schoolEmail: school.email,
       },
+      teacherSignatures: captureTeacherSignatures(payload as unknown as Record<string, unknown>),
       academicSources,
       sourceVersion,
       locale: input.locale,

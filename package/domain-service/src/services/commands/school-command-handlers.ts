@@ -1,5 +1,6 @@
 import type { appendIncidentFollowUpSchema, AttachmentInput, attendanceArrivalSchema, attendanceCallSchema, DecideMarksCorrectionInput, decideTeacherCorrectionSchema, editTeacherIncidentSchema, RejectMarksCorrectionInput, rejectTeacherCorrectionSchema, RequestMarksCorrectionInput, requestTeacherCorrectionSchema, ReviseMarksCorrectionInput, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, takeOverTeacherIncidentSchema, validateTeacherLogbookSchema } from '@edaya/core'
 import type { z } from 'zod'
+import type { ClearTeacherSignatureInput, CompleteTeacherSignatureUploadInput, CreateTeacherSignatureUploadInput } from '../../capabilities/files/teacher-signatures'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type {
   AcademicsServiceWorkflow,
@@ -332,6 +333,9 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     updateStudentNote: payload => workflows.student.updateStudentNote(payload as UpdateStudentNoteInput),
     updateGuardianContactMethods: payload => workflows.student.updateGuardianContactMethods(payload as UpdateGuardianContactMethodsInput),
     updateGuardianStudentLink: payload => workflows.student.updateGuardianStudentLink(payload as UpdateGuardianStudentLinkInput),
+    createTeacherSignatureUpload: payload => workflows.documents.createTeacherSignatureUpload(payload as CreateTeacherSignatureUploadInput),
+    completeTeacherSignatureUpload: payload => workflows.documents.completeTeacherSignatureUpload(payload as CompleteTeacherSignatureUploadInput),
+    clearTeacherSignature: payload => workflows.documents.clearTeacherSignature(payload as ClearTeacherSignatureInput),
     createProfilePhotoUpload: payload => workflows.student.createProfilePhotoUpload(payload as CreateProfilePhotoUploadInput),
     completeProfilePhotoUpload: payload => workflows.student.completeProfilePhotoUpload(payload as AttachmentInput),
     submitStudentPhoto: payload => workflows.student.submitStudentPhoto(payload as SubmitStudentPhotoInput),

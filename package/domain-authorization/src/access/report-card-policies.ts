@@ -1,4 +1,4 @@
-import type { Attachment, ReportCardResultSection } from '@edaya/core'
+import type { Attachment, DocumentTeacher, ReportCardResultSection } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
 import { assertAnnualReportCardSources, AttachmentOwnerKind, BusinessRuleViolationError, Permission, ReportCardResultStatus, TeacherAssignmentKind } from '@edaya/core'
 import { AccessFacts, denied } from './facts'
@@ -54,21 +54,26 @@ export class ReportCardAccessPolicy {
     }
     collect(result.sectionResults)
     const subjects = []
+    const teachersByClassSubjectId = new Map<string, DocumentTeacher[]>()
     const teacherNameByClassSubjectId = new Map<string, string>()
     for (const id of subjectIds) {
       const classSubject = await facts.one('classSubjects', id)
       if (classSubject.classGroupId !== classGroup.id)
         return denied('Report card subject belongs to another class')
       subjects.push({ classSubjectId: id, subject: await facts.one('subjects', classSubject.subjectId) })
-      const names = await facts.assignedTeacherNames({ academicYearId: academicYear.id, classGroupId: classGroup.id, kind: TeacherAssignmentKind.Subject, classSubjectId: id })
+      const teachers = await facts.assignedTeachers({ academicYearId: academicYear.id, classGroupId: classGroup.id, kind: TeacherAssignmentKind.Subject, classSubjectId: id })
+      teachersByClassSubjectId.set(id, teachers)
+      const names = [...new Set(teachers.map(teacher => teacher.name))].join(', ')
       if (names)
         teacherNameByClassSubjectId.set(id, names)
     }
-    const homeroomTeacherName = await facts.assignedTeacherNames({ academicYearId: academicYear.id, classGroupId: classGroup.id, kind: TeacherAssignmentKind.Homeroom })
+    const homeroomTeachers = await facts.assignedTeachers({ academicYearId: academicYear.id, classGroupId: classGroup.id, kind: TeacherAssignmentKind.Homeroom })
+
+    const homeroomTeacherName = [...new Set(homeroomTeachers.map(teacher => teacher.name))].join(', ') || undefined
 
     const peerResults = await this.access.repositories.results.forAccess(scope).list({ classGroupId: classGroup.id, periodId: period.id, reportCardDefinitionId: definition.id, status: ReportCardResultStatus.Published })
     const attachments = await this.access.repositories.attachments.forAccess(await this.access.scope(Permission.REPORT_CARD_PUBLISH, 'attachments')).list({ ownerKind: AttachmentOwnerKind.ReportCard, ownerId: result.id })
-    return { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, homeroomTeacherName, peerResults, attachments }
+    return { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, teachersByClassSubjectId, homeroomTeacherName, homeroomTeachers, peerResults, attachments }
   }
 
   async annualDocumentContext(resultId: string) {

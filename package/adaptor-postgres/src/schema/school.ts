@@ -245,6 +245,7 @@ export const teachers = pgTable('teachers', {
   lastName: text('last_name').notNull(),
   code: text('code'),
   photoUrl: text('photo_url'),
+  signatureAttachmentId: text('signature_attachment_id'),
   email: text('email'),
   phone: text('phone'),
   notificationEmail: text('notification_email'),

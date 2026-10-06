@@ -1,5 +1,6 @@
 import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
+import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import {
   academicPeriodResponseSchema,
   academicYearResponseSchema,
@@ -59,7 +60,6 @@ import {
   subjectResponseSchema,
   teacherResponseSchema,
 } from "./entities";
-import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
 import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
@@ -462,6 +462,16 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     headers: z.record(z.string()).optional(),
     status: z.literal("pending_upload"),
   }).openapi("CreateProfilePhotoUploadResponse"),
+  createTeacherSignatureUpload: z.object({
+    attachmentId: z.string(),
+    storageKey: z.string(),
+    uploadUrl: z.string().url(),
+    expiresAt: z.coerce.date(),
+    headers: z.record(z.string()).optional(),
+    status: z.literal("pending_upload"),
+  }).openapi("CreateTeacherSignatureUploadResponse"),
+  completeTeacherSignatureUpload: teacherResponseSchema,
+  clearTeacherSignature: teacherResponseSchema,
   completeProfilePhotoUpload: attachmentResponseSchema,
   submitStudentPhoto: studentPhotoSubmissionResponseSchema,
   withdrawStudentPhotoSubmission: studentPhotoSubmissionResponseSchema,

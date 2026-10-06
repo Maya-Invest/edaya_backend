@@ -52,6 +52,11 @@
         </tbody>
       </table>
     {{/if}}
+    {{#if reporterTeachers}}
+      <section class="incident-author"><strong>{{labels.reportedBy}}</strong>
+        {{#each reporterTeachers}}<div class="teacher-pair"><span>{{name}}</span>{{#if signatureUrl}}<img class="teacher-signature" src="{{signatureUrl}}" alt="{{../labels.signature}}" />{{/if}}</div>{{/each}}
+      </section>
+    {{/if}}
     <footer>
       {{#if stampUrl}}<img class="stamp" src="{{stampUrl}}" alt="" />{{/if}}
       {{#if signatureUrl}}<img class="sign" src="{{signatureUrl}}" alt="" />{{/if}}

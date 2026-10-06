@@ -20,6 +20,7 @@ import { DOCUMENT_PREVIEW_KIND, DOCUMENT_RENDER_KIND } from '../../capabilities/
 import { clearSchoolIssuanceAsset, completeSchoolIssuanceAssetUpload, createSchoolIssuanceAssetUpload } from '../../capabilities/documents/issuance-asset-uploads'
 import { documentNumberLockKey, documentRenderOutbox, persistRequestedIssuance } from '../../capabilities/documents/persist-requested-issuance'
 import { grantAttachmentDownload } from '../../capabilities/files/grant-attachment-download'
+import { clearTeacherSignature, completeTeacherSignatureUpload, createTeacherSignatureUpload } from '../../capabilities/files/teacher-signatures'
 import { schoolCommandScope } from '../commands/school-command-scope'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
@@ -106,6 +107,18 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
   constructor(base: BaseSchoolService) {
     super(base)
     this.repositories = pickWorkflowRepositories('documents', base.repositories)
+  }
+
+  createTeacherSignatureUpload(input: Parameters<typeof createTeacherSignatureUpload>[1]) {
+    return createTeacherSignatureUpload(this.baseService, input)
+  }
+
+  completeTeacherSignatureUpload(input: Parameters<typeof completeTeacherSignatureUpload>[1]) {
+    return completeTeacherSignatureUpload(this.baseService, input)
+  }
+
+  clearTeacherSignature(input: Parameters<typeof clearTeacherSignature>[1]) {
+    return clearTeacherSignature(this.baseService, input)
   }
 
   async listDocumentTemplates() {

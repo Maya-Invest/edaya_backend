@@ -29,7 +29,7 @@ const STAFF_TEACHER = [Audience.Staff, Audience.Teacher] as const
 const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
   'report-card.v1': {
     templateKey: 'report-card.v1',
-    templateVersion: '1.2.0',
+    templateVersion: '1.3.0',
     locales: ['fr', 'en'],
     format: 'pdf',
     sourceType: Source.ReportCardResult,
@@ -43,7 +43,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
   },
   'annual-report-card.v1': {
     templateKey: 'annual-report-card.v1',
-    templateVersion: '1.0.0',
+    templateVersion: '1.1.0',
     locales: ['fr', 'en'],
     format: 'pdf',
     sourceType: Source.ReportCardResult,
@@ -281,7 +281,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
   },
   'incident-report.v1': {
     templateKey: 'incident-report.v1',
-    templateVersion: '1.0.0',
+    templateVersion: '1.1.0',
     locales: ['fr', 'en'],
     format: 'pdf',
     sourceType: Source.Incident,

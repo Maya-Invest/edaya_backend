@@ -172,6 +172,9 @@ export type SchoolCommandKey
     | 'allocateAccountBalance'
     | 'reverseAllocation'
     | 'refundAvailableBalance'
+    | 'createTeacherSignatureUpload'
+    | 'completeTeacherSignatureUpload'
+    | 'clearTeacherSignature'
     | 'createProfilePhotoUpload'
     | 'completeProfilePhotoUpload'
     | 'submitStudentPhoto'
@@ -374,6 +377,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'allocateAccountBalance',
   'reverseAllocation',
   'refundAvailableBalance',
+  'createTeacherSignatureUpload',
+  'completeTeacherSignatureUpload',
+  'clearTeacherSignature',
   'createProfilePhotoUpload',
   'completeProfilePhotoUpload',
   'submitStudentPhoto',

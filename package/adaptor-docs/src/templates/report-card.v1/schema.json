@@ -56,7 +56,32 @@
           "total": { "type": "string" },
           "rank": { "type": "string" },
           "appreciation": { "type": "string" },
-          "teacherName": { "type": "string" }
+          "teacherName": { "type": "string" },
+          "teachers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "teacherId",
+                "name"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "teacherId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "signatureUrl": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -113,6 +138,31 @@
         },
         "appreciation": { "type": "string" },
         "homeroomTeacherName": { "type": "string" },
+        "homeroomTeachers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "teacherId",
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "teacherId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "signatureUrl": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
         "principalName": { "type": "string" },
         "principalStampUrl": { "type": "string", "minLength": 1 },
         "signedAt": { "type": "string" }

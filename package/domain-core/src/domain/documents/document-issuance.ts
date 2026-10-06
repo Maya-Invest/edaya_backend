@@ -45,6 +45,7 @@ export const documentIssuanceSnapshotSchema = z.object({
   crestAttachmentId: z.string().min(1).optional(),
   stampAttachmentId: z.string().min(1).optional(),
   signatureAttachmentId: z.string().min(1).optional(),
+  teacherSignatures: z.array(z.object({ teacherId: z.string().min(1), attachmentId: z.string().min(1) })).optional(),
   issuanceAssetVersion: z.number().int().nonnegative().optional(),
   academicPeriodId: z.string().min(1).optional(),
   academicSources: z.array(z.object({

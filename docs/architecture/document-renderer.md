@@ -73,3 +73,13 @@ Then set `GOTENBERG_URL=http://localhost:3000` in `apps/api/.env`. Set `CHROME_P
 - Starting Gotenberg from `bun repo dev`
 - Cryptographic PDF signing, XLSX, per-school HTML admin
 - Enabling Browser Run in the Cloudflare dashboard (ops after merge)
+
+## Teacher signatures
+
+The teacher signature is an optional school-scoped `teachers.signature_attachment_id`. Only the authenticated teacher can manage it through `createTeacherSignatureUpload`, `completeTeacherSignatureUpload` and `clearTeacherSignature`; ordinary teacher and attachment mutations cannot select the `teacher.signature` purpose. The private upload accepts a CRC-validated PNG bounded to 1024 pixels per side and 1 MiB. Completion changes the teacher slot only after upload validation, under a teacher lock and replay-safe command receipt. Each replacement uses a new attachment.
+
+Periodic and annual payloads carry subject `teachers` and council `homeroomTeachers`, each identified by `teacherId`, with existing name strings as compatibility fallbacks. Incident `reporterTeachers` resolves the recorded author in the same school; staff and unresolved authors receive no teacher signature. Rendering embeds private images alongside their names, retaining the school signature. Standalone image download remains self-only.
+
+Requests capture `snapshot.teacherSignatures` (including an explicit empty list) and retain every referenced attachment. Durable rendering and retries use those captured references, regardless of later replacement or removal. A missing or unreadable teacher asset fails with recoverable `TEACHER_SIGNATURE_ASSET_UNAVAILABLE`. Existing snapshots without this field preserve their legacy annual payload fingerprint. The synchronous report-card renderer also hydrates teacher images before rendering and preserves already cached PDFs.
+
+Rollout: deploy migration `0038_teacher_signatures.sql` and the additive backend API first. Verify the pinned OpenAPI/TypeScript/Dart release contract and backend checks, then publish the teacher mobile update. There is no account-wide sharing or staff management screen.

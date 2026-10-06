@@ -14,4 +14,6 @@ export * from './remove-attachment'
 export * from './sanitize-file-name'
 export * from './student-photo-lifecycle'
 export * from './student-photos'
+export * from './teacher-signatures'
+
 export * from './upload-policy'

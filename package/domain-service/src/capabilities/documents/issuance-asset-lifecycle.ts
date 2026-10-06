@@ -12,6 +12,7 @@ import {
   SCHOOL_SIGNATURE_PURPOSE,
   SCHOOL_STAMP_PURPOSE,
   School as SchoolEntity,
+  TEACHER_SIGNATURE_PURPOSE,
 } from '@edaya/core'
 import { isPublicBrandingPurpose, isSchoolIssuanceAssetPurpose, schoolIssuanceAssetSlot } from './issuance-asset-access'
 
@@ -90,6 +91,12 @@ export async function retainIssuanceSnapshotAssets(
     { purpose: SCHOOL_STAMP_PURPOSE, attachmentId: snapshot.stampAttachmentId },
     { purpose: SCHOOL_SIGNATURE_PURPOSE, attachmentId: snapshot.signatureAttachmentId },
   ]
+  for (const { teacherId, attachmentId } of snapshot.teacherSignatures ?? []) {
+    const attachment = await base.repositories.attachments.forSchool!(schoolId).findById(attachmentId)
+    if (!attachment?.storageKey || attachment.purpose !== TEACHER_SIGNATURE_PURPOSE || attachment.ownerKind !== AttachmentOwnerKind.Teacher || attachment.ownerId !== teacherId)
+      throw new BusinessRuleViolationError('TEACHER_SIGNATURE_ASSET_UNAVAILABLE', 'A teacher signature is unavailable')
+    await base.repositories.privateFiles.retain({ schoolId, sourceType: DOCUMENT_ISSUANCE_CAPABILITY, sourceId: issuanceId, slot: `${TEACHER_SIGNATURE_PURPOSE}:${teacherId}`, attachmentId, storageKey: attachment.storageKey })
+  }
   for (const slot of slots) {
     if (!slot.attachmentId)
       continue

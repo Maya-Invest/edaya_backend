@@ -4,12 +4,13 @@ import {
   DOCUMENT_FAILURES,
   DocumentSourceType,
 } from '@edaya/core'
-
 import { formatDocumentDate } from '../document-format'
+
+import { captureTeacherSignatures, freezeDocumentTeachers } from '../document-teachers'
 import { fail, requireYear } from './shared'
 
 export async function assembleIncidentReport(
-  base: DocumentAssemblyContext<'academicYears' | 'classGroups' | 'incidents' | 'studentIncidentInvolvements' | 'students', never>,
+  base: DocumentAssemblyContext<'academicYears' | 'classGroups' | 'incidents' | 'studentIncidentInvolvements' | 'students' | 'teachers' | 'staffMembers', never>,
   input: AssembleDocumentInput,
   school: School,
   locale: string,
@@ -30,6 +31,11 @@ export async function assembleIncidentReport(
   if (!yearId)
     fail(DOCUMENT_FAILURES.SOURCE_MISSING, 'Academic year is required')
   const year = await requireYear(base, yearId)
+  const reporter = await base.repositories.teachers.findById(incident.reporterId)
+  const staffReporter = await base.repositories.staffMembers.findById(incident.reporterId)
+  const reporterTeachers = reporter?.schoolId === school.id && !staffReporter
+    ? freezeDocumentTeachers([{ teacherId: reporter.id, name: reporter.fullName, ...(reporter.signatureAttachmentId ? { signatureAttachmentId: reporter.signatureAttachmentId } : {}) }], input.teacherSignatures)
+    : []
   const sourceVersion = `${incident.id}:${incident.status}:${incident.updatedAt?.toISOString() ?? incident.createdAt.toISOString()}`
   return {
     academicYearId: year.id,
@@ -41,6 +47,7 @@ export async function assembleIncidentReport(
     snapshot: {
       facts: {
         kind: 'incident-report.v1',
+        ...(reporterTeachers.length ? { reporterTeachers } : {}),
         documentTitle: title,
         schoolName: school.name,
         date: formatDocumentDate(incident.date, locale, timeZone),
@@ -50,6 +57,7 @@ export async function assembleIncidentReport(
         ],
         fields: names.map(name => ({ label: locale.startsWith('en') ? 'Involved' : 'Impliqué', value: name })),
       },
+      teacherSignatures: captureTeacherSignatures({ reporterTeachers }),
       sourceVersion,
       locale: input.locale,
       timeZone,

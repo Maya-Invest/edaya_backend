@@ -1,5 +1,5 @@
-/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { School } from '@edaya/core'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { AssembledDocumentSource, AssembleDocumentInput, DocumentAssemblyContext } from './shared'
 import {
   DOCUMENT_FAILURES,
@@ -8,9 +8,10 @@ import {
   ReportCardResultStatus,
 } from '@edaya/core'
 import { hydrateReportRevision } from '../../academics/report-comment-revisions'
-
 import { buildReportCardV1Payload } from '../build-report-card-v1-payload'
+
 import { catalogLangFromLocale, catalogSubjectName } from '../catalog-label'
+import { captureTeacherSignatures, freezeDocumentTeachers, freezeTeachersBySubject } from '../document-teachers'
 import { fail } from './shared'
 
 export async function assembleReportDocument(
@@ -42,6 +43,8 @@ export async function assembleReportDocument(
     locale,
     subjectNameByClassSubjectId,
     teacherNameByClassSubjectId: context.teacherNameByClassSubjectId,
+    teachersByClassSubjectId: freezeTeachersBySubject(context.teachersByClassSubjectId, input.teacherSignatures),
+    homeroomTeachers: freezeDocumentTeachers(context.homeroomTeachers, input.teacherSignatures),
     homeroomTeacherName: context.homeroomTeacherName,
     classResults: peerAverages.length
       ? {
@@ -53,7 +56,7 @@ export async function assembleReportDocument(
   })
   const previous = (await base.repositories.documentIssuances.forSchool!(base.actor.schoolId).list({ sourceId: context.result.id, templateKey: 'report-card.v1', status: DocumentIssuanceStatus.Ready })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
   const priorFacts = revision ? previous?.snapshot.facts : undefined
-  const facts = priorFacts ? { ...priorFacts, subjects: (priorFacts['subjects'] as Array<Record<string, unknown>>).map((row, index) => ({ ...row, appreciation: payload.subjects[index]?.appreciation })), council: { ...(priorFacts['council'] as Record<string, unknown>), appreciation: payload.council?.appreciation } } : { kind: input.templateKey, documentTitle: title, ...payload, schoolCode: school.schoolCode, schoolAddress: school.postalAddress, schoolPhone: school.phone, schoolEmail: school.email }
+  const facts = priorFacts ? { ...priorFacts, subjects: (priorFacts['subjects'] as Array<Record<string, unknown>>).map((row, index) => ({ ...row, appreciation: payload.subjects[index]?.appreciation, teachers: payload.subjects[index]?.teachers })), council: { ...(priorFacts['council'] as Record<string, unknown>), appreciation: payload.council?.appreciation, homeroomTeachers: payload.council?.homeroomTeachers } } : { kind: input.templateKey, documentTitle: title, ...payload, schoolCode: school.schoolCode, schoolAddress: school.postalAddress, schoolPhone: school.phone, schoolEmail: school.email }
   const publishedAt = context.result.publishedAt?.toISOString() ?? ''
   return {
     academicYearId: context.academicYear.id,
@@ -65,6 +68,7 @@ export async function assembleReportDocument(
     portraitRequired: false,
     snapshot: {
       facts,
+      teacherSignatures: captureTeacherSignatures(facts),
       sourceVersion: `${publishedAt}:${context.period.id}`,
       locale: input.locale,
       timeZone,

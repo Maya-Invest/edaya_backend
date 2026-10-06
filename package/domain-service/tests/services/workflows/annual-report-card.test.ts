@@ -3,7 +3,7 @@ import type { DocumentRenderInput } from '@edaya/core'
 import { writeFileSync } from 'node:fs'
 import { ActorAssuranceLevel, createGuardianActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentResult, DocumentIssuanceStatus, reportCardAcademicVersion, ReportCardAggregationSource, ReportCardResult, ReportCardResultStatus, Teacher, TeacherAssignment, TeacherAssignmentKind } from '@edaya/core'
-import { dispatchDocumentRender } from '@edaya/service'
+import { dispatchDocumentRender, renderReportCardDocument } from '@edaya/service'
 import { describe, expect, test } from 'bun:test'
 import { createChromePdfRenderer, createDocumentRenderer, detectChromeExecutable } from '../../../../adaptor-docs/src/index'
 import { createReportCardContext } from './report-card-workflow-context'
@@ -68,6 +68,39 @@ describe('official annual report card workflow', () => {
     expect((await f.family.documentsWorkflow.grantDocumentDownload({ id: issued.id })).downloadUrl).toContain('memory://')
     await f.repositories.guardianLinks.delete('link')
     await expect(f.family.documentsWorkflow.grantDocumentDownload({ id: issued.id })).rejects.toThrow()
+  }, 60000)
+
+  test('annual, periodic and legacy reports pair duplicate teacher names by ID and freeze replacements', async () => {
+    const f = await annualFixture()
+    const png = await Bun.file(new URL('../../fixtures/upload-formats/synthetic.png', import.meta.url)).bytes()
+    const actors = []
+    for (const id of ['teacher-a', 'teacher-b']) {
+      await f.repositories.teachers.save(new Teacher({ id, schoolId: 'sch1', firstName: 'Same', lastName: 'Name', subjectId: id }))
+      await f.repositories.teacherAssignments.save(new TeacherAssignment({ id: `${id}-subject`, teacherId: id, academicYearId: 'ay1', classSubjectId: 'cs1', kind: TeacherAssignmentKind.Subject }))
+      const actor = f.forActor(createTeacherActorMetadata({ schoolId: 'sch1', teacherId: id, subjectId: id, academicYearId: 'ay1', requestId: id, authenticatedAt: new Date() }))
+      const intent = await actor.documentsWorkflow.createTeacherSignatureUpload({ attachmentId: `${id}-signature`, fileName: 'signature.png', mimeType: 'image/png', sizeBytes: png.length })
+      await f.service.baseService.fileStorage.putObject({ key: intent.storageKey, body: png, contentType: 'image/png' })
+      await actor.documentsWorkflow.completeTeacherSignatureUpload({ attachmentId: intent.attachmentId })
+      actors.push(actor)
+    }
+    await f.repositories.teacherAssignments.save(new TeacherAssignment({ id: 'homeroom', teacherId: 'teacher-a', academicYearId: 'ay1', classGroupId: 'cg1', kind: TeacherAssignmentKind.Homeroom }))
+    const annual = await f.request()
+    const periodic = await f.service.documentsWorkflow.requestDocumentIssuance({ requestId: 'periodic-signatures', templateKey: 'report-card.v1', sourceId: 'report-per1' })
+    await actors[0]!.documentsWorkflow.clearTeacherSignature({ requestId: 'clear-after-capture', attachmentId: 'teacher-a-signature' })
+    await dispatchDocumentRender(f.application)
+    for (const issued of [annual, periodic]) {
+      expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Ready)
+      const payload = f.rendered.filter(input => input.templateKey === issued.templateKey).at(-1)!.payload as { subjects: Array<{ teachers?: Array<{ teacherId: string, name: string, signatureUrl?: string }> }>, council: { homeroomTeachers: Array<{ teacherId: string, signatureUrl?: string }> } }
+      expect(payload.subjects[0]?.teachers?.map(entry => entry.teacherId)).toEqual(['teacher-a', 'teacher-b'])
+      expect(payload.subjects[0]?.teachers?.every(entry => entry.name === 'Same Name' && entry.signatureUrl?.startsWith('data:image/png'))).toBe(true)
+      expect(payload.council.homeroomTeachers[0]).toMatchObject({ teacherId: 'teacher-a', signatureUrl: expect.stringContaining('data:image/png') })
+    }
+    await renderReportCardDocument(f.service, { resultId: 'report-sem2', renderer: { render: async (input) => {
+      const payload = input.payload as { subjects: Array<{ teachers: Array<{ teacherId: string, name: string, signatureUrl?: string }> }> }
+      expect(payload.subjects[0]?.teachers[0]).toEqual({ teacherId: 'teacher-a', name: 'Same Name' })
+      expect(payload.subjects[0]?.teachers[1]?.signatureUrl).toContain('data:image/png')
+      return { bytes: new TextEncoder().encode('%PDF-signature'), contentType: 'application/pdf', sha256: 'b'.repeat(64), renderId: 'legacy' }
+    } } })
   }, 60000)
 
   test('changed, unpublished and pending contributing grades block issuance and downloads', async () => {

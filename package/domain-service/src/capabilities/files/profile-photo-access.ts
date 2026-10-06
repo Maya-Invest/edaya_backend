@@ -13,9 +13,11 @@ import {
   resourceAccessScope,
   STUDENT_PORTRAIT_PURPOSE,
   StudentPhotoSubmissionStatus,
+  TEACHER_SIGNATURE_PURPOSE,
 } from '@edaya/core'
 import { documentArtifactReadPolicyForAttachment } from '../documents/document-artifact-access'
 import { isSchoolIssuanceAssetPurpose, schoolIssuanceAssetReadPolicy } from '../documents/issuance-asset-access'
+import { teacherSignatureReadPolicy } from './teacher-signatures'
 
 export async function requireCurrentGuardianStudentLink(
   base: BaseSchoolService,
@@ -243,6 +245,8 @@ export async function resolveAttachmentReadPolicy(
   const attachment = await base.repositories.attachments.forSchool!(base.actor.schoolId).findById(attachmentId)
   if (!attachment)
     return undefined
+  if (attachment.purpose === TEACHER_SIGNATURE_PURPOSE)
+    return teacherSignatureReadPolicy(base, attachment)
   if (isProfilePhotoPurpose(attachment.purpose))
     return profilePhotoReadPolicy(base, attachment)
   if (isSchoolIssuanceAssetPurpose(attachment.purpose))
