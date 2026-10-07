@@ -63,13 +63,13 @@
   "androidArtifacts": [
     {
       "app": "guardian",
-      "applicationId": "com.softilab.edaya.guardian",
+      "applicationId": "ca.mayainvest.edaya.guardian",
       "certificateSha256": "c7efef9fff9673b6aa087eaea577f9323331c9a36984f2b17ee563ff1fa00d52",
       "sha256": "af726aa34b7a4b7316820ccfeaa9d717498aba3b764ac9e4aedbae8a6f7e45f0"
     },
     {
       "app": "teacher",
-      "applicationId": "com.softilab.edaya.staff",
+      "applicationId": "ca.mayainvest.edaya.staff",
       "certificateSha256": "b4914d6b0aa952ef164c21732b2ba37e5331a551093aeb525aef29954182ef2d",
       "sha256": "825f94886c72cff2f27b76ea326faf3946fdc6bffefc40fb12eb0f1616b94962"
     }

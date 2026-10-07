@@ -4,26 +4,21 @@ import { attachIdentityRuntime } from "../runtime";
 import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import { readFileSync, writeFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
-import { parseEnv } from "../env";
+import { parseTestingEnv } from "./env";
+import { createAuthEmailSenders } from "../email";
+import { createAppLogger } from "../logger";
 import { createTestingIdentity } from "./composition";
 
-/** Explicit disposable configuration: never loads or rewrites a project .env. */
+/** Disposable identity configuration; only email settings come from local .env. */
 export async function startTestingServer(source: Record<string, string | undefined>) {
   if (source.NODE_ENV !== "test")
     throw new Error("The testing server requires NODE_ENV=test");
   const port = Number(source.EDAYA_TEST_PORT ?? 9999);
   const origin = `http://127.0.0.1:${port}`;
-  const env = parseEnv({
-    NODE_ENV: "test",
-    RUNTIME: "test",
-    PORT: port,
-    LOG_LEVEL: "silent",
-    AUTH_DATABASE_URL: source.EDAYA_TEST_AUTH_DATABASE_URL ?? "pglite:memory",
-    BETTER_AUTH_SECRET: "disposable-local-testing-secret-at-least-32-characters",
-    BETTER_AUTH_URL: origin,
-    FIRST_PARTY_API_ORIGINS: origin,
-    TRUSTED_ORIGINS: [`http://localhost:${port}`, origin, `http://10.0.2.2:${port}`, source.EDAYA_TEST_TRUSTED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"].join(","),
-  }, "test");
+  const localEnv = loadLocalProcessEnv();
+  const env = parseTestingEnv(source, localEnv);
+  const emailLog = createAppLogger({ ...env, LOG_LEVEL: "warn" });
+  const email = createAuthEmailSenders(env, emailLog, { allowTestDelivery: true });
   const clock = source.EDAYA_TEST_CLOCK_FILE;
   const policy = source.EDAYA_TEST_POLICY_FILE;
   if (clock)
@@ -31,6 +26,8 @@ export async function startTestingServer(source: Record<string, string | undefin
   if (policy)
     writeFileSync(policy, "[]", { mode: 0o600 });
   const test = await createTestingIdentity(env, {
+    emailDelivery: email.sendAuthVerificationOtp,
+    warn: message => emailLog.warn({}, message),
     mailbox: source.EDAYA_TEST_OTP_FILE,
     now: clock
       ? () => {
@@ -49,7 +46,6 @@ export async function startTestingServer(source: Record<string, string | undefin
         } }
       : undefined,
   });
-  const localEnv = loadLocalProcessEnv();
   const apiEnv = parseRuntimeEnv({ ...localEnv, ...env, LOG_LEVEL: localEnv.LOG_LEVEL ?? "error", RUNTIME: "local", API_ORIGIN: origin, PORT: port });
   attachIdentityRuntime(apiEnv, test.runtime);
   const server = serve({ hostname: "127.0.0.1", port, fetch: (request) => {

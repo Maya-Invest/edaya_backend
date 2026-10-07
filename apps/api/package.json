@@ -16,7 +16,6 @@
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "test": "NODE_ENV=test bun test ./tests ./src/identity/tests --timeout 120000",
-    "build": "tsup",
     "dev:test": "NODE_ENV=test bun --no-env-file src/identity/entries/testing.ts"
   },
   "dependencies": {

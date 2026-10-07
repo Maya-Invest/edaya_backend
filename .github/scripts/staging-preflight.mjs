@@ -59,7 +59,7 @@ export function validateConfiguration(env) {
   try { createPrivateKey(fcm.private_key); } catch { errors.push("FCM_SERVICE_ACCOUNT_JSON.private_key: invalid private key"); }
   const signing = parse("ANDROID_SIGNING_BUNDLE", env.ANDROID_SIGNING_BUNDLE);
   if (!base64(signing.keystore) || Buffer.from(signing.keystore || "", "base64").length === 0) errors.push("ANDROID_SIGNING_BUNDLE.keystore: invalid base64");
-  for (const [app, applicationId] of [["guardian", "com.softilab.edaya.guardian"], ["teacher", "com.softilab.edaya.staff"]]) {
+  for (const [app, applicationId] of [["guardian", "ca.mayainvest.edaya.guardian"], ["teacher", "ca.mayainvest.edaya.staff"]]) {
     const config = signing.apps?.[app];
     for (const field of ["keyAlias", "keyPassword", "storePassword"]) if (!nonempty(config?.[field]) || /[\r\n\\]/.test(config[field])) errors.push(`ANDROID_SIGNING_BUNDLE.apps.${app}.${field}: missing or invalid`);
     const firebase = config?.firebase;

@@ -18,7 +18,7 @@ const candidate = () => ({ repositories: commits, flutter: "3.44.8", apiUrl: sta
 const saved = () => ({ schemaVersion: 3, candidate: candidate(), apks: { guardian: "d".repeat(64), teacher: "e".repeat(64) } });
 const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 function environment() {
-  const firebase = app => ({ project_info: { project_id: "fixture-project" }, client: [{ client_info: { android_client_info: { package_name: app === "guardian" ? "com.softilab.edaya.guardian" : "com.softilab.edaya.staff" } } }] });
+  const firebase = app => ({ project_info: { project_id: "fixture-project" }, client: [{ client_info: { android_client_info: { package_name: app === "guardian" ? "ca.mayainvest.edaya.guardian" : "ca.mayainvest.edaya.staff" } } }] });
   return { RELEASE_TARGET: "staging", RESET_DATA: "false", VALIDATE_ONLY: "true", CLOUDFLARE_ACCOUNT_ID: staging.account, CLOUDFLARE_API_TOKEN: "private-token", IDENTITY_CHECKOUT_TOKEN: "private-checkout-token", STAGING_NEON_TARGET_CONFIRMED: staging.databaseHost,
     STAGING_DATABASE_URL: `postgres://school:secret@${staging.databaseHost}/neondb?sslmode=require`, STAGING_AUTH_DATABASE_URL: `postgres://edaya_identity:secret@${staging.databaseHost}/edaya_identity?sslmode=require`,
     STAGING_API_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", R2_ENDPOINT: "https://fixture.r2.cloudflarestorage.com", R2_ACCESS_KEY_ID: "key", R2_SECRET_ACCESS_KEY: "secret", FCM_SERVICE_ACCOUNT_JSON: JSON.stringify({ project_id: "fixture-project", client_email: "fixture@example.com", private_key: privateKey.export({ type: "pkcs8", format: "pem" }) }) }),

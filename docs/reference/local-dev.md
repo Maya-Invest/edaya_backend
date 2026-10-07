@@ -184,8 +184,19 @@ In local dev, the webapp `/login` page signs into the identity service with the 
 
 ## Identity emails
 
-OTP and signup-verification delivery is owned by `edaya_identity`, not the school Worker.
-Configure and inspect authentication email delivery in the identity repository. The school notification cron handles school-domain notifications only. See [cron-runtimes.md](./cron-runtimes.md).
+OTP and signup-verification delivery is owned by the unified API's identity module (`apps/api/src/identity`). The school notification cron handles school-domain notifications only. See [cron-runtimes.md](./cron-runtimes.md).
+
+To send authentication emails from the local server, configure `apps/api/.env` (or the file selected by `EDAYA_LOCAL_ENV_FILE`):
+
+```dotenv
+CLOUDFLARE_EMAIL_ACCOUNT_ID=your-cloudflare-account-id
+CLOUDFLARE_EMAIL_API_TOKEN=your-email-sending-api-token
+EMAIL_FROM=EDAYA <noreply@edayaplus.com>
+```
+
+The sender domain must be enabled for Cloudflare Email Sending, and the token must have permission to send email in that account. Local processes use the [Cloudflare REST API](https://developers.cloudflare.com/email-service/api/send-emails/rest-api/); Workers keep their `EMAIL` binding. Process environment values take precedence over the local file. Keep credentials in the gitignored local file or process environment.
+
+With both credentials present, real OTP delivery is automatic in normal development and `dev:test`. Remove any existing `EMAIL_TRANSPORT=log` setting to enable it; retaining that setting explicitly disables sending. With neither credential, delivery remains omitted locally. Partial credentials produce a configuration warning and disable real delivery. These credentials apply to authentication emails; school notification delivery is unchanged.
 
 ## Testing
 
@@ -242,7 +253,9 @@ See [Account architecture and cutover](../proposals/three-repo-account-auth-arch
 
 ## Test-only OTP access
 
-From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9999`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. No `.env` files are changed or loaded by the test entry. Normal environment settings, provider credentials and database URLs are ignored; only explicit `EDAYA_TEST_*` configuration is used. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
+From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9999`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without requiring provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. Email settings are loaded from the normal local configuration described above, while identity database, secret and origin settings remain isolated under explicit `EDAYA_TEST_*` configuration. No `.env` files are rewritten. The school API continues to use its normal local configuration. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
+
+When email sending is configured, each email challenge captures and sends the same OTP once. Email failures emit a sanitized terminal warning and leave the captured code usable. Requests time out after 10 seconds and are not automatically retried. WhatsApp and SMS remain capture-only. Revealing or copying a code never sends email. Ordinary automated tests remain offline unless they explicitly inject a delivery dependency; CI can also set `EMAIL_TRANSPORT=log` to keep `dev:test` capture-only regardless of inherited credentials.
 
 Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_API_URL=http://127.0.0.1:9999 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
 

@@ -46,6 +46,9 @@ export const EnvSchema = z.object({
   SMS_TRANSPORT: z.enum(["log", "unimplemented"]).optional(),
   /** From header for in-process notify, e.g. `EDAYA <noreply@edayaplus.com>` */
   EMAIL_FROM: z.string().min(1).optional(),
+  /** Optional REST credentials for local auth email delivery, including dev:test. */
+  CLOUDFLARE_EMAIL_ACCOUNT_ID: z.string().trim().optional(),
+  CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
   /** Firebase Cloud Messaging HTTP v1 service-account JSON (Worker secret) */
   FCM_SERVICE_ACCOUNT_JSON: z.string().min(1).optional(),
   /** When true, allow POST /core/onboarding/register-school for authenticated unlinked users. */

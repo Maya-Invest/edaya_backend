@@ -46,7 +46,7 @@ See [docs/reference/runtime-boundaries.md](../../docs/reference/runtime-boundari
 | ---------- | --------------------------- | -------------------------------------------------------------- |
 | **Worker** | `bun run deploy:production` | Wrangler bundles `src/entries/worker.ts` → `api.edayaplus.com` |
 
-`bun run build` produces a Node bundle of the **local** entry (`dist/node.js`) for CI/typecheck only — not used in production deploy.
+Bun runs the local TypeScript entry directly. Wrangler bundles the Worker entry for deployment. CI validates both staging and production bundles with `bun run deploy:staging:dry-run` and `bun run deploy:production:dry-run`; these commands do not deploy. Use `bun run check` for API type checking. The repository-root `bun run build` builds the generated API-client package.
 
 Before first production deploy:
 

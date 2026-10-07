@@ -31,7 +31,7 @@ Do not introduce the rewrite's `SchoolMembership` model or give guardians generi
 - [x] Inspect current account invitation and subject-link invariants, including disabled access and multi-profile callers.
 - [x] Record the configured first-party link hosts, Android package, and iOS bundle/team from existing configuration. Do not invent a new deployment domain or App Store numeric ID.
 
-Hosts: `https://app.edayaplus.com` and `https://staging.app.edayaplus.com` (legacy `app.school.edayaplus.com` and `staging.app.school.edayaplus.com` remain accepted so leftover invite URLs still open the app). Guardian package `com.softilab.edaya.guardian`, iOS team `ZZRPX6RMZ7`. Android SHA-256 fingerprints are the upload/`guardian` alias (same value as Play Store signing) plus the local debug cert. Do not invent fingerprints or commit keystore passwords.
+Hosts: `https://app.edayaplus.com` and `https://staging.app.edayaplus.com` (legacy `app.school.edayaplus.com` and `staging.app.school.edayaplus.com` remain accepted so leftover invite URLs still open the app). Guardian package `ca.mayainvest.edaya.guardian`, iOS team `ZZRPX6RMZ7`. Android SHA-256 fingerprints are the upload/`guardian` alias (same value as Play Store signing) plus the local debug cert. Do not invent fingerprints or commit keystore passwords.
 
 Start with the [invitation workflow](../../../package/domain-service/src/services/workflows/account-invitation.ts), [public invitation routes](../../../apps/api/src/routes/invitation.routes.ts), [web acceptance page](../../../../edaya_frontend/apps/webapp/src/routes/invite/%5Btoken%5D/+page.svelte), and [guardian router](../../../../edaya_mobile/apps/guardian/lib/app/router.dart).
 
@@ -75,7 +75,7 @@ Do not add `localhost` to associated domains. Universal Links and App Links do n
 
 - [x] Generate Dart `previewInvitation` / `acceptInvitation` from `client-bindings.json` (`basePath: root` → `/public/invitations/{token}`). Do not hand-edit generated output as the source of truth.
 - [x] Native HTTP GET preview may omit a bearer token. Accept still sends the identity JWT.
-- [x] Web `/invite` Get-the-app copy (Play Store package `com.softilab.edaya.guardian`; no invented Apple numeric ID — search App Store, then reopen the link).
+- [x] Web `/invite` Get-the-app copy (Play Store package `ca.mayainvest.edaya.guardian`; no invented Apple numeric ID — search App Store, then reopen the link).
 - [x] Guardian accept stays on the invite page (`guardianLinked`); do not dump a newly linked guardian into `/school/students`.
 - [x] Staff-web post-auth gate: linked guardians go to `/login` with the guardian portal banner, matching teachers.
 
@@ -97,7 +97,7 @@ Verified guardian Email OTP sessions can list pending **email-channel guardian**
 
 1. **App logic** — unit tests feed `https://staging.app.edayaplus.com/invite/{token}` into the parser, pending store, and router.
 2. **Android emulator/device** — debug APK still receives an explicit VIEW intent when Digital Asset Links are not verified:
-   `adb shell am start -W -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://staging.app.edayaplus.com/invite/TOKEN" com.softilab.edaya.guardian`
+   `adb shell am start -W -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d "https://staging.app.edayaplus.com/invite/TOKEN" ca.mayainvest.edaya.guardian`
    Point the app at local identity/API via `--dart-define`. The host need not be reachable.
 3. **iOS simulator** — `xcrun simctl openurl` usually opens Safari. Inject the URI in debug, or long-press in Notes on a team-signed device after staging AASA is deployed.
 4. **Real association** — deploy well-known files to staging, install a team-signed guardian build, tap a staging-issued invite in Mail/Notes.

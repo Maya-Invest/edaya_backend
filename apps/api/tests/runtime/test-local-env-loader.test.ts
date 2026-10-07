@@ -37,6 +37,28 @@ afterEach(() => {
 });
 
 describe("local dev env files", () => {
+  it("loads auth email settings from EDAYA_LOCAL_ENV_FILE with process overrides", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "edaya-email-env-"));
+    const filename = path.join(directory, "email.env");
+    try {
+      await writeFile(filename, [
+        "DATABASE_URL=pglite",
+        "CLOUDFLARE_EMAIL_ACCOUNT_ID=file-account",
+        "CLOUDFLARE_EMAIL_API_TOKEN=file-token",
+        "EMAIL_FROM=Dev <dev@edayaplus.com>",
+      ].join("\n"));
+      process.env = { NODE_ENV: "test", EDAYA_LOCAL_ENV_FILE: filename, CLOUDFLARE_EMAIL_API_TOKEN: "process-token" };
+      const env = loadLocalProcessEnv();
+      expect(env.CLOUDFLARE_EMAIL_ACCOUNT_ID).toBe("file-account");
+      expect(env.CLOUDFLARE_EMAIL_API_TOKEN).toBe("process-token");
+      expect(env.EMAIL_FROM).toBe("Dev <dev@edayaplus.com>");
+      expect(env.EMAIL_TRANSPORT).toBeUndefined();
+    }
+    finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("resolves the API package root for env file loading", () => {
     const apiRoot = resolveApiRootFromLoader();
     expect(existsSync(path.join(apiRoot, "package.json"))).toBe(true);

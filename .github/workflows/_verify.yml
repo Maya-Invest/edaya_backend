@@ -20,3 +20,7 @@ jobs:
         run: bash .github/scripts/lint-workflows.sh
       - name: Verify all unit and tooling tests
         run: bun run verify
+      - name: Validate staging Worker bundle
+        run: bun --filter @edaya/api deploy:staging:dry-run
+      - name: Validate production Worker bundle
+        run: bun --filter @edaya/api deploy:production:dry-run

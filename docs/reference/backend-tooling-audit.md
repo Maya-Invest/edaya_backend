@@ -81,7 +81,7 @@ Client regeneration preserves the existing OpenAPI schema, bindings, runtime fil
 
 ## Tools retained outside the consolidated packages
 
-The root TypeScript compiler and ESLint configuration supply active checks across the backend. Turbo schedules workspace tasks and caches them. Tsup builds the API's current deployment entries. Drizzle Kit remains with the adapters that own schema generation, and Wrangler remains with the deployable applications. Removing these would require replacing active workflows, beyond the unused declarations and redundant package boundaries identified here.
+The root TypeScript compiler and ESLint configuration supply active checks across the backend. Turbo schedules workspace tasks and caches them, including the generated API-client build. Bun executes the local API entry directly, and Wrangler bundles the Worker entry for deployment. CI validates staging and production Worker bundles through deployment dry runs. Drizzle Kit remains with the adapters that own schema generation.
 
 ## Validation
 

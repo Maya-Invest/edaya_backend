@@ -1,6 +1,7 @@
 import type { OtpDeliveryPort } from "@edaya/account";
 import type { Environment } from "../env";
 import type { CreateIdentityRuntimeOptions } from "../runtime";
+import type { AuthOtpDeliveryInput } from "../email";
 import { appendFileSync, closeSync, fchmodSync, openSync } from "node:fs";
 import { AuthError } from "@edaya/account";
 import { z } from "zod";
@@ -23,7 +24,11 @@ export function assertTestingEnvironment(env: Environment) {
 }
 
 /** The only composition that captures plaintext codes or installs OTP test routes. */
-export async function createTestingIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "now" | "privilegedPolicy"> & { mailbox?: string } = {}) {
+export async function createTestingIdentity(env: Environment, options: Pick<CreateIdentityRuntimeOptions, "now" | "privilegedPolicy"> & {
+  mailbox?: string;
+  emailDelivery?: (input: AuthOtpDeliveryInput) => Promise<void>;
+  warn?: (message: string) => void;
+} = {}) {
   assertTestingEnvironment(env);
   const now = options.now ?? Date.now;
   const captures = new Map<string, { otp: string; channel: string; expiresAt: number }>();
@@ -45,6 +50,15 @@ export async function createTestingIdentity(env: Environment, options: Pick<Crea
     captures.set(message.attemptId, { otp: message.code, channel: message.channel, expiresAt: now() + 300000 });
     if (options.mailbox)
       appendFileSync(options.mailbox, `${JSON.stringify({ ...message, deliveredAt: Date.now() })}\n`, { mode: 0o600 });
+    if (message.channel === "email" && options.emailDelivery) {
+      try {
+        await options.emailDelivery({ email: message.destination, otp: message.code, type: "sign-in" });
+      }
+      catch {
+        // Never expose provider responses, credentials or OTPs in terminal warnings.
+        (options.warn ?? console.error)("Auth OTP email delivery failed; the captured test code remains available.");
+      }
+    }
     return { status: "accepted" };
   } };
   const runtime = await createIdentityRuntime({ ...env, PHONE_AUTH_MODE: "whatsapp_first", PHONE_SMS_ROUTES: [{ prefix: "+225", provider: "africas_talking" }] }, { ...options, delivery });

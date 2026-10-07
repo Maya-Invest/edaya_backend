@@ -1,4 +1,5 @@
-import type { Environment } from "./env";
+import type { CloudflareEmailBinding, Environment } from "./env";
+import { createLocalEmailBinding } from "./local-email";
 
 export type AuthOtpType = "sign-in" | "email-verification" | "forget-password" | "change-email";
 export interface AuthOtpDeliveryInput {
@@ -101,16 +102,13 @@ function parseFromAddress(value: string): {
 function shouldLogAuthEmailInDev(env: Environment): boolean {
   return env.NODE_ENV === "development";
 }
-function useCloudflareEmail(env: Environment): boolean {
-  return env.EMAIL_TRANSPORT === "cloudflare" && Boolean(env.EMAIL);
-}
-async function sendCloudflareEmail(env: Environment, to: string, copy: {
+async function sendCloudflareEmail(env: Environment, binding: CloudflareEmailBinding, to: string, copy: {
   subject: string;
   html: string;
   text: string;
 }): Promise<void> {
   const from = parseFromAddress(env.EMAIL_FROM);
-  await env.EMAIL!.send({
+  await binding.send({
     to,
     from: from.name ? { email: from.email, name: from.name } : from.email,
     subject: copy.subject,
@@ -118,15 +116,24 @@ async function sendCloudflareEmail(env: Environment, to: string, copy: {
     text: copy.text,
   });
 }
-export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger) {
+export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger, options: {
+  /** Only the dedicated testing server opts into delivery while NODE_ENV=test. */
+  allowTestDelivery?: boolean;
+  send?: (url: string, init: RequestInit) => Promise<Response>;
+} = {}) {
+  const suppressed = env.NODE_ENV === "test" && !options.allowTestDelivery;
+  const binding = suppressed
+    ? undefined
+    : (env.EMAIL_TRANSPORT === "cloudflare" && env.EMAIL)
+      || createLocalEmailBinding(env, message => log.warn({}, message), options.send);
   async function sendAuthVerificationOtp(input: AuthOtpDeliveryInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();
     const copy = formatOtpEmail(input);
-    if (env.NODE_ENV === "test") {
+    if (suppressed) {
       return;
     }
-    if (useCloudflareEmail(env)) {
-      await sendCloudflareEmail(env, normalizedEmail, copy);
+    if (binding) {
+      await sendCloudflareEmail(env, binding, normalizedEmail, copy);
       if (shouldLogAuthEmailInDev(env)) {
         log.info({ email: normalizedEmail, type: input.type, delivery: "cloudflare" }, "Auth OTP sent");
       }
@@ -140,11 +147,11 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger) {
   async function sendAuthVerificationEmail(input: AuthVerificationEmailInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();
     const copy = formatVerificationLinkEmail(input);
-    if (env.NODE_ENV === "test") {
+    if (suppressed) {
       return;
     }
-    if (useCloudflareEmail(env)) {
-      await sendCloudflareEmail(env, normalizedEmail, copy);
+    if (binding) {
+      await sendCloudflareEmail(env, binding, normalizedEmail, copy);
       if (shouldLogAuthEmailInDev(env)) {
         log.info({ email: normalizedEmail, delivery: "cloudflare" }, "Auth verification email sent");
       }

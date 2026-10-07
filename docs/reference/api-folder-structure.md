@@ -97,7 +97,9 @@ All generated REST routes share `SCHOOL_API_BASE_PATH = "/core"` from `lib/schoo
 |--------|---------|
 | `dev` | `bun --watch src/entries/local.ts` |
 | `dev:worker` | `wrangler dev --env staging --env-file .dev.vars` |
-| `build` | `tsup` → `dist/node.js` from `src/entries/local.ts` |
+| `check` | `tsc --noEmit` |
+| `deploy:production:dry-run` | `wrangler deploy --env prod --dry-run` |
+| `deploy:staging:dry-run` | `wrangler deploy --env staging --dry-run` |
 | `deploy:production` | `wrangler deploy --env prod` |
 | `deploy:staging` | `wrangler deploy --env staging` |
 

@@ -139,6 +139,8 @@ const RawEnvSchema = z.object({
   REQUIRE_EMAIL_VERIFICATION: envBoolean.optional(),
   EMAIL_FROM: z.string().default("EDAYA <noreply@edayaplus.com>"),
   EMAIL_TRANSPORT: z.enum(["log", "cloudflare"]).optional(),
+  CLOUDFLARE_EMAIL_ACCOUNT_ID: z.string().trim().optional(),
+  CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
 }).superRefine((env, ctx) => {
   const required = env.PHONE_AUTH_MODE === "disabled" ? [] : ["AFRICAS_TALKING_USERNAME", "AFRICAS_TALKING_API_KEY", "AFRICAS_TALKING_SENDER_ID", ...(env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [])];
   for (const key of required) {

@@ -204,7 +204,7 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 | `bun run lint:fix` | ESLint with auto-fix |
 | `bun run check` | TypeScript checks |
 | `bun run test` | Unit tests (Turbo; excludes integration-tests) |
-| `bun run build` | Build deployable bundles |
+| `bun run build` | Build generated API-client JavaScript and declarations |
 | `bun run quality` | `lint` + `check` per package |
 | `bun run test:coverage` | Unit coverage (informational) |
 | `bun run test:integration` | Integration api + http slices |

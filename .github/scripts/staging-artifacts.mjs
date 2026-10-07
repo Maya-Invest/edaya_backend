@@ -18,7 +18,7 @@ if (mode === "signing") {
     for (const key of ["keyAlias", "keyPassword", "storePassword"]) {
       if (typeof data[key] !== "string" || !data[key] || /[\r\n\\]/.test(data[key])) throw new Error("Invalid signing configuration");
     }
-    const expectedId = app === "guardian" ? "com.softilab.edaya.guardian" : "com.softilab.edaya.staff";
+    const expectedId = app === "guardian" ? "ca.mayainvest.edaya.guardian" : "ca.mayainvest.edaya.staff";
     if (!data.firebase?.client?.some(client => client.client_info?.android_client_info?.package_name === expectedId)) throw new Error("Firebase application ID does not match the existing Android app");
     const android = resolve(mobile, `apps/${app}/android`);
     writeFileSync(resolve(android, "key.properties"), `storeFile=../../../android-signing/edaya-upload.jks\nkeyAlias=${data.keyAlias}\nkeyPassword=${data.keyPassword}\nstorePassword=${data.storePassword}\n`, { mode: 0o600 });

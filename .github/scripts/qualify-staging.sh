@@ -33,7 +33,7 @@ export EDAYA_TEST_OTP_FILE="$EDAYA_CI_API_PID_DIR/otp.jsonl"
 export EDAYA_TEST_CLOCK_FILE="$EDAYA_CI_API_PID_DIR/clock-offset"
 export EDAYA_TEST_POLICY_FILE="$EDAYA_CI_API_PID_DIR/privileged-accounts.json"
 (cd "$BACKEND" && bun --no-env-file repo seed --skip-profile-photos --skip-attachments)
-(cd "$MOBILE" && EDAYA_INTEGRATION_TESTS=1 EDAYA_API_URL="$EDAYA_TEST_API_URL" dart run melos run test:integration && python3 .github/scripts/ci_support.py evidence --role mobile)
+(cd "$MOBILE" && EDAYA_API_URL="$EDAYA_TEST_API_URL" python3 scripts/integration-runner.py && python3 .github/scripts/ci_support.py evidence --role mobile)
 cp "$MOBILE/.ci-evidence/results.json" "$ROOT/release/mobile-integration.json"
 (cd "$BACKEND/apps/api" && ./node_modules/.bin/wrangler deploy --env staging --dry-run)
 date -u +%FT%TZ > "$ROOT/release/qualification-passed.txt"
