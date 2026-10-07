@@ -37,7 +37,10 @@ if (integrationEnv) {
     const testContentType = "text/plain";
 
     afterAll(async () => {
-      await storage.deleteObject(testKey);
+      await Promise.all([
+        storage.deleteObject(testKey),
+        storage.deleteObject(`${testKey}-presign`),
+      ]);
     });
 
     it("puts, heads, presigns download, and deletes an object", async () => {

@@ -41,7 +41,7 @@ function teacherClassSubjectAssignments() {
 describe("service account routes", () => {
   it("authenticates service accounts with API keys against /core/entities/schools/list", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "integration-seeding",
@@ -70,7 +70,7 @@ describe("service account routes", () => {
 
   it("returns 401 when the API key is invalid", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const response = await app.request(createAppRequest("/core/entities/schools/list", {
       method: "POST",
@@ -86,7 +86,7 @@ describe("service account routes", () => {
 
   it("returns only the service account itself when it lacks staff directory permission", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const { apiKey, staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "narrow-teacher",
@@ -116,7 +116,7 @@ describe("service account routes", () => {
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     await provisionServiceAccountForTests(application, {
       serviceId: "listed-bot",
@@ -142,7 +142,7 @@ describe("service account routes", () => {
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/service-accounts", {
@@ -184,7 +184,7 @@ describe("service account routes", () => {
 
   it("creates a service account with a caller-provided API key", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const accessToken = await signInDirectorWithBearer(app);
     const customApiKey = "sk_live_custom-key-for-route-test-only";
@@ -230,7 +230,7 @@ describe("service account routes", () => {
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const staffAccount = DEV_AUTH_STAFF_ACCOUNTS.find(account => account.staffId === "ci-st3")!;
     const teacherStaffId = staffAccount.staffId;
@@ -264,7 +264,7 @@ describe("service account routes", () => {
 
   it("returns 403 when the service account lacks permission for a protected command", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "teacher-command-bot",
@@ -295,7 +295,7 @@ describe("service account routes", () => {
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const accessToken = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/commands/materialize-deliveries", {
@@ -317,7 +317,7 @@ describe("service account routes", () => {
       sessionActor: createSessionActorDependency(async c =>
         wrapAuthWithVerifiedAssurance(c.var.identityClient)),
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const { staffMember } = await provisionServiceAccountForTests(application, {
       serviceId: "updatable-bot",
@@ -346,7 +346,7 @@ describe("service account routes", () => {
 
   it("rejects a combined first-party and service credential header", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp();
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const { apiKey } = await provisionServiceAccountForTests(application, {
       serviceId: "dual-auth",

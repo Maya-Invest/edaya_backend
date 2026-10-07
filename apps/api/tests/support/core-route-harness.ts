@@ -304,11 +304,19 @@ export async function createCoreRouteTestApp(
   return { app, runtime, application, env, ...(embeddedLocalFiles ? { localFiles: embeddedLocalFiles } : {}) };
 }
 
-export async function seedDevSchoolAndAuthLinks(application: ApiSchoolApplication, _runtime: ApiRuntime) {
+export async function seedDevSchoolAndAuthLinks(
+  application: ApiSchoolApplication,
+  _runtime: ApiRuntime,
+  options: { includeAccessSeed?: boolean } = {},
+) {
   await runIntegrationLightSchoolSeed(application);
   await runDevAuthLinkWithPort(createInProcessAuthLinkSeedPort(application), testIdentityProvisioner, {
     linkGuardians: false,
   });
+  // Owner-only tests and cases that install explicit grants do not need every
+  // demo staff preset. Keep those cases focused on their own authority fixture.
+  if (options.includeAccessSeed === false)
+    return;
   const context = resolveDevSeedContext();
   await runDevAccessSeed(application, {
     auth: testIdentityProvisioner,

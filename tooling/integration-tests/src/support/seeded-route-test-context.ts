@@ -23,6 +23,11 @@ import {
 
 export type IntegrationFixtureKind = 'light' | 'full'
 
+// Full fixtures provision the complete demo dataset, identity links, access
+// assignments and private photos. Match the HTTP seed suite's setup allowance;
+// keep the smaller route fixtures and individual assertion deadlines unchanged.
+const FULL_SEED_SETUP_TIMEOUT = 600_000
+
 type FullSchoolSeedResult = DevSchoolSeedResult & { status: 'seeded' }
 type LightSchoolSeedResult = IntegrationLightSchoolSeedResult & { status: 'seeded' }
 
@@ -195,7 +200,7 @@ function describeWithFixture(
       context = options.isolate
         ? await provisionSeededRouteTestContext(fixture)
         : await resolveSharedRouteContext(fixture)
-    }, fixture === 'light' ? 60_000 : 180_000)
+    }, fixture === 'light' ? 60_000 : FULL_SEED_SETUP_TIMEOUT)
 
     afterAll(async () => {
       if (!options.isolate) {
@@ -225,7 +230,7 @@ function describeWithSchoolDataFixture(
       context = options.isolate
         ? await provisionSeededSchoolDataContext(fixture)
         : await resolveSharedSchoolDataContext(fixture)
-    }, fixture === 'light' ? 45_000 : 120_000)
+    }, fixture === 'light' ? 45_000 : FULL_SEED_SETUP_TIMEOUT)
 
     afterAll(async () => {
       if (!options.isolate) {
