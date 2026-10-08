@@ -25,7 +25,6 @@ export const paths = {
   codegen: path.join(repoRoot, 'tooling/repo/codegen/bin/edaya-codegen.ts'),
   identityMigrate: path.join(repoRoot, 'tooling/repo/db/identity/migrate.ts'),
   identityWipe: path.join(repoRoot, 'tooling/repo/db/identity/wipe.ts'),
-  devContainer: path.join(repoRoot, 'tooling/api-dev-container/run.sh'),
   apiRoot: path.join(repoRoot, 'apps/api'),
   smokeNotify: path.join(repoRoot, 'tooling/integration-tests/smoke/notify-e2e.ts'),
 } as const

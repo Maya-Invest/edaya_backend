@@ -34,8 +34,6 @@ Run the complete local gate:
 bun repo verify --full
 ```
 
-The main release workflow gates school/Account migrations, API client publication, Docker image publication and Worker deployment on `Full validation`. The unified image builds directly from this checkout; there is no Identity preparation script or separate Identity checkout. Production migration credentials are `PRODUCTION_DATABASE_URL` and `PRODUCTION_AUTH_DATABASE_URL`. Staging retains its existing API/Identity secret inputs, combined for one Worker by the coordinator.
-
-The development-image bake starts the unified disposable fixture entry only while seeding, captures delivery in a temporary file and removes that file before completing the image. Its normal entry point starts the ordinary API server; test OTP and internal HTTP routes remain unavailable.
+The main release workflow gates school/Account migrations, API client publication and Worker deployment on `Full validation`. Backend tests run directly with Bun and local databases. Frontend and mobile integration workflows check out the backend and start its TypeScript API and file-server entries directly with Bun. Production migration credentials are `PRODUCTION_DATABASE_URL` and `PRODUCTION_AUTH_DATABASE_URL`. Staging retains its existing API/Identity secret inputs, combined for one Worker by the coordinator.
 
 The retained Neon endpoint's ownership/staging branch and dedicated Account database/role remain release blockers until verified. Code qualification uses disposable databases and does not resolve those infrastructure blockers.

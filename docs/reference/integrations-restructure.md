@@ -30,7 +30,6 @@ edaya_backend/
     seeding/                        HTTP seed orchestration (@edaya/seeding)
     integration-tests/              Integration tests + smoke
     test-support/                   Shared Bun preload (no package.json)
-    api-dev-container/              Container scripts (no package.json)
 ```
 
 ## Boundary rules

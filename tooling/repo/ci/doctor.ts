@@ -19,7 +19,6 @@ const expectedSecretExamples = [
 function isAllowedTrackedEnvFile(name: string): boolean {
   return name === '.env.example'
     || /^\.env\..+\.example$/.test(name)
-    || /^container\..+\.env$/.test(name)
 }
 
 const trackedEnvOutput = await $`git -C ${repoRoot} ls-files -- ${'*.env*'}`.text()

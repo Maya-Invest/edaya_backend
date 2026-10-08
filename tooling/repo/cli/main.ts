@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import process from 'node:process'
-import { runDevContainer } from './commands/dev-container'
 import { dispatchCompoundCommand } from './dispatch'
 import { repoCliUsage } from './lib/help'
 import { runBunScript } from './lib/spawn'
@@ -26,10 +25,6 @@ if (parsed.kind === 'help') {
 
 if (isCompoundRepoCommand(parsed.command)) {
   process.exit(await dispatchCompoundCommand(parsed.command, parsed.forwardArgs))
-}
-
-if (parsed.command === 'dev-container') {
-  process.exit(await runDevContainer(parsed.forwardArgs))
 }
 
 if ((parsed.command === 'identity-migrate' || parsed.command === 'identity-wipe')

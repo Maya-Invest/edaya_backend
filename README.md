@@ -35,8 +35,7 @@ edaya_backend/
     ├── fixtures/                         @edaya/fixtures — shared seed data and test helpers
     ├── seeding/                          @edaya/seeding — seed workflows and HTTP orchestration
     ├── integration-tests/                @edaya/integration-tests — integration and smoke suites
-    ├── test-support/                     shared Bun preload (no package.json)
-    └── api-dev-container/                container scripts (no package.json)
+    └── test-support/                     shared Bun preload (no package.json)
 ```
 
 **Boundary rule:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, and adaptor packages never depend on `apps/` or `tooling/`. Account authentication and its replaceable Better Auth adapter live in this workspace. Flutter apps live in `edaya_mobile`; the former identity repository is no longer a build dependency. `tooling/repo/db/school` owns school migration CLI scripts; Worker host wiring (Hyperdrive, DI, request runtime cache) lives in `apps/api`.
@@ -149,7 +148,7 @@ The generator's shared contract lives in `package/api-client/src/contract`, expo
 
 See [backend tooling audit](docs/reference/backend-tooling-audit.md) for the consolidation decisions and validation.
 
-`tooling/api-dev-container/` is a Docker/Apple Container helper (no workspace `package.json`). Invoke via `bun repo dev-container` / root `dev:container*` scripts.
+Run `bun repo dev` to start the API and local file server directly with Bun. Use `bun repo seed` to populate the local development data.
 
 ## Prerequisites
 

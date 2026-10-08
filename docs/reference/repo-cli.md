@@ -24,7 +24,6 @@ Implementation: `tooling/repo/cli/` — thin subprocess dispatch, no domain impo
 ```text
 bun repo
 ├── dev
-├── dev-container [up|build|down|logs]
 ├── seed [--staging] [--scope <name>] [--clean] [--repair]
 │   └── clean [--staging]
 ├── db
@@ -49,20 +48,7 @@ bun repo
 
 ### `bun repo dev`
 
-Starts `@edaya/identity`, `@edaya/api`, and the local file server in watch mode. Loads `apps/api/.env` for the school API and files; identity loads its own environment.
-
-### `bun repo dev-container`
-
-Apple Container dev image for API + local-files (macOS 26, Apple silicon). Forwards to `tooling/api-dev-container/run.sh`.
-
-```sh
-bun repo dev-container          # up (default)
-bun repo dev-container build
-bun repo dev-container down
-bun repo dev-container logs
-```
-
-Root alias: `bun run dev:container`.
+Starts the API (including Account authentication) and the local file server directly with Bun in watch mode. Loads `apps/api/.env` for the API and files. Use `bun repo seed` to populate local development data.
 
 ### `bun repo seed`
 
@@ -213,7 +199,6 @@ bun run test:integration          # api + http
 bun run test:integration:api
 bun run test:integration:http
 bun run test:integration:seed     # slow, opt-in
-bun run api-dev-container         # alias: bun repo dev-container
 ```
 
 Everything else: **`bun repo <command>`** (`bun repo --help`).

@@ -32,7 +32,7 @@ All 786 external resolutions remain pinned to their original versions. No additi
 | `@edaya/seeding` | Keep | Owns HTTP orchestration, repair, cleanup, seed ports, and workflows. It has independent exports and test coverage beyond the fixture data. |
 | `@edaya/integration-tests` | Keep | Owns distinct API, HTTP, seed, and native PostgreSQL suites with dedicated runtime setup. Its separate commands and dependency graph preserve test isolation and CI scheduling. |
 
-`tooling/test-support/` and `tooling/api-dev-container/` contain scripts without package manifests; they do not increase the package count.
+`tooling/test-support/` contains scripts without a package manifest; it does not increase the package count.
 
 ## Dependency removals
 
@@ -75,7 +75,7 @@ The repository package now runs the relocated generator and migration tests, pre
 
 Identity command help exits before executing a migration or wipe, including when `--yes` is present. The generator also supports `--help`.
 
-CI migration steps, staging deployment and rehearsal scripts, deploy path filters, container startup, and seed-baking scripts use the relocated entries. Native finance tests and their TypeScript includes now reference `tooling/repo/db/school/`.
+CI migration steps, staging deployment and rehearsal scripts, deploy path filters, and direct Bun development commands use the relocated entries. Native finance tests and their TypeScript includes now reference `tooling/repo/db/school/`.
 
 Client regeneration preserves the existing OpenAPI schema, bindings, runtime files, and Dart contract. Historical generator banners were retained to avoid changing consumer artifact hashes for a tooling-only relocation. The content-addressed release contract was repinned in backend, frontend, and mobile; only the backend source fingerprint and release ID changed in those manifests.
 
@@ -95,4 +95,4 @@ The root TypeScript compiler and ESLint configuration supply active checks acros
 - A fresh offline installation with a frozen lockfile passes without existing dependency links; repository tooling checks and tests are verified in that copy.
 - Final `bun run verify` passes: repository hygiene, release-contract checks, lint, type checks, builds, and 2,012 unit tests. The integration suites separately pass 121 tests in total; three optional benchmarks are skipped.
 
-Live deployment, remote database resets, and container image publication are outside this audit. CI and container entry points were updated; live operations were not executed.
+Live deployment and remote database resets are outside this audit. CI and local development entry points were updated; live operations were not executed.

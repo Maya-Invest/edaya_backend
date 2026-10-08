@@ -23,6 +23,47 @@ Apply `package/adaptor-account/drizzle/0001_phone_delivery.sql` through the exis
 
 Both Worker environments default to `PHONE_AUTH_MODE=disabled`. Configure an approved Africa’s Talking CI sender, `AFRICAS_TALKING_USERNAME`, the secret `AFRICAS_TALKING_API_KEY`, and `AFRICAS_TALKING_SENDER_ID`. Set `PHONE_SMS_ROUTES` to `[{"prefix":"+225","provider":"africas_talking"}]`. `AFRICAS_TALKING_SANDBOX` is for local testing only and is rejected in production. Enable `sms_only` while Meta approval is pending. An enabled mode rejects incomplete configuration at startup.
 
+### Local Africa's Talking setup
+
+Edit the existing gitignored `apps/api/.env`, preserving its database and Account settings. Set the following values (replace placeholders before enabling):
+
+```dotenv
+PHONE_AUTH_MODE=sms_only
+PHONE_SMS_ROUTES='[{"prefix":"+225","provider":"africas_talking"}]'
+AFRICAS_TALKING_USERNAME=sandbox
+AFRICAS_TALKING_API_KEY=YOUR_SANDBOX_API_KEY
+AFRICAS_TALKING_SENDER_ID=YOUR_SANDBOX_SENDER_ID
+AFRICAS_TALKING_SANDBOX=true
+```
+
+Use the key and sender configured in your [sandbox application](https://account.africastalking.com/apps/sandbox). Africa's Talking's [username guidance](https://help.africastalking.com/en/articles/2249244-what-is-my-username-and-api-key) specifies `sandbox` as the sandbox username; live authentication uses the application username, which can differ from its display name. Register a supported Côte d'Ivoire number in the [simulator](https://simulator.africastalking.com:1517/) and use that same number in EDAYA. Sandbox messages arrive in the simulator, as explained in the [provider's sandbox guide](https://help.africastalking.com/en/articles/1170660-how-do-i-get-started-on-the-africa-s-talking-sandbox).
+
+Restart `bun dev` from the backend root, check `http://localhost:9999/auth/edaya/methods` for phone availability, and request an OTP through the normal login form. `bun run dev:test` captures SMS locally and does not call Africa's Talking, even when provider credentials are present. `SMS_TRANSPORT` controls school notifications, not this phone OTP integration.
+
+For delivery to real phones during local development, replace the sandbox username/key/sender with the live application's values and set `AFRICAS_TALKING_SANDBOX=false`. A live key cannot be used with the sandbox endpoint. This application currently accepts only CI mobile numbers (`+225` followed by ten digits starting with `01`, `05`, or `07`).
+
+### Staging Africa's Talking setup
+
+Staging runs with `NODE_ENV=production`, so its current validation also rejects sandbox mode. Use a live application, a sender approved for Côte d'Ivoire, and sufficient SMS credit for real handset qualification. Keep `NODE_ENV=production`.
+
+Merge these three fields into the existing gitignored `apps/api/secrets.staging.json`, preserving all existing secrets:
+
+```json
+{
+  "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
+  "AFRICAS_TALKING_API_KEY": "YOUR_LIVE_API_KEY",
+  "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID"
+}
+```
+
+For coordinated GitHub releases, merge the same fields into the existing `STAGING_IDENTITY_SECRETS` JSON secret. The release merges it with `STAGING_API_SECRETS`; duplicate fields must agree. Keep phone mode in Wrangler configuration because staging preflight rejects `PHONE_AUTH_MODE` in secret payloads. Cloudflare documents [environment-specific secret storage](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+Once the credentials are complete and the Identity migrations have been applied, set only `env.staging.vars.PHONE_AUTH_MODE` to `sms_only` in `apps/api/wrangler.jsonc`. Retain its existing `PHONE_SMS_ROUTES` and `AFRICAS_TALKING_SANDBOX=false`. Upload secrets before enabling the mode (from `apps/api`, `bunx wrangler secret bulk secrets.staging.json --env staging`), or use the coordinated staging release's secret upload. Deploy the updated staging Worker through the existing release process; editing a local secret file alone does not configure the deployed Worker. Production has a separate configuration.
+
+After deployment, inspect `https://staging.api.edayaplus.com/auth/edaya/methods`, then request a code through staging with a controlled CI test phone. Verify receipt and successful login, and test an explicit resend after cooldown. A provider `accepted` result alone does not establish handset delivery. Do not enable the deployed test-code reveal endpoint.
+
+### WhatsApp setup
+
 For WhatsApp, configure `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID`, a pinned supported `WHATSAPP_API_VERSION`, and `WHATSAPP_AUTH_TEMPLATES`:
 
 ```json

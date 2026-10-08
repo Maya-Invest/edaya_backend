@@ -25,9 +25,6 @@
     "test:integration:native": "bun --filter @edaya/integration-tests test:integration:native",
     "verify": "python3 -m unittest discover -s .github/scripts -p 'test_*.py' && bun repo verify && bun test ./.github/scripts/*.test.mjs && turbo run quality && turbo run build && turbo run test --concurrency=2 -- --dots",
     "dev": "bun tooling/repo/dev/start-local-dev.ts",
-    "dev:container": "bash tooling/api-dev-container/run.sh",
-    "dev:container:down": "bash tooling/api-dev-container/run.sh down",
-    "dev:container:logs": "bash tooling/api-dev-container/run.sh logs",
     "dev:test": "bun --filter @edaya/api dev:test"
   },
   "devDependencies": {

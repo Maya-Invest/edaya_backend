@@ -1,7 +1,5 @@
 export type RepoBunSpawnCommand = 'dev' | 'seed' | 'doctor' | 'codegen' | 'identity-migrate' | 'identity-wipe'
 
-export type RepoSpawnCommand = RepoBunSpawnCommand | 'dev-container'
-
 export type CompoundRepoCommand
   = | 'db'
     | 'check'
@@ -10,7 +8,7 @@ export type CompoundRepoCommand
     | 'deploy'
     | 'openapi'
 
-export type RepoCliCommand = RepoSpawnCommand | CompoundRepoCommand
+export type RepoCliCommand = RepoBunSpawnCommand | CompoundRepoCommand
 
 export type ParsedRepoCli
   = | { kind: 'help' }
@@ -18,7 +16,6 @@ export type ParsedRepoCli
 
 const COMMANDS = new Set<RepoCliCommand>([
   'dev',
-  'dev-container',
   'seed',
   'doctor',
   'codegen',
