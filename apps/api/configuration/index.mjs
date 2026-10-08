@@ -91,7 +91,7 @@ export function validateSmsCredentials(values, label = 'SMS configuration') {
   const routes = JSON.parse(values.SMS_ROUTES ?? '[]');
   validateSmsRoutes(routes, label);
   if (!routes.length) throw new Error(`${label}: enabled delivery requires sms_routes`);
-  for (const key of ['AFRICAS_TALKING_USERNAME', 'AFRICAS_TALKING_SENDER_ID', 'AFRICAS_TALKING_API_KEY']) {
+  for (const key of ['AFRICAS_TALKING_USERNAME', 'AFRICAS_TALKING_API_KEY']) {
     if (typeof values[key] !== 'string' || !values[key].trim()) throw new Error(`${label}: ${key} is required`);
   }
   if (['true', '1'].includes(values.AFRICAS_TALKING_SANDBOX?.trim().toLowerCase()) && values.AFRICAS_TALKING_USERNAME !== 'sandbox')

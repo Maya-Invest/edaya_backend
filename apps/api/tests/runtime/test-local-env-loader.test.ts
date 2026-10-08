@@ -44,7 +44,7 @@ describe("local dev env files", () => {
       await writeFile(filename, [
         "CLOUDFLARE_EMAIL_API_TOKEN=file-token",
       ].join("\n"));
-      process.env = { NODE_ENV: "test", EDAYA_LOCAL_ENV_FILE: filename, CLOUDFLARE_EMAIL_API_TOKEN: "process-token", CLOUDFLARE_EMAIL_ACCOUNT_ID: "file-account", EMAIL_FROM: "Dev <dev@edayaplus.com>" };
+      process.env = { NODE_ENV: "test", PHONE_AUTH_MODE: "disabled", EDAYA_LOCAL_ENV_FILE: filename, CLOUDFLARE_EMAIL_API_TOKEN: "process-token", CLOUDFLARE_EMAIL_ACCOUNT_ID: "file-account", EMAIL_FROM: "Dev <dev@edayaplus.com>" };
       const env = loadLocalProcessEnv();
       expect(env.CLOUDFLARE_EMAIL_ACCOUNT_ID).toBe("file-account");
       expect(env.CLOUDFLARE_EMAIL_API_TOKEN).toBe("process-token");

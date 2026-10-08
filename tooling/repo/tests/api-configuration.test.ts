@@ -62,8 +62,15 @@ describe('SMS route configuration', () => {
       AFRICAS_TALKING_API_KEY: 'test-key',
     }
     expect(() => validateSmsCredentials(config)).not.toThrow()
+    for (const sender of [undefined, '', '  ']) {
+      const { AFRICAS_TALKING_SENDER_ID: _configuredSender, ...withoutSender } = config
+      const values = sender === undefined ? withoutSender : { ...withoutSender, AFRICAS_TALKING_SENDER_ID: sender }
+      expect(() => validateSmsCredentials(values)).not.toThrow()
+      expect(() => validateSmsCredentials({ ...values, AFRICAS_TALKING_SANDBOX: 'true', AFRICAS_TALKING_USERNAME: 'sandbox' })).not.toThrow()
+    }
     expect(() => validateSmsCredentials({ ...config, SMS_ROUTES: '[]' })).toThrow('sms_routes')
     expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_API_KEY: '' })).toThrow('AFRICAS_TALKING_API_KEY')
+    expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_USERNAME: '' })).toThrow('AFRICAS_TALKING_USERNAME')
     expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_SANDBOX: 'true' })).toThrow('sandbox')
     expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_SANDBOX: 'true', AFRICAS_TALKING_USERNAME: 'sandbox' })).not.toThrow()
   })

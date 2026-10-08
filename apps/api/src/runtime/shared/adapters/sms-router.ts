@@ -11,7 +11,7 @@ export function resolveSmsRouter(source: Record<string, unknown>, request?: (url
   const active = (env.PHONE_AUTH_MODE ?? "disabled") !== "disabled" || env.SMS_TRANSPORT === "router";
   const providers: Record<string, SmsProviderPort> = {};
   if (active) {
-    providers.africas_talking = createAfricasTalkingSms({ username: env.AFRICAS_TALKING_USERNAME!, apiKey: env.AFRICAS_TALKING_API_KEY!, senderId: env.AFRICAS_TALKING_SENDER_ID!, sandbox: env.AFRICAS_TALKING_SANDBOX }, request);
+    providers.africas_talking = createAfricasTalkingSms({ username: env.AFRICAS_TALKING_USERNAME!, apiKey: env.AFRICAS_TALKING_API_KEY!, senderId: env.AFRICAS_TALKING_SENDER_ID, sandbox: env.AFRICAS_TALKING_SANDBOX }, request);
   }
   return createSmsRouter(active ? env.SMS_ROUTES : [], providers);
 }

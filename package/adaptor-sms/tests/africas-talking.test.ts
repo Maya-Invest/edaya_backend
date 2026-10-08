@@ -20,6 +20,29 @@ test("sandbox/live endpoint, authentication and form encoding", async () => {
   }
 });
 
+test("legacy default sender omits from; configured senders are trimmed in sandbox and live", async () => {
+  for (const sandbox of [true, false]) {
+    for (const senderId of [undefined, "", "   ", "  EDAYA  "]) {
+      const username = sandbox ? "sandbox" : "live-app";
+      const provider = createAfricasTalkingSms({ ...options, username, sandbox, senderId }, async (url, init) => {
+        expect(url).toBe(`https://${sandbox ? "api.sandbox" : "api"}.africastalking.com/version1/messaging`);
+        const form = new URLSearchParams(String(init.body));
+        expect(form.get("username")).toBe(username);
+        expect(form.has("from")).toBe(Boolean(senderId?.trim()));
+        expect(form.get("from")).toBe(senderId?.trim() || null);
+        expect(form.get("to")).toBe(message.to);
+        return Response.json(payload(101));
+      });
+      expect(await provider.send(message)).toEqual({ status: "accepted", messageId: "id" });
+    }
+  }
+});
+
+test("default sender still requires authentication credentials", () => {
+  expect(() => createAfricasTalkingSms({ ...options, senderId: undefined, username: " " })).toThrow(/username and API key/);
+  expect(() => createAfricasTalkingSms({ ...options, senderId: undefined, apiKey: " " })).toThrow(/username and API key/);
+});
+
 test("100, 101 and 102 are accepted only with exact recipient and a message ID", async () => {
   for (const code of [100, 101, 102]) {
     expect(await createAfricasTalkingSms(options, async () => Response.json(payload(code))).send(message)).toMatchObject({ status: "accepted" });

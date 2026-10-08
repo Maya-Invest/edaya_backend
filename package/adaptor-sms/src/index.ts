@@ -3,15 +3,16 @@ import type { SmsProviderPort } from "@edaya/core";
 export interface AfricasTalkingOptions {
   username: string;
   apiKey: string;
-  senderId: string;
+  senderId?: string;
   sandbox: boolean;
 }
 
 export function createAfricasTalkingSms(options: AfricasTalkingOptions, request: (url: string, init: RequestInit) => Promise<Response> = fetch): SmsProviderPort {
-  if (![options.username, options.apiKey, options.senderId].every(value => value.trim()))
-    throw new Error("Africa's Talking requires username, API key and sender ID");
+  if (![options.username, options.apiKey].every(value => value.trim()))
+    throw new Error("Africa's Talking requires username and API key");
   if (options.sandbox && options.username !== "sandbox")
     throw new Error("Africa's Talking sandbox requires username sandbox");
+  const senderId = options.senderId?.trim();
   return {
     async send(message) {
       try {
@@ -19,7 +20,7 @@ export function createAfricasTalkingSms(options: AfricasTalkingOptions, request:
           method: "POST",
           signal: AbortSignal.timeout(10000),
           headers: { "apiKey": options.apiKey, "content-type": "application/x-www-form-urlencoded", "accept": "application/json" },
-          body: new URLSearchParams({ username: options.username, to: message.to, from: options.senderId, message: message.body }),
+          body: new URLSearchParams({ username: options.username, to: message.to, ...(senderId ? { from: senderId } : {}), message: message.body }),
         });
         // HTTP failures alone do not establish that the message was rejected.
         if (!response.ok)

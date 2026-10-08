@@ -34,7 +34,7 @@ export function validateSmsEnvironment(env: z.infer<z.ZodObject<typeof smsEnviro
     return;
   if (!env.SMS_ROUTES.length)
     ctx.addIssue({ code: "custom", path: ["SMS_ROUTES"], message: "Enabled delivery requires at least one SMS route" });
-  for (const key of ["AFRICAS_TALKING_USERNAME", "AFRICAS_TALKING_API_KEY", "AFRICAS_TALKING_SENDER_ID"] as const) {
+  for (const key of ["AFRICAS_TALKING_USERNAME", "AFRICAS_TALKING_API_KEY"] as const) {
     if (!env[key])
       ctx.addIssue({ code: "custom", path: [key], message: `${key} is required for SMS delivery` });
   }

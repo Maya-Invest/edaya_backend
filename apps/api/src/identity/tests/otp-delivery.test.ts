@@ -44,6 +44,19 @@ test("timeouts, malformed success and server errors remain uncertain without ret
     expect(calls).toBe(1);
   }
 });
+
+test("SMS OTP uses the legacy default sender and retains provider-qualified acceptance", async () => {
+  let calls = 0;
+  const delivery = createOtpDelivery({ ...env, AFRICAS_TALKING_SENDER_ID: undefined }, async (_url, init) => {
+    calls++;
+    const form = new URLSearchParams(String(init.body));
+    expect(form.has("from")).toBe(false);
+    expect(form.get("message")).toContain("123456");
+    return Response.json({ SMSMessageData: { Recipients: [{ number: "+2250712345678", statusCode: 101, messageId: "default-sender" }] } });
+  });
+  expect(await delivery.send({ channel: "sms", destination: "+2250712345678", code: "123456", attemptId: "attempt" })).toEqual({ status: "accepted", messageId: "sms:v1:[\"africas_talking\",\"default-sender\"]" });
+  expect(calls).toBe(1);
+});
 test("SMS routes do not expand CI phone availability and invalid config fails closed", () => {
   expect(phoneSmsPrefixes([{ prefix: "+1", provider: "africas_talking" }])).toEqual([]);
   expect(phoneSmsPrefixes([{ prefix: "+225", provider: "africas_talking" }])).toEqual(["+225"]);
