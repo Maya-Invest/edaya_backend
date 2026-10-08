@@ -1,220 +1,99 @@
-# Repo CLI (`bun repo`)
+# Repository commands
 
-Canonical entry point for **development and operations** in the `edaya_backend` monorepo. **Turbo quality tasks** (`lint`, `check`, `test`, `build`, `quality`) run from the **repo root only** — never through `bun repo`.
+`bun repo` is the backend development/operations interface. Root `bun run` scripts run workspace quality and integration tasks. Package scripts remain available for focused iteration. Deployment workflows remain separate: staging owns reset/seeding/qualification; production owns its migration/deployment process.
 
-```sh
-bun repo --help
-```
+## Command reference
 
-Implementation: `tooling/repo/cli/` — thin subprocess dispatch, no domain imports.
+This table and top-level help come from `tooling/repo/cli/catalog.ts`. Unsupported arguments fail before the operation. `bun repo <command> --help` is non-mutating and does not require credentials or running services.
 
-## Quick start
+<!-- repo-commands:start -->
 
-| Task | Command |
-|------|---------|
-| Start identity + API + local files | `bun repo dev` |
-| Full local seed | `bun repo seed` |
-| Pre-PR check (verify job) | `bun run verify` |
-| PR CI locally (verify + integration) | `bun repo verify --full` |
-| Repo hygiene only | `bun repo verify` |
-| Staging smoke | `bun repo smoke-test staging` |
+| Command | Behavior |
+| --- | --- |
+| `dev` | Start local API/auth and file service (writes local data). |
+| `seed [clean] [--staging] [--scope NAME] [--clean] [--yes] [--repair] [--skip-profile-photos] [--skip-attachments] [--no-progress]` | Seed local/staging data. clean deletes data; --clean prompts unless --yes. Scopes: all, school, auth, auth:link, access, profile-pictures, service-account, validate, doctor. |
+| `db migrate <school\|identity> <local\|staging\|production>`<br>`db reset school <staging\|production> [--yes]`<br>`db wipe identity <local\|staging> [--yes]`<br>`db generate`<br>`db flatten [--yes]`<br>`db browser school` | Migrate schemas, reset school schemas, wipe Account data, generate migrations, replace migration history, or browse local school data. Legacy db migrate/reset without school remain aliases. |
+| `check <openapi\|boundaries\|test-naming\|commands>` | Read-only artifact, import, test-name and generated command-documentation checks. |
+| `doctor` | Check configuration ownership, Worker parity, environment files and repository layout. |
+| `verify [--ci\|--full]` | Default: repository hygiene. --ci: workflow lint, quality/build/unit checks and both Worker builds. --full: --ci plus all backend integrations (requires pg_config). |
+| `smoke api staging`<br>`smoke notify local`<br>`smoke r2 staging [--curl-only]` | Explicit live checks: API exercises staging; notify creates/publishes an announcement; R2 uploads, checks and deletes an object. --curl-only prints a short-lived signed upload command without uploading. |
+| `vars push api <staging\|production> [--dry-run] [--replace-secret NAME]...`<br>`vars delete api <staging\|production> NAME [--dry-run]` | Merge config or explicitly delete variables; preserves secrets and resource bindings. Requires Cloudflare account/token. |
+| `secrets push api <staging\|production> [--dry-run]`<br>`secrets list api <staging\|production>`<br>`secrets delete api <staging\|production> NAME [--dry-run]` | Validate and upload the selected private secrets JSON, list names, or delete one secret. Never displays values. Requires Cloudflare account/token. |
+| `pause <api\|scheduler\|jobs\|all> <staging\|production> [--dry-run]` | Enable only the selected pause controls through a settings-only update. |
+| `resume <api\|scheduler\|jobs\|all> <staging\|production> [--dry-run]` | Disable only the selected pause controls through a settings-only update. |
+| `status api <staging\|production>` | Read Worker deployment versions and pause controls; no configuration or credential values are printed. |
+| `deploy api <staging\|production> [--dry-run]` | Code-only Worker deployment; --dry-run builds without deploying. Does not migrate, seed, apply config, or coordinate a release. |
+| `openapi export [--output PATH]`<br>`openapi generate` | Export the OpenAPI fixture, or export and regenerate repository client artifacts. |
+| `codegen <generate\|check> --input <file\|url> [--client-dir PATH] [--schema-out PATH] [--bindings-out PATH] [--client-out PATH] [--openapi-out PATH] [--repo-root PATH] [--runtime-version VERSION] [--header "Name: value"]` | Low-level client generation or drift checking. Detailed option combinations: bun repo codegen --help. |
+| `smoke-test <staging\|notify\|r2> [--curl-only]` | Compatibility alias: staging → smoke api staging; notify → smoke notify local; r2 → smoke r2 staging. |
+| `identity-migrate [local\|staging\|production]` | Compatibility alias for db migrate identity. Without a target, requires exactly one configured database URL; explicit targets are preferred. |
+| `identity-wipe <local\|staging> [--yes]` | Compatibility alias for db wipe identity; omitted target retains local behavior. |
 
-## Command tree
+<!-- repo-commands:end -->
 
-```text
-bun repo
-├── dev
-├── seed [--staging] [--scope <name>] [--clean] [--repair]
-│   └── clean [--staging]
-├── db
-│   ├── migrate <local|staging|production>
-│   ├── generate
-│   └── browser school
-├── check
-│   ├── openapi
-│   ├── boundaries
-│   └── test-naming
-├── smoke-test <staging|notify|r2>
-├── openapi <export|generate>
-├── codegen <generate|check> [options]
-├── identity-migrate
-├── identity-wipe <local|staging> [--yes]
-├── deploy api <staging|production>
-├── doctor
-└── verify [--full]
-```
-
-## Development
-
-### `bun repo dev`
-
-Starts the API (including Account authentication) and the local file server directly with Bun in watch mode. Loads `apps/api/.env` for the API and files. Use `bun repo seed` to populate local development data.
-
-### `bun repo seed`
-
-Forwards argv to `tooling/seeding/scripts/seed.ts` — single parser in `@edaya/seeding`.
+## Development and databases
 
 ```sh
-bun repo seed                          # local full demo seed
-bun repo seed --staging                 # staging API
-bun repo seed clean                    # wipe local school .data
-bun repo seed clean --staging          # wipe staging school DB
-bun repo seed --scope doctor --repair  # diagnose + repair drift
-bun repo seed --scope auth:link        # granular scope
+bun repo dev
+bun dev:test
+bun repo seed
+bun repo seed --staging --scope school
+bun repo seed clean --yes
+bun repo seed --staging --clean --yes
+bun repo db migrate school local
+bun repo db migrate identity staging
+bun repo db wipe identity local --yes
+bun repo db reset school staging --yes
 ```
 
-Env: repo root `.env` — see `.env.example`. API runtime stays in `apps/api/.env`.
+School reset drops and recreates school/notification schemas. Seed cleanup removes local school files or truncates staging school data, retaining schema. Identity wipe is separate and has no production target. Stop the local API before wiping its database. `--clean` now prompts like `clean`; non-interactive invocations require `--yes`, and cancellation stops seeding.
 
-## Database
+Identity migration targets are explicit: local reads API local configuration/secrets, staging uses `STAGING_AUTH_DATABASE_URL`, production uses `PRODUCTION_AUTH_DATABASE_URL`. The old no-target `identity-migrate` only accepts one distinct URL across the legacy environment variables, warning about deprecation. It refuses ambiguous targets. The old `db migrate <environment>`, `db reset <environment>`, and `identity-wipe` forms remain compatibility aliases.
 
-```sh
-bun repo db migrate local
-bun repo db migrate staging
-bun repo db reset staging --yes      # drop schemas + re-apply school migrations
-bun repo db reset production --yes   # destructive — production only
-bun repo db flatten                  # squash school migrations to one baseline
-bun repo db generate
-bun repo db browser school    # stop bun repo dev first
-```
+`db flatten` changes tracked migration history, not database state. It prompts unless `--yes`, generates in a temporary directory, validates the result, then replaces the old directory while retaining a private-to-the-checkout ignored backup. Generation failure leaves original migrations unchanged. Review before committing; do not reset a production database merely because a baseline was generated.
 
-`db reset` drops `drizzle`, `notify`, and `public` schemas, then re-applies school + notify migrations. After staging reset, run `bun repo seed --staging`. Identity users are wiped from `edaya_identity` (`bun repo db wipe staging`).
+Local application settings come from `apps/api/config.local.jsonc`, credentials from `apps/api/.env`. Root `.env` supplies repository/remote tooling credentials. See [configuration ownership](api-configuration.md).
 
-Migrate / reset implementation: `tooling/repo/db/school/`. Identity commands live in `tooling/repo/db/identity/`:
+## Verification levels
 
-```sh
-bun repo identity-migrate                 # AUTH_DATABASE_URL or staging/production variants
-bun repo identity-wipe local --yes        # stop identity before deleting local data
-bun repo identity-wipe staging --yes      # guarded staging identity cleanup
-```
+| Entry point | Checks |
+| --- | --- |
+| `bun repo verify` | Command docs, repository doctor, OpenAPI drift, release contract, import boundaries, test naming |
+| `bun run verify` | CI-script tests, hygiene, quality, client build, unit tests |
+| `bun repo verify --ci` | Workflow/shell lint, root verification, staging and production Worker dry-run builds |
+| `bun repo verify --full` | Everything in `--ci`, then service/HTTP, seed, and native PostgreSQL integration |
 
-These commands keep school and identity databases separate. The low-level generator is available through `bun repo codegen generate|check --input <file|url> ...`; `bun repo openapi generate` remains the usual repository workflow.
+The CI verification job calls `bun repo verify --ci`; local full verification uses the same steps plus `.github/scripts/run-backend-integration.sh`. Native integration requires `pg_config`, `initdb`, and `pg_ctl`. Workflow lint may download the pinned validator on first use. Worker dry runs upload no code.
 
-## Validation
-
-### `bun repo check`
-
-| Target | What it checks |
-|--------|----------------|
-| `openapi` | OpenAPI / generated client drift vs committed fixture |
-| `boundaries` | Runtime import boundary rules |
-| `test-naming` | Unit test filename conventions |
-
-Ad-hoc: `bun repo check openapi`, `bun repo check boundaries`, `bun repo check test-naming`.
-
-### `bun repo doctor`
-
-Repo hygiene: tracked env files, required `.env.example` files, secret examples.
-
-### `bun repo verify`
-
-Repo hygiene only — **no Turbo**. Runs `doctor` and all `repo check *` targets.
-
-1. `repo doctor`
-2. `repo check openapi`
-3. `repo check boundaries`
-4. `repo check test-naming`
-
-**Not included (default):** `lint`, `check`, `build`, `test`, `quality`, `test:integration*`, `smoke-test *`.
-
-```sh
-bun repo verify --full
-```
-
-Local **PR blocking** gate: hygiene + `quality` + `build` + unit `test` + `test:integration` (same as `_verify.yml` then `_integration.yml`). Omits informational coverage (`_coverage.yml`).
-
-### Pre-PR (`bun run verify`)
-
-Default gate from repo root — repo hygiene first, then Turbo quality + build + unit tests (no integration):
-
-```sh
-bun run verify
-# = bun repo verify && bun run quality && bun run build && turbo run test -- --dots
-```
-
-CI verify job uses `bun run verify`. PR workflows also run `bun run test:integration` afterward — use `bun repo verify --full` to run both locally. See [test-pyramid-plan.md](../sprints/test-pyramid-plan.md).
+Root workspace commands are `build`, `quality`, `check`, `lint`, `lint:fix`, `test`, and `test:coverage`. Integration commands are `test:integration`, `test:integration:api`, `test:integration:http`, `test:integration:seed`, and `test:integration:native`; the default integration command includes API and HTTP only. Use `bun --filter <package> <script>` for package-scoped iteration.
 
 ## Operations
 
-### `bun repo smoke-test`
-
-Live environment / provider checks (not Turbo tests).
-
-| Target | Description |
-|--------|-------------|
-| `staging` | Tier-1 HTTP vs deployed staging API |
-| `notify` | In-process notify announcement + delivery-event e2e against the school API |
-| `r2` | R2 credentials smoke |
-
-Ad-hoc: `bun repo smoke-test staging`, `bun repo smoke-test notify`, `bun repo smoke-test r2`.
-
-### `bun repo deploy`
-
 ```sh
-bun repo deploy api staging
-bun repo deploy api production
+bun repo deploy api production --dry-run
+bun repo vars push api staging --dry-run
+bun repo secrets push api staging --dry-run
+bun repo status api staging
+bun repo pause scheduler staging --dry-run
+bun repo pause all staging
+bun repo resume api staging
+bun repo smoke api staging
+bun repo smoke notify local
+bun repo smoke r2 staging
 ```
 
-Runs `wrangler deploy` from `apps/api/`.
+Code deployment preserves remote variables and does not apply configuration, run migrations, seed data, or perform a coordinated release. Use the staging release workflow when those steps are required.
 
-### `bun repo openapi`
+Secrets push chooses `apps/api/secrets.staging.json` or `apps/api/secrets.prod.json`. Its dry-run validates the file and prints names only, without Cloudflare calls. Remote operations require `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Push merges supplied secrets; delete is explicit and rejects non-secret bindings. Secret values travel to Wrangler through stdin, not command arguments. Read-back checks confirm binding presence/type, not secret values (Cloudflare does not reveal them).
 
-Mutating OpenAPI workflows (contrast with `repo check openapi`).
+Pause/resume changes only the selected remote control: API → `PAUSE_API`, scheduler → `PAUSE_SCHEDULER`, jobs → `PAUSE_JOBS`, all → all three. Status reports active version traffic and these controls only. It does not print arbitrary settings or credentials. A later full `vars push` reapplies tracked flag values; do not overlap configuration pushes with releases or maintenance.
 
-```sh
-bun repo openapi export
-bun repo openapi generate
-```
+Smoke checks have real effects. API smoke exercises deployed staging; notification smoke creates/publishes local test announcements and can deliver through configured providers; R2 smoke performs PUT/HEAD/DELETE. Only API/staging, notify/local and R2/staging are supported. The legacy `smoke-test staging|notify|r2` forms map to those exact combinations. R2's `--curl-only` emits a short-lived signed URL without uploading; treat that output as a credential.
 
-## Turbo quality scripts
+## Generated API artifacts
 
-**Rule:** Turbo tasks are root-only. Do not add `lint`, `check`, `test`, `build`, `quality`, or `lint:fix` to `bun repo`.
+`openapi export [--output PATH]` exports the fixture. `openapi generate` exports the default fixture and regenerates the repository client, with no custom arguments. Use `codegen generate|check` for custom inputs/outputs; `bun repo codegen --help` explains option combinations. `check openapi` verifies generated artifacts without updating tracked files.
 
-Run across the monorepo from root:
+## Adding a command
 
-```sh
-bun run lint
-bun run check
-bun run test
-bun run build
-bun run quality
-```
-
-Package-scoped iteration:
-
-```sh
-bun --filter @edaya/core test
-bun --filter @edaya/api lint
-```
-
-## Root `package.json` scripts
-
-Turbo quality and integration slices only — no Turbo tasks in `bun repo`:
-
-```sh
-bun run verify                # bun repo verify + quality + build + test
-bun repo verify --full        # above + test:integration (PR blocking CI)
-bun run lint | check | test | build | quality | lint:fix
-bun run test:coverage
-bun run test:integration          # api + http
-bun run test:integration:api
-bun run test:integration:http
-bun run test:integration:seed     # slow, opt-in
-```
-
-Everything else: **`bun repo <command>`** (`bun repo --help`).
-
-## Contributing a command
-
-1. Add script path in `tooling/repo/cli/lib/paths.ts` (if spawning a file).
-2. Add parser + dispatch under `tooling/repo/cli/`.
-3. Register in `parse-repo-cli.ts` / `dispatch.ts`.
-4. Add a line to this doc and `bun repo --help`.
-5. Optional root alias shim in root `package.json` — **avoid**; use `bun repo` only.
-
-**Rule:** subprocess dispatch only — no domain logic, **no Turbo shortcuts**, in `@edaya/repo` CLI.
-
-## Related docs
-
-- [local-dev.md](./local-dev.md) — first-time setup, seeding, troubleshooting
-- [cross-repo-workflow.md](./cross-repo-workflow.md) — OpenAPI across backend + edaya_web
-- [repo-cli-proposal.md](../sprints/repo-cli-proposal.md) — design rationale and migration phases
+Add its syntax, effect and routing mode to the command catalog, then add its strict parser and dispatcher/script mapping. Regenerate the table with `bun tooling/repo/cli/command-docs.ts --write`; `bun repo check commands` detects drift. Add tests for unknown arguments, safe help, target selection and side effects. Keep domain logic outside the CLI and retain distinct staging/production release orchestration.

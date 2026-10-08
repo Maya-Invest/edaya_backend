@@ -5,7 +5,7 @@
  * Prerequisites:
  *   - bun repo dev
  *   - bun repo seed
- *   - apps/api/.env: RUNTIME=local, EMAIL_TRANSPORT=log
+ *   - apps/api/config.local.jsonc: RUNTIME=local, EMAIL_TRANSPORT=log
  */
 import { loadDotenvFiles } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
 import {
@@ -21,6 +21,8 @@ import { waitForApi } from '../../seeding/src/http/wait-for-api'
 loadDotenvFiles()
 
 const baseUrl = process.env.API_ORIGIN ?? 'http://localhost:9999'
+if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(baseUrl).hostname))
+  throw new Error('smoke notify local requires a loopback API_ORIGIN; remote notification smoke is not supported')
 const director = DEV_AUTH_STAFF_ACCOUNTS.find(a => a.staffId === 'st5') ?? DEV_AUTH_STAFF_ACCOUNTS[0]!
 const announcementId = `ann-notify-smoke-${Date.now()}`
 

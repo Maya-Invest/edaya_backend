@@ -1,8 +1,10 @@
+import { commandUsage } from './catalog'
+
 export type DeployApiTarget = 'staging' | 'production'
 
 export type ParsedDeployCli
   = | { kind: 'help' }
-    | { kind: 'api', target: DeployApiTarget }
+    | { kind: 'api', target: DeployApiTarget, dryRun?: boolean }
 
 const API_TARGETS = new Set<DeployApiTarget>(['staging', 'production'])
 
@@ -16,7 +18,9 @@ export function parseDeployCliArgs(args: readonly string[]): ParsedDeployCli {
     return { kind: 'help' }
   }
 
-  const [app, target] = args
+  const [app, target, ...flags] = args
+  if (flags.some(flag => flag !== '--dry-run') || flags.length > 1)
+    throw new Error('Unexpected deploy argument; only --dry-run is supported')
   if (app !== 'api') {
     throw new Error(`Only "api" deploy is supported. Got: ${app ?? '(missing)'}`)
   }
@@ -26,15 +30,9 @@ export function parseDeployCliArgs(args: readonly string[]): ParsedDeployCli {
     )
   }
 
-  return { kind: 'api', target: target as DeployApiTarget }
+  return { kind: 'api', target: target as DeployApiTarget, ...(flags.length ? { dryRun: true } : {}) }
 }
 
 export function deployCliUsage(): string {
-  return [
-    'Usage: bun repo deploy api <staging|production>',
-    '',
-    'Examples:',
-    '  bun repo deploy api staging',
-    '  bun repo deploy api production',
-  ].join('\n')
+  return commandUsage('deploy')
 }

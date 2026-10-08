@@ -1,5 +1,7 @@
 # Edaya Core
 
+See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
 Web frontends live in the separate **[edaya_frontend](../edaya_frontend)** repo (`@edaya/webapp`, `@edaya/webadmin`).
@@ -92,9 +94,9 @@ flowchart TB
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `apps/api/src/entries/local.ts` | `apps/api/.env` | `bun repo dev` (API + local-files) |
+| **local** | `apps/api/src/entries/local.ts` | `config.local.jsonc` + `.env` secrets | `bun repo dev` (API + local-files) |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
-| **worker** | `apps/api/src/entries/worker.ts` | `wrangler.jsonc` + `.dev.vars` | `bun --filter @edaya/api dev:worker` (optional smoke) |
+| **worker** | `apps/api/src/entries/worker.ts` | `config.staging.jsonc` + `.dev.vars` secrets | `bun --filter @edaya/api dev:worker` (optional smoke) |
 
 `local` uses persisted PGlite by default (`DATABASE_URL=pglite:.data/school`). `in-memory` uses ephemeral PGlite for fast tests. Workers require a real Postgres URL via Hyperdrive.
 
@@ -251,13 +253,12 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 
 ## Environment
 
-**API** (`apps/api/.env`):
+**API settings** (`apps/api/config.local.jsonc`; credentials in `.env`):
 
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | `pglite:.data/school` (local), `pglite` (in-memory tests); Postgres via Hyperdrive on `worker` |
 | `API_ORIGIN` | JWT audience and public school API origin |
-| `IDENTITY_ISSUER` | Central identity JWT issuer; JWKS is resolved at `/.well-known/jwks.json` |
 | `TRUSTED_ORIGINS` | School API CORS origins |
 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.

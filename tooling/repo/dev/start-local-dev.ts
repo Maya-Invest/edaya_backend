@@ -1,33 +1,24 @@
 #!/usr/bin/env bun
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
-import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
 
-function loadApiEnv(): void {
-  const envFile = resolve(apiRoot, '.env')
-  if (existsSync(envFile)) {
-    dotenvExpand.expand(dotenv.config({ path: envFile }))
-  }
-}
-
-loadApiEnv()
+loadLocalConfiguration(process.env, apiRoot)
 
 console.log('API and authentication on :9999, local files on :9200.')
 
 const children = [
-  Bun.spawn(['bun', '--filter', '@edaya/api', 'dev'], {
+  Bun.spawn(['bun', '--no-env-file', '--filter', '@edaya/api', 'dev'], {
     cwd: repoRoot,
     stdin: 'inherit',
     stdout: 'inherit',
     stderr: 'inherit',
     env: process.env,
   }),
-  Bun.spawn(['bun', '--watch', 'tooling/repo/dev/local-files.ts'], {
+  Bun.spawn(['bun', '--no-env-file', '--watch', 'tooling/repo/dev/local-files.ts'], {
     cwd: repoRoot,
     stdin: 'inherit',
     stdout: 'inherit',

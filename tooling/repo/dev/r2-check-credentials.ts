@@ -55,11 +55,9 @@ async function main() {
   }
   console.log(`  key:      ${key}`)
   console.log('')
-  console.log('Copy/paste:')
-  console.log(`curl -sS -w '\\nhttp_code=%{http_code}\\n' -X PUT -H 'Content-Type: ${TEST_CONTENT_TYPE}' --data-binary '${TEST_BODY}' '${presigned.uploadUrl}'`)
-  console.log('')
-
   if (curlOnly) {
+    console.log('Short-lived signed upload command (treat as a credential):')
+    console.log(`curl -sS -X PUT -H 'Content-Type: ${TEST_CONTENT_TYPE}' --data-binary '${TEST_BODY}' '${presigned.uploadUrl}'`)
     return
   }
 

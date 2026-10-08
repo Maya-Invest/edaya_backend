@@ -29,7 +29,7 @@ Staging smoke: `bun repo smoke-test staging` (full tier-1 checks in `@edaya/inte
 
 ## Environment (repo root `.env`)
 
-Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/.env` is also loaded for local school and identity URLs.
+Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/config.local.jsonc` is also loaded for local school and identity URLs.
 
 | Variable | Used by | Default |
 |----------|---------|---------|
@@ -48,8 +48,8 @@ bun repo seed clean --yes && bun repo seed              # local school fresh sta
 bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
 # Account/auth data: `bun repo identity-wipe local --yes` (or staging)
 # or
-bun repo seed --clean
-bun repo seed --staging --clean
+bun repo seed --clean                 # prompts; add --yes for automation
+bun repo seed --staging --clean       # prompts; add --yes for automation
 ```
 
 ## Local dev flow

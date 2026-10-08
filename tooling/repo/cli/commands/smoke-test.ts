@@ -11,6 +11,6 @@ export async function runSmokeTestCommand(
     case 'notify':
       return runBunScript(paths.smokeNotify)
     case 'r2':
-      return runBunScript(paths.testR2)
+      return runBunScript(paths.testR2, parsed.curlOnly ? ['--curl-only'] : [])
   }
 }

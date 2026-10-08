@@ -1,5 +1,6 @@
 import api from "@/app";
-import { loadLocalProcessEnv, parseRuntimeEnv } from "@/runtime/shared/env";
+import { parseRuntimeEnv } from "@/runtime/shared/env";
+import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
 import { attachIdentityRuntime } from "../runtime";
 import { resetApiRuntimesForTests } from "@/runtime/local/registry";
 import { readFileSync, writeFileSync } from "node:fs";

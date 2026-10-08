@@ -16,11 +16,5 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
       - uses: ./.github/actions/ci-bun-turbo
-      - name: Validate workflow definitions
-        run: bash .github/scripts/lint-workflows.sh
-      - name: Verify all unit and tooling tests
-        run: bun run verify
-      - name: Validate staging Worker bundle
-        run: bun --filter @edaya/api deploy:staging:dry-run
-      - name: Validate production Worker bundle
-        run: bun --filter @edaya/api deploy:production:dry-run
+      - name: Run shared CI verification
+        run: bun repo verify --ci

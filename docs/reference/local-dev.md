@@ -1,5 +1,7 @@
 # Local development
 
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_frontend](../../edaya_frontend/README.MD)** repo.
 
 The webapp is a **static SPA** (`ssr = false`) that calls the API from the browser via `@maya-invest/edaya-api-client`. Identity login targets the backend’s separate identity service; school requests carry its access JWT as a Bearer token.
@@ -61,7 +63,7 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 | **local** | `bun repo dev` | PGlite `.data/school` |
 | **worker** | `bun --filter @edaya/api dev:worker` | Postgres via school Hyperdrive |
 
-Central Identity is a separate process/Worker with its own database. Tests use `RUNTIME=in-memory` programmatically (ephemeral school PGlite). Workers use `wrangler.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
+Identity runs in the unified API with its own database. Tests use `RUNTIME=in-memory` programmatically (ephemeral school PGlite). Wrangler smoke uses `config.staging.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
@@ -97,7 +99,7 @@ See [api-runtimes.md](./api-runtimes.md).
 
 | Concern | Local dev (`bun repo dev`) | Staging | Production |
 |---------|----------------------|---------|------------|
-| **Env file** | `apps/api/.env` | `wrangler.jsonc` `[env.staging]` + Wrangler secrets | `wrangler.jsonc` `[env.production]` + Wrangler secrets |
+| **Env file** | `config.local.jsonc` + `.env` secrets | `config.staging.jsonc` + Worker secrets | `config.production.jsonc` + Worker secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
 | **File storage** | `bun tooling/repo/dev/local-files.ts` (:9200) | R2 `edaya-files-staging` | R2 `edaya-files-production` |
 | **Notify** | In-process `@edaya/adaptor-notify` (API injects log email + log SMS) | Cloudflare Email + unimplemented SMS + optional FCM on the API Worker | Same as staging |
@@ -174,7 +176,7 @@ bun repo seed    # terminal 2
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
-**Reference date:** rolling dashboard data anchors to the dataset clock in `tooling/fixtures/src/meta/dates.ts` (demo-ci default `2026-09-17`, central `2026-06-16`). Override at seed time with `SEED_REFERENCE_DATE` in `apps/api/.env` or repo root `.env`.
+**Reference date:** rolling dashboard data anchors to the dataset clock in `tooling/fixtures/src/meta/dates.ts` (demo-ci default `2026-09-17`, central `2026-06-16`). Override at seed time with `SEED_REFERENCE_DATE` in the shell or repo root `.env`.
 
 See `tooling/fixtures/src/meta/entity-manifest.ts` for entity coverage status.
 
@@ -186,7 +188,7 @@ In local dev, the webapp `/login` page signs into the identity service with the 
 
 OTP and signup-verification delivery is owned by the unified API's identity module (`apps/api/src/identity`). The school notification cron handles school-domain notifications only. See [cron-runtimes.md](./cron-runtimes.md).
 
-To send authentication emails from the local server, configure `apps/api/.env` (or the file selected by `EDAYA_LOCAL_ENV_FILE`):
+To send authentication emails from the local server, put the account ID / sender in `config.local.jsonc` and only the API token in `.env` (or the file selected by `EDAYA_LOCAL_ENV_FILE`). The following shows the combined settings:
 
 ```dotenv
 CLOUDFLARE_EMAIL_ACCOUNT_ID=your-cloudflare-account-id
@@ -242,7 +244,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 20
 bun repo seed --scope doctor                                                    # health check (sign-in + grants + data)
 ```
 
-- **Port in use** — Change `PORT` in `apps/api/.env`; update `API_URL` in the webapp `.env` to match.
+- **Port in use** — Change `PORT` in `apps/api/config.local.jsonc`; update `API_URL` in the webapp `.env` to match.
 - **401 after login** — Verify the JWT issuer/audience match `IDENTITY_ISSUER` and `API_ORIGIN`.
 
 ## Account authentication

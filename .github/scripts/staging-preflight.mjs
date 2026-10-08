@@ -1,3 +1,4 @@
+import { readConfig, validateSecrets } from "../../apps/api/configuration/index.mjs";
 import { mergeWorkerSecrets } from "./merge-worker-secrets.mjs";
 import { spawnSync } from "node:child_process";
 import { createPrivateKey } from "node:crypto";
@@ -27,6 +28,7 @@ export function configurationPreflight(env) {
 // Errors name fields and resources only. Never include URLs, payloads or provider diagnostics.
 export function validateConfiguration(env) {
   const errors = [];
+  const config = readConfig("staging");
   for (const name of required) if (!nonempty(env[name])) errors.push(`${name}: missing`);
   if (env.STAGING_NEON_TARGET_CONFIRMED !== staging.databaseHost) errors.push("STAGING_NEON_TARGET_CONFIRMED: endpoint ownership must be verified");
   for (const [name, database] of [["STAGING_DATABASE_URL", staging.schoolDatabase], ["STAGING_AUTH_DATABASE_URL", staging.identityDatabase]]) {
@@ -42,18 +44,19 @@ export function validateConfiguration(env) {
   const api = parse("STAGING_API_SECRETS", env.STAGING_API_SECRETS);
   const identity = parse("STAGING_IDENTITY_SECRETS", env.STAGING_IDENTITY_SECRETS);
   for (const [name, secrets] of [["STAGING_API_SECRETS", api], ["STAGING_IDENTITY_SECRETS", identity]]) {
+    try { validateSecrets(Object.fromEntries(Object.entries(secrets).filter(([key]) => !["IDENTITY_DIRECTORY_URL", "IDENTITY_ISSUER", "ACCOUNT_POLICY_URL"].includes(key))), name); } catch (error) { errors.push(error.message); }
     for (const [field, value] of Object.entries(secrets)) if (!nonempty(value)) errors.push(`${name}.${field}: expected nonempty string`);
-    for (const field of ["DATABASE_URL", "AUTH_DATABASE_URL", "TEST_OTP_ACCESS", "PHONE_AUTH_MODE", "NODE_ENV", "RUNTIME", "STAGING_MAINTENANCE", "STAGING_PAUSE_JOBS", "API_ORIGIN", "BETTER_AUTH_URL", "FIRST_PARTY_API_ORIGINS"]) if (field in secrets) errors.push(`${name}.${field}: reserved configuration must not be supplied as a secret`);
+    for (const field of ["DATABASE_URL", "AUTH_DATABASE_URL", "TEST_OTP_ACCESS", "PHONE_AUTH_MODE", "NODE_ENV", "RUNTIME", "PAUSE_API", "PAUSE_SCHEDULER", "PAUSE_JOBS", "API_ORIGIN", "BETTER_AUTH_URL", "FIRST_PARTY_API_ORIGINS"]) if (field in secrets) errors.push(`${name}.${field}: reserved configuration must not be supplied as a secret`);
   }
-  for (const field of ["R2_ENDPOINT", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "FCM_SERVICE_ACCOUNT_JSON"]) if (!nonempty(api[field])) errors.push(`STAGING_API_SECRETS.${field}: missing`);
+  for (const field of ["R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "FCM_SERVICE_ACCOUNT_JSON"]) if (!nonempty(api[field])) errors.push(`STAGING_API_SECRETS.${field}: missing`);
   if (!nonempty(identity.BETTER_AUTH_SECRET) || identity.BETTER_AUTH_SECRET.length < 32) errors.push("STAGING_IDENTITY_SECRETS.BETTER_AUTH_SECRET: minimum 32 characters required");
   let combined;
   try { combined = mergeWorkerSecrets(api, identity); } catch (error) { errors.push(error.message); }
   const keys = parse("STAGING_IDENTITY_SECRETS.ACCOUNT_SECURITY_KEYS", identity.ACCOUNT_SECURITY_KEYS);
-  const active = identity.ACCOUNT_SECURITY_KEY_VERSION || "v1";
+  const active = config.ACCOUNT_SECURITY_KEY_VERSION || "v1";
   if (!keys[active] || !/^[a-zA-Z0-9_-]+$/.test(active)) errors.push("ACCOUNT_SECURITY_KEY_VERSION: missing or invalid key version");
   for (const [version, key] of Object.entries(keys)) if (!/^[a-zA-Z0-9_-]+$/.test(version) || !base64(key) || Buffer.from(key, "base64").length !== 32) errors.push("ACCOUNT_SECURITY_KEYS: each version must contain a 32-byte base64 key");
-  try { if (new URL(api.R2_ENDPOINT).protocol !== "https:") throw new Error(); } catch { errors.push("STAGING_API_SECRETS.R2_ENDPOINT: HTTPS required"); }
+  try { if (new URL(config.R2_ENDPOINT).protocol !== "https:") throw new Error(); } catch { errors.push("config.staging.jsonc.R2_ENDPOINT: HTTPS required"); }
   const fcm = parse("STAGING_API_SECRETS.FCM_SERVICE_ACCOUNT_JSON", api.FCM_SERVICE_ACCOUNT_JSON);
   if (!nonempty(fcm.project_id) || !nonempty(fcm.client_email)) errors.push("FCM_SERVICE_ACCOUNT_JSON: project_id and client_email required");
   try { createPrivateKey(fcm.private_key); } catch { errors.push("FCM_SERVICE_ACCOUNT_JSON.private_key: invalid private key"); }

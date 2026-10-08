@@ -43,10 +43,12 @@ if (invocation.kind === 'clean') {
 }
 
 if (invocation.clean) {
-  await runSeedCleanup({
+  if (!await runSeedCleanup({
     target: invocation.target,
-    yes: true,
-  })
+    yes: invocation.yes ?? false,
+  })) {
+    process.exit(0)
+  }
 }
 
 process.exit(await runSeedHttpCli(invocation))

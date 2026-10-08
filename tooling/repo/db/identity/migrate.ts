@@ -6,14 +6,12 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import { resolveIdentityMigrationTarget } from './lib/resolve-migration-target'
 
-const databaseUrl = process.env['AUTH_DATABASE_URL']
-  ?? process.env['STAGING_AUTH_DATABASE_URL']
-  ?? process.env['PRODUCTION_AUTH_DATABASE_URL']
-
-if (!databaseUrl) {
-  throw new Error('Set AUTH_DATABASE_URL (or STAGING_AUTH_DATABASE_URL / PRODUCTION_AUTH_DATABASE_URL)')
-}
+const { databaseUrl, label } = resolveIdentityMigrationTarget(process.argv.slice(2), process.env, resolve(import.meta.dirname, '../../../..'))
+console.log(`Applying identity migrations (${label})`)
+if (!process.argv[2])
+  console.warn('identity-migrate without a target is deprecated; use db migrate identity <target>.')
 
 if (databaseUrl.startsWith('pglite:')) {
   const dataDir = resolve(databaseUrl.slice('pglite:'.length).trim() || '.data/identity')

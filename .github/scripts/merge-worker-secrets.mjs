@@ -1,3 +1,4 @@
+import { validateSecrets } from "../../apps/api/configuration/index.mjs";
 const retired = new Set(["IDENTITY_DIRECTORY_SECRET", "IDENTITY_DIRECTORY_URL", "IDENTITY_ISSUER", "ACCOUNT_POLICY_URL"]);
 /** Merge validated release inputs without disclosing credential contents. */
 export function mergeWorkerSecrets(api, identity) {
@@ -11,5 +12,5 @@ export function mergeWorkerSecrets(api, identity) {
       result[field] = value;
     }
   }
-  return result;
+  return validateSecrets(result, "Worker secrets");
 }

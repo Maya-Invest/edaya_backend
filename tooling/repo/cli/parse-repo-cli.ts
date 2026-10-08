@@ -1,45 +1,17 @@
-export type RepoBunSpawnCommand = 'dev' | 'seed' | 'doctor' | 'codegen' | 'identity-migrate' | 'identity-wipe'
+import type { CommandsWithMode, RepoCliCommand } from './catalog'
+import { commandCatalog } from './catalog'
 
-export type CompoundRepoCommand
-  = | 'db'
-    | 'check'
-    | 'smoke-test'
-    | 'verify'
-    | 'deploy'
-    | 'openapi'
-
-export type RepoCliCommand = RepoBunSpawnCommand | CompoundRepoCommand
+export type { RepoCliCommand } from './catalog'
+export type RepoBunSpawnCommand = CommandsWithMode<'spawn'>
+export type CompoundRepoCommand = CommandsWithMode<'compound'>
 
 export type ParsedRepoCli
   = | { kind: 'help' }
     | { kind: 'run', command: RepoCliCommand, forwardArgs: string[] }
 
-const COMMANDS = new Set<RepoCliCommand>([
-  'dev',
-  'seed',
-  'doctor',
-  'codegen',
-  'identity-migrate',
-  'identity-wipe',
-  'db',
-  'check',
-  'smoke-test',
-  'verify',
-  'deploy',
-  'openapi',
-])
-
-export const COMPOUND_COMMANDS = new Set<CompoundRepoCommand>([
-  'db',
-  'check',
-  'smoke-test',
-  'verify',
-  'deploy',
-  'openapi',
-])
-
+const COMMANDS = new Set(Object.keys(commandCatalog))
 export function isCompoundRepoCommand(command: RepoCliCommand): command is CompoundRepoCommand {
-  return COMPOUND_COMMANDS.has(command as CompoundRepoCommand)
+  return commandCatalog[command].mode === 'compound'
 }
 
 export function parseRepoCliArgs(argv: readonly string[]): ParsedRepoCli {

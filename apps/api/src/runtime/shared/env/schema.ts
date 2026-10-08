@@ -5,22 +5,7 @@ import type { CronJobsQueueBinding } from "@/runtime/worker/adapters/cloudflare-
 import { z } from "zod";
 import { inferRuntimeKind, prepareRuntimeBindings } from "@/runtime/shared/env/bindings";
 
-const envBooleanSchema = z.preprocess((value) => {
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  switch (value.trim().toLowerCase()) {
-    case "1":
-    case "true":
-      return true;
-    case "0":
-    case "false":
-      return false;
-    default:
-      return value;
-  }
-}, z.boolean());
+import { envBooleanSchema } from "./boolean";
 
 export const EnvSchema = z.object({
   RUNTIME: z.enum(["in-memory", "local", "worker"]).default("local"),
@@ -32,7 +17,9 @@ export const EnvSchema = z.object({
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
-  STAGING_NOTIFICATION_EMAILS: z.string().default(""),
+  PAUSE_API: envBooleanSchema.default(false),
+  PAUSE_SCHEDULER: envBooleanSchema.default(false),
+  PAUSE_JOBS: envBooleanSchema.default(false),
   AUTH_DATABASE_URL: z.string().default("pglite:.data/identity"),
   BETTER_AUTH_SECRET: z.string().min(32).optional(),
   ACCOUNT_SECURITY_KEYS: z.string().optional(),

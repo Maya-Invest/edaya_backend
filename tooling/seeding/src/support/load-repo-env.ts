@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
+import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.mjs'
 import { resolveRepoRoot } from './resolve-repo-root'
 
 function loadEnvFile(envFile: string, override = false): void {
@@ -23,8 +25,8 @@ export function loadRepoEnvFile(repoRoot: string = resolveRepoRoot()): void {
   loadEnvFile(legacySeedingEnv)
 }
 
-/** Load seed CLI env: root `.env`, then `apps/api/.env` for school and identity URLs. */
+/** Load seed CLI env: root `.env`, then `apps/api/config.local.jsonc` for school and identity URLs. */
 export function loadSeedEnvFiles(repoRoot: string = resolveRepoRoot()): void {
   loadRepoEnvFile(repoRoot)
-  loadEnvFile(path.join(repoRoot, 'apps/api/.env'))
+  loadLocalConfiguration(process.env, path.join(repoRoot, 'apps/api'))
 }

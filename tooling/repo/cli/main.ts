@@ -1,8 +1,12 @@
 #!/usr/bin/env bun
 
+import { resolve } from 'node:path'
 import process from 'node:process'
+import { config } from 'dotenv'
+import { commandUsage } from './catalog'
 import { dispatchCompoundCommand } from './dispatch'
 import { repoCliUsage } from './lib/help'
+import { repoRoot } from './lib/paths'
 import { runBunScript } from './lib/spawn'
 import { isCompoundRepoCommand, parseRepoCliArgs } from './parse-repo-cli'
 import { resolveRepoCommandScript } from './registry'
@@ -23,16 +27,17 @@ if (parsed.kind === 'help') {
   process.exit(0)
 }
 
+if (parsed.forwardArgs.some(arg => arg === '--help' || arg === '-h') && parsed.command !== 'codegen') {
+  console.log(commandUsage(parsed.command))
+  process.exit(0)
+}
+if (['dev', 'doctor'].includes(parsed.command) && parsed.forwardArgs.length) {
+  console.error(`Unexpected argument: ${parsed.forwardArgs[0]}`)
+  process.exit(1)
+}
+config({ path: resolve(repoRoot, '.env') })
 if (isCompoundRepoCommand(parsed.command)) {
   process.exit(await dispatchCompoundCommand(parsed.command, parsed.forwardArgs))
-}
-
-if ((parsed.command === 'identity-migrate' || parsed.command === 'identity-wipe')
-  && parsed.forwardArgs.some(arg => arg === '--help' || arg === '-h')) {
-  console.log(parsed.command === 'identity-migrate'
-    ? 'Usage: bun repo identity-migrate\nSet AUTH_DATABASE_URL (or STAGING_AUTH_DATABASE_URL / PRODUCTION_AUTH_DATABASE_URL).'
-    : 'Usage: bun repo identity-wipe <local|staging> [--yes]\nStop identity before wiping its local database.')
-  process.exit(0)
 }
 
 const scriptPath = resolveRepoCommandScript(parsed.command)

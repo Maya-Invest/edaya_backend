@@ -1,0 +1,52 @@
+{
+  // Local process configuration. Credentials belong in .env, not here.
+  // API_ORIGIN also supplies the identity issuer and first-party audience.
+  // Optional: ALLOW_PUBLIC_SCHOOL_REGISTRATION, WEBAPP_ORIGIN,
+  // ACCOUNT_INVITATIONS_ENABLED, PROFILE_PHOTO_MAX_BYTES, PLATFORM_BOOTSTRAP_EMAILS.
+  // Local notifications use log transports unless explicitly configured.
+  // "EMAIL_TRANSPORT": "log",
+  // "SMS_TRANSPORT": "log",
+  // "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
+  // "CLOUDFLARE_EMAIL_ACCOUNT_ID": "YOUR_ACCOUNT_ID", // auth email REST; token in .env
+  // "LOCAL_FILES_URL": "http://localhost:9200",
+  // "LOCAL_FILES_ROOT": ".data/files",
+  // "GOTENBERG_URL": "http://localhost:3000",
+  // "CHROME_PATH": "", // blank selects the local stub when Gotenberg is absent
+  // "CRON_JOB_KEYS": "processDueNotifications,reconcilePendingDeliveries",
+  // "GRAPHQL_GRAPHIQL": "true",
+  // "GRAPHIQL_WEBAPP_ORIGIN": "http://localhost:5173",
+  // "GRAPHIQL_DEFAULT_EMAIL": "c.moreau@school.edu",
+  // Africa's Talking sandbox (normal bun dev, not capture-only dev:test):
+  // "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
+  // "AFRICAS_TALKING_USERNAME": "sandbox",
+  // "AFRICAS_TALKING_SANDBOX": "true",
+  // Supply sandbox key/sender in .env / this config. Messages reach the simulator.
+  // For real phones use live username/key/approved sender and sandbox=false.
+  // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
+  // AUTH_PROVIDER_GENERATION, ENABLE_GRAPHQL; use string values "true" / "false".
+  // Phone auth stays disabled until all provider settings AND secrets are configured.
+  // SMS requires PHONE_SMS_ROUTES plus AFRICAS_TALKING_USERNAME/SENDER_ID and API key.
+  // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
+  // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
+  // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
+  // "WHATSAPP_PHONE_NUMBER_ID": "1234567890",
+  // "WHATSAPP_BUSINESS_ACCOUNT_ID": "1234567890",
+  // "WHATSAPP_API_VERSION": "vXX.X", // replace with a supported pinned version
+  // "WHATSAPP_AUTH_TEMPLATES": "{\"fr\":{\"name\":\"edaya_auth_fr\",\"language\":\"fr\"},\"en\":{\"name\":\"edaya_auth_en\",\"language\":\"en_US\"}}",
+  // Optional rendering: GOTENBERG_URL, DOCS_RENDER_ON_PUBLISH.
+  // See docs/reference/api-configuration.md and phone-verification.md.
+  "RUNTIME": "local",
+  "NODE_ENV": "development",
+  "PORT": "9999",
+  "LOG_LEVEL": "debug",
+  "DATABASE_URL": "pglite:.data/school",
+  "RUN_MIGRATIONS_ON_STARTUP": "true",
+  "API_ORIGIN": "http://localhost:9999",
+  "TRUSTED_ORIGINS": "http://localhost:5173,http://localhost:4173",
+  "AUTH_DATABASE_URL": "pglite:.data/identity",
+  "PHONE_AUTH_MODE": "disabled",
+  "ACCOUNT_SECURITY_KEY_VERSION": "v1",
+  "LOCAL_FILES_PORT": "9200",
+  "EMAIL_TRANSPORT": "log",
+  "AUTH_PROVIDER_GENERATION": "better-auth:v1"
+}

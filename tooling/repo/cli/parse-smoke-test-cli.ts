@@ -1,33 +1,35 @@
+import { commandUsage } from './catalog'
+
 export type SmokeTestTarget = 'staging' | 'notify' | 'r2'
-
-export type ParsedSmokeTestCli
-  = | { kind: 'help' }
-    | { kind: 'run', target: SmokeTestTarget }
-
-const TARGETS = new Set<SmokeTestTarget>(['staging', 'notify', 'r2'])
-
+export type ParsedSmokeTestCli = { kind: 'help' } | { kind: 'run', target: SmokeTestTarget, curlOnly?: boolean }
 export function parseSmokeTestCliArgs(args: readonly string[]): ParsedSmokeTestCli {
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+  if (!args.length || args.includes('--help') || args.includes('-h'))
     return { kind: 'help' }
+  const [subject, ...rest] = args
+  let target: SmokeTestTarget
+  if (subject === 'api' && rest.shift() === 'staging') {
+    target = 'staging'
   }
-
-  const [target] = args
-  if (!target || !TARGETS.has(target as SmokeTestTarget)) {
-    throw new Error(
-      `Unknown smoke-test target: ${target ?? '(missing)'}. Valid: ${[...TARGETS].join(', ')}`,
-    )
+  else if (subject === 'staging') {
+    target = 'staging'
   }
-
-  return { kind: 'run', target: target as SmokeTestTarget }
+  else if (subject === 'notify') {
+    target = 'notify'
+    if (rest[0] === 'local')
+      rest.shift()
+  }
+  else if (subject === 'r2') {
+    target = 'r2'
+    if (rest[0] === 'staging')
+      rest.shift()
+  }
+  else {
+    throw new Error(commandUsage('smoke'))
+  }
+  if (rest.length > 1 || rest.some(arg => target !== 'r2' || arg !== '--curl-only'))
+    throw new Error('Unsupported smoke environment/option; use smoke --help')
+  return { kind: 'run', target, ...(rest.length ? { curlOnly: true } : {}) }
 }
-
 export function smokeTestCliUsage(): string {
-  return [
-    'Usage: bun repo smoke-test <target>',
-    '',
-    'Targets:',
-    '  staging      Tier-1 HTTP vs deployed staging API',
-    '  notify       In-process notify outbound e2e (school API)',
-    '  r2           Staging R2 PUT check (apps/api/secrets.staging.json + wrangler staging bucket)',
-  ].join('\n')
+  return commandUsage('smoke')
 }

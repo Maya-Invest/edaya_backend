@@ -1,33 +1,5 @@
+import { commandCatalog } from '../catalog'
+
 export function repoCliUsage(): string {
-  return [
-    'Usage: bun repo <command> [options]',
-    '',
-    'Development:',
-    '  dev                          Start identity + API + local files',
-    '  seed [options]               HTTP seed CLI',
-    '  db <subcommand>              migrate | reset | flatten | generate | browser',
-    '  identity-migrate             Apply Account + provider migrations',
-    '  identity-wipe local|staging   Guarded identity cleanup (accepts --yes)',
-    '',
-    'Validation:',
-    '  check openapi|boundaries     Read-only checks',
-    '  verify [--full]              Hygiene; --full = PR CI (verify + integration)',
-    '  doctor                       Repo hygiene',
-    '',
-    'Operations:',
-    '  smoke-test staging|notify|r2        Live environment smoke checks',
-    '  deploy api staging|production',
-    '  openapi export|generate',
-    '  codegen generate|check [options]    Generate a client from a file or URL',
-    '',
-    'Examples:',
-    '  bun repo seed clean --staging',
-    '  bun repo db migrate local',
-    '  bun repo db reset staging --yes',
-    '  bun repo dev',
-    '  bun repo check openapi',
-    '  bun repo smoke-test staging',
-    '  bun repo verify',
-    '  bun repo verify --full',
-  ].join('\n')
+  return ['Usage: bun repo <command> [options]', '', ...Object.entries(commandCatalog).map(([name, entry]) => `  ${name.padEnd(18)} ${entry.description}`), '', 'Use bun repo <command> --help for syntax. Unknown arguments are rejected.'].join('\n')
 }

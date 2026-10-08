@@ -42,17 +42,14 @@ describe("local dev env files", () => {
     const filename = path.join(directory, "email.env");
     try {
       await writeFile(filename, [
-        "DATABASE_URL=pglite",
-        "CLOUDFLARE_EMAIL_ACCOUNT_ID=file-account",
         "CLOUDFLARE_EMAIL_API_TOKEN=file-token",
-        "EMAIL_FROM=Dev <dev@edayaplus.com>",
       ].join("\n"));
-      process.env = { NODE_ENV: "test", EDAYA_LOCAL_ENV_FILE: filename, CLOUDFLARE_EMAIL_API_TOKEN: "process-token" };
+      process.env = { NODE_ENV: "test", EDAYA_LOCAL_ENV_FILE: filename, CLOUDFLARE_EMAIL_API_TOKEN: "process-token", CLOUDFLARE_EMAIL_ACCOUNT_ID: "file-account", EMAIL_FROM: "Dev <dev@edayaplus.com>" };
       const env = loadLocalProcessEnv();
       expect(env.CLOUDFLARE_EMAIL_ACCOUNT_ID).toBe("file-account");
       expect(env.CLOUDFLARE_EMAIL_API_TOKEN).toBe("process-token");
       expect(env.EMAIL_FROM).toBe("Dev <dev@edayaplus.com>");
-      expect(env.EMAIL_TRANSPORT).toBeUndefined();
+      expect(env.EMAIL_TRANSPORT).toBe("log");
     }
     finally {
       await rm(directory, { recursive: true, force: true });
@@ -71,7 +68,6 @@ describe("local dev env files", () => {
       await writeFile(path.join(apiRoot, ".env"), [
         "RUNTIME=local",
         "NODE_ENV=development",
-        "DATABASE_URL=pglite",
         "API_ORIGIN=http://localhost:9999",
         "BETTER_AUTH_SECRET=from-env",
       ].join("\n"));

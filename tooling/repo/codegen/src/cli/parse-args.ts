@@ -27,9 +27,15 @@ function parseHeaderValue(value: string): [string, string] {
 export function parseCli(argv: string[]): ParsedCli {
 	const parsed: ParsedCli = { headers: {} }
 
+	const seen = new Set<string>()
 	for (let index = 0; index < argv.length; index += 1) {
 		const token = argv[index]
+		if (token !== '--header' && seen.has(token))
+			throw new Error(`Duplicate argument: ${token}`)
+		seen.add(token)
 		if (token === 'generate' || token === 'check') {
+			if (parsed.command)
+				throw new Error('Expected one codegen action')
 			parsed.command = token
 			continue
 		}

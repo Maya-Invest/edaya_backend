@@ -1,5 +1,7 @@
 # Phone verification operations
 
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 Phone login and contact linking use the same Account policy in web, guardian and teacher. Launch accepts only Côte d’Ivoire mobile numbers: +225 followed by ten digits starting with 01, 05 or 07. Formatting spaces, parentheses, periods and hyphens are normalized. A destination without a configured SMS prefix returns `phone_country_unsupported` before preparing an OTP. The longest configured prefix wins; v1 supports the `africas_talking` provider only. North America/Twilio is deferred.
 
 The first send uses Meta Cloud API in `whatsapp_first` mode or Africa’s Talking in `sms_only` mode. The user can resend the current channel or switch WhatsApp to SMS after cooldown. No status callback, timeout, poll, background job or process restart sends a message. There is no Cloudflare Workflow, queue or delivery outbox.
@@ -25,7 +27,7 @@ Both Worker environments default to `PHONE_AUTH_MODE=disabled`. Configure an app
 
 ### Local Africa's Talking setup
 
-Edit the existing gitignored `apps/api/.env`, preserving its database and Account settings. Set the following values (replace placeholders before enabling):
+Set phone settings in `apps/api/config.local.jsonc` (all values are strings) and only `AFRICAS_TALKING_API_KEY` in `.env`. The following shows the combined settings (replace placeholders before enabling):
 
 ```dotenv
 PHONE_AUTH_MODE=sms_only
@@ -46,7 +48,7 @@ For delivery to real phones during local development, replace the sandbox userna
 
 Staging runs with `NODE_ENV=production`, so its current validation also rejects sandbox mode. Use a live application, a sender approved for Côte d'Ivoire, and sufficient SMS credit for real handset qualification. Keep `NODE_ENV=production`.
 
-Merge these three fields into the existing gitignored `apps/api/secrets.staging.json`, preserving all existing secrets:
+Put `AFRICAS_TALKING_USERNAME` and `AFRICAS_TALKING_SENDER_ID` in `config.staging.jsonc`. Merge only `AFRICAS_TALKING_API_KEY` into `secrets.staging.json`. The combined settings are:
 
 ```json
 {
@@ -56,9 +58,9 @@ Merge these three fields into the existing gitignored `apps/api/secrets.staging.
 }
 ```
 
-For coordinated GitHub releases, merge the same fields into the existing `STAGING_IDENTITY_SECRETS` JSON secret. The release merges it with `STAGING_API_SECRETS`; duplicate fields must agree. Keep phone mode in Wrangler configuration because staging preflight rejects `PHONE_AUTH_MODE` in secret payloads. Cloudflare documents [environment-specific secret storage](https://developers.cloudflare.com/workers/configuration/secrets/).
+For coordinated GitHub releases, merge only the API key into the existing `STAGING_IDENTITY_SECRETS` JSON secret. The release merges it with `STAGING_API_SECRETS`; duplicate fields must agree. Keep phone mode in `config.staging.jsonc` because staging preflight rejects `PHONE_AUTH_MODE` in secret payloads. Cloudflare documents [environment-specific secret storage](https://developers.cloudflare.com/workers/configuration/secrets/).
 
-Once the credentials are complete and the Identity migrations have been applied, set only `env.staging.vars.PHONE_AUTH_MODE` to `sms_only` in `apps/api/wrangler.jsonc`. Retain its existing `PHONE_SMS_ROUTES` and `AFRICAS_TALKING_SANDBOX=false`. Upload secrets before enabling the mode (from `apps/api`, `bunx wrangler secret bulk secrets.staging.json --env staging`), or use the coordinated staging release's secret upload. Deploy the updated staging Worker through the existing release process; editing a local secret file alone does not configure the deployed Worker. Production has a separate configuration.
+Once the credentials are complete and the Identity migrations have been applied, set `PHONE_AUTH_MODE` to `sms_only` in `apps/api/config.staging.jsonc`. Retain its existing `PHONE_SMS_ROUTES` and `AFRICAS_TALKING_SANDBOX=false`. Upload secrets before enabling the mode (from `apps/api`, `bunx wrangler secret bulk secrets.staging.json --env staging`), or use the coordinated staging release's secret upload. Apply the settings with `bun repo vars push api staging`; editing a local file alone does not configure the deployed Worker. Code releases preserve the deployed phone mode. Production has a separate configuration.
 
 After deployment, inspect `https://staging.api.edayaplus.com/auth/edaya/methods`, then request a code through staging with a controlled CI test phone. Verify receipt and successful login, and test an explicit resend after cooldown. A provider `accepted` result alone does not establish handset delivery. Do not enable the deployed test-code reveal endpoint.
 

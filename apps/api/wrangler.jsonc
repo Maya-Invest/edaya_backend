@@ -51,27 +51,6 @@
       "browser": {
         "binding": "BROWSER"
       },
-      "vars": {
-        "NODE_ENV": "production",
-        "LOG_LEVEL": "info",
-        "RUNTIME": "worker",
-        "PHONE_AUTH_MODE": "disabled",
-        "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
-        "AFRICAS_TALKING_SANDBOX": "false",
-        "STAGING_MAINTENANCE": "false",
-        "STAGING_PAUSE_JOBS": "false",
-        "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
-        "EMAIL_TRANSPORT": "cloudflare",
-        "API_ORIGIN": "https://staging.api.edayaplus.com",
-        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
-        "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "PROFILE_PHOTO_MAX_BYTES": "1048576",
-        "PLATFORM_BOOTSTRAP_EMAILS": "",
-        "R2_BUCKET_NAME": "edaya-files-staging"
-      },
       "routes": [
         {
           "pattern": "staging.api.edayaplus.com",
@@ -108,25 +87,6 @@
     },
     "prod": {
       "name": "edaya-api-prod",
-      "vars": {
-        "NODE_ENV": "production",
-        "LOG_LEVEL": "info",
-        "RUNTIME": "worker",
-        "PHONE_AUTH_MODE": "disabled",
-        "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
-        "AFRICAS_TALKING_SANDBOX": "false",
-        "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
-        "WEBAPP_ORIGIN": "https://app.edayaplus.com",
-        "REQUIRE_EMAIL_VERIFICATION": "true",
-        "EMAIL_FROM": "EDAYA <noreply@edayaplus.com>",
-        "EMAIL_TRANSPORT": "cloudflare",
-        "API_ORIGIN": "https://api.edayaplus.com",
-        "ALLOW_PUBLIC_SCHOOL_REGISTRATION": "true",
-        "ACCOUNT_INVITATIONS_ENABLED": "true",
-        "PROFILE_PHOTO_MAX_BYTES": "1048576",
-        "PLATFORM_BOOTSTRAP_EMAILS": "",
-        "R2_BUCKET_NAME": "edaya-files-production"
-      },
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
@@ -179,5 +139,6 @@
         }
       ]
     }
-  }
+  },
+  "keep_vars": true
 }

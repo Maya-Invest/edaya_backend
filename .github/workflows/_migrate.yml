@@ -63,9 +63,9 @@ jobs:
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
           PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
           MIGRATE_TARGET: ${{ inputs.migrate_target }}
-        run: bun repo db migrate "$MIGRATE_TARGET"
+        run: bun repo db migrate school "$MIGRATE_TARGET"
 
       - name: Migrate Account and auth provider schemas
         env:
-          AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
-        run: bun repo identity-migrate
+          PRODUCTION_AUTH_DATABASE_URL: ${{ secrets.PRODUCTION_AUTH_DATABASE_URL }}
+        run: bun repo db migrate identity production

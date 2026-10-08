@@ -6,11 +6,12 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 import postgres from 'postgres'
+import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.mjs'
 import { assertStagingIdentityDatabaseUrl, isLocalAuthDatabaseUrl } from './lib/assert-identity-wipe-allowed'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 config({ path: resolve(repoRoot, '.env') })
-config({ path: resolve(repoRoot, 'apps/api/.env') })
+loadLocalConfiguration(process.env)
 
 const WIPE_AUTH_SQL = [
   'TRUNCATE TABLE identity.account CASCADE; TRUNCATE TABLE identity.challenge, identity.quota;',
@@ -45,6 +46,10 @@ async function confirm(message: string, autoYes: boolean): Promise<boolean> {
 
 function parseArgs(argv: string[]): { target: WipeTarget, yes: boolean } {
   const args = argv.slice(2)
+  if (args.some(arg => !['local', 'staging', '--local', '--staging', '--yes', '-y'].includes(arg)))
+    throw new Error('Usage: bun repo db wipe identity <local|staging> [--yes]')
+  if (args.filter(arg => ['local', 'staging', '--local', '--staging'].includes(arg)).length > 1 || args.filter(arg => ['--yes', '-y'].includes(arg)).length > 1)
+    throw new Error('Duplicate identity wipe arguments')
   const hasLocal = args.includes('local') || args.includes('--local')
   const hasStaging = args.includes('staging') || args.includes('--staging')
   if (hasLocal && hasStaging) {

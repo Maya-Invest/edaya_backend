@@ -2,7 +2,7 @@
 
 The API worker wires adapters from **`RUNTIME` only**. Scheduled cron jobs run on the same worker (`scheduled()` handler). Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present.
 
-**Env files:** `bun repo dev` loads `apps/api/.env` only. `.dev.vars` is Wrangler-only (`wrangler dev`, deploy, R2 ops scripts) and is never read by the local process runtime.
+**Configuration:** `bun repo dev` loads `apps/api/config.local.jsonc` plus secrets from `.env`. Wrangler smoke and R2 tools load `config.staging.jsonc` plus `.dev.vars` secrets. Deployed variables are updated explicitly with `bun repo vars push api <staging|production>`; code deployment preserves them. See [API configuration](api-configuration.md).
 
 See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runtimes.md) for commands and env loading.
 
@@ -69,7 +69,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `.env.example`, local-files always started by `bun repo dev`, in-memory notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
+`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `config.local.jsonc`, local-files always started by `bun repo dev`, in-memory notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
 
 ## Related packages
 
@@ -82,3 +82,5 @@ Cron does not use file storage (`noOpFileStorage`).
 | `@edaya/adaptor-r2` | Worker `FileStoragePort` |
 | `@edaya/adaptor-notify` | In-process email/push adapters on the school API |
 | `@edaya/adaptor-docs` | In-process PDF rendering (templates + inner PdfRenderer) |
+
+Staging and production share the Worker entrypoint, adapters, build settings, binding names/types, schedules, and queue behavior. Repository verification compares effective Wrangler profiles and allows only resource identities to differ. Application behavior is selected by configuration, including independent `PAUSE_API`, `PAUSE_SCHEDULER`, and `PAUSE_JOBS` controls, never by staging hostnames. Staging fixture/reset safeguards remain tooling-only.

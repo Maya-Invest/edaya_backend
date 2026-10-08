@@ -27,6 +27,7 @@ export type SeedCliInvocation
       target: SeedHttpTarget
       scope: HttpDevSeedScope
       clean: boolean
+      yes?: boolean
       repair: boolean
       skipProfilePhotos: boolean
       skipAttachments: boolean
@@ -76,6 +77,7 @@ function parseSeedInvocation(flagArgs: readonly string[]): SeedCliInvocation {
     target: flagArgs.includes('--staging') ? 'staging' : 'local',
     scope,
     clean: flagArgs.includes('--clean'),
+    ...((flagArgs.includes('--yes') || flagArgs.includes('-y')) ? { yes: true } : {}),
     repair: flagArgs.includes('--repair'),
     skipProfilePhotos: flagArgs.includes('--skip-profile-photos'),
     skipAttachments: flagArgs.includes('--skip-attachments'),
@@ -104,7 +106,7 @@ export function seedCliUsage(): string {
     '  --skip-profile-photos    Skip profile photo uploads',
     '  --skip-attachments       Skip fixture attachment registration',
     '  --no-progress            Disable interactive progress bars',
-    '  --yes, -y                With clean: skip confirmation prompt',
+    '  --yes, -y                With clean or --clean: skip confirmation prompt',
     '  -h, --help               Show this help',
     '',
     'Examples:',
@@ -119,6 +121,23 @@ export function parseSeedCliArgs(argv: readonly string[]): SeedCliInvocation {
     return { kind: 'help' }
   }
 
+  const flags = argv.slice(2)
+  const cleaning = flags[0] === 'clean'
+  const allowed = new Set(cleaning ? ['--staging', '--yes', '-y', '--auth'] : ['--staging', '--scope', '--clean', '--yes', '-y', '--repair', '--skip-profile-photos', '--skip-attachments', '--no-progress'])
+  const seen = new Set<string>()
+  for (let i = cleaning ? 1 : 0; i < flags.length; i++) {
+    const flag = flags[i]!
+    if (!allowed.has(flag) || seen.has(flag === '-y' ? '--yes' : flag))
+      throw new Error(`Unexpected or duplicate seed argument: ${flag}`)
+    seen.add(flag === '-y' ? '--yes' : flag)
+    if (flag === '--scope') {
+      const value = flags[++i]
+      if (!value || value.startsWith('-'))
+        throw new Error('--scope requires a value')
+    }
+  }
+  if (!cleaning && (seen.has('--yes') || seen.has('-y')) && !seen.has('--clean'))
+    throw new Error('--yes requires clean or --clean')
   const positionalArgs = argv.slice(2)
   if (positionalArgs[0] === 'clean') {
     return parseCleanInvocation(positionalArgs.slice(1))

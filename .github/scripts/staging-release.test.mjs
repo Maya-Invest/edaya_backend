@@ -21,7 +21,7 @@ function environment() {
   const firebase = app => ({ project_info: { project_id: "fixture-project" }, client: [{ client_info: { android_client_info: { package_name: app === "guardian" ? "ca.mayainvest.edaya.guardian" : "ca.mayainvest.edaya.staff" } } }] });
   return { RELEASE_TARGET: "staging", RESET_DATA: "false", VALIDATE_ONLY: "true", CLOUDFLARE_ACCOUNT_ID: staging.account, CLOUDFLARE_API_TOKEN: "private-token", IDENTITY_CHECKOUT_TOKEN: "private-checkout-token", STAGING_NEON_TARGET_CONFIRMED: staging.databaseHost,
     STAGING_DATABASE_URL: `postgres://school:secret@${staging.databaseHost}/neondb?sslmode=require`, STAGING_AUTH_DATABASE_URL: `postgres://edaya_identity:secret@${staging.databaseHost}/edaya_identity?sslmode=require`,
-    STAGING_API_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", R2_ENDPOINT: "https://fixture.r2.cloudflarestorage.com", R2_ACCESS_KEY_ID: "key", R2_SECRET_ACCESS_KEY: "secret", FCM_SERVICE_ACCOUNT_JSON: JSON.stringify({ project_id: "fixture-project", client_email: "fixture@example.com", private_key: privateKey.export({ type: "pkcs8", format: "pem" }) }) }),
+    STAGING_API_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", R2_ACCESS_KEY_ID: "key", R2_SECRET_ACCESS_KEY: "secret", FCM_SERVICE_ACCOUNT_JSON: JSON.stringify({ project_id: "fixture-project", client_email: "fixture@example.com", private_key: privateKey.export({ type: "pkcs8", format: "pem" }) }) }),
     STAGING_IDENTITY_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", BETTER_AUTH_SECRET: "s".repeat(32), ACCOUNT_SECURITY_KEYS: JSON.stringify({ v1: Buffer.alloc(32, 1).toString("base64") }) }),
     ANDROID_SIGNING_BUNDLE: JSON.stringify({ keystore: Buffer.from("fixture").toString("base64"), apps: Object.fromEntries(["guardian", "teacher"].map(app => [app, { keyAlias: "fixture", keyPassword: "private", storePassword: "private", firebase: firebase(app) }])) }),
   };
@@ -172,7 +172,7 @@ fi
 
 import { mergeWorkerSecrets } from './merge-worker-secrets.mjs';
 test('single Worker secrets retain keys, discard directory fields and reject conflicts', () => {
-  expect(mergeWorkerSecrets({ SHARED: 'same', IDENTITY_DIRECTORY_SECRET: 'old-a' }, { SHARED: 'same', IDENTITY_DIRECTORY_SECRET: 'old-b', BETTER_AUTH_SECRET: 'signing', ACCOUNT_SECURITY_KEYS: 'keyring' })).toEqual({ SHARED: 'same', BETTER_AUTH_SECRET: 'signing', ACCOUNT_SECURITY_KEYS: 'keyring' });
+  expect(mergeWorkerSecrets({ AFRICAS_TALKING_API_KEY: 'same', IDENTITY_DIRECTORY_SECRET: 'old-a' }, { AFRICAS_TALKING_API_KEY: 'same', IDENTITY_DIRECTORY_SECRET: 'old-b', BETTER_AUTH_SECRET: 'signing', ACCOUNT_SECURITY_KEYS: 'keyring' })).toEqual({ AFRICAS_TALKING_API_KEY: 'same', BETTER_AUTH_SECRET: 'signing', ACCOUNT_SECURITY_KEYS: 'keyring' });
   expect(() => mergeWorkerSecrets({ SECRET: 'first' }, { SECRET: 'second' })).toThrow('SECRET: conflicting duplicate field');
   const env = environment(); env.STAGING_API_SECRETS = JSON.stringify({ ...JSON.parse(env.STAGING_API_SECRETS), BETTER_AUTH_SECRET: 'different' });
   expect(validateConfiguration(env).errors.join('\n')).toContain('BETTER_AUTH_SECRET: conflicting duplicate field');

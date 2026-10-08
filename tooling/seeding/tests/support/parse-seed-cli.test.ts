@@ -66,3 +66,21 @@ describe('parseSeedCliArgs', () => {
     expect(seedCliUsage()).not.toContain('seed:smoke')
   })
 })
+
+
+describe('seed command safety', () => {
+  it('rejects ignored, duplicate and incomplete flags', () => {
+    for (const flags of [
+      ['--dry-run'], ['clean', '--scope', 'school'], ['--scope'],
+      ['--scope', '--clean'], ['--staging', '--staging'],
+      ['--yes'], ['clean', '--yes', '-y'],
+    ]) {
+      expect(() => parseSeedCliArgs(['bun', 'seed.ts', ...flags])).toThrow()
+    }
+  })
+  it('requires explicit confirmation bypass for either cleanup spelling', () => {
+    expect(parseSeedCliArgs(['bun', 'seed.ts', '--clean'])).not.toHaveProperty('yes')
+    expect(parseSeedCliArgs(['bun', 'seed.ts', '--clean', '--yes'])).toMatchObject({ clean: true, yes: true })
+    expect(parseSeedCliArgs(['bun', 'seed.ts', 'clean'])).toMatchObject({ yes: false })
+  })
+})

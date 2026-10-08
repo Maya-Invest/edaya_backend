@@ -4,7 +4,10 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'bun:test'
 import { findRuntimeBoundaryViolations } from '../lib/runtime-boundaries.ts'
 
-const VALID_WRANGLER = `
+const VALID_WRANGLER = `{
+  "keep_vars": true,
+  "main": "src/entries/worker.ts",
+  "env": { "staging": {}, "prod": {} },
   "compatibility_date": "2026-03-24",
   "browser": {
     "binding": "BROWSER"
@@ -22,7 +25,7 @@ const VALID_WRANGLER = `
       }
     ]
   }
-`
+}`
 
 describe('findRuntimeBoundaryViolations', () => {
   function writeFile(root: string, relativePath: string, contents: string): void {
@@ -32,7 +35,9 @@ describe('findRuntimeBoundaryViolations', () => {
   }
 
   function writeBaselineRepoFiles(root: string): void {
-    writeFile(root, 'apps/api/.env.example', 'RUNTIME=local\nDATABASE_URL=pglite:.data/school\n')
+    writeFile(root, 'apps/api/config.local.jsonc', '{"RUNTIME":"local","DATABASE_URL":"pglite:.data/school"}')
+    writeFile(root, 'apps/api/config.staging.jsonc', '{"API_ORIGIN":"https://staging.example.com"}')
+    writeFile(root, 'apps/api/config.production.jsonc', '{"API_ORIGIN":"https://example.com"}')
     writeFile(root, 'apps/api/wrangler.jsonc', VALID_WRANGLER)
     writeFile(root, 'apps/api/src/runtime/shared/adapters/file-storage.ts', 'switch (env.RUNTIME) {}\n')
     writeFile(root, 'apps/api/src/runtime/local/school-database.ts', 'export async function createSchoolDatabase() {}\n')
@@ -46,18 +51,15 @@ describe('findRuntimeBoundaryViolations', () => {
     expect(findRuntimeBoundaryViolations(repoRoot)).toEqual([])
   })
 
-  test('reports postgres default in apps/api/.env.example', () => {
+  test('rejects a Postgres URL in tracked local configuration', () => {
     const root = mkdtempSync(join(tmpdir(), 'edaya-runtime-boundary-'))
     try {
       writeBaselineRepoFiles(root)
-      writeFile(root, 'apps/api/.env.example', 'RUNTIME=local\nDATABASE_URL=postgres://localhost/edaya\n')
+      writeFile(root, 'apps/api/config.local.jsonc', '{"RUNTIME":"local","DATABASE_URL":"postgres://localhost/edaya"}')
 
       expect(findRuntimeBoundaryViolations(root)).toEqual([{
-        label: 'local env example',
-        message: 'apps/api/.env.example must not default DATABASE_URL to postgres://',
-      }, {
-        label: 'local env example',
-        message: 'apps/api/.env.example must default DATABASE_URL to pglite:.data/school',
+        label: 'local configuration',
+        message: 'Invalid config.local.jsonc or secrets.json.example',
       }])
     }
     finally {

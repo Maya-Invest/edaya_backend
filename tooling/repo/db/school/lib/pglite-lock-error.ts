@@ -12,6 +12,6 @@ export function pgliteLockHelpMessage(): string {
     + '  2. On Windows, end any leftover `bun.exe` still holding `.data` (Task Manager).\n'
     + '  3. Rerun: bun repo db migrate local\n'
     + 'Or wipe and let startup migrate: stop API → delete `.data` → `bun dev` '
-    + '(RUN_MIGRATIONS_ON_STARTUP=true in apps/api/.env).'
+    + '(RUN_MIGRATIONS_ON_STARTUP=true in apps/api/config.local.jsonc).'
   )
 }

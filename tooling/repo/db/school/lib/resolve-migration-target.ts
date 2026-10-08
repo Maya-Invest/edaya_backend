@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { isPgliteDatabase, resolvePersistedPgliteDataDir } from '@edaya/adaptor-postgres'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
+import { loadLocalConfiguration } from '../../../../../apps/api/configuration/index.mjs'
 
 export type MigrationTarget = 'local' | 'staging' | 'production'
 export type MigrationScope = 'school'
@@ -12,10 +13,7 @@ export type MigrationScope = 'school'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..')
 
 function loadApiEnvFile(): void {
-  const envPath = path.resolve(repoRoot, 'apps/api/.env')
-  if (existsSync(envPath)) {
-    expand(config({ path: envPath }))
-  }
+  loadLocalConfiguration(process.env)
 }
 
 function loadRepoEnvFile(): void {
@@ -73,7 +71,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
 
   if (!databaseUrl || databaseUrl === 'memory') {
     const hints = target === 'local'
-      ? ['Set DATABASE_URL in apps/api/.env (e.g. pglite:.data/school).']
+      ? ['Set DATABASE_URL in apps/api/config.local.jsonc (e.g. pglite:.data/school).']
       : target === 'staging'
         ? [
             'Set STAGING_DATABASE_URL to the Neon staging branch connection string.',
@@ -96,7 +94,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
   if (databaseUrl === 'pglite') {
     fail(
       'Ephemeral PGlite (DATABASE_URL=pglite) cannot be migrated.',
-      ['Use a persisted path such as pglite:.data/school in apps/api/.env.'],
+      ['Use a persisted path such as pglite:.data/school in apps/api/config.local.jsonc.'],
     )
   }
 

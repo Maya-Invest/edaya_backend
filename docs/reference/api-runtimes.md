@@ -1,5 +1,7 @@
 # API runtimes
 
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 The unified API supports in-memory tests, a local process and a Cloudflare Worker. `apps/api/src/identity` is the only application composition folder allowed to import authentication-provider internals. School business packages remain independent of them.
 
 | Profile | Entry | School database | Account database |
@@ -8,9 +10,9 @@ The unified API supports in-memory tests, a local process and a Cloudflare Worke
 | In-memory | Test harness | Ephemeral school fixtures | Ephemeral Account fixtures when used |
 | Worker | `src/entries/worker.ts` | `HYPERDRIVE` | `HYPERDRIVE_AUTH` |
 
-Local configuration loads `apps/api/.env`; `.dev.vars` belongs to Wrangler. Worker bindings and secrets are parsed without process environment access. Worker database handles are created lazily within each request/runtime, never globally, and closed after the request and required notification work. Process profiles reuse a registry keyed by both database/configuration identities. Authentication dispatch precedes school dependencies; public auth and JWKS do not initialize school repositories unless privileged policy needs them.
+Local configuration loads `apps/api/config.local.jsonc` plus secrets from `apps/api/.env`; `.dev.vars` belongs to Wrangler. Worker bindings and secrets are parsed without process environment access. Worker database handles are created lazily within each request/runtime, never globally, and closed after the request and required notification work. Process profiles reuse a registry keyed by both database/configuration identities. Authentication dispatch precedes school dependencies; public auth and JWKS do not initialize school repositories unless privileged policy needs them.
 
-`API_ORIGIN` is the environment’s canonical API origin and controls issuer, audience and Account provider base URL. There is no independent auth URL or directory secret. `TRUSTED_ORIGINS` controls credentialed browser CORS. `BETTER_AUTH_SECRET`, durable versioned `ACCOUNT_SECURITY_KEYS` and the active key version remain secrets. Worker configuration retains both databases, auth KV, R2, email, browser rendering, queue and cron resources. PGlite is rejected in Worker runtimes.
+`API_ORIGIN` is the environment’s canonical API origin and controls issuer, audience and Account provider base URL. There is no independent auth URL or directory secret. `TRUSTED_ORIGINS` controls credentialed browser CORS. `BETTER_AUTH_SECRET`, durable versioned `ACCOUNT_SECURITY_KEYS` remain secrets; the active key version is non-secret configuration. Worker configuration retains both databases, auth KV, R2, email, browser rendering, queue and cron resources. PGlite is rejected in Worker runtimes.
 
 The scheduled handler runs credential expiry and school scheduling independently and reports either failure after both settle. Queue processing retains its existing school behavior. Maintenance skips HTTP and background work; job pause skips scheduled work and retries queue batches. Cleanup runs even when jobs fail.
 

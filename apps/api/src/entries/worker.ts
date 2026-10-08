@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { maintenanceResponse, stagingSwitch } from "@/staging-maintenance";
+import { isPaused, maintenanceResponse } from "@/operational-controls";
 
 import { runIndependentJobs } from "@/identity/jobs";
 import app from "@/app";
@@ -12,14 +12,14 @@ import { parseRuntimeEnv } from "@/runtime/shared/env";
 
 export default {
   async fetch(request: Request, bindings: Record<string, unknown>, executionCtx: ExecutionContext) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE"))
+    if (isPaused(bindings, "PAUSE_API"))
       return maintenanceResponse();
     const env = parseRuntimeEnv(bindings, "worker");
     return app.fetch(request, env, executionCtx);
   },
 
   async scheduled(controller: ScheduledController, bindings: Record<string, unknown>, ctx: ExecutionContext) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE") || stagingSwitch(bindings, "STAGING_PAUSE_JOBS"))
+    if (isPaused(bindings, "PAUSE_SCHEDULER"))
       return;
     const env = parseRuntimeEnv(bindings, "worker");
     const logger = createAppLogger(env);
@@ -48,7 +48,7 @@ export default {
   },
 
   async queue(batch: MessageBatch<CronJobDispatchQueueBody>, bindings: Record<string, unknown>) {
-    if (stagingSwitch(bindings, "STAGING_MAINTENANCE") || stagingSwitch(bindings, "STAGING_PAUSE_JOBS")) {
+    if (isPaused(bindings, "PAUSE_JOBS")) {
       batch.retryAll({ delaySeconds: 60 });
       return;
     }

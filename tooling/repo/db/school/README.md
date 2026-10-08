@@ -10,7 +10,7 @@ Database migration CLI for the EDAYA school schema (Neon / Hyperdrive / PGlite).
 
 | Command | Scope | Environment |
 |---------|-------|-------------|
-| `bun repo db migrate local` | school | `apps/api/.env` (`pglite:.data/school`) |
+| `bun repo db migrate local` | school | `apps/api/config.local.jsonc` (`pglite:.data/school`) |
 | `bun repo db migrate staging` | school | repo root `.env` (`STAGING_DATABASE_URL`) |
 | `bun repo db migrate production` | school | repo root `.env` (`PRODUCTION_DATABASE_URL`) |
 | `bun repo db reset staging --yes` | drop + re-apply school | staging |

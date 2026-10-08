@@ -37,7 +37,7 @@ The live staging Hyperdrives both use `ep-holy-mouse-awj7ghpf.c-12.us-east-1.aws
 
 Create the dedicated identity database and role on the confirmed branch and configure its direct URL. The coordinator checks both connections before entering maintenance, changes only the staging auth Hyperdrive, and preserves disabled query caching. It retains the existing queue, KV namespace, bucket, and Android signing configuration.
 
-Verify the `noreply@edayaplus.com` sender, Browser Rendering account capability, Firebase project/application IDs, and controlled test recipients/devices before live acceptance. Administrative fixture creation sends no email. Set the optional `STAGING_NOTIFICATION_EMAILS` field in `STAGING_API_SECRETS` to the designated account emails for school email/push delivery. An empty allowlist cancels school delivery channels before providers are called. Live delivery evidence still requires designated accounts/devices; generated fixture addresses are not delivery authorization.
+Verify the `noreply@edayaplus.com` sender, Browser Rendering account capability, Firebase project/application IDs, and controlled test recipients/devices before live acceptance. Administrative fixture creation sends no email. School email/push uses the same unrestricted recipient resolution as production; there is no staging recipient allowlist. Use designated test accounts and devices. Live delivery evidence still requires designated accounts/devices; generated fixture addresses are not delivery authorization.
 
 ## Verification availability
 
@@ -49,9 +49,9 @@ Full phone-enabled OTP-capture and clock-driven journeys remain in **local** qua
 
 1. Verify all three repositories; check generated contracts; run backend integration, seed, native PostgreSQL, browser, and mobile integration checks. Rehearse an empty bootstrap on two disposable PostgreSQL databases with verified identity accounts, private attachments, and document fixtures.
 2. Publish/reuse the exact API client. Verify web against the exact published backend client and build staging staff/admin assets. Build APKs with Flutter 3.44.8 and verify signatures/application IDs against the existing keystore. JavaScript repositories use Bun 1.3.14; Actions uses Node 22 and Java 17.
-3. Recheck database and infrastructure identities. Deploy unified API maintenance responses, confirm HTTP 503, pause queue delivery, and allow old requests to finish.
+3. Recheck database and infrastructure identities. Set `PAUSE_API`, `PAUSE_SCHEDULER`, and `PAUSE_JOBS` to true, deploy the unified API once, confirm HTTP 503, pause queue delivery, and allow old requests to finish.
 4. Configure secrets and the separate identity Hyperdrive. Only when `reset_data=true`, purge obsolete staging queue messages and auth KV, reset school/notification schemas, and clear identity users/credentials. Identity reset retains signing keys.
-5. Migrate, provision verified fixture accounts through the identity-owned CLI, and enable unified API HTTP while jobs remain paused. For a reset, run the complete school seed. A release without reset migrates and validates existing fixtures without reseeding school data.
+5. Migrate, provision verified fixture accounts through the identity-owned CLI, and set `PAUSE_API=false` while `PAUSE_SCHEDULER` and `PAUSE_JOBS` remain true. For a reset, run the complete school seed. A release without reset migrates and validates existing fixtures without reseeding school data.
 6. Run API smoke and the dedicated native mobile staging smoke, deploy the prepared staff/admin web assets, resume jobs, and observe for 65 minutes. Observation records HTTP health plus redacted Worker event summaries, requires scheduled executions, and rejects errors, stream gaps, and unexplained warnings.
 
 Identity fixtures are exported by backend tooling to a private temporary JSON file, then consumed by the backend Identity fixture entry (`apps/api/src/identity/entries/staging-fixtures.ts`). Provider packages import no school-domain code; composition resolves privileged policy through typed school repositories. Staging HTTP seeding only signs in provisioned accounts; `/dev/seed/mark-email-verified` remains local-only. The local rehearsal uses `SEED_PROVISIONED_IDENTITY=true` and private `SEED_AUTH_SESSIONS_FILE` credentials to exercise that same session-only path.
@@ -64,7 +64,7 @@ Automated success is not a substitute for installed-device acceptance. Record th
 
 ## Failure and recovery
 
-The coordinator stops at the first failed phase. After maintenance starts, its failure handler attempts to restore maintenance on the unified API and pause the queue. If Cloudflare itself is unavailable, the progress artifact identifies the failure and an operator must confirm maintenance through the dashboard/API.
+The coordinator stops at the first failed phase. After maintenance starts, its failure handler uses settings-only updates to enable all three pause controls and pauses queue delivery; it does not redeploy code. If Cloudflare itself is unavailable, the progress artifact identifies the failure and an operator must confirm maintenance through the dashboard/API.
 
 Use `release/deployment-progress.json` to identify the last completed phase and `worker-versions.json` plus the manifest for compatible versions. Keep data-dependent services in maintenance during recovery. Redeploy a previously recorded compatible set of API, web, and mobile artifacts. If the database schema is incompatible, rebuild **staging only** with the matching source revisions and explicit reset, then reseed. A Worker rollback does not restore database state.
 
@@ -75,3 +75,5 @@ Related guidance: [Neon direct versus pooled connections](https://neon.com/docs/
 ## Unified endpoint cutover
 
 The API Worker retains its existing name and both database bindings, with `staging.api.edayaplus.com` and `api.edayaplus.com` configured as Custom Domains. Read-only preflight verifies zone account ownership and hostname conflicts; an absent hostname is eligible for later creation. Secrets are validated and combined for one Worker; conflicting duplicate fields fail and retired directory fields are discarded. APK provenance is schema 3 with one API URL; older provenance is a cache miss. All candidates require committed backend/frontend/mobile revisions. Fresh web/mobile builds and login are mandatory. Retire old domains and the Identity Worker only after a later rollout passes unified smoke and observation, without compatibility aliases.
+
+Operational controls are shared with production; deployment workflows remain separate. See [configuration migration and rollback](api-configuration.md#one-time-operational-control-migration) before the first release using the new names.

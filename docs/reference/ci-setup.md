@@ -1,5 +1,7 @@
 # CI setup
 
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 Branch pushes run repository hygiene, unit/tooling tests and applicable builds. Every pull request, including PRs targeting development branches, runs complete integration qualification. Production release jobs and the staging coordinator require qualification before publication or live changes. Git hooks are unchanged.
 
 ## Required checks

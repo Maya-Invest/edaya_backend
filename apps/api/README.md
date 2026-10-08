@@ -1,5 +1,7 @@
 # Edaya API
 
+See [API configuration and secrets](../../docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+
 Hono API for Edaya Core (`@edaya/api`).
 
 ## Local development
@@ -20,7 +22,7 @@ cp .dev.vars.example .dev.vars
 bun run dev:worker
 ```
 
-Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). For rare prod Miniflare debugging: `cd apps/api && wrangler dev --env prod --env-file .dev.vars`.
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). Normal deployments preserve variables. Update them separately with `bun repo vars push api production`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
@@ -51,7 +53,7 @@ Bun runs the local TypeScript entry directly. Wrangler bundles the Worker entry 
 Before first production deploy:
 
 1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate production` (from repo root)
-2. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
+2. Apply `config.production.jsonc` using `bun repo vars push api production` from the repository root. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
 3. Dry-run: `bun run deploy:production:dry-run`
 4. Deploy: `bun run deploy:production` (or `bun repo deploy api production` from repo root)
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 /* eslint-disable dot-notation -- process.env index signature requires bracket access for tsc */
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import {
@@ -9,15 +8,10 @@ import {
   DEFAULT_LOCAL_FILES_ROOT,
   resolveLocalFileStorageConfig,
 } from '@edaya/adaptor-local-fs'
-import dotenv from 'dotenv'
-import dotenvExpand from 'dotenv-expand'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
-const apiEnvFile = process.env['EDAYA_LOCAL_ENV_FILE'] ?? resolve(repoRoot, 'apps/api/.env')
-
-if (existsSync(apiEnvFile)) {
-  dotenvExpand.expand(dotenv.config({ path: apiEnvFile }))
-}
+loadLocalConfiguration(process.env)
 
 function resolveRootDir(value: string | undefined): string {
   const root = value ?? DEFAULT_LOCAL_FILES_ROOT

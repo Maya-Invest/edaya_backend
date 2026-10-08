@@ -2,6 +2,7 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
 
 const target = process.argv[2]
 if (target !== 'school') {
@@ -11,12 +12,7 @@ if (target !== 'school') {
 }
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
-const envFile = resolve(repoRoot, 'apps/api/.env')
-
-if (!existsSync(envFile)) {
-  console.error('Missing apps/api/.env — run: cp apps/api/.env.example apps/api/.env')
-  process.exit(1)
-}
+loadLocalConfiguration(process.env)
 
 const PAGE_SIZE = 50
 const defaultPort = 8192
@@ -105,7 +101,7 @@ async function createSchoolBackend(dataDir: string): Promise<DbBrowserBackend> {
 async function createBackend(): Promise<DbBrowserBackend> {
   const databaseUrl = process.env.DATABASE_URL
   if (!databaseUrl?.startsWith('pglite:')) {
-    console.error('School browser only supports local PGlite. Set DATABASE_URL=pglite:.data/school in apps/api/.env.')
+    console.error('School browser only supports local PGlite. Set DATABASE_URL=pglite:.data/school in apps/api/config.local.jsonc.')
     process.exit(1)
   }
 

@@ -1,0 +1,13 @@
+export const apiRoot: string;
+export const configKeys: Set<string>;
+export const secretKeys: Set<string>;
+export const databaseKeys: Set<string>;
+export const localOnlyKeys: Set<string>;
+export const workerOnlyKeys: Set<string>;
+export function parseJsonc(text: string, label?: string): Record<string, unknown>;
+export function validateConfig(value: unknown, label?: string, target?: string): Record<string, string>;
+export function readConfig(target: string, root?: string): Record<string, string>;
+export function validateSecrets(value: unknown, label?: string): Record<string, string>;
+export function readSecrets(filename: string, options?: { optional?: boolean }): Record<string, string>;
+export function loadConfiguration(target?: string, options?: { root?: string; source?: Record<string, string | undefined>; secretsFile?: string }): Record<string, string>;
+export function loadLocalConfiguration(source?: Record<string, string | undefined>, root?: string): Record<string, string>;

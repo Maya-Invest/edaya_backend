@@ -1,3 +1,5 @@
+import { updateWorkerVariables, workerTarget } from "../../tooling/repo/operations/worker-vars.mjs";
+import { readConfig } from "../../apps/api/configuration/index.mjs";
 import { assertReleaseMutationAllowed } from "./staging-candidate.mjs";
 import { runPreflight, validateConfiguration } from "./staging-preflight.mjs";
 import { spawnSync } from "node:child_process";
@@ -41,7 +43,13 @@ const cloud = async (path, method = "GET", body) => {
   if (!response.ok || !json.success) throw new Error(`Cloudflare ${method} ${path.split("?")[0]} failed (${response.status}); error codes ${(json.errors || []).map(error => error.code).join(",")}`);
   return json.result;
 };
-const deployWorker = (repo, app, maintenance, pause = true) => wrangler(repo, app, ["deploy", "--env", "staging", "--var", `STAGING_MAINTENANCE:${maintenance}`, "--var", "PHONE_AUTH_MODE:disabled", "--var", `STAGING_PAUSE_JOBS:${pause}`]);
+const setWorkerControls = async (api, scheduler, jobs) => {
+  await updateWorkerVariables({
+    accountId: staging.account, token: process.env.CLOUDFLARE_API_TOKEN,
+    worker: workerTarget("staging", resolve(backend, "apps/api")),
+    values: { PAUSE_API: String(api), PAUSE_SCHEDULER: String(scheduler), PAUSE_JOBS: String(jobs) },
+  });
+};
 const waitHttp = async (url, expected) => {
   for (let attempt = 0; attempt < 36; attempt++) {
     try { const response = await fetch(url, { signal: AbortSignal.timeout(10000), redirect: "manual" }); if (response.status === expected) return; } catch {}
@@ -66,7 +74,9 @@ try {
   command("bun", ["tooling/repo/db/school/staging-preflight.ts"], backend);
   mark("Entering staging maintenance");
   enteredMaintenance = true;
-  deployWorker(backend, "api", true);
+  await setWorkerControls(true, true, true);
+  // First rollout: old code ignores the new flags. Deploy before checking 503.
+  wrangler(backend, "api", ["deploy", "--env", "staging"]);
   await waitHttp(`${staging.urls.api}/reference`, 503);
   await cloud(`/queues/${queue.queue_id}`, "PUT", { queue_name: staging.queue, settings: { ...queue.settings, delivery_paused: true } });
   // Let requests already running against the previous Worker version finish.
@@ -92,9 +102,9 @@ try {
   mark("Provisioning verified Account fixtures and enabling the unified API");
   const accounts = resolve(privateDir, "accounts.json");
   command("bun", ["tooling/seeding/scripts/export-identity-fixtures.ts", accounts], backend);
-  command("bun", ["apps/api/src/identity/entries/staging-fixtures.ts", "staging", accounts, `${accounts}.sessions.json`], backend, { ...apiSecrets });
+  command("bun", ["apps/api/src/identity/entries/staging-fixtures.ts", "staging", accounts, `${accounts}.sessions.json`], backend, { ...readConfig("staging"), ...apiSecrets });
   testEnv.SEED_AUTH_SESSIONS_FILE = `${accounts}.sessions.json`;
-  deployWorker(backend, "api", false);
+  await setWorkerControls(false, true, true);
   await waitHttp(`${staging.urls.api}/reference`, 200);
   if (options.reset) {
     mark("Bootstrapping school data, private attachments, and document fixtures");
@@ -109,7 +119,7 @@ try {
   mark("Deploying prepared staff and admin web assets");
   for (const app of ["webapp", "webadmin"]) { wrangler(web, app, ["deploy", "--env", "staging"]); await waitHttp(`${staging.urls[app]}/login`, 200); }
   mark("Resuming scheduled work and queue delivery");
-  deployWorker(backend, "api", false, false);
+  await setWorkerControls(false, false, false);
   await cloud(`/queues/${queue.queue_id}`, "PUT", { queue_name: staging.queue, settings: { ...queue.settings, delivery_paused: false } });
   const versions = {};
   for (const worker of ["edaya-api-staging", "edaya-webapp-staging", "edaya-webadmin-staging"]) versions[worker] = await cloud(`/workers/scripts/${worker}/deployments`);
@@ -120,9 +130,7 @@ try {
 } catch (error) {
   mark("Release stopped before advancing");
   if (enteredMaintenance) {
-    for (const [repo, app] of [[backend, "api"]]) {
-      try { deployWorker(repo, app, true); } catch { console.error(`Could not restore ${app} maintenance; operator intervention required`); }
-    }
+    try { await setWorkerControls(true, true, true); } catch { console.error("Could not restore API pause controls; operator intervention required"); }
     if (queue) { try { await cloud(`/queues/${queue.queue_id}`, "PUT", { queue_name: staging.queue, settings: { ...queue.settings, delivery_paused: true } }); } catch { console.error("Could not pause staging queue; operator intervention required"); } }
   }
   console.error(error instanceof Error ? error.message : "Staging release failed");

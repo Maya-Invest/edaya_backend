@@ -10,8 +10,6 @@
 export {
   type Environment,
   inferRuntimeKind,
-  loadDotenvFiles,
-  loadLocalProcessEnv,
   parseEnv,
   parseRuntimeEnv,
   platformBootstrapEmails,
@@ -26,6 +24,9 @@ export {
   shouldAllowPublicSchoolRegistration,
   usesHyperdriveBinding,
 } from "@/runtime/shared/env";
+
+// Process-only helpers are deliberately absent from the shared Worker env barrel.
+export { loadDotenvFiles, loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
 
 export type {
   ApiRuntime,
