@@ -1,3 +1,4 @@
+import { localOperations } from "../../../configuration/local-operations.mjs";
 import api from "@/app";
 import { parseRuntimeEnv } from "@/runtime/shared/env";
 import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";
@@ -28,6 +29,8 @@ export async function startTestingServer(source: Record<string, string | undefin
     writeFileSync(policy, "[]", { mode: 0o600 });
   const test = await createTestingIdentity(env, {
     emailDelivery: email.sendAuthVerificationOtp,
+    operationsScope: localOperations({ ...localEnv, ...env, API_ORIGIN: origin }).scope,
+    operationsRootId: localOperations({ ...localEnv, ...env, API_ORIGIN: origin }).rootId,
     warn: message => emailLog.warn({}, message),
     mailbox: source.EDAYA_TEST_OTP_FILE,
     now: clock

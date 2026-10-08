@@ -29,6 +29,13 @@ export function parseRepoCliArgs(argv: readonly string[]): ParsedRepoCli {
 
   if (!COMMANDS.has(command as RepoCliCommand)) {
     const unknown = command ?? '(missing)'
+    const replacements: Record<string, string> = {
+      'identity-migrate': 'db migrate identity <local|staging|production>',
+      'identity-wipe': 'db wipe identity <local|staging> [--yes]',
+      'smoke-test': 'smoke <api staging|notify local|r2 staging>',
+    }
+    if (replacements[unknown])
+      throw new Error(`Unknown repo command: ${unknown}. Use bun repo ${replacements[unknown]}.`)
     throw new Error(
       `Unknown repo command: ${unknown}. Valid commands: ${[...COMMANDS].join(', ')}`,
     )

@@ -172,7 +172,7 @@ bun repo seed    # terminal 2
 | `bun repo seed --scope doctor --repair` | Auto-repair common drift without wiping `.data` |
 | `bun repo seed --scope <name>` | Granular scope — `bun repo seed --help` for list |
 
-**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun repo smoke-test staging` for post-deploy checks.
+**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun repo smoke api staging` for post-deploy checks.
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
@@ -198,7 +198,7 @@ EMAIL_FROM=EDAYA <noreply@edayaplus.com>
 
 The sender domain must be enabled for Cloudflare Email Sending, and the token must have permission to send email in that account. Local processes use the [Cloudflare REST API](https://developers.cloudflare.com/email-service/api/send-emails/rest-api/); Workers keep their `EMAIL` binding. Process environment values take precedence over the local file. Keep credentials in the gitignored local file or process environment.
 
-With both credentials present, real OTP delivery is automatic in normal development and `dev:test`. Remove any existing `EMAIL_TRANSPORT=log` setting to enable it; retaining that setting explicitly disables sending. With neither credential, delivery remains omitted locally. Partial credentials produce a configuration warning and disable real delivery. These credentials apply to authentication emails; school notification delivery is unchanged.
+With both credentials present, real OTP delivery is automatic in normal captured development. Remove any existing `EMAIL_TRANSPORT=log` setting to enable it; retaining that setting explicitly disables sending. With neither credential, delivery remains omitted locally. Partial credentials produce a configuration warning and disable real delivery. These credentials apply to authentication emails; school notification delivery is unchanged.
 
 ## Testing
 
@@ -249,15 +249,15 @@ bun repo seed --scope doctor                                                    
 
 ## Account authentication
 
-Use the dedicated `bun run dev:test` server for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
+Use `bun repo dev` for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
 
-See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun repo identity-migrate`. Keep the identity database separate from the school database.
+See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun repo db migrate identity local`. Keep the identity database separate from the school database.
 
 ## Test-only OTP access
 
-From the backend checkout run `bun run dev:test`. Identity requires `NODE_ENV=test`, binds to `127.0.0.1:9999`, and uses a disposable in-memory identity database. It captures email, WhatsApp and SMS without requiring provider credentials; phone verification starts with WhatsApp for Côte d’Ivoire. Email settings are loaded from the normal local configuration described above, while identity database, secret and origin settings remain isolated under explicit `EDAYA_TEST_*` configuration. No `.env` files are rewritten. The school API continues to use its normal local configuration. Localhost and Android emulator Identity origins are included for native debug clients. Set `EDAYA_TEST_PORT`, `EDAYA_TEST_API_ORIGIN` and `EDAYA_TEST_TRUSTED_ORIGINS` inline when using other local ports. An optional `EDAYA_TEST_AUTH_DATABASE_URL` must point to a local test database; do not reuse normal development data.
+From the backend checkout run `bun repo dev`. OTP capture is enabled by default, with `NODE_ENV=development` and the normal persistent school and identity databases. The API binds to loopback when capture is enabled. Set `LOCAL_OTP_CAPTURE=false` to opt out. Configured providers deliver the captured code once; explicit transport opt-outs and phone mode still apply. Capture does not enable phone authentication automatically. Automated CI retains a separate internal testing entrypoint with disposable `EDAYA_TEST_*` settings and offline injected delivery. No `.env` files are rewritten.
 
-When email sending is configured, each email challenge captures and sends the same OTP once. Email failures emit a sanitized terminal warning and leave the captured code usable. Requests time out after 10 seconds and are not automatically retried. WhatsApp and SMS remain capture-only. Revealing or copying a code never sends email. Ordinary automated tests remain offline unless they explicitly inject a delivery dependency; CI can also set `EMAIL_TRANSPORT=log` to keep `dev:test` capture-only regardless of inherited credentials.
+Configured OTP providers send the captured challenge once. Delivery failures emit a sanitized warning and leave the local capture usable; revealing or copying a code never resends it. Seeding pauses school background processing, not authentication OTPs. Successful seeding restores the previous background settings; failures leave them paused for inspection using `bun repo status local` and explicit `resume scheduler local` / `resume jobs local`.
 
 Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_API_URL=http://127.0.0.1:9999 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
 

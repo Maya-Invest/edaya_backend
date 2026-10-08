@@ -2,20 +2,17 @@ import { commandUsage } from './catalog'
 
 export type RemoteTarget = 'staging' | 'production'
 export type OperationCommand = 'secrets' | 'pause' | 'resume' | 'status'
-export interface ParsedOperation { command: OperationCommand, target: RemoteTarget, action: string, name?: string, dryRun: boolean }
+export interface ParsedOperation { command: OperationCommand, target: RemoteTarget | 'local', action: string, name?: string, dryRun: boolean }
 export function parseOperationsCli(command: OperationCommand, args: readonly string[]): ParsedOperation {
   const rest = [...args]
   const action = command === 'secrets' ? rest.shift()! : command
-  const subject = rest.shift()
+  const subject = command === 'pause' || command === 'resume' ? rest.shift() : undefined
   const target = rest.shift()
-  if (!['staging', 'production'].includes(target ?? ''))
+  if (!(command === 'secrets' ? ['staging', 'production'] : ['local', 'staging', 'production']).includes(target ?? ''))
     throw new Error(commandUsage(command))
   if (command === 'pause' || command === 'resume') {
     if (!['api', 'scheduler', 'jobs', 'all'].includes(subject ?? ''))
       throw new Error(commandUsage(command))
-  }
-  else if (subject !== 'api') {
-    throw new Error(commandUsage(command))
   }
   if (command === 'secrets' && !['push', 'delete', 'list'].includes(action))
     throw new Error(commandUsage(command))
@@ -28,7 +25,7 @@ export function parseOperationsCli(command: OperationCommand, args: readonly str
   const allowPreview = command !== 'status' && action !== 'list'
   if (rest.length > 1 || rest.some(flag => !allowPreview || flag !== '--dry-run'))
     throw new Error('Unexpected operation argument')
-  return { command, target: target as RemoteTarget, action: command === 'pause' || command === 'resume' ? subject! : action, ...(name ? { name } : {}), dryRun: rest.length > 0 }
+  return { command, target: target as RemoteTarget | 'local', action: command === 'pause' || command === 'resume' ? subject! : action, ...(name ? { name } : {}), dryRun: rest.length > 0 }
 }
 export function pauseValues(action: string, paused: boolean): Record<string, string> {
   const controls: Record<string, string> = { api: 'PAUSE_API', scheduler: 'PAUSE_SCHEDULER', jobs: 'PAUSE_JOBS' }

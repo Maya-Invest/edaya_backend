@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'bun:test'
-import { loadConfiguration, parseJsonc, readConfig, validateConfig, validateSecrets } from '../../../apps/api/configuration/index.mjs'
+import { loadConfiguration, parseJsonc, readConfig, validateConfig, validateSecrets, validateSmsCredentials } from '../../../apps/api/configuration/index.mjs'
 
 const directories: string[] = []
 afterEach(() => {
@@ -48,5 +48,49 @@ describe('API configuration ownership', () => {
       expect(config.R2_ENDPOINT).toStartWith('https://')
     }
     expect(() => validateConfig({ PORT: '9999' }, 'config', 'staging')).toThrow('local-only')
+  })
+})
+
+describe('SMS route configuration', () => {
+  test('release preflight requires credentials only for enabled delivery', () => {
+    expect(() => validateSmsCredentials({})).not.toThrow()
+    const config = {
+      SMS_TRANSPORT: 'router',
+      SMS_ROUTES: JSON.stringify([{ prefix: '+225', provider: 'africas_talking' }]),
+      AFRICAS_TALKING_USERNAME: 'live-app',
+      AFRICAS_TALKING_SENDER_ID: 'EDAYA',
+      AFRICAS_TALKING_API_KEY: 'test-key',
+    }
+    expect(() => validateSmsCredentials(config)).not.toThrow()
+    expect(() => validateSmsCredentials({ ...config, SMS_ROUTES: '[]' })).toThrow('sms_routes')
+    expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_API_KEY: '' })).toThrow('AFRICAS_TALKING_API_KEY')
+    expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_SANDBOX: 'true' })).toThrow('sandbox')
+    expect(() => validateSmsCredentials({ ...config, AFRICAS_TALKING_SANDBOX: 'true', AFRICAS_TALKING_USERNAME: 'sandbox' })).not.toThrow()
+  })
+  test('native routes become runtime strings and cannot be overridden by inherited values', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-sms-config-'))
+    directories.push(root)
+    const routes = [{ prefix: '+225', provider: 'africas_talking' }]
+    writeFileSync(join(root, 'config.local.jsonc'), JSON.stringify({ sms_routes: routes }))
+    expect(readConfig('local', root)).toEqual({ SMS_ROUTES: JSON.stringify(routes) })
+    expect(loadConfiguration('local', { root, source: { SMS_ROUTES: '[]', sms_routes: '[]' } }).SMS_ROUTES).toBe(JSON.stringify(routes))
+    expect(() => loadConfiguration('local', { root, source: { PHONE_SMS_ROUTES: '[]' } })).toThrow(/removed/)
+  })
+  test('rejects escaped JSON, duplicate prefixes, unregistered providers and legacy fields', () => {
+    const route = { prefix: '+225', provider: 'africas_talking' }
+    for (const sms_routes of ['[]', [route, route], [{ ...route, provider: 'unknown' }], [{ ...route, prefix: '225' }], [{ ...route, secret: 'invalid' }]])
+      expect(() => validateConfig({ sms_routes })).toThrow()
+    expect(() => validateConfig({ PHONE_SMS_ROUTES: '[]' })).toThrow(/removed/)
+    expect(() => validateConfig({ SMS_ROUTES: '[]' })).toThrow(/native/)
+    expect(() => validateSecrets({ SMS_ROUTES: '[]' })).toThrow(/non-secret/)
+    expect(() => validateConfig({ AFRICAS_TALKING_SANDBOX: 'true' }, 'staging', 'staging')).toThrow(/live SMS/)
+  })
+  test('environment selection preserves native route isolation', () => {
+    const root = mkdtempSync(join(tmpdir(), 'edaya-sms-config-'))
+    directories.push(root)
+    for (const [target, prefix] of [['local', '+225'], ['staging', '+22507'], ['production', '+22505']]) {
+      writeFileSync(join(root, `config.${target}.jsonc`), JSON.stringify({ sms_routes: [{ prefix, provider: 'africas_talking' }] }))
+      expect(JSON.parse(readConfig(target!, root).SMS_ROUTES!)[0].prefix).toBe(prefix)
+    }
   })
 })

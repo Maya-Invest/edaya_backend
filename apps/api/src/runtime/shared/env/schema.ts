@@ -1,3 +1,4 @@
+import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
 import type { BrowserRunBinding } from "@edaya/adaptor-docs";
 import type { CloudflareEmailBinding } from "@edaya/adaptor-notify";
 import type { RuntimeBindings, RuntimeKind } from "@/runtime/types";
@@ -17,6 +18,8 @@ export const EnvSchema = z.object({
   ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
+  LOCAL_OTP_CAPTURE: envBooleanSchema.default(false),
+  LOCAL_OPERATIONS_ROOT: z.string().optional(),
   PAUSE_API: envBooleanSchema.default(false),
   PAUSE_SCHEDULER: envBooleanSchema.default(false),
   PAUSE_JOBS: envBooleanSchema.default(false),
@@ -30,10 +33,10 @@ export const EnvSchema = z.object({
   /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */
   EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp"]).optional(),
   /** SMS transport (`log` locally; unimplemented on the API Worker until a provider is registered) */
-  SMS_TRANSPORT: z.enum(["log", "unimplemented"]).optional(),
+  ...smsEnvironmentFields,
   /** From header for in-process notify, e.g. `EDAYA <noreply@edayaplus.com>` */
   EMAIL_FROM: z.string().min(1).optional(),
-  /** Optional REST credentials for local auth email delivery, including dev:test. */
+  /** Optional REST credentials for local auth email delivery, including isolated CI fixtures. */
   CLOUDFLARE_EMAIL_ACCOUNT_ID: z.string().trim().optional(),
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
   /** Firebase Cloud Messaging HTTP v1 service-account JSON (Worker secret) */
@@ -72,7 +75,7 @@ export const EnvSchema = z.object({
   LOCAL_FILES_SECRET: z.string().min(1).optional(),
   /** Local one-shot cron (`bun cron:local`): comma-separated job keys; default runs heartbeat tick */
   CRON_JOB_KEYS: z.string().optional(),
-}).catchall(z.any());
+}).catchall(z.any()).superRefine(validateSmsEnvironment);
 
 export type Environment = z.infer<typeof EnvSchema> & {
   CRON_JOBS?: CronJobsQueueBinding;

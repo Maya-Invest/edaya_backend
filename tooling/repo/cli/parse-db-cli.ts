@@ -23,16 +23,17 @@ export function parseDbCliArgs(args: readonly string[]): ParsedDbCli {
     return { kind: 'help' }
   const [action, ...rest] = args
   if (action === 'migrate') {
-    const explicit = rest[0] === 'school' || rest[0] === 'identity'
-    const database = explicit ? rest.shift() : 'school'
+    const database = rest.shift()
+    if (database !== 'school' && database !== 'identity')
+      throw new Error(commandUsage('db'))
     const target = rest.shift()
     if (!target || !targets.has(target) || rest.length)
       throw new Error('Usage: bun repo db migrate <school|identity> <local|staging|production>')
     return database === 'identity' ? { kind: 'identity-migrate', target: target as DbMigrateTarget } : { kind: 'migrate', target: target as DbMigrateTarget, slice: 'school' }
   }
   if (action === 'reset') {
-    if (rest[0] === 'school')
-      rest.shift()
+    if (rest.shift() !== 'school')
+      throw new Error(commandUsage('db'))
     const target = rest.shift()
     if (target !== 'staging' && target !== 'production')
       throw new Error('Usage: bun repo db reset school <staging|production> [--yes]')

@@ -50,7 +50,7 @@ export async function createTestNotifyRuntime(options: {
       implemented: true,
       async send(input) {
         sentSms.push({ to: input.to, body: input.body });
-        return { providerMessageId: "sms-1" };
+        return { status: "accepted", providerMessageId: "sms-1" };
       },
     },
     fcm: options.fcm ?? {

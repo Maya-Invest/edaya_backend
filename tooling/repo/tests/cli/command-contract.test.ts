@@ -15,15 +15,15 @@ import { parseOperationsCli, pauseValues } from '../../cli/parse-operations-cli'
 import { parseSmokeTestCliArgs } from '../../cli/parse-smoke-test-cli'
 
 test('unsupported flags cannot turn a preview into a mutation', () => {
-  expect(() => parseDbCliArgs(['reset', 'production', '--yes', '--dry-run'])).toThrow()
+  expect(() => parseDbCliArgs(['reset', 'school', 'production', '--yes', '--dry-run'])).toThrow()
   expect(() => parseSmokeTestCliArgs(['r2', '--dry-run'])).toThrow()
   expect(() => parseOpenapiCliArgs(['generate', '--output', 'ignored'])).toThrow()
   expect(() => parseOpenapiCliArgs(['export', '--output'])).toThrow()
   expect(() => parseCheckCliArgs(['boundaries', 'ignored'])).toThrow()
-  expect(() => parseDeployCliArgs(['api', 'production', '--typo'])).toThrow()
+  expect(() => parseDeployCliArgs(['production', '--typo'])).toThrow()
 })
 test('deployment dry-run is forwarded to Wrangler, with production mapped to prod', async () => {
-  const parsed = parseDeployCliArgs(['api', 'production', '--dry-run'])
+  const parsed = parseDeployCliArgs(['production', '--dry-run'])
   if (parsed.kind === 'help')
     throw new Error('Expected deployment')
   let command: readonly string[] = []
@@ -35,11 +35,11 @@ test('deployment dry-run is forwarded to Wrangler, with production mapped to pro
 })
 test('database targets and smoke effects are explicit', () => {
   expect(parseDbCliArgs(['migrate', 'identity', 'production'])).toEqual({ kind: 'identity-migrate', target: 'production' })
-  expect(parseDbCliArgs(['migrate', 'school', 'local'])).toEqual(parseDbCliArgs(['migrate', 'local']))
+  expect(parseDbCliArgs(['migrate', 'school', 'local'])).toEqual({ kind: 'migrate', target: 'local', slice: 'school' })
   expect(parseDbCliArgs(['wipe', 'identity', 'staging', '--yes'])).toEqual({ kind: 'identity-wipe', target: 'staging', yes: true })
   expect(() => parseDbCliArgs(['wipe', 'identity', 'production'])).toThrow()
-  expect(parseSmokeTestCliArgs(['api', 'staging'])).toEqual(parseSmokeTestCliArgs(['staging']))
-  expect(parseSmokeTestCliArgs(['notify', 'local'])).toEqual(parseSmokeTestCliArgs(['notify']))
+  expect(parseSmokeTestCliArgs(['api', 'staging'])).toEqual({ kind: 'run', target: 'staging' })
+  expect(parseSmokeTestCliArgs(['notify', 'local'])).toEqual({ kind: 'run', target: 'notify' })
   expect(parseSmokeTestCliArgs(['r2', 'staging', '--curl-only'])).toEqual({ kind: 'run', target: 'r2', curlOnly: true })
   expect(() => parseSmokeTestCliArgs(['notify', 'production'])).toThrow()
 })
@@ -48,8 +48,8 @@ test('pause operations affect only their selected flags', () => {
   expect(pauseValues('api', false)).toEqual({ PAUSE_API: 'false' })
   expect(Object.keys(pauseValues('all', true))).toHaveLength(3)
   expect(parseOperationsCli('pause', ['jobs', 'staging', '--dry-run'])).toMatchObject({ action: 'jobs', dryRun: true })
-  expect(() => parseOperationsCli('status', ['api', 'staging', '--dry-run'])).toThrow()
-  expect(() => parseOperationsCli('secrets', ['delete', 'api', 'production'])).toThrow()
+  expect(() => parseOperationsCli('status', ['staging', '--dry-run'])).toThrow()
+  expect(() => parseOperationsCli('secrets', ['delete', 'production'])).toThrow()
 })
 test('help for every command exits without credentials or side effects', () => {
   for (const command of Object.keys(commandCatalog)) {
@@ -82,4 +82,13 @@ test('command documentation check catches and repairs drift in the generated tab
   finally {
     rmSync(root, { recursive: true, force: true })
   }
+})
+
+test('removed aliases and redundant API arguments are rejected', () => {
+  expect(() => parseDeployCliArgs(['api', 'production'])).toThrow()
+  expect(() => parseOperationsCli('secrets', ['push', 'api', 'staging'])).toThrow()
+  expect(() => parseOperationsCli('status', ['api', 'staging'])).toThrow()
+  expect(() => parseDbCliArgs(['migrate', 'staging'])).toThrow()
+  expect(() => parseDbCliArgs(['reset', 'staging'])).toThrow()
+  for (const target of ['staging', 'notify', 'r2']) expect(() => parseSmokeTestCliArgs([target])).toThrow()
 })

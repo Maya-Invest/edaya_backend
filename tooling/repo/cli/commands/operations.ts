@@ -1,5 +1,7 @@
 import type { OperationCommand } from '../parse-operations-cli'
 import process from 'node:process'
+import { loadConfiguration } from '../../../../apps/api/configuration/index.mjs'
+import { localOperations } from '../../../../apps/api/configuration/local-operations.mjs'
 import { operateSecrets } from '../../operations/secrets'
 import { formatWorkerStatus } from '../../operations/status'
 import { readWorkerState, updateWorkerVariables, workerTarget } from '../../operations/worker-vars.mjs'
@@ -9,6 +11,14 @@ import { parseOperationsCli, pauseValues } from '../parse-operations-cli'
 export async function dispatchOperations(command: OperationCommand, args: readonly string[]): Promise<number> {
   try {
     const parsed = parseOperationsCli(command, args)
+    if (parsed.target === 'local') {
+      const operations = localOperations(loadConfiguration('local', { source: process.env }))
+      const values = command === 'status' ? {} : pauseValues(parsed.action, command === 'pause')
+      const state = parsed.dryRun || command === 'status' ? operations.read() : await operations.set(values)
+      console.log(`${parsed.dryRun ? 'Preview' : 'Local'}: ${operations.scope}`)
+      console.log(JSON.stringify(parsed.dryRun ? { ...state.controls, ...values } : state.controls, null, 2))
+      return 0
+    }
     const worker = workerTarget(parsed.target)
     const credentials = { worker, accountId: process.env.CLOUDFLARE_ACCOUNT_ID, token: process.env.CLOUDFLARE_API_TOKEN }
     if (command === 'secrets') {

@@ -46,9 +46,9 @@ const credentials = { accountId: 'a'.repeat(32), token: 'private-token', worker:
 
 describe('deployed variable updates', () => {
   test('CLI requires explicit target and supports repeatable migration opt-in', () => {
-    expect(parseVarsCliArgs(['push', 'api', 'production', '--dry-run', '--replace-secret', 'R2_ENDPOINT', '--replace-secret', 'ACCOUNT_SECURITY_KEY_VERSION'])).toMatchObject({ target: 'production', dryRun: true, replaceSecrets: ['R2_ENDPOINT', 'ACCOUNT_SECURITY_KEY_VERSION'] })
-    expect(() => parseVarsCliArgs(['push', 'api', 'local'])).toThrow()
-    expect(() => parseVarsCliArgs(['delete', 'api', 'staging'])).toThrow()
+    expect(parseVarsCliArgs(['push', 'production', '--dry-run', '--replace-secret', 'R2_ENDPOINT', '--replace-secret', 'ACCOUNT_SECURITY_KEY_VERSION'])).toMatchObject({ target: 'production', dryRun: true, replaceSecrets: ['R2_ENDPOINT', 'ACCOUNT_SECURITY_KEY_VERSION'] })
+    expect(() => parseVarsCliArgs(['push', 'local'])).toThrow()
+    expect(() => parseVarsCliArgs(['delete', 'staging'])).toThrow()
     expect(workerTarget('production')).toBe('edaya-api-prod')
   })
   test('updates and adds variables while inheriting secrets, unlisted vars and resources', async () => {
@@ -111,4 +111,13 @@ test('pause transitions preserve unrelated variables and secrets', async () => {
   for (const legacy of ['STAGING_NOTIFICATION_EMAILS', 'STAGING_MAINTENANCE', 'STAGING_PAUSE_JOBS']) {
     expect(() => planVariableUpdate([], { [legacy]: 'false' })).toThrow('unknown or secret key')
   }
+})
+
+test('publishes serialized SMS routes and verifies their read-back', async () => {
+  const f = fixture()
+  const routes = JSON.stringify([{ prefix: '+225', provider: 'africas_talking' }])
+  expect((await updateWorkerVariables({ ...credentials, values: { SMS_ROUTES: routes }, request: f.request })).applied).toBe(true)
+  expect(f.payload()?.bindings).toContainEqual({ name: 'SMS_ROUTES', type: 'plain_text', text: routes })
+  expect(() => planVariableUpdate(initial, { SMS_ROUTES: 'not JSON' })).toThrow()
+  expect(() => planVariableUpdate(initial, { PHONE_SMS_ROUTES: routes })).toThrow(/removed/)
 })

@@ -108,11 +108,11 @@ try {
   await waitHttp(`${staging.urls.api}/reference`, 200);
   if (options.reset) {
     mark("Bootstrapping school data, private attachments, and document fixtures");
-    const result = spawnSync("bun", ["repo", "seed", "--staging"], { cwd: backend, env: { ...testEnv, SEED_DATASET: "demo-ci" }, stdio: "inherit" });
+    const result = spawnSync("bun", ["--no-env-file", "tooling/seeding/scripts/seed.ts", "--staging"], { cwd: backend, env: { ...testEnv, SEED_DATASET: "demo-ci" }, stdio: "inherit" });
     if (result.status !== 0) throw new Error("Staging school bootstrap failed");
   }
   mark("Checking staging API and native client integration");
-  const smoke = spawnSync("bun", ["repo", "smoke-test", "staging"], { cwd: backend, env: testEnv, stdio: "inherit" });
+  const smoke = spawnSync("bun", ["repo", "smoke", "api", "staging"], { cwd: backend, env: testEnv, stdio: "inherit" });
   if (smoke.status !== 0) throw new Error("Staging API smoke checks failed");
   const live = spawnSync("dart", ["run", "melos", "run", "test:staging"], { cwd: mobile, env: { ...testEnv, EDAYA_INTEGRATION_TESTS: "1", EDAYA_API_URL: staging.urls.api }, stdio: "inherit" });
   if (live.status !== 0) throw new Error("Staging native mobile smoke failed");

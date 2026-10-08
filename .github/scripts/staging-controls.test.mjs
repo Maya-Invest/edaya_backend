@@ -25,7 +25,7 @@ async function release({ failAt, reset = true } = {}) {
     mark: stage => record("stage", stage),
     assertHyperdrive: () => {},
     command: (_program, args) => record(args[0].includes("staging-release.ts") ? "migration" : "command", args),
-    spawnSync: (_program, args) => { record("subprocess", args); return { status: failAt === "smoke" && args.includes("smoke-test") ? 1 : 0 }; },
+    spawnSync: (_program, args) => { record("subprocess", args); return { status: failAt === "smoke" && args.includes("smoke") ? 1 : 0 }; },
     readConfig: () => ({}), writeFileSync: () => {},
     observeStaging: async () => record("observe", true),
     setTimeout: callback => { record("drain", true); callback(); },
@@ -58,7 +58,7 @@ test("staging deploys API once, confirms maintenance before mutations, resumes h
   expect(index(e => e.kind === "cloud" && e.value.body?.settings?.delivery_paused === true)).toBeGreaterThan(maintenance);
   expect(index(e => e.kind === "migration")).toBeGreaterThan(index(e => e.kind === "drain"));
   expect(index(e => e.kind === "cloud" && e.value.path.endsWith("/purge"))).toBeGreaterThan(index(e => e.kind === "drain"));
-  expect(index(e => e.kind === "subprocess" && e.value.includes("seed"))).toBeGreaterThan(index(e => e.kind === "http" && e.value === 200));
+  expect(index(e => e.kind === "subprocess" && e.value.includes("tooling/seeding/scripts/seed.ts"))).toBeGreaterThan(index(e => e.kind === "http" && e.value === 200));
   expect(index(e => e.kind === "observe")).toBeGreaterThan(index(e => e.kind === "cloud" && e.value.body?.settings?.delivery_paused === false));
 });
 
@@ -79,5 +79,5 @@ test("non-reset staging release keeps migrations but skips purge and seed", asyn
   expect(exitCode).toBe(0);
   expect(events.filter(e => e.kind === "migration")).toHaveLength(2);
   expect(events.some(e => e.kind === "cloud" && e.value.path.endsWith("/purge"))).toBe(false);
-  expect(events.some(e => e.kind === "subprocess" && e.value.includes("seed"))).toBe(false);
+  expect(events.some(e => e.kind === "subprocess" && e.value.includes("tooling/seeding/scripts/seed.ts"))).toBe(false);
 });

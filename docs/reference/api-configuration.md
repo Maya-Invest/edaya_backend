@@ -13,23 +13,23 @@ Wrangler contains infrastructure, routes, bindings and schedules, with `keep_var
 
 ## Local setup
 
-Copy `.env.example` to `.env` and edit settings in `config.local.jsonc`. `bun dev`, local cron, the file service, database tooling and seeding share this configuration. Precedence is explicit process environment, then private secrets, then tracked settings. The loader validates private files even when a parent process already loaded their values. Bun dotenv autoload is disabled; the repository CLI explicitly loads the root `.env` for tooling credentials.
+Copy `.env.example` to `.env` and edit settings in `config.local.jsonc`. `bun dev`, local cron, the file service, database tooling and seeding share this configuration. Precedence is explicit process environment, then private secrets, then tracked settings, except SMS routes: the selected file always owns them. The loader validates private files even when a parent process already loaded their values. Bun dotenv autoload is disabled; the repository CLI explicitly loads the root `.env` for tooling credentials.
 
-`EDAYA_LOCAL_ENV_FILE` selects a different **secrets-only** file (relative paths resolve against `apps/api`). Test launchers must pass their non-secret overrides as process environment variables. `dev:test` keeps its isolated identity database, keys and origins; it imports only email settings from normal local configuration. Secret values are literal and do not interpolate `$VARIABLE` expressions.
+`EDAYA_LOCAL_ENV_FILE` selects a different **secrets-only** file (relative paths resolve against `apps/api`). Test launchers must pass their non-secret overrides as process environment variables. The internal CI testing entry keeps its isolated identity database, keys and origins; it imports only email settings from normal local configuration. Secret values are literal and do not interpolate `$VARIABLE` expressions.
 
 `bun --filter @edaya/api dev:worker` reads staging settings and passes them to Wrangler while `.dev.vars` supplies secrets. Hyperdrive local connection strings remain in `.dev.vars`. It does not upload anything. Use process/command overrides for local experiments; do not put settings back in private credential files.
 
-All active JSONC values are strings, including booleans and numbers. Structured settings such as `PHONE_SMS_ROUTES` and `WHATSAPP_AUTH_TEMPLATES` are JSON-encoded strings. Unknown keys, duplicate config keys, secret keys in config, and non-secret keys in secrets are rejected. PGlite paths belong in local config; credential-bearing Postgres URLs belong in private files used by the relevant tooling.
+JSONC values are strings, including booleans and numbers, except `sms_routes`, which is a native array of `{ "prefix": "+225", "provider": "africas_talking" }` entries. `WHATSAPP_AUTH_TEMPLATES` remains a JSON-encoded string. The loader validates source settings and serializes `sms_routes` to the internal `SMS_ROUTES` string binding for processes and Worker-variable publication. Inherited `SMS_ROUTES` cannot override the file; `PHONE_SMS_ROUTES` is rejected. Runtime-variable validation is separate from source-file validation. Unknown keys, duplicate config keys, secret keys in config, and non-secret keys in secrets are rejected. PGlite paths belong in local config; credential-bearing Postgres URLs belong in private files used by the relevant tooling.
 
 ## Update deployed variables
 
 Supply `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (Workers Scripts Write) in the shell or repository-root `.env`. From the repository root:
 
 ```sh
-bun repo vars push api staging --dry-run
-bun repo vars push api staging
-bun repo vars push api production
-bun repo vars delete api staging OBSOLETE_SETTING
+bun repo vars push staging --dry-run
+bun repo vars push staging
+bun repo vars push production
+bun repo vars delete staging OBSOLETE_SETTING
 ```
 
 Push merges the selected config file into deployed variables. Omitted variables remain present; use `delete` to remove one explicitly. Empty strings are values, not deletions. Dry-run reads remote state and reports key-level changes without writing. The command never prints secret values or uploads Worker code.
@@ -42,10 +42,10 @@ Copy `secrets.json.example` into the environment's private JSON file. Preserve e
 
 ```sh
 # From the repository root:
-bun repo secrets push api staging --dry-run
-bun repo secrets push api staging
-bun repo secrets push api production
-bun repo secrets list api staging
+bun repo secrets push staging --dry-run
+bun repo secrets push staging
+bun repo secrets push production
+bun repo secrets list staging
 ```
 
 Secret previews validate the private file locally and print names only; they do not read remote state. Uploads validate binding types and verify secret names after writing. Secret values are passed to Wrangler through standard input.
@@ -59,8 +59,8 @@ The local migration backs up existing private files in `.data/config-backups/` w
 Legacy deployments may store non-secret settings as secret bindings. Conversion requires explicit opt-in and uses the value supplied in the config file; it does not reveal or copy a stored secret:
 
 ```sh
-bun repo vars push api staging --dry-run --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
-bun repo vars push api staging --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
+bun repo vars push staging --dry-run --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
+bun repo vars push staging --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
 ```
 
 Use additional `--replace-secret NAME` flags only for known non-secret keys being moved, such as provider usernames or sender IDs. Credential keys cannot be converted. There is no automatic remote migration during code deployment.
@@ -80,14 +80,14 @@ For an existing Worker, apply and verify variables before the first code deploym
 Each control is independent and defaults to `"false"` in both Worker profiles. Boolean strings accept `true`/`false` and `1`/`0` (case and whitespace normalized). No control depends on a hostname. Use narrowly scoped settings updates for temporary operational changes:
 
 ```sh
-bun repo status api staging
+bun repo status staging
 bun repo pause all staging --dry-run
 bun repo pause all staging
 bun repo resume api staging
 bun repo resume all staging
 ```
 
-These commands preserve unrelated variables and secrets without changing the tracked config files or redeploying code. `vars push` applies the control values from the chosen file as part of its configuration update. Local/test runtimes retain their existing lifecycle.
+These commands preserve unrelated variables and secrets without changing the tracked config files or redeploying code. `vars push` applies the control values from the chosen file as part of its configuration update. Local API and cron share dynamic pause state with the seed coordinator. See [repository commands](repo-cli.md) for recovery.
 
 The staging coordinator sets all three flags before its single API code deployment, verifies HTTP 503, pauses queue delivery, and drains existing requests before database mutations. It enables HTTP for seeding/smoke tests while background handlers remain paused, then resumes jobs after verification. Later transitions and failure recovery update settings only. Production keeps its separate deployment/migration workflow. Neither workflow changes phone mode or automatically applies config files.
 
@@ -98,12 +98,16 @@ For staging, use the updated release coordinator: it uploads all three new contr
 Before production deployment, explicitly upload the new controls with values matching its intended state (normally all false). After the new code is verified in each environment, remove obsolete variables:
 
 ```sh
-bun repo vars delete api staging STAGING_MAINTENANCE
-bun repo vars delete api staging STAGING_PAUSE_JOBS
-bun repo vars delete api staging STAGING_NOTIFICATION_EMAILS
+bun repo vars delete staging STAGING_MAINTENANCE
+bun repo vars delete staging STAGING_PAUSE_JOBS
+bun repo vars delete staging STAGING_NOTIFICATION_EMAILS
 # Repeat for production if those bindings exist.
 ```
 
-If an obsolete binding is a secret, use `bun repo secrets delete api staging NAME` (or select `production`) instead. Remove obsolete fields from authoritative private/GitHub secret payloads as well. The new runtime does not support legacy aliases. Before rolling back to older code, restore its former variables using that revision's configuration tooling, including its staging maintenance/job-pause settings. A rollback does not restore database state.
+If an obsolete binding is a secret, use `bun repo secrets delete staging NAME` (or select `production`) instead. Remove obsolete fields from authoritative private/GitHub secret payloads as well. The new runtime does not support legacy aliases. Before rolling back to older code, restore its former variables using that revision's configuration tooling, including its staging maintenance/job-pause settings. A rollback does not restore database state.
 
 The school-notification recipient allowlist has been removed entirely. Staging now sends school email and push through normal recipient resolution, just like production. Use designated test accounts/devices for live verification; the old empty allowlist no longer blocks deliveries.
+
+## SMS delivery
+
+Each environment config contains its own native `sms_routes` array. Local defaults to the Africa's Talking sandbox; staging and production require live SMS. Both `PHONE_AUTH_MODE` and `SMS_TRANSPORT=router` use the same provider settings and routes, with independent enablement. Set username and sender ID in config and the API key in secrets. Enabled delivery requires nonempty routes and complete credentials; disabled delivery does not. See [phone verification](phone-verification.md#router-rollout-and-rollback) for the required legacy-binding migration and safe rollback order.

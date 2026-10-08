@@ -264,3 +264,5 @@ Tests are split by layer. **`bun run test`** runs Turbo unit tests only. **`bun 
 Seeding uses per-school `seedingApiKey` values from `@edaya/fixtures` — no API env key required.
 
 Webapp env vars live in the **edaya_frontend** repo (`apps/webapp/.env` there).
+
+SMS routing is provided by `@edaya/messaging` with provider implementations in `@edaya/adaptor-sms`. OTP and school notifications share environment-specific `sms_routes`; see [phone verification operations](docs/reference/phone-verification.md).

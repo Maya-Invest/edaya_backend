@@ -25,7 +25,7 @@ Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo 
 | `service-account` | Provision seeding service account |
 | `validate` | Manifest entity counts + dashboard queries |
 
-Staging smoke: `bun repo smoke-test staging` (full tier-1 checks in `@edaya/integration-tests`).
+Staging smoke: `bun repo smoke api staging` (full tier-1 checks in `@edaya/integration-tests`).
 
 ## Environment (repo root `.env`)
 
@@ -46,7 +46,7 @@ Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_
 ```sh
 bun repo seed clean --yes && bun repo seed              # local school fresh start
 bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
-# Account/auth data: `bun repo identity-wipe local --yes` (or staging)
+# Account/auth data: `bun repo db wipe identity local --yes` (or staging)
 # or
 bun repo seed --clean                 # prompts; add --yes for automation
 bun repo seed --staging --clean       # prompts; add --yes for automation

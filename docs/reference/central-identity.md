@@ -8,6 +8,6 @@ Auth dispatch runs before school dependencies. Login and ordinary session operat
 
 Only `@maya-invest/edaya-api-client` is published. Its generated `auth` namespace and `createAuthClient(transport)` use a session transport independent of token exchange. The package contains no server signing or provider dependencies. Dart contracts live in `edaya_api_client`; `edaya_auth` consumes them as the session/renewal adapter. The API client does not depend on the auth adapter.
 
-Staging advertises phone verification unavailable. Failed availability discovery also yields email-only forms. Email OTP, authenticators, recovery and email account linking remain available. Provider-enabled OTP capture is confined to the explicit disposable local testing entry.
+Staging advertises phone verification unavailable. Failed availability discovery also yields email-only forms. Email OTP, authenticators, recovery and email account linking remain available. OTP capture is enabled in local development and isolated tests, never in Workers.
 
-Run `bun repo dev` for the API and local files. Use `bun run dev:test` only with disposable fixture configuration. Account migrations and guarded wipes remain in `tooling/repo/db/identity`; school migrations remain in `tooling/repo/db/school`. See [staging-release.md](staging-release.md) for validation and the later rollout boundary.
+Run `bun repo dev` for the API and local files. It captures OTPs using persistent local data; isolated CI fixtures use an internal testing entrypoint. Account migrations and guarded wipes remain in `tooling/repo/db/identity`; school migrations remain in `tooling/repo/db/school`. See [staging-release.md](staging-release.md) for validation and the later rollout boundary.

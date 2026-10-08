@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@edaya/core": "workspace:*",
-    "drizzle-orm": "^0.39.0"
+    "drizzle-orm": "^0.39.0",
+    "@edaya/adaptor-sms": "workspace:*"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.4.6",

@@ -46,18 +46,12 @@ async function confirm(message: string, autoYes: boolean): Promise<boolean> {
 
 function parseArgs(argv: string[]): { target: WipeTarget, yes: boolean } {
   const args = argv.slice(2)
-  if (args.some(arg => !['local', 'staging', '--local', '--staging', '--yes', '-y'].includes(arg)))
+  const [target, ...flags] = args
+  if ((target !== 'local' && target !== 'staging') || flags.length > 1 || flags.some(flag => !['--yes', '-y'].includes(flag)))
     throw new Error('Usage: bun repo db wipe identity <local|staging> [--yes]')
-  if (args.filter(arg => ['local', 'staging', '--local', '--staging'].includes(arg)).length > 1 || args.filter(arg => ['--yes', '-y'].includes(arg)).length > 1)
-    throw new Error('Duplicate identity wipe arguments')
-  const hasLocal = args.includes('local') || args.includes('--local')
-  const hasStaging = args.includes('staging') || args.includes('--staging')
-  if (hasLocal && hasStaging) {
-    throw new Error('Use either local or staging, not both.')
-  }
 
   return {
-    target: hasStaging ? 'staging' : 'local',
+    target,
     yes: args.includes('--yes') || args.includes('-y'),
   }
 }
@@ -83,7 +77,7 @@ async function probeIdentityReachable(baseUrl: string): Promise<boolean> {
 async function wipeLocal(): Promise<void> {
   const databaseUrl = process.env['AUTH_DATABASE_URL'] ?? 'pglite:.data/identity'
   if (!isLocalAuthDatabaseUrl(databaseUrl)) {
-    throw new Error('Local wipe expects AUTH_DATABASE_URL=pglite:.data/identity. Use `bun repo identity-wipe staging` for Neon.')
+    throw new Error('Local wipe expects AUTH_DATABASE_URL=pglite:.data/identity. Use `bun repo db wipe identity staging` for Neon.')
   }
 
   const identityUrl = process.env['API_ORIGIN'] ?? `http://localhost:${process.env['PORT'] ?? '9999'}`

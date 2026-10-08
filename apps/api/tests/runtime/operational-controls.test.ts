@@ -1,3 +1,4 @@
+import { createApiRuntime } from "../../src/runtime/shared/create-api-runtime";
 import { describe, expect, test } from "bun:test";
 import worker from "../../src/entries/worker";
 import { isPaused, maintenanceResponse } from "../../src/operational-controls";
@@ -66,4 +67,15 @@ describe("operational controls", () => {
       });
     }
   }
+});
+
+test("paused request notification draining never initializes school storage", async () => {
+  const env = EnvSchema.parse({ DATABASE_URL: "pglite:memory", PAUSE_JOBS: true });
+  const runtime = await createApiRuntime({
+    env,
+    resolveSchoolHandle: async () => { throw new Error("database must remain unopened"); },
+    initSchoolApplication: () => { throw new Error("application must remain unopened"); },
+  });
+  await runtime.drainNotifications!();
+  await runtime.close();
 });

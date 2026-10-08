@@ -9,7 +9,7 @@ import { accountRequiresPrivilegedTotp } from "@/lib/account-security-policy";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 
 /** One lazy Account connection owned by the enclosing API runtime. */
-export function composeIdentity(env: ApiEnvironment, school: () => Promise<ApiSchoolApplication>, options: Pick<CreateIdentityRuntimeOptions, "delivery"> = {}) {
+export function composeIdentity(env: ApiEnvironment, school: () => Promise<ApiSchoolApplication>, options: Pick<CreateIdentityRuntimeOptions, "delivery" | "smsRouter"> = {}) {
   let pending: Promise<IdentityRuntime> | undefined;
   const resolve = () => pending ??= Promise.resolve(attachedIdentityRuntime(env) ?? createIdentityRuntime(parseEnv({
     ...env,

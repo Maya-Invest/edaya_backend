@@ -4,6 +4,7 @@ import { dispatchDbCommand } from './commands/db-dispatch'
 import { dispatchDeployCommand } from './commands/deploy-dispatch'
 import { dispatchOpenapiCommand } from './commands/openapi-dispatch'
 import { dispatchOperations } from './commands/operations'
+import { dispatchSeedCommand } from './commands/seed'
 import { dispatchSmokeTestCommand } from './commands/smoke-test-dispatch'
 import { dispatchVarsCommand } from './commands/vars'
 import { dispatchVerifyCommand } from './commands/verify'
@@ -22,8 +23,8 @@ export async function dispatchCompoundCommand(
       return dispatchDbCommand(forwardArgs)
     case 'check':
       return dispatchCheckCommand(forwardArgs)
-    case 'smoke-test':
-      return dispatchSmokeTestCommand(forwardArgs)
+    case 'seed':
+      return dispatchSeedCommand(forwardArgs)
     case 'vars':
       return dispatchVarsCommand(forwardArgs)
     case 'deploy':

@@ -67,8 +67,8 @@ The repository package now runs the relocated generator and migration tests, pre
 |-----------|--------------------------------|
 | Start identity, API, and local files | `bun repo dev` |
 | School migration, reset, and generation | Existing `bun repo db ...` commands |
-| Identity migration | `bun repo identity-migrate` |
-| Guarded identity wipe | `bun repo identity-wipe local|staging [--yes]` |
+| Identity migration | `bun repo db migrate identity local` |
+| Guarded identity wipe | `bun repo db wipe identity local|staging [--yes]` |
 | Repository client regeneration | `bun repo openapi generate` |
 | Client generation from another input | `bun repo codegen generate|check ...` |
 | Standalone local file server | `bun tooling/repo/dev/local-files.ts` |

@@ -6,7 +6,7 @@ All school messages use the durable school queue and the same authorization poli
 
 `@edaya/adaptor-notify` implements `NotificationGatewayPort` and `InvitationDeliveryPort`. Sign-in / verify / reset OTP mail is Better Auth in the identity service — not a school notify job. Local and Worker school runtimes require an initialized dispatcher; missing runtime configuration fails rather than silently logging or switching gateways. The in-memory test runtime uses the no-op port.
 
-`apps/api` injects `EmailTransportPort` and `SmsTransportPort` into notify (local log; Worker Cloudflare email and unimplemented SMS). SMTP and real SMS providers register only in the API resolver. FCM uses `FCM_SERVICE_ACCOUNT_JSON`. Transport selection never changes the school queue, policy, profile resolution or push path.
+`apps/api` injects `EmailTransportPort` and `SmsTransportPort` into notify (local log; Worker Cloudflare email and optional shared SMS router). SMTP selection and SMS router composition belong in the API resolver. Africa's Talking implements the shared SMS provider port. FCM uses `FCM_SERVICE_ACCOUNT_JSON`. Transport selection never changes the school queue, policy, profile resolution or push path.
 
 School notifications and account invitations enqueue in the business transaction; background dispatch sends after commit. Invitation command success acknowledges durable queue acceptance. Provider failures are retried without rolling back the already committed invitation. Phone invitations fail closed before enqueue when SMS invitations are off or the SMS transport is unimplemented. Cron owns delays; transports receive immediate channel attempts.
 
@@ -36,7 +36,7 @@ Generated deliveries have one source key and a unique school/source/subject/prof
 
 ## Email, SMS and receipts
 
-The API runtime selects email (local log, Worker Cloudflare) and SMS (local log, Worker unimplemented). Staging and production use Cloudflare Email via the Worker `EMAIL` binding. Delivery status is written in-process from `onDeliveryEvent` after each channel attempt. Cron `reconcilePendingDeliveries` polls remaining pending rows. There is no external notification-provider webhook.
+The API runtime selects email (local log, Worker Cloudflare) and SMS (local log, Worker unimplemented by default; `SMS_TRANSPORT=router` enables shared provider routing). Staging and production use Cloudflare Email via the Worker `EMAIL` binding. Delivery status is written in-process from `onDeliveryEvent` after each channel attempt. Cron `reconcilePendingDeliveries` polls remaining pending rows. There is no external notification-provider webhook.
 
 ## Deployment
 
@@ -57,3 +57,9 @@ Existing device tokens have no reliable school provenance. Migration preserves t
 Pause sends before changing key formats and reconcile pending/uncertain provider attempts against provider history. Resume only with the matching migrated backend and updated clients. Sent channel receipts prevent ordinary resends, but migration cannot determine whether an unacknowledged external attempt succeeded. Deployment and real-device/provider evidence remain Plan 06 requirements.
 
 Provider channel identities are SHA-256 digests of the transport job, subject and channel tuple. Email correlation carries the original delivery ID, subject and school. Provider bounce text is reduced to a stable failure code before returning a domain delivery event.
+
+## SMS attempt durability
+
+The router is shared with Account OTP delivery and reads `sms_routes` from the current environment config. Notification dispatch uses a database executor independent of command transactions. A lease-fenced `sending` marker commits before SMS network access; an expired unfinished attempt becomes `uncertain`, including when the job has exhausted all claims. Held and permanently rejected SMS channels cannot be retried automatically. Confirmed temporary rejections may retry within the existing job limit; other channels continue independently. Jobs with no retryable work become terminal.
+
+Status lookups and delivery events map held SMS to `failed` with `SMS_DELIVERY_UNCERTAIN`; an active sending marker is not exposed as a confirmed failure. Accepted provider IDs are stored as `sms:v1:` plus JSON `[providerId,messageId]`. No database migration or automatic provider failover is introduced. See [SMS rollout and rollback](../reference/phone-verification.md#router-rollout-and-rollback) before deploying or reverting.

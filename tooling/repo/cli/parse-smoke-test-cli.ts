@@ -10,18 +10,11 @@ export function parseSmokeTestCliArgs(args: readonly string[]): ParsedSmokeTestC
   if (subject === 'api' && rest.shift() === 'staging') {
     target = 'staging'
   }
-  else if (subject === 'staging') {
-    target = 'staging'
-  }
-  else if (subject === 'notify') {
+  else if (subject === 'notify' && rest.shift() === 'local') {
     target = 'notify'
-    if (rest[0] === 'local')
-      rest.shift()
   }
-  else if (subject === 'r2') {
+  else if (subject === 'r2' && rest.shift() === 'staging') {
     target = 'r2'
-    if (rest[0] === 'staging')
-      rest.shift()
   }
   else {
     throw new Error(commandUsage('smoke'))

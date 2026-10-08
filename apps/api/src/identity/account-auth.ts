@@ -1,3 +1,4 @@
+import { phoneSmsPrefixes } from "./phone-config";
 import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
 import type { Account, AccountService, AuthOutcome, AuthSession } from "@edaya/account";
 import type { Environment } from "./env";
@@ -70,7 +71,7 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
       if (request.method === "GET" && path === "/auth/edaya/methods") {
         return json({ methods: [
           { key: "email_otp", kind: "email", channels: ["email"] },
-          { key: "phone_otp", kind: "phone", available: env.PHONE_AUTH_MODE !== "disabled", countries: env.PHONE_AUTH_MODE !== "disabled" ? ["CI"] : [], prefixes: env.PHONE_AUTH_MODE !== "disabled" ? env.PHONE_SMS_ROUTES.map(route => route.prefix) : [] },
+          { key: "phone_otp", kind: "phone", available: env.PHONE_AUTH_MODE !== "disabled" && phoneSmsPrefixes(env.SMS_ROUTES).length > 0, countries: env.PHONE_AUTH_MODE !== "disabled" && phoneSmsPrefixes(env.SMS_ROUTES).length > 0 ? ["CI"] : [], prefixes: env.PHONE_AUTH_MODE !== "disabled" ? phoneSmsPrefixes(env.SMS_ROUTES) : [] },
         ] });
       }
       if (request.method !== "POST" || !authPostPaths.has(path))

@@ -1,3 +1,4 @@
+import { recoverInterruptedSms } from "./recover-sms";
 import type { EmailTransportPort, NormalizedDeliveryEvent, ResolveInvitationDispatchRecipient, ResolveNotificationDispatchRecipient, SmsTransportPort } from "@edaya/core";
 import type { FcmTransport } from "../push/fcm";
 import type { NotifySql } from "../store/types";
@@ -79,6 +80,7 @@ async function bounded<T>(request: Promise<T>): Promise<T> {
 }
 
 export async function sendJob(idempotencyKey: string, deps: SendJobDependencies): Promise<void> {
+  await recoverInterruptedSms(deps.sql, idempotencyKey);
   await deps.sql.execute(`UPDATE notify.jobs SET status = 'dead', lease_id = NULL, lease_expires_at = NULL,
     failure_reason = CASE WHEN payload_version <> 1 THEN 'NOTIFY_VERSION_UNSUPPORTED' ELSE 'NOTIFY_ATTEMPTS_EXHAUSTED' END,
     updated_at = clock_timestamp()
@@ -101,6 +103,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
   const events: NormalizedDeliveryEvent[] = [];
   let anySent = false;
   let lastFailure: string | undefined;
+  let terminalFailure: string | undefined;
   let lastProviderId: string | undefined;
   const metadata = parseStringMetadata(job.metadata);
   const candidateChannels: readonly NotifySendChannel[] = job.job_kind === "invitation"
@@ -110,7 +113,16 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
   for (const subjectId of subjectIds) {
     let subjectSent = recipientRows.some(row => row.subject_id === subjectId && row.status === "sent");
     anySent ||= subjectSent;
+    let subjectTerminal = false;
     for (const channel of candidateChannels) {
+      const previous = recipientRows.find(row => row.subject_id === subjectId && row.channel === channel);
+      if (channel === "sms" && previous && ["sending", "uncertain", "rejected"].includes(previous.status)) {
+        const reason = previous.status === "rejected" ? previous.failure_reason ?? "SMS_REJECTED" : "SMS_DELIVERY_UNCERTAIN";
+        terminalFailure = reason;
+        subjectTerminal = true;
+        events.push({ deliveryId: job.delivery_id, subjectId, channel, status: "failed", failureReason: reason, occurredAt: new Date() });
+        continue;
+      }
       if (recipientRows.some(row => row.subject_id === subjectId && row.channel === channel && row.status === "sent"))
         continue;
       const renewed = await deps.sql.query<{ idempotency_key: string }>(`
@@ -119,6 +131,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
         RETURNING idempotency_key`, [idempotencyKey, leaseId]);
       if (!renewed.length)
         return;
+      let smsAttemptStarted = false;
       try {
         const recipient = job.job_kind === "school"
           ? (metadata
@@ -235,43 +248,66 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
             }
             continue;
           }
-          const sent = await bounded(deps.sms.send({
+          // The marker is committed on the delivery executor before the external side effect.
+          if (!await upsertJobRecipient(deps.sql, {
+            idempotency_key: idempotencyKey,
+            subject_id: subjectId,
+            channel,
+            status: "sending",
+            provider_message_id: null,
+            failure_reason: "SMS_DELIVERY_UNCERTAIN",
+          }, leaseId)) {
+            return;
+          }
+          smsAttemptStarted = true;
+          const result = await bounded(deps.sms.send({
             to: recipient.phone,
             body: job.sms_body ?? job.body,
             idempotencyKey: buildNotifyChannelId(idempotencyKey, subjectId, "sms"),
           }));
-          lastProviderId = sent.providerMessageId;
-          anySent = true;
-          subjectSent = true;
+          const accepted = result.status === "accepted";
+          const retryable = result.status === "rejected" && result.retryable;
+          const reason = result.status === "uncertain" ? "SMS_DELIVERY_UNCERTAIN" : result.status === "rejected" ? result.reason : null;
           if (!await upsertJobRecipient(deps.sql, {
             idempotency_key: idempotencyKey,
             subject_id: subjectId,
-            channel: "sms",
-            status: "sent",
-            provider_message_id: sent.providerMessageId ?? null,
-            failure_reason: null,
+            channel,
+            status: accepted ? "sent" : result.status === "uncertain" ? "uncertain" : retryable ? "failed" : "rejected",
+            provider_message_id: accepted ? result.providerMessageId : null,
+            failure_reason: reason,
           }, leaseId)) {
             return;
           }
-          events.push({
-            deliveryId: job.delivery_id,
-            status: "sent",
-            providerMessageId: sent.providerMessageId,
-            channel: "sms",
-            occurredAt: new Date(),
-            subjectId,
-          });
+          if (accepted) {
+            lastProviderId = result.providerMessageId;
+            anySent = true;
+            subjectSent = true;
+          }
+          else if (retryable) {
+            lastFailure = reason!;
+          }
+          else {
+            terminalFailure = reason!;
+            subjectTerminal = true;
+          }
+          events.push({ deliveryId: job.delivery_id, status: accepted ? "sent" : "failed", providerMessageId: accepted ? result.providerMessageId : undefined, channel, failureReason: reason ?? undefined, occurredAt: new Date(), subjectId });
         }
       }
       catch {
-        const failureReason = "NOTIFY_DELIVERY_FAILED";
-        lastFailure = failureReason;
+        const failureReason = smsAttemptStarted ? "SMS_DELIVERY_UNCERTAIN" : "NOTIFY_DELIVERY_FAILED";
+        if (smsAttemptStarted) {
+          terminalFailure = failureReason;
+          subjectTerminal = true;
+        }
+        else {
+          lastFailure = failureReason;
+        }
         deps.log("notify send failed", { idempotencyKey, subjectId, channel, code: failureReason });
         if (!await upsertJobRecipient(deps.sql, {
           idempotency_key: idempotencyKey,
           subject_id: subjectId,
           channel,
-          status: "failed",
+          status: smsAttemptStarted ? "uncertain" : "failed",
           provider_message_id: null,
           failure_reason: failureReason,
         }, leaseId)) {
@@ -287,7 +323,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
         });
       }
     }
-    if (!subjectSent && !lastFailure)
+    if (!subjectSent && !lastFailure && !subjectTerminal)
       events.push({ deliveryId: job.delivery_id, subjectId, status: "cancelled", occurredAt: new Date(), failureReason: "recipient or channels no longer eligible" });
   }
 
@@ -295,7 +331,7 @@ export async function sendJob(idempotencyKey: string, deps: SendJobDependencies)
   const completed = await deps.sql.query<{ idempotency_key: string }>(`UPDATE notify.jobs SET status = $3, provider_message_id = COALESCE($4, provider_message_id),
     failure_reason = $5, lease_id = NULL, lease_expires_at = NULL,
     next_attempt_at = CASE WHEN $3 = 'failed' THEN clock_timestamp() + INTERVAL '1 minute' ELSE NULL END, updated_at = clock_timestamp()
-    WHERE idempotency_key = $1 AND lease_id = $2 AND status = 'sending' AND lease_expires_at > clock_timestamp() RETURNING idempotency_key`, [idempotencyKey, leaseId, failed ? (Number(job.attempts) >= 5 ? "dead" : "failed") : anySent ? "sent" : "cancelled", lastProviderId ?? null, failed ? lastFailure ?? "no channels delivered" : null]);
+    WHERE idempotency_key = $1 AND lease_id = $2 AND status = 'sending' AND lease_expires_at > clock_timestamp() RETURNING idempotency_key`, [idempotencyKey, leaseId, failed ? (Number(job.attempts) >= 5 ? "dead" : "failed") : terminalFailure ? "dead" : anySent ? "sent" : "cancelled", lastProviderId ?? null, failed ? lastFailure ?? "no channels delivered" : terminalFailure ?? null]);
 
   if (!completed.length)
     return;

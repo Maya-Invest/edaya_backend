@@ -27,8 +27,10 @@
         "@edaya/adaptor-notify": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
+        "@edaya/adaptor-sms": "workspace:*",
         "@edaya/authorization": "workspace:*",
         "@edaya/core": "workspace:*",
+        "@edaya/messaging": "workspace:*",
         "@edaya/service": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
         "@hono/graphql-server": "^0.7.0",
@@ -129,6 +131,7 @@
       "name": "@edaya/adaptor-notify",
       "version": "0.0.1",
       "dependencies": {
+        "@edaya/adaptor-sms": "workspace:*",
         "@edaya/core": "workspace:*",
         "drizzle-orm": "^0.39.0",
       },
@@ -164,6 +167,16 @@
         "@types/bun": "^1.3.14",
       },
     },
+    "package/adaptor-sms": {
+      "name": "@edaya/adaptor-sms",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+      },
+    },
     "package/api-client": {
       "name": "@maya-invest/edaya-api-client",
       "version": "0.0.0",
@@ -192,6 +205,16 @@
       "dependencies": {
         "cron-parser": "^5.6.1",
         "zod": "^3.24.4",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.14",
+      },
+    },
+    "package/domain-messaging": {
+      "name": "@edaya/messaging",
+      "version": "0.0.1",
+      "dependencies": {
+        "@edaya/core": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "^1.3.14",
@@ -252,6 +275,7 @@
         "@edaya/adaptor-local-fs": "workspace:*",
         "@edaya/adaptor-postgres": "workspace:*",
         "@edaya/adaptor-r2": "workspace:*",
+        "@edaya/seeding": "workspace:*",
         "@electric-sql/pglite": "^0.4.6",
         "@maya-invest/edaya-api-client": "workspace:*",
         "dotenv": "^16.5.0",
@@ -404,6 +428,8 @@
 
     "@edaya/adaptor-r2": ["@edaya/adaptor-r2@workspace:package/adaptor-r2"],
 
+    "@edaya/adaptor-sms": ["@edaya/adaptor-sms@workspace:package/adaptor-sms"],
+
     "@edaya/api": ["@edaya/api@workspace:apps/api"],
 
     "@edaya/authorization": ["@edaya/authorization@workspace:package/domain-authorization"],
@@ -413,6 +439,8 @@
     "@edaya/fixtures": ["@edaya/fixtures@workspace:tooling/fixtures"],
 
     "@edaya/integration-tests": ["@edaya/integration-tests@workspace:tooling/integration-tests"],
+
+    "@edaya/messaging": ["@edaya/messaging@workspace:package/domain-messaging"],
 
     "@edaya/repo": ["@edaya/repo@workspace:tooling/repo"],
 

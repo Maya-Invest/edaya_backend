@@ -174,10 +174,11 @@ export async function upsertJobRecipient(
   leaseId?: string,
 ): Promise<boolean> {
   const written = await sql.query<{ idempotency_key: string }>(
-    `INSERT INTO notify.job_recipients (idempotency_key, subject_id, channel, status, provider_message_id, failure_reason)
-     SELECT $1,$2,$3,$4,$5,$6 WHERE $7::text IS NULL OR EXISTS (
-       SELECT 1 FROM notify.jobs WHERE idempotency_key = $1 AND lease_id = $7 AND status = 'sending' AND lease_expires_at > clock_timestamp()
-     )
+    `WITH owner AS (
+       SELECT idempotency_key FROM notify.jobs WHERE idempotency_key = $1 AND lease_id = $7
+         AND status = 'sending' AND lease_expires_at > clock_timestamp() FOR UPDATE
+     ) INSERT INTO notify.job_recipients (idempotency_key, subject_id, channel, status, provider_message_id, failure_reason)
+     SELECT $1,$2,$3,$4,$5,$6 WHERE $7::text IS NULL OR EXISTS (SELECT 1 FROM owner)
      ON CONFLICT (idempotency_key, subject_id, channel) DO UPDATE SET
        status = EXCLUDED.status,
        provider_message_id = EXCLUDED.provider_message_id,

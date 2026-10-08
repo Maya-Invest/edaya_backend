@@ -76,7 +76,7 @@ async function main() {
     console.error(error instanceof Error ? error.message : error)
     console.error('')
     console.error('Could not configure CORS automatically. Either:')
-    console.error('  1. Run `wrangler login`, then retry `bun repo smoke-test r2` or tooling/repo/dev/r2-configure-cors.ts')
+    console.error('  1. Run `wrangler login`, then retry `bun repo smoke r2 staging` or tooling/repo/dev/r2-configure-cors.ts')
     console.error('  2. Set CORS manually in Cloudflare dashboard (R2 → bucket → Settings → CORS)')
     console.error(`  3. Apply this policy: ${corsFile}`)
     process.exit(1)

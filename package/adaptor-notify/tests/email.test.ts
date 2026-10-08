@@ -27,7 +27,7 @@ describe("email and sms transports", () => {
       idempotencyKey: "s1",
     });
     expect(transport.implemented).toBe(true);
-    expect(result.providerMessageId).toBe("log-sms:s1");
+    expect(result).toEqual({ status: "accepted", providerMessageId: "sms:v1:[\"log\",\"log-sms:s1\"]" });
     expect(calls.length).toBe(1);
   });
 

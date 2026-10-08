@@ -24,7 +24,7 @@ export function resolveLocalSeedAuthUrl(): string {
   return resolveLocalSeedApiUrl()
 }
 
-/** Staging API base URL (`bun repo seed --staging`, `bun repo smoke-test staging`). */
+/** Staging API base URL (`bun repo seed --staging`, `bun repo smoke api staging`). */
 export function resolveStagingSeedApiUrl(): string {
   const configured = process.env['SEED_STAGING_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_STAGING_API_URL)

@@ -68,3 +68,5 @@ __pycache__/
 # Recoverable migration-flatten backups
 /package/adaptor-postgres/drizzle.backup-*
 /package/adaptor-postgres/.migration-baseline-*
+
+.local-state/

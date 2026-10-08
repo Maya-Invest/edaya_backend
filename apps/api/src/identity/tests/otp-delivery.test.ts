@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { parseEnv } from "../env";
 import { phoneTestEnv } from "./support/phone-env";
 import { createOtpDelivery } from "../otp-delivery";
-import { smsRoute } from "../phone-config";
+import { phoneSmsPrefixes } from "../phone-config";
 
 const env = phoneTestEnv;
 
@@ -22,7 +22,7 @@ test("SMS validates the exact recipient and acceptance status, not HTTP success 
     request = new Request(url, init);
     return Response.json({ SMSMessageData: { Recipients: [{ number: "+2250712345678", statusCode: 101, messageId: "AT-id" }] } });
   });
-  expect(await delivery.send({ channel: "sms", destination: "+2250712345678", code: "123456" })).toEqual({ status: "accepted", messageId: "AT-id" });
+  expect(await delivery.send({ channel: "sms", destination: "+2250712345678", code: "123456" })).toEqual({ status: "accepted", messageId: "sms:v1:[\"africas_talking\",\"AT-id\"]" });
   expect(request!.url).toBe("https://api.africastalking.com/version1/messaging");
   const form = new URLSearchParams(await request!.text());
   expect(form.get("to")).toBe("+2250712345678");
@@ -44,9 +44,12 @@ test("timeouts, malformed success and server errors remain uncertain without ret
     expect(calls).toBe(1);
   }
 });
-test("prefix routing selects longest configured prefix; unsupported countries and invalid config fail closed", () => {
-  expect(smsRoute([{ prefix: "+225", provider: "africas_talking" }, { prefix: "+22507", provider: "africas_talking" }], "+2250712345678")?.prefix).toBe("+22507");
-  expect(smsRoute(env.PHONE_SMS_ROUTES, "+15145550123")).toBeUndefined();
-  expect(() => parseEnv({ ...env, PHONE_SMS_ROUTES: [{ prefix: "+1", provider: "africas_talking" }] }, "local")).toThrow();
+test("SMS routes do not expand CI phone availability and invalid config fails closed", () => {
+  expect(phoneSmsPrefixes([{ prefix: "+1", provider: "africas_talking" }])).toEqual([]);
+  expect(phoneSmsPrefixes([{ prefix: "+225", provider: "africas_talking" }])).toEqual(["+225"]);
+  expect(phoneSmsPrefixes([{ prefix: "+22599", provider: "africas_talking" }])).toEqual([]);
+  expect(phoneSmsPrefixes([{ prefix: "+2", provider: "africas_talking" }])).toEqual(["+225"]);
+  expect(() => parseEnv({ ...env, SMS_ROUTES: [{ prefix: "+225", provider: "unknown" }] }, "local")).toThrow();
+  expect(() => parseEnv({ ...env, PHONE_SMS_ROUTES: [] }, "local")).toThrow(/removed/);
   expect(() => parseEnv({ ...env, WHATSAPP_APP_SECRET: undefined }, "local")).toThrow();
 });

@@ -7,8 +7,8 @@ export function varsCliUsage() {
 export function parseVarsCliArgs(args: readonly string[]) {
   if (!args.length || args.includes('--help') || args.includes('-h'))
     return { kind: 'help' as const }
-  const [action, app, target, ...rest] = args
-  if (!['push', 'delete'].includes(action!) || app !== 'api' || !['staging', 'production'].includes(target!))
+  const [action, target, ...rest] = args
+  if (!['push', 'delete'].includes(action!) || !['staging', 'production'].includes(target!))
     throw new Error(varsCliUsage())
   let dryRun = false
   const replaceSecrets: string[] = []

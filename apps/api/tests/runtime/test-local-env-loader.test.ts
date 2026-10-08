@@ -49,7 +49,7 @@ describe("local dev env files", () => {
       expect(env.CLOUDFLARE_EMAIL_ACCOUNT_ID).toBe("file-account");
       expect(env.CLOUDFLARE_EMAIL_API_TOKEN).toBe("process-token");
       expect(env.EMAIL_FROM).toBe("Dev <dev@edayaplus.com>");
-      expect(env.EMAIL_TRANSPORT).toBe("log");
+      expect(env.EMAIL_TRANSPORT).toBeUndefined();
     }
     finally {
       await rm(directory, { recursive: true, force: true });

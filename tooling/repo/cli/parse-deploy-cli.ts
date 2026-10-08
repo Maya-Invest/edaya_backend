@@ -18,15 +18,12 @@ export function parseDeployCliArgs(args: readonly string[]): ParsedDeployCli {
     return { kind: 'help' }
   }
 
-  const [app, target, ...flags] = args
+  const [target, ...flags] = args
   if (flags.some(flag => flag !== '--dry-run') || flags.length > 1)
     throw new Error('Unexpected deploy argument; only --dry-run is supported')
-  if (app !== 'api') {
-    throw new Error(`Only "api" deploy is supported. Got: ${app ?? '(missing)'}`)
-  }
   if (!target || !API_TARGETS.has(target as DeployApiTarget)) {
     throw new Error(
-      `Usage: bun repo deploy api <staging|production>. Got: ${target ?? '(missing)'}`,
+      `Usage: bun repo deploy <staging|production>. Got: ${target ?? '(missing)'}`,
     )
   }
 

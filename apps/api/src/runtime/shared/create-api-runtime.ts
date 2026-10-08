@@ -1,3 +1,4 @@
+import { resolveSmsRouter } from "./adapters/sms-router";
 import { createSystemActorMetadata } from "@edaya/authorization";
 import { resolveInvitationDispatchRecipient, resolveNotificationDispatchRecipient } from "@edaya/service";
 import { transactionContext } from "@edaya/adaptor-postgres";
@@ -27,6 +28,7 @@ export interface InitSchoolApplicationExtras {
 export interface CreateApiRuntimeOptions {
   env: Environment;
   identityClient?: IdentityClient;
+  runBackground?: (work: () => Promise<void>) => Promise<void>;
   resolveSchoolHandle: () => Promise<DatabaseHandle>;
   initSchoolApplication: (
     db: PostgresTransactionalDb,
@@ -35,6 +37,7 @@ export interface CreateApiRuntimeOptions {
 }
 
 export async function createApiRuntime(options: CreateApiRuntimeOptions): Promise<ApiRuntime> {
+  const smsRouter = resolveSmsRouter(options.env);
   let schoolApplicationPromise: Promise<ApiSchoolApplication> | undefined;
   let closing: Promise<void> | undefined;
   let schoolApp: ApiSchoolApplication | null = null;
@@ -66,7 +69,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
       getExecutor: () => transactionContext.getStore() ?? handle.db,
       env: options.env,
       email: resolveEmailTransport(options.env, transportLog),
-      sms: resolveSmsTransport(options.env, transportLog),
+      sms: resolveSmsTransport(options.env, transportLog, smsRouter),
       log: logger
         ? (message, extra) => logger.info(extra ?? {}, message)
         : undefined,
@@ -89,7 +92,7 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
     return notifyRuntime;
   }
 
-  const identity = composeIdentity(options.env, getSchoolApplication);
+  const identity = composeIdentity(options.env, getSchoolApplication, { smsRouter });
   const identityClient = options.identityClient ?? identity.client;
 
   function getSchoolApplication(): Promise<ApiSchoolApplication> {
@@ -114,10 +117,18 @@ export async function createApiRuntime(options: CreateApiRuntimeOptions): Promis
   return {
     env: options.env,
     async drainNotifications() {
-      await getSchoolApplication();
-      const runtime = await getNotifyRuntime();
-      if (runtime)
-        await drainPendingSchoolNotifications(runtime);
+      if (!options.runBackground && options.env.PAUSE_JOBS)
+        return;
+      const drain = async () => {
+        await getSchoolApplication();
+        const runtime = await getNotifyRuntime();
+        if (runtime)
+          await drainPendingSchoolNotifications(runtime);
+      };
+      if (options.runBackground)
+        await options.runBackground(drain);
+      else
+        await drain();
     },
     getSchoolApplication,
     getIdentityRuntime: identity.resolve,

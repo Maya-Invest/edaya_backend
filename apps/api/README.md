@@ -22,7 +22,7 @@ cp .dev.vars.example .dev.vars
 bun run dev:worker
 ```
 
-Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy api production` from repo root). Normal deployments preserve variables. Update them separately with `bun repo vars push api production`.
+Production worker profile: deploy only (`bun run deploy:production` from `apps/api`, or `bun repo deploy production` from repo root). Normal deployments preserve variables. Update them separately with `bun repo vars push production`.
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
@@ -52,9 +52,9 @@ Bun runs the local TypeScript entry directly. Wrangler bundles the Worker entry 
 
 Before first production deploy:
 
-1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate production` (from repo root)
-2. Apply `config.production.jsonc` using `bun repo vars push api production` from the repository root. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
+1. Migrate the Hyperdrive origin Neon DB (school + auth): `bun repo db migrate school production` (from repo root)
+2. Apply `config.production.jsonc` using `bun repo vars push production` from the repository root. Upload secrets: `cp secrets.json.example secrets.prod.json` then `bunx wrangler secret bulk secrets.prod.json --env prod`
 3. Dry-run: `bun run deploy:production:dry-run`
-4. Deploy: `bun run deploy:production` (or `bun repo deploy api production` from repo root)
+4. Deploy: `bun run deploy:production` (or `bun repo deploy production` from repo root)
 
 See [docs/reference/local-dev.md](../../docs/reference/local-dev.md) and [docs/reference/api-runtimes.md](../../docs/reference/api-runtimes.md).

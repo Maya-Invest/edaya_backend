@@ -15,8 +15,7 @@
     "quality": "bun run lint && bun run check",
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
-    "test": "NODE_ENV=test bun test ./tests ./src/identity/tests --timeout 120000",
-    "dev:test": "NODE_ENV=test bun --no-env-file src/identity/entries/testing.ts"
+    "test": "NODE_ENV=test bun test ./tests ./src/identity/tests --timeout 120000"
   },
   "dependencies": {
     "@edaya/account": "workspace:*",
@@ -50,7 +49,9 @@
     "pino-pretty": "^11.3.0",
     "postgres": "^3.4.5",
     "stoker": "^1.4.2",
-    "zod": "^3.24.4"
+    "zod": "^3.24.4",
+    "@edaya/messaging": "workspace:*",
+    "@edaya/adaptor-sms": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260610.0",

@@ -50,7 +50,7 @@ Phases 0–3, 5–6, and 8 of the repository simplification plan are **complete*
 - **Phase 4:** Split `postgres-schema.ts` and `entity-stores.ts` by bounded context without migration drift.
 - **Phase 7:** ESLint `no-restricted-imports`, runtime public entry points. (`prototype.queries.ts` rename completed 2026-06-23.)
 - **Product:** Domain-scoped mutation invalidation buckets (Finding 8), pagination for school-wide admin lists (Finding 9).
-- **Operator:** Staging smoke (`bun repo smoke-test staging`), manual screen QA checklist (Phase 8.2).
+- **Operator:** Staging smoke (`bun repo smoke api staging`), manual screen QA checklist (Phase 8.2).
 
 ---
 

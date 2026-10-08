@@ -10,8 +10,6 @@ import { resolveIdentityMigrationTarget } from './lib/resolve-migration-target'
 
 const { databaseUrl, label } = resolveIdentityMigrationTarget(process.argv.slice(2), process.env, resolve(import.meta.dirname, '../../../..'))
 console.log(`Applying identity migrations (${label})`)
-if (!process.argv[2])
-  console.warn('identity-migrate without a target is deprecated; use db migrate identity <target>.')
 
 if (databaseUrl.startsWith('pglite:')) {
   const dataDir = resolve(databaseUrl.slice('pglite:'.length).trim() || '.data/identity')

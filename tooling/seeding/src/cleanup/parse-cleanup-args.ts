@@ -6,7 +6,7 @@ export interface CleanupOptions {
 }
 
 export const IDENTITY_AUTH_WIPE_HINT
-  = 'Account authentication lives in apps/api/src/identity. Run `bun repo identity-wipe local --yes` or `bun repo identity-wipe staging --yes`.'
+  = 'Account authentication lives in apps/api/src/identity. Run `bun repo db wipe identity local --yes` or `bun repo db wipe identity staging --yes`.'
 
 export function parseCleanupArgs(argv: string[]): CleanupOptions {
   const args = argv.slice(2)

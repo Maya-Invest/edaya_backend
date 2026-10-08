@@ -7,12 +7,13 @@ const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
 
 loadLocalConfiguration(process.env, apiRoot)
+process.env.LOCAL_OTP_CAPTURE ??= 'true'
 
-console.log('API and authentication on :9999, local files on :9200.')
+console.log(`API and authentication on :${process.env.PORT}, local files on :${process.env.LOCAL_FILES_PORT}. OTP capture: ${process.env.LOCAL_OTP_CAPTURE}.`)
 
 const children = [
-  Bun.spawn(['bun', '--no-env-file', '--filter', '@edaya/api', 'dev'], {
-    cwd: repoRoot,
+  Bun.spawn(['bun', '--no-env-file', '--watch', 'src/entries/local.ts'], {
+    cwd: apiRoot,
     stdin: 'inherit',
     stdout: 'inherit',
     stderr: 'inherit',
@@ -27,24 +28,22 @@ const children = [
   }),
 ]
 
-function shutdown(signal?: NodeJS.Signals): void {
-  for (const child of children) {
-    try {
-      child.kill()
+let stopping: Promise<void> | undefined
+function shutdown(): Promise<void> {
+  return stopping ??= (async () => {
+    for (const child of children) child.kill('SIGTERM')
+    await Promise.race([Promise.all(children.map(child => child.exited)), new Promise(done => setTimeout(done, 3000))])
+    for (const child of children) {
+      if (child.exitCode === null)
+        child.kill('SIGKILL')
     }
-    catch {
-      // child may already be gone
-    }
-  }
-  if (signal) {
-    process.kill(process.pid, signal)
-  }
+  })()
 }
-
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => shutdown(signal))
+  process.once(signal, () => {
+    void shutdown().then(() => process.exit(signal === 'SIGINT' ? 130 : 143))
+  })
 }
-
 const exitCode = await Promise.race(children.map(child => child.exited))
-shutdown()
+await shutdown()
 process.exit(exitCode)

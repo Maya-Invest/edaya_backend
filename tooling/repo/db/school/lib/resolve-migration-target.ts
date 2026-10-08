@@ -75,7 +75,7 @@ export function resolveMigrationTarget(target: MigrationTarget): { databaseUrl: 
       : target === 'staging'
         ? [
             'Set STAGING_DATABASE_URL to the Neon staging branch connection string.',
-            'Example: STAGING_DATABASE_URL=postgres://… bun repo db migrate staging',
+            'Example: STAGING_DATABASE_URL=postgres://… bun repo db migrate school staging',
           ]
         : [
             'Set PRODUCTION_DATABASE_URL to the Neon production branch connection string.',

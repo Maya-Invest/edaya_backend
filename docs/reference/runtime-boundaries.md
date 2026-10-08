@@ -2,7 +2,7 @@
 
 The API worker wires adapters from **`RUNTIME` only**. Scheduled cron jobs run on the same worker (`scheduled()` handler). Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present.
 
-**Configuration:** `bun repo dev` loads `apps/api/config.local.jsonc` plus secrets from `.env`. Wrangler smoke and R2 tools load `config.staging.jsonc` plus `.dev.vars` secrets. Deployed variables are updated explicitly with `bun repo vars push api <staging|production>`; code deployment preserves them. See [API configuration](api-configuration.md).
+**Configuration:** `bun repo dev` loads `apps/api/config.local.jsonc` plus secrets from `.env`. Wrangler smoke and R2 tools load `config.staging.jsonc` plus `.dev.vars` secrets. Deployed variables are updated explicitly with `bun repo vars push <staging|production>`; code deployment preserves them. See [API configuration](api-configuration.md).
 
 See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runtimes.md) for commands and env loading.
 
@@ -12,7 +12,7 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 |---------|---------|---------|
 | **`local`** | Day-to-day development | `bun repo dev` |
 | **`in-memory`** | Fast automated tests | `bun test` (harness sets env) |
-| **`worker`** | Staging / production deploy; optional local smoke | `bun repo deploy api production`, `bun repo deploy api staging`, `bun --filter @edaya/api dev:worker` |
+| **`worker`** | Staging / production deploy; optional local smoke | `bun repo deploy production`, `bun repo deploy staging`, `bun --filter @edaya/api dev:worker` |
 
 **worker** is not a separate `RUNTIME` value. It means `RUNTIME=worker` executed through `wrangler dev` (Miniflare) with `.dev.vars` and Cloudflare bindings — same adapter wiring as a deployed Worker.
 

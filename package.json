@@ -24,8 +24,7 @@
     "test:integration:seed": "bun --filter @edaya/integration-tests test:integration:seed",
     "test:integration:native": "bun --filter @edaya/integration-tests test:integration:native",
     "verify": "python3 -m unittest discover -s .github/scripts -p 'test_*.py' && bun repo verify && bun test ./.github/scripts/*.test.mjs && turbo run quality && turbo run build && turbo run test --concurrency=2 -- --dots",
-    "dev": "bun --no-env-file tooling/repo/dev/start-local-dev.ts",
-    "dev:test": "bun --no-env-file --filter @edaya/api dev:test"
+    "dev": "bun --no-env-file tooling/repo/dev/start-local-dev.ts"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

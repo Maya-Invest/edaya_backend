@@ -90,16 +90,16 @@ edaya_backend/
 |--------|------------------|
 | `bun repo dev` | Identity, school API, and local files in watch mode |
 | `bun --filter @edaya/api dev:worker` | `@edaya/api` `dev:worker` |
-| `bun repo seed` / `bun repo seed --staging` / `bun repo seed --scope doctor` / `bun repo smoke-test staging` | `@edaya/seeding` / `@edaya/integration-tests` |
+| `bun repo seed` / `bun repo seed --staging` / `bun repo seed --scope doctor` / `bun repo smoke api staging` | `@edaya/seeding` / `@edaya/integration-tests` |
 | `bun repo db generate` | `@edaya/adaptor-postgres` |
-| `bun repo db migrate local` | `repo migration commands` — school (local) |
-| `bun repo db migrate staging` | `repo migration commands` — school (staging) |
-| `bun repo db migrate production` | `repo migration commands` — school (production) |
+| `bun repo db migrate school local` | `repo migration commands` — school (local) |
+| `bun repo db migrate school staging` | `repo migration commands` — school (staging) |
+| `bun repo db migrate school production` | `repo migration commands` — school (production) |
 | `bun repo openapi generate` | Export OpenAPI + regenerate client bindings |
 | `bun repo check openapi` | Drift check for generated artifacts |
-| `bun repo deploy api production` | `@edaya/api` `deploy:production` |
-| `bun repo deploy api staging` | `@edaya/api` `deploy:staging` |
-| `bun repo smoke-test staging` | `@edaya/integration-tests` |
+| `bun repo deploy production` | `@edaya/api` `deploy:production` |
+| `bun repo deploy staging` | `@edaya/api` `deploy:staging` |
+| `bun repo smoke api staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_frontend**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 

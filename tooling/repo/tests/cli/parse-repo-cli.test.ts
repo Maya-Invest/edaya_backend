@@ -25,10 +25,10 @@ describe('parseRepoCliArgs', () => {
       command: 'doctor',
       forwardArgs: [],
     })
-    expect(parseRepoCliArgs(['bun', 'repo', 'db', 'migrate', 'local'])).toEqual({
+    expect(parseRepoCliArgs(['bun', 'repo', 'db', 'migrate', 'school', 'local'])).toEqual({
       kind: 'run',
       command: 'db',
-      forwardArgs: ['migrate', 'local'],
+      forwardArgs: ['migrate', 'school', 'local'],
     })
     expect(parseRepoCliArgs(['bun', 'repo', 'check', 'openapi'])).toEqual({
       kind: 'run',
@@ -56,7 +56,7 @@ describe('parseRepoCliArgs', () => {
   })
 
   it('forwards generator and identity arguments to the relocated scripts', () => {
-    for (const command of ['codegen', 'identity-migrate', 'identity-wipe'] as const) {
+    for (const command of ['codegen'] as const) {
       expect(parseRepoCliArgs(['bun', 'repo', command, 'staging', '--yes'])).toEqual({
         kind: 'run',
         command,
@@ -64,8 +64,6 @@ describe('parseRepoCliArgs', () => {
       })
     }
     expect(resolveRepoCommandScript('codegen')).toEndWith(join('repo', 'codegen', 'bin', 'edaya-codegen.ts'))
-    expect(resolveRepoCommandScript('identity-migrate')).toEndWith(join('repo', 'db', 'identity', 'migrate.ts'))
-    expect(resolveRepoCommandScript('identity-wipe')).toEndWith(join('repo', 'db', 'identity', 'wipe.ts'))
   })
 
   it('rejects unknown commands', () => {
@@ -85,8 +83,8 @@ describe('parseRepoCliArgs', () => {
       ], {
         env: { ...process.env, AUTH_DATABASE_URL: 'invalid-for-help-check' },
       })
-      expect(result.exitCode).toBe(0)
-      expect(result.stdout.toString()).toContain(`Usage: bun repo ${command}`)
+      expect(result.exitCode).toBe(1)
+      expect(result.stderr.toString()).toContain('Unknown repo command')
     }
   })
 })
@@ -94,7 +92,6 @@ describe('parseRepoCliArgs', () => {
 describe('resolveRepoCommandScript', () => {
   it('resolves script paths under the monorepo', () => {
     expect(resolveRepoCommandScript('dev')).toEndWith(join('tooling', 'repo', 'dev', 'start-local-dev.ts'))
-    expect(resolveRepoCommandScript('seed')).toEndWith(join('tooling', 'seeding', 'scripts', 'seed.ts'))
     expect(resolveRepoCommandScript('doctor')).toEndWith(join('tooling', 'repo', 'ci', 'doctor.ts'))
   })
 })

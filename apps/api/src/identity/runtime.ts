@@ -10,7 +10,8 @@ import { createAccountAuthHandler } from "./account-auth";
 import { createAuthDatabase } from "./database";
 import { ensureIdentitySigningKeys } from "./jwt-keys";
 import { createOtpDelivery } from "./otp-delivery";
-import { smsRoute } from "./phone-config";
+import type { SmsRouterPort } from "@edaya/core";
+import { resolveSmsRouter } from "@/runtime/shared/adapters/sms-router";
 
 export interface IdentityRuntime {
   env: Environment;
@@ -25,8 +26,11 @@ export interface IdentityRuntime {
 }
 export interface CreateIdentityRuntimeOptions {
   keys?: IdentitySigningKeys;
+  /** Explicit local capture composition only; never inferred for Workers. */
+  localFixtures?: boolean;
   /** Integration tests capture delivery here while retaining the real provider. */
   delivery?: OtpDeliveryPort;
+  smsRouter?: SmsRouterPort;
   /** Account expiration tests can advance time without waiting in real time. */
   now?: () => number;
   /** Test composition can enforce policy for isolated fixture accounts. */
@@ -61,13 +65,14 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
       ? JSON.parse(env.ACCOUNT_SECURITY_KEYS) as Record<string, string>
       : { v1: createHash("sha256").update(`local-account-key:${env.BETTER_AUTH_SECRET}`).digest("base64") };
     const security = createAccountSecurity(keyring, env.ACCOUNT_SECURITY_KEY_VERSION);
-    const delivery = options.delivery ?? createOtpDelivery(env);
+    const smsRouter = options.smsRouter ?? resolveSmsRouter(env);
+    const delivery = options.delivery ?? createOtpDelivery(env, fetch, smsRouter);
     const provider = createBetterAuthAdapter(db, { secret: env.BETTER_AUTH_SECRET, baseUrl: env.BETTER_AUTH_URL, generation: env.AUTH_PROVIDER_GENERATION, delivery });
     const accounts = new AccountService(repository, provider, security, options.privilegedPolicy ?? { async requiresTotp(_accountId) {
       if (!env.REQUIRE_PRIVILEGED_TOTP)
         return false;
       throw new Error("Privileged Account policy must be composed in-process");
-    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && env.NODE_ENV === "test", { mode: env.PHONE_AUTH_MODE, supports: phone => !!smsRoute(env.PHONE_SMS_ROUTES, phone), delivery });
+    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || options.localFixtures === true), { mode: env.PHONE_AUTH_MODE, supports: phone => /^\+225(?:01|05|07)\d{8}$/.test(phone) && smsRouter.supports(phone), delivery });
     const auth = {
       handler: createAccountAuthHandler(accounts, env, keys),
       async purgeExpiredCredentials() {

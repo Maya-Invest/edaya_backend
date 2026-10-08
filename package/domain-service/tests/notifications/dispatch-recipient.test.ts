@@ -62,7 +62,7 @@ describe('delayed notification dispatch uses current business facts', () => {
         return {}
       },
     }
-    const runtime = createNotifyRuntimeFromDrizzle({ db, env: {}, resolveSchoolRecipient: resolve, email, sms: { implemented: false, send: async () => ({}) } })
+    const runtime = createNotifyRuntimeFromDrizzle({ db, env: {}, resolveSchoolRecipient: resolve, email, sms: { implemented: false, send: async () => ({ status: 'rejected' as const, reason: 'SMS_UNIMPLEMENTED', retryable: false }) } })
     const gateway = createNotifyNotificationGateway({ runtime })
     for (const input of inputs) await gateway.enqueue({ idempotencyKey: input.deliveryId, schoolId: input.schoolId, kind: 'event', eventKey: input.eventKey, title: 'Private', body: 'Details', recipients: [{ kind: input.deliveryId.endsWith('staff') ? staff : guardian, id: input.deliveryId.endsWith('staff') ? 'staff-a' : 'guardian-a', subjectId: input.subjectId }] })
     await fixture.db.exec('UPDATE guardians SET notification_email = \'new-guardian@example.test\' WHERE id = \'guardian-a\'')
@@ -165,7 +165,7 @@ describe('delayed notification dispatch uses current business facts', () => {
         await fixture.db.exec('DELETE FROM guardian_student_links WHERE id = \'guardian-link\'')
         return {}
       } },
-      sms: { implemented: false, send: async () => ({}) },
+      sms: { implemented: false, send: async () => ({ status: 'rejected' as const, reason: 'SMS_UNIMPLEMENTED', retryable: false }) },
       fcm: { send: async () => {
         pushes++
         return {}

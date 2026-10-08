@@ -113,19 +113,20 @@ export async function lookupSchoolDeliveryStatuses(
       row.idempotency_key === buildNotifyJobId("school", query.schoolId, query.deliveryId) && row.subject_id === query.subjectId && row.channel !== "queued",
     );
     const sent = matches.find(row => row.status === "sent");
-    const failed = matches.find(row => row.status === "failed");
+    const failed = matches.find(row => ["failed", "rejected", "uncertain"].includes(row.status));
     const cancelled = matches.find(row => row.status === "cancelled");
     const chosen = sent ?? failed ?? cancelled;
     if (!chosen) {
       continue;
     }
-    if (chosen.status !== "sent" && chosen.status !== "failed" && chosen.status !== "cancelled" && chosen.status !== "read") {
+    const normalizedStatus = ["rejected", "uncertain"].includes(chosen.status) ? "failed" : chosen.status;
+    if (normalizedStatus !== "sent" && normalizedStatus !== "failed" && normalizedStatus !== "cancelled" && normalizedStatus !== "read") {
       continue;
     }
     result.set(query.deliveryId, {
-      status: chosen.status,
+      status: normalizedStatus,
       providerMessageId: chosen.provider_message_id ?? undefined,
-      failureReason: chosen.failure_reason ?? undefined,
+      failureReason: chosen.status === "uncertain" ? "SMS_DELIVERY_UNCERTAIN" : chosen.failure_reason ?? undefined,
     });
   }
   return result;

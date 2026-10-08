@@ -8,6 +8,7 @@ import { createNotifySqlFromDrizzle } from "./store/sql";
 
 export interface NotifyRuntime {
   sql: NotifySql;
+  deliverySql?: NotifySql;
   email: EmailTransportPort;
   sms: SmsTransportPort;
   fcm: FcmTransport;
@@ -20,6 +21,7 @@ export interface NotifyRuntime {
 
 export interface CreateNotifyRuntimeOptions {
   sql: NotifySql;
+  deliverySql?: NotifySql;
   env: NotifyTransportEnv;
   email: EmailTransportPort;
   sms: SmsTransportPort;
@@ -38,6 +40,7 @@ export function createNotifyRuntime(options: CreateNotifyRuntimeOptions): Notify
   const log = options.log ?? silentNotifyLog();
   return {
     sql: options.sql,
+    deliverySql: options.deliverySql ?? options.sql,
     email: options.email,
     sms: options.sms,
     fcm: options.fcm ?? resolveFcmTransport(options.env.FCM_SERVICE_ACCOUNT_JSON, log),
@@ -63,6 +66,7 @@ export function createNotifyRuntimeFromDrizzle(options: {
 }): NotifyRuntime {
   return createNotifyRuntime({
     sql: createNotifySqlFromDrizzle(options.db, options.getExecutor),
+    deliverySql: createNotifySqlFromDrizzle(options.db),
     env: options.env,
     email: options.email,
     sms: options.sms,

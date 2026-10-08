@@ -1,10 +1,10 @@
 {
 // Worker application settings. Credentials belong in secrets files.
-// Apply explicitly: bun repo vars push api staging
+// Apply explicitly: bun repo vars push staging
   // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
   // AUTH_PROVIDER_GENERATION, ENABLE_GRAPHQL; use string values "true" / "false".
   // Phone auth stays disabled until all provider settings AND secrets are configured.
-  // SMS requires PHONE_SMS_ROUTES plus AFRICAS_TALKING_USERNAME/SENDER_ID and API key.
+  // SMS requires sms_routes plus AFRICAS_TALKING_USERNAME/SENDER_ID and API key.
   // "AFRICAS_TALKING_USERNAME": "YOUR_LIVE_APPLICATION_USERNAME",
   // "AFRICAS_TALKING_SENDER_ID": "YOUR_APPROVED_CI_SENDER_ID",
   // WhatsApp requires sms_only prerequisites as fallback; then use whatsapp_first.
@@ -21,7 +21,7 @@
   "PAUSE_SCHEDULER": "false",
   "PAUSE_JOBS": "false",
   "PHONE_AUTH_MODE": "disabled",
-  "PHONE_SMS_ROUTES": "[{\"prefix\":\"+225\",\"provider\":\"africas_talking\"}]",
+  "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
   "AFRICAS_TALKING_SANDBOX": "false",
   "TRUSTED_ORIGINS": "https://staging.app.edayaplus.com,https://staging.admin.edayaplus.com",
   "WEBAPP_ORIGIN": "https://staging.app.edayaplus.com",

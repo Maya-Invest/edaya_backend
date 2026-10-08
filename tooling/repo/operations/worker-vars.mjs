@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { apiRoot, configKeys, databaseKeys, localOnlyKeys, parseJsonc, readConfig, validateConfig } from '../../../apps/api/configuration/index.mjs'
+import { apiRoot, configKeys, databaseKeys, localOnlyKeys, parseJsonc, readConfig, validateRuntimeConfig } from '../../../apps/api/configuration/index.mjs'
 
 export function workerTarget(target, root = apiRoot) {
   if (!['staging', 'production'].includes(target))
@@ -13,7 +13,7 @@ export function workerTarget(target, root = apiRoot) {
 }
 
 export function planVariableUpdate(bindings, values = {}, deletes = [], replaceSecrets = [], versionId) {
-  validateConfig(values, 'Worker variables', 'staging')
+  validateRuntimeConfig(values, 'Worker variables', 'staging')
   const replacements = new Set(replaceSecrets)
   for (const name of replacements) {
     if (!configKeys.has(name) || databaseKeys.has(name) || localOnlyKeys.has(name) || !(name in values))

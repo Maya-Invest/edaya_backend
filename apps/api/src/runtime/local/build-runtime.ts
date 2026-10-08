@@ -1,3 +1,4 @@
+import { localOperations } from "../../../configuration/local-operations.mjs";
 import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
 import { buildSchoolApplication } from "@/runtime/shared/school-application";
 import { runMigrationsOnStartup } from "@/runtime/local/profile";
@@ -19,6 +20,7 @@ export async function buildLocalApiRuntime(
   let pending: Promise<import("@/runtime/types").DatabaseHandle> | undefined;
   return createApiRuntime({
     env,
+    runBackground: work => localOperations(env).background(["PAUSE_JOBS"], work),
     identityClient: extras?.identityClient,
     resolveSchoolHandle: () => pending ??= (async () => {
       const handle = await createSchoolDatabase(env);

@@ -1,3 +1,4 @@
+import type { SmsRoute } from "@edaya/core";
 import { z } from "zod";
 
 function json(value: unknown) {
@@ -8,12 +9,10 @@ function json(value: unknown) {
   }
   catch { return value; }
 }
-export const smsRoutesSchema = z.preprocess(json, z.array(z.object({ prefix: z.string().regex(/^\+225\d{0,10}$/), provider: z.literal("africas_talking") }).strict()).superRefine((routes, ctx) => {
-  if (new Set(routes.map(route => route.prefix)).size !== routes.length)
-    ctx.addIssue({ code: "custom", message: "SMS prefixes must be unique" });
-}));
 const template = z.object({ name: z.string().min(1).regex(/^[a-z0-9_]+$/), language: z.string().min(2).max(16) }).strict();
 export const templatesSchema = z.preprocess(json, z.object({ fr: template, en: template }).strict());
-export function smsRoute(routes: z.infer<typeof smsRoutesSchema>, phone: string) {
-  return routes.filter(route => phone.startsWith(route.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0];
+
+/** Intersect transport routes with the existing CI mobile authentication policy. */
+export function phoneSmsPrefixes(routes: readonly SmsRoute[]): string[] {
+  return [...new Set(routes.filter(route => route.prefix.length <= 14 && ["+22501", "+22505", "+22507"].some(prefix => prefix.startsWith(route.prefix) || route.prefix.startsWith(prefix))).map(route => route.prefix.length < 4 ? "+225" : route.prefix))];
 }

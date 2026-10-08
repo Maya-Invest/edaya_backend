@@ -1,7 +1,8 @@
+import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
 /* eslint-disable node/no-process-env -- Local and fixture process configuration. */
 import process from "node:process";
 import { z } from "zod";
-import { smsRoutesSchema, templatesSchema } from "./phone-config";
+import { templatesSchema } from "./phone-config";
 
 const envBoolean = z.preprocess((value) => {
   if (typeof value !== "string") {
@@ -124,11 +125,7 @@ const RawEnvSchema = z.object({
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
   ACCOUNT_SECURITY_KEY_VERSION: z.string().regex(/^[\w-]+$/).default("v1"),
   PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
-  PHONE_SMS_ROUTES: smsRoutesSchema.default([]),
-  AFRICAS_TALKING_USERNAME: z.string().min(1).optional(),
-  AFRICAS_TALKING_API_KEY: z.string().min(1).optional(),
-  AFRICAS_TALKING_SENDER_ID: z.string().min(1).optional(),
-  AFRICAS_TALKING_SANDBOX: envBoolean.default(false),
+  ...smsEnvironmentFields,
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().regex(/^\d+$/).optional(),
   WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().regex(/^\d+$/).optional(),
@@ -142,15 +139,12 @@ const RawEnvSchema = z.object({
   CLOUDFLARE_EMAIL_ACCOUNT_ID: z.string().trim().optional(),
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
 }).superRefine((env, ctx) => {
-  const required = env.PHONE_AUTH_MODE === "disabled" ? [] : ["AFRICAS_TALKING_USERNAME", "AFRICAS_TALKING_API_KEY", "AFRICAS_TALKING_SENDER_ID", ...(env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [])];
+  validateSmsEnvironment(env, ctx);
+  const required = env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [];
   for (const key of required) {
     if (!env[key as keyof typeof env])
       ctx.addIssue({ code: "custom", path: [key], message: `${key} is required for phone authentication` });
   }
-  if (env.PHONE_AUTH_MODE !== "disabled" && !env.PHONE_SMS_ROUTES.length)
-    ctx.addIssue({ code: "custom", path: ["PHONE_SMS_ROUTES"], message: "At least one SMS route is required" });
-  if (env.NODE_ENV === "production" && env.AFRICAS_TALKING_SANDBOX)
-    ctx.addIssue({ code: "custom", path: ["AFRICAS_TALKING_SANDBOX"], message: "SMS sandbox is not allowed in production" });
   if (env.SCHOOL_API_ORIGIN !== undefined && env.SCHOOL_API_ORIGIN.trim() !== "") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

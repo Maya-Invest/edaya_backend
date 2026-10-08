@@ -1,4 +1,4 @@
-import { readConfig, validateSecrets } from "../../apps/api/configuration/index.mjs";
+import { readConfig, validateSecrets, validateSmsCredentials } from "../../apps/api/configuration/index.mjs";
 import { mergeWorkerSecrets } from "./merge-worker-secrets.mjs";
 import { spawnSync } from "node:child_process";
 import { createPrivateKey } from "node:crypto";
@@ -52,6 +52,7 @@ export function validateConfiguration(env) {
   if (!nonempty(identity.BETTER_AUTH_SECRET) || identity.BETTER_AUTH_SECRET.length < 32) errors.push("STAGING_IDENTITY_SECRETS.BETTER_AUTH_SECRET: minimum 32 characters required");
   let combined;
   try { combined = mergeWorkerSecrets(api, identity); } catch (error) { errors.push(error.message); }
+  if (combined) { try { validateSmsCredentials({ ...config, ...combined }); } catch (error) { errors.push(error.message); } }
   const keys = parse("STAGING_IDENTITY_SECRETS.ACCOUNT_SECURITY_KEYS", identity.ACCOUNT_SECURITY_KEYS);
   const active = config.ACCOUNT_SECURITY_KEY_VERSION || "v1";
   if (!keys[active] || !/^[a-zA-Z0-9_-]+$/.test(active)) errors.push("ACCOUNT_SECURITY_KEY_VERSION: missing or invalid key version");

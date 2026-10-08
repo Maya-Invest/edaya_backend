@@ -142,7 +142,7 @@ export function createAuthEmailSenders(env: Environment, log: AuthEmailLogger, o
     if (env.NODE_ENV === "production") {
       throw new Error("Auth OTP email delivery is not configured for production");
     }
-    log.info({ email: normalizedEmail, type: input.type, delivery: "log" }, "Auth delivery omitted locally; use dev:test for captured OTP access");
+    log.info({ email: normalizedEmail, type: input.type, delivery: "log" }, "Auth delivery omitted locally; use bun repo dev for captured OTP access");
   }
   async function sendAuthVerificationEmail(input: AuthVerificationEmailInput): Promise<void> {
     const normalizedEmail = input.email.trim().toLowerCase();

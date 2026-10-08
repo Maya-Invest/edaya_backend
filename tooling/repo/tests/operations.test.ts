@@ -36,7 +36,7 @@ test('secret previews validate locally; uploads put values in stdin, never args/
   try {
     writeFileSync(join(root, 'secrets.prod.json'), JSON.stringify({ BETTER_AUTH_SECRET: 'sensitive-value' }))
     const f = remote()
-    const parsed = parseOperationsCli('secrets', ['push', 'api', 'production', '--dry-run'])
+    const parsed = parseOperationsCli('secrets', ['push', 'production', '--dry-run'])
     expect(await operateSecrets(parsed, f.credentials, f.run, root)).toEqual({ names: ['BETTER_AUTH_SECRET'], applied: false })
     expect(f.reads()).toBe(0)
     const result = await operateSecrets({ ...parsed, dryRun: false }, f.credentials, f.run, root)
@@ -49,7 +49,7 @@ test('secret previews validate locally; uploads put values in stdin, never args/
   finally { rmSync(root, { recursive: true, force: true }) }
 })
 test('secret delete refuses variables; deletion/list expose only secret names', async () => {
-  const parsed = parseOperationsCli('secrets', ['delete', 'api', 'staging', 'LEGACY'])
+  const parsed = parseOperationsCli('secrets', ['delete', 'staging', 'LEGACY'])
   const variable = remote([{ name: 'LEGACY', type: 'plain_text', text: 'private' }])
   await expect(operateSecrets(parsed, variable.credentials, variable.run)).rejects.toThrow('not a secret')
   expect(variable.calls).toHaveLength(0)
@@ -95,13 +95,13 @@ test('identity migrations select only the requested target and reject ambiguous 
   const source = { AUTH_DATABASE_URL: 'postgres://local/db', STAGING_AUTH_DATABASE_URL: 'postgres://staging/db', PRODUCTION_AUTH_DATABASE_URL: 'postgres://production/db' }
   expect(resolveIdentityMigrationTarget(['staging'], source, '/unused').databaseUrl).toBe(source.STAGING_AUTH_DATABASE_URL)
   expect(resolveIdentityMigrationTarget(['production'], source, '/unused').databaseUrl).toBe(source.PRODUCTION_AUTH_DATABASE_URL)
-  expect(() => resolveIdentityMigrationTarget([], source, '/unused')).toThrow('exactly one')
+  expect(() => resolveIdentityMigrationTarget([], source, '/unused')).toThrow('Usage:')
   expect(() => resolveIdentityMigrationTarget(['production'], { AUTH_DATABASE_URL: source.AUTH_DATABASE_URL }, '/unused')).toThrow('Missing')
   expect(() => resolveIdentityMigrationTarget(['production', '--dry-run'], source, '/unused')).toThrow()
 })
 
 test('secret mutations fail closed on deployment/API errors and failed verification', async () => {
-  const parsed = parseOperationsCli('secrets', ['delete', 'api', 'staging', 'LEGACY'])
+  const parsed = parseOperationsCli('secrets', ['delete', 'staging', 'LEGACY'])
   for (const options of [{ pending: true }, { split: true }, { status: 403 }, { status: 404 }]) {
     const f = remote([{ name: 'LEGACY', type: 'secret_text' }], options)
     await expect(operateSecrets(parsed, f.credentials, f.run)).rejects.toThrow()

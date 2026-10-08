@@ -48,7 +48,7 @@ describe("resolveSmsTransport", () => {
       body: "Hi",
       idempotencyKey: "s1",
     });
-    expect(result.providerMessageId).toBe("log-sms:s1");
+    expect(result).toEqual({ status: "accepted", providerMessageId: "sms:v1:[\"log\",\"log-sms:s1\"]" });
   });
 
   it("is unimplemented on the worker runtime", async () => {

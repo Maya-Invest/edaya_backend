@@ -2,17 +2,11 @@ import { resolve } from 'node:path'
 import { loadConfiguration } from '../../../../../apps/api/configuration/index.mjs'
 
 export function resolveIdentityMigrationTarget(args: readonly string[], source: Record<string, string | undefined>, root: string): { databaseUrl: string, label: string } {
-  if (args.length > 1 || (args.length && !['local', 'staging', 'production'].includes(args[0]!)))
+  if (args.length !== 1 || (args.length && !['local', 'staging', 'production'].includes(args[0]!)))
     throw new Error('Usage: bun repo db migrate identity <local|staging|production>')
   const target = args[0]
   let databaseUrl: string | undefined
-  if (!target) {
-    const candidates = [...new Set(['AUTH_DATABASE_URL', 'STAGING_AUTH_DATABASE_URL', 'PRODUCTION_AUTH_DATABASE_URL'].map(key => source[key]?.trim()).filter(Boolean))]
-    if (candidates.length !== 1)
-      throw new Error('Legacy identity-migrate requires exactly one database URL. Use db migrate identity with an explicit target.')
-    databaseUrl = candidates[0]
-  }
-  else if (target === 'local') {
+  if (target === 'local') {
     databaseUrl = loadConfiguration('local', { root: resolve(root, 'apps/api'), source })['AUTH_DATABASE_URL']
   }
   else {

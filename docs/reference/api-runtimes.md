@@ -16,6 +16,6 @@ Local configuration loads `apps/api/config.local.jsonc` plus secrets from `apps/
 
 The scheduled handler runs credential expiry and school scheduling independently and reports either failure after both settle. Queue processing retains its existing school behavior. Maintenance skips HTTP and background work; job pause skips scheduled work and retries queue batches. Cleanup runs even when jobs fail.
 
-Local development uses one API on port 9999 and local files on 9200. The explicit testing entry alone installs private OTP capture routes. GraphiQL accepts an explicit Authorization header and links to supported webapp login.
+Local development uses one API on port 9999 and local files on 9200. The development launcher enables private OTP capture by default; the internal testing entry preserves disposable CI isolation. GraphiQL accepts an explicit Authorization header and links to supported webapp login.
 
 Protected school commands retain Zod/OpenAPI body validation, actor resolution, grants and access-token verification. Malformed command bodies return 422; valid bodies without an authorized credential return 401. Auth keeps its own JSON/body-size checks, origin policy and sanitized failures.
