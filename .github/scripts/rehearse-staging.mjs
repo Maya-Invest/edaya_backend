@@ -45,7 +45,7 @@ try {
   const schoolDb = `postgres://edaya_rehearsal@127.0.0.1:${pgPort}/neondb`;
   const authDb = `postgres://edaya_identity:rehearsal-only@127.0.0.1:${pgPort}/edaya_identity`;
   const apiUrl = `http://127.0.0.1:${apiPort}`, filesUrl = `http://127.0.0.1:${filePort}`;
-  const common = { NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", EMAIL_TRANSPORT: "log", SMS_TRANSPORT: "log", PHONE_AUTH_MODE: "disabled", TRUSTED_ORIGINS: "http://localhost:4173", WEBAPP_ORIGIN: "http://localhost:4173" };
+  const common = { NODE_ENV: "development", RUNTIME: "local", LOG_LEVEL: "silent", EMAIL_TRANSPORT: "log", SMS_TRANSPORT: "log", PHONE_AUTH_MODE: "disabled", LOCAL_OTP_CAPTURE: "true", TRUSTED_ORIGINS: "http://localhost:4173", WEBAPP_ORIGIN: "http://localhost:4173" };
   const schoolEnv = { ...common, PORT: String(apiPort), DATABASE_URL: schoolDb, AUTH_DATABASE_URL: authDb, BETTER_AUTH_SECRET: "disposable-account-secret-for-rehearsal-only", API_ORIGIN: apiUrl, LOCAL_FILES_URL: filesUrl, LOCAL_FILES_PORT: String(filePort), LOCAL_FILES_ROOT: resolve(directory, "files"), LOCAL_FILES_SECRET: "disposable-file-secret", RUN_MIGRATIONS_ON_STARTUP: "false", ALLOW_PUBLIC_SCHOOL_REGISTRATION: "true" };
   const releaseEnv = { EDAYA_DISPOSABLE_POSTGRES: "true", RELEASE_TARGET: "staging", RESET_DATA: "true", STAGING_MAINTENANCE_CONFIRMED: "true", STAGING_DATABASE_HOST: "127.0.0.1", STAGING_DATABASE_URL: schoolDb, STAGING_AUTH_DATABASE_URL: authDb };
   run("bun", ["tooling/repo/db/school/staging-release.ts"], backend, { ...schoolEnv, ...releaseEnv });
