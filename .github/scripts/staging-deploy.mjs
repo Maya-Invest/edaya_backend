@@ -43,11 +43,11 @@ const cloud = async (path, method = "GET", body) => {
   if (!response.ok || !json.success) throw new Error(`Cloudflare ${method} ${path.split("?")[0]} failed (${response.status}); error codes ${(json.errors || []).map(error => error.code).join(",")}`);
   return json.result;
 };
-const setWorkerControls = async (api, scheduler, jobs) => {
+const setWorkerControls = async (api, scheduler, jobs, applyConfiguration = false) => {
   await updateWorkerVariables({
     accountId: staging.account, token: process.env.CLOUDFLARE_API_TOKEN,
     worker: workerTarget("staging", resolve(backend, "apps/api")),
-    values: { ...readConfig("staging"), PAUSE_API: String(api), PAUSE_SCHEDULER: String(scheduler), PAUSE_JOBS: String(jobs) },
+    values: { ...(applyConfiguration ? readConfig("staging") : {}), PAUSE_API: String(api), PAUSE_SCHEDULER: String(scheduler), PAUSE_JOBS: String(jobs) },
   });
 };
 const waitHttp = async (url, expected) => {
@@ -73,7 +73,7 @@ try {
   command("bun", ["tooling/repo/db/school/staging-preflight.ts"], backend);
   mark("Entering staging maintenance");
   enteredMaintenance = true;
-  await setWorkerControls(true, true, true);
+  await setWorkerControls(true, true, true, true);
   // First rollout: old code ignores the new flags. Deploy before checking 503.
   wrangler(backend, "api", ["deploy", "--env", "staging"]);
   await waitHttp(`${staging.urls.api}/reference`, 503);

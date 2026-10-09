@@ -19,7 +19,10 @@ async function release({ failAt, reset = true } = {}) {
     options: { reset, school: { username: "school" }, identity: { hostname: "db.example", password: "credential" } },
     apiSecrets: { BETTER_AUTH_SECRET: "private" }, testEnv: {},
     workerTarget: () => "edaya-api-staging",
-    updateWorkerVariables: async options => record("controls", options.values),
+    updateWorkerVariables: async options => {
+      record("controls", options.values);
+      if (failAt === "configuration" && options.values.API_ORIGIN) throw new Error("Configuration collision");
+    },
     wrangler: (_repo, app, args) => record(args[0] === "deploy" ? "deploy" : "secrets", { app, args }),
     waitHttp: async (_url, status) => record("http", status),
     mark: stage => record("stage", stage),
@@ -42,15 +45,15 @@ async function release({ failAt, reset = true } = {}) {
   return { events, exitCode: process.exitCode };
 }
 const settings = { API_ORIGIN: staging.urls.api, R2_BUCKET_NAME: staging.bucket };
-const paused = { ...settings, PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" };
+const paused = { PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" };
 
 test("staging deploys API once, confirms maintenance before mutations, resumes handlers separately", async () => {
   const { events, exitCode } = await release();
   expect(exitCode).toBe(0);
   expect(events.filter(e => e.kind === "controls").map(e => e.value)).toEqual([
-    paused,
-    { ...settings, PAUSE_API: "false", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" },
-    { ...settings, PAUSE_API: "false", PAUSE_SCHEDULER: "false", PAUSE_JOBS: "false" },
+    { ...settings, ...paused },
+    { PAUSE_API: "false", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" },
+    { PAUSE_API: "false", PAUSE_SCHEDULER: "false", PAUSE_JOBS: "false" },
   ]);
   expect(events.filter(e => e.kind === "deploy" && e.value.app === "api")).toHaveLength(1);
   const index = predicate => events.findIndex(predicate);
@@ -63,12 +66,12 @@ test("staging deploys API once, confirms maintenance before mutations, resumes h
   expect(index(e => e.kind === "observe")).toBeGreaterThan(index(e => e.kind === "cloud" && e.value.body?.settings?.delivery_paused === false));
 });
 
-for (const failAt of ["http", "migration", "smoke", "mobile-smoke", "observe"]) test(`release failure at ${failAt} restores all controls and queue pause without redeploying`, async () => {
+for (const failAt of ["configuration", "http", "migration", "smoke", "mobile-smoke", "observe"]) test(`release failure at ${failAt} restores all controls and queue pause without redeploying`, async () => {
   const { events, exitCode } = await release({ failAt });
   expect(exitCode).toBe(1);
   expect(events.filter(e => e.kind === "controls").at(-1).value).toEqual(paused);
   expect(events.filter(e => e.kind === "cloud" && e.value.body?.settings).at(-1).value.body.settings.delivery_paused).toBe(true);
-  expect(events.filter(e => e.kind === "deploy" && e.value.app === "api")).toHaveLength(1);
+  expect(events.filter(e => e.kind === "deploy" && e.value.app === "api")).toHaveLength(failAt === "configuration" ? 0 : 1);
   if (failAt === "mobile-smoke") {
     expect(events.some(e => e.kind === "deploy" && e.value.app !== "api")).toBe(false);
     expect(events.some(e => e.kind === "observe")).toBe(false);

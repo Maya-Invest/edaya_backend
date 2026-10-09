@@ -21,6 +21,8 @@ const readiness = process.env.REPOSITORY_READINESS === "true";
 const evidence = name => JSON.parse(readFileSync(resolve(output, name), "utf8"));
 if (readiness && process.env.RELEASE_STATUS === "qualified") {
   if (process.env.VALIDATE_ONLY !== "true" || process.env.RESET_DATA !== "false") throw new Error("Invalid readiness boundary");
+  const initial = evidence("manifest.json");
+  if (JSON.stringify(initial.repositories) !== JSON.stringify(repositories)) throw new Error("Candidate changed during readiness qualification");
   readFileSync(resolve(output, "qualification-passed.txt"));
   if (evidence("bootstrap-rehearsal.json").passed !== true || evidence("mobile-staging-runner/summary.json").ok !== true)
     throw new Error("Readiness rehearsal or runner validation is incomplete");
