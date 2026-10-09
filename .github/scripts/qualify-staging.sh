@@ -40,7 +40,9 @@ cp "$WEB/.ci-evidence/results.json" "$ROOT/release/browser-integration.json"
 # Native suites get a fresh disposable fixture, without sharing browser state.
 export EDAYA_CI_API_PORT=11999 EDAYA_CI_FILES_PORT=19200
 export EDAYA_CI_WEBAPP_ORIGIN=http://127.0.0.1:14173
-export EDAYA_CI_API_PID_DIR="$ROOT/.release-private/mobile-apis"
+mkdir -p "$ROOT/.release-private"
+export EDAYA_CI_API_PID_DIR
+EDAYA_CI_API_PID_DIR="$(mktemp -d "$ROOT/.release-private/mobile-apis-XXXXXX")"
 export EDAYA_TEST_API_URL=http://127.0.0.1:11999
 cleanup() { GITHUB_WORKSPACE="$WEB" bash "$WEB/.github/scripts/ci-start-local-apis.sh" stop; }
 trap cleanup EXIT
