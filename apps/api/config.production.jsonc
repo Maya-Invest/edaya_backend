@@ -23,6 +23,7 @@
   "PAUSE_JOBS": "false",
   "PHONE_AUTH_MODE": "disabled",
   "sms_routes": [{ "prefix": "+225", "provider": "africas_talking" }],
+  "AFRICAS_TALKING_USERNAME": "atoumbre",
   "AFRICAS_TALKING_SANDBOX": "false",
   "TRUSTED_ORIGINS": "https://app.edayaplus.com,https://admin.edayaplus.com",
   "WEBAPP_ORIGIN": "https://app.edayaplus.com",
