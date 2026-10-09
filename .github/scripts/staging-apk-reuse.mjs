@@ -13,6 +13,7 @@ const candidate = {
   repositories: candidateCommits(candidateRepositories(root)),
   flutter: "3.44.8",
   apiUrl: staging.urls.api,
+  testOtpAccess: false,
   firebase: Object.fromEntries(apps.map(app => [app, hash(resolve(mobile, `apps/${app}/android/app/google-services.json`))])),
 };
 if (process.argv[2] === "record") {

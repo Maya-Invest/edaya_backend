@@ -240,17 +240,17 @@ export async function createCoreRouteTestApp(
     await runStartupMigrations(nativeHandle.db, nativeDatabase!.url);
   const runtime = nativeHandle
     ? await createApiRuntime({
-      env,
-      ...identityClientExtras,
-      resolveSchoolHandle: async () => nativeHandle,
-      initSchoolApplication: (db, extras) => buildSchoolApplication(db as PostgresTransactionalDb, {
-        databaseUrl: nativeDatabase!.url,
         env,
-        identityDirectory: extras.identityClient.directory,
-        notifyRuntime: extras.notifyRuntime,
-        runMigrations: false,
-      }),
-    })
+        ...identityClientExtras,
+        resolveSchoolHandle: async () => nativeHandle,
+        initSchoolApplication: (db, extras) => buildSchoolApplication(db as PostgresTransactionalDb, {
+          databaseUrl: nativeDatabase!.url,
+          env,
+          identityDirectory: extras.identityClient.directory,
+          notifyRuntime: extras.notifyRuntime,
+          runMigrations: false,
+        }),
+      })
     : env.RUNTIME === "local"
       ? await buildLocalApiRuntime(env, identityClientExtras)
       : await buildInMemoryApiRuntime(env, identityClientExtras);

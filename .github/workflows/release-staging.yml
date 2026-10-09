@@ -156,8 +156,7 @@ jobs:
             bun install --frozen-lockfile
           fi
           bun run verify
-          bun --filter @edaya/webapp deploy:staging:dry-run
-          bun --filter @edaya/webadmin deploy:staging:dry-run
+          bash ../edaya_backend/.github/scripts/build-staging-web.sh
       - name: Restore existing Android signing material
         env:
           ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}

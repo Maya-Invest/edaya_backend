@@ -2,6 +2,18 @@
 
 This release qualifies the current three-repository stack for staging. Production, store publication, and completion of the v1 feature plans are separate work.
 
+## Repository readiness without deployment
+
+Use `readiness-staging.yml` with exact 40-character `web_sha` and `mobile_sha` inputs. The triggering backend commit selects the third candidate. This workflow requires only `IDENTITY_CHECKOUT_TOKEN` and the existing `STAGING_ANDROID_SIGNING_BUNDLE` repository secrets. It does not use the staging Actions environment, Cloudflare credentials, or live database credentials.
+
+The same sequence can run locally through `RELEASE_ROOT=<parent-of-clean-checkouts> bash edaya_backend/.github/scripts/readiness-staging.sh`, with Node 22, Bun 1.3.14, Flutter 3.44.8, Melos 8.0.0, PostgreSQL tools, Java 17 and the Android SDK available. Restore existing signing/Firebase material in those clean checkouts first. The guard rejects dirty candidates and local dotenv files; use disposable checkouts rather than an active development tree. Local validation previously resolved a stale pnpm ESLint configuration (3.16.0) instead of the Bun-locked 9.2.0, so fresh frozen installs are required.
+
+Readiness shares release qualification, disposable bootstrap rehearsal, web/Worker dry runs and Android artifact preparation. It compiles and discovers all six staging smoke scenarios in `--validate-runner` mode with HTTP disabled; this is not a live smoke result. Signed APKs are built afresh, checked against existing identities and recorded against all three commits. Missing signing material is a failure, never a reason to substitute debug keys.
+
+The readiness manifest records repository/build qualification separately from live infrastructure, deployed acceptance and iOS, all of which remain `not-evaluated`. Failed checks do not produce qualified artifacts. No packages are published, live databases touched, or Workers deployed. The actual release still requires the complete read-only infrastructure/credential preflight, deployed smoke and observation.
+
+The coordinator applies and reads back application settings with maintenance flags overriding the checked-in defaults. Preflight rejects variable/secret collisions, mismatched staging buckets, and unknown identity bindings. Only the dedicated identity database/role or the recorded legacy school database/role is accepted initially; after transition the dedicated identity binding is required.
+
 ## Candidate and deployment ownership
 
 The backend `release-staging.yml` workflow checks out backend at the triggering SHA and resolves the web and mobile inputs once. Identity lives in `edaya_backend/apps/api/src/identity`, and one API client belongs to the backend. All verification, generated clients, builds, migrations, and deployments use those checkouts. Its `edaya-full-stack-staging` concurrency group serializes the complete release, including observation and recovery.
@@ -43,7 +55,7 @@ Verify the `noreply@edayaplus.com` sender, Browser Rendering account capability,
 
 Staging keeps `PHONE_AUTH_MODE=disabled`: phone login/linking, SMS and WhatsApp resend attempts are rejected without provider sends. Web, guardian and teacher forms trust Identity's advertised availability; failed discovery falls back to email-only labels, hides phone controls/hints, and rejects pasted phones locally in English/French. Email OTP, authenticators and recovery remain available.
 
-Full phone-enabled OTP-capture and clock-driven journeys remain in **local** qualification. Deployment runs `melos run test:staging`, with six registered smoke cases, real native API clients and private fixture sessions. It rejects OTP test access, captured OTP files and test clock configuration; deployed apps never enable test OTP access.
+Full phone-enabled OTP-capture and clock-driven journeys remain in **local** qualification. Deployment runs `python3 scripts/staging-smoke.py`, with six registered smoke cases, real native API clients and private fixture sessions. It rejects OTP test access, captured OTP files and test clock configuration; deployed apps never enable test OTP access.
 
 ## Release order
 

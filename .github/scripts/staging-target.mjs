@@ -45,3 +45,20 @@ export function assertHyperdrive(config, database, role) {
     throw new Error("Hyperdrive does not match the recorded staging database with caching disabled");
   }
 }
+
+// The legacy auth binding may still share the school database before first rollout.
+export function assertInitialIdentityHyperdrive(config, schoolRole) {
+  if (config?.origin?.database === staging.identityDatabase) {
+    assertHyperdrive(config, staging.identityDatabase, "edaya_identity");
+  } else {
+    if (!schoolRole) throw new Error("Recorded school role is required for the legacy identity binding");
+    assertHyperdrive(config, staging.schoolDatabase, schoolRole);
+  }
+}
+
+export function assertStagingConfiguration(config) {
+  if (config.R2_BUCKET_NAME !== staging.bucket) throw new Error("Staging bucket differs between application configuration and release target");
+  if (config.API_ORIGIN !== staging.urls.api || config.WEBAPP_ORIGIN !== staging.urls.webapp)
+    throw new Error("Staging application origins differ from release targets");
+  if (config.PHONE_AUTH_MODE !== "disabled") throw new Error("Staging phone authentication must remain disabled");
+}

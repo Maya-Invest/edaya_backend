@@ -16,17 +16,17 @@ async function release({ failAt, reset = true } = {}) {
   };
   const scope = {
     process, staging, resolve, backend: "/backend", web: "/web", mobile: "/mobile", root: "/root", output: "/output", privateDir: "/private",
-    options: { reset, identity: { hostname: "db.example", password: "credential" } },
+    options: { reset, school: { username: "school" }, identity: { hostname: "db.example", password: "credential" } },
     apiSecrets: { BETTER_AUTH_SECRET: "private" }, testEnv: {},
     workerTarget: () => "edaya-api-staging",
     updateWorkerVariables: async options => record("controls", options.values),
     wrangler: (_repo, app, args) => record(args[0] === "deploy" ? "deploy" : "secrets", { app, args }),
     waitHttp: async (_url, status) => record("http", status),
     mark: stage => record("stage", stage),
-    assertHyperdrive: () => {},
+    assertHyperdrive: () => {}, assertInitialIdentityHyperdrive: () => {},
     command: (_program, args) => record(args[0].includes("staging-release.ts") ? "migration" : "command", args),
-    spawnSync: (_program, args) => { record("subprocess", args); return { status: failAt === "smoke" && args.includes("smoke") ? 1 : 0 }; },
-    readConfig: () => ({}), writeFileSync: () => {},
+    spawnSync: (_program, args) => { record("subprocess", args); return { status: (failAt === "smoke" && args.includes("smoke")) || (failAt === "mobile-smoke" && args.includes("scripts/staging-smoke.py")) ? 1 : 0 }; },
+    readConfig: () => ({ API_ORIGIN: staging.urls.api, R2_BUCKET_NAME: staging.bucket, PAUSE_API: "false", PAUSE_JOBS: "false", PAUSE_SCHEDULER: "false" }), writeFileSync: () => {},
     observeStaging: async () => record("observe", true),
     setTimeout: callback => { record("drain", true); callback(); },
     console: { log() {}, error() {} },
@@ -41,15 +41,16 @@ async function release({ failAt, reset = true } = {}) {
   await new AsyncFunction(...Object.keys(scope), controlSource + coordinator)(...Object.values(scope));
   return { events, exitCode: process.exitCode };
 }
-const paused = { PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" };
+const settings = { API_ORIGIN: staging.urls.api, R2_BUCKET_NAME: staging.bucket };
+const paused = { ...settings, PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" };
 
 test("staging deploys API once, confirms maintenance before mutations, resumes handlers separately", async () => {
   const { events, exitCode } = await release();
   expect(exitCode).toBe(0);
   expect(events.filter(e => e.kind === "controls").map(e => e.value)).toEqual([
     paused,
-    { PAUSE_API: "false", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" },
-    { PAUSE_API: "false", PAUSE_SCHEDULER: "false", PAUSE_JOBS: "false" },
+    { ...settings, PAUSE_API: "false", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" },
+    { ...settings, PAUSE_API: "false", PAUSE_SCHEDULER: "false", PAUSE_JOBS: "false" },
   ]);
   expect(events.filter(e => e.kind === "deploy" && e.value.app === "api")).toHaveLength(1);
   const index = predicate => events.findIndex(predicate);
@@ -62,12 +63,16 @@ test("staging deploys API once, confirms maintenance before mutations, resumes h
   expect(index(e => e.kind === "observe")).toBeGreaterThan(index(e => e.kind === "cloud" && e.value.body?.settings?.delivery_paused === false));
 });
 
-for (const failAt of ["http", "migration", "smoke", "observe"]) test(`release failure at ${failAt} restores all controls and queue pause without redeploying`, async () => {
+for (const failAt of ["http", "migration", "smoke", "mobile-smoke", "observe"]) test(`release failure at ${failAt} restores all controls and queue pause without redeploying`, async () => {
   const { events, exitCode } = await release({ failAt });
   expect(exitCode).toBe(1);
   expect(events.filter(e => e.kind === "controls").at(-1).value).toEqual(paused);
   expect(events.filter(e => e.kind === "cloud" && e.value.body?.settings).at(-1).value.body.settings.delivery_paused).toBe(true);
   expect(events.filter(e => e.kind === "deploy" && e.value.app === "api")).toHaveLength(1);
+  if (failAt === "mobile-smoke") {
+    expect(events.some(e => e.kind === "deploy" && e.value.app !== "api")).toBe(false);
+    expect(events.some(e => e.kind === "observe")).toBe(false);
+  }
   if (failAt === "http") {
     expect(events.some(e => e.kind === "migration")).toBe(false);
     expect(events.some(e => e.kind === "secrets")).toBe(false);

@@ -91,3 +91,28 @@ class WorkflowGates(unittest.TestCase):
             self.assertNotRegex(text, r'path: release/\s*\n')
             self.assertIn('release/preflight.json', text)
             self.assertGreaterEqual(text.count('if: ${{ !inputs.validate_only }}'), 2)
+
+
+class ReadinessBoundary(unittest.TestCase):
+    def test_readiness_needs_only_checkout_and_signing_secrets(self):
+        text = (ROOT / '.github/workflows/readiness-staging.yml').read_text()
+        self.assertEqual(set(re.findall(r'secrets\.([A-Z_]+)', text)), {'IDENTITY_CHECKOUT_TOKEN', 'STAGING_ANDROID_SIGNING_BUNDLE'})
+        self.assertNotIn('environment: staging', text)
+        self.assertNotIn('packages: write', text)
+        self.assertIn('ref: ${{ github.sha }}', text)
+        for role in ('web', 'mobile'):
+            self.assertIn('ref: ${{ inputs.' + role + '_sha }}', text)
+        script = (ROOT / '.github/scripts/readiness-staging.sh').read_text()
+        for forbidden in ('staging-deploy.mjs', 'publish-client.mjs', 'staging-preflight.mjs'):
+            self.assertNotIn(forbidden, script)
+        self.assertIn('VALIDATE_ONLY=true', script)
+        self.assertIn('RESET_DATA=false', script)
+        self.assertIn('qualify-staging.sh', script)
+        self.assertIn('build-staging-web.sh', script)
+
+    def test_runner_is_qualified_before_live_deployment(self):
+        qualify = (ROOT / '.github/scripts/qualify-staging.sh').read_text()
+        self.assertIn('python3 scripts/staging-smoke.py --validate-runner', qualify)
+        deploy = (ROOT / '.github/scripts/staging-deploy.mjs').read_text()
+        self.assertIn('spawnSync("python3", ["scripts/staging-smoke.py"]', deploy)
+        self.assertNotIn('"test:staging"', deploy)

@@ -31,10 +31,10 @@ function formatOtpEmail(input: {
   otp: string;
   type: AuthOtpType;
 }): {
-    subject: string;
-    html: string;
-    text: string;
-  } {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const codeHtml = otpCodeHtml(input.otp);
   switch (input.type) {
     case "sign-in":
@@ -73,10 +73,10 @@ function formatVerificationLinkEmail(input: {
   url: string;
   displayName?: string;
 }): {
-    subject: string;
-    html: string;
-    text: string;
-  } {
+  subject: string;
+  html: string;
+  text: string;
+} {
   const safeUrl = escapeHtml(input.url);
   const greetingName = input.displayName?.trim();
   const greetingHtml = greetingName ? `<p>Hello ${escapeHtml(greetingName)},</p>` : "";

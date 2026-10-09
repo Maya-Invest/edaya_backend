@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { observeStaging } from "./observe-staging.mjs";
-import { assertHyperdrive, releaseOptions, staging } from "./staging-target.mjs";
+import { assertHyperdrive, assertInitialIdentityHyperdrive, releaseOptions, staging } from "./staging-target.mjs";
 
 assertReleaseMutationAllowed();
 await runPreflight(process.env);
@@ -47,7 +47,7 @@ const setWorkerControls = async (api, scheduler, jobs) => {
   await updateWorkerVariables({
     accountId: staging.account, token: process.env.CLOUDFLARE_API_TOKEN,
     worker: workerTarget("staging", resolve(backend, "apps/api")),
-    values: { PAUSE_API: String(api), PAUSE_SCHEDULER: String(scheduler), PAUSE_JOBS: String(jobs) },
+    values: { ...readConfig("staging"), PAUSE_API: String(api), PAUSE_SCHEDULER: String(scheduler), PAUSE_JOBS: String(jobs) },
   });
 };
 const waitHttp = async (url, expected) => {
@@ -63,8 +63,7 @@ try {
   mark("Checking existing staging infrastructure");
   assertHyperdrive(await cloud(`/hyperdrive/configs/${staging.schoolHyperdrive}`), staging.schoolDatabase);
   const authDrive = await cloud(`/hyperdrive/configs/${staging.identityHyperdrive}`);
-  if (![staging.schoolDatabase, staging.identityDatabase].includes(authDrive.origin.database)) throw new Error("Unexpected identity Hyperdrive database");
-  assertHyperdrive(authDrive, authDrive.origin.database);
+  assertInitialIdentityHyperdrive(authDrive, decodeURIComponent(options.school.username));
   await cloud(`/storage/kv/namespaces/${staging.authKv}/keys?limit=1`);
   await cloud(`/r2/buckets/${staging.bucket}`);
   const queues = await cloud("/queues?per_page=100");
@@ -114,7 +113,7 @@ try {
   mark("Checking staging API and native client integration");
   const smoke = spawnSync("bun", ["repo", "smoke", "api", "staging"], { cwd: backend, env: testEnv, stdio: "inherit" });
   if (smoke.status !== 0) throw new Error("Staging API smoke checks failed");
-  const live = spawnSync("dart", ["run", "melos", "run", "test:staging"], { cwd: mobile, env: { ...testEnv, EDAYA_INTEGRATION_TESTS: "1", EDAYA_API_URL: staging.urls.api }, stdio: "inherit" });
+  const live = spawnSync("python3", ["scripts/staging-smoke.py"], { cwd: mobile, env: { ...testEnv, EDAYA_INTEGRATION_TESTS: "1", EDAYA_API_URL: staging.urls.api }, stdio: "inherit" });
   if (live.status !== 0) throw new Error("Staging native mobile smoke failed");
   mark("Deploying prepared staff and admin web assets");
   for (const app of ["webapp", "webadmin"]) { wrangler(web, app, ["deploy", "--env", "staging"]); await waitHttp(`${staging.urls[app]}/login`, 200); }

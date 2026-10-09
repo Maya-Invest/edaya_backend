@@ -32,13 +32,13 @@ async function main(): Promise<void> {
   const identityEnv = parseEnv({ ...env, BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET ?? (env.NODE_ENV === "production" ? undefined : "local-account-secret-at-least-32-characters"), BETTER_AUTH_URL: env.API_ORIGIN, FIRST_PARTY_API_ORIGINS: env.API_ORIGIN }, "local");
   const captured = env.LOCAL_OTP_CAPTURE
     ? await createCapturedIdentity(identityEnv, {
-      delivery: createOtpDelivery(identityEnv),
-      operationsScope: operations.scope,
-      operationsRootId: operations.rootId,
-      privilegedPolicy: { async requiresTotp(accountId) {
-        return env.REQUIRE_PRIVILEGED_TOTP === true && accountRequiresPrivilegedTotp((await (await getApiRuntime(env)).getSchoolApplication()).repositories, accountId);
-      } },
-    })
+        delivery: createOtpDelivery(identityEnv),
+        operationsScope: operations.scope,
+        operationsRootId: operations.rootId,
+        privilegedPolicy: { async requiresTotp(accountId) {
+          return env.REQUIRE_PRIVILEGED_TOTP === true && accountRequiresPrivilegedTotp((await (await getApiRuntime(env)).getSchoolApplication()).repositories, accountId);
+        } },
+      })
     : undefined;
   if (captured)
     attachIdentityRuntime(env, captured.runtime);

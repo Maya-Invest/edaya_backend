@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { assertHyperdrive, releaseOptions, staging } from "./staging-target.mjs";
+import { assertHyperdrive, assertInitialIdentityHyperdrive, assertStagingConfiguration, releaseOptions, staging } from "./staging-target.mjs";
 
 const config = () => ({
   RELEASE_TARGET: "staging", RESET_DATA: "false", CLOUDFLARE_ACCOUNT_ID: staging.account,
@@ -29,4 +29,18 @@ describe("coordinated staging release guards", () => {
     expect(() => assertHyperdrive(drive, "edaya_identity")).toThrow();
     expect(() => assertHyperdrive({ ...drive, caching: { disabled: false } }, "neondb")).toThrow();
   });
+});
+
+test("initial identity binding accepts only the final identity role or recorded legacy school role", () => {
+  const drive = (database, user, host = staging.databaseHost, disabled = true) => ({ origin: { database, user, host }, caching: { disabled } });
+  for (const value of [drive("neondb", "school"), drive("edaya_identity", "edaya_identity")])
+    expect(() => assertInitialIdentityHyperdrive(value, "school")).not.toThrow();
+  for (const value of [drive("neondb", "other"), drive("other", "school"), drive("edaya_identity", "school"), drive("neondb", "school", "other"), drive("neondb", "school", staging.databaseHost, false)])
+    expect(() => assertInitialIdentityHyperdrive(value, "school")).toThrow();
+});
+test("staging settings must match resource targets and email-only authentication", () => {
+  const config = { API_ORIGIN: staging.urls.api, WEBAPP_ORIGIN: staging.urls.webapp, R2_BUCKET_NAME: staging.bucket, PHONE_AUTH_MODE: "disabled" };
+  expect(() => assertStagingConfiguration(config)).not.toThrow();
+  for (const patch of [{ R2_BUCKET_NAME: "edaya-files-dev" }, { API_ORIGIN: "https://other.example" }, { PHONE_AUTH_MODE: "sms_only" }])
+    expect(() => assertStagingConfiguration({ ...config, ...patch })).toThrow();
 });

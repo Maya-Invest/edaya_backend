@@ -1,3 +1,4 @@
+import { planVariableUpdate } from "../../tooling/repo/operations/worker-vars.mjs";
 import { readConfig, validateSecrets, validateSmsCredentials } from "../../apps/api/configuration/index.mjs";
 import { mergeWorkerSecrets } from "./merge-worker-secrets.mjs";
 import { spawnSync } from "node:child_process";
@@ -6,7 +7,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { assertHyperdrive, releaseOptions, staging } from "./staging-target.mjs";
+import { assertHyperdrive, assertInitialIdentityHyperdrive, assertStagingConfiguration, releaseOptions, staging } from "./staging-target.mjs";
 
 const required = ["CLOUDFLARE_API_TOKEN", "STAGING_DATABASE_URL", "STAGING_AUTH_DATABASE_URL", "STAGING_API_SECRETS", "STAGING_IDENTITY_SECRETS", "STAGING_NEON_TARGET_CONFIRMED", "IDENTITY_CHECKOUT_TOKEN", "ANDROID_SIGNING_BUNDLE"];
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -29,6 +30,7 @@ export function configurationPreflight(env) {
 export function validateConfiguration(env) {
   const errors = [];
   const config = readConfig("staging");
+  try { assertStagingConfiguration(config); } catch (error) { errors.push(error.message); }
   for (const name of required) if (!nonempty(env[name])) errors.push(`${name}: missing`);
   if (env.STAGING_NEON_TARGET_CONFIRMED !== staging.databaseHost) errors.push("STAGING_NEON_TARGET_CONFIRMED: endpoint ownership must be verified");
   for (const [name, database] of [["STAGING_DATABASE_URL", staging.schoolDatabase], ["STAGING_AUTH_DATABASE_URL", staging.identityDatabase]]) {
@@ -106,10 +108,14 @@ export async function runPreflight(env, { request = fetch, databaseCheck, signin
         if (route.script && route.script !== staging.apiWorker && new RegExp(`^${pattern}$`).test(hostname)) throw new Error();
       }
     });
+    await check("Cloudflare.applicationSettings", async () => {
+      const settings = await cloud(`/workers/scripts/${staging.apiWorker}/settings`);
+      planVariableUpdate(settings.bindings, { ...readConfig("staging"), PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" });
+    });
     await check("Cloudflare.schoolHyperdrive", async () => assertHyperdrive(await cloud(`/hyperdrive/configs/${staging.schoolHyperdrive}`), staging.schoolDatabase));
     await check("Cloudflare.identityHyperdrive", async () => {
       const drive = await cloud(`/hyperdrive/configs/${staging.identityHyperdrive}`);
-      assertHyperdrive(drive, staging.identityDatabase, "edaya_identity");
+      assertInitialIdentityHyperdrive(drive, decodeURIComponent(new URL(env.STAGING_DATABASE_URL).username));
     });
     await check("Cloudflare.authKv", () => cloud(`/storage/kv/namespaces/${staging.authKv}/keys?limit=1`));
     await check("Cloudflare.filesBucket", () => cloud(`/r2/buckets/${staging.bucket}`));

@@ -98,6 +98,7 @@ describe("read-only staging preflight", () => {
       requests.push(options.method); let result = [];
       if (url.includes("hyperdrive")) result = { origin: { host: staging.databaseHost, database: url.includes(staging.schoolHyperdrive) ? staging.schoolDatabase : staging.identityDatabase, user: "edaya_identity" }, caching: { disabled: true } };
       if (url.includes('/zones?')) result = [{ id: 'zone', name: staging.zoneName, status: 'active', account: { id: staging.account } }];
+      if (url.endsWith("/settings")) result = { bindings: [] };
       if (url.includes("/queues?")) result = [{ queue_name: staging.queue }];
       return { ok: true, json: async () => url.includes("api.github") ? { permissions: { pull: true } } : { success: true, result } };
     };
@@ -192,6 +193,7 @@ test('unclaimed Custom Domain is eligible while scheme and wildcard routes owned
       if (url.includes('/zones?')) result = [{ id: 'zone', name: staging.zoneName, status: 'active', account: { id: staging.account } }];
       else if (url.includes('/workers/routes')) result = pattern ? [{ pattern, script: 'foreign-worker' }] : [];
       else if (url.includes('/hyperdrive/configs/')) result = { origin: { host: staging.databaseHost, database: url.endsWith(staging.identityHyperdrive) ? staging.identityDatabase : staging.schoolDatabase, user: 'edaya_identity' }, caching: { disabled: true } };
+      else if (url.endsWith('/settings')) result = { bindings: [] };
       else if (url.includes('/queues?')) result = [{ queue_name: staging.queue }];
       return { ok: true, json: async () => url.includes('api.github.com') ? { permissions: { pull: true } } : { success: true, result } };
     };
