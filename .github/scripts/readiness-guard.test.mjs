@@ -8,3 +8,14 @@ test("readiness rejects live credentials and inherited fixture targets", () => {
   for (const patch of [{ VALIDATE_ONLY: "false" }, { RESET_DATA: "true" }, { REPOSITORY_READINESS: undefined }])
     expect(() => assertReadinessEnvironment({ ...env, ...patch })).toThrow();
 });
+
+import { assertQualification, qualificationPhases } from "./qualification-phase.mjs";
+test("qualification requires every phase to succeed", () => {
+  const phases = Object.fromEntries(qualificationPhases.map(name => [name, { exitCode: 0 }]));
+  expect(() => assertQualification({ phases })).not.toThrow();
+  for (const name of qualificationPhases) {
+    const missing = { ...phases }; delete missing[name];
+    expect(() => assertQualification({ phases: missing })).toThrow();
+    expect(() => assertQualification({ phases: { ...phases, [name]: { exitCode: 1 } } })).toThrow();
+  }
+});

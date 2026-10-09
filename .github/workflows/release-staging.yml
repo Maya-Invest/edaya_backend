@@ -240,6 +240,7 @@ jobs:
             release/browser-integration.json
             release/mobile-integration.json
             release/bootstrap-rehearsal.json
+            release/qualification.json
             release/qualification-passed.txt
             release/worker-versions.json
           if-no-files-found: warn

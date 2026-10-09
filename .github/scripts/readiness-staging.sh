@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="${RELEASE_ROOT:?RELEASE_ROOT is required}"
 export VALIDATE_ONLY=true RESET_DATA=false RELEASE_TARGET=staging REPOSITORY_READINESS=true
-export CI=true TURBO_FORCE=true WRANGLER_SEND_METRICS=false CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false
+export CI=true WRANGLER_SEND_METRICS=false CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false
 node "$ROOT/edaya_backend/.github/scripts/readiness-guard.mjs"
 mkdir -p "$ROOT/release"
 node "$ROOT/edaya_backend/.github/scripts/staging-manifest.mjs"

@@ -106,6 +106,7 @@ jobs:
           if-no-files-found: warn
           path: |
             release/manifest.json
+            release/qualification.json
             release/qualification-passed.txt
             release/bootstrap-rehearsal.json
             release/browser-integration.json

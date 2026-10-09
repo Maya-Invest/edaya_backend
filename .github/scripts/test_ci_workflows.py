@@ -112,7 +112,7 @@ class ReadinessBoundary(unittest.TestCase):
 
     def test_runner_is_qualified_before_live_deployment(self):
         qualify = (ROOT / '.github/scripts/qualify-staging.sh').read_text()
-        self.assertIn('python3 scripts/staging-smoke.py --validate-runner', qualify)
+        self.assertIn('python3 "$MOBILE/scripts/staging-smoke.py" --validate-runner', qualify)
         deploy = (ROOT / '.github/scripts/staging-deploy.mjs').read_text()
         self.assertIn('spawnSync("python3", ["scripts/staging-smoke.py"]', deploy)
         self.assertNotIn('"test:staging"', deploy)

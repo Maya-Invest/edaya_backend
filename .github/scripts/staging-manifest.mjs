@@ -1,3 +1,4 @@
+import { assertQualification } from "./qualification-phase.mjs";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -21,6 +22,7 @@ const readiness = process.env.REPOSITORY_READINESS === "true";
 const evidence = name => JSON.parse(readFileSync(resolve(output, name), "utf8"));
 if (readiness && process.env.RELEASE_STATUS === "qualified") {
   if (process.env.VALIDATE_ONLY !== "true" || process.env.RESET_DATA !== "false") throw new Error("Invalid readiness boundary");
+  assertQualification(evidence("qualification.json"));
   const initial = evidence("manifest.json");
   if (JSON.stringify(initial.repositories) !== JSON.stringify(repositories)) throw new Error("Candidate changed during readiness qualification");
   readFileSync(resolve(output, "qualification-passed.txt"));
