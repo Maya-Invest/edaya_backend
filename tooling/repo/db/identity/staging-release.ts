@@ -1,16 +1,12 @@
 import process from 'node:process'
 import { runAccountMigrations } from '@edaya/adaptor-account'
-import { assertStagingFixtureTarget, runMigrations } from '@edaya/adaptor-auth'
+import { runMigrations } from '@edaya/adaptor-auth'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { assertStagingMutationAllowed } from '../lib/staging-validation'
+import { assertStagingMutationAllowed, stagingDatabaseTarget } from '../lib/staging-validation'
 
 assertStagingMutationAllowed(process.env['STAGING_AUTH_DATABASE_URL'] ?? '', process.env)
-const url = process.env['STAGING_AUTH_DATABASE_URL'] ?? ''
-assertStagingFixtureTarget(url, process.env['STAGING_DATABASE_HOST'] ?? '')
-if (process.env['RELEASE_TARGET'] !== 'staging' || !['true', 'false'].includes(process.env['RESET_DATA'] ?? '')) {
-  throw new Error('Explicit staging release target and reset switch required')
-}
+const url = stagingDatabaseTarget('identity', process.env).toString()
 const sql = postgres(url, { max: 1 })
 try {
   await runMigrations(drizzle(sql), { driver: 'postgres-js' })

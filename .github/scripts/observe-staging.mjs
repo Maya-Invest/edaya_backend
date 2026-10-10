@@ -48,7 +48,7 @@ export async function observeStaging(root) {
   let stopping = false;
   const save = () => writeFileSync(resolve(root, "release/observation.json"), JSON.stringify({ observations, events, complete: false }, null, 2));
   try {
-    for (const [app, repo, worker] of [["api", "edaya_backend", "edaya-api-staging"]]) {
+    for (const [app, repo, worker] of [["api", "edaya_backend", staging.apiWorker]]) {
       const cwd = resolve(root, repo, "apps", app);
       const child = spawn(resolve(cwd, "node_modules/.bin/wrangler"), ["tail", worker, "--format", "json"], { cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
       tails.push(child);

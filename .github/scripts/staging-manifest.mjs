@@ -59,7 +59,7 @@ const manifest = {
     openapiSha256: digest(resolve(root, "edaya_backend/tooling/repo/fixtures/openapi.json")),
     wrangler: Object.fromEntries([["backend", "api"], ["frontend", "webapp"], ["frontend", "webadmin"]].map(([repo, app]) => [app, packageVersion(resolve(root, `edaya_${repo}/apps/${app}/node_modules/wrangler/package.json`))])),
   },
-  backendWorker: { configurationSha256: digest(resolve(root, "edaya_backend/apps/api/wrangler.jsonc")), name: "edaya-api-staging" },
+  backendWorker: { configurationSha256: digest(resolve(root, "edaya_backend/apps/api/wrangler.jsonc")), name: staging.apiWorker },
   urls: staging.urls, apks,
   androidSignatures: existsSync(resolve(apkDir, "signatures.json")) ? JSON.parse(readFileSync(resolve(apkDir, "signatures.json"), "utf8")) : null,
   workers: existsSync(resolve(output, "worker-versions.json")) ? JSON.parse(readFileSync(resolve(output, "worker-versions.json"), "utf8")) : null,

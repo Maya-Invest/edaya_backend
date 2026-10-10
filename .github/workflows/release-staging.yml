@@ -51,9 +51,10 @@ jobs:
     env:
       RELEASE_ROOT: ${{ github.workspace }}
       RELEASE_TARGET: staging
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      STAGING_ZONE_NAME: ${{ vars.STAGING_ZONE_NAME }}
       VALIDATE_ONLY: ${{ inputs.validate_only && 'true' || 'false' }}
       RESET_DATA: ${{ inputs.reset_data && 'true' || 'false' }}
-      CLOUDFLARE_ACCOUNT_ID: ca013c820d015639e8769dc09e2566ec
       CI: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -75,6 +76,8 @@ jobs:
       - name: Install backend configuration dependencies
         working-directory: edaya_backend
         run: bun install --frozen-lockfile --ignore-scripts
+      - name: Load staging release configuration
+        run: node edaya_backend/.github/scripts/staging-target.mjs --github-env
       - name: Check configuration before cross-repository checkout
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -82,7 +85,6 @@ jobs:
           STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
           STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
           STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
-          STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
           IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
           ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
         run: node edaya_backend/.github/scripts/staging-preflight.mjs --configuration-only
@@ -123,7 +125,6 @@ jobs:
           STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
           STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
           STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
-          STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
           IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
           ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
         run: |
@@ -145,7 +146,6 @@ jobs:
         working-directory: edaya_frontend
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
-          PUBLIC_API_URL: https://staging.api.edayaplus.com
           PUBLIC_APP_ENV: staging
           PUBLIC_TEST_OTP_ACCESS: 'false'
         run: |
@@ -188,7 +188,8 @@ jobs:
           overwrite: true
       - name: Record prepared artifacts
         run: node edaya_backend/.github/scripts/staging-manifest.mjs
-      - name: Deploy, bootstrap, smoke-test, and observe staging
+      - name: Prepare staging maintenance and API deployment
+        id: staging_prepare
         if: ${{ !inputs.validate_only }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -196,10 +197,44 @@ jobs:
           STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
           STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
           STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
-          STAGING_NEON_TARGET_CONFIRMED: ${{ vars.STAGING_NEON_TARGET_CONFIRMED }}
           IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
           ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
-        run: node edaya_backend/.github/scripts/staging-deploy.mjs
+        run: node edaya_backend/.github/scripts/staging-deploy.mjs prepare
+      - name: Apply staging database migrations
+        id: staging_migrate
+        if: ${{ !inputs.validate_only }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
+          STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
+          STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
+        run: node edaya_backend/.github/scripts/staging-migrate.mjs
+      - name: Finish staging deployment, smoke-test, and observe
+        id: staging_finish
+        if: ${{ !inputs.validate_only }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
+          STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
+          STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
+        run: node edaya_backend/.github/scripts/staging-deploy.mjs finish
+      - name: Restore staging maintenance after a failed release phase
+        if: ${{ always() && !inputs.validate_only && steps.staging_prepare.outcome != 'skipped' && steps.staging_prepare.outcome != '' && steps.staging_finish.outcome != 'success' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          STAGING_AUTH_DATABASE_URL: ${{ secrets.STAGING_AUTH_DATABASE_URL }}
+          STAGING_API_SECRETS: ${{ secrets.STAGING_API_SECRETS }}
+          STAGING_IDENTITY_SECRETS: ${{ secrets.STAGING_IDENTITY_SECRETS }}
+          IDENTITY_CHECKOUT_TOKEN: ${{ secrets.IDENTITY_CHECKOUT_TOKEN }}
+          ANDROID_SIGNING_BUNDLE: ${{ secrets.STAGING_ANDROID_SIGNING_BUNDLE }}
+        run: node edaya_backend/.github/scripts/staging-deploy.mjs recover
       - name: Collect browser evidence even when qualification fails
         if: always()
         run: |
@@ -243,6 +278,8 @@ jobs:
             release/qualification.json
             release/qualification-passed.txt
             release/worker-versions.json
+            release/deployment-state.json
+            release/deployment-progress.json
           if-no-files-found: warn
           overwrite: true
       - name: Remove signing and fixture credentials

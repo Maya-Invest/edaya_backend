@@ -7,16 +7,16 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { assertHyperdrive, assertInitialIdentityHyperdrive, assertStagingConfiguration, releaseOptions, staging } from "./staging-target.mjs";
+import { assertHyperdrive, assertInitialIdentityHyperdrive, assertStagingConfiguration, releaseOptions } from "./staging-target.mjs";
 
-const required = ["CLOUDFLARE_API_TOKEN", "STAGING_DATABASE_URL", "STAGING_AUTH_DATABASE_URL", "STAGING_API_SECRETS", "STAGING_IDENTITY_SECRETS", "STAGING_NEON_TARGET_CONFIRMED", "IDENTITY_CHECKOUT_TOKEN", "ANDROID_SIGNING_BUNDLE"];
+const required = ["CLOUDFLARE_API_TOKEN", "STAGING_DATABASE_URL", "STAGING_AUTH_DATABASE_URL", "STAGING_API_SECRETS", "STAGING_IDENTITY_SECRETS", "CLOUDFLARE_ACCOUNT_ID", "STAGING_ZONE_NAME", "IDENTITY_CHECKOUT_TOKEN", "ANDROID_SIGNING_BUNDLE"];
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const nonempty = value => typeof value === "string" && value.trim().length > 0;
 const base64 = value => nonempty(value) && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value);
 
 export function configurationPreflight(env) {
-  const { errors } = validateConfiguration(env);
-  const report = { target: "staging", phase: "configuration", endpoint: staging.databaseHost, status: errors.length ? "blocked" : "passed", checked: [], errors, createdAt: new Date().toISOString() };
+  const { errors, target } = validateConfiguration(env);
+  const report = { target: "staging", phase: "configuration", endpoint: target?.databaseHost ?? null, status: errors.length ? "blocked" : "passed", checked: [], errors, createdAt: new Date().toISOString() };
   if (env.RELEASE_ROOT) {
     const output = resolve(env.RELEASE_ROOT, "release");
     mkdirSync(output, { recursive: true });
@@ -32,12 +32,9 @@ export function validateConfiguration(env) {
   const config = readConfig("staging");
   try { assertStagingConfiguration(config); } catch (error) { errors.push(error.message); }
   for (const name of required) if (!nonempty(env[name])) errors.push(`${name}: missing`);
-  if (env.STAGING_NEON_TARGET_CONFIRMED !== staging.databaseHost) errors.push("STAGING_NEON_TARGET_CONFIRMED: endpoint ownership must be verified");
-  for (const [name, database] of [["STAGING_DATABASE_URL", staging.schoolDatabase], ["STAGING_AUTH_DATABASE_URL", staging.identityDatabase]]) {
-    try {
-      releaseOptions({ ...env, STAGING_DATABASE_URL: name === "STAGING_DATABASE_URL" ? env[name] : `postgres://school:placeholder@${staging.databaseHost}/neondb?sslmode=require`, STAGING_AUTH_DATABASE_URL: name === "STAGING_AUTH_DATABASE_URL" ? env[name] : `postgres://edaya_identity:placeholder@${staging.databaseHost}/edaya_identity?sslmode=require` });
-    } catch { errors.push(`${name}: invalid target, role, TLS or release options`); }
-  }
+  let target;
+  try { target = releaseOptions(env).target; }
+  catch { errors.push("STAGING_DATABASE_URL / STAGING_AUTH_DATABASE_URL: invalid target, role, TLS or release options"); }
   if (env.VALIDATE_ONLY !== undefined && !["true", "false"].includes(env.VALIDATE_ONLY)) errors.push("VALIDATE_ONLY: expected true or false");
   const parse = (name, value) => {
     try { const parsed = JSON.parse(value); if (!object(parsed)) throw new Error(); return parsed; }
@@ -71,13 +68,15 @@ export function validateConfiguration(env) {
     const firebase = config?.firebase;
     if (!object(firebase) || firebase.project_info?.project_id !== fcm.project_id || !firebase.client?.some(client => client.client_info?.android_client_info?.package_name === applicationId)) errors.push(`ANDROID_SIGNING_BUNDLE.apps.${app}.firebase: Firebase project or application ID mismatch`);
   }
-  return { errors: [...new Set(errors)], api, identity, combined, signing };
+  return { errors: [...new Set(errors)], api, identity, combined, signing, target };
 }
 
 export async function runPreflight(env, { request = fetch, databaseCheck, signingCheck } = {}) {
   const config = validateConfiguration(env);
+  const staging = config.target;
   const errors = [...config.errors];
   const checked = [];
+  if (!config.errors.length && staging.webWorkers.length !== 2) errors.push("Both web candidate configurations are required for live preflight");
   if (!errors.length) {
     const check = async (name, action) => { try { await action(); checked.push(name); } catch { errors.push(`${name}: verification failed`); } };
     const cloud = async path => {
@@ -112,10 +111,10 @@ export async function runPreflight(env, { request = fetch, databaseCheck, signin
       const settings = await cloud(`/workers/scripts/${staging.apiWorker}/settings`);
       planVariableUpdate(settings.bindings, { ...readConfig("staging"), PAUSE_API: "true", PAUSE_SCHEDULER: "true", PAUSE_JOBS: "true" });
     });
-    await check("Cloudflare.schoolHyperdrive", async () => assertHyperdrive(await cloud(`/hyperdrive/configs/${staging.schoolHyperdrive}`), staging.schoolDatabase));
+    await check("Cloudflare.schoolHyperdrive", async () => assertHyperdrive(await cloud(`/hyperdrive/configs/${staging.schoolHyperdrive}`), staging.schoolDatabase, staging.schoolRole, staging));
     await check("Cloudflare.identityHyperdrive", async () => {
       const drive = await cloud(`/hyperdrive/configs/${staging.identityHyperdrive}`);
-      assertInitialIdentityHyperdrive(drive, decodeURIComponent(new URL(env.STAGING_DATABASE_URL).username));
+      assertInitialIdentityHyperdrive(drive, staging.schoolRole, staging);
     });
     await check("Cloudflare.authKv", () => cloud(`/storage/kv/namespaces/${staging.authKv}/keys?limit=1`));
     await check("Cloudflare.filesBucket", () => cloud(`/r2/buckets/${staging.bucket}`));
@@ -125,7 +124,7 @@ export async function runPreflight(env, { request = fetch, databaseCheck, signin
       if (!response.ok || (await response.json()).permissions?.pull !== true) throw new Error();
     });
     await check("Database.identities", databaseCheck || (() => {
-      const result = spawnSync("bun", ["tooling/repo/db/school/staging-preflight.ts"], { cwd: resolve(env.RELEASE_ROOT || "..", "edaya_backend"), env, stdio: "pipe", timeout: 30000 });
+      const result = spawnSync("bun", ["tooling/repo/db/school/staging-preflight.ts"], { cwd: resolve(env.RELEASE_ROOT || "..", "edaya_backend"), env: { ...env, STAGING_DATABASE_HOST: staging.databaseHost, STAGING_SCHOOL_DATABASE: staging.schoolDatabase, STAGING_IDENTITY_DATABASE: staging.identityDatabase, STAGING_IDENTITY_ROLE: staging.identityRole }, stdio: "pipe", timeout: 30000 });
       if (result.status !== 0) throw new Error();
     }));
     await check("Android.signing", signingCheck || (() => {
@@ -141,7 +140,7 @@ export async function runPreflight(env, { request = fetch, databaseCheck, signin
       } finally { rmSync(directory, { recursive: true, force: true }); }
     }));
   }
-  const report = { target: "staging", endpoint: staging.databaseHost, status: errors.length ? "blocked" : "passed", checked, errors, createdAt: new Date().toISOString() };
+  const report = { target: "staging", endpoint: staging?.databaseHost ?? null, status: errors.length ? "blocked" : "passed", checked, errors, createdAt: new Date().toISOString() };
   if (env.RELEASE_ROOT) { const output = resolve(env.RELEASE_ROOT, "release"); mkdirSync(output, { recursive: true }); writeFileSync(resolve(output, "preflight.json"), `${JSON.stringify(report, null, 2)}\n`); }
   if (errors.length) throw new Error(`Staging preflight blocked:\n${errors.join("\n")}`);
   return report;

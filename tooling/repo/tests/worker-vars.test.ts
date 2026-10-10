@@ -96,7 +96,7 @@ describe('deployed variable updates', () => {
     const wrangler = JSON.parse(readFileSync(new URL('../../../apps/api/wrangler.jsonc', import.meta.url), 'utf8'))
     expect(wrangler.keep_vars).toBe(true)
     for (const env of Object.values(wrangler.env)) expect(env).not.toHaveProperty('vars')
-    const release = readFileSync(new URL('../../../.github/scripts/staging-deploy.mjs', import.meta.url), 'utf8')
+    const release = readFileSync(new URL('../../../.github/scripts/staging-runtime.mjs', import.meta.url), 'utf8')
     expect(release).not.toContain('PHONE_AUTH_MODE:disabled')
     expect(release).toContain('updateWorkerVariables')
   })

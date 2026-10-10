@@ -14,9 +14,9 @@ async function main(): Promise<void> {
   if (target !== "staging" || !manifest)
     throw new Error("Usage: staging-fixtures.ts staging <accounts.json>");
   const databaseUrl = process.env.STAGING_AUTH_DATABASE_URL ?? "";
-  assertStagingFixtureTarget(databaseUrl, process.env.STAGING_DATABASE_HOST ?? "");
+  assertStagingFixtureTarget(databaseUrl, process.env.STAGING_DATABASE_HOST ?? "", process.env.STAGING_IDENTITY_DATABASE ?? "", process.env.STAGING_IDENTITY_ROLE ?? "");
   const input: unknown = JSON.parse(await readFile(manifest, "utf8"));
-  const env = parseEnv({ ...process.env, AUTH_DATABASE_URL: databaseUrl, RUNTIME: "local", NODE_ENV: "production", LOG_LEVEL: "silent", BETTER_AUTH_URL: "https://staging.api.edayaplus.com", FIRST_PARTY_API_ORIGINS: "https://staging.api.edayaplus.com", REQUIRE_EMAIL_VERIFICATION: "true", EMAIL_TRANSPORT: "log" }, "local");
+  const env = parseEnv({ ...process.env, AUTH_DATABASE_URL: databaseUrl, RUNTIME: "local", NODE_ENV: "production", LOG_LEVEL: "silent", BETTER_AUTH_URL: process.env.API_ORIGIN, FIRST_PARTY_API_ORIGINS: process.env.API_ORIGIN, REQUIRE_EMAIL_VERIFICATION: "true", EMAIL_TRANSPORT: "log" }, "local");
   const sql = postgres(databaseUrl, { max: 1 });
   try {
     const count = await provisionFixtureAccounts(drizzle(sql), env, input);

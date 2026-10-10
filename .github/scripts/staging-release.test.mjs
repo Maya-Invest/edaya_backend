@@ -9,7 +9,8 @@ import { clientName, publicationStatus, candidatePublicationRecord } from "./cli
 import { recordClient } from "./record-client.mjs";
 import { reusableApks } from "./staging-apk-provenance.mjs";
 import { validateConfiguration, runPreflight, configurationPreflight } from "./staging-preflight.mjs";
-import { staging } from "./staging-target.mjs";
+import { staging as resources } from "./staging-target.mjs";
+const staging = { ...resources, account: "a".repeat(32), zoneName: "edayaplus.com", databaseHost: "stage.example", schoolDatabase: "neondb", identityDatabase: "edaya_identity", schoolRole: "school", identityRole: "edaya_identity" };
 const temps = [];
 const temporary = () => { const path = mkdtempSync(resolve(tmpdir(), "edaya-release-test-")); temps.push(path); return path; };
 afterEach(() => { for (const path of temps.splice(0)) rmSync(path, { recursive: true, force: true }); });
@@ -19,7 +20,7 @@ const saved = () => ({ schemaVersion: 3, candidate: candidate(), apks: { guardia
 const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 function environment() {
   const firebase = app => ({ project_info: { project_id: "fixture-project" }, client: [{ client_info: { android_client_info: { package_name: app === "guardian" ? "ca.mayainvest.edaya.guardian" : "ca.mayainvest.edaya.staff" } } }] });
-  return { RELEASE_TARGET: "staging", RESET_DATA: "false", VALIDATE_ONLY: "true", CLOUDFLARE_ACCOUNT_ID: staging.account, CLOUDFLARE_API_TOKEN: "private-token", IDENTITY_CHECKOUT_TOKEN: "private-checkout-token", STAGING_NEON_TARGET_CONFIRMED: staging.databaseHost,
+  return { RELEASE_TARGET: "staging", RESET_DATA: "false", VALIDATE_ONLY: "true", CLOUDFLARE_ACCOUNT_ID: staging.account, CLOUDFLARE_API_TOKEN: "private-token", IDENTITY_CHECKOUT_TOKEN: "private-checkout-token", STAGING_ZONE_NAME: staging.zoneName,
     STAGING_DATABASE_URL: `postgres://school:secret@${staging.databaseHost}/neondb?sslmode=require`, STAGING_AUTH_DATABASE_URL: `postgres://edaya_identity:secret@${staging.databaseHost}/edaya_identity?sslmode=require`,
     STAGING_API_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", R2_ACCESS_KEY_ID: "key", R2_SECRET_ACCESS_KEY: "secret", FCM_SERVICE_ACCOUNT_JSON: JSON.stringify({ project_id: "fixture-project", client_email: "fixture@example.com", private_key: privateKey.export({ type: "pkcs8", format: "pem" }) }) }),
     STAGING_IDENTITY_SECRETS: JSON.stringify({ IDENTITY_DIRECTORY_SECRET: "shared-private", BETTER_AUTH_SECRET: "s".repeat(32), ACCOUNT_SECURITY_KEYS: JSON.stringify({ v1: Buffer.alloc(32, 1).toString("base64") }) }),
@@ -84,8 +85,8 @@ describe("single client publication", () => {
 });
 describe("read-only staging preflight", () => {
   test("valid payloads pass static validation", () => { expect(validateConfiguration(environment()).errors).toEqual([]); });
-  for (const field of ["CLOUDFLARE_API_TOKEN", "STAGING_AUTH_DATABASE_URL", "STAGING_NEON_TARGET_CONFIRMED", "ANDROID_SIGNING_BUNDLE", "IDENTITY_CHECKOUT_TOKEN"]) test(`missing ${field} fails without exposing values`, () => { const env = environment(); delete env[field]; const errors = validateConfiguration(env).errors.join("\n"); expect(errors).toContain(field); expect(errors).not.toContain("private-token"); expect(errors).not.toContain("secret@"); });
-  for (const url of [`postgres://edaya_identity:secret@other.neon.tech/edaya_identity?sslmode=require`, `postgres://edaya_identity:secret@${staging.databaseHost}/edaya_identity?sslmode=disable`, `postgres://school:secret@${staging.databaseHost}/neondb?sslmode=require`]) test(`rejects incorrect Identity target ${url.split('?')[1]}`, () => { expect(validateConfiguration({ ...environment(), STAGING_AUTH_DATABASE_URL: url }).errors).toContain("STAGING_AUTH_DATABASE_URL: invalid target, role, TLS or release options"); });
+  for (const field of ["CLOUDFLARE_API_TOKEN", "STAGING_AUTH_DATABASE_URL", "STAGING_ZONE_NAME", "CLOUDFLARE_ACCOUNT_ID", "ANDROID_SIGNING_BUNDLE", "IDENTITY_CHECKOUT_TOKEN"]) test(`missing ${field} fails without exposing values`, () => { const env = environment(); delete env[field]; const errors = validateConfiguration(env).errors.join("\n"); expect(errors).toContain(field); expect(errors).not.toContain("private-token"); expect(errors).not.toContain("secret@"); });
+  for (const url of [`postgres://edaya_identity:secret@other.neon.tech/edaya_identity?sslmode=require`, `postgres://edaya_identity:secret@${staging.databaseHost}/edaya_identity?sslmode=disable`, `postgres://school:secret@${staging.databaseHost}/neondb?sslmode=require`]) test(`rejects incorrect Identity target ${url.split('?')[1]}`, () => { expect(validateConfiguration({ ...environment(), STAGING_AUTH_DATABASE_URL: url }).errors).toContain("STAGING_DATABASE_URL / STAGING_AUTH_DATABASE_URL: invalid target, role, TLS or release options"); });
   test("invalid and mismatched secrets fail", () => {
     const env = environment(); env.STAGING_IDENTITY_SECRETS = JSON.stringify({ BETTER_AUTH_SECRET: "short", IDENTITY_DIRECTORY_SECRET: "different", ACCOUNT_SECURITY_KEYS: '{"v1":"bad"}', PHONE_AUTH_MODE: "live" });
     expect(validateConfiguration(env).combined?.IDENTITY_DIRECTORY_SECRET).toBeUndefined(); expect(validateConfiguration(env).errors.join("\n")).toContain("ACCOUNT_SECURITY_KEYS");
@@ -96,7 +97,7 @@ describe("read-only staging preflight", () => {
     const requests = [];
     const request = async (url, options) => {
       requests.push(options.method); let result = [];
-      if (url.includes("hyperdrive")) result = { origin: { host: staging.databaseHost, database: url.includes(staging.schoolHyperdrive) ? staging.schoolDatabase : staging.identityDatabase, user: "edaya_identity" }, caching: { disabled: true } };
+      if (url.includes("hyperdrive")) result = { origin: { host: staging.databaseHost, database: url.includes(staging.schoolHyperdrive) ? staging.schoolDatabase : staging.identityDatabase, user: url.includes(staging.schoolHyperdrive) ? staging.schoolRole : staging.identityRole }, caching: { disabled: true } };
       if (url.includes('/zones?')) result = [{ id: 'zone', name: staging.zoneName, status: 'active', account: { id: staging.account } }];
       if (url.endsWith("/settings")) result = { bindings: [] };
       if (url.includes("/queues?")) result = [{ queue_name: staging.queue }];
@@ -108,7 +109,7 @@ describe("read-only staging preflight", () => {
 });
 describe("validation cannot mutate staging", () => {
   test("direct publication and deployment fail before any operations", () => {
-    for (const script of ["publish-client.mjs", "staging-deploy.mjs"]) {
+    for (const script of ["publish-client.mjs", "staging-deploy.mjs", "staging-migrate.mjs"]) {
       const result = spawnSync("node", [resolve(import.meta.dir, script)], { env: { ...process.env, VALIDATE_ONLY: "true", RELEASE_ROOT: temporary() }, encoding: "utf8" });
       expect(result.status).toBe(1); expect(result.stderr).toContain("VALIDATE_ONLY forbids publication, deployment and live data changes");
     }
@@ -117,7 +118,13 @@ describe("validation cannot mutate staging", () => {
   test("workflow forwards validation and gates every publication and live deployment step", () => {
     const workflow = readFileSync(resolve(import.meta.dir, "../workflows/release-staging.yml"), "utf8");
     expect(workflow.match(/validate_only:/g)).toHaveLength(2);
-    for (const name of ["Publish or reuse matching API client", "Deploy, bootstrap, smoke-test, and observe staging"]) expect(workflow).toContain(`- name: ${name}\n        if: \${{ !inputs.validate_only }}`);
+    for (const step of workflow.split("      - name: ").slice(1)) {
+      if (/run: node edaya_backend\/\.github\/scripts\/(publish-client|staging-deploy|staging-migrate)\.mjs/.test(step))
+        expect(step).toContain("!inputs.validate_only");
+    }
+    expect(workflow.indexOf("staging-deploy.mjs prepare")).toBeLessThan(workflow.indexOf("staging-migrate.mjs"));
+    expect(workflow.indexOf("staging-migrate.mjs")).toBeLessThan(workflow.indexOf("staging-deploy.mjs finish"));
+    expect(workflow).toContain("staging-deploy.mjs recover");
     expect(readFileSync(resolve(import.meta.dir, "../workflows/deploy_push.yml"), "utf8")).toContain("validate_only: ${{ inputs.validate_only }}");
     const dispatch = Bun.YAML.parse(readFileSync(resolve(import.meta.dir, "../workflows/deploy_push.yml"), "utf8"));
     expect(dispatch.jobs["publish-api-client"].needs).toContain("qualification");
@@ -192,7 +199,7 @@ test('unclaimed Custom Domain is eligible while scheme and wildcard routes owned
       let result = [];
       if (url.includes('/zones?')) result = [{ id: 'zone', name: staging.zoneName, status: 'active', account: { id: staging.account } }];
       else if (url.includes('/workers/routes')) result = pattern ? [{ pattern, script: 'foreign-worker' }] : [];
-      else if (url.includes('/hyperdrive/configs/')) result = { origin: { host: staging.databaseHost, database: url.endsWith(staging.identityHyperdrive) ? staging.identityDatabase : staging.schoolDatabase, user: 'edaya_identity' }, caching: { disabled: true } };
+      else if (url.includes('/hyperdrive/configs/')) result = { origin: { host: staging.databaseHost, database: url.endsWith(staging.identityHyperdrive) ? staging.identityDatabase : staging.schoolDatabase, user: url.endsWith(staging.schoolHyperdrive) ? staging.schoolRole : staging.identityRole }, caching: { disabled: true } };
       else if (url.endsWith('/settings')) result = { bindings: [] };
       else if (url.includes('/queues?')) result = [{ queue_name: staging.queue }];
       return { ok: true, json: async () => url.includes('api.github.com') ? { permissions: { pull: true } } : { success: true, result } };

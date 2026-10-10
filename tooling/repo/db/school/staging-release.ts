@@ -1,30 +1,16 @@
 import process from 'node:process'
 import postgres from 'postgres'
-import { assertStagingMutationAllowed } from '../lib/staging-validation'
+import { assertStagingMutationAllowed, stagingDatabaseTarget } from '../lib/staging-validation'
 import { applySchoolMigrations } from './lib/apply-school-migrations'
 import { resetRemoteDatabase } from './lib/reset-remote-database'
 
 assertStagingMutationAllowed(process.env['STAGING_DATABASE_URL'] ?? '', process.env)
-const value = process.env['STAGING_DATABASE_URL'] ?? ''
-let url: URL
-try {
-  url = new URL(value)
-}
-catch {
-  throw new Error('Missing or invalid staging school database URL')
-}
-if (process.env['RELEASE_TARGET'] !== 'staging'
-  || !['true', 'false'].includes(process.env['RESET_DATA'] ?? '')
-  || !process.env['STAGING_DATABASE_HOST']
-  || url.hostname !== process.env['STAGING_DATABASE_HOST']
-  || url.hostname.includes('-pooler') || url.pathname !== '/neondb'
-  || !['postgres:', 'postgresql:'].includes(url.protocol)) {
-  throw new Error('Explicit direct staging school database and reset switch required')
-}
+const url = stagingDatabaseTarget('school', process.env)
+const value = url.toString()
 const sql = postgres(value, { max: 1 })
 try {
   const [database] = await sql`SELECT current_database() AS name`
-  if (database?.['name'] !== 'neondb') {
+  if (database?.['name'] !== decodeURIComponent(url.pathname.slice(1))) {
     throw new Error('Unexpected school database')
   }
 }

@@ -8,9 +8,9 @@ const env = parseEnv({ RUNTIME: "test", NODE_ENV: "test", LOG_LEVEL: "silent", A
 describe("administrative staging fixtures", () => {
   test("rejects production, shared databases, pooled and mismatched targets", () => {
     const target = "postgres://edaya_identity:password@ep-stage.neon.tech/edaya_identity";
-    expect(() => assertStagingFixtureTarget(target, "ep-stage.neon.tech")).not.toThrow();
+    expect(() => assertStagingFixtureTarget(target, "ep-stage.neon.tech", "edaya_identity", "edaya_identity")).not.toThrow();
     for (const url of [target.replace("ep-stage", "ep-prod"), target.replace("/edaya_identity", "/neondb"), target.replace("ep-stage", "ep-stage-pooler")]) {
-      expect(() => assertStagingFixtureTarget(url, "ep-stage.neon.tech")).toThrow();
+      expect(() => assertStagingFixtureTarget(url, "ep-stage.neon.tech", "edaya_identity", "edaya_identity")).toThrow();
     }
   });
   test("creates durable fixture Accounts without passwords and safely repeats", async () => {
