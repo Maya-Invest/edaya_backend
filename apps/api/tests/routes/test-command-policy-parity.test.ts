@@ -1,10 +1,9 @@
-import { ActorAssuranceLevel, AuthorizationError, AuthorizationErrorCode, createServiceStaffActorMetadata, createStaffActorMetadata, createSystemActorMetadata } from "@edaya/authorization";
+import { ActorAssuranceLevel, AuthorizationError, createServiceStaffActorMetadata, createStaffActorMetadata, createSystemActorMetadata } from "@edaya/authorization";
 import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, Announcement, AnnouncementStatus, AnnouncementTarget, AnnouncementTargetKind, MessageDelivery, MessageDeliveryStatus, Permission, School, StaffMember, StaffPermissionAssignment, SubjectMatter } from "@edaya/core";
 import { dispatchSchoolCommand } from "@edaya/service";
 import type { SchoolCommandKey } from "@edaya/service";
 import { expect, test } from "bun:test";
 import { coreCommands } from "@/lib/school-api/registry";
-import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import { hashInvitationToken } from "../../../../package/domain-service/src/capabilities/invitations/invitation-token";
 import { createNativePolicyApp } from "../support/native-policy-app";
 
@@ -18,9 +17,9 @@ const commands: Array<{ method: SchoolCommandKey; input: Record<string, unknown>
   { method: "acceptAccountInvitation", input: { token: "invitation-token", subjectId: "invited-person", contactValue: "invitee@example.com" } },
 ];
 
-test.each(["human", "service"] as const)("%s command caller receives the same decision through workflow, REST and GraphQL", async (kind) => {
+test.each(["human", "service"] as const)("%s command caller receives the same decision through workflow and REST", async (kind) => {
   const actor = kind === "human" ? createStaffActorMetadata(identity) : createServiceStaffActorMetadata(identity);
-  const { app, school, repositories } = await createNativePolicyApp(actor, { graphql: true });
+  const { app, school, repositories } = await createNativePolicyApp(actor);
   const ownerSchool = (await repositories.schools.findById("school-a"))!;
   await repositories.schools.save(new School({ ...ownerSchool.data, ownerSubjectId: "person-a" }));
   if (kind === "service") {
@@ -42,14 +41,6 @@ test.each(["human", "service"] as const)("%s command caller receives the same de
     else await direct;
     const rest = await app.request(`/core/commands/${config.publicName}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
     expect(rest.status).toBe(kind === "human" ? 403 : 200);
-    const graphql = await app.request("/graphql", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-      query: `mutation Check($input: ${getOpenApiSchemaName(config.requestSchema)}Input!) { ${method}(input: $input) { __typename } }`,
-      variables: { input },
-    }) });
-    const body = await graphql.json() as { errors?: Array<{ message?: string; extensions?: { code?: string } }>; data?: unknown };
-    if (kind === "human")
-      expect(body.errors?.[0]?.extensions?.code).toBe(AuthorizationErrorCode.Forbidden);
-    else expect(body.errors).toBeUndefined();
   }
   for (const id of ["delivery", "generic-new"]) {
     const input = { id, schoolId: "school-a", subjectId: "person-a", title: "Notice", body: "Body", status: MessageDeliveryStatus.Sent, sentAt: new Date().toISOString() };
@@ -62,16 +53,6 @@ test.each(["human", "service"] as const)("%s command caller receives the same de
     for (const [path, payload] of [["save", input], ["batch-save", { entities: [input] }]] as const) {
       const response = await app.request(`/core/entities/message-deliveries/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       expect(response.status).toBe(kind === "human" ? 403 : 200);
-    }
-    for (const query of [
-      "mutation Check($input: MessageDeliveryInput!) { saveMessageDelivery(input: $input) { id } }",
-      "mutation Check($input: MessageDeliveryInput!) { batchSaveMessageDelivery(entities: [$input]) { ids } }",
-    ]) {
-      const response = await app.request("/graphql", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, variables: { input } }) });
-      const body = await response.json() as { errors?: Array<{ extensions?: { code?: string } }> };
-      if (kind === "human")
-        expect(body.errors?.[0]?.extensions?.code).toBe(AuthorizationErrorCode.Forbidden);
-      else expect(body.errors).toBeUndefined();
     }
   }
   expect(Boolean(await repositories.messageDeliveries.findById("generic-new"))).toBe(kind === "service");

@@ -5,7 +5,7 @@ import { BusinessRuleViolationError, School } from '@edaya/core'
 import { schoolCommandScope } from '../../services/commands/school-command-scope'
 import { validateSchoolOwnership } from '../../services/entities/config/school/validate-school-ownership'
 
-/** Internal fixture admission only; never exposed as a school HTTP/GraphQL command. */
+/** Internal fixture admission only; never exposed as a school HTTP command. */
 export async function initializeFixtureSchoolOwner(base: BaseSchoolService, input: { schoolId: string, staffId: string, subjectId: string }): Promise<void> {
   for (const value of [input.schoolId, input.staffId, input.subjectId]) {
     if (typeof value !== 'string' || !value.trim() || value !== value.trim())

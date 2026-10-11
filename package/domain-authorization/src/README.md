@@ -57,7 +57,7 @@ Machine-only command decisions live in business policies. Subject/matter import 
 
 Invitation acceptance admits service accounts with permission-assignment authority and the verified `account-invitation-public` or fixture identities. Token, contact, status, expiry and ownership checks remain mandatory, including on retries. Provider delivery events admit authorized service accounts and the named webhook, notification adapter, reconciliation and fixture identities. Missing delivery IDs still require an admitted caller and action.
 
-REST and GraphQL only dispatch these commands. They contain no additional caller-kind policy or runtime authorization selector; direct workflows reach the same policies.
+REST routes only dispatch these commands. They contain no additional caller-kind policy or runtime authorization selector; direct workflows reach the same policies.
 
 Guardian linking requires `PARENT_UPDATE`, without borrowing student-detail read authority. Shared entity validation retains the student's same-school enrollment requirement for commands and direct saves.
 

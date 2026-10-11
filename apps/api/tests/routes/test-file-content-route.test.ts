@@ -38,14 +38,15 @@ describe("file content route", () => {
     expect((await repositories.attachments.findById(legacy.id))?.data).toEqual(legacy.data);
   });
   it("conceals purpose-restricted files even with school-wide attachment read permission", async () => {
-    const { app, repositories } = await createNativePolicyApp(undefined, { graphql: true });
+    const { app, repositories } = await createNativePolicyApp();
     await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: "purpose-read", schoolId: "school-a", staffId: "staff-a", academicYearId: "year-a", permission: Permission.ATTACHMENT_READ, scopes: [{ kind: "school" }] }));
     await repositories.attachments.save(new Attachment({ id: "restricted", schoolId: "school-a", ownerKind: AttachmentOwnerKind.Staff, ownerId: "staff-a", purpose: "fixture.private", fileName: "secret.pdf", fileUrl: "https://private.example/secret", mimeType: "application/pdf", sizeBytes: 100 }));
     const list = await app.request("/core/entities/attachments/list", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     expect(list.status).toBe(200);
     expect(await list.json() as unknown).toEqual([]);
-    const graph = await app.request("/graphql", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: "query { attachments { id } attachmentsCount { count } }" }) });
-    expect(await graph.json() as unknown).toEqual({ data: { attachments: [], attachmentsCount: { count: 0 } } });
+    const count = await app.request("/core/entities/attachments/count", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    expect(count.status).toBe(200);
+    expect(await count.json() as unknown).toEqual({ count: 0 });
     for (const suffix of ["content", "download-url"]) {
       const response = await app.request(`/core/files/restricted/${suffix}`, { redirect: "manual" });
       expect(response.status).toBe(404);

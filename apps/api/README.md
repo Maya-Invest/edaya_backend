@@ -26,15 +26,7 @@ Production worker profile: deploy only (`bun run deploy:production` from `apps/a
 
 OpenAPI reference (Core + Better Auth): http://localhost:9999/reference
 
-GraphiQL (local entity queries): http://localhost:9999/graphiql — requires an authenticated Better Auth session cookie.
-
-### GraphiQL auth
-
-GraphQL uses the same auth as REST (`actor` from Better Auth session or `Authorization: Bearer` service account key).
-
-1. **Sign in on the GraphiQL page** — use the email/password form at http://localhost:9999/graphiql (`POST /graphiql/login`, dev-only wrapper around Better Auth).
-2. **Session cookie** — sign in via the webapp (http://localhost:5173), then open GraphiQL.
-3. **Service account** — set `GRAPHQL_DEV_API_KEY` in `apps/api/.env` to the school profile `seedingApiKey` from `@edaya/fixtures` for auto-injected Bearer auth locally, or add it manually in GraphiQL's **Headers** panel.
+School queries and commands use REST under `/core`, documented in the OpenAPI reference. Authenticate with a school access token or a service-account Bearer key.
 
 Default dev credentials (after `bun repo seed --scope auth:link`): `c.moreau@school.edu` / `DevPassword1!` (director staff). Guardian example: `c.dubois@mail.com`.
 

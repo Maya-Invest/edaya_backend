@@ -10,6 +10,11 @@ afterEach(() => {
 })
 
 describe('API configuration ownership', () => {
+  test('rejects retired GraphQL settings and development credentials', () => {
+    for (const key of ['ENABLE_GRAPHQL', 'GRAPHQL_GRAPHIQL', 'GRAPHIQL_WEBAPP_ORIGIN', 'GRAPHIQL_DEFAULT_EMAIL'])
+      expect(() => validateConfig({ [key]: 'true' })).toThrow()
+    expect(() => validateSecrets({ GRAPHQL_DEV_API_KEY: 'retired-key' })).toThrow('unknown')
+  })
   test('reads commented string values and rejects malformed JSON, duplicates, and nonstrings', () => {
     expect(validateConfig(parseJsonc('{ // comment\n"PORT": "9999", }'))).toEqual({ PORT: '9999' })
     expect(() => parseJsonc('{"PORT": "1", "PORT": "2"}')).toThrow('duplicate')

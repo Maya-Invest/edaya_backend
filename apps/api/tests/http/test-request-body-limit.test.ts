@@ -13,7 +13,7 @@ const env = parseEnv({
 });
 
 describe("public request bounds", () => {
-  for (const path of ["/core/commands/register-attachment", "/graphql"]) {
+  for (const path of ["/core/commands/register-attachment", "/core/entities/students/list"]) {
     it(`rejects oversized ${path} input before dependency or command execution`, async () => {
       const response = await createApp().fetch(new Request(`http://localhost:9999${path}`, {
         method: "POST",

@@ -15,7 +15,6 @@ export const EnvSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DATABASE_URL: z.string(),
   REQUIRE_PRIVILEGED_TOTP: envBooleanSchema.optional(),
-  ENABLE_GRAPHQL: envBooleanSchema.optional(),
   RUN_MIGRATIONS_ON_STARTUP: envBooleanSchema.optional(),
   API_ORIGIN: z.string().url().default("http://localhost:9999"),
   LOCAL_OTP_CAPTURE: envBooleanSchema.default(false),

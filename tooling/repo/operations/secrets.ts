@@ -13,7 +13,7 @@ export async function operateSecrets(
   let payload: Record<string, string | null> = {}
   if (parsed.action === 'push') {
     payload = readSecrets(resolve(root, parsed.target === 'production' ? 'secrets.prod.json' : 'secrets.staging.json'))
-    const localOnly = ['DATABASE_URL', 'AUTH_DATABASE_URL', 'LOCAL_FILES_SECRET', 'GRAPHQL_DEV_API_KEY', 'CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE', 'CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH']
+    const localOnly = ['DATABASE_URL', 'AUTH_DATABASE_URL', 'LOCAL_FILES_SECRET', 'CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE', 'CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH']
     if (Object.keys(payload).some(key => localOnly.includes(key)))
       throw new Error('Local database/file credentials cannot be uploaded to the Worker')
     if (!Object.keys(payload).length)

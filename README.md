@@ -105,7 +105,6 @@ flowchart TB
 - `apps/api/src/routes/` — OpenAPI route modules (thin HTTP surface)
 - `apps/api/src/lib/school-api/` — registry, schemas, dispatch, entity handlers
 - `apps/api/src/routes/onboarding.routes.ts` — thin HTTP for school registration; orchestration lives in `@edaya/service` (`capabilities/onboarding`)
-- `apps/api/src/lib/graphql/` — **supported second contract** (`POST /graphql`) derived from the same registry as REST. The typed client (`@maya-invest/edaya-api-client`) is REST-only; web/mobile production callers use REST. Vite proxies `/graphql` and `/graphiql` for local exploration.
 - `apps/api/src/cron/` — scheduled cron + queue consumer
 - `apps/api/src/runtime/` — database, auth, Worker bindings, Hyperdrive, runtime registry
 - `apps/api/src/http/` — Hono app, dependency injection middleware

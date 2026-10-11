@@ -44,7 +44,6 @@ cd edaya_frontend && bun --filter @edaya/webapp dev
 | School API | http://localhost:9999 |
 | Account authentication | http://localhost:9999 |
 | OpenAPI reference | http://localhost:9999/reference |
-| GraphiQL (entity API) | http://localhost:9999/graphiql |
 
 ## How the webapp reaches the API
 
@@ -162,7 +161,7 @@ bun repo seed    # terminal 2
 3. Seed access roles, provision the seeding service account with the school profile API key
 4. Load demo school data through `/core/*` routes
 
-**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/fixtures` — no `.env` API key required. For GraphiQL Bearer auto-injection, set `GRAPHQL_DEV_API_KEY` to the same profile key.
+**Credentials:** seeding uses the `seedingApiKey` from the school profile in `@edaya/fixtures` — no `.env` API key required.
 
 | Command | Purpose |
 |---------|---------|

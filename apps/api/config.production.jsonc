@@ -2,7 +2,7 @@
 // Worker application settings. Credentials belong in secrets files.
 // Apply explicitly: bun repo vars push production
   // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
-  // AUTH_PROVIDER_GENERATION, ENABLE_GRAPHQL; use string values "true" / "false".
+  // AUTH_PROVIDER_GENERATION. Boolean settings use string values "true" / "false".
   // Phone auth stays disabled until all provider settings AND secrets are configured.
   // SMS requires sms_routes plus AFRICAS_TALKING_USERNAME and API key.
   // Optional sender ID must be registered; qualify default-sender delivery before enabling.
