@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { loadConfiguration } from '../../../../../apps/api/configuration/index.mjs'
+import { loadConfiguration } from '../../../../../apps/api/configuration/index.ts'
 
 export function resolveIdentityMigrationTarget(args: readonly string[], source: Record<string, string | undefined>, root: string): { databaseUrl: string, label: string } {
   if (args.length !== 1 || (args.length && !['local', 'staging', 'production'].includes(args[0]!)))

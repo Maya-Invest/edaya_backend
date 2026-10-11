@@ -3,7 +3,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
-import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.ts'
 import { resolveRepoRoot } from './resolve-repo-root'
 
 function loadEnvFile(envFile: string, override = false): void {

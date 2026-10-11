@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.ts'
+import { redact } from '../ops/runtime'
+import { Services } from '../ops/services'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 const apiRoot = resolve(repoRoot, 'apps/api')
@@ -11,39 +13,14 @@ process.env.LOCAL_OTP_CAPTURE ??= 'true'
 
 console.log(`API and authentication on :${process.env.PORT}, local files on :${process.env.LOCAL_FILES_PORT}. OTP capture: ${process.env.LOCAL_OTP_CAPTURE}.`)
 
-const children = [
-  Bun.spawn(['bun', '--no-env-file', '--watch', 'src/entries/local.ts'], {
-    cwd: apiRoot,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-    env: process.env,
-  }),
-  Bun.spawn(['bun', '--no-env-file', '--watch', 'tooling/repo/dev/local-files.ts'], {
-    cwd: repoRoot,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-    env: process.env,
-  }),
-]
-
-let stopping: Promise<void> | undefined
-function shutdown(): Promise<void> {
-  return stopping ??= (async () => {
-    for (const child of children) child.kill('SIGTERM')
-    await Promise.race([Promise.all(children.map(child => child.exited)), new Promise(done => setTimeout(done, 3000))])
-    for (const child of children) {
-      if (child.exitCode === null)
-        child.kill('SIGKILL')
-    }
-  })()
+const services = new Services(true)
+try {
+  services.start('API', ['bun', '--no-env-file', '--watch', 'src/entries/local.ts'], apiRoot, process.env)
+  services.start('Local files', ['bun', '--no-env-file', '--watch', 'tooling/repo/dev/local-files.ts'], repoRoot, process.env)
+  await services.wait()
 }
-for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.once(signal, () => {
-    void shutdown().then(() => process.exit(signal === 'SIGINT' ? 130 : 143))
-  })
+catch (error) {
+  console.error(redact(error instanceof Error ? error.message : 'Local service failed'))
+  process.exitCode = 1
 }
-const exitCode = await Promise.race(children.map(child => child.exited))
-await shutdown()
-process.exit(exitCode)
+finally { await services.stop('local-services.json') }

@@ -10,4 +10,4 @@ Only `@maya-invest/edaya-api-client` is published. Its generated `auth` namespac
 
 Staging advertises phone verification unavailable. Failed availability discovery also yields email-only forms. Email OTP, authenticators, recovery and email account linking remain available. OTP capture is enabled in local development and isolated tests, never in Workers.
 
-Run `bun repo dev` for the API and local files. It captures OTPs using persistent local data; isolated CI fixtures use an internal testing entrypoint. Account migrations and guarded wipes remain in `tooling/repo/db/identity`; school migrations remain in `tooling/repo/db/school`. See [staging-release.md](staging-release.md) for validation and the later rollout boundary.
+Run `bun run repo dev` for the API and local files. It captures OTPs using persistent local data; isolated CI fixtures use an internal testing entrypoint. Account migrations and guarded wipes remain in `tooling/repo/db/identity`; school migrations remain in `tooling/repo/db/school`. See [staging-release.md](staging-release.md) for validation and the later rollout boundary.

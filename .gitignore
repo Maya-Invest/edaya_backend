@@ -70,3 +70,10 @@ __pycache__/
 /package/adaptor-postgres/.migration-baseline-*
 
 .local-state/
+
+# Prepared clients, isolated checkouts, and release evidence
+.generated/
+.ci/
+.release/
+.ci-evidence/
+.cache/repo-tools/

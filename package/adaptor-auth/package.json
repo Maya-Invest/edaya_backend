@@ -18,13 +18,13 @@
     }
   },
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "auth:generate-schema": "bunx auth@1.7.3 generate --config ./src/cli/auth-config.ts --output ./generated-provider-schema.ts --yes",
     "auth:db:generate": "drizzle-kit generate --config drizzle.auth.config.ts",
     "auth:db:push": "drizzle-kit push --config drizzle.auth.config.ts",
-    "lint": "eslint src drizzle.auth.config.ts",
-    "lint:fix": "eslint src drizzle.auth.config.ts --fix",
+    "lint": "bun x --bun eslint src drizzle.auth.config.ts",
+    "lint:fix": "bun x --bun eslint src drizzle.auth.config.ts --fix",
     "test": "bun test"
   },
   "dependencies": {

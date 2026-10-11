@@ -1,9 +1,9 @@
-import type { Binding } from '../operations/worker-vars.mjs'
+import type { Binding } from '../operations/worker-vars.ts'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'bun:test'
-import { localOperations } from '../../../apps/api/configuration/local-operations.mjs'
+import { localOperations } from '../../../apps/api/configuration/local-operations.ts'
 import { beginStagingSeed, withSeedPause } from '../operations/seed'
 
 test('local seed excludes concurrent runs, drains active work, and preserves previous controls', async () => {

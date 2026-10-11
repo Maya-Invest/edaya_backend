@@ -24,7 +24,7 @@ Source audit: `../../../audits/edaya-backend-2026-09-22/REPORT.md` in the parent
 
 Implementation is in the working tree across backend, `edaya_frontend`, and `edaya_mobile`. Checked milestones have implementation and local automated evidence. M7 remains open for coordinated deployment and live acceptance; the program is not release-approved yet. Current contracts and rollout prerequisites are documented in [marks approval and release](../reference/marks-approval-and-release.md). The [deployment acceptance checklist](backend-release-acceptance.md) records the remaining environment journeys.
 
-The current release is identified by `release-contract.json`. Updated implementation and verification evidence for the replacement correction workflow are recorded in [submitted marks corrections](submitted-marks-corrections.md). The ledger below preserves the earlier remediation baseline and is not evidence for subsequent changes.
+Historical synchronized releases used `release-contract.json`; current releases use independent qualification evidence in `.release/manifest.json`. Updated implementation and verification evidence for the replacement correction workflow are recorded in [submitted marks corrections](submitted-marks-corrections.md). The ledger below preserves the earlier remediation baseline and is not evidence for subsequent changes.
 
 ## Finding traceability
 

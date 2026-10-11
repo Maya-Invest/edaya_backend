@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'bun:test'
-import { parseJsonc } from '../../../apps/api/configuration/index.mjs'
+import { parseJsonc } from '../../../apps/api/configuration/index.ts'
 import { findWorkerParityViolations } from '../lib/worker-parity'
 
 const fixture = () => parseJsonc(readFileSync(new URL('../../../apps/api/wrangler.jsonc', import.meta.url), 'utf8')) as any

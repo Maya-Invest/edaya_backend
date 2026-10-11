@@ -12,13 +12,12 @@ const HYGIENE_STEPS: VerifyStep[] = [
   { label: 'command documentation', run: () => runRepoCommand(['bun', 'tooling/repo/cli/command-docs.ts', '--check']) },
   { label: 'repo doctor', run: () => runBunScript(paths.doctor) },
   { label: 'repo check openapi', run: () => runBunScript(paths.openapiCheck) },
-  { label: 'release contract', run: () => runRepoCommand(['python3', 'scripts/release-contract.py', '--role', 'backend']) },
   { label: 'repo check boundaries', run: () => runBunScript(paths.checkBoundaries) },
   { label: 'repo check test-naming', run: () => runBunScript(paths.checkTestNaming) },
 ]
 
 export const CI_COMMANDS: readonly (readonly string[])[] = [
-  ['bash', '.github/scripts/lint-workflows.sh'],
+  ['bun', 'run', 'repo', 'ci', 'workflows'],
   ['bun', 'run', 'verify'],
   ['bun', '--filter', '@edaya/api', 'deploy:staging:dry-run'],
   ['bun', '--filter', '@edaya/api', 'deploy:production:dry-run'],
@@ -26,7 +25,7 @@ export const CI_COMMANDS: readonly (readonly string[])[] = [
 const CI_STEPS: VerifyStep[] = CI_COMMANDS.map(command => ({ label: command.join(' '), run: () => runRepoCommand(command) }))
 const FULL_STEPS: VerifyStep[] = [
   ...CI_STEPS,
-  { label: 'full backend integration', run: () => runRepoCommand(['bash', '.github/scripts/run-backend-integration.sh']) },
+  { label: 'full backend integration', run: () => runRepoCommand(['bun', 'tooling/repo/ops/main.ts', 'test', 'integration']) },
 ]
 
 async function runSteps(steps: readonly VerifyStep[]): Promise<number> {

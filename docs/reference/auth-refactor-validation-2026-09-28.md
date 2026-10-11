@@ -6,7 +6,7 @@ The implementation does **not** yet have an all-green validation result. All thr
 
 Tested the current uncommitted implementation over backend `406d4977`, frontend `4d7694c`, and mobile `531d8e7`. These results describe those working trees, not just the commits.
 
-Runs used fresh, disposable local Postgres databases, the real local identity and school applications, a local files service, Chromium, and Flutter's widget-test runtime. Frontend browser tests used Vite. Notification transports were local logs; the test-only OTP lookup supplied codes. No production or staging database was changed, and no real email, Telegram, or WhatsApp delivery was exercised. The shared stack was seeded with `bun repo seed --skip-profile-photos --skip-attachments`.
+Runs used fresh, disposable local Postgres databases, the real local identity and school applications, a local files service, Chromium, and Flutter's widget-test runtime. Frontend browser tests used Vite. Notification transports were local logs; the test-only OTP lookup supplied codes. No production or staging database was changed, and no real email, Telegram, or WhatsApp delivery was exercised. The shared stack was seeded with `bun run repo maintenance seed --skip-profile-photos --skip-attachments`.
 
 The shared stack used `REQUIRE_PRIVILEGED_TOTP=false`; these browser and mobile journeys therefore do not establish production owner MFA enforcement. This run is automated local-suite validation, not deployed-environment or real-provider acceptance testing.
 

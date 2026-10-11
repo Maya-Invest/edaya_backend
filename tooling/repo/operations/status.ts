@@ -1,6 +1,6 @@
-import type { readWorkerState } from './worker-vars.mjs'
+import type { Binding } from './worker-vars.ts'
 
-export function formatWorkerStatus(worker: string, state: Awaited<ReturnType<typeof readWorkerState>>): string {
+export function formatWorkerStatus(worker: string, state: { deployments: { deployments: { versions: { version_id: string, percentage: number }[] }[] }, versions: { items: { id: string }[] }, bindings: Binding[] }): string {
   const lines = [`Worker: ${worker}`]
   for (const version of state.deployments.deployments[0]?.versions ?? []) lines.push(`  version ${version.version_id}: ${version.percentage}%`)
   for (const key of ['PAUSE_API', 'PAUSE_SCHEDULER', 'PAUSE_JOBS']) {

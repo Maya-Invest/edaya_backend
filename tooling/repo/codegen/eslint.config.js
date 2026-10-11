@@ -1,3 +1,4 @@
+import { importOrder } from '../eslint-imports.js'
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
@@ -11,6 +12,7 @@ export default antfu({
   },
   ignores: ['**/node_modules/*', 'tests/fixtures/**'],
   rules: {
+    'perfectionist/sort-imports': importOrder,
     'perfectionist/sort-imports': 'off',
     'perfectionist/sort-exports': 'off',
     'perfectionist/sort-named-imports': 'off',

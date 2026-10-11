@@ -1,4 +1,4 @@
-import { localOperations } from "../../configuration/local-operations.mjs";
+import { localOperations } from "../../configuration/local-operations.ts";
 import { maintenanceResponse } from "@/operational-controls";
 import { createCapturedIdentity } from "@/identity/local/capture";
 import { createOtpDelivery } from "@/identity/otp-delivery";

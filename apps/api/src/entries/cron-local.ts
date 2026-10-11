@@ -1,4 +1,4 @@
-import { localOperations } from "../../configuration/local-operations.mjs";
+import { localOperations } from "../../configuration/local-operations.ts";
 import { loadLocalProcessEnv } from "@/runtime";
 import { buildLocalApiRuntime } from "@/runtime/local/build-runtime";
 import {

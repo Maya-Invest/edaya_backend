@@ -1,5 +1,5 @@
 /* eslint-disable node/no-process-env */
-import { loadLocalConfiguration } from "../../../../configuration/index.mjs";
+import { loadLocalConfiguration } from "../../../../configuration/index.ts";
 import { parseRuntimeEnv } from "@/runtime/shared/env/schema";
 import type { Environment } from "@/runtime/shared/env/schema";
 import {

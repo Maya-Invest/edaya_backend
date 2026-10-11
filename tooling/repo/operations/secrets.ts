@@ -1,8 +1,8 @@
 import type { ParsedOperation } from '../cli/parse-operations-cli'
-import type { WorkerCredentials } from './worker-vars.mjs'
+import type { WorkerCredentials } from './worker-vars.ts'
 import { resolve } from 'node:path'
-import { apiRoot, readSecrets } from '../../../apps/api/configuration/index.mjs'
-import { readWorkerState } from './worker-vars.mjs'
+import { apiRoot, readSecrets } from '../../../apps/api/configuration/index.ts'
+import { readWorkerState } from './worker-vars.ts'
 
 export async function operateSecrets(
   parsed: ParsedOperation,
@@ -28,7 +28,7 @@ export async function operateSecrets(
   if (parsed.action === 'list')
     return { names: state.bindings.filter(b => b.type === 'secret_text').map(b => b.name).sort(), applied: false }
   const active = state.deployments.deployments[0]?.versions
-  if (active?.length !== 1 || active[0].percentage !== 100 || state.versions.items[0]?.id !== active[0].version_id)
+  if (active?.length !== 1 || active[0]!.percentage !== 100 || state.versions.items[0]?.id !== active[0]!.version_id)
     throw new Error('Resolve pending or multi-version deployments before changing secrets')
   for (const name of Object.keys(payload)) {
     const existing = state.bindings.find(b => b.name === name)

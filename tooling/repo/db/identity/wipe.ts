@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { config } from 'dotenv'
 import postgres from 'postgres'
-import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../../apps/api/configuration/index.ts'
 import { assertStagingIdentityDatabaseUrl, isLocalAuthDatabaseUrl } from './lib/assert-identity-wipe-allowed'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')

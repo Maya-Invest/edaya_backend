@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { selectedVariables, updateWorkerVariables, workerTarget } from '../../operations/worker-vars.mjs'
+import { selectedVariables, updateWorkerVariables, workerTarget } from '../../operations/worker-vars.ts'
 import { parseVarsCliArgs, varsCliUsage } from '../parse-vars-cli'
 
 export async function dispatchVarsCommand(args: readonly string[]): Promise<number> {

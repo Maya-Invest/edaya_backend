@@ -4,15 +4,15 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "test:integration": "bun run test:integration:api && bun run test:integration:http",
     "test:integration:api": "bun test src/services src/runtime src/adaptor src/staging --parallel=1",
     "test:integration:http": "bun test src/auth src/routes --parallel=1",
     "test:integration:seed": "bun src/native/run.ts --seed",
     "test:integration:native": "bun src/native/run.ts",
-    "lint": "eslint src smoke",
-    "lint:fix": "eslint src smoke --fix"
+    "lint": "bun x --bun eslint src smoke",
+    "lint:fix": "bun x --bun eslint src smoke --fix"
   },
   "devDependencies": {
     "@edaya/adaptor-notify": "workspace:*",

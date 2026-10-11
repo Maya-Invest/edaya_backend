@@ -1,116 +1,48 @@
 # Repository commands
 
-`bun repo` is the backend development/operations interface. Root `bun run` scripts run workspace quality and integration tasks. Package scripts remain available for focused iteration. Deployment workflows remain separate: staging owns reset/seeding/qualification; production owns its migration/deployment process.
 
-## Command reference
+## Backend commands
 
-This table and top-level help come from `tooling/repo/cli/catalog.ts`. Unsupported arguments fail before the operation. `bun repo <command> --help` is non-mutating and does not require credentials or running services.
+```sh
+bun install --frozen-lockfile
+bun run repo check
+bun run repo test tooling
+bun run repo ci verify
+bun run repo test integration
+bun run repo build staging
+bun run repo ci qualify staging
+```
+
+`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then schema compatibility and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
+
+Compatibility uses checksum-pinned oasdiff 1.11.7. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment. With no successful history, `tooling/repo/fixtures/compatibility/bootstrap.json` is the initial existing-contract snapshot to review. Behavioral API/authentication regression suites remain mandatory independently of schema generation. Successfully generating a new client is not a compatibility test for installed clients.
+
+## Cloudflare and migrations
+
+Configure environment secrets `CLOUDFLARE_API_TOKEN`, `STAGING_DATABASE_URL`, `STAGING_AUTH_DATABASE_URL`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_AUTH_DATABASE_URL` as applicable, and environment variable `CLOUDFLARE_ACCOUNT_ID`. The deployment job explicitly migrates identity and school databases before deploying the verified Worker bundle. Normal deployment never resets or seeds.
+
+For an emergency use `bun run repo maintenance emergency-deploy staging --dry-run`, then an explicit `--yes` to apply. It creates build evidence and uploads that build without implicit migrations/reset. This is an emergency bypass of ordinary qualification and is marked in its evidence.
+
+## Separate staging maintenance
+
+The **Staging maintenance** workflow shares the staging deployment concurrency group. Its default is a read-only dry run. Applying reset/reseed or recovery requires typing `STAGING MAINTENANCE` and turning dry run off. It requires dedicated staging DB roles, direct TLS connections, and deployed Hyperdrive bindings matching the configured targets.
+
+Configure non-secret environment variables `STAGING_DATABASE_HOST`, `STAGING_SCHOOL_DATABASE`, `STAGING_IDENTITY_DATABASE`, `STAGING_IDENTITY_ROLE`, plus the staging database/Cloudflare credentials. Seed authentication uses the existing seed configuration. Queue edit and Worker settings permissions are required for maintenance only.
+
+Reset/reseed pauses API, scheduler, jobs and queue delivery, drains work, checks HTTP maintenance state, resets the two staging databases while preserving signing keys, seeds, then restores owned controls. Failure retains the pause. Inspect sanitized maintenance evidence and `bun run repo maintenance status staging` before requesting the explicit recovery operation. Recovery resumes paused controls; it does not retry reset or seed. Settings operations performed outside Actions must also be serialized by the operator.
 
 <!-- repo-commands:start -->
 
-| Command | Behavior |
-| --- | --- |
-| `dev` | Start local API/auth and file service with persistent data and OTP capture enabled. |
-| `seed [clean] [--staging] [--scope NAME] [--clean] [--yes] [--repair] [--skip-profile-photos] [--skip-attachments] [--no-progress]` | Seed local/staging data with background work paused. clean deletes data; --clean prompts unless --yes. Scopes: all, school, auth, auth:link, access, profile-pictures, service-account, validate, doctor. |
-| `db migrate <school\|identity> <local\|staging\|production>`<br>`db reset school <staging\|production> [--yes]`<br>`db wipe identity <local\|staging> [--yes]`<br>`db generate`<br>`db flatten [--yes]`<br>`db browser school` | Migrate schemas, reset school schemas, wipe Account data, generate migrations, replace migration history, or browse local school data. |
-| `check <openapi\|boundaries\|test-naming\|commands>` | Read-only artifact, import, test-name and generated command-documentation checks. |
-| `doctor` | Check configuration ownership, Worker parity, environment files and repository layout. |
-| `verify [--ci\|--full]` | Default: repository hygiene. --ci: workflow lint, quality/build/unit checks and both Worker builds. --full: --ci plus all backend integrations (requires pg_config). |
-| `smoke api staging`<br>`smoke notify local`<br>`smoke r2 staging [--curl-only]` | Explicit live checks: API exercises staging; notify creates/publishes an announcement; R2 uploads, checks and deletes an object. --curl-only prints a short-lived signed upload command without uploading. |
-| `vars push <staging\|production> [--dry-run] [--replace-secret NAME]...`<br>`vars delete <staging\|production> NAME [--dry-run]` | Merge config or explicitly delete variables; preserves secrets and resource bindings. Requires Cloudflare account/token. |
-| `secrets push <staging\|production> [--dry-run]`<br>`secrets list <staging\|production>`<br>`secrets delete <staging\|production> NAME [--dry-run]` | Validate and upload the selected private secrets JSON, list names, or delete one secret. Never displays values. Requires Cloudflare account/token. |
-| `pause <api\|scheduler\|jobs\|all> <local\|staging\|production> [--dry-run]` | Enable only the selected pause controls through a settings-only update. |
-| `resume <api\|scheduler\|jobs\|all> <local\|staging\|production> [--dry-run]` | Disable only the selected pause controls through a settings-only update. |
-| `status <local\|staging\|production>` | Read local pause controls or Worker deployment versions and controls; no configuration or credential values are printed. |
-| `deploy <staging\|production> [--dry-run]` | Code-only Worker deployment; --dry-run builds without deploying. Does not migrate, seed, apply config, or coordinate a release. |
-| `openapi export [--output PATH]`<br>`openapi generate` | Export the OpenAPI fixture, or export and regenerate repository client artifacts. |
-| `codegen <generate\|check> --input <file\|url> [--client-dir PATH] [--schema-out PATH] [--bindings-out PATH] [--client-out PATH] [--openapi-out PATH] [--repo-root PATH] [--runtime-version VERSION] [--header "Name: value"]` | Low-level client generation or drift checking. Detailed option combinations: bun repo codegen --help. |
+```text
+Usage: bun run repo <command>
+
+check         Repository hygiene, workflow lint, generated contract checks and type checks.
+test          unit | integration | tooling
+build         staging | production (build immutable release artifacts without deployment)
+generate      openapi | openapi-export | codegen | templates | commands
+dev           Start local API and file services.
+maintenance   db | seed | vars | secrets | pause | resume | status | smoke | reset-staging | emergency-deploy
+ci            verify | qualify | fixture | migrate | deploy | resolve | workflows
+```
 
 <!-- repo-commands:end -->
-
-## Development and databases
-
-```sh
-bun repo dev
-bun repo seed
-bun repo seed --staging --scope school
-bun repo seed clean --yes
-bun repo seed --staging --clean --yes
-bun repo db migrate school local
-bun repo db migrate identity staging
-bun repo db wipe identity local --yes
-bun repo db reset school staging --yes
-```
-
-School reset drops and recreates school/notification schemas. Seed cleanup removes local school files or truncates staging school data, retaining schema. Identity wipe is separate and has no production target. Stop the local API before wiping its database. `--clean` now prompts like `clean`; non-interactive invocations require `--yes`, and cancellation stops seeding.
-
-Identity migration targets are explicit: local reads API local configuration/secrets, staging uses `STAGING_AUTH_DATABASE_URL`, production uses `PRODUCTION_AUTH_DATABASE_URL`. Removed aliases and implicit targets now fail with usage guidance; only the canonical forms above are supported.
-
-`db flatten` changes tracked migration history, not database state. It prompts unless `--yes`, generates in a temporary directory, validates the result, then replaces the old directory while retaining a private-to-the-checkout ignored backup. Generation failure leaves original migrations unchanged. Review before committing; do not reset a production database merely because a baseline was generated.
-
-Local application settings come from `apps/api/config.local.jsonc`, credentials from `apps/api/.env`. Root `.env` supplies repository/remote tooling credentials. See [configuration ownership](api-configuration.md).
-
-## Verification levels
-
-| Entry point | Checks |
-| --- | --- |
-| `bun repo verify` | Command docs, repository doctor, OpenAPI drift, release contract, import boundaries, test naming |
-| `bun run verify` | CI-script tests, hygiene, quality, client build, unit tests |
-| `bun repo verify --ci` | Workflow/shell lint, root verification, staging and production Worker dry-run builds |
-| `bun repo verify --full` | Everything in `--ci`, then service/HTTP, seed, and native PostgreSQL integration |
-
-The CI verification job calls `bun repo verify --ci`; local full verification uses the same steps plus `.github/scripts/run-backend-integration.sh`. Native integration requires `pg_config`, `initdb`, and `pg_ctl`. Workflow lint may download the pinned validator on first use. Worker dry runs upload no code.
-
-Root workspace commands are `build`, `quality`, `check`, `lint`, `lint:fix`, `test`, and `test:coverage`. Integration commands are `test:integration`, `test:integration:api`, `test:integration:http`, `test:integration:seed`, and `test:integration:native`; the default integration command includes API and HTTP only. Use `bun --filter <package> <script>` for package-scoped iteration.
-
-## Operations
-
-```sh
-bun repo deploy production --dry-run
-bun repo vars push staging --dry-run
-bun repo secrets push staging --dry-run
-bun repo status staging
-bun repo pause scheduler staging --dry-run
-bun repo pause all staging
-bun repo resume api staging
-bun repo smoke api staging
-bun repo smoke notify local
-bun repo smoke r2 staging
-```
-
-Code deployment preserves remote variables and does not apply configuration, run migrations, seed data, or perform a coordinated release. Use the staging release workflow when those steps are required.
-
-Secrets push chooses `apps/api/secrets.staging.json` or `apps/api/secrets.prod.json`. Its dry-run validates the file and prints names only, without Cloudflare calls. Remote operations require `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Push merges supplied secrets; delete is explicit and rejects non-secret bindings. Secret values travel to Wrangler through stdin, not command arguments. Read-back checks confirm binding presence/type, not secret values (Cloudflare does not reveal them).
-
-Pause/resume changes only the selected remote control: API → `PAUSE_API`, scheduler → `PAUSE_SCHEDULER`, jobs → `PAUSE_JOBS`, all → all three. Status reports active version traffic and these controls only. It does not print arbitrary settings or credentials. A later full `vars push` reapplies tracked flag values; do not overlap configuration pushes with releases or maintenance.
-
-Smoke checks have real effects. API smoke exercises deployed staging; notification smoke creates/publishes local test announcements and can deliver through configured providers; R2 smoke performs PUT/HEAD/DELETE. Only API/staging, notify/local and R2/staging are supported. R2's `--curl-only` emits a short-lived signed URL without uploading; treat that output as a credential.
-
-## Generated API artifacts
-
-`openapi export [--output PATH]` exports the fixture. `openapi generate` exports the default fixture and regenerates the repository client, with no custom arguments. Use `codegen generate|check` for custom inputs/outputs; `bun repo codegen --help` explains option combinations. `check openapi` verifies generated artifacts without updating tracked files.
-
-## Adding a command
-
-Add its syntax, effect and routing mode to the command catalog, then add its strict parser and dispatcher/script mapping. Regenerate the table with `bun tooling/repo/cli/command-docs.ts --write`; `bun repo check commands` detects drift. Add tests for unknown arguments, safe help, target selection and side effects. Keep domain logic outside the CLI and retain distinct staging/production release orchestration.
-
-## Seed supervision and recovery
-
-`bun repo dev` enables OTP capture with persistent local databases. Set `LOCAL_OTP_CAPTURE=false` to disable it. The captured code is also delivered once when its provider is configured; explicit transport opt-outs and phone mode still apply. Capture is restricted to local development/test composition and loopback access. The isolated test entrypoint remains internal to CI; there is no `dev:test` package command.
-
-Public seed commands pause scheduler and job processing before mutations, including request-triggered school notifications. Authentication OTP delivery remains active. Local coordination lives under ignored `.local-state/operations/`, outside the data removed by cleanup; do not delete it while processes are running. Local API, cron and seed must use the same API origin and database configuration. Local pauses wait for active background work to drain and reject simultaneous seed invocations.
-
-Standalone staging seeding requires Cloudflare Workers Scripts Write and Queues edit access in the supervising process. It pauses Worker background controls and queue delivery, verifies settings, and retains the release drain period. An already fully paused staging Worker is treated as owned by another operation; use the release coordinator or recover deliberately. The release coordinator invokes the internal seed runner while retaining its own maintenance lifecycle. Settings operations must remain serialized across machines: the existing Cloudflare settings API offers no atomic cross-machine lock.
-
-Successful seeding restores previous settings; failed/interrupted seeding retains pauses. Queued notifications are preserved and can deliver after recovery. Inspect first, then resume the intended paths:
-
-```sh
-bun repo status local
-bun repo resume scheduler local
-bun repo resume jobs local
-bun repo status staging
-bun repo resume scheduler staging
-bun repo resume jobs staging
-```
-
-For staging failures, also inspect and resume queue delivery explicitly in Cloudflare after recovery. The commands above change handler controls, not queue transport. Never run a full variable push or another release concurrently with seeding.

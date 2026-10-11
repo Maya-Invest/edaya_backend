@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'bun:test'
-import { loadConfiguration, parseJsonc, readConfig, validateConfig, validateSecrets, validateSmsCredentials } from '../../../apps/api/configuration/index.mjs'
+import { loadConfiguration, parseJsonc, readConfig, validateConfig, validateSecrets, validateSmsCredentials } from '../../../apps/api/configuration/index.ts'
 
 const directories: string[] = []
 afterEach(() => {

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
 import { expect, test } from 'bun:test'
-import { commandCatalog, commandMarkdown } from '../../cli/catalog'
+import { commandCatalog } from '../../cli/catalog'
 import { commandDocumentation } from '../../cli/command-docs'
 import { runDeployCommand } from '../../cli/commands/deploy'
 import { CI_COMMANDS } from '../../cli/commands/verify'
@@ -13,6 +13,7 @@ import { parseDeployCliArgs } from '../../cli/parse-deploy-cli'
 import { parseOpenapiCliArgs } from '../../cli/parse-openapi-cli'
 import { parseOperationsCli, pauseValues } from '../../cli/parse-operations-cli'
 import { parseSmokeTestCliArgs } from '../../cli/parse-smoke-test-cli'
+import { help } from '../../ops/main'
 
 test('unsupported flags cannot turn a preview into a mutation', () => {
   expect(() => parseDbCliArgs(['reset', 'school', 'production', '--yes', '--dry-run'])).toThrow()
@@ -22,7 +23,7 @@ test('unsupported flags cannot turn a preview into a mutation', () => {
   expect(() => parseCheckCliArgs(['boundaries', 'ignored'])).toThrow()
   expect(() => parseDeployCliArgs(['production', '--typo'])).toThrow()
 })
-test('deployment dry-run is forwarded to Wrangler, with production mapped to prod', async () => {
+test('legacy deployment uses the central emergency confirmation and evidence policy', async () => {
   const parsed = parseDeployCliArgs(['production', '--dry-run'])
   if (parsed.kind === 'help')
     throw new Error('Expected deployment')
@@ -31,7 +32,7 @@ test('deployment dry-run is forwarded to Wrangler, with production mapped to pro
     command = args
     return 0
   })
-  expect(command).toEqual(['bun', 'wrangler', 'deploy', '--env', 'prod', '--dry-run'])
+  expect(command).toEqual(['bun', '--no-env-file', 'tooling/repo/ops/main.ts', 'maintenance', 'emergency-deploy', 'production', '--dry-run'])
 })
 test('database targets and smoke effects are explicit', () => {
   expect(parseDbCliArgs(['migrate', 'identity', 'production'])).toEqual({ kind: 'identity-migrate', target: 'production' })
@@ -63,9 +64,9 @@ test('help for every command exits without credentials or side effects', () => {
 })
 test('documentation and CI use the shared definitions', () => {
   const root = join(import.meta.dirname, '../../../..')
-  expect(readFileSync(join(root, 'docs/reference/repo-cli.md'), 'utf8')).toContain(commandMarkdown())
-  expect(readFileSync(join(root, '.github/workflows/_verify.yml'), 'utf8')).toContain('bun repo verify --ci')
-  expect(CI_COMMANDS).toContainEqual(['bash', '.github/scripts/lint-workflows.sh'])
+  expect(readFileSync(join(root, 'docs/reference/repo-cli.md'), 'utf8')).toContain(help().trimEnd())
+  expect(readFileSync(join(root, '.github/workflows/_qualify.yml'), 'utf8')).toContain('bun run repo ci qualify')
+  expect(CI_COMMANDS).toContainEqual(['bun', 'run', 'repo', 'ci', 'workflows'])
   expect(CI_COMMANDS).toContainEqual(['bun', '--filter', '@edaya/api', 'deploy:staging:dry-run'])
   expect(CI_COMMANDS).toContainEqual(['bun', '--filter', '@edaya/api', 'deploy:production:dry-run'])
 })

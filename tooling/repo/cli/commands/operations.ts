@@ -1,10 +1,11 @@
 import type { OperationCommand } from '../parse-operations-cli'
 import process from 'node:process'
-import { loadConfiguration } from '../../../../apps/api/configuration/index.mjs'
-import { localOperations } from '../../../../apps/api/configuration/local-operations.mjs'
+import { loadConfiguration } from '../../../../apps/api/configuration/index.ts'
+import { localOperations } from '../../../../apps/api/configuration/local-operations.ts'
 import { operateSecrets } from '../../operations/secrets'
 import { formatWorkerStatus } from '../../operations/status'
-import { readWorkerState, updateWorkerVariables, workerTarget } from '../../operations/worker-vars.mjs'
+import { readWorkerState, updateWorkerVariables, workerTarget } from '../../operations/worker-vars.ts'
+import { redact, run } from '../../ops/runtime'
 import { paths } from '../lib/paths'
 import { parseOperationsCli, pauseValues } from '../parse-operations-cli'
 
@@ -23,10 +24,8 @@ export async function dispatchOperations(command: OperationCommand, args: readon
     const credentials = { worker, accountId: process.env.CLOUDFLARE_ACCOUNT_ID, token: process.env.CLOUDFLARE_API_TOKEN }
     if (command === 'secrets') {
       const result = await operateSecrets(parsed, credentials, async (argv, input) => {
-        const child = Bun.spawn(['bun', '--no-env-file', 'wrangler', ...argv], { cwd: paths.apiRoot, stdin: 'pipe', stdout: 'inherit', stderr: 'inherit', env: process.env })
-        child.stdin.write(input)
-        child.stdin.end()
-        return child.exited
+        await run(['bun', 'x', 'wrangler', ...argv], { cwd: paths.apiRoot, input, quiet: true })
+        return 0
       })
       console.log(`${parsed.dryRun ? 'Local preview' : result.applied ? 'Updated' : 'Secrets'}: ${worker}`)
       for (const name of result.names) console.log(`  ${name}`)
@@ -43,7 +42,7 @@ export async function dispatchOperations(command: OperationCommand, args: readon
     return 0
   }
   catch (error) {
-    console.error(error instanceof Error ? error.message : 'Operation failed')
+    console.error(redact(error instanceof Error ? error.message : 'Operation failed'))
     return 1
   }
 }

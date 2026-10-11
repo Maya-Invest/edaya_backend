@@ -10,8 +10,8 @@
     }
   },
   "scripts": {
-    "check": "tsc --noEmit",
-    "lint": "eslint src tests",
+    "check": "bun x --bun tsc --noEmit",
+    "lint": "bun x --bun eslint src tests",
     "quality": "bun run lint && bun run check",
     "test": "bun test tests"
   },

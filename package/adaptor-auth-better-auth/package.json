@@ -6,8 +6,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "check": "tsc --noEmit",
-    "lint": "eslint src",
+    "check": "bun x --bun tsc --noEmit",
+    "lint": "bun x --bun eslint src",
     "quality": "bun run lint && bun run check",
     "test": "bun test --pass-with-no-tests"
   },

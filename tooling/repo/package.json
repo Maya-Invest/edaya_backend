@@ -4,11 +4,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "check": "tsc --noEmit -p tsconfig.check.json && tsc --noEmit -p db/tsconfig.json && tsc --noEmit -p codegen/tsconfig.json",
+    "check": "bun x --bun tsc --noEmit -p tsconfig.check.json && bun x --bun tsc --noEmit -p db/tsconfig.json && bun x --bun tsc --noEmit -p codegen/tsconfig.json && bun x --bun tsc --noEmit -p tsconfig.api-tools.json",
     "quality": "bun run lint && bun run check",
-    "test": "bun test tests codegen/tests db --dots",
-    "lint": "eslint . && cd codegen && eslint src tests bin",
-    "lint:fix": "eslint . --fix && cd codegen && eslint src tests bin --fix"
+    "test": "bun test ops/tests tests codegen/tests db --dots",
+    "lint": "bun x --bun eslint . && cd codegen && bun x --bun eslint src tests bin",
+    "lint:fix": "bun x --bun eslint . --fix && cd codegen && bun x --bun eslint src tests bin --fix"
   },
   "dependencies": {
     "@edaya/adaptor-account": "workspace:*",

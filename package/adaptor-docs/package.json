@@ -11,10 +11,10 @@
   },
   "scripts": {
     "precompile": "bun scripts/precompile-templates.ts",
-    "check": "bun run precompile && tsc --noEmit",
+    "check": "bun scripts/precompile-templates.ts --check && bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "lint": "eslint src tests scripts",
-    "lint:fix": "eslint src tests scripts --fix",
+    "lint": "bun x --bun eslint src tests scripts",
+    "lint:fix": "bun x --bun eslint src tests scripts --fix",
     "test": "bun run precompile && bun test tests"
   },
   "dependencies": {

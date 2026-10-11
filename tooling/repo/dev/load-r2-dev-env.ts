@@ -1,7 +1,7 @@
 import type { ConfiguredR2Environment } from '@edaya/adaptor-r2'
 import { resolve } from 'node:path'
 import { isR2FileStorageConfigured } from '@edaya/adaptor-r2'
-import { readConfig, readSecrets } from '../../../apps/api/configuration/index.mjs'
+import { readConfig, readSecrets } from '../../../apps/api/configuration/index.ts'
 import { loadWranglerDevVars } from './load-wrangler-dev-vars.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')

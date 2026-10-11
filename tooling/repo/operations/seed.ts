@@ -1,11 +1,11 @@
-import type { WorkerCredentials } from './worker-vars.mjs'
+import type { WorkerCredentials } from './worker-vars.ts'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { apiRoot, parseJsonc } from '../../../apps/api/configuration/index.mjs'
-import { readWorkerState, updateWorkerVariables } from './worker-vars.mjs'
+import { apiRoot, parseJsonc } from '../../../apps/api/configuration/index.ts'
+import { readWorkerState, updateWorkerVariables } from './worker-vars.ts'
 
-export interface SeedSession { drain: () => Promise<void>, finish: (success: boolean) => Promise<void> }
+export interface SeedSession { drain: () => Promise<void>, finish: (success: boolean) => Promise<void>, openApi?: () => Promise<void> }
 export async function withSeedPause(begin: () => Promise<SeedSession>, run: () => Promise<number>): Promise<number> {
   const session = await begin()
   let success = false
@@ -36,12 +36,13 @@ function readBoolean(value: unknown): boolean {
     return false
   throw new Error('Invalid deployed pause control')
 }
-export async function beginStagingSeed(credentials: WorkerCredentials, options: { queueName?: string, wait?: () => Promise<void> } = {}): Promise<SeedSession> {
+export async function beginStagingSeed(credentials: WorkerCredentials, options: { queueName?: string, wait?: () => Promise<void>, maintenance?: boolean } = {}): Promise<SeedSession> {
   const request = credentials.request ?? fetch
   const before = await readWorkerState(credentials)
   const prior: Record<string, string> = {}
   const missing: string[] = []
-  for (const name of ['PAUSE_SCHEDULER', 'PAUSE_JOBS']) {
+  const controls = ['PAUSE_SCHEDULER', 'PAUSE_JOBS', ...(options.maintenance ? ['PAUSE_API'] : [])]
+  for (const name of controls) {
     const binding = before.bindings.find(binding => binding.name === name)
     if (binding && binding.type !== 'plain_text')
       throw new Error('Pause controls must be non-secret variables')
@@ -87,7 +88,7 @@ export async function beginStagingSeed(credentials: WorkerCredentials, options: 
   let expectedWorker: string
   let expectedQueue: string
   try {
-    await updateWorkerVariables({ ...credentials, values: { PAUSE_SCHEDULER: 'true', PAUSE_JOBS: 'true' } })
+    await updateWorkerVariables({ ...credentials, values: Object.fromEntries(controls.map(name => [name, 'true'])) })
     await queueRequest(`/${id}`, { queue_name: queue.queue_name, settings: { ...previousQueue, delivery_paused: true } })
     const afterQueue = await queueRequest(`/${id}`) as Queue
     if (afterQueue.settings.delivery_paused !== true)
@@ -98,9 +99,18 @@ export async function beginStagingSeed(credentials: WorkerCredentials, options: 
   catch { throw new Error('Could not establish staging seed pause; inspect status and queue delivery before recovery') }
   return {
     drain: options.wait ?? (() => new Promise(done => setTimeout(done, 60000))),
+    async openApi() {
+      if (!options.maintenance || fingerprint(await readWorkerState(credentials)) !== expectedWorker)
+        throw new Error('Maintenance ownership changed before seeding')
+      await updateWorkerVariables({ ...credentials, values: { PAUSE_API: 'false' } })
+      expectedWorker = fingerprint(await readWorkerState(credentials))
+    },
     async finish(success) {
-      if (!success)
+      if (!success) {
+        if (options.maintenance)
+          await updateWorkerVariables({ ...credentials, values: { PAUSE_API: 'true' } })
         return
+      }
       const currentQueue = await queueRequest(`/${id}`) as Queue
       if (fingerprint(await readWorkerState(credentials)) !== expectedWorker || fingerprint(currentQueue.settings) !== expectedQueue)
         throw new Error('Staging changed during seeding; refusing automatic restoration')
@@ -114,7 +124,7 @@ export async function beginStagingSeed(credentials: WorkerCredentials, options: 
       }
       catch {
         const recovery = await Promise.allSettled([
-          updateWorkerVariables({ ...credentials, values: { PAUSE_SCHEDULER: 'true', PAUSE_JOBS: 'true' } }),
+          updateWorkerVariables({ ...credentials, values: Object.fromEntries(controls.map(name => [name, 'true'])) }),
           queueRequest(`/${id}`, { queue_name: queue!.queue_name, settings: { ...previousQueue, delivery_paused: true } }),
         ])
         throw new Error(recovery.some(result => result.status === 'rejected')

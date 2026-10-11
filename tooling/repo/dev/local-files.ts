@@ -8,7 +8,7 @@ import {
   DEFAULT_LOCAL_FILES_ROOT,
   resolveLocalFileStorageConfig,
 } from '@edaya/adaptor-local-fs'
-import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.ts'
 
 const repoRoot = resolve(import.meta.dirname, '../../..')
 loadLocalConfiguration(process.env)

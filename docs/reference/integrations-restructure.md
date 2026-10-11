@@ -41,14 +41,14 @@ edaya_backend/
 | `@edaya/service` (`package/domain-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, identity runtime |
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `tooling/repo/db/school` | School migration application and guarded reset commands | School SQL source files (those live in adaptor-postgres) |
-| `tooling/seeding` | HTTP seed scripts against running API (`bun repo seed`, …) | API route handlers |
+| `tooling/seeding` | HTTP seed scripts against running API (`bun run repo maintenance seed`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Account composition, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts and seed data |
 
 **Domain dependency direction:** `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
 
 **Dependency direction:** `package/domain-core`, `package/domain-authorization`, `package/domain-service`, `package/adaptor-postgres`, `package/api-client`, and adaptor packages do not depend on identity persistence. `apps/api/src/identity` composes Account/provider adapters and exposes typed in-process directory, token and privileged-policy ports. School packages exclude provider internals. `tooling/seeding` calls authentication and school routes through one API URL.
 
-**Enforcement:** `bun repo verify` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`) and layout-identity checks (`tooling/repo/lib/layout-identity.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/domain-authorization/src`.
+**Enforcement:** `bun run repo check` runs import boundary grep checks (`tooling/repo/lib/boundaries.ts`) and layout-identity checks (`tooling/repo/lib/layout-identity.ts`). ESLint `no-restricted-imports` blocks `@edaya/service` and `@edaya/authorization` in `package/domain-core/src`, and `@edaya/service` in `package/domain-authorization/src`.
 
 ## Package map
 
@@ -88,18 +88,18 @@ edaya_backend/
 
 | Script | Package / target |
 |--------|------------------|
-| `bun repo dev` | Identity, school API, and local files in watch mode |
+| `bun run repo dev` | Identity, school API, and local files in watch mode |
 | `bun --filter @edaya/api dev:worker` | `@edaya/api` `dev:worker` |
-| `bun repo seed` / `bun repo seed --staging` / `bun repo seed --scope doctor` / `bun repo smoke api staging` | `@edaya/seeding` / `@edaya/integration-tests` |
-| `bun repo db generate` | `@edaya/adaptor-postgres` |
-| `bun repo db migrate school local` | `repo migration commands` — school (local) |
-| `bun repo db migrate school staging` | `repo migration commands` — school (staging) |
-| `bun repo db migrate school production` | `repo migration commands` — school (production) |
-| `bun repo openapi generate` | Export OpenAPI + regenerate client bindings |
+| `bun run repo maintenance seed` / `bun run repo maintenance seed --staging` / `bun run repo maintenance seed --scope doctor` / `bun run repo maintenance smoke api staging` | `@edaya/seeding` / `@edaya/integration-tests` |
+| `bun run repo maintenance db generate` | `@edaya/adaptor-postgres` |
+| `bun run repo maintenance db migrate school local` | `repo migration commands` — school (local) |
+| `bun run repo maintenance db migrate school staging` | `repo migration commands` — school (staging) |
+| `bun run repo maintenance db migrate school production` | `repo migration commands` — school (production) |
+| `bun run repo generate openapi` | Export OpenAPI + regenerate client bindings |
 | `bun repo check openapi` | Drift check for generated artifacts |
 | `bun repo deploy production` | `@edaya/api` `deploy:production` |
 | `bun repo deploy staging` | `@edaya/api` `deploy:staging` |
-| `bun repo smoke api staging` | `@edaya/integration-tests` |
+| `bun run repo maintenance smoke api staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_frontend**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 

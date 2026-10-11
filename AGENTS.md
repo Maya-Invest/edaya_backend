@@ -26,7 +26,7 @@ After permission, relationship, or seed changes, verify teacher and family porta
 | API runtimes | [docs/reference/api-runtimes.md](docs/reference/api-runtimes.md) |
 | Runtime boundaries | [docs/reference/runtime-boundaries.md](docs/reference/runtime-boundaries.md) |
 | Local development | [docs/reference/local-dev.md](docs/reference/local-dev.md) |
-| Repo CLI (`bun repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
+| Repo CLI (`bun run repo`) | [docs/reference/repo-cli.md](docs/reference/repo-cli.md) |
 | CI setup | [docs/reference/ci-setup.md](docs/reference/ci-setup.md) |
 | Cross-repo OpenAPI workflow | [docs/reference/cross-repo-workflow.md](docs/reference/cross-repo-workflow.md) |
 | Unit test coverage | [docs/reference/unit-test-coverage.md](docs/reference/unit-test-coverage.md) |
@@ -41,7 +41,7 @@ After permission, relationship, or seed changes, verify teacher and family porta
 Before opening a PR:
 
 ```sh
-bun repo verify --full   # PR blocking CI locally (verify + integration)
+bun run repo ci qualify staging   # PR blocking CI locally (verify + integration)
 # or separately:
 bun run verify           # repo hygiene, then quality + build + unit tests
 bun run test:integration
@@ -49,6 +49,6 @@ bun run test:integration
 
 For seed HTTP paths, also run `bun run test:integration:seed`.
 
-Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun repo verify`.
+Ad-hoc Turbo iteration: `bun run lint`, `bun run check`, `bun run test`, etc. Repo hygiene only: `bun run repo check`.
 
 Package-scoped iteration: `bun --filter @edaya/core test`, `bun --filter @edaya/api test`, etc.

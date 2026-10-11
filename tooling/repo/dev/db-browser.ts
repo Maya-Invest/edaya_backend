@@ -2,7 +2,8 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { loadLocalConfiguration } from '../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../apps/api/configuration/index.ts'
+import { run } from '../ops/runtime'
 
 const target = process.argv[2]
 if (target !== 'school') {
@@ -199,7 +200,7 @@ console.log(`Local DB browser running at ${url}`)
 console.log('Press Ctrl+C to stop.\n')
 
 if (process.platform === 'darwin') {
-  Bun.spawn(['open', url])
+  void run(['open', url], { quiet: true }).catch(() => console.log('Open the displayed URL in your browser.'))
 }
 
 async function shutdown() {

@@ -1,6 +1,6 @@
 # Local development
 
-See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun run repo maintenance vars` commands.
 
 Run the **Edaya Core API** on your machine. Web frontends (`@edaya/webapp`, `@edaya/webadmin`) live in the sibling **[edaya_frontend](../../edaya_frontend/README.MD)** repo.
 
@@ -59,10 +59,10 @@ The API uses explicit **profiles** (`local`, `in-memory`, `worker`). See [runtim
 
 | Profile | Command | School DB |
 |---------|---------|-----------|
-| **local** | `bun repo dev` | PGlite `.data/school` |
+| **local** | `bun run repo dev` | PGlite `.data/school` |
 | **worker** | `bun --filter @edaya/api dev:worker` | Postgres via school Hyperdrive |
 
-Identity runs in the unified API with its own database. Tests use `RUNTIME=in-memory` programmatically (ephemeral school PGlite). Wrangler smoke uses `config.staging.jsonc` + `.dev.vars` (not loaded by `bun repo dev`). See [api-runtimes.md](./api-runtimes.md).
+Identity runs in the unified API with its own database. Tests use `RUNTIME=in-memory` programmatically (ephemeral school PGlite). Wrangler smoke uses `config.staging.jsonc` + `.dev.vars` (not loaded by `bun run repo dev`). See [api-runtimes.md](./api-runtimes.md).
 
 ## API database (local profile)
 
@@ -70,7 +70,7 @@ Identity runs in the unified API with its own database. Tests use `RUNTIME=in-me
 
 ## File storage (local dev)
 
-`bun repo dev` starts identity, the school API, and the local file server together. Uploads persist under repo-root `.data/files/` (gitignored).
+`bun run repo dev` starts identity, the school API, and the local file server together. Uploads persist under repo-root `.data/files/` (gitignored).
 
 | Variable | Default |
 |----------|---------|
@@ -83,7 +83,7 @@ Profile photos and uploads use the presigned-URL flow: `/core/files/{attachmentI
 
 ### worker smoke (R2, Hyperdrive)
 
-Optional — exercises the same adaptors as deployed workers. Requires `apps/api/.dev.vars` (Wrangler secrets; **not** read by `bun repo dev`).
+Optional — exercises the same adaptors as deployed workers. Requires `apps/api/.dev.vars` (Wrangler secrets; **not** read by `bun run repo dev`).
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
@@ -96,7 +96,7 @@ See [api-runtimes.md](./api-runtimes.md).
 
 ## Environment credentials matrix
 
-| Concern | Local dev (`bun repo dev`) | Staging | Production |
+| Concern | Local dev (`bun run repo dev`) | Staging | Production |
 |---------|----------------------|---------|------------|
 | **Env file** | `config.local.jsonc` + `.env` secrets | `config.staging.jsonc` + Worker secrets | `config.production.jsonc` + Worker secrets |
 | **Database** | PGlite `.data/school` | Neon branch via Hyperdrive `c6b9a94e…` | Neon branch via Hyperdrive `c65edec7…` |
@@ -122,8 +122,8 @@ bunx wrangler secret bulk secrets.prod.json --env prod
 Plain HTTP browser — no extra setup.
 
 ```sh
-# School data (students, announcements, etc.) — stop `bun repo dev` first
-bun repo db browser school
+# School data (students, announcements, etc.) — stop `bun run repo dev` first
+bun run repo maintenance db browser school
 
 ```
 
@@ -131,30 +131,30 @@ Opens automatically at `http://127.0.0.1:8192`.
 
 | Symptom | Fix |
 |---------|-----|
-| School browser fails to open PGlite | Stop `bun repo dev` first — the API holds the lock on `.data/school` |
+| School browser fails to open PGlite | Stop `bun run repo dev` first — the API holds the lock on `.data/school` |
 
 ## Dev database seed
 
-Seeding targets both local deployments: the unified API at `http://localhost:9999`. Each service owns its database. After starting the API, run `bun repo seed` in another terminal to load demo data.
+Seeding targets both local deployments: the unified API at `http://localhost:9999`. Each service owns its database. After starting the API, run `bun run repo maintenance seed` in another terminal to load demo data.
 
 ### Fresh clone or after wiping `.data/`
 
-**Order matters.** Never delete `.data` while `bun repo dev` is running — open PGlite/SQLite handles will corrupt the files.
+**Order matters.** Never delete `.data` while `bun run repo dev` is running — open PGlite/SQLite handles will corrupt the files.
 
 ```sh
-# 1. Stop bun repo dev (Ctrl+C)
+# 1. Stop bun run repo dev (Ctrl+C)
 
 # 2. Wipe local databases
 rm -rf .data
 
 # 3. Start API + webapp
-bun repo dev          # terminal 1 — http://localhost:9999/
+bun run repo dev          # terminal 1 — http://localhost:9999/
 
 # 4. Seed demo data (once API is ready)
-bun repo seed    # terminal 2
+bun run repo maintenance seed    # terminal 2
 ```
 
-`bun repo seed` runs the full HTTP seed. On a fresh database the flow is:
+`bun run repo maintenance seed` runs the full HTTP seed. On a fresh database the flow is:
 
 1. Provision central identity users through the identity Worker
 2. Sign in and call `POST /core/onboarding/register-school` when no school exists yet
@@ -165,13 +165,13 @@ bun repo seed    # terminal 2
 
 | Command | Purpose |
 |---------|---------|
-| `bun repo seed` | Full local demo data via HTTP |
-| `bun repo seed --staging` | Full seed against `SEED_STAGING_API_URL` |
-| `bun repo seed --scope doctor` | Diagnose seed health (sign-in, grants, entity checks) |
-| `bun repo seed --scope doctor --repair` | Auto-repair common drift without wiping `.data` |
-| `bun repo seed --scope <name>` | Granular scope — `bun repo seed --help` for list |
+| `bun run repo maintenance seed` | Full local demo data via HTTP |
+| `bun run repo maintenance seed --staging` | Full seed against `SEED_STAGING_API_URL` |
+| `bun run repo maintenance seed --scope doctor` | Diagnose seed health (sign-in, grants, entity checks) |
+| `bun run repo maintenance seed --scope doctor --repair` | Auto-repair common drift without wiping `.data` |
+| `bun run repo maintenance seed --scope <name>` | Granular scope — `bun run repo maintenance seed --help` for list |
 
-**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun repo smoke api staging` for post-deploy checks.
+**Staging:** see [deploy-staging.md](./deploy-staging.md). Use `bun run repo maintenance smoke api staging` for post-deploy checks.
 
 Fixture data lives in `tooling/fixtures/`. Loaders and orchestration live in `tooling/seeding/`.
 
@@ -228,19 +228,19 @@ Before opening a pull request, run `bun run verify`. For integration coverage (H
 
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
-| `bun repo seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun repo dev`, `rm -rf .data`, restart, `bun repo seed` |
+| `bun run repo maintenance seed` times out; `/doc` returns 500 with PGlite file errors | `.data` wiped or corrupted while API was running | Stop `bun run repo dev`, `rm -rf .data`, restart, `bun run repo maintenance seed` |
 | `POST /auth/edaya/otp/start` fails | Identity database empty or identity service unavailable | Start the unified API on port 9999, then run the full seed |
 | Sign-in succeeds but app shows “Session API indisponible” | Identity subject exists but the school actor is not linked | Run the full seed against identity and school |
-| `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun repo dev` |
+| `422` on `/core/entities/.../list` during login | Stale API process after schema changes | Restart `bun run repo dev` |
 | Webapp shows API unreachable | API not ready on port 9999 | Wait for startup; set `PUBLIC_API_URL` to the school API origin (`http://localhost:9999`) |
-| DB browser fails on school tables | API still running (`bun repo dev`) holds the `.data/school` lock | Stop `bun repo dev`, then run `bun repo db browser school` |
+| DB browser fails on school tables | API still running (`bun run repo dev`) holds the `.data/school` lock | Stop `bun run repo dev`, then run `bun run repo maintenance db browser school` |
 
 Quick health checks:
 
 ```sh
 curl -s http://localhost:9999/            # expect {"message":"Edaya Core API"}
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:9999/doc   # expect 200
-bun repo seed --scope doctor                                                    # health check (sign-in + grants + data)
+bun run repo maintenance seed --scope doctor                                                    # health check (sign-in + grants + data)
 ```
 
 - **Port in use** — Change `PORT` in `apps/api/config.local.jsonc`; update `API_URL` in the webapp `.env` to match.
@@ -248,22 +248,22 @@ bun repo seed --scope doctor                                                    
 
 ## Account authentication
 
-Use `bun repo dev` for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun repo seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
+Use `bun run repo dev` for captured local email/WhatsApp/SMS verification. Password and Telegram endpoints are absent. `bun run repo maintenance seed` exercises local OTP; remote staging fixtures use an explicitly generated `SEED_AUTH_SESSIONS_FILE`, never the development OTP endpoint.
 
-See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun repo db migrate identity local`. Keep the identity database separate from the school database.
+See [Account architecture and cutover](../proposals/three-repo-account-auth-architecture.md) for encryption keys, optional TOTP, provider replacement, and launch gates. Identity migrations: `AUTH_DATABASE_URL=... bun run repo maintenance db migrate identity local`. Keep the identity database separate from the school database.
 
 ## Test-only OTP access
 
-From the backend checkout run `bun repo dev`. OTP capture is enabled by default, with `NODE_ENV=development` and the normal persistent school and identity databases. The API binds to loopback when capture is enabled. Set `LOCAL_OTP_CAPTURE=false` to opt out. Configured providers deliver the captured code once; explicit transport opt-outs and phone mode still apply. Capture does not enable phone authentication automatically. Automated CI retains a separate internal testing entrypoint with disposable `EDAYA_TEST_*` settings and offline injected delivery. No `.env` files are rewritten.
+From the backend checkout run `bun run repo dev`. OTP capture is enabled by default, with `NODE_ENV=development` and the normal persistent school and identity databases. The API binds to loopback when capture is enabled. Set `LOCAL_OTP_CAPTURE=false` to opt out. Configured providers deliver the captured code once; explicit transport opt-outs and phone mode still apply. Capture does not enable phone authentication automatically. Automated CI retains a separate internal testing entrypoint with disposable `EDAYA_TEST_*` settings and offline injected delivery. No `.env` files are rewritten.
 
-Configured OTP providers send the captured challenge once. Delivery failures emit a sanitized warning and leave the local capture usable; revealing or copying a code never resends it. Seeding pauses school background processing, not authentication OTPs. Successful seeding restores the previous background settings; failures leave them paused for inspection using `bun repo status local` and explicit `resume scheduler local` / `resume jobs local`.
+Configured OTP providers send the captured challenge once. Delivery failures emit a sanitized warning and leave the local capture usable; revealing or copying a code never resends it. Seeding pauses school background processing, not authentication OTPs. Successful seeding restores the previous background settings; failures leave them paused for inspection using `bun run repo maintenance status local` and explicit `resume scheduler local` / `resume jobs local`.
 
 Start the webapp with `PUBLIC_TEST_OTP_ACCESS=true PUBLIC_API_URL=http://127.0.0.1:9999 bun --filter @edaya/webapp dev` from the web checkout. Start either Flutter app in debug with `flutter run --dart-define=TEST_OTP_ACCESS=true` and a loopback Identity URL. The controls also require successful server capability discovery. Staging is not a testing signal. Normal deployment commands and Flutter profile/release builds exclude access.
 
 Send a code through the normal form, select **Show test code**, optionally **Copy**, and manually enter it before verifying. Reveal creates no message, OTP guess or session. Login and contact linking use the same controls. Codes are transient and clear on replacement, expiry, completion, reset, departure or backgrounding. French and English are supported.
 
-Stop with Ctrl-C: the server clears captured codes and closes its database. The optional CI mailbox (`EDAYA_TEST_OTP_FILE`, permissions 0600), clock (`EDAYA_TEST_CLOCK_FILE`) and privileged policy (`EDAYA_TEST_POLICY_FILE`) remain private fixtures; delete mailbox files after shutdown and never upload them. The integration start/stop scripts use disposable school configuration and clean the private fixtures on stop.
+Stop with Ctrl-C: the server clears captured codes and closes its database. The optional CI mailbox (`EDAYA_TEST_OTP_FILE`, permissions 0600), clock (`EDAYA_TEST_CLOCK_FILE`) and privileged policy (`EDAYA_TEST_POLICY_FILE`) remain private fixtures; delete mailbox files after shutdown and never upload them. The integration supervisor uses disposable configuration and cleans private fixtures when the child command ends.
 
 Only the testing entry exposes `GET /auth/edaya/testing/capabilities` and `POST /auth/edaya/testing/otp` with `{challenge}`. Both return `Cache-Control: no-store`; pending challenges only, with original recent session authorization for linking. The normal application returns 404 for these routes and the removed `/auth/edaya/dev/last-otp` route in every environment. No migration or hosted testing deployment is required.
 
-For a complete disposable school/Identity/files stack, run `.github/scripts/ci-start-local-apis.sh start` from the web or mobile checkout. Its optional `EDAYA_CI_API_PID_DIR` selects the fixture directory (default `/tmp/edaya-ci-apis`). To seed it, run from the backend with `SEED_ENV_FILE=/tmp/edaya-ci-apis/school.env SEED_API_URL=http://127.0.0.1:9999 EDAYA_TEST_OTP_FILE=/tmp/edaya-ci-apis/otp.jsonl bun --no-env-file repo seed --skip-profile-photos --skip-attachments`. Use the matching Identity issuer and school API origin from the disposable configuration. Run the same script with `stop` when finished. Never attach the private mailbox or disposable environment file as an artifact.
+For a complete disposable school/Identity/files stack, run `bun run repo ci fixture /absolute/consumer/path -- <command> [arguments]` from the acquired backend checkout. The supervisor starts owned services, injects their configuration into the command, and removes private files and processes on success, failure, or cancellation. Set `EDAYA_FIXTURE_SEED=true` to prepare the complete demo fixture. Ports can be selected with `EDAYA_CI_API_PORT` and `EDAYA_CI_FILES_PORT`. Frontend `bun run repo test integration` and mobile `dart run edaya_repo:repo ci integration` acquire their service inputs from the already prepared client record and manage this lifecycle automatically. Never upload private mailbox files or disposable environment files.

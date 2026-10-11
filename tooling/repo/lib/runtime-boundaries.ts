@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { parseJsonc, readConfig, validateSecrets } from '../../../apps/api/configuration/index.mjs'
+import { parseJsonc, readConfig, validateSecrets } from '../../../apps/api/configuration/index.ts'
 import { findWorkerParityViolations } from './worker-parity'
 
 export interface RuntimeBoundaryViolation {

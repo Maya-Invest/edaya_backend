@@ -1,8 +1,8 @@
-import type { Binding } from '../operations/worker-vars.mjs'
+import type { Binding } from '../operations/worker-vars.ts'
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'bun:test'
 import { parseVarsCliArgs } from '../cli/parse-vars-cli'
-import { planVariableUpdate, updateWorkerVariables, workerTarget } from '../operations/worker-vars.mjs'
+import { planVariableUpdate, updateWorkerVariables, workerTarget } from '../operations/worker-vars.ts'
 
 const initial: Binding[] = [
   { name: 'LOG_LEVEL', type: 'plain_text', text: 'info' },
@@ -96,9 +96,9 @@ describe('deployed variable updates', () => {
     const wrangler = JSON.parse(readFileSync(new URL('../../../apps/api/wrangler.jsonc', import.meta.url), 'utf8'))
     expect(wrangler.keep_vars).toBe(true)
     for (const env of Object.values(wrangler.env)) expect(env).not.toHaveProperty('vars')
-    const release = readFileSync(new URL('../../../.github/scripts/staging-runtime.mjs', import.meta.url), 'utf8')
+    const release = readFileSync(new URL('../ops/release.ts', import.meta.url), 'utf8')
     expect(release).not.toContain('PHONE_AUTH_MODE:disabled')
-    expect(release).toContain('updateWorkerVariables')
+    expect(release).toContain('--keep-vars')
   })
 })
 

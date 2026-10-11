@@ -1,41 +1,78 @@
-# CI setup
+# Independent verification and releases
 
-See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+Each repository verifies and releases its own revision. Backend changes do not require synchronized consumer source changes, client package publication, or release manifests in sibling repositories. Cloudflare application deployments remain; no container publication is configured.
 
-Branch pushes run repository hygiene, unit/tooling tests and applicable builds. Every pull request, including PRs targeting development branches, runs complete integration qualification. Production release jobs and the staging coordinator require qualification before publication or live changes. Git hooks are unchanged.
+| Event | Required behavior |
+| --- | --- |
+| PR into `main` or `staging` | Full verification and integrations; no deployment |
+| Other branch push | Repository checks and unit/tooling tests |
+| Push to `staging` | Qualify that commit, release staging |
+| Push to `main` | Qualify that commit, release production |
+| Manual deployment | Select revision in the environment's deployment workflow; use the same qualification and deployment jobs |
+| Manual validation | Select environment, revision, and optionally a backend reference; never deploy |
 
-## Required checks
+Deployments are serialized per repository/environment without cancelling active deployments. They depend on successful qualification; failure, cancellation or skipped qualification cannot deploy. Artifact restoration selects the unique qualified artifact from the same run and attempt, checks out its recorded source commit, restores frozen dependencies, and verifies file checksums. Deployment never resolves another backend branch or generates another client.
 
-`verify / verify` is the unit check. `Full validation` requires successful verification and integration jobs, plus backend resolution for consumers. Failed, cancelled, missing or skipped required jobs fail this check. Manual PR dispatch runs the same full gates; test-skipping switches have been removed.
+## Adoption gate
 
-Ordinary staging pushes run unit checks. Staging release/validation is dispatched only through the backend **Full-stack staging release** coordinator. `validate_only=true` qualifies the three commits, performs dry runs and checks signed APKs without publishing, deploying or changing live data. Manifest schema 4 and APK provenance schema 3 remain unchanged.
+Replacement deployment jobs require repository variable `ENABLE_INDEPENDENT_RELEASES=true`. Leave it unset until full local verification, both destination builds, all integration suites, artifact handoff, and non-deploying GitHub rehearsals pass. The bootstrap API snapshot also needs review before the backend gate is enabled. No production release is implied by installing this tooling.
 
-## Backend revision and client contracts
+Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. Configure branch protection to require **qualification / Full validation** from the PR workflow (confirm the exact displayed check name on the first rehearsal). Remove obsolete coordinator/publication checks only after that required check succeeds. GitHub may display the caller workflow name as an additional prefix.
 
-Frontend/mobile resolve one immutable backend SHA before integration jobs. An explicit `backend_ref` wins; otherwise a matching consumer head branch is preferred, followed by the PR target branch when the matching branch is absent. Access failures do not fall back. Manual dispatch without a matching branch must supply `backend_ref`.
+Bun remains pinned to 1.3.14, Flutter to 3.44.8. Ubuntu CI and macOS development use native Git, Node.js 22+ for the third-party Wrangler CLI, archive tools and PostgreSQL binaries where needed. Validators are downloaded at pinned versions and verified against committed SHA-256 checksums. No first-party Python or Node operational runtime is required.
 
-The retained secret `IDENTITY_CHECKOUT_TOKEN` needs contents:read access to the private backend repository; the staging coordinator additionally needs web/mobile checkout access. Checkout credentials are not persisted. Consumer and backend release contracts must match, and the backend's generated artifacts and content-addressed source fingerprint must pass verification before fixture startup. Every mobile matrix job receives the same resolved SHA.
+## Release evidence
 
-Frontend unit/browser checks install the committed vendored API client with the frozen lockfile. They do not require a branch client to be published first. Production deployment uses `0.0.0-production.<qualified-backend-sha>` and checks the package's `edayaSourceCommit` and installed contract hashes. Missing or mismatched publication blocks deployment. Feature pushes never publish API clients.
+`.ci-evidence/qualification.json` records source identity and mandatory outcomes. `.release/manifest.json` records source commit, environment, tool version, API fingerprint, artifact hashes and status. Consumer evidence includes backend commit and generated-client checksums. Evidence is an output; it does not pin another repository's future release. Private fixtures are disposable and logs are sanitized before they become retained evidence.
 
-## Toolchains and evidence
-
-Jobs use Ubuntu 24.04, Node 22, Python 3.13, Bun 1.3.14, Flutter 3.44.8, Melos 8.0.0 and Java 17 where applicable. Actions are pinned to reviewed release commits with version comments. Dependency installations enforce committed locks. Workflow definitions are checked with actionlint 1.7.12, downloaded only after matching the pinned archive checksum; shell syntax is also checked.
-
-Browser and mobile artifacts contain only `.ci-evidence/results.json`: revision, backend SHA, lock hash, fixed suite names, completion metadata and numeric counts. Fixture files, private sessions, OTP captures, screenshots and browser traces stay out of uploads. Failures still produce sanitized evidence. Staging uploads use a separate explicit file allowlist, including early configuration-preflight failures.
-
-Local evidence and GitHub results are distinct. A local green run does not establish GitHub success for a newer revision. GitHub's current plan rejects private-repository branch protection/ruleset checks; deployment/publication dependencies are enforced by workflows, while protected merge enforcement remains unavailable/unverified. No billing or visibility changes are made.
-
-## Backend qualification
-
-`bun run verify` runs CI helper/release tests, repository hygiene, quality, build and all package unit tests. `_integration.yml` runs service/HTTP, seed HTTP and native PostgreSQL suites once, discovering PostgreSQL binaries before any seed/native invocation. Optional native performance benchmarks remain excluded from mandatory correctness tests.
-
-Run the complete local gate:
+## Backend commands
 
 ```sh
-bun repo verify --full
+bun install --frozen-lockfile
+bun run repo check
+bun run repo test tooling
+bun run repo ci verify
+bun run repo test integration
+bun run repo build staging
+bun run repo ci qualify staging
 ```
 
-The main release workflow gates school/Account migrations, API client publication and Worker deployment on `Full validation`. Backend tests run directly with Bun and local databases. Frontend and mobile integration workflows check out the backend and start its TypeScript API and file-server entries directly with Bun. Production migration credentials are `PRODUCTION_DATABASE_URL` and `PRODUCTION_AUTH_DATABASE_URL`. Staging retains its existing API/Identity secret inputs, combined for one Worker by the coordinator.
+`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then schema compatibility and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
 
-The retained Neon endpoint's ownership/staging branch and dedicated Account database/role remain release blockers until verified. Code qualification uses disposable databases and does not resolve those infrastructure blockers.
+Compatibility uses checksum-pinned oasdiff 1.11.7. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment. With no successful history, `tooling/repo/fixtures/compatibility/bootstrap.json` is the initial existing-contract snapshot to review. Behavioral API/authentication regression suites remain mandatory independently of schema generation. Successfully generating a new client is not a compatibility test for installed clients.
+
+## Cloudflare and migrations
+
+Configure environment secrets `CLOUDFLARE_API_TOKEN`, `STAGING_DATABASE_URL`, `STAGING_AUTH_DATABASE_URL`, `PRODUCTION_DATABASE_URL`, `PRODUCTION_AUTH_DATABASE_URL` as applicable, and environment variable `CLOUDFLARE_ACCOUNT_ID`. The deployment job explicitly migrates identity and school databases before deploying the verified Worker bundle. Normal deployment never resets or seeds.
+
+For an emergency use `bun run repo maintenance emergency-deploy staging --dry-run`, then an explicit `--yes` to apply. It creates build evidence and uploads that build without implicit migrations/reset. This is an emergency bypass of ordinary qualification and is marked in its evidence.
+
+## Separate staging maintenance
+
+The **Staging maintenance** workflow shares the staging deployment concurrency group. Its default is a read-only dry run. Applying reset/reseed or recovery requires typing `STAGING MAINTENANCE` and turning dry run off. It requires dedicated staging DB roles, direct TLS connections, and deployed Hyperdrive bindings matching the configured targets.
+
+Configure non-secret environment variables `STAGING_DATABASE_HOST`, `STAGING_SCHOOL_DATABASE`, `STAGING_IDENTITY_DATABASE`, `STAGING_IDENTITY_ROLE`, plus the staging database/Cloudflare credentials. Seed authentication uses the existing seed configuration. Queue edit and Worker settings permissions are required for maintenance only.
+
+Reset/reseed pauses API, scheduler, jobs and queue delivery, drains work, checks HTTP maintenance state, resets the two staging databases while preserving signing keys, seeds, then restores owned controls. Failure retains the pause. Inspect sanitized maintenance evidence and `bun run repo maintenance status staging` before requesting the explicit recovery operation. Recovery resumes paused controls; it does not retry reset or seed. Settings operations performed outside Actions must also be serialized by the operator.
+
+## Entrypoint migration inventory
+
+| Previous entrypoints | Replacement or disposition |
+| --- | --- |
+| `.github/scripts/run-backend-integration.sh`, workflow fragments | `tooling/repo/ops/main.ts` test/CI commands; existing native/service harnesses retained |
+| `scripts/release-contract.py`, sibling manifest comparisons | Removed; independent `.release` evidence and compatibility gates |
+| `publish-client.mjs`, `client-publication.mjs`, client recording helpers | Removed; consumers build from pinned backend source |
+| `staging-*.mjs`, `qualify-staging.sh`, `rehearse-staging.mjs`, readiness/coordinator scripts | Independent workflows, `release.ts`, `restore.ts`, `compatibility.ts`, guarded `maintenance.ts`; no consumer deployment orchestration |
+| `ci_support.py`, workflow tests, workflow lint launcher | Bun evidence/workflow/process tests; checksum-pinned actionlint |
+| Configuration and worker-vars `.mjs`/`.d.mts` | Typed modules in their existing configuration/operations owners |
+| Local service launchers and hooks | Central process-group supervision; minimal host shell hook invoking Bun |
+
+Backend compatibility has a dedicated handwritten HTTP suite, actor-assurance and tenant-scope regressions, plus checksum-pinned oasdiff. The generated-client tests remain separate. Explicit maintenance validates both direct database connections and deployed bindings before pausing, drains background work, purges stale queue/authentication state, resets/migrates, provisions private fixture sessions, and reseeds. Failure keeps maintenance controls paused; recovery is explicit.
+
+## Local migration rehearsal — 2026-10-11
+
+The complete `ci qualify staging` command passed against the local working tree: repository/workflow checks, all TypeScript checks, builds, unit tests, service/HTTP integrations, seed integrations, native PostgreSQL integrations, schema compatibility and the environment-specific Worker build. All **141** tooling tests and **12** handwritten compatibility regressions passed. Native PostgreSQL reported **60** passing tests; its three optional projection benchmarks remained skipped and are not required release checks.
+
+Staging and production Worker bundles both passed deployment dry runs using the already built bundle and explicit application configuration. No deployment, database migration, reset or reseed was performed against a hosted environment. Local evidence identifies the working tree and must not be treated as a qualified committed release candidate.
+
+GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and the initial compatibility snapshot review remain required before enabling the adoption gate.

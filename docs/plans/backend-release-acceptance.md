@@ -4,7 +4,7 @@ Use this checklist after the separately managed reset and coordinated deployment
 
 ## Prerequisites
 
-- Deploy the backend and web/mobile artifacts identified by the same `release-contract.json` release ID. Compare the schema fingerprint and generated artifacts before enabling users.
+- Release each repository from its independently qualified source and checksummed artifacts. Backend compatibility gates protect released clients; consumers record their acquired backend commit. See the current independent CI setup guide.
 - Install forward migrations into the empty database. Seed an explicit finance currency and distinct teacher/reviewer identity subjects, with Draft and Submitted evaluations, pending/approved/rejected corrections, and published reports with locked source marks.
 - Retire old sessions, school caches and pending mobile mutations before reopening. Reset target selection and Identity/storage deletion are outside this implementation.
 - Record the deployed revisions, environment, reviewer and execution time with each result below. Never put access tokens, passwords or private student records into evidence.

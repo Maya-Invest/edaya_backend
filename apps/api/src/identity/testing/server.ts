@@ -1,4 +1,4 @@
-import { localOperations } from "../../../configuration/local-operations.mjs";
+import { localOperations } from "../../../configuration/local-operations.ts";
 import api from "@/app";
 import { parseRuntimeEnv } from "@/runtime/shared/env";
 import { loadLocalProcessEnv } from "@/runtime/shared/env/local-loader";

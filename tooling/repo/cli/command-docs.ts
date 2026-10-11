@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { commandMarkdown } from './catalog'
+import { help } from '../ops/main'
 import { repoRoot } from './lib/paths'
 
 const start = '<!-- repo-commands:start -->'
@@ -13,7 +13,7 @@ export function commandDocumentation(write = false, root = repoRoot): void {
   const to = text.indexOf(end)
   if (from < 0 || to < from)
     throw new Error('Command documentation markers are missing')
-  const updated = `${text.slice(0, from + start.length)}\n\n${commandMarkdown()}\n\n${text.slice(to)}`
+  const updated = `${text.slice(0, from + start.length)}\n\n${`\`\`\`text\n${help().trimEnd()}\n\`\`\``}\n\n${text.slice(to)}`
   if (write)
     writeFileSync(file, updated)
   else if (text !== updated)

@@ -1,6 +1,6 @@
 # Edaya Core
 
-See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun run repo maintenance vars` commands.
 
 Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
@@ -94,7 +94,7 @@ flowchart TB
 
 | Profile | Entry | Env source | Local command |
 |---------|-------|------------|---------------|
-| **local** | `apps/api/src/entries/local.ts` | `config.local.jsonc` + `.env` secrets | `bun repo dev` (API + local-files) |
+| **local** | `apps/api/src/entries/local.ts` | `config.local.jsonc` + `.env` secrets | `bun run repo dev` (API + local-files) |
 | **in-memory** | tests / harness | programmatic env | `bun test` in `apps/api` |
 | **worker** | `apps/api/src/entries/worker.ts` | `config.staging.jsonc` + `.dev.vars` secrets | `bun --filter @edaya/api dev:worker` (optional smoke) |
 
@@ -142,14 +142,14 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 |---------|------|------|
 | `@edaya/repo` | `tooling/repo` | Repo CLI, CI checks, OpenAPI client generator, school and identity migration commands, local file server |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared seed IDs, fixture records, assets, and minimal test helpers |
-| `@edaya/seeding` | `tooling/seeding` | Seed workflows and HTTP orchestration (`bun repo seed`) |
+| `@edaya/seeding` | `tooling/seeding` | Seed workflows and HTTP orchestration (`bun run repo maintenance seed`) |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, and notification smoke |
 
 The generator's shared contract lives in `package/api-client/src/contract`, exposed as `@maya-invest/edaya-api-client/contract`. The API imports this dependency-free contract; generation code remains in tooling. Tooling uses the root TypeScript and Bun/Node type dependencies.
 
 See [backend tooling audit](docs/reference/backend-tooling-audit.md) for the consolidation decisions and validation.
 
-Run `bun repo dev` to start the API and local file server directly with Bun. Use `bun repo seed` to populate the local development data.
+Run `bun run repo dev` to start the API and local file server directly with Bun. Use `bun run repo maintenance seed` to populate the local development data.
 
 ## Prerequisites
 
@@ -169,7 +169,7 @@ Web frontends: see **[edaya_frontend](../edaya_frontend/README.md)** (`cp apps/w
 ## Local development
 
 ```sh
-bun repo dev
+bun run repo dev
 ```
 
 | Service | URL |
@@ -179,7 +179,7 @@ bun repo dev
 
 Webapp (port 5173) runs from **edaya_frontend** — see [edaya_frontend README](../edaya_frontend/README.md).
 
-`bun repo dev` starts identity, the school API, and the local file server (required for uploads). Run `bun --filter @edaya/api dev` to start only the API.
+`bun run repo dev` starts identity, the school API, and the local file server (required for uploads). Run `bun --filter @edaya/api dev` to start only the API.
 
 **worker smoke** (Miniflare — optional, hits remote Neon/R2):
 
@@ -192,14 +192,14 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 
 ## Commands
 
-**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun repo dev`, `bun repo seed`, `bun repo db …`, etc. **No Turbo in `bun repo`** — use root scripts below.
+**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun run repo dev`, `bun run repo maintenance seed`, `bun run repo maintenance db …`, etc. **No Turbo in `bun repo`** — use root scripts below.
 
 **Turbo quality** (root `package.json`):
 
 | Command | Description |
 |---------|-------------|
-| `bun run verify` | Pre-PR gate: `bun repo verify` + quality + build + test |
-| `bun repo verify --full` | Local PR CI: `bun run verify` + `test:integration` |
+| `bun run verify` | Pre-PR gate: `bun run repo check` + quality + build + test |
+| `bun run repo ci qualify staging` | Local PR CI: `bun run verify` + `test:integration` |
 | `bun run lint` | ESLint across workspaces |
 | `bun run lint:fix` | ESLint with auto-fix |
 | `bun run check` | TypeScript checks |
@@ -213,9 +213,9 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 ### Pre-PR verification
 
 ```sh
-bun repo verify --full       # PR blocking CI locally (verify + integration)
+bun run repo ci qualify staging       # PR blocking CI locally (verify + integration)
 bun run verify               # CI verify job only (no integration)
-bun repo verify              # repo hygiene only (doctor + repo check *)
+bun run repo check              # repo hygiene only (doctor + repo check *)
 bun run test:integration     # integration slices alone
 ```
 

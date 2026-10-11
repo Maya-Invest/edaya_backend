@@ -2,6 +2,8 @@
 
 This records the integration-test refresh across backend, frontend, and mobile. The earlier `auth-refactor-validation-2026-09-28.md` describes the failures that motivated this work; it is historical evidence, not the current result.
 
+This dated record retains the commands and results used at that time. The October operational-tooling migration replaced the Python mobile runner and removed integration spreadsheet export. Use [CI setup](ci-setup.md) and each consumer's repository CLI reference for current commands; mobile now uses `dart run edaya_repo:repo ci integration` and `ci validate-integration`.
+
 ## Implemented coverage and execution controls
 
 - Frontend feature/scenario IDs are checked against the route, sidebar, and modal catalogs. Mobile inventories walk the registered GoRouter trees and validate explicitly registered actions and overlays.

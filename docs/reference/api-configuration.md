@@ -26,10 +26,10 @@ JSONC values are strings, including booleans and numbers, except `sms_routes`, w
 Supply `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (Workers Scripts Write) in the shell or repository-root `.env`. From the repository root:
 
 ```sh
-bun repo vars push staging --dry-run
-bun repo vars push staging
-bun repo vars push production
-bun repo vars delete staging OBSOLETE_SETTING
+bun run repo maintenance vars push staging --dry-run
+bun run repo maintenance vars push staging
+bun run repo maintenance vars push production
+bun run repo maintenance vars delete staging OBSOLETE_SETTING
 ```
 
 Push merges the selected config file into deployed variables. Omitted variables remain present; use `delete` to remove one explicitly. Empty strings are values, not deletions. Dry-run reads remote state and reports key-level changes without writing. The command never prints secret values or uploads Worker code.
@@ -42,10 +42,10 @@ Copy `secrets.json.example` into the environment's private JSON file. Preserve e
 
 ```sh
 # From the repository root:
-bun repo secrets push staging --dry-run
-bun repo secrets push staging
-bun repo secrets push production
-bun repo secrets list staging
+bun run repo maintenance secrets push staging --dry-run
+bun run repo maintenance secrets push staging
+bun run repo maintenance secrets push production
+bun run repo maintenance secrets list staging
 ```
 
 Secret previews validate the private file locally and print names only; they do not read remote state. Uploads validate binding types and verify secret names after writing. Secret values are passed to Wrangler through standard input.
@@ -59,8 +59,8 @@ The local migration backs up existing private files in `.data/config-backups/` w
 Legacy deployments may store non-secret settings as secret bindings. Conversion requires explicit opt-in and uses the value supplied in the config file; it does not reveal or copy a stored secret:
 
 ```sh
-bun repo vars push staging --dry-run --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
-bun repo vars push staging --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
+bun run repo maintenance vars push staging --dry-run --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
+bun run repo maintenance vars push staging --replace-secret R2_ENDPOINT --replace-secret ACCOUNT_SECURITY_KEY_VERSION
 ```
 
 Use additional `--replace-secret NAME` flags only for known non-secret keys being moved, such as provider usernames or sender IDs. Credential keys cannot be converted. There is no automatic remote migration during code deployment.
@@ -80,11 +80,11 @@ For an existing Worker, apply and verify variables before the first code deploym
 Each control is independent and defaults to `"false"` in both Worker profiles. Boolean strings accept `true`/`false` and `1`/`0` (case and whitespace normalized). No control depends on a hostname. Use narrowly scoped settings updates for temporary operational changes:
 
 ```sh
-bun repo status staging
-bun repo pause all staging --dry-run
-bun repo pause all staging
-bun repo resume api staging
-bun repo resume all staging
+bun run repo maintenance status staging
+bun run repo maintenance pause all staging --dry-run
+bun run repo maintenance pause all staging
+bun run repo maintenance resume api staging
+bun run repo maintenance resume all staging
 ```
 
 These commands preserve unrelated variables and secrets without changing the tracked config files or redeploying code. `vars push` applies the control values from the chosen file as part of its configuration update. Local API and cron share dynamic pause state with the seed coordinator. See [repository commands](repo-cli.md) for recovery.
@@ -98,13 +98,13 @@ For staging, use the updated release coordinator: it uploads all three new contr
 Before production deployment, explicitly upload the new controls with values matching its intended state (normally all false). After the new code is verified in each environment, remove obsolete variables:
 
 ```sh
-bun repo vars delete staging STAGING_MAINTENANCE
-bun repo vars delete staging STAGING_PAUSE_JOBS
-bun repo vars delete staging STAGING_NOTIFICATION_EMAILS
+bun run repo maintenance vars delete staging STAGING_MAINTENANCE
+bun run repo maintenance vars delete staging STAGING_PAUSE_JOBS
+bun run repo maintenance vars delete staging STAGING_NOTIFICATION_EMAILS
 # Repeat for production if those bindings exist.
 ```
 
-If an obsolete binding is a secret, use `bun repo secrets delete staging NAME` (or select `production`) instead. Remove obsolete fields from authoritative private/GitHub secret payloads as well. The new runtime does not support legacy aliases. Before rolling back to older code, restore its former variables using that revision's configuration tooling, including its staging maintenance/job-pause settings. A rollback does not restore database state.
+If an obsolete binding is a secret, use `bun run repo maintenance secrets delete staging NAME` (or select `production`) instead. Remove obsolete fields from authoritative private/GitHub secret payloads as well. The new runtime does not support legacy aliases. Before rolling back to older code, restore its former variables using that revision's configuration tooling, including its staging maintenance/job-pause settings. A rollback does not restore database state.
 
 The school-notification recipient allowlist has been removed entirely. Staging now sends school email and push through normal recipient resolution, just like production. Use designated test accounts/devices for live verification; the old empty allowlist no longer blocks deliveries.
 

@@ -1,6 +1,6 @@
 # Cron runtimes
 
-Scheduled jobs are defined in `@edaya/service` (`package/domain-service/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun repo dev`.
+Scheduled jobs are defined in `@edaya/service` (`package/domain-service/src/capabilities/scheduling-jobs/`). Deployed workers run a **heartbeat** cron via Cloudflare `scheduled()` and execute work through a **Cloudflare Queue** consumer. Local debugging uses a one-shot CLI against the same PGlite database as `bun run repo dev`.
 
 | Profile | Entry | Env source | Command |
 |---------|-------|------------|---------|
@@ -23,11 +23,11 @@ Worker bindings (not env vars):
 |---------|------|
 | `CRON_JOBS` | Queue producer (heartbeat) and consumer (`queue` handler) |
 
-Local cron uses the same PGlite school database as `bun repo dev`. Identity remains a separate service. Notification and storage adapters follow the existing runtime configuration.
+Local cron uses the same PGlite school database as `bun run repo dev`. Identity remains a separate service. Notification and storage adapters follow the existing runtime configuration.
 
 ## Local (one-shot against PGlite)
 
-Requires a seeded local database (`bun repo dev` at least once, or `bun repo seed` with API running).
+Requires a seeded local database (`bun run repo dev` at least once, or `bun run repo maintenance seed` with API running).
 
 ```sh
 bun --filter @edaya/api cron:local

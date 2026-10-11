@@ -1,4 +1,4 @@
-import type { Binding } from '../operations/worker-vars.mjs'
+import type { Binding } from '../operations/worker-vars.ts'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

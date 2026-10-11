@@ -10,10 +10,10 @@
     }
   },
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix",
+    "lint": "bun x --bun eslint src tests",
+    "lint:fix": "bun x --bun eslint src tests --fix",
     "test": "bun test tests/r2-file-storage.test.ts tests/r2-file-storage-object-operations.test.ts tests/configure-r2-bucket-cors.test.ts tests/probe-r2-endpoint.test.ts",
     "test:integration": "bun test tests/r2-file-storage.integration.test.ts"
   },

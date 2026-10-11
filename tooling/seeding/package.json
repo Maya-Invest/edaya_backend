@@ -34,11 +34,11 @@
     }
   },
   "scripts": {
-    "check": "tsc --noEmit",
+    "check": "bun x --bun tsc --noEmit",
     "quality": "bun run lint && bun run check",
     "test": "bun test src tests --dots",
-    "lint": "eslint src scripts",
-    "lint:fix": "eslint src scripts --fix"
+    "lint": "bun x --bun eslint src scripts",
+    "lint:fix": "bun x --bun eslint src scripts --fix"
   },
   "dependencies": {
     "@edaya/authorization": "workspace:*",

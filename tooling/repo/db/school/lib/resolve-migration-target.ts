@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { isPgliteDatabase, resolvePersistedPgliteDataDir } from '@edaya/adaptor-postgres'
 import { config } from 'dotenv'
 import { expand } from 'dotenv-expand'
-import { loadLocalConfiguration } from '../../../../../apps/api/configuration/index.mjs'
+import { loadLocalConfiguration } from '../../../../../apps/api/configuration/index.ts'
 
 export type MigrationTarget = 'local' | 'staging' | 'production'
 export type MigrationScope = 'school'

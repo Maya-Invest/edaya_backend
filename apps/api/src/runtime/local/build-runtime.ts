@@ -1,4 +1,4 @@
-import { localOperations } from "../../../configuration/local-operations.mjs";
+import { localOperations } from "../../../configuration/local-operations.ts";
 import { createApiRuntime } from "@/runtime/shared/create-api-runtime";
 import { buildSchoolApplication } from "@/runtime/shared/school-application";
 import { runMigrationsOnStartup } from "@/runtime/local/profile";

@@ -1,0 +1,9 @@
+Usage: bun run repo <command>
+
+check         Repository hygiene, workflow lint, generated contract checks and type checks.
+test          unit | integration | tooling
+build         staging | production (build immutable release artifacts without deployment)
+generate      openapi | openapi-export | codegen | templates | commands
+dev           Start local API and file services.
+maintenance   db | seed | vars | secrets | pause | resume | status | smoke | reset-staging | emergency-deploy
+ci            verify | qualify | fixture | migrate | deploy | resolve | workflows

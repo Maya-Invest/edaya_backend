@@ -1,6 +1,6 @@
 # API runtimes
 
-See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo vars` commands.
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun run repo maintenance vars` commands.
 
 The unified API supports in-memory tests, a local process and a Cloudflare Worker. `apps/api/src/identity` is the only application composition folder allowed to import authentication-provider internals. School business packages remain independent of them.
 
