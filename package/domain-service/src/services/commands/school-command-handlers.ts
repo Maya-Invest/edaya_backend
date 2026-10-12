@@ -175,8 +175,6 @@ import type { TeacherCorrectionsWorkflow } from '../workflows/teacher-correction
 import type {
   GenerateClassGroupTimetableInput,
   GenerateSchoolTimetableInput,
-  PublishClassGroupTimetableInput,
-  RepublishClassGroupTimetableInput,
   TimetableGenerationServiceWorkflow,
 } from '../workflows/timetable-generation'
 
@@ -369,8 +367,6 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     requestAttendanceJustification: payload => workflows.scheduling.requestAttendanceJustification(payload as RequestAttendanceJustificationInput),
     generateClassGroupTimetable: payload => workflows.timetableGeneration.generateClassGroupTimetable(payload as GenerateClassGroupTimetableInput),
     generateSchoolTimetable: payload => workflows.timetableGeneration.generateSchoolTimetable(payload as GenerateSchoolTimetableInput),
-    publishClassGroupTimetable: payload => workflows.timetableGeneration.publishClassGroupTimetable(payload as PublishClassGroupTimetableInput),
-    republishClassGroupTimetable: payload => workflows.timetableGeneration.republishClassGroupTimetable(payload as RepublishClassGroupTimetableInput),
     // communications
     createAnnouncement: payload => workflows.communications.createAnnouncement(payload as CreateAnnouncementInput),
     addTarget: payload => workflows.communications.addTarget(payload as AddAnnouncementTargetInput),

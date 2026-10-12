@@ -3,6 +3,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import type { SchedulingWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
 import { ActivitySession, Attendance, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, BusinessRuleViolationError, CalendarEvent, calendarEventBlocksTimetable, CalendarEventScopeKind, civilDateKey, LessonSession, normalizeDate, OccurrenceStatus, Schedule, ScheduleKind, StudentClassEnrollmentStatus } from '@edaya/core'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { ATTENDANCE_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { materializeOccurrences } from '../../capabilities/scheduling/materialize-occurrences'
 import { findAttendanceRecordByAnchor } from '../entities/config/scheduling/attendance-record'
@@ -89,6 +90,10 @@ export interface RescheduleOccurrenceInput {
 }
 
 export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
+  private withAcademicState<T>(operation: () => Promise<T>): Promise<T> {
+    return this.baseService.atomicExecution.execute(operation, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
+  }
+
   private readonly repositories: SchedulingWorkflowRepositories
 
   constructor(base: BaseSchoolService) {
@@ -97,7 +102,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async saveSchedule({ schedule: input, materialize = true }: SaveScheduleInput): Promise<Schedule> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const schedule = await this.createSchedule(input)
       if (materialize) {
         await this.materializeSchedule({ scheduleId: schedule.id })
@@ -107,7 +112,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createSchedule(input: CreateScheduleInput): Promise<Schedule> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const classGroup = await this.requireClassGroup(input.classGroupId)
       const schedule = new Schedule({
         ...input,
@@ -119,7 +124,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async createCalendarEvent(input: CreateCalendarEventInput): Promise<CalendarEvent> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const event = new CalendarEvent(input)
       await this.baseService.entities.calendarEvents.save(event)
       return event
@@ -127,7 +132,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async materializeSchedule({ scheduleId }: MaterializeScheduleInput): Promise<Array<LessonSession | ActivitySession>> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const schedule = await this.requireSchedule(scheduleId)
       if (schedule.scheduleKind === ScheduleKind.Lesson) {
         return this.materializeLessonSchedule(schedule)
@@ -146,7 +151,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     const school = await this.requireSchool(classGroup.schoolId)
     const displayLabel = await this.resolveLessonDisplayLabel(schedule)
     const nonSchoolDates = await this.buildNonSchoolDates(classGroup)
-    return this.baseService.atomicExecution.execute(() => materializeOccurrences({
+    return this.withAcademicState(() => materializeOccurrences({
       list: () => this.repositories.lessonSessions.list({ scheduleId: schedule.id }),
       save: entity => this.baseService.entities.lessonSessions.save(entity),
       create: occurrence => new LessonSession({ ...occurrence, schoolId: schedule.schoolId, classGroupId: classGroup.id, scheduleId: schedule.id, classSubjectId: schedule.classSubjectId!, status: OccurrenceStatus.Pending, isException: false }),
@@ -162,7 +167,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     const school = await this.requireSchool(classGroup.schoolId)
     const displayLabel = await this.resolveActivityDisplayLabel(schedule)
     const nonSchoolDates = await this.buildNonSchoolDates(classGroup)
-    return this.baseService.atomicExecution.execute(() => materializeOccurrences({
+    return this.withAcademicState(() => materializeOccurrences({
       list: () => this.repositories.activitySessions.list({ scheduleId: schedule.id }),
       save: entity => this.baseService.entities.activitySessions.save(entity),
       create: occurrence => new ActivitySession({ ...occurrence, schoolId: schedule.schoolId, classGroupId: classGroup.id, scheduleId: schedule.id, activityId: schedule.activityId!, status: OccurrenceStatus.Pending, isException: false }),
@@ -180,7 +185,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }: RecordAttendanceInput): Promise<AttendanceRecord> {
     if (this.baseService.actor.kind === 'teacher')
       throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const lessonSession = await this.requireLessonSession(lessonSessionId)
       const classGroup = await this.requireClassGroup(lessonSession.classGroupId)
       await this.authorizeAttendanceRecord({
@@ -217,14 +222,14 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }: RecordDailyAttendanceInput): Promise<AttendanceRecord> {
     if (this.baseService.actor.kind === 'teacher')
       throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const classGroup = await this.requireClassGroup(classGroupId)
       this.requireDailyAttendanceMode(classGroup)
       await this.authorizeAttendanceRecord({ classGroup, studentId })
       await this.requireStudentInSchool(studentId, classGroup.schoolId)
       await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
       const createdBy = resolveAuditActorId(this.baseService.actor)
-      return this.baseService.atomicExecution.execute(async () => {
+      return this.withAcademicState(async () => {
         const attendance = await this.getOrCreateAttendance(classGroup, date, createdAt)
         const record = await this.saveAttendanceRecord({
           id,
@@ -251,7 +256,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }: RecordLessonSessionAttendanceInput): Promise<AttendanceRecord[]> {
     if (this.baseService.actor.kind === 'teacher')
       throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const lessonSession = await this.requireLessonSession(lessonSessionId)
       const classGroup = await this.requireClassGroup(lessonSession.classGroupId)
       await this.authorizeAttendanceRecord({ classGroup, lessonSession })
@@ -259,7 +264,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
         await this.requireStudentInSchool(studentId, classGroup.schoolId)
       }
       const createdBy = resolveAuditActorId(this.baseService.actor)
-      return this.baseService.atomicExecution.execute(async () => {
+      return this.withAcademicState(async () => {
         const records: AttendanceRecord[] = []
         for (const [studentId, status] of Object.entries(attendanceByStudent)) {
           records.push(await this.saveAttendanceRecord({
@@ -290,7 +295,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }: RecordClassDailyAttendanceInput): Promise<AttendanceRecord[]> {
     if (this.baseService.actor.kind === 'teacher')
       throw new BusinessRuleViolationError('ATTENDANCE_CALL_COMMAND_REQUIRED', 'Save attendance as a draft and submit the completed call')
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const classGroup = await this.requireClassGroup(classGroupId)
       this.requireDailyAttendanceMode(classGroup)
       await this.authorizeAttendanceRecord({ classGroup })
@@ -299,7 +304,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
         await this.requireEnrollmentForClassGroup({ studentId, classGroupId: classGroup.id })
       }
       const createdBy = resolveAuditActorId(this.baseService.actor)
-      return this.baseService.atomicExecution.execute(async () => {
+      return this.withAcademicState(async () => {
         const attendance = await this.getOrCreateAttendance(classGroup, date, createdAt)
         const records: AttendanceRecord[] = []
         for (const [studentId, status] of Object.entries(attendanceByStudent)) {
@@ -323,7 +328,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async cancelLessonSession({ lessonSessionId }: CancelLessonSessionInput): Promise<LessonSession> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const lessonSession = await this.requireLessonSession(lessonSessionId)
       const classGroup = await this.requireClassGroup(lessonSession.classGroupId)
       await this.authorizeTimetableUpdate(classGroup)
@@ -346,7 +351,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   async cancelActivitySession({ activitySessionId }: CancelActivitySessionInput): Promise<ActivitySession> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const activitySession = await this.requireActivitySession(activitySessionId)
       const classGroup = await this.requireClassGroup(activitySession.classGroupId)
       await this.authorizeTimetableUpdate(classGroup)
@@ -374,7 +379,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     startsAt,
     endsAt,
   }: RescheduleOccurrenceInput): Promise<LessonSession | ActivitySession> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       if (lessonSessionId && activitySessionId) {
         throw new BusinessRuleViolationError(
           'INVALID_OCCURRENCE_TARGET',
@@ -443,7 +448,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     decision,
     reason,
   }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const anchor: AttendanceAnchor = attendanceId
         ? { attendanceId }
         : { lessonSessionId: lessonSessionId! }
@@ -467,7 +472,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     attendanceId,
     reason,
   }: RequestAttendanceJustificationInput): Promise<AttendanceRecord> {
-    return this.baseService.atomicExecution.execute(async () => {
+    return this.withAcademicState(async () => {
       const existing = await this.repositories.attendance.findById(attendanceId)
       if (!existing || existing.studentId !== studentId) {
         denyResourceAccess()

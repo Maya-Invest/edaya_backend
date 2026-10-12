@@ -12,6 +12,7 @@ export interface TeacherWorkflowState {
   history: Array<{ at: string, subjectId: string, action: string, payload: Record<string, unknown> }>
 }
 export interface TeacherCorrectionsPort {
+  referencedLessonSessionIds: (schoolId: string, sessionIds: readonly string[]) => Promise<string[]>
   find: (schoolId: string, id: string) => Promise<TeacherCorrection | undefined>
   save: (row: TeacherCorrection) => Promise<void>
   forTarget: (schoolId: string, workflow: CorrectionWorkflow, targetId: string) => Promise<TeacherCorrection[]>

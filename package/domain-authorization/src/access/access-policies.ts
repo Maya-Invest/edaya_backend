@@ -574,23 +574,12 @@ export class AccessPolicies {
       }
     },
     assertCreateClass: (id: string) => this.assertResources(P.TIMETABLE_CREATE, 'classGroups', [id]),
-    assertPublishClass: (id: string) => this.assertResources(P.TIMETABLE_PUBLISH, 'classGroups', [id]),
     assertGenerate: async (sessions: readonly CoreEntityMap['lessonSessions'][]) => {
       const scope = await this.scope(P.TIMETABLE_CREATE, 'lessonSessions', 'write')
       for (const session of sessions) {
         const existing = await this.repositories.lessonSessions.forSchool!(this.actor.schoolId).findById(session.id)
         if (existing)
           denied('Generated sessions must have new identities')
-        await this.repositories.lessonSessions.forAccess(scope).assertAccess(session)
-      }
-      return scope
-    },
-    assertPublish: async (sessions: readonly CoreEntityMap['lessonSessions'][]) => {
-      const scope = await this.scope(P.TIMETABLE_PUBLISH, 'lessonSessions', 'write')
-      for (const session of sessions) {
-        const existing = await this.repositories.lessonSessions.forAccess(scope).findById(session.id)
-        if (!existing)
-          denied()
         await this.repositories.lessonSessions.forAccess(scope).assertAccess(session)
       }
       return scope

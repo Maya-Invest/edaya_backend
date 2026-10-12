@@ -194,16 +194,27 @@ function sortCandidateBlocks(
     || left[0]!.periodDefinitionId.localeCompare(right[0]!.periodDefinitionId))
 }
 
+function searchOrder(value: string, attempt: number): number {
+  let hash = attempt
+  for (const char of value)
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619)
+  return hash >>> 0
+}
+
 class CandidateBlockCache {
   private readonly blocksBySpan = new Map<string, ResolvedTimetableCell[][]>()
 
-  constructor(private readonly weekCells: readonly ResolvedTimetableCell[], private readonly preferredIds: Set<string>) {}
+  constructor(private readonly weekCells: readonly ResolvedTimetableCell[], private readonly preferredIds: Set<string>, private readonly searchAttempt = 0) {}
 
   get(subject: TimetableSubjectDemand): ResolvedTimetableCell[][] {
     const key = `${subject.minPeriodSpan}:${subject.maxPeriodSpan}`
     let blocks = this.blocksBySpan.get(key)
     if (!blocks) {
       blocks = sortCandidateBlocks(buildCandidateBlocks(this.weekCells, subject.minPeriodSpan, subject.maxPeriodSpan), this.preferredIds)
+      if (this.searchAttempt > 0) {
+        blocks.sort((left, right) => Number(this.preferredIds.has(right[0]!.periodDefinitionId)) - Number(this.preferredIds.has(left[0]!.periodDefinitionId))
+          || searchOrder(`${left[0]!.date}:${left[0]!.periodDefinitionId}`, this.searchAttempt) - searchOrder(`${right[0]!.date}:${right[0]!.periodDefinitionId}`, this.searchAttempt))
+      }
       this.blocksBySpan.set(key, blocks)
     }
     return blocks
@@ -218,6 +229,7 @@ interface PlacementSearchContext {
   preferredIds: Set<string>
   placements: readonly TimetablePlacement[]
   minDayGapSameSubject: number
+  existingSubjectDates?: readonly { classSubjectId: string, date: string }[]
 }
 
 function candidateBlocks(context: PlacementSearchContext, blockSize?: number): ResolvedTimetableCell[][] {
@@ -225,6 +237,8 @@ function candidateBlocks(context: PlacementSearchContext, blockSize?: number): R
     .filter(block => blockSize === undefined || block.length === blockSize)
     .filter(block => blockIsAvailable(block, context.classGroupId, context.subject.teacherIds, context.occupied))
     .filter(block => !violatesSameSubjectDayGap(context.placements, context.subject.classSubjectId, block[0]!.date, context.minDayGapSameSubject))
+    .filter(block => !context.existingSubjectDates?.some(existing => existing.classSubjectId === context.subject.classSubjectId
+      && calendarDaysBetween(existing.date, block[0]!.date) < context.minDayGapSameSubject))
 }
 
 const PLACEMENT_SCORE_SLOT_WEIGHT = 1_000_000
@@ -592,11 +606,15 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
   const rangeEndKey = dateKey(normalizeDate(input.endDate))
   const occupied = new TimetableOccupancyIndex(input.occupiedIntervals)
   const placements: TimetablePlacement[] = []
-  const placedBySubjectWeek: Record<string, Record<string, number>> = {}
+  const placedBySubjectWeek: Record<string, Record<string, number>> = structuredClone(input.existingWorkloadByClassSubjectAndWeek ?? {})
   const weeks = weekKeysInRange(input.startDate, input.endDate)
 
   for (const templatePlacement of input.templatePlacements) {
     for (const currentWeekKey of weeks) {
+      const required = input.subjects.find(subject => subject.classSubjectId === templatePlacement.classSubjectId)?.periodsPerWeek ?? 0
+      const placed = placedBySubjectWeek[templatePlacement.classSubjectId]?.[currentWeekKey] ?? 0
+      if (placed + placementSlotCount(templatePlacement) > required)
+        continue
       const concreteCells: ResolvedTimetableCell[] = []
       let blockAvailable = true
       for (const templateCell of templatePlacement.cells) {
@@ -631,6 +649,12 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
       if (!blockAvailable || concreteCells.length === 0) {
         continue
       }
+      if (violatesSameSubjectDayGap(placements, templatePlacement.classSubjectId, concreteCells[0]!.date, input.options.minDayGapSameSubject))
+        continue
+      if (input.existingSubjectDates?.some(existing => existing.classSubjectId === templatePlacement.classSubjectId
+        && calendarDaysBetween(existing.date, concreteCells[0]!.date) < input.options.minDayGapSameSubject)) {
+        continue
+      }
       const placement = makePlacement({
         classSubjectId: templatePlacement.classSubjectId,
         displayLabel: templatePlacement.displayLabel,
@@ -641,6 +665,70 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
       const byWeek = placedBySubjectWeek[placement.classSubjectId] ?? {}
       byWeek[currentWeekKey] = (byWeek[currentWeekKey] ?? 0) + placementSlotCount(placement)
       placedBySubjectWeek[placement.classSubjectId] = byWeek
+    }
+  }
+
+  // Keep available template lessons fixed, then fill only the remaining workload.
+  // A blocked recurring slot is not proof that the concrete week is infeasible.
+  const templateCells = buildWeeklyTemplateSpace([...input.periodById.values()], input.options)
+  const repairCells = weeks.flatMap(currentWeekKey => templateCells.flatMap((cell) => {
+    const date = dateInWeek(currentWeekKey, cell.date)
+    if (date < rangeStartKey || date > rangeEndKey || input.nonSchoolDates.has(date))
+      return []
+    return [{ ...cell, date, weekKey: currentWeekKey, ...buildCellTimes(dateFromKey(date), input.periodById.get(cell.periodDefinitionId)!) }]
+  }))
+  const repair = solveTimetable({
+    classGroupId: input.classGroupId,
+    cells: repairCells,
+    subjects: [...input.subjects],
+    occupiedIntervals: [...input.occupiedIntervals, ...placements.flatMap(placement => placementOccupiedIntervals(input.classGroupId, placement))],
+    existingWorkloadByClassSubjectAndWeek: placedBySubjectWeek,
+    existingSubjectDates: [
+      ...(input.existingSubjectDates ?? []),
+      ...placements.map(placement => ({ classSubjectId: placement.classSubjectId, date: placement.cell.date })),
+    ],
+    options: { ...input.options, enforceWorkloadFulfillment: false },
+  })
+  for (const placement of repair.placements) {
+    placements.push(placement)
+    const byWeek = placedBySubjectWeek[placement.classSubjectId] ?? {}
+    byWeek[placement.cell.weekKey] = (byWeek[placement.cell.weekKey] ?? 0) + placementSlotCount(placement)
+    placedBySubjectWeek[placement.classSubjectId] = byWeek
+  }
+
+  // If filling holes cannot satisfy a week, allow its newly generated lessons to
+  // move. Preserved lessons and other weeks remain fixed; retain the better plan.
+  for (const currentWeekKey of weeks) {
+    const missing = input.subjects.reduce((sum, subject) => sum + Math.max(0, subject.periodsPerWeek - (placedBySubjectWeek[subject.classSubjectId]?.[currentWeekKey] ?? 0)), 0)
+    const weekCells = repairCells.filter(cell => cell.weekKey === currentWeekKey)
+    if (missing === 0 || weekCells.length === 0)
+      continue
+    const otherWeeks = placements.filter(placement => placement.cell.weekKey !== currentWeekKey)
+    const replanInput: SolveTimetableInput = {
+      classGroupId: input.classGroupId,
+      cells: weekCells,
+      subjects: [...input.subjects],
+      occupiedIntervals: [...input.occupiedIntervals, ...otherWeeks.flatMap(placement => placementOccupiedIntervals(input.classGroupId, placement))],
+      existingWorkloadByClassSubjectAndWeek: input.existingWorkloadByClassSubjectAndWeek,
+      existingSubjectDates: [
+        ...(input.existingSubjectDates ?? []),
+        ...otherWeeks.map(placement => ({ classSubjectId: placement.classSubjectId, date: placement.cell.date })),
+      ],
+      options: { ...input.options, enforceWorkloadFulfillment: false },
+    }
+    const replanned = solveTimetable(replanInput)
+    if (replanned.unmetWorkloads.reduce((sum, unmet) => sum + unmet.required - unmet.placed, 0) >= missing)
+      continue
+    for (let index = placements.length - 1; index >= 0; index--) {
+      if (placements[index]!.cell.weekKey === currentWeekKey)
+        placements.splice(index, 1)
+    }
+    placements.push(...replanned.placements)
+    for (const subject of input.subjects) {
+      const byWeek = placedBySubjectWeek[subject.classSubjectId] ?? {}
+      byWeek[currentWeekKey] = (input.existingWorkloadByClassSubjectAndWeek?.[subject.classSubjectId]?.[currentWeekKey] ?? 0)
+        + replanned.placements.filter(placement => placement.classSubjectId === subject.classSubjectId).reduce((sum, placement) => sum + placement.span, 0)
+      placedBySubjectWeek[subject.classSubjectId] = byWeek
     }
   }
 
@@ -668,6 +756,7 @@ export function spreadWeeklyTemplate(input: SpreadWeeklyTemplateInput): SolveTim
     throw new BusinessRuleViolationError(
       'TIMETABLE_WORKLOAD_UNSATISFIED',
       formatTimetableWorkloadViolation(first),
+      { classGroupId: input.classGroupId, ...first },
     )
   }
 
@@ -688,15 +777,18 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
 
   for (const currentWeekKey of [...cellsByWeek.keys()].sort()) {
     const weekCells = cellsByWeek.get(currentWeekKey)!
-    const candidates = new CandidateBlockCache(weekCells, preferredIds)
+    const candidates = new CandidateBlockCache(weekCells, preferredIds, input.searchAttempt)
+    const existingDatesBySubject = new Map(input.subjects.map(subject => [subject.classSubjectId, input.existingSubjectDates?.filter(existing => existing.classSubjectId === subject.classSubjectId
+      && weekCells.some(cell => calendarDaysBetween(existing.date, cell.date) < input.options.minDayGapSameSubject))]))
     const contextFor = (subject: TimetableSubjectDemand): PlacementSearchContext => ({
       candidates,
       subject,
-      classGroupId: input.classGroupId,
+      classGroupId: subject.classGroupId ?? input.classGroupId,
       occupied,
       preferredIds,
       placements,
       minDayGapSameSubject: input.options.minDayGapSameSubject,
+      existingSubjectDates: existingDatesBySubject.get(subject.classSubjectId),
     })
     const availableCounts = new Map(input.subjects.map(subject => [subject.classSubjectId, candidateBlocks(contextFor(subject)).length]))
     const subjects = [...input.subjects].sort((left, right) =>
@@ -704,7 +796,17 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
       || right.periodsPerWeek - left.periodsPerWeek
       || left.classSubjectId.localeCompare(right.classSubjectId))
 
-    for (const subject of subjects) {
+    while (subjects.length > 0) {
+      if (input.subjects.some(subject => subject.classGroupId !== undefined)) {
+        const capacity = new Map(subjects.map((subject) => {
+          const cells = new Set(candidateBlocks(contextFor(subject)).flatMap(block => block.map(cell => cell.startsAt.getTime())))
+          const remaining = Math.max(1, subject.periodsPerWeek - (input.existingWorkloadByClassSubjectAndWeek?.[subject.classSubjectId]?.[currentWeekKey] ?? 0))
+          return [subject.classSubjectId, cells.size / remaining]
+        }))
+        subjects.sort((left, right) => capacity.get(left.classSubjectId)! - capacity.get(right.classSubjectId)!
+          || right.periodsPerWeek - left.periodsPerWeek || left.classSubjectId.localeCompare(right.classSubjectId))
+      }
+      const subject = subjects.shift()!
       const existingCount = input.existingWorkloadByClassSubjectAndWeek?.[subject.classSubjectId]?.[currentWeekKey] ?? 0
       const slotsToPlace = Math.max(0, subject.periodsPerWeek - existingCount)
       let slotsPlaced = 0
@@ -721,7 +823,7 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
           teacherIds: subject.teacherIds,
         }, block)
         placements.push(placement)
-        const nextOccupied = placementOccupiedIntervals(input.classGroupId, placement)
+        const nextOccupied = placementOccupiedIntervals(subject.classGroupId ?? input.classGroupId, placement)
         occupied.add(nextOccupied)
         placementContext.occupied = occupied
         placementContext.placements = placements
@@ -743,6 +845,7 @@ export function solveTimetable(input: SolveTimetableInput): SolveTimetableResult
     throw new BusinessRuleViolationError(
       'TIMETABLE_WORKLOAD_UNSATISFIED',
       formatTimetableWorkloadViolation(first),
+      { classGroupId: input.classGroupId, ...first },
     )
   }
   return { placements, unmetWorkloads }

@@ -1,76 +1,76 @@
-import { z } from "@hono/zod-openapi";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
-import type { AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeLevelSubjectInput, GradeLevelSubjectMatterInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionInput, ReportCardResultInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
-import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
+import type { AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeLevelSubjectInput, GradeLevelSubjectMatterInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionInput, ReportCardResultInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from '@edaya/core'
+import { academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from '@edaya/core'
+import { z } from '@hono/zod-openapi'
+import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from './helpers'
 
 // ==========================================================
 // 1. All Domain Entities Response OpenAPI Schemas
 // ==========================================================
 
-export const schoolResponseSchema = responseSchema<SchoolInput>("School", unwrapShape(schoolSchema));
-export const academicYearResponseSchema = responseSchema<AcademicYearInput>("AcademicYear", unwrapShape(academicYearSchema));
-export const academicPeriodResponseSchema = responseSchema<AcademicPeriodInput>("AcademicPeriod", unwrapShape(academicPeriodSchema));
-export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionInput>("PeriodDefinition", unwrapShape(periodDefinitionSchema));
-export const gradeLevelResponseSchema = responseSchema<GradeLevelInput>("GradeLevel", unwrapShape(gradeLevelSchema));
-export const staffMemberResponseSchema = responseSchema<StaffMemberInput>("StaffMember", unwrapShape(staffMemberSchema));
-export const teacherResponseSchema = responseSchema<TeacherInput>("Teacher", unwrapShape(teacherSchema));
-export const teacherAssignmentResponseSchema = responseSchema<TeacherAssignmentInput>("TeacherAssignment", unwrapShape(teacherAssignmentSchema));
-export const teacherUnavailabilityResponseSchema = responseSchema<TeacherUnavailabilityInput>("TeacherUnavailability", unwrapShape(teacherUnavailabilitySchema));
+export const schoolResponseSchema = responseSchema<SchoolInput>('School', unwrapShape(schoolSchema))
+export const academicYearResponseSchema = responseSchema<AcademicYearInput>('AcademicYear', unwrapShape(academicYearSchema))
+export const academicPeriodResponseSchema = responseSchema<AcademicPeriodInput>('AcademicPeriod', unwrapShape(academicPeriodSchema))
+export const periodDefinitionResponseSchema = responseSchema<PeriodDefinitionInput>('PeriodDefinition', unwrapShape(periodDefinitionSchema))
+export const gradeLevelResponseSchema = responseSchema<GradeLevelInput>('GradeLevel', unwrapShape(gradeLevelSchema))
+export const staffMemberResponseSchema = responseSchema<StaffMemberInput>('StaffMember', unwrapShape(staffMemberSchema))
+export const teacherResponseSchema = responseSchema<TeacherInput>('Teacher', unwrapShape(teacherSchema))
+export const teacherAssignmentResponseSchema = responseSchema<TeacherAssignmentInput>('TeacherAssignment', unwrapShape(teacherAssignmentSchema))
+export const teacherUnavailabilityResponseSchema = responseSchema<TeacherUnavailabilityInput>('TeacherUnavailability', unwrapShape(teacherUnavailabilitySchema))
 
-const { tokenHash: _accountInvitationTokenHash, ...accountInvitationShape } = unwrapShape(accountInvitationSchema);
+const { tokenHash: _accountInvitationTokenHash, ...accountInvitationShape } = unwrapShape(accountInvitationSchema)
 export const accountInvitationResponseSchema = responseSchema<AccountInvitationInput>(
-  "AccountInvitation",
+  'AccountInvitation',
   accountInvitationShape,
-);
-export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput>("StaffAssignment", unwrapShape(staffAssignmentSchema));
-export const staffPermissionAssignmentResponseSchema = responseSchema<StaffPermissionAssignmentInput>("StaffPermissionAssignment", unwrapShape(staffPermissionAssignmentSchema));
-export const staffPermissionProfileResponseSchema = responseSchema<StaffPermissionProfileInput>("StaffPermissionProfile", unwrapShape(staffPermissionProfileSchema));
-export const staffPermissionProfileBindingResponseSchema = responseSchema<StaffPermissionProfileBindingInput>("StaffPermissionProfileBinding", unwrapShape(staffPermissionProfileBindingSchema));
-export const attachmentResponseSchema = responseSchema<AttachmentInput>("Attachment", unwrapShape(attachmentSchema));
-export const resourceResponseSchema = responseSchema<ResourceInput>("Resource", unwrapShape(resourceSchema));
-export const resourceAssignmentResponseSchema = responseSchema<ResourceAssignmentInput>("ResourceAssignment", unwrapShape(resourceAssignmentSchema));
-export const catalogInstallmentTemplateSchema = valueSchema<CatalogInstallmentTemplate>(unwrapShape(coreCatalogInstallmentTemplateSchema));
-export const catalogServiceResponseSchema = responseSchema<CatalogServiceInput>("CatalogService", unwrapShape(catalogServiceSchema));
-export const chargeInstallmentSchema = valueSchema<ChargeInstallment>(unwrapShape(coreChargeInstallmentSchema));
-export const studentServiceEnrollmentResponseSchema = responseSchema<StudentServiceEnrollmentInput>("StudentServiceEnrollment", unwrapShape(studentServiceEnrollmentSchema));
-export const studentChargeResponseSchema = responseSchema<StudentChargeInput>("StudentCharge", unwrapShape(studentChargeSchema));
-export const studentYearAccountResponseSchema = responseSchema<StudentYearAccountInput>("StudentYearAccount", unwrapShape(studentYearAccountSchema));
-export const paymentResponseSchema = responseSchema<PaymentInput>("Payment", unwrapShape(paymentSchema));
-export const scheduleResponseSchema = responseSchema<ScheduleInput>("Schedule", unwrapShape(scheduleSchema));
-export const lessonSessionResponseSchema = responseSchema<LessonSessionInput>("LessonSession", unwrapShape(lessonSessionSchema));
-export const activitySessionResponseSchema = responseSchema<ActivitySessionInput>("ActivitySession", unwrapShape(activitySessionSchema));
-export const attendanceOccurrenceResponseSchema = responseSchema<AttendanceInput>("AttendanceOccurrence", unwrapShape(attendanceSchema));
-export const calendarEventResponseSchema = responseSchema<CalendarEventInput>("CalendarEvent", unwrapShape(calendarEventSchema));
-export const attendanceResponseSchema = responseSchema<AttendanceRecordInput>("Attendance", unwrapShape(attendanceRecordSchema));
-export const announcementResponseSchema = responseSchema<AnnouncementInput>("Announcement", unwrapShape(announcementSchema));
-export const announcementTargetResponseSchema = responseSchema<AnnouncementTargetInput>("AnnouncementTarget", unwrapShape(announcementTargetSchema));
-export const messageDeliveryResponseSchema = responseSchema<MessageDeliveryInput>("MessageDelivery", unwrapShape(messageDeliverySchema));
+)
+export const staffAssignmentResponseSchema = responseSchema<StaffAssignmentInput>('StaffAssignment', unwrapShape(staffAssignmentSchema))
+export const staffPermissionAssignmentResponseSchema = responseSchema<StaffPermissionAssignmentInput>('StaffPermissionAssignment', unwrapShape(staffPermissionAssignmentSchema))
+export const staffPermissionProfileResponseSchema = responseSchema<StaffPermissionProfileInput>('StaffPermissionProfile', unwrapShape(staffPermissionProfileSchema))
+export const staffPermissionProfileBindingResponseSchema = responseSchema<StaffPermissionProfileBindingInput>('StaffPermissionProfileBinding', unwrapShape(staffPermissionProfileBindingSchema))
+export const attachmentResponseSchema = responseSchema<AttachmentInput>('Attachment', unwrapShape(attachmentSchema))
+export const resourceResponseSchema = responseSchema<ResourceInput>('Resource', unwrapShape(resourceSchema))
+export const resourceAssignmentResponseSchema = responseSchema<ResourceAssignmentInput>('ResourceAssignment', unwrapShape(resourceAssignmentSchema))
+export const catalogInstallmentTemplateSchema = valueSchema<CatalogInstallmentTemplate>(unwrapShape(coreCatalogInstallmentTemplateSchema))
+export const catalogServiceResponseSchema = responseSchema<CatalogServiceInput>('CatalogService', unwrapShape(catalogServiceSchema))
+export const chargeInstallmentSchema = valueSchema<ChargeInstallment>(unwrapShape(coreChargeInstallmentSchema))
+export const studentServiceEnrollmentResponseSchema = responseSchema<StudentServiceEnrollmentInput>('StudentServiceEnrollment', unwrapShape(studentServiceEnrollmentSchema))
+export const studentChargeResponseSchema = responseSchema<StudentChargeInput>('StudentCharge', unwrapShape(studentChargeSchema))
+export const studentYearAccountResponseSchema = responseSchema<StudentYearAccountInput>('StudentYearAccount', unwrapShape(studentYearAccountSchema))
+export const paymentResponseSchema = responseSchema<PaymentInput>('Payment', unwrapShape(paymentSchema))
+export const scheduleResponseSchema = responseSchema<ScheduleInput>('Schedule', unwrapShape(scheduleSchema))
+export const lessonSessionResponseSchema = responseSchema<LessonSessionInput>('LessonSession', unwrapShape(lessonSessionSchema))
+export const activitySessionResponseSchema = responseSchema<ActivitySessionInput>('ActivitySession', unwrapShape(activitySessionSchema))
+export const attendanceOccurrenceResponseSchema = responseSchema<AttendanceInput>('AttendanceOccurrence', unwrapShape(attendanceSchema))
+export const calendarEventResponseSchema = responseSchema<CalendarEventInput>('CalendarEvent', unwrapShape(calendarEventSchema))
+export const attendanceResponseSchema = responseSchema<AttendanceRecordInput>('Attendance', unwrapShape(attendanceRecordSchema))
+export const announcementResponseSchema = responseSchema<AnnouncementInput>('Announcement', unwrapShape(announcementSchema))
+export const announcementTargetResponseSchema = responseSchema<AnnouncementTargetInput>('AnnouncementTarget', unwrapShape(announcementTargetSchema))
+export const messageDeliveryResponseSchema = responseSchema<MessageDeliveryInput>('MessageDelivery', unwrapShape(messageDeliverySchema))
 
 export const schoolNotificationTemplatesResponseSchema = responseSchema<SchoolNotificationTemplatesInput>(
-  "SchoolNotificationTemplates",
+  'SchoolNotificationTemplates',
   unwrapShape(schoolNotificationTemplatesSchema),
-);
-export const subjectResponseSchema = responseSchema<SubjectInput>("Subject", unwrapShape(subjectSchema));
-export const subjectCategoryResponseSchema = responseSchema<SubjectCategoryInput>("SubjectCategory", unwrapShape(subjectCategorySchema));
-export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>("SubjectMatter", unwrapShape(subjectMatterSchema));
-export const gradeLevelSubjectResponseSchema = responseSchema<GradeLevelSubjectInput>("GradeLevelSubject", unwrapShape(gradeLevelSubjectSchema));
-export const gradeLevelSubjectMatterResponseSchema = responseSchema<GradeLevelSubjectMatterInput>("GradeLevelSubjectMatter", unwrapShape(gradeLevelSubjectMatterSchema));
-export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGroup", unwrapShape(classGroupSchema));
-export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
-export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
-export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>("ClassSubjectProgress", unwrapShape(classSubjectProgressSchema));
-export const activityResponseSchema = responseSchema<ActivityInput>("Activity", unwrapShape(activitySchema));
-export const activityEnrollmentResponseSchema = responseSchema<ActivityEnrollmentInput>("ActivityEnrollment", unwrapShape(activityEnrollmentSchema));
-export const classActivityEnrollmentResponseSchema = responseSchema<ClassActivityEnrollmentInput>("ClassActivityEnrollment", unwrapShape(classActivityEnrollmentSchema));
-export const assessmentResponseSchema = responseSchema<AssessmentInput>("Assessment", unwrapShape(assessmentSchema));
-export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>("AssessmentResult", unwrapShape(assessmentResultSchema));
-export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema));
-export const gradeScaleResponseSchema = responseSchema<GradeScaleInput>("GradeScale", unwrapShape(gradeScaleSchema));
-export const definitionResponseSchema = responseSchema<ReportCardDefinitionInput>("ReportCardDefinition", unwrapShape(reportCardDefinitionSchema));
-export const sectionResponseSchema = responseSchema<ReportCardDefinitionSectionInput>("ReportCardDefinitionSection", unwrapShape(reportCardDefinitionSectionSchema));
+)
+export const subjectResponseSchema = responseSchema<SubjectInput>('Subject', unwrapShape(subjectSchema))
+export const subjectCategoryResponseSchema = responseSchema<SubjectCategoryInput>('SubjectCategory', unwrapShape(subjectCategorySchema))
+export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>('SubjectMatter', unwrapShape(subjectMatterSchema))
+export const gradeLevelSubjectResponseSchema = responseSchema<GradeLevelSubjectInput>('GradeLevelSubject', unwrapShape(gradeLevelSubjectSchema))
+export const gradeLevelSubjectMatterResponseSchema = responseSchema<GradeLevelSubjectMatterInput>('GradeLevelSubjectMatter', unwrapShape(gradeLevelSubjectMatterSchema))
+export const classGroupResponseSchema = responseSchema<ClassGroupInput>('ClassGroup', unwrapShape(classGroupSchema))
+export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>('ClassSubject', unwrapShape(classSubjectSchema))
+export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>('ClassSubjectMatter', unwrapShape(classSubjectMatterSchema))
+export const classSubjectProgressResponseSchema = responseSchema<ClassSubjectProgressInput>('ClassSubjectProgress', unwrapShape(classSubjectProgressSchema))
+export const activityResponseSchema = responseSchema<ActivityInput>('Activity', unwrapShape(activitySchema))
+export const activityEnrollmentResponseSchema = responseSchema<ActivityEnrollmentInput>('ActivityEnrollment', unwrapShape(activityEnrollmentSchema))
+export const classActivityEnrollmentResponseSchema = responseSchema<ClassActivityEnrollmentInput>('ClassActivityEnrollment', unwrapShape(classActivityEnrollmentSchema))
+export const assessmentResponseSchema = responseSchema<AssessmentInput>('Assessment', unwrapShape(assessmentSchema))
+export const assessmentResultResponseSchema = responseSchema<AssessmentResultInput>('AssessmentResult', unwrapShape(assessmentResultSchema))
+export const gradeScaleRangeSchema = valueSchema<GradeScaleRange>(unwrapShape(coreGradeScaleRangeSchema))
+export const gradeScaleResponseSchema = responseSchema<GradeScaleInput>('GradeScale', unwrapShape(gradeScaleSchema))
+export const definitionResponseSchema = responseSchema<ReportCardDefinitionInput>('ReportCardDefinition', unwrapShape(reportCardDefinitionSchema))
+export const sectionResponseSchema = responseSchema<ReportCardDefinitionSectionInput>('ReportCardDefinitionSection', unwrapShape(reportCardDefinitionSectionSchema))
 export const reportCardResultSectionSchema = lazySchema(() => coreReportCardResultSectionSchema)
-  .openapi("ReportCardResultSection", { type: "object" });
-export const resultResponseSchema = responseSchema<ReportCardResultInput>("ReportCardResult", {
+  .openapi('ReportCardResultSection', { type: 'object' })
+export const resultResponseSchema = responseSchema<ReportCardResultInput>('ReportCardResult', {
   ...unwrapShape(reportCardResultSchema),
   sectionResults: z.array(reportCardResultSectionSchema),
   attendanceSummary: valueSchema<AttendanceSummary>({
@@ -78,22 +78,22 @@ export const resultResponseSchema = responseSchema<ReportCardResultInput>("Repor
     total: z.number(),
     attendanceRate: z.number(),
   }),
-});
-export const studentResponseSchema = responseSchema<StudentInput>("Student", unwrapShape(studentSchema));
-export const enrollmentResponseSchema = responseSchema<StudentClassEnrollmentInput>("StudentClassEnrollment", unwrapShape(studentClassEnrollmentSchema));
-export const guardianResponseSchema = responseSchema<GuardianInput>("Guardian", {
+})
+export const studentResponseSchema = responseSchema<StudentInput>('Student', unwrapShape(studentSchema))
+export const enrollmentResponseSchema = responseSchema<StudentClassEnrollmentInput>('StudentClassEnrollment', unwrapShape(studentClassEnrollmentSchema))
+export const guardianResponseSchema = responseSchema<GuardianInput>('Guardian', {
   ...unwrapShape(guardianSchema),
   contactMethods: z.array(objectFromSchema(guardianContactMethodSchema)),
-});
-export const guardianLinkResponseSchema = responseSchema<GuardianStudentLinkInput>("GuardianStudentLink", unwrapShape(guardianStudentLinkSchema));
-export const studentNoteResponseSchema = responseSchema<StudentNoteInput>("StudentNote", unwrapShape(studentNoteSchema));
-export const studentPhotoSubmissionResponseSchema = responseSchema<StudentPhotoSubmissionInput>("StudentPhotoSubmission", unwrapShape(studentPhotoSubmissionSchema));
-export const studentHealthProfileResponseSchema = responseSchema<StudentHealthProfileInput>("StudentHealthProfile", unwrapShape(studentHealthProfileSchema));
-export const studentDisciplinaryActionResponseSchema = responseSchema<StudentDisciplinaryActionInput>("StudentDisciplinaryAction", unwrapShape(studentDisciplinaryActionSchema));
-export const disciplinaryActionResponseSchema = responseSchema<DisciplinaryActionInput>("DisciplinaryAction", unwrapShape(disciplinaryActionSchema));
-export const studentIncidentInvolvementResponseSchema = responseSchema<StudentIncidentInvolvementInput>("StudentIncidentInvolvement", unwrapShape(studentIncidentInvolvementSchema));
-export const incidentResponseSchema = responseSchema<IncidentInput>("Incident", unwrapShape(incidentSchema));
-export const documentIssuanceResponseSchema = responseSchema<DocumentIssuanceInput>("DocumentIssuance", unwrapShape(documentIssuanceSchema));
+})
+export const guardianLinkResponseSchema = responseSchema<GuardianStudentLinkInput>('GuardianStudentLink', unwrapShape(guardianStudentLinkSchema))
+export const studentNoteResponseSchema = responseSchema<StudentNoteInput>('StudentNote', unwrapShape(studentNoteSchema))
+export const studentPhotoSubmissionResponseSchema = responseSchema<StudentPhotoSubmissionInput>('StudentPhotoSubmission', unwrapShape(studentPhotoSubmissionSchema))
+export const studentHealthProfileResponseSchema = responseSchema<StudentHealthProfileInput>('StudentHealthProfile', unwrapShape(studentHealthProfileSchema))
+export const studentDisciplinaryActionResponseSchema = responseSchema<StudentDisciplinaryActionInput>('StudentDisciplinaryAction', unwrapShape(studentDisciplinaryActionSchema))
+export const disciplinaryActionResponseSchema = responseSchema<DisciplinaryActionInput>('DisciplinaryAction', unwrapShape(disciplinaryActionSchema))
+export const studentIncidentInvolvementResponseSchema = responseSchema<StudentIncidentInvolvementInput>('StudentIncidentInvolvement', unwrapShape(studentIncidentInvolvementSchema))
+export const incidentResponseSchema = responseSchema<IncidentInput>('Incident', unwrapShape(incidentSchema))
+export const documentIssuanceResponseSchema = responseSchema<DocumentIssuanceInput>('DocumentIssuance', unwrapShape(documentIssuanceSchema))
 
 // ==========================================================
 // 2. All 42 Query Filter (QueryOptions) OpenAPI Schemas
@@ -102,21 +102,21 @@ export const documentIssuanceResponseSchema = responseSchema<DocumentIssuanceInp
 export const schoolQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   name: field.string(),
-});
+})
 
 export const academicYearQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
   status: field.string(),
-});
+})
 
 export const academicPeriodQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   academicYearId: field.id(),
   name: field.string(),
-});
+})
 
 export const periodDefinitionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -125,13 +125,13 @@ export const periodDefinitionQuerySchema = createQueryOptionsSchema({
   dayOfWeek: field.string(),
   isTeachingSlot: field.boolean(),
   name: field.string(),
-});
+})
 
 export const gradeLevelQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
-});
+})
 
 export const staffMemberQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -140,7 +140,7 @@ export const staffMemberQuerySchema = createQueryOptionsSchema({
   lastName: field.string(),
   code: field.string(),
   isActive: field.boolean(),
-});
+})
 
 export const teacherQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -150,7 +150,7 @@ export const teacherQuerySchema = createQueryOptionsSchema({
   code: field.string(),
   email: field.string(),
   isActive: field.boolean(),
-});
+})
 
 export const teacherAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -160,7 +160,7 @@ export const teacherAssignmentQuerySchema = createQueryOptionsSchema({
   classSubjectId: field.id(),
   classGroupId: field.id(),
   status: z.nativeEnum(TeacherAssignmentStatus),
-});
+})
 
 export const teacherUnavailabilityQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -169,7 +169,7 @@ export const teacherUnavailabilityQuerySchema = createQueryOptionsSchema({
   recurrence: z.nativeEnum(TeacherUnavailabilityRecurrence),
   dayOfWeek: field.string(),
   isActive: field.boolean(),
-});
+})
 
 export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -181,7 +181,7 @@ export const staffAssignmentQuerySchema = createQueryOptionsSchema({
   activitySessionId: field.id(),
   assessmentId: field.id(),
   responsibility: field.string(),
-});
+})
 
 export const accountInvitationQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -189,7 +189,7 @@ export const accountInvitationQuerySchema = createQueryOptionsSchema({
   kind: z.nativeEnum(AccountInvitationKind),
   targetId: field.id(),
   status: z.nativeEnum(AccountInvitationStatus),
-});
+})
 
 export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.string(),
@@ -201,14 +201,14 @@ export const staffPermissionAssignmentQuerySchema = createQueryOptionsSchema({
   sourceProfileId: field.string(),
   sourceProfileBindingId: field.string(),
   sourceManualAssignmentId: field.string(),
-});
+})
 
 export const staffPermissionProfileQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
   sourceKey: field.string(),
-});
+})
 
 export const staffPermissionProfileBindingQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -216,21 +216,21 @@ export const staffPermissionProfileBindingQuerySchema = createQueryOptionsSchema
   staffId: field.id(),
   profileId: field.id(),
   academicYearId: field.id(),
-});
+})
 
 export const attachmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   fileName: field.string(),
   mimeType: field.string(),
-});
+})
 
 export const resourceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
   kind: field.string(),
-});
+})
 
 export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -239,7 +239,7 @@ export const resourceAssignmentQuerySchema = createQueryOptionsSchema({
   activitySessionId: field.id(),
   assessmentId: field.id(),
   classGroupId: field.id(),
-});
+})
 
 export const catalogServiceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -247,7 +247,7 @@ export const catalogServiceQuerySchema = createQueryOptionsSchema({
   academicYearId: field.id(),
   name: field.string(),
   status: field.string(),
-});
+})
 
 export const studentServiceEnrollmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -255,7 +255,7 @@ export const studentServiceEnrollmentQuerySchema = createQueryOptionsSchema({
   catalogServiceId: field.id(),
   academicYearId: field.id(),
   status: field.string(),
-});
+})
 
 export const studentChargeQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -263,14 +263,14 @@ export const studentChargeQuerySchema = createQueryOptionsSchema({
   enrollmentId: field.id(),
   academicYearId: field.id(),
   status: field.string(),
-});
+})
 
 export const studentYearAccountQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   studentId: field.id(),
   academicYearId: field.id(),
   currency: field.string(),
-});
+})
 
 export const paymentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -280,7 +280,7 @@ export const paymentQuerySchema = createQueryOptionsSchema({
   status: field.string(),
   kind: field.string(),
   reference: field.string(),
-});
+})
 
 export const scheduleQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -289,18 +289,18 @@ export const scheduleQuerySchema = createQueryOptionsSchema({
   classSubjectId: field.id(),
   scheduleKind: field.string(),
   title: field.string(),
-});
+})
 
 export const lessonSessionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   classGroupId: field.id(),
   scheduleId: field.id(),
-  timetableGenerated: field.string(),
+  timetableGenerated: z.boolean(),
   classSubjectId: field.id(),
   status: field.string(),
   displayLabel: field.string(),
-});
+})
 
 export const activitySessionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -310,21 +310,21 @@ export const activitySessionQuerySchema = createQueryOptionsSchema({
   activityId: field.id(),
   status: field.string(),
   displayLabel: field.string(),
-});
+})
 
 export const attendancesQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   classGroupId: field.id(),
   displayLabel: field.string(),
-});
+})
 
 export const calendarEventQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   academicYearId: field.id(),
   title: field.string(),
-});
+})
 
 export const attendanceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -334,21 +334,21 @@ export const attendanceQuerySchema = createQueryOptionsSchema({
   activitySessionId: field.id(),
   assessmentId: field.id(),
   status: field.string(),
-});
+})
 
 export const announcementQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   title: field.string(),
   status: field.string(),
-});
+})
 
 export const announcementTargetQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   announcementId: field.id(),
   targetKind: field.string(),
   targetId: field.id(),
-});
+})
 
 export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -357,11 +357,11 @@ export const messageDeliveryQuerySchema = createQueryOptionsSchema({
   recipientKind: field.string(),
   recipientId: field.id(),
   status: field.string(),
-});
+})
 
 export const schoolNotificationTemplatesQuerySchema = createQueryOptionsSchema({
   schoolId: field.id(),
-});
+})
 
 export const subjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -369,19 +369,19 @@ export const subjectQuerySchema = createQueryOptionsSchema({
   name: field.string(),
   code: field.string(),
   categoryId: field.id(),
-});
+})
 
 export const subjectCategoryQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
-});
+})
 
 export const subjectMatterQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   subjectId: field.id(),
   name: field.string(),
-});
+})
 
 export const classGroupQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -390,7 +390,7 @@ export const classGroupQuerySchema = createQueryOptionsSchema({
   academicYearId: field.id(),
   homeroomStaffId: field.id(),
   name: field.string(),
-});
+})
 
 export const classSubjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -398,7 +398,7 @@ export const classSubjectQuerySchema = createQueryOptionsSchema({
   subjectId: field.id(),
   gradeLevelSubjectId: field.id(),
   periodsPerWeek: field.number(),
-});
+})
 
 export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -406,26 +406,26 @@ export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
   academicYearId: field.id(),
   subjectId: field.id(),
   periodsPerWeek: field.number(),
-});
+})
 
 export const gradeLevelSubjectMatterQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   gradeLevelSubjectId: field.id(),
   subjectMatterId: field.id(),
-});
+})
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classSubjectId: field.id(),
   subjectMatterId: field.id(),
   status: field.string(),
-});
+})
 
 export const classSubjectProgressQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classSubjectMatterId: field.id(),
   lessonSessionId: field.id(),
-});
+})
 
 export const activityQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -433,20 +433,20 @@ export const activityQuerySchema = createQueryOptionsSchema({
   name: field.string(),
   category: field.string(),
   coach: field.string(),
-});
+})
 
 export const activityEnrollmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   activityId: field.id(),
   studentId: field.id(),
   status: field.string(),
-});
+})
 
 export const classActivityEnrollmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   activityId: field.id(),
   classGroupId: field.id(),
-});
+})
 
 export const assessmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -455,34 +455,34 @@ export const assessmentQuerySchema = createQueryOptionsSchema({
   periodId: field.id(),
   title: field.string(),
   kind: field.string(),
-});
+})
 
 export const assessmentResultQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   assessmentId: field.id(),
   studentId: field.id(),
   status: field.string(),
-});
+})
 
 export const gradeScaleQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
   isDefault: field.boolean(),
-});
+})
 
 export const definitionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   academicYearId: field.id(),
   name: field.string(),
-});
+})
 
 export const sectionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   reportCardDefinitionId: field.id(),
   name: field.string(),
-});
+})
 
 export const resultQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -491,7 +491,7 @@ export const resultQuerySchema = createQueryOptionsSchema({
   classGroupId: field.id(),
   periodId: field.id(),
   status: field.string(),
-});
+})
 
 export const studentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -500,7 +500,7 @@ export const studentQuerySchema = createQueryOptionsSchema({
   lastName: field.string(),
   status: field.string(),
   matricule: field.string(),
-});
+})
 
 export const enrollmentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -508,7 +508,7 @@ export const enrollmentQuerySchema = createQueryOptionsSchema({
   classGroupId: field.id(),
   academicYearId: field.id(),
   status: field.string(),
-});
+})
 
 export const guardianQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -517,7 +517,7 @@ export const guardianQuerySchema = createQueryOptionsSchema({
   lastName: field.string(),
   code: field.string(),
   email: field.string(),
-});
+})
 
 export const guardianLinkQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -525,7 +525,7 @@ export const guardianLinkQuerySchema = createQueryOptionsSchema({
   guardianId: field.id(),
   studentId: field.id(),
   relationship: field.string(),
-});
+})
 
 export const studentPhotoSubmissionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -534,46 +534,46 @@ export const studentPhotoSubmissionQuerySchema = createQueryOptionsSchema({
   status: field.string(),
   submitterGuardianId: field.id(),
   attachmentId: field.id(),
-});
+})
 
 export const studentNoteQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   studentId: field.id(),
   title: field.string(),
-});
+})
 
 export const studentHealthProfileQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   studentId: field.id(),
-});
+})
 
 export const studentDisciplinaryActionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   studentId: field.id(),
   disciplinaryActionId: field.id(),
-});
+})
 
 export const disciplinaryActionQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
-});
+})
 
 export const studentIncidentInvolvementQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   studentId: field.id(),
   incidentId: field.id(),
   role: field.string(),
-});
+})
 
 export const incidentQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   schoolId: field.id(),
   title: field.string(),
-});
+})
 
 export const documentIssuanceQuerySchema = createQueryOptionsSchema({
   id: field.id(),
@@ -585,10 +585,10 @@ export const documentIssuanceQuerySchema = createQueryOptionsSchema({
   academicYearId: field.id(),
   status: field.string(),
   requestId: field.string(),
-});
+})
 
-export const staffPermissionScopeDefaultsResponseSchema = responseSchema<StaffPermissionScopeDefaultsInput>("StaffPermissionScopeDefaults", unwrapShape(staffPermissionScopeDefaultsSchema));
-export const staffPermissionScopeDefaultsQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id() });
+export const staffPermissionScopeDefaultsResponseSchema = responseSchema<StaffPermissionScopeDefaultsInput>('StaffPermissionScopeDefaults', unwrapShape(staffPermissionScopeDefaultsSchema))
+export const staffPermissionScopeDefaultsQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id() })
 
-export const staffManualPermissionAssignmentResponseSchema = responseSchema<StaffManualPermissionAssignmentInput>("StaffManualPermissionAssignment", unwrapShape(staffManualPermissionAssignmentSchema));
-export const staffManualPermissionAssignmentQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id(), permission: field.string(), status: field.string() });
+export const staffManualPermissionAssignmentResponseSchema = responseSchema<StaffManualPermissionAssignmentInput>('StaffManualPermissionAssignment', unwrapShape(staffManualPermissionAssignmentSchema))
+export const staffManualPermissionAssignmentQuerySchema = createQueryOptionsSchema({ id: field.id(), schoolId: field.id(), staffId: field.id(), academicYearId: field.id(), permission: field.string(), status: field.string() })

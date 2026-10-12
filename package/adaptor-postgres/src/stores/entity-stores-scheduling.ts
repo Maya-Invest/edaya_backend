@@ -13,7 +13,6 @@ import {
   LessonSession as LessonSessionCtor,
   OccurrenceStatus,
   Schedule as ScheduleCtor,
-  TimetableGenerated,
 } from '@edaya/core'
 import { customStore, defaultStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
@@ -33,7 +32,7 @@ export function createSchedulingEntityStores(db: StoreDatabase): Pick<EntityStor
         schoolId: entity.schoolId,
         classGroupId: entity.classGroupId,
         scheduleId: entity.scheduleId ?? null,
-        timetableGenerated: entity.timetableGenerated ?? null,
+        timetableGenerated: entity.timetableGenerated,
         timetableTeacherIds: entity.timetableTeacherIds,
         classSubjectId: entity.classSubjectId,
         status: entity.status,
@@ -54,9 +53,7 @@ export function createSchedulingEntityStores(db: StoreDatabase): Pick<EntityStor
         schoolId: row.schoolId,
         classGroupId: row.classGroupId,
         scheduleId: row.scheduleId ?? undefined,
-        timetableGenerated: row.timetableGenerated
-          ? enumValue(TimetableGenerated, row.timetableGenerated, 'lessonSessions.timetableGenerated')
-          : undefined,
+        timetableGenerated: row.timetableGenerated,
         timetableTeacherIds: row.timetableTeacherIds as string[],
         classSubjectId: row.classSubjectId,
         status: enumValue(OccurrenceStatus, row.status, 'lessonSessions.status'),

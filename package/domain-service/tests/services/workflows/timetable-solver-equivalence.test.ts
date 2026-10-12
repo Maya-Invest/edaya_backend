@@ -5,10 +5,11 @@ import { solveTimetable, spreadWeeklyTemplate } from '../../../src/capabilities/
 import { timetableEquivalenceCase } from '../../support/timetable-equivalence-fixture'
 import baseline from '../../support/timetable-solver-baseline.json'
 
-// Fingerprints were recorded with the original solver, before indexing/caching.
+// Free-mode fingerprints retain the original solver baseline. Weekly fingerprints
+// include repair around occupied records and calendar closures.
 for (const mode of [TimetableGenerationMode.Weekly, TimetableGenerationMode.Free]) {
   for (let seed = 0; seed < 12; seed++) {
-    test(`preserves original ${mode} placements and diagnostics, fixture ${seed}`, () => {
+    test(`preserves deterministic ${mode} placements and diagnostics, fixture ${seed}`, () => {
       const { input, spread } = timetableEquivalenceCase(seed, mode)
       const original = JSON.stringify(input)
       const solved = solveTimetable(input)

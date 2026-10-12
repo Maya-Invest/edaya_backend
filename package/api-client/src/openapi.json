@@ -739,7 +739,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -1238,7 +1237,6 @@
               "TIMETABLE_READ",
               "TIMETABLE_CREATE",
               "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
               "TIMETABLE_LOCK",
               "TIMETABLE_UNLOCK",
               "FINANCIAL_CONFIG_READ",
@@ -1335,6 +1333,12 @@
           },
           "code": {
             "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            }
           }
         },
         "required": [
@@ -1425,7 +1429,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -1778,7 +1781,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -3250,7 +3252,6 @@
               "TIMETABLE_READ",
               "TIMETABLE_CREATE",
               "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
               "TIMETABLE_LOCK",
               "TIMETABLE_UNLOCK",
               "FINANCIAL_CONFIG_READ",
@@ -6535,7 +6536,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -6725,7 +6725,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -6895,7 +6894,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -7065,7 +7063,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -7441,7 +7438,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -7959,7 +7955,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -8397,7 +8392,6 @@
               "TIMETABLE_READ",
               "TIMETABLE_CREATE",
               "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
               "TIMETABLE_LOCK",
               "TIMETABLE_UNLOCK",
               "FINANCIAL_CONFIG_READ",
@@ -8735,7 +8729,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -8935,7 +8928,6 @@
               "TIMETABLE_READ",
               "TIMETABLE_CREATE",
               "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
               "TIMETABLE_LOCK",
               "TIMETABLE_UNLOCK",
               "FINANCIAL_CONFIG_READ",
@@ -9302,7 +9294,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -9491,7 +9482,6 @@
                 "TIMETABLE_READ",
                 "TIMETABLE_CREATE",
                 "TIMETABLE_UPDATE",
-                "TIMETABLE_PUBLISH",
                 "TIMETABLE_LOCK",
                 "TIMETABLE_UNLOCK",
                 "FINANCIAL_CONFIG_READ",
@@ -9849,7 +9839,6 @@
                     "TIMETABLE_READ",
                     "TIMETABLE_CREATE",
                     "TIMETABLE_UPDATE",
-                    "TIMETABLE_PUBLISH",
                     "TIMETABLE_LOCK",
                     "TIMETABLE_UNLOCK",
                     "FINANCIAL_CONFIG_READ",
@@ -20298,12 +20287,8 @@
             "minLength": 1
           },
           "timetableGenerated": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "draft",
-              "published"
-            ]
+            "type": "boolean",
+            "default": false
           },
           "timetableTeacherIds": {
             "type": "array",
@@ -21198,103 +21183,20 @@
           },
           "options": {
             "$ref": "#/components/schemas/TimetableGenerationOptions"
+          },
+          "classGroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
           }
         },
         "required": [
           "academicYearId",
           "startDate",
           "endDate"
-        ]
-      },
-      "PublishClassGroupTimetableResponse": {
-        "type": "object",
-        "properties": {
-          "classGroupId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "publishedSessionIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          "skippedSessionIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        },
-        "required": [
-          "classGroupId",
-          "publishedSessionIds",
-          "skippedSessionIds"
-        ]
-      },
-      "PublishClassGroupTimetableCommand": {
-        "type": "object",
-        "properties": {
-          "classGroupId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "startDate": {
-            "type": "string",
-            "nullable": true
-          },
-          "endDate": {
-            "type": "string",
-            "nullable": true
-          },
-          "sessionConflictPolicy": {
-            "type": "string",
-            "enum": [
-              "fail",
-              "skip"
-            ]
-          }
-        },
-        "required": [
-          "classGroupId",
-          "startDate",
-          "endDate"
-        ]
-      },
-      "RepublishClassGroupTimetableResponse": {
-        "type": "object",
-        "properties": {
-          "generation": {
-            "$ref": "#/components/schemas/GenerateClassGroupTimetableResponse"
-          },
-          "publication": {
-            "$ref": "#/components/schemas/PublishClassGroupTimetableResponse"
-          }
-        },
-        "required": [
-          "generation",
-          "publication"
-        ]
-      },
-      "RepublishClassGroupTimetableCommand": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/GenerateClassGroupTimetableCommand"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "sessionConflictPolicy": {
-                "type": "string",
-                "enum": [
-                  "fail",
-                  "skip"
-                ]
-              }
-            }
-          }
         ]
       },
       "Announcement": {
@@ -27913,7 +27815,6 @@
               "TIMETABLE_READ",
               "TIMETABLE_CREATE",
               "TIMETABLE_UPDATE",
-              "TIMETABLE_PUBLISH",
               "TIMETABLE_LOCK",
               "TIMETABLE_UNLOCK",
               "FINANCIAL_CONFIG_READ",
@@ -57947,266 +57848,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GenerateSchoolTimetableResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/commands/publish-class-group-timetable": {
-      "post": {
-        "tags": [
-          "Core Commands"
-        ],
-        "summary": "publish-class-group-timetable",
-        "operationId": "commands.publishClassGroupTimetable",
-        "x-edaya-kind": "command",
-        "x-edaya-command-key": "publishClassGroupTimetable",
-        "x-edaya-command-public-name": "publish-class-group-timetable",
-        "x-edaya-request-schema": "PublishClassGroupTimetableCommand",
-        "x-edaya-response-schema": "PublishClassGroupTimetableResponse",
-        "requestBody": {
-          "description": "publish-class-group-timetable payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublishClassGroupTimetableCommand"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Executed publish-class-group-timetable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublishClassGroupTimetableResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid authorization session",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied due to authorization policies",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Business rule violation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error occurred",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "example": {
-                    "message": "Hello World"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/core/commands/republish-class-group-timetable": {
-      "post": {
-        "tags": [
-          "Core Commands"
-        ],
-        "summary": "republish-class-group-timetable",
-        "operationId": "commands.republishClassGroupTimetable",
-        "x-edaya-kind": "command",
-        "x-edaya-command-key": "republishClassGroupTimetable",
-        "x-edaya-command-public-name": "republish-class-group-timetable",
-        "x-edaya-request-schema": "RepublishClassGroupTimetableCommand",
-        "x-edaya-response-schema": "RepublishClassGroupTimetableResponse",
-        "requestBody": {
-          "description": "republish-class-group-timetable payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RepublishClassGroupTimetableCommand"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Executed republish-class-group-timetable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RepublishClassGroupTimetableResponse"
                 }
               }
             }

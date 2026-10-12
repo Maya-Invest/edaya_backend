@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, Student, StudentClassEnrollment } from '@edaya/core'
+import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, LessonSession, Student, StudentClassEnrollment, Teacher } from '@edaya/core'
 import { dispatchDocumentRender, resolveAttachmentReadPolicy } from '@edaya/service'
 import {
   describe,
@@ -312,4 +312,32 @@ describe('DocumentsServiceWorkflow', () => {
       sourceId: 'enr1',
     })).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
+})
+
+test('generated timetables issue class and teacher PDFs immediately without protecting replaceable lessons', async () => {
+  const { regeneratableSessionIds } = await import('../../../src/capabilities/timetable/regeneration-protection')
+  const { app, application, schoolRepositories: repositories } = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true, documentRenderer: renderer(), fileStorage: createInMemoryFileStorage() })
+  await seedSchooling(repositories)
+  await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Ada', lastName: 'Teacher' }))
+  const lesson = new LessonSession({ id: 'generated', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'math', timetableGenerated: true, timetableTeacherIds: ['teacher'], displayLabel: 'Math', startsAt: new Date('2026-04-15T08:00Z'), endsAt: new Date('2026-04-15T09:00Z') })
+  await repositories.lessonSessions.save(lesson)
+  const issued = []
+  for (const templateKey of ['class-timetable.v1', 'teacher-timetable.v1'] as const) {
+    const document = await app.documentsWorkflow.requestDocumentIssuance({ requestId: templateKey, templateKey, sourceId: templateKey === 'class-timetable.v1' ? 'cg1' : 'teacher', academicYearId: 'ay1' })
+    issued.push(document)
+    expect(document.status).toBe(DocumentIssuanceStatus.Requested)
+  }
+  await dispatchDocumentRender(application)
+  for (const document of issued) {
+    const ready = (await repositories.documentIssuances.findById(document.id))!
+    expect(ready.status).toBe(DocumentIssuanceStatus.Ready)
+    expect(ready.artifactAttachmentId).toBeTruthy()
+  }
+  expect(await regeneratableSessionIds(repositories, 'sch1', [lesson])).toEqual([lesson.id])
+  const original = (await repositories.documentIssuances.findById(issued[0]!.id))!
+  await repositories.lessonSessions.delete(lesson.id)
+  await repositories.lessonSessions.save(lesson.copyWith({ id: 'replacement', displayLabel: 'Updated math' }))
+  const refreshed = await app.documentsWorkflow.requestDocumentIssuance({ requestId: 'new-class-print', templateKey: 'class-timetable.v1', sourceId: 'cg1', academicYearId: 'ay1' })
+  expect(refreshed.sourceVersion).not.toBe(original.sourceVersion)
+  expect((await repositories.documentIssuances.findById(original.id))?.data).toEqual(original.data)
 })

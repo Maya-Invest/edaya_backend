@@ -15,7 +15,6 @@ import {
   SubjectColor,
   TeacherAssignment,
   TeacherAssignmentKind,
-  TimetableGenerated,
   TimetableGenerationMode,
 } from '@edaya/core'
 import { expect, it } from 'bun:test'
@@ -27,7 +26,7 @@ const startDate = new Date('2026-09-07T00:00:00.000Z')
 const endDate = new Date('2026-09-11T00:00:00.000Z')
 
 describeIntegration('timetable generation lifecycle', () => {
-  it('resolves, generates, publishes, and republishes through Postgres repositories', async () => {
+  it('resolves, generates and replaces eligible sessions through Postgres repositories', async () => {
     const { app, schoolRepositories } = await createTestApp()
     await saveSchool(app, {
       id: 'school',
@@ -125,13 +124,10 @@ describeIntegration('timetable generation lifecycle', () => {
       endDate,
     })
     expect(generated.sessions.map(session => session.startsAt.toISOString().slice(0, 10))).toEqual(['2026-09-07', '2026-09-10'])
-    expect(generated.sessions.every(session => session.timetableGenerated === TimetableGenerated.Draft)).toBe(true)
-
-    const published = await app.timetableGenerationWorkflow.publishClassGroupTimetable({ classGroupId: 'class', startDate, endDate })
-    expect(published.publishedSessionIds).toHaveLength(2)
+    expect(generated.sessions.every(session => session.timetableGenerated === true)).toBe(true)
 
     const completed = generated.sessions[0]!.copyWith({
-      timetableGenerated: TimetableGenerated.Published,
+      timetableGenerated: true,
       status: OccurrenceStatus.Completed,
     })
     await schoolRepositories.lessonSessions.save(completed)
@@ -147,7 +143,7 @@ describeIntegration('timetable generation lifecycle', () => {
     await schoolRepositories.lessonSessions.save(standalone)
 
     const replacedId = generated.sessions[1]!.id
-    const republished = await app.timetableGenerationWorkflow.republishClassGroupTimetable({
+    const regenerated = await app.timetableGenerationWorkflow.generateClassGroupTimetable({
       classGroupId: 'class',
       academicYearId: 'year',
       startDate,
@@ -156,6 +152,6 @@ describeIntegration('timetable generation lifecycle', () => {
     expect(await schoolRepositories.lessonSessions.findById(completed.id)).toBeDefined()
     expect(await schoolRepositories.lessonSessions.findById(standalone.id)).toBeDefined()
     expect(await schoolRepositories.lessonSessions.findById(replacedId)).toBeUndefined()
-    expect(republished.generation.sessions).toHaveLength(0)
+    expect(regenerated.sessions).toHaveLength(0)
   })
 })

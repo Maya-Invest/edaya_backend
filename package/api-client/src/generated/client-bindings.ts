@@ -1732,16 +1732,6 @@ export const clientBindings = {
         "requestSchemaName": "GenerateSchoolTimetableCommand",
         "responseSchemaName": "GenerateSchoolTimetableResponse"
       },
-      "publishClassGroupTimetable": {
-        "publicName": "publish-class-group-timetable",
-        "requestSchemaName": "PublishClassGroupTimetableCommand",
-        "responseSchemaName": "PublishClassGroupTimetableResponse"
-      },
-      "republishClassGroupTimetable": {
-        "publicName": "republish-class-group-timetable",
-        "requestSchemaName": "RepublishClassGroupTimetableCommand",
-        "responseSchemaName": "RepublishClassGroupTimetableResponse"
-      },
       "createAnnouncement": {
         "publicName": "create-announcement",
         "requestSchemaName": "CreateAnnouncementCommand",

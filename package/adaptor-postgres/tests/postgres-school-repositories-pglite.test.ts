@@ -1,4 +1,4 @@
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence, TimetableGenerated } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -138,7 +138,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       schoolId: 'school-1',
       classGroupId: 'class-1',
       classSubjectId: 'class-subject-1',
-      timetableGenerated: TimetableGenerated.Draft,
+      timetableGenerated: true,
       timetableTeacherIds: ['teacher-1'],
       startsAt: new Date('2026-09-07T08:00:00.000Z'),
       endsAt: new Date('2026-09-07T09:00:00.000Z'),
@@ -153,7 +153,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
     expect((await repos.classSubjects.findById('class-subject-1'))?.periodsPerWeek).toBe(5)
     expect(await repos.lessonSessions.findById('lesson-1')).toMatchObject({
       scheduleId: undefined,
-      timetableGenerated: TimetableGenerated.Draft,
+      timetableGenerated: true,
       timetableTeacherIds: ['teacher-1'],
     })
   })

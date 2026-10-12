@@ -3,8 +3,8 @@ import type { AssembledDocumentSource, AssembleDocumentInput, DocumentAssemblyCo
 import {
   DOCUMENT_FAILURES,
   DocumentSourceType,
+  OccurrenceStatus,
   StudentClassEnrollmentStatus,
-  TimetableGenerated,
 } from '@edaya/core'
 import { loadInBatches } from '../../shared/bounded-reads'
 
@@ -23,13 +23,15 @@ export async function assembleClassOperational(
   const classGroup = await base.repositories.classGroups.findById(input.sourceId)
   if (!classGroup || classGroup.schoolId !== base.actor.schoolId)
     fail(DOCUMENT_FAILURES.SOURCE_MISSING, 'Class was not found')
+  if (input.academicYearId && input.academicYearId !== classGroup.academicYearId)
+    fail(DOCUMENT_FAILURES.SOURCE_MISSING, 'Class does not belong to the selected academic year')
   const year = await requireYear(base, classGroup.academicYearId)
   if (input.templateKey === 'class-timetable.v1') {
-    const sessions = (await base.repositories.lessonSessions.list({ classGroupId: classGroup.id, timetableGenerated: TimetableGenerated.Published }))
+    const sessions = (await base.repositories.lessonSessions.list({ classGroupId: classGroup.id, timetableGenerated: true, status: { $ne: OccurrenceStatus.Cancelled } }))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
     if (sessions.length === 0)
-      fail(DOCUMENT_FAILURES.SOURCE_UNPUBLISHED, 'A class timetable requires published sessions')
-    const sourceVersion = sessions.map(session => `${session.id}:${session.startsAt.toISOString()}`).join('|')
+      fail(DOCUMENT_FAILURES.TIMETABLE_EMPTY, 'No timetable sessions exist for this class; generate its timetable first')
+    const sourceVersion = sessions.map(session => `${session.id}:${session.startsAt.toISOString()}:${session.endsAt.toISOString()}:${session.displayLabel}`).join('|')
     return {
       academicYearId: classGroup.academicYearId,
       sourceType: DocumentSourceType.ClassGroup,

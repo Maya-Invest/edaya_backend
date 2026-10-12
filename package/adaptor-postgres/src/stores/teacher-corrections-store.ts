@@ -6,10 +6,25 @@ import { compileResourceAccess } from '../lib/resource-access-scope'
 import { transactionContext } from '../lib/transaction'
 import { classGroups } from '../postgres-schema'
 
-interface Executor { execute: (query: SQL) => Promise<{ rows: Array<{ payload?: unknown, total?: unknown }> }> }
+interface Executor { execute: (query: SQL) => Promise<{ rows: Array<{ payload?: unknown, total?: unknown, target_id?: string }> }> }
 export class PostgresTeacherCorrections implements TeacherCorrectionsPort {
   constructor(private readonly db: Executor) {}
   private executor() { return (transactionContext.getStore() as Executor | undefined) ?? this.db }
+  async referencedLessonSessionIds(schoolId: string, sessionIds: readonly string[]) {
+    if (sessionIds.length === 0)
+      return []
+    const ids = sql.join(sessionIds.map(id => sql`${id}`), sql`, `)
+    const attendanceKeys = sql.join(sessionIds.map(id => sql`${`lesson:${id}`}`), sql`, `)
+    const { rows } = await this.executor().execute(sql`
+      select target_id from teacher_workflow_states where school_id=${schoolId} and workflow='logbook' and target_id in (${ids})
+      union
+      select target_id from teacher_corrections where school_id=${schoolId} and workflow='logbook' and target_id in (${ids})
+      union
+      select substring(target_id from 8) as target_id from teacher_workflow_states where school_id=${schoolId} and workflow='attendance' and target_id in (${attendanceKeys})
+    `)
+    return rows.map(row => row.target_id!)
+  }
+
   async find(schoolId: string, id: string) {
     const { rows } = await this.executor().execute(sql`select payload from teacher_corrections where school_id=${schoolId} and id=${id}`)
     return rows[0] ? teacherCorrectionSchema.parse(rows[0].payload) : undefined

@@ -274,6 +274,13 @@
       "when": 1791244801000,
       "tag": "0038_teacher_signatures",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791676800000,
+      "tag": "0039_timetable_generation_final",
+      "breakpoints": true
     }
   ]
 }

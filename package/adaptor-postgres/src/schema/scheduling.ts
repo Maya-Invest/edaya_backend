@@ -22,7 +22,7 @@ export const lessonSessions = pgTable('lesson_sessions', {
   schoolId: text('school_id').notNull(),
   classGroupId: text('class_group_id').notNull(),
   scheduleId: text('schedule_id'),
-  timetableGenerated: text('timetable_generated'),
+  timetableGenerated: boolean('timetable_generated').notNull().default(false),
   timetableTeacherIds: jsonb('timetable_teacher_ids').notNull().default([]),
   classSubjectId: text('class_subject_id').notNull(),
   status: text('status').notNull(),

@@ -22,6 +22,23 @@ export const lessonSessionConfig: EntityConfigFactory<LessonSession> = ({ reposi
           throw new BusinessRuleViolationError('ASSESSMENT_MARKS_FROZEN', 'Submitted evaluations depend on this lesson session')
       },
     },
+    hooks: {
+      postSave: async (session, existing, repos) => {
+        if (existing?.timetableGenerated && !session.isException && (
+          existing.isException
+          || session.classGroupId !== existing.classGroupId
+          || session.classSubjectId !== existing.classSubjectId
+          || session.scheduleId !== existing.scheduleId
+          || session.startsAt.getTime() !== existing.startsAt.getTime()
+          || session.endsAt.getTime() !== existing.endsAt.getTime()
+          || session.displayLabel !== existing.displayLabel
+          || session.sessionNote !== existing.sessionNote
+          || JSON.stringify(session.timetableTeacherIds) !== JSON.stringify(existing.timetableTeacherIds)
+        )) {
+          await repos.lessonSessions.save(session.copyWith({ isException: true }))
+        }
+      },
+    },
     atomicExecution,
   })
 
@@ -54,10 +71,12 @@ export async function validateLessonSessionSave(
 
   const scheduleChanged = !existing
     || lessonSession.classGroupId !== existing.classGroupId
+    || lessonSession.classSubjectId !== existing.classSubjectId
+    || JSON.stringify(lessonSession.timetableTeacherIds) !== JSON.stringify(existing.timetableTeacherIds)
     || lessonSession.startsAt.getTime() !== existing.startsAt.getTime()
     || lessonSession.endsAt.getTime() !== existing.endsAt.getTime()
 
-  if (scheduleChanged && !lessonSession.scheduleId && !lessonSession.timetableGenerated) {
+  if (scheduleChanged && (!lessonSession.scheduleId || lessonSession.timetableGenerated)) {
     const assignments = await repositories.teacherAssignments.list({
       classSubjectId: lessonSession.classSubjectId,
       kind: TeacherAssignmentKind.Subject,
@@ -70,7 +89,7 @@ export async function validateLessonSessionSave(
 
     await assertNoSessionConflict(repositories, {
       classGroupId: lessonSession.classGroupId,
-      teacherIds,
+      teacherIds: [...new Set([...teacherIds, ...lessonSession.timetableTeacherIds])],
       startsAt: lessonSession.startsAt,
       endsAt: lessonSession.endsAt,
       excludeSessionId: lessonSession.id,

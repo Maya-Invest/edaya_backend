@@ -3,7 +3,7 @@ import type { AssembledDocumentSource, AssembleDocumentInput, DocumentAssemblyCo
 import {
   DOCUMENT_FAILURES,
   DocumentSourceType,
-  TimetableGenerated,
+  OccurrenceStatus,
 } from '@edaya/core'
 import { loadInBatches } from '../../shared/bounded-reads'
 
@@ -27,13 +27,14 @@ export async function assembleTeacherTimetable(
   if (!yearId)
     fail(DOCUMENT_FAILURES.SOURCE_MISSING, 'Academic year is required')
   const year = await requireYear(base, yearId)
-  const sessions = (await base.repositories.lessonSessions.list({ schoolId: school.id, timetableGenerated: TimetableGenerated.Published }))
+  const yearClasses = await base.repositories.classGroups.list({ schoolId: school.id, academicYearId: year.id })
+  const sessions = (yearClasses.length ? await base.repositories.lessonSessions.list({ schoolId: school.id, classGroupId: { $in: yearClasses.map(group => group.id) }, timetableGenerated: true, status: { $ne: OccurrenceStatus.Cancelled } }) : [])
     .filter(session => session.timetableTeacherIds.includes(teacher.id))
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
   if (sessions.length === 0)
-    fail(DOCUMENT_FAILURES.SOURCE_UNPUBLISHED, 'A teacher timetable requires published assigned sessions')
+    fail(DOCUMENT_FAILURES.TIMETABLE_EMPTY, 'No timetable sessions exist for this teacher; generate the timetable first')
   const classGroups = new Map((await loadInBatches(sessions.map(session => session.classGroupId), ids => base.repositories.classGroups.findByIds(ids))).map(group => [group.id, group]))
-  const sourceVersion = sessions.map(session => session.id).join(',')
+  const sourceVersion = sessions.map(session => `${session.id}:${session.startsAt.toISOString()}:${session.endsAt.toISOString()}:${session.classGroupId}:${session.displayLabel}`).join('|')
   return {
     academicYearId: year.id,
     sourceType: DocumentSourceType.Teacher,

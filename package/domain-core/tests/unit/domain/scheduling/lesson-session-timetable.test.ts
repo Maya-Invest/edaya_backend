@@ -1,4 +1,4 @@
-import { ClassSubject, GradeLevelSubject, LessonSession, TimetableGenerated } from '@edaya/core'
+import { ClassSubject, GradeLevelSubject, LessonSession } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 const lessonBase = {
@@ -17,22 +17,22 @@ describe('timetable preparation domain contracts', () => {
     const generated = new LessonSession({
       ...lessonBase,
       id: 'lesson-generated',
-      timetableGenerated: TimetableGenerated.Draft,
+      timetableGenerated: true,
     })
 
     expect(standalone.scheduleId).toBeUndefined()
-    expect(standalone.timetableGenerated).toBeUndefined()
+    expect(standalone.timetableGenerated).toBe(false)
     expect(generated.scheduleId).toBeUndefined()
-    expect(generated.timetableGenerated).toBe(TimetableGenerated.Draft)
+    expect(generated.timetableGenerated).toBe(true)
   })
 
   test('preserves generated state through copyWith', () => {
     const generated = new LessonSession({
       ...lessonBase,
-      timetableGenerated: TimetableGenerated.Published,
+      timetableGenerated: true,
     })
 
-    expect(generated.copyWith({ displayLabel: 'Updated' }).timetableGenerated).toBe(TimetableGenerated.Published)
+    expect(generated.copyWith({ displayLabel: 'Updated' }).timetableGenerated).toBe(true)
   })
 
   test('accepts nullable weekly workload on grade and class subjects', () => {

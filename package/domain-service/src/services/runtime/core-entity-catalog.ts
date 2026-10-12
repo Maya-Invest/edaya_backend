@@ -105,7 +105,7 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
   if (['staffPermissionProfiles', 'staffPermissionAssignments', 'staffPermissionProfileBindings', 'staffManualPermissionAssignments', 'staffPermissionScopeDefaults'].includes(key))
     baseConfig.writeLockGroup = 'permission-state'
-  if (['assessments', 'assessmentResults', 'results', 'enrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions'].includes(key))
+  if (['assessments', 'assessmentResults', 'results', 'enrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))
     baseConfig.writeLockGroup = 'academic-state'
   if (['catalogServices', 'studentServiceEnrollments', 'studentCharges', 'studentYearAccounts', 'payments'].includes(key))
     baseConfig.writeLockGroup = '0-finance-state'

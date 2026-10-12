@@ -68,7 +68,6 @@ const STUDIES_DIRECTOR_EXTRA_PERMISSIONS: readonly Permission[] = [
   Permission.REPORT_CARD_SIGN,
   Permission.REPORT_CARD_EXPORT,
   Permission.TIMETABLE_READ,
-  Permission.TIMETABLE_PUBLISH,
   Permission.TIMETABLE_LOCK,
   Permission.TIMETABLE_UNLOCK,
   Permission.ENROLLMENT_READ,

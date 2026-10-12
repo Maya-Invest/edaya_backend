@@ -83,7 +83,7 @@ for (const classCount of sizes(values.classes!)) {
       const samples = []
       for (let run = 0; run <= runs; run++) {
         // Restore the same initial state; later classes still see this run's writes.
-        const generated = await fixture.schoolRepositories.lessonSessions.list({ timetableGenerated: 'draft' })
+        const generated = await fixture.schoolRepositories.lessonSessions.list({ timetableGenerated: true })
         await fixture.schoolRepositories.lessonSessions.batchDelete(generated.map(row => row.id))
         Object.assign(phases, { readMs: 0, solveMs: 0, spreadMs: 0, persistMs: 0 })
         for (const key of Object.keys(queryCounts)) delete queryCounts[key]

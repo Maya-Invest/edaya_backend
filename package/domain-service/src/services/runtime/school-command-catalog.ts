@@ -130,8 +130,6 @@ export type SchoolCommandKey
     | 'requestAttendanceJustification'
     | 'generateClassGroupTimetable'
     | 'generateSchoolTimetable'
-    | 'publishClassGroupTimetable'
-    | 'republishClassGroupTimetable'
     | 'createAnnouncement'
     | 'addTarget'
     | 'publishAnnouncement'
@@ -335,8 +333,6 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'requestAttendanceJustification',
   'generateClassGroupTimetable',
   'generateSchoolTimetable',
-  'publishClassGroupTimetable',
-  'republishClassGroupTimetable',
   'createAnnouncement',
   'addTarget',
   'publishAnnouncement',

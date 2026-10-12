@@ -114,6 +114,7 @@ describe('SchoolService aggregate and timetable queries', () => {
       displayLabel: 'Math',
       startsAt: new Date('2026-05-01T10:00:00Z'),
       endsAt: new Date('2026-05-01T11:00:00Z'),
+      timetableGenerated: true,
       timetableTeacherIds: ['teacher-a'],
     }))
     await fixture.repositories.lessonSessions.save(new LessonSession({
@@ -124,6 +125,7 @@ describe('SchoolService aggregate and timetable queries', () => {
       displayLabel: 'Other',
       startsAt: new Date('2026-05-01T10:00:00Z'),
       endsAt: new Date('2026-05-01T11:00:00Z'),
+      timetableGenerated: true,
       timetableTeacherIds: ['teacher-a'],
     }))
     const input = { teacherId: 'teacher-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-01') }
@@ -138,6 +140,12 @@ describe('SchoolService aggregate and timetable queries', () => {
 
     const guardianService = new SchoolService({ actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
     await expect(guardianService.getTeacherTimetable(input)).rejects.toBeInstanceOf(AuthorizationError)
+    const classInput = { classGroupId: 'class-a', startDate: input.startDate, endDate: input.endDate }
+    expect((await guardianService.getClassGroupTimetable(classInput)).events.map(event => event.id)).toEqual(['math-session'])
+    await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
+    const studentService = new SchoolService({ actor: createStudentActorMetadata({ ...identity, studentId: 'student-a' }), repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
+    expect((await studentService.getClassGroupTimetable(classInput)).events.map(event => event.id)).toEqual(['math-session'])
+    await expect(guardianService.getClassGroupTimetable({ ...classInput, classGroupId: 'class-other' })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test.each(['staff', 'teacher', 'guardian', 'student'] as const)('%s availability scopes supporting reads before building cells', async (kind) => {
