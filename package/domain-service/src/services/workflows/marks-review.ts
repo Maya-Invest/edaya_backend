@@ -54,7 +54,7 @@ export class MarksReviewWorkflow {
             throw new BusinessRuleViolationError('MARKS_ROSTER_CHANGED', 'Reconcile marks with the evaluation roster before submitting')
           for (const studentId of rosterStudentIds) {
             const result = byStudent.get(studentId)
-            if (!result || (!result.designation && result.score === undefined))
+            if (!result || (!result.designation && result.score === undefined && result.mentionId === undefined))
               throw new BusinessRuleViolationError('MARKS_INCOMPLETE', 'Every student requires a score, absence or exemption')
             assertMarkDesignation(result)
             if (result.score !== undefined && result.score > assessment.maxScore)

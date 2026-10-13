@@ -4,6 +4,8 @@ import { z } from 'zod'
 
 import { AttendanceSummary, attendanceSummarySchema } from '../../domain/value-objects/attendance-summary'
 
+import { calculatedGradeSchema } from '../school/grading-policy'
+
 import { parseDomain, roundTo2, zodDate } from '../shared/utils'
 
 import { reportCardAggregationSchema } from './report-card-aggregation-config'
@@ -23,13 +25,16 @@ export const reportCardResultBaseSchema = z.object({
   sourceAssessments: z.array(z.object({ assessmentId: z.string(), revision: z.number().int().nonnegative() })).default([]),
   pendingAssessmentIds: z.array(z.string()).default([]),
   calculationStale: z.boolean().default(false),
+  grading: calculatedGradeSchema.optional(),
+  aggregateLabel: z.string().optional(),
+  gradingPolicyRevision: z.number().int().positive().optional(),
   reportCardDefinitionId: z.string().trim().min(1, 'reportCardDefinitionId must not be blank'),
   studentId: z.string().trim().min(1, 'studentId must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   periodId: z.string().trim().min(1, 'periodId must not be blank'),
   attendanceSummary: attendanceSummarySchema.transform(data => new AttendanceSummary(data)),
   assessmentResultCount: z.number().int().nonnegative('assessmentResultCount must be a non-negative integer'),
-  overallAverage: z.number().finite().nonnegative('overallAverage must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  overallAverage: z.number().finite().nonnegative('overallAverage must be a finite, non-negative number').nullable().optional().transform(v => v === null ? undefined : v),
   rank: z.number().int().nonnegative('rank must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
   classSize: z.number().int().nonnegative('classSize must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
   passThreshold: z.number().finite().nonnegative('passThreshold must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
@@ -56,7 +61,13 @@ function refineReportCardResult(data: any, ctx: z.RefinementCtx) {
   }
 }
 
+export const reportCardSnapshotSchema = reportCardResultBaseSchema.extend({
+  sectionResults: reportCardResultSectionSchema.array(),
+})
+
 export const reportCardResultSchema = reportCardResultBaseSchema.extend({
+  revisedDraft: reportCardSnapshotSchema.optional(),
+  publicationHistory: reportCardSnapshotSchema.array().default([]),
   sectionResults: reportCardResultSectionSchema.array(),
 }).superRefine(refineReportCardResult)
 
@@ -83,10 +94,15 @@ export class ReportCardResult {
   readonly sectionResults: readonly ReportCardResultSection[]
 
   constructor(args: ReportCardResultInput) {
-    this.data = parseDomain(reportCardResultSchema, args)
+    this.data = parseDomain(reportCardResultSchema, { ...args, overallAverage: args.grading || args.overallAverage == null ? args.overallAverage : roundTo2(args.overallAverage) })
     this.sectionResults = Object.freeze([...args.sectionResults])
   }
 
+  get revisedDraft() { return this.data.revisedDraft }
+  get publicationHistory() { return this.data.publicationHistory }
+  get grading() { return this.data.grading }
+  get aggregateLabel() { return this.data.aggregateLabel }
+  get gradingPolicyRevision() { return this.data.gradingPolicyRevision }
   get id() { return this.data.id }
   get version() { return this.data.version }
   get sourceMarks() { return this.data.sourceMarks }
@@ -124,6 +140,7 @@ export class ReportCardResult {
     aggregation?: ReportCardResultData['aggregation']
   }): ReportCardResult {
     return new ReportCardResult({
+      ...this.data,
       version: this.version,
       sourceMarks: this.sourceMarks,
       pendingCorrectionIds: this.pendingCorrectionIds,

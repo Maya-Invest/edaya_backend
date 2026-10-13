@@ -60,6 +60,19 @@ describe("report document publication policy", () => {
     expect(f.putObject).toHaveBeenCalledTimes(1);
   });
 
+  test("reviewed republication renders a new PDF and retains the old attachment", async () => {
+    const f = await fixture();
+    await f.grant();
+    await f.repositories.attachments.save(new Attachment({ id: "old-publication", schoolId: "school-a", ownerKind: AttachmentOwnerKind.ReportCard, ownerId: "report", fileName: "old.pdf", storageKey: "old.pdf", status: AttachmentStatus.Ready, sizeBytes: 4096, mimeType: "application/pdf", createdAt: new Date(Date.now() - 60_000) }));
+    await f.repositories.results.save(new ReportCardResult({ ...f.result.data, sectionResults: [...f.result.sectionResults], publishedAt: new Date(), version: f.result.version + 1, publicationHistory: [{ ...f.result.data, sectionResults: [...f.result.sectionResults] }] }));
+    const outcome = await f.generate();
+    expect(outcome?.attachmentId).not.toBe("old-publication");
+    expect(f.render).toHaveBeenCalledTimes(1);
+    expect((await f.repositories.attachments.findById("old-publication"))?.status).toBe(AttachmentStatus.Ready);
+    expect(await f.generate()).toEqual(outcome);
+    expect(f.render).toHaveBeenCalledTimes(1);
+  });
+
   test("cached PDF still requires current authority and selected year", async () => {
     const f = await fixture();
     await f.attachment();

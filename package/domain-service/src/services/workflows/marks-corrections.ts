@@ -2,6 +2,7 @@ import type { Assessment, AssessmentResult, DecideMarksCorrectionInput, MarksCor
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
 import { Assessment as AssessmentEntity, BusinessRuleViolationError, decideMarksCorrectionSchema, Permission, rejectMarksCorrectionSchema, requestMarksCorrectionSchema, AssessmentResult as ResultEntity, reviseMarksCorrectionSchema } from '@edaya/core'
+import { assessmentGradingPolicy, captureGradeEntry } from '../../capabilities/academics/grading'
 import { academicStateLock, assertMarkDesignation, assertMarksRevision } from '../../capabilities/academics/marks-state'
 import { ASSESSMENT_RESULT_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { notifyTeacherCorrection } from '../../capabilities/notifications/teacher-correction-notifications'
@@ -9,7 +10,7 @@ import { schoolCommandScope } from '../commands/school-command-scope'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 
 function values(mark: AssessmentResult) {
-  return { score: mark.score ?? null, designation: mark.designation ?? 'scored' as const, notes: mark.notes ?? null, status: mark.status ?? null }
+  return { ...(mark.mentionId ? { mentionId: mark.mentionId } : {}), score: mark.score ?? null, designation: mark.designation ?? 'scored' as const, notes: mark.notes ?? null, status: mark.status ?? null }
 }
 function fail(code: string, message: string): never {
   throw new BusinessRuleViolationError(code, message)
@@ -58,19 +59,23 @@ export class MarksCorrectionsWorkflow {
           fail('MARKS_CORRECTION_PENDING', 'A selected student already has a pending correction')
         await this.unlocked(ids)
         const marks = new Map((await this.repositories.assessmentResults.findByIds(ids)).map(row => [row.id, row]))
+        const policy = await assessmentGradingPolicy(this.repositories, sheet)
+        if (input.expectedGradingRevision !== undefined && input.expectedGradingRevision !== (policy?.revision ?? 0))
+          fail('GRADING_REVISION_CONFLICT', 'Reload the grading configuration before proposing a correction')
         const changes = input.changes.map((change) => {
           const mark = marks.get(change.resultId)
           if (!mark || mark.assessmentId !== sheet.id || !sheet.marksReview.rosterStudentIds.includes(mark.studentId))
             denyResourceAccess()
-          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed })
+          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}) })
           this.validate(sheet, proposedMark)
+          captureGradeEntry(proposedMark, sheet, policy, mark)
           const before = values(mark)
           const proposed = values(proposedMark)
           if (JSON.stringify(before) === JSON.stringify(proposed))
             fail('MARKS_CORRECTION_UNCHANGED', 'Every proposed correction must change a mark')
           return { resultId: mark.id, studentId: mark.studentId, revision: mark.revision, before, proposed }
         })
-        const row: MarksCorrection = { id: crypto.randomUUID(), schoolId: actor.schoolId, assessmentId: sheet.id, status: 'pending', version: 0, baseRevision: sheet.marksRevision, authorSubjectId: actor.subjectId, reason: input.reason, createdAt: new Date(), changes, revisions: [] }
+        const row: MarksCorrection = { id: crypto.randomUUID(), schoolId: actor.schoolId, assessmentId: sheet.id, status: 'pending', version: 0, baseRevision: sheet.marksRevision, baseGradingRevision: policy?.revision ?? 0, authorSubjectId: actor.subjectId, reason: input.reason, createdAt: new Date(), changes, revisions: [] }
         await this.repositories.marksCorrections.save(row)
         await notifyTeacherCorrection(this.base, { ...row, classGroupId: sheet.classGroupId }, 'requested', Permission.GRADE_VALIDATE)
         return row
@@ -112,19 +117,23 @@ export class MarksCorrectionsWorkflow {
           fail('MARKS_CORRECTION_PENDING', 'A selected student has another pending correction')
         await this.unlocked(ids)
         const marks = new Map((await this.repositories.assessmentResults.findByIds(ids)).map(m => [m.id, m]))
+        const policy = await assessmentGradingPolicy(this.repositories, sheet)
+        if (input.expectedGradingRevision !== undefined && input.expectedGradingRevision !== (policy?.revision ?? 0))
+          fail('GRADING_REVISION_CONFLICT', 'Reload the grading configuration before proposing a correction')
         const changes = input.changes.map((change) => {
           const mark = marks.get(change.resultId)
           if (!mark || mark.assessmentId !== sheet.id || !sheet.marksReview.rosterStudentIds.includes(mark.studentId))
             denyResourceAccess()
-          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed })
+          const proposedMark = new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}) })
           this.validate(sheet, proposedMark)
+          captureGradeEntry(proposedMark, sheet, policy, mark)
           const before = values(mark)
           const proposed = values(proposedMark)
           if (JSON.stringify(before) === JSON.stringify(proposed))
             fail('MARKS_CORRECTION_UNCHANGED', 'Each proposal must change a mark')
           return { resultId: mark.id, studentId: mark.studentId, revision: mark.revision, before, proposed }
         })
-        const revised: MarksCorrection = { ...row, version: row.version + 1, baseRevision: sheet.marksRevision, reason: input.reason, changes, revisions: [...row.revisions, { version: row.version, reason: row.reason, changes: row.changes, at: new Date() }] }
+        const revised: MarksCorrection = { ...row, version: row.version + 1, baseRevision: sheet.marksRevision, baseGradingRevision: policy?.revision ?? 0, reason: input.reason, changes, revisions: [...row.revisions, { version: row.version, reason: row.reason, changes: row.changes, at: new Date() }] }
         await this.repositories.marksCorrections.save(revised)
         await notifyTeacherCorrection(this.base, { ...revised, classGroupId: sheet.classGroupId }, 'revised', Permission.GRADE_VALIDATE)
         return revised
@@ -189,11 +198,14 @@ export class MarksCorrectionsWorkflow {
             fail('MARKS_NOT_SUBMITTED', 'The evaluation must remain submitted')
           await this.unlocked(row.changes.map(change => change.resultId))
           const originals = new Map((await this.repositories.assessmentResults.findByIds(row.changes.map(change => change.resultId))).map(mark => [mark.id, mark]))
+          const policy = await assessmentGradingPolicy(this.repositories, sheet)
+          if ((row.baseGradingRevision ?? 0) !== (policy?.revision ?? 0))
+            fail('GRADING_REVISION_CONFLICT', 'Revise this correction using the current grading configuration')
           const updated = row.changes.map((change) => {
             const mark = originals.get(change.resultId)
             if (!mark || mark.assessmentId !== sheet.id || mark.studentId !== change.studentId || mark.revision !== change.revision || JSON.stringify({ ...values(mark), ...(change.before.status === undefined ? { status: undefined } : {}) }) !== JSON.stringify(change.before))
               fail('MARKS_REVISION_CONFLICT', 'A source mark changed; submit a new correction')
-            const result = new ResultEntity({ ...mark.data, ...change.proposed, revision: mark.revision + 1 })
+            const result = captureGradeEntry(new ResultEntity({ ...mark.data, ...change.proposed, ...(policy && change.proposed.score !== null ? { originalEntry: { kind: 'numeric' as const, value: change.proposed.score, maximum: sheet.maxScore } } : {}), revision: mark.revision + 1 }), sheet, policy, mark)
             this.validate(sheet, result)
             return result
           })

@@ -2,6 +2,7 @@ import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { AtomicExecutionPort, BaseRepositoryInterface, CoreEntityKey, CoreEntityMap, Filter, QueryOptions, ResourceAccessScope } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { AuthorizationError, AuthorizationErrorCode, createAccessPolicies } from '@edaya/authorization'
+import { ReportCardResult } from '@edaya/core'
 import { visibleReportRevision } from '../../capabilities/academics/report-comment-revisions'
 import { assertTeacherWorkflowWrite, recordTeacherWorkflowDecision } from '../../capabilities/academics/teacher-workflow-boundaries'
 
@@ -29,6 +30,7 @@ export interface ManagedEntityServiceConfig<T> {
   gates?: EntityBusinessGates<T>
   hooks?: EntityBusinessHooks<T>
   atomicExecution?: AtomicExecutionPort
+  projectRead?: (entity: T) => Promise<T>
   writeLockGroup?: string
 }
 export interface ManagedEntityServiceArgs<T> {
@@ -52,10 +54,21 @@ export class ManagedEntityService<T> {
 
   private async projectRead(row: T): Promise<T> {
     if (this.config.resource !== 'results')
-      return row
+      return this.config.projectRead ? this.config.projectRead(row) : row
     const result = row as CoreEntityMap['results']
     const state = await this.repositories.teacherCorrections.state(this.actor.schoolId, 'report_comments', result.id)
-    return visibleReportRevision(result, state) as T
+    let visible = visibleReportRevision(result, state)
+    if (visible.grading || visible.revisedDraft) {
+      const group = await this.repositories.classGroups.findById(result.classGroupId)
+      const level = group && await this.repositories.gradeLevels.findById(group.gradeLevelId)
+      const policy = group && level?.gradingPolicyFor(group.academicYearId)
+      const pending = group && level && policy && (policy.status !== 'completed' || await this.repositories.assessmentDependencies.pendingGradingClass({ schoolId: level.schoolId, gradeLevelId: level.id, academicYearId: group.academicYearId, policyRevision: policy.revision }))
+      if (pending)
+        visible = new ReportCardResult({ ...visible.data, sectionResults: [...visible.sectionResults], rank: visible.status === 'published' ? visible.rank : undefined, revisedDraft: visible.revisedDraft ? { ...visible.revisedDraft, rank: undefined } : undefined })
+    }
+    return (this.actor.kind === 'guardian' || this.actor.kind === 'student'
+      ? new ReportCardResult({ ...visible.data, sectionResults: [...visible.sectionResults], revisedDraft: undefined, publicationHistory: [] })
+      : visible) as T
   }
 
   private async readRepository(): Promise<BaseRepositoryInterface<T>> {

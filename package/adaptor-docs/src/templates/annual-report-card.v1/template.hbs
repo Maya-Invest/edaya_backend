@@ -92,8 +92,8 @@
         <tr class="identity-header"><td colspan="{{columnCount}}">{{studentName}} · {{classLabel}} · {{schoolYear}} · {{documentTitle}}</td></tr>
         <tr>
           <th class="col-discipline">{{labels.disciplines}}</th>
-          {{#each periods}}<th class="col-period">{{label}}<br /><span class="scale">/ 20</span></th>{{/each}}
-          <th class="col-moy">{{labels.annualAverage}}<br /><span class="scale">/ 20</span></th>
+          {{#each periods}}<th class="col-period">{{label}}<br /><span class="scale">/ {{#if @root.gradingMaximum}}{{@root.gradingMaximum}}{{else}}20{{/if}}</span></th>{{/each}}
+          <th class="col-moy">{{#if aggregateLabel}}{{aggregateLabel}}{{else}}{{labels.annualAverage}}{{/if}}<br /><span class="scale">/ {{#if gradingMaximum}}{{gradingMaximum}}{{else}}20{{/if}}</span></th>
           <th class="col-coef">{{labels.coef}}</th>
           <th class="col-total">{{labels.total}}</th>
           <th class="col-rank">{{labels.rank}}</th>
@@ -117,7 +117,7 @@
       <tr class="notes-row"><td colspan="{{columnCount}}"><p class="grade-note">{{labels.periodWeights}}: {{#each periods}}{{label}} × {{weight}}{{#unless @last}} · {{/unless}}{{/each}}. {{labels.missingGrade}}</p></td></tr>
       <tr class="closing-row"><td colspan="{{columnCount}}">
     <section class="period-recap">
-      {{#each periods}}<div><strong>{{label}}</strong><span>{{average}} / 20</span></div>{{/each}}
+      {{#each periods}}<div><strong>{{label}}</strong><span>{{average}} / {{#if @root.gradingMaximum}}{{@root.gradingMaximum}}{{else}}20{{/if}}</span></div>{{/each}}
     </section>
     <section class="summary-row">
       <div class="summary-card">
@@ -148,7 +148,7 @@
       <div class="summary-card summary-average">
         <h3>{{labels.annualMean}}</h3>
         {{#if semesterAverage}}
-          <p class="big-average">{{semesterAverage}}</p>
+          <p class="big-average">{{#if aggregateLabel}}<span>{{aggregateLabel}}</span> {{/if}}{{semesterAverage}}</p>
         {{/if}}
         {{#if semesterRank}}
           <p class="rank-line">{{labels.rank}} · {{semesterRank}}</p>

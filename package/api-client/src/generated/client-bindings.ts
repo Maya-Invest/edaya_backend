@@ -1187,6 +1187,16 @@ export const clientBindings = {
         "requestSchemaName": "RecordLessonSessionProgressCommand",
         "responseSchemaName": "ClassSubjectProgress"
       },
+      "configureGrading": {
+        "publicName": "configure-grading",
+        "requestSchemaName": "ConfigureGradingCommand",
+        "responseSchemaName": "GradeLevel"
+      },
+      "retryGrading": {
+        "publicName": "retry-grading",
+        "requestSchemaName": "RetryGradingCommand",
+        "responseSchemaName": "GradeLevel"
+      },
       "createGradeScale": {
         "publicName": "create-grade-scale",
         "requestSchemaName": "CreateGradeScaleCommand",

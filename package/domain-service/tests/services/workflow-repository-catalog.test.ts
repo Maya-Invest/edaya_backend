@@ -12,6 +12,7 @@ describe('workflow repository catalog', () => {
       guardianLinks: { id: 'guardian-link-repo' },
       students: { id: 'student-repo' },
       schools: { id: 'school-repo' },
+      gradeLevels: { id: 'grade-level-repo' },
       academicYears: { id: 'year-repo' },
       accountInvitations: { id: 'invitation-repo' },
       staffPermissionProfiles: { id: 'profile-repo' },
@@ -37,7 +38,9 @@ describe('workflow repository catalog', () => {
     expect(accessControl.staffMembers).toBe(repositories.staffMembers)
 
     const setup = pickWorkflowRepositories('setup', repositories)
-    expect(Object.keys(setup).sort()).toEqual(['academicYears', 'schools', 'staffPermissionProfiles'])
+    expect(Object.keys(setup).sort()).toEqual(['academicYears', 'gradeLevels', 'schools', 'staffPermissionProfiles'])
+
+    expect(setup.gradeLevels).toBe(repositories.gradeLevels)
 
     const invitations = pickWorkflowRepositories('invitations', repositories)
     expect(Object.keys(invitations).sort()).toEqual([

@@ -13,6 +13,37 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
     return (transactionContext.getStore() as ProjectionExecutor | undefined) ?? this.db
   }
 
+  async pendingGradingClass(input: { schoolId: string, gradeLevelId: string, academicYearId: string, policyRevision: number }): Promise<string | undefined> {
+    const { rows } = await this.executor().execute(sql`
+      select c.id from class_groups c join report_card_results r on r.class_group_id=c.id
+      where c.school_id=${input.schoolId} and c.grade_level_id=${input.gradeLevelId} and c.academic_year_id=${input.academicYearId}
+        and (coalesce((r.revised_draft->>'gradingPolicyRevision')::integer, r.grading_policy_revision, 0) <> ${input.policyRevision}
+          or coalesce((r.revised_draft->>'calculationStale')::boolean, r.calculation_stale))
+      order by c.id limit 1`)
+    return rows[0]?.id === undefined ? undefined : String(rows[0].id)
+  }
+
+  async refreshGradingRankings(input: { schoolId: string, classGroupId: string, policyRevision: number }): Promise<void> {
+    // Include published results in comparisons, but retain their publication snapshot.
+    // Only drafts (including revised drafts) receive refreshed rankings.
+    await this.executor().execute(sql`
+      with candidates as (
+        select r.id, r.period_id, r.revised_draft is not null as revised,
+          case when r.revised_draft is not null then (r.revised_draft->>'overallAverage')::numeric else r.overall_average end as average
+        from report_card_results r join class_groups c on c.id=r.class_group_id
+        where c.school_id=${input.schoolId} and c.id=${input.classGroupId}
+          and coalesce((r.revised_draft->>'gradingPolicyRevision')::integer, r.grading_policy_revision)=${input.policyRevision}
+          and not coalesce((r.revised_draft->>'calculationStale')::boolean, r.calculation_stale)
+      ), ranks as (
+        select id, revised, rank() over (partition by period_id order by average desc) as rank,
+          count(*) over (partition by period_id) as size from candidates where average is not null
+      ) update report_card_results r set
+        rank=case when ranks.revised or r.status='published' then r.rank else ranks.rank end,
+        class_size=case when ranks.revised or r.status='published' then r.class_size else ranks.size end,
+        revised_draft=case when ranks.revised then r.revised_draft || jsonb_build_object('rank', ranks.rank, 'classSize', ranks.size) else r.revised_draft end
+      from ranks where r.id=ranks.id`)
+  }
+
   async reportAssessmentIds(schoolId: string, studentId: string, periodIds: readonly string[]): Promise<string[]> {
     const ids = new Set<string>()
     for (let start = 0; start < periodIds.length; start += 500) {
@@ -44,7 +75,11 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
   async invalidateMarkDrafts(schoolId: string, ids: readonly string[]): Promise<void> {
     if (!ids.length)
       return
-    await this.executor().execute(sql`update report_card_results r set calculation_stale=true, version=version+1
+    await this.executor().execute(sql`update report_card_results r set revised_draft = r.revised_draft || jsonb_build_object('calculationStale', true, 'version', (r.revised_draft->>'version')::integer + 1, 'rank', null)
+      from students s where s.id=r.student_id and s.school_id=${schoolId} and r.revised_draft is not null
+      and exists (select 1 from jsonb_array_elements(r.revised_draft->'sourceMarks') source
+        where source->>'resultId' in (${sql.join(ids.map(id => sql`${id}`), sql`, `)}))`)
+    await this.executor().execute(sql`update report_card_results r set calculation_stale=true, version=version+1, rank=null
       from students s where s.id=r.student_id and s.school_id=${schoolId} and r.status='draft'
       and exists (select 1 from jsonb_array_elements(r.source_marks) source
         where source->>'resultId' in (${sql.join(ids.map(id => sql`${id}`), sql`, `)}))`)
@@ -66,7 +101,14 @@ export class PostgresAssessmentDependencies implements AssessmentDependenciesPor
 
   async invalidateDrafts(input: { schoolId: string, assessmentId: string, periodId: string, classGroupId: string }): Promise<void> {
     await this.executor().execute(sql`
-      update report_card_results r set calculation_stale = true, version = r.version + 1
+      update report_card_results r set revised_draft = r.revised_draft || jsonb_build_object('calculationStale', true, 'version', (r.revised_draft->>'version')::integer + 1, 'rank', null)
+      from students s where s.id=r.student_id and s.school_id=${input.schoolId} and r.revised_draft is not null
+        and (r.revised_draft->'sourceAssessments' @> ${JSON.stringify([{ assessmentId: input.assessmentId }])}::jsonb
+          or ((r.period_id=${input.periodId} or r.aggregation->'sourcePeriodIds' ? ${input.periodId})
+            and exists (select 1 from student_class_enrollments e where e.student_id=r.student_id and e.class_group_id=${input.classGroupId})))`)
+
+    await this.executor().execute(sql`
+      update report_card_results r set calculation_stale = true, version = r.version + 1, rank = null
       from students s
       where s.id = r.student_id and s.school_id = ${input.schoolId} and r.status = 'draft'
         and (

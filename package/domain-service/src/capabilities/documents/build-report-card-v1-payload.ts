@@ -64,6 +64,8 @@ export interface ReportCardV1Payload {
   birthPlace?: string
   nationality?: string
   gender?: string
+  aggregateLabel?: string
+  gradingMaximum?: string
   semesterAverage?: string
   semesterRank?: string
   schoolCity?: string
@@ -85,12 +87,12 @@ export interface ReportCardV1Payload {
   }
 }
 
-function formatNumber(value: number | undefined, locale: string): string {
+function formatNumber(value: number | undefined, locale: string, decimalPlaces = 2): string {
   if (value === undefined)
     return '—'
   return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
   }).format(value)
 }
 
@@ -150,7 +152,7 @@ function mapSubjectRow(
   return {
     name: resolveSectionName(section, catalogLangFromLocale(locale), subjectNameByClassSubjectId),
     kind,
-    average: formatNumber(section.average, locale),
+    average: `${formatNumber(section.average, locale, section.grading?.decimalPlaces)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
     coefficient: String(section.weight),
     total: formatNumber(total, locale),
     ...(section.rank !== undefined && classSize !== undefined
@@ -240,9 +242,9 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
 
   if (input.result.overallAverage !== undefined) {
     subjects.push({
-      name: catalogDocumentLabel('TOTAL', lang),
+      name: input.result.aggregateLabel ?? catalogDocumentLabel('TOTAL', lang),
       kind: 'totals',
-      average: formatNumber(input.result.overallAverage, locale),
+      average: formatNumber(input.result.overallAverage, locale, input.result.grading?.decimalPlaces),
       ...(input.result.rank !== undefined && input.result.classSize !== undefined
         ? { rank: formatRank(input.result.rank, input.result.classSize, locale) }
         : {}),
@@ -252,6 +254,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
   const attendance = input.result.attendanceSummary
   const appreciation = input.result.teacherComment ?? input.result.principalComment
   const payload: ReportCardV1Payload = {
+    ...(input.result.grading ? { aggregateLabel: input.result.aggregateLabel, gradingMaximum: String(input.result.grading.maximum) } : {}),
     studentName: input.student.fullName,
     periodLabel: catalogPeriodLabel(input.periodLabel, lang),
     schoolName: input.school.name,
@@ -266,7 +269,7 @@ export function buildReportCardV1Payload(input: ReportCardDocumentContext): Repo
     ...(input.student.gender ? { gender: input.student.gender } : {}),
     ...(input.result.overallAverage !== undefined
       ? {
-          semesterAverage: `${formatNumber(input.result.overallAverage, locale)} / 20`,
+          semesterAverage: `${formatNumber(input.result.overallAverage, locale, input.result.grading?.decimalPlaces)} / ${input.result.grading?.maximum ?? 20}${input.result.grading ? ` · ${input.result.grading.mention.code} — ${input.result.grading.mention.label}` : ''}`,
         }
       : {}),
     ...(input.result.rank !== undefined && input.result.classSize !== undefined

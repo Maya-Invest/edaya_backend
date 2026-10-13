@@ -37,9 +37,9 @@ export async function assessmentRoster(assessment: Assessment, repositories: Pic
 }
 
 export function assertMarkDesignation(result: AssessmentResult): void {
-  if (result.designation === 'scored' && result.score === undefined)
+  if (result.designation === 'scored' && result.score === undefined && result.mentionId === undefined)
     throw new BusinessRuleViolationError('MARK_SCORE_REQUIRED', 'A scored mark requires a numeric score')
-  if ((result.designation === 'absent' || result.designation === 'exempt') && result.score !== undefined)
+  if ((result.designation === 'absent' || result.designation === 'exempt') && (result.score !== undefined || result.mentionId !== undefined))
     throw new BusinessRuleViolationError('MARK_SCORE_NOT_ALLOWED', 'Absent and exempt marks must not carry a score')
 }
 

@@ -1,9 +1,11 @@
 import { z } from 'zod'
 
 import { parseDomain, zodDate } from '../shared/utils'
+import { currentGradingPolicy, gradingPolicySchema } from './grading-policy'
 
 export const gradeLevelSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
+  gradingPolicies: z.array(gradingPolicySchema).default([]),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
   /** Short human-readable stem used to build class names (e.g. `6ème` for `6ème 1`). */
@@ -32,6 +34,8 @@ export class GradeLevel {
   }
 
   get id() { return this.data.id }
+  get gradingPolicies() { return this.data.gradingPolicies }
+  gradingPolicyFor(academicYearId: string) { return currentGradingPolicy(this.gradingPolicies, academicYearId) }
   get schoolId() { return this.data.schoolId }
   get name() { return this.data.name }
   get label() { return this.data.label }

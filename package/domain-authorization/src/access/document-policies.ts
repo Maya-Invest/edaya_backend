@@ -1,17 +1,6 @@
 import type { DocumentIssuance, DocumentTemplateKey } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
-import {
-  assertAnnualReportCardSources,
-  BusinessRuleViolationError,
-  DocumentAudience,
-  DocumentIssuanceStatus,
-  DocumentSourceType,
-  EnrollmentEndReason,
-  Permission,
-  reportCardAcademicVersion,
-  ReportCardResultStatus,
-  StudentClassEnrollmentStatus,
-} from '@edaya/core'
+import { assertAnnualReportCardSources, BusinessRuleViolationError, DocumentAudience, DocumentIssuanceStatus, DocumentSourceType, EnrollmentEndReason, Permission, publishedReportSource, reportCardAcademicVersion, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core'
 import { AccessFacts, denied } from './facts'
 
 export interface DocumentIssueTarget {
@@ -245,16 +234,15 @@ export class DocumentAccessPolicy {
     const annual = await facts.one('results', resultId)
     const annualPeriod = await facts.one('academicPeriods', annual.periodId)
     const contributors = []
-    const definition = await facts.one('definitions', annual.reportCardDefinitionId)
     for (const periodId of annual.aggregation?.sourcePeriodIds ?? []) {
       const reports = await facts.list('results', { studentId: annual.studentId, periodId, status: ReportCardResultStatus.Published })
       if (reports.length !== 1)
         throw new BusinessRuleViolationError('DOCUMENT_SOURCE_UNPUBLISHED', 'Each annual source period must have one published report')
-      const result = reports[0]!
+      const result = await publishedReportSource(reports[0]!, annual.aggregation?.sourceReportVersions?.find(source => source.periodId === periodId)?.sourceVersion)
       const period = await facts.one('academicPeriods', periodId)
       const sourceDefinition = await facts.one('definitions', result.reportCardDefinitionId)
       const classGroup = await facts.one('classGroups', result.classGroupId)
-      if (sourceDefinition.gradeScaleId !== definition.gradeScaleId || sourceDefinition.academicYearId !== annualPeriod.academicYearId || classGroup.academicYearId !== annualPeriod.academicYearId)
+      if (result.grading?.scaleId !== annual.grading?.scaleId || result.grading?.maximum !== annual.grading?.maximum || sourceDefinition.academicYearId !== annualPeriod.academicYearId || classGroup.academicYearId !== annualPeriod.academicYearId)
         return denied('Annual report sources have incompatible academic placement')
       contributors.push({ result, period })
     }

@@ -1,9 +1,8 @@
 import type { AcademicPeriod } from '../school/academic-period'
-import type { ReportCardResult } from './report-card-result'
-import type { ReportCardResultSection } from './report-card-result-section'
 import { BusinessRuleViolationError } from '../shared/business-rule-error'
 import { ReportCardAggregationSource } from './report-card-aggregation-config'
-import { ReportCardResultStatus } from './report-card-result'
+import { ReportCardResult, ReportCardResultStatus } from './report-card-result'
+import { ReportCardResultSection } from './report-card-result-section'
 
 /** Deterministic academic provenance. Includes values as well as revisions to detect changed sources. */
 export async function reportCardAcademicVersion(result: ReportCardResult): Promise<string> {
@@ -85,4 +84,17 @@ export async function assertAnnualReportCardSources(
     if (!version || version.resultId !== result.id || version.sourceVersion !== await reportCardAcademicVersion(result))
       fail('DOCUMENT_SOURCE_CHANGED', 'Regenerate the annual result from the current contributing reports')
   }
+}
+
+/** Preserve the published contributors of an annual report until that report is republished. */
+export async function publishedReportSource(result: ReportCardResult, expectedVersion?: string): Promise<ReportCardResult> {
+  if (!expectedVersion || await reportCardAcademicVersion(result) === expectedVersion)
+    return result
+  const hydrate = (nodes: readonly ReportCardResultSection[]): ReportCardResultSection[] => nodes.map(node => new ReportCardResultSection({ ...(node.data ?? node), subResults: hydrate(node.subResults) }))
+  for (const snapshot of result.publicationHistory) {
+    const historical = new ReportCardResult({ ...snapshot, sectionResults: hydrate(snapshot.sectionResults) })
+    if (await reportCardAcademicVersion(historical) === expectedVersion)
+      return historical
+  }
+  return result
 }

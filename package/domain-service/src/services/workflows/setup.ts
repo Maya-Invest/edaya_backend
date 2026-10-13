@@ -4,6 +4,7 @@ import type { SetupWorkflowRepositories } from '../runtime/workflow-repository-c
 import { denyResourceAccess } from '@edaya/authorization'
 import { AcademicPeriod as AcademicPeriodEntity, AcademicYear as AcademicYearEntity, AccountInvitationKind, ActivityEnrollment as ActivityEnrollmentEntity, Activity as ActivityEntity, AttachmentOwnerKind, BusinessRuleViolationError, ClassGroup, GradeLevel as GradeLevelEntity, PeriodDefinition as PeriodDefinitionEntity, ResourceAssignment, Resource as ResourceEntity, School as SchoolEntity, StaffAssignment as StaffAssignmentEntity, StaffMember as StaffMemberEntity, Teacher as TeacherEntity } from '@edaya/core'
 import { ensureDefaultSubjectCategories } from '../../capabilities/academics/ensure-default-subject-categories'
+import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { ensureSchoolPermissionProfiles } from '../../capabilities/access-control/seed-staff-permission-profiles'
 import { completeAttachmentUpload } from '../../capabilities/files/attachment-uploads'
 import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
@@ -451,8 +452,10 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
   async configureGradeLevel(input: GradeLevelInput): Promise<GradeLevel> {
     return this.baseService.atomicExecution.execute(async () => {
       this.checkActorSchool(input.schoolId)
-      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity(input))
-    })
+      const scope = await this.baseService.access.entity('gradeLevels').readScope()
+      const existing = await this.repositories.gradeLevels.forAccess(scope).findById(input.id)
+      return this.saveConstructed(this.baseService.entities.gradeLevels, new GradeLevelEntity({ ...input, gradingPolicies: existing?.gradingPolicies ?? [] }))
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async configurePeriodDefinition(input: PeriodDefinitionInput & { schoolId?: string }): Promise<PeriodDefinition> {

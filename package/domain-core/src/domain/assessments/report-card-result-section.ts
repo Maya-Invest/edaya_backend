@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { calculatedGradeSchema } from '../school/grading-policy'
+
 import { parseDomain, roundTo2 } from '../shared/utils'
 
 import { ReportCardDefinitionSectionKind } from './report-card-definition-section'
@@ -8,7 +10,8 @@ export const reportCardResultSectionBaseSchema = z.object({
   sectionId: z.string().trim().min(1, 'sectionId must not be blank'),
   sectionKind: z.nativeEnum(ReportCardDefinitionSectionKind),
   name: z.string().trim().min(1, 'name must not be blank'),
-  average: z.number().finite().nonnegative('average must be a finite, non-negative number').transform(v => roundTo2(v)).optional(),
+  grading: calculatedGradeSchema.optional(),
+  average: z.number().finite().nonnegative('average must be a finite, non-negative number').optional(),
   weight: z.number().finite().nonnegative('weight must be a finite, non-negative number'),
   parentSectionId: z.string().trim().min(1, 'parentSectionId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   classSubjectId: z.string().trim().min(1, 'classSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -47,10 +50,11 @@ export class ReportCardResultSection {
   readonly subResults: readonly ReportCardResultSection[]
 
   constructor(args: ReportCardResultSectionInput) {
-    this.data = parseDomain(reportCardResultSectionSchema, args)
+    this.data = parseDomain(reportCardResultSectionSchema, { ...args, average: args.grading || args.average === undefined ? args.average : roundTo2(args.average) })
     this.subResults = Object.freeze(args.subResults ? [...args.subResults] : [])
   }
 
+  get grading() { return this.data.grading as import('../school/grading-policy').CalculatedGrade | undefined }
   get sectionId() { return this.data.sectionId }
   get sectionKind() { return this.data.sectionKind }
   get name() { return this.data.name }

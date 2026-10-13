@@ -18,6 +18,20 @@ describe("annual report-card presentation", () => {
     expect(html).not.toContain("XOF");
   });
 
+  test("uses the captured scale for every annual and period heading", () => {
+    for (const locale of ["en", "fr"] as const) {
+      const html = getTemplateDefinition("annual-report-card.v1")!.compileHtml(locale, {
+        ...EXAMPLE_ANNUAL_RENDER_REQUEST.payload,
+        gradingMaximum: "4",
+        aggregateLabel: "GPA",
+        semesterAverage: "3.125 / 4",
+      });
+      expect(html).not.toContain("/ 20");
+      expect(html).toContain("GPA");
+      expect(html.match(/class="scale">\/ 4/g)).toHaveLength(4);
+    }
+  });
+
   test("forces landscape consistently even when the caller requests portrait", async () => {
     const inputs: Array<{ orientation: string }> = [];
     const result = await renderDocument({ ...EXAMPLE_ANNUAL_RENDER_REQUEST, options: { orientation: "portrait" } }, {

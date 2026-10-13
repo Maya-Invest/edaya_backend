@@ -4,9 +4,11 @@ import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-con
 
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
+import { assessmentGradingPolicy, captureGradeEntry } from '../../../../capabilities/academics/grading'
 import { prepareMarkBatchValidation } from '../../../../capabilities/academics/marks-batch-context'
 import { markMutationHooks } from '../../../../capabilities/academics/marks-mutation-hooks'
 import { assertMarkDesignation, assertMarksDraft, assessmentRoster } from '../../../../capabilities/academics/marks-state'
+import { normalizeCommandRequest } from '../../../commands/command-execution'
 import { config } from '../../entity-config'
 
 import { indirectTenant } from '../../entity-config/tenant'
@@ -50,6 +52,12 @@ export async function validateAssessmentResultSave(
   if (result.revision !== (_existing?.revision ?? 0))
     throw new BusinessRuleViolationError('MARKS_STATE_COMMAND_REQUIRED', 'Mark revisions are command owned')
   assertMarkDesignation(result)
+  const policy = await assessmentGradingPolicy(repositories, assessment)
+  if (policy || result.originalEntry || result.calculation) {
+    const expected = captureGradeEntry(result, assessment, policy, _existing)
+    if (normalizeCommandRequest({ entry: result.originalEntry, calculation: result.calculation }) !== normalizeCommandRequest({ entry: expected.originalEntry, calculation: expected.calculation }))
+      throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Grade provenance and calculations are command owned')
+  }
   if (_existing && (_existing.assessmentId !== result.assessmentId || _existing.studentId !== result.studentId))
     throw new BusinessRuleViolationError('MARK_TARGET_IMMUTABLE', 'A mark cannot be reassigned to another student or evaluation')
   const duplicate = await repositories.assessmentResults.findOne({ assessmentId: result.assessmentId, studentId: result.studentId })

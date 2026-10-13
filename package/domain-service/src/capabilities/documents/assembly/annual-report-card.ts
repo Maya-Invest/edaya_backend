@@ -6,7 +6,7 @@ import { digestCommandRequest } from '../../../services/commands/command-executi
 import { applyReportCommentRevision } from '../../academics/report-comment-revisions'
 import { buildAnnualReportCardV1Payload } from '../build-annual-report-card-v1-payload'
 import { catalogLangFromLocale, catalogSubjectName } from '../catalog-label'
-import { formatDocumentDate } from '../document-format'
+import { formatDocumentDate, formatReportAverage, gradingPeerAverages } from '../document-format'
 import { captureTeacherSignatures, freezeDocumentTeachers, freezeTeachersBySubject } from '../document-teachers'
 
 export async function assembleAnnualReportCard(
@@ -31,14 +31,13 @@ export async function assembleAnnualReportCard(
     }
   }
   const aggregation = annual.result.aggregation!
-  const averages = annual.peerResults.filter(entry => !entry.calculationStale && !entry.pendingCorrectionIds.length && !entry.pendingAssessmentIds.length
+  const peers = annual.peerResults.filter(entry => !entry.calculationStale && !entry.pendingCorrectionIds.length && !entry.pendingAssessmentIds.length
     && entry.aggregation?.source === aggregation.source
     && entry.aggregation.sourcePeriodIds.length === aggregation.sourcePeriodIds.length
     && aggregation.sourcePeriodIds.every(id => entry.aggregation!.sourcePeriodIds.includes(id)
       && (entry.aggregation!.periodWeightsByPeriodId?.[id] ?? 1) === (aggregation.periodWeightsByPeriodId?.[id] ?? 1)))
-    .map(entry => entry.overallAverage)
-    .filter((value): value is number => value !== undefined)
-  const format = (value: number) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} / 20`
+  const averages = gradingPeerAverages(result, peers)
+  const format = (value: number) => formatReportAverage(value, result.grading, locale)
   const payload = buildAnnualReportCardV1Payload({
     result,
     student: annual.student,

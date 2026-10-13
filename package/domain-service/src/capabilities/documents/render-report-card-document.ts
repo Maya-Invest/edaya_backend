@@ -5,6 +5,7 @@ import { validateAttachmentSave } from '../../services/entities/config/school/at
 import { buildStorageKey } from '../files/build-storage-key'
 import { buildReportCardV1Payload } from './build-report-card-v1-payload'
 import { catalogLangFromLocale, catalogSubjectName } from './catalog-label'
+import { formatReportAverage, gradingPeerAverages } from './document-format'
 import { captureTeacherSignatures, freezeDocumentTeachers, freezeTeachersBySubject, hydrateTeacherSignatures } from './document-teachers'
 
 export interface RenderReportCardDocumentInput {
@@ -23,17 +24,18 @@ function assertPublished(result: ReportCardResult, period: AcademicPeriod): void
 function readyDocument(context: DocumentContext) {
   const attachment = context.attachments.find(entry => entry.status === AttachmentStatus.Ready
     && entry.mimeType === 'application/pdf' && entry.storageKey
+    && (!context.result.publicationHistory.length || !context.result.publishedAt || entry.createdAt >= context.result.publishedAt)
     && (entry.sizeBytes === undefined || entry.sizeBytes >= 2_048))
   return attachment?.storageKey ? { attachmentId: attachment.id, storageKey: attachment.storageKey } : undefined
 }
 
 function documentSource(context: DocumentContext, locale: string, captured?: DocumentIssuanceSnapshot['teacherSignatures']) {
-  const { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, homeroomTeacherName, peerResults } = context
+  const { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, homeroomTeacherName } = context
   const catalogLang = catalogLangFromLocale(locale)
   const subjectNameByClassSubjectId = new Map(subjects.map(({ classSubjectId, subject }) => [classSubjectId, catalogSubjectName(subject.name, catalogLang, subject.code)]))
   // Repository order must not affect floating-point accumulation or source comparisons.
-  const peerAverages = [...peerResults].sort((a, b) => a.id.localeCompare(b.id)).map(entry => entry.overallAverage).filter((value): value is number => value !== undefined)
-  const formatAverage = (value: number) => `${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} / 20`
+  const peerAverages = gradingPeerAverages(context.result, context.peerResults)
+  const formatAverage = (value: number) => formatReportAverage(value, context.result.grading, locale)
   const payload = buildReportCardV1Payload({
     result,
     student,

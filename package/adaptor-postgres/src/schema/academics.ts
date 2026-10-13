@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const academicYears = pgTable('academic_years', {
@@ -44,6 +44,7 @@ export const periodDefinitions = pgTable('period_definitions', {
 // 5. Grade Level Table
 
 export const gradeLevels = pgTable('grade_levels', {
+  gradingPolicies: jsonb('grading_policies').notNull().default([]),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   name: text('name').notNull(),

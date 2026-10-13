@@ -41,6 +41,9 @@ async function validateReportCardDefinitionSave(
   if (!gradeScale || gradeScale.schoolId !== definition.schoolId) {
     denyResourceAccess()
   }
+  const policy = gradeLevel.gradingPolicyFor(definition.academicYearId)
+  if (policy && definition.gradeScaleId !== policy.scale.id)
+    throw new BusinessRuleViolationError('GRADING_SCALE_INHERITED', 'Report models must use the grade level grading scale')
   if (!definition.isDefault)
     return
 

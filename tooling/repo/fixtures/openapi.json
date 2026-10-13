@@ -4626,6 +4626,209 @@
             "type": "string",
             "minLength": 1
           },
+          "gradingPolicies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "academicYearId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "numeric-first",
+                    "mention-first"
+                  ]
+                },
+                "aggregateLabel": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "scale": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "schoolId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minScore": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "maxScore": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "decimalPlaces": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3,
+                      "default": 1
+                    },
+                    "roundingMode": {
+                      "type": "string",
+                      "enum": [
+                        "nearest",
+                        "truncate"
+                      ],
+                      "default": "nearest"
+                    },
+                    "intervalConvention": {
+                      "type": "string",
+                      "enum": [
+                        "legacy-closed",
+                        "continuous"
+                      ],
+                      "default": "legacy-closed"
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "default": 0
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
+                    "isDefault": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "createdAt": {},
+                    "ranges": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "letter": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "minScore": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "maxScore": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "gpaValue": {
+                            "type": "number",
+                            "nullable": true,
+                            "minimum": 0
+                          },
+                          "interpretation": {
+                            "type": "string",
+                            "nullable": true,
+                            "minLength": 1
+                          },
+                          "isPassing": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "letter",
+                          "minScore",
+                          "maxScore",
+                          "isPassing"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "schoolId",
+                    "name",
+                    "minScore",
+                    "maxScore",
+                    "ranges"
+                  ]
+                },
+                "numericEquivalents": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "default": {}
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "updating",
+                    "completed",
+                    "failed"
+                  ],
+                  "default": "updating"
+                },
+                "workId": {
+                  "type": "string"
+                },
+                "failureCode": {
+                  "type": "string"
+                },
+                "cursor": {
+                  "type": "object",
+                  "properties": {
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "marks",
+                        "reports",
+                        "annual",
+                        "rankings",
+                        "done"
+                      ]
+                    },
+                    "classId": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "assessmentId": {
+                      "type": "string",
+                      "default": ""
+                    },
+                    "afterId": {
+                      "type": "string",
+                      "default": ""
+                    }
+                  },
+                  "required": [
+                    "phase"
+                  ]
+                }
+              },
+              "required": [
+                "academicYearId",
+                "revision",
+                "mode",
+                "aggregateLabel",
+                "scale"
+              ]
+            },
+            "default": []
+          },
           "schoolId": {
             "type": "string",
             "minLength": 1
@@ -12373,6 +12576,94 @@
           "completedPercentage"
         ]
       },
+      "ConfigureGradingCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedScaleRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "scaleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "numeric-first",
+              "mention-first"
+            ]
+          },
+          "aggregateLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "numericEquivalents": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requestId",
+          "gradeLevelId",
+          "academicYearId",
+          "scaleId",
+          "mode",
+          "aggregateLabel",
+          "expectedRevision",
+          "confirmed"
+        ]
+      },
+      "RetryGradingCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "requestId",
+          "gradeLevelId",
+          "academicYearId",
+          "expectedRevision"
+        ]
+      },
       "GradeScale": {
         "type": "object",
         "properties": {
@@ -12402,6 +12693,27 @@
             "maximum": 3,
             "default": 1
           },
+          "roundingMode": {
+            "type": "string",
+            "enum": [
+              "nearest",
+              "truncate"
+            ],
+            "default": "nearest"
+          },
+          "intervalConvention": {
+            "type": "string",
+            "enum": [
+              "legacy-closed",
+              "continuous"
+            ],
+            "default": "legacy-closed"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -12417,6 +12729,10 @@
             "items": {
               "type": "object",
               "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "letter": {
                   "type": "string",
                   "minLength": 1
@@ -12464,6 +12780,10 @@
       "GradeScaleRangeCommandValue": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
           "letter": {
             "type": "string",
             "minLength": 1
@@ -12525,6 +12845,27 @@
             "minimum": 0,
             "maximum": 3,
             "default": 1
+          },
+          "roundingMode": {
+            "type": "string",
+            "enum": [
+              "nearest",
+              "truncate"
+            ],
+            "default": "nearest"
+          },
+          "intervalConvention": {
+            "type": "string",
+            "enum": [
+              "legacy-closed",
+              "continuous"
+            ],
+            "default": "legacy-closed"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
           },
           "description": {
             "type": "string",
@@ -13438,6 +13779,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "baseGradingRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "authorSubjectId": {
             "type": "string"
           },
@@ -13466,6 +13811,11 @@
                 "before": {
                   "type": "object",
                   "properties": {
+                    "mentionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
                     "score": {
                       "type": "number",
                       "nullable": true,
@@ -13505,6 +13855,11 @@
                 "proposed": {
                   "type": "object",
                   "properties": {
+                    "mentionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
                     "score": {
                       "type": "number",
                       "nullable": true,
@@ -13581,6 +13936,11 @@
                       "before": {
                         "type": "object",
                         "properties": {
+                          "mentionId": {
+                            "type": "string",
+                            "nullable": true,
+                            "minLength": 1
+                          },
                           "score": {
                             "type": "number",
                             "nullable": true,
@@ -13620,6 +13980,11 @@
                       "proposed": {
                         "type": "object",
                         "properties": {
+                          "mentionId": {
+                            "type": "string",
+                            "nullable": true,
+                            "minLength": 1
+                          },
                           "score": {
                             "type": "number",
                             "nullable": true,
@@ -13720,6 +14085,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "expectedGradingRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "reason": {
             "type": "string",
             "minLength": 1
@@ -13736,6 +14105,11 @@
                 "proposed": {
                   "type": "object",
                   "properties": {
+                    "mentionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
                     "score": {
                       "type": "number",
                       "nullable": true,
@@ -15727,6 +16101,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "expectedGradingRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "reason": {
             "type": "string",
             "minLength": 1
@@ -15743,6 +16121,11 @@
                 "proposed": {
                   "type": "object",
                   "properties": {
+                    "mentionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "minLength": 1
+                    },
                     "score": {
                       "type": "number",
                       "nullable": true,
@@ -15904,6 +16287,181 @@
             "minimum": 0,
             "default": 0
           },
+          "mentionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "originalEntry": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "numeric"
+                    ]
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maximum": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "maximum"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "mention"
+                    ]
+                  },
+                  "intervalId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "policyRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "points": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "kind",
+                  "intervalId",
+                  "code",
+                  "label",
+                  "policyRevision",
+                  "points"
+                ]
+              }
+            ]
+          },
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "isPassing": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label",
+                  "isPassing"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
           "studentId": {
             "type": "string",
             "minLength": 1
@@ -15975,6 +16533,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "expectedGradingRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
           "results": {
             "type": "array",
             "items": {
@@ -15982,6 +16544,11 @@
               "properties": {
                 "id": {
                   "type": "string",
+                  "minLength": 1
+                },
+                "mentionId": {
+                  "type": "string",
+                  "nullable": true,
                   "minLength": 1
                 },
                 "studentId": {
@@ -16040,6 +16607,11 @@
             "type": "string",
             "minLength": 1
           },
+          "mentionId": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "studentId": {
             "type": "string",
             "minLength": 1
@@ -16067,6 +16639,10 @@
             "maxLength": 200
           },
           "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expectedGradingRevision": {
             "type": "integer",
             "minimum": 0
           }
@@ -16153,6 +16729,359 @@
       "ReportCardResultSection": {
         "type": "object"
       },
+      "ReportCardSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "sourceMarks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "resultId": {
+                  "type": "string"
+                },
+                "assessmentId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "resultId",
+                "assessmentId",
+                "revision"
+              ]
+            },
+            "default": []
+          },
+          "pendingCorrectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "sourceAssessments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "assessmentId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "assessmentId",
+                "revision"
+              ]
+            },
+            "default": []
+          },
+          "pendingAssessmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "calculationStale": {
+            "type": "boolean",
+            "default": false
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "isPassing": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label",
+                  "isPassing"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "aggregateLabel": {
+            "type": "string"
+          },
+          "gradingPolicyRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "reportCardDefinitionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attendanceSummary": {
+            "type": "object",
+            "properties": {
+              "presentCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "absenceCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "excusedAbsenceCount": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              },
+              "lateCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "presentCount",
+              "absenceCount",
+              "lateCount"
+            ]
+          },
+          "assessmentResultCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overallAverage": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "classSize": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0
+          },
+          "passThreshold": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "teacherComment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "principalComment": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "default": "draft"
+          },
+          "generatedAt": {},
+          "publishedAt": {
+            "nullable": true
+          },
+          "aggregation": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "assessments",
+                  "report_cards"
+                ]
+              },
+              "sourcePeriodIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "periodWeightsByPeriodId": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                }
+              },
+              "sourceReportVersions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "periodId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "resultId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "sourceVersion": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "periodId",
+                    "resultId",
+                    "version",
+                    "sourceVersion"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "source",
+              "sourcePeriodIds"
+            ]
+          },
+          "sectionResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportCardResultSection"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "reportCardDefinitionId",
+          "studentId",
+          "classGroupId",
+          "periodId",
+          "attendanceSummary",
+          "assessmentResultCount",
+          "sectionResults"
+        ]
+      },
       "ReportCardResult": {
         "type": "object",
         "properties": {
@@ -16226,6 +17155,115 @@
           "calculationStale": {
             "type": "boolean",
             "default": false
+          },
+          "grading": {
+            "type": "object",
+            "properties": {
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "scaleId": {
+                "type": "string"
+              },
+              "scaleRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "maximum": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 2
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "units": {
+                "type": "string",
+                "enum": [
+                  "numeric",
+                  "points"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reportedValue": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mention": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "isPassing": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "code",
+                  "label",
+                  "isPassing"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "numeric-normalization",
+                  "mention-points",
+                  "explicit-equivalent"
+                ]
+              }
+            },
+            "required": [
+              "policyRevision",
+              "scaleId",
+              "scaleRevision",
+              "mode",
+              "maximum",
+              "units",
+              "value",
+              "reportedValue",
+              "mention",
+              "provenance"
+            ]
+          },
+          "aggregateLabel": {
+            "type": "string"
+          },
+          "gradingPolicyRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
           },
           "reportCardDefinitionId": {
             "type": "string",
@@ -16386,6 +17424,15 @@
               "source",
               "sourcePeriodIds"
             ]
+          },
+          "revisedDraft": {
+            "$ref": "#/components/schemas/ReportCardSnapshot"
+          },
+          "publicationHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportCardSnapshot"
+            }
           },
           "sectionResults": {
             "type": "array",
@@ -16569,6 +17616,16 @@
       "PublishReportCardResultCommand": {
         "type": "object",
         "properties": {
+          "reviewedGradingRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "reviewedDraftVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
           "id": {
             "type": "string",
             "minLength": 1
@@ -24356,6 +25413,205 @@
       "AssessmentMarksReviewResponse": {
         "type": "object",
         "properties": {
+          "gradingPolicy": {
+            "type": "object",
+            "properties": {
+              "academicYearId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "numeric-first",
+                  "mention-first"
+                ]
+              },
+              "aggregateLabel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "scale": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "schoolId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minScore": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxScore": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "decimalPlaces": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "default": 1
+                  },
+                  "roundingMode": {
+                    "type": "string",
+                    "enum": [
+                      "nearest",
+                      "truncate"
+                    ],
+                    "default": "nearest"
+                  },
+                  "intervalConvention": {
+                    "type": "string",
+                    "enum": [
+                      "legacy-closed",
+                      "continuous"
+                    ],
+                    "default": "legacy-closed"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 1
+                  },
+                  "isDefault": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "createdAt": {},
+                  "ranges": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "letter": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minScore": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "maxScore": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "gpaValue": {
+                          "type": "number",
+                          "nullable": true,
+                          "minimum": 0
+                        },
+                        "interpretation": {
+                          "type": "string",
+                          "nullable": true,
+                          "minLength": 1
+                        },
+                        "isPassing": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "letter",
+                        "minScore",
+                        "maxScore",
+                        "isPassing"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "schoolId",
+                  "name",
+                  "minScore",
+                  "maxScore",
+                  "ranges"
+                ]
+              },
+              "numericEquivalents": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "default": {}
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "updating",
+                  "completed",
+                  "failed"
+                ],
+                "default": "updating"
+              },
+              "workId": {
+                "type": "string"
+              },
+              "failureCode": {
+                "type": "string"
+              },
+              "cursor": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "enum": [
+                      "marks",
+                      "reports",
+                      "annual",
+                      "rankings",
+                      "done"
+                    ]
+                  },
+                  "classId": {
+                    "type": "string",
+                    "default": ""
+                  },
+                  "assessmentId": {
+                    "type": "string",
+                    "default": ""
+                  },
+                  "afterId": {
+                    "type": "string",
+                    "default": ""
+                  }
+                },
+                "required": [
+                  "phase"
+                ]
+              }
+            },
+            "required": [
+              "academicYearId",
+              "revision",
+              "mode",
+              "aggregateLabel",
+              "scale"
+            ]
+          },
           "assessment": {
             "$ref": "#/components/schemas/Assessment"
           },
@@ -43678,6 +44934,266 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClassSubjectProgress"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-grading": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-grading",
+        "operationId": "commands.configureGrading",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureGrading",
+        "x-edaya-command-public-name": "configure-grading",
+        "x-edaya-request-schema": "ConfigureGradingCommand",
+        "x-edaya-response-schema": "GradeLevel",
+        "requestBody": {
+          "description": "configure-grading payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureGradingCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-grading",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/retry-grading": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "retry-grading",
+        "operationId": "commands.retryGrading",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "retryGrading",
+        "x-edaya-command-public-name": "retry-grading",
+        "x-edaya-request-schema": "RetryGradingCommand",
+        "x-edaya-response-schema": "GradeLevel",
+        "requestBody": {
+          "description": "retry-grading payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryGradingCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed retry-grading",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeLevel"
                 }
               }
             }

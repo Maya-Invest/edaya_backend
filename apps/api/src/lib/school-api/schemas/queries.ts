@@ -1,3 +1,4 @@
+import { gradingPolicySchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
 import { assessmentResponseSchema, assessmentResultResponseSchema } from "./entities";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
@@ -604,6 +605,7 @@ export const listAssessmentMarksReviewsQuerySchema = z.object({
   limit: z.number().int().min(1).max(100).optional(),
 }).openapi("ListAssessmentMarksReviewsQuery");
 export const assessmentMarksReviewResponseSchema = z.object({
+  gradingPolicy: gradingPolicySchema.optional(),
   assessment: assessmentResponseSchema,
   students: z.array(z.object({ id: z.string(), firstName: z.string(), lastName: z.string() })),
   results: z.array(assessmentResultResponseSchema),

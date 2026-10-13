@@ -2260,6 +2260,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-grading": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-grading */
+        post: operations["commands.configureGrading"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/retry-grading": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** retry-grading */
+        post: operations["commands.retryGrading"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-grade-scale": {
         parameters: {
             query?: never;
@@ -13259,6 +13293,69 @@ export interface components {
         };
         GradeLevel: {
             id: string;
+            /** @default [] */
+            gradingPolicies: {
+                academicYearId: string;
+                revision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                aggregateLabel: string;
+                scale: {
+                    id: string;
+                    schoolId: string;
+                    name: string;
+                    minScore: number;
+                    maxScore: number;
+                    /** @default 1 */
+                    decimalPlaces: number;
+                    /**
+                     * @default nearest
+                     * @enum {string}
+                     */
+                    roundingMode: "nearest" | "truncate";
+                    /**
+                     * @default legacy-closed
+                     * @enum {string}
+                     */
+                    intervalConvention: "legacy-closed" | "continuous";
+                    /** @default 0 */
+                    revision: number;
+                    description?: string | null;
+                    /** @default false */
+                    isDefault: boolean;
+                    createdAt?: unknown;
+                    ranges: {
+                        id?: string;
+                        letter: string;
+                        minScore: number;
+                        maxScore: number;
+                        gpaValue?: number | null;
+                        interpretation?: string | null;
+                        isPassing: boolean;
+                    }[];
+                };
+                /** @default {} */
+                numericEquivalents: {
+                    [key: string]: number;
+                };
+                /**
+                 * @default updating
+                 * @enum {string}
+                 */
+                status: "updating" | "completed" | "failed";
+                workId?: string;
+                failureCode?: string;
+                cursor?: {
+                    /** @enum {string} */
+                    phase: "marks" | "reports" | "annual" | "rankings" | "done";
+                    /** @default  */
+                    classId: string;
+                    /** @default  */
+                    assessmentId: string;
+                    /** @default  */
+                    afterId: string;
+                };
+            }[];
             schoolId: string;
             name: string;
             label: string;
@@ -14773,6 +14870,27 @@ export interface components {
             notes?: string | null;
             recordedAt?: unknown;
         };
+        ConfigureGradingCommand: {
+            requestId: string;
+            gradeLevelId: string;
+            academicYearId: string;
+            expectedScaleRevision?: number;
+            scaleId: string;
+            /** @enum {string} */
+            mode: "numeric-first" | "mention-first";
+            aggregateLabel: string;
+            numericEquivalents?: {
+                [key: string]: number;
+            };
+            expectedRevision: number;
+            confirmed: boolean;
+        };
+        RetryGradingCommand: {
+            requestId: string;
+            gradeLevelId: string;
+            academicYearId: string;
+            expectedRevision: number;
+        };
         GradeScale: {
             id: string;
             schoolId: string;
@@ -14781,11 +14899,24 @@ export interface components {
             maxScore: number;
             /** @default 1 */
             decimalPlaces: number;
+            /**
+             * @default nearest
+             * @enum {string}
+             */
+            roundingMode: "nearest" | "truncate";
+            /**
+             * @default legacy-closed
+             * @enum {string}
+             */
+            intervalConvention: "legacy-closed" | "continuous";
+            /** @default 0 */
+            revision: number;
             description?: string | null;
             /** @default false */
             isDefault: boolean;
             createdAt?: unknown;
             ranges: {
+                id?: string;
                 letter: string;
                 minScore: number;
                 maxScore: number;
@@ -14795,6 +14926,7 @@ export interface components {
             }[];
         };
         GradeScaleRangeCommandValue: {
+            id?: string;
             letter: string;
             minScore: number;
             maxScore: number;
@@ -14810,6 +14942,18 @@ export interface components {
             maxScore: number;
             /** @default 1 */
             decimalPlaces: number;
+            /**
+             * @default nearest
+             * @enum {string}
+             */
+            roundingMode: "nearest" | "truncate";
+            /**
+             * @default legacy-closed
+             * @enum {string}
+             */
+            intervalConvention: "legacy-closed" | "continuous";
+            /** @default 0 */
+            revision: number;
             description?: string | null;
             /** @default false */
             isDefault: boolean;
@@ -15052,6 +15196,7 @@ export interface components {
             status: "pending" | "approved" | "rejected" | "withdrawn";
             version: number;
             baseRevision: number;
+            baseGradingRevision?: number;
             authorSubjectId: string;
             reason: string;
             /** Format: date-time */
@@ -15061,6 +15206,7 @@ export interface components {
                 studentId: string;
                 revision: number;
                 before: {
+                    mentionId?: string | null;
                     score: number | null;
                     /** @enum {string} */
                     designation: "scored" | "absent" | "exempt";
@@ -15069,6 +15215,7 @@ export interface components {
                     status?: "met" | "late" | "missed" | "excused" | null;
                 };
                 proposed: {
+                    mentionId?: string | null;
                     score: number | null;
                     /** @enum {string} */
                     designation: "scored" | "absent" | "exempt";
@@ -15085,6 +15232,7 @@ export interface components {
                     studentId: string;
                     revision: number;
                     before: {
+                        mentionId?: string | null;
                         score: number | null;
                         /** @enum {string} */
                         designation: "scored" | "absent" | "exempt";
@@ -15093,6 +15241,7 @@ export interface components {
                         status?: "met" | "late" | "missed" | "excused" | null;
                     };
                     proposed: {
+                        mentionId?: string | null;
                         score: number | null;
                         /** @enum {string} */
                         designation: "scored" | "absent" | "exempt";
@@ -15113,10 +15262,12 @@ export interface components {
             requestId: string;
             assessmentId: string;
             expectedRevision: number;
+            expectedGradingRevision?: number;
             reason: string;
             changes: {
                 resultId: string;
                 proposed: {
+                    mentionId?: string | null;
                     score: number | null;
                     /** @enum {string} */
                     designation: "scored" | "absent" | "exempt";
@@ -15507,10 +15658,12 @@ export interface components {
             requestId: string;
             assessmentId: string;
             expectedRevision: number;
+            expectedGradingRevision?: number;
             reason: string;
             changes: {
                 resultId: string;
                 proposed: {
+                    mentionId?: string | null;
                     score: number | null;
                     /** @enum {string} */
                     designation: "scored" | "absent" | "exempt";
@@ -15544,6 +15697,48 @@ export interface components {
             id: string;
             /** @default 0 */
             revision: number;
+            mentionId?: string | null;
+            originalEntry?: {
+                /** @enum {string} */
+                kind: "numeric";
+                value: number;
+                maximum: number;
+            } | {
+                /** @enum {string} */
+                kind: "mention";
+                intervalId: string;
+                code: string;
+                label: string;
+                policyRevision: number;
+                points: number;
+            };
+            calculation?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                    isPassing: boolean;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
             studentId: string;
             assessmentId: string;
             score?: number | null;
@@ -15560,8 +15755,10 @@ export interface components {
             requestId: string;
             assessmentId: string;
             expectedRevision: number;
+            expectedGradingRevision?: number;
             results: {
                 id: string;
+                mentionId?: string | null;
                 studentId: string;
                 score?: number | null;
                 /** @enum {string} */
@@ -15573,6 +15770,7 @@ export interface components {
         };
         RecordAssessmentResultCommand: {
             id: string;
+            mentionId?: string | null;
             studentId: string;
             assessmentId: string;
             score?: number | null;
@@ -15580,6 +15778,7 @@ export interface components {
             designation?: "scored" | "absent" | "exempt";
             requestId: string;
             expectedRevision: number;
+            expectedGradingRevision?: number;
         };
         RecordAssessmentResultComplianceCommand: {
             id: string;
@@ -15597,6 +15796,97 @@ export interface components {
             periodId: string;
         };
         ReportCardResultSection: Record<string, never>;
+        ReportCardSnapshot: {
+            id: string;
+            /** @default 0 */
+            version: number;
+            /** @default [] */
+            sourceMarks: {
+                resultId: string;
+                assessmentId: string;
+                revision: number;
+            }[];
+            /** @default [] */
+            pendingCorrectionIds: string[];
+            /** @default [] */
+            sourceAssessments: {
+                assessmentId: string;
+                revision: number;
+            }[];
+            /** @default [] */
+            pendingAssessmentIds: string[];
+            /** @default false */
+            calculationStale: boolean;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                    isPassing: boolean;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            aggregateLabel?: string;
+            gradingPolicyRevision?: number;
+            reportCardDefinitionId: string;
+            studentId: string;
+            classGroupId: string;
+            periodId: string;
+            attendanceSummary: {
+                presentCount: number;
+                absenceCount: number;
+                /** @default 0 */
+                excusedAbsenceCount: number;
+                lateCount: number;
+            };
+            assessmentResultCount: number;
+            overallAverage?: number | null;
+            rank?: number | null;
+            classSize?: number | null;
+            passThreshold?: number | null;
+            teacherComment?: string | null;
+            principalComment?: string | null;
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "published";
+            generatedAt?: unknown;
+            publishedAt?: unknown;
+            aggregation?: {
+                /** @enum {string} */
+                source: "assessments" | "report_cards";
+                sourcePeriodIds: string[];
+                periodWeightsByPeriodId?: {
+                    [key: string]: number;
+                };
+                sourceReportVersions?: {
+                    periodId: string;
+                    resultId: string;
+                    version: number;
+                    sourceVersion: string;
+                }[];
+            } | null;
+            sectionResults: components["schemas"]["ReportCardResultSection"][];
+        };
         ReportCardResult: {
             id: string;
             /** @default 0 */
@@ -15618,6 +15908,35 @@ export interface components {
             pendingAssessmentIds: string[];
             /** @default false */
             calculationStale: boolean;
+            grading?: {
+                policyRevision: number;
+                scaleId: string;
+                scaleRevision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                maximum: number;
+                /** @default 2 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                /** @enum {string} */
+                units: "numeric" | "points";
+                value: number;
+                reportedValue: number;
+                mention: {
+                    id: string;
+                    code: string;
+                    label: string;
+                    isPassing: boolean;
+                };
+                /** @enum {string} */
+                provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
+            };
+            aggregateLabel?: string;
+            gradingPolicyRevision?: number;
             reportCardDefinitionId: string;
             studentId: string;
             classGroupId: string;
@@ -15659,6 +15978,8 @@ export interface components {
                     sourceVersion: string;
                 }[];
             } | null;
+            revisedDraft?: components["schemas"]["ReportCardSnapshot"];
+            publicationHistory?: components["schemas"]["ReportCardSnapshot"][];
             sectionResults: components["schemas"]["ReportCardResultSection"][];
         };
         GenerateReportCardResultCommand: {
@@ -15698,6 +16019,8 @@ export interface components {
             }[];
         };
         PublishReportCardResultCommand: {
+            reviewedGradingRevision?: number;
+            reviewedDraftVersion?: number;
             id: string;
             studentId: string;
             periodId: string;
@@ -17610,6 +17933,68 @@ export interface components {
             correctionId: string;
         };
         AssessmentMarksReviewResponse: {
+            gradingPolicy?: {
+                academicYearId: string;
+                revision: number;
+                /** @enum {string} */
+                mode: "numeric-first" | "mention-first";
+                aggregateLabel: string;
+                scale: {
+                    id: string;
+                    schoolId: string;
+                    name: string;
+                    minScore: number;
+                    maxScore: number;
+                    /** @default 1 */
+                    decimalPlaces: number;
+                    /**
+                     * @default nearest
+                     * @enum {string}
+                     */
+                    roundingMode: "nearest" | "truncate";
+                    /**
+                     * @default legacy-closed
+                     * @enum {string}
+                     */
+                    intervalConvention: "legacy-closed" | "continuous";
+                    /** @default 0 */
+                    revision: number;
+                    description?: string | null;
+                    /** @default false */
+                    isDefault: boolean;
+                    createdAt?: unknown;
+                    ranges: {
+                        id?: string;
+                        letter: string;
+                        minScore: number;
+                        maxScore: number;
+                        gpaValue?: number | null;
+                        interpretation?: string | null;
+                        isPassing: boolean;
+                    }[];
+                };
+                /** @default {} */
+                numericEquivalents: {
+                    [key: string]: number;
+                };
+                /**
+                 * @default updating
+                 * @enum {string}
+                 */
+                status: "updating" | "completed" | "failed";
+                workId?: string;
+                failureCode?: string;
+                cursor?: {
+                    /** @enum {string} */
+                    phase: "marks" | "reports" | "annual" | "rankings" | "done";
+                    /** @default  */
+                    classId: string;
+                    /** @default  */
+                    assessmentId: string;
+                    /** @default  */
+                    afterId: string;
+                };
+            };
             assessment: components["schemas"]["Assessment"];
             students: {
                 id: string;
@@ -27635,6 +28020,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClassSubjectProgress"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureGrading": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-grading payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigureGradingCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-grading */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeLevel"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.retryGrading": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description retry-grading payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RetryGradingCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed retry-grading */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeLevel"];
                 };
             };
             /** @description Invalid request payload */

@@ -3,7 +3,7 @@ import type { EntityBusinessHooks } from '../../services/entities/managed-entity
 import { markSheetEdited } from './marks-state'
 
 function markChanged(result: AssessmentResult, existing?: AssessmentResult): boolean {
-  return !existing || result.score !== existing.score || result.designation !== existing.designation
+  return !existing || result.score !== existing.score || result.mentionId !== existing.mentionId || result.designation !== existing.designation
 }
 
 export const markMutationHooks: EntityBusinessHooks<AssessmentResult> = {

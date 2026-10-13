@@ -1,11 +1,15 @@
-import type { Attachment, DocumentTeacher, ReportCardResultSection } from '@edaya/core'
+import type { Attachment, DocumentTeacher, GradeLevel, ReportCardResultSection } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
-import { assertAnnualReportCardSources, AttachmentOwnerKind, BusinessRuleViolationError, Permission, ReportCardResultStatus, TeacherAssignmentKind } from '@edaya/core'
+import { assertAnnualReportCardSources, AttachmentOwnerKind, BusinessRuleViolationError, Permission, publishedReportSource, ReportCardResultStatus, TeacherAssignmentKind } from '@edaya/core'
 import { AccessFacts, denied } from './facts'
 
 /** Publication authorizes the document and its supporting data as one business action. */
 export class ReportCardAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
+
+  assertConfigureGrading(level: GradeLevel, existing: GradeLevel) {
+    return this.access.assertSave(Permission.REPORT_CARD_CONFIGURE, 'gradeLevels', level, existing)
+  }
 
   assertGenerate(studentId: string) {
     return this.access.assertResources(Permission.REPORT_CARD_GENERATE, 'students', [studentId])
@@ -81,14 +85,13 @@ export class ReportCardAccessPolicy {
     const ids = annual.result.aggregation?.sourcePeriodIds ?? []
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
     const contributors: Array<Awaited<ReturnType<ReportCardAccessPolicy['documentContext']>>> = []
-    const definition = await facts.one('definitions', annual.result.reportCardDefinitionId)
     for (const periodId of ids) {
       const reports = await facts.list('results', { studentId: annual.student.id, periodId, status: ReportCardResultStatus.Published })
       if (reports.length !== 1)
         throw new BusinessRuleViolationError('DOCUMENT_SOURCE_UNPUBLISHED', 'Each contributing period must have one published report')
       const context = await this.documentContext(reports[0]!.id)
-      const sourceDefinition = await facts.one('definitions', context.result.reportCardDefinitionId)
-      if (sourceDefinition.gradeScaleId !== definition.gradeScaleId)
+      context.result = await publishedReportSource(context.result, annual.result.aggregation?.sourceReportVersions?.find(source => source.periodId === periodId)?.sourceVersion)
+      if (context.result.grading?.scaleId !== annual.result.grading?.scaleId || context.result.grading?.maximum !== annual.result.grading?.maximum)
         throw new BusinessRuleViolationError('DOCUMENT_INPUT_CONFLICT', 'Annual report sources must use the same grading scale')
       contributors.push(context)
     }

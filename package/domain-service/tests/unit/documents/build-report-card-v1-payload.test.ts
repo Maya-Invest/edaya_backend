@@ -211,3 +211,18 @@ describe('buildReportCardV1Payload', () => {
     })).toThrow(/no section results/)
   })
 })
+
+test('configured report documents use captured points, precision, mention and aggregate label', () => {
+  const grading = { policyRevision: 2, scaleId: 'gpa', scaleRevision: 1, mode: 'mention-first' as const, maximum: 4, decimalPlaces: 3, roundingMode: 'nearest' as const, units: 'points' as const, value: 11 / 3, reportedValue: 3.667, mention: { id: 'a', code: 'A', label: 'Excellent', isPassing: true }, provenance: 'mention-points' as const }
+  const result = new ReportCardResult({ id: 'configured', reportCardDefinitionId: 'def', studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 2, attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, aggregateLabel: 'GPA', grading, gradingPolicyRevision: 2, overallAverage: 3.667, sectionResults: [new ReportCardResultSection({ sectionId: 'math', sectionKind: ReportCardDefinitionSectionKind.Subject, classSubjectId: 'math', name: 'Math', weight: 1, average: 3.667, grading })] })
+  const school = new School({ id: 'school', name: 'School', timeZone: 'America/Toronto' })
+  const student = new Student({ id: 'student', schoolId: school.id, firstName: 'Ada', lastName: 'L' })
+  for (const locale of ['en-US', 'fr-FR']) {
+    const payload = buildReportCardV1Payload({ school, student, result, periodLabel: 'Term', locale })
+    expect(payload.aggregateLabel).toBe('GPA')
+    expect(payload.gradingMaximum).toBe('4')
+    expect(payload.semesterAverage).toBe(`${locale === 'fr-FR' ? '3,667' : '3.667'} / 4 · A — Excellent`)
+    expect(payload.subjects[0]?.average).toContain('667 · A')
+    expect(payload.semesterAverage).not.toContain('/ 20')
+  }
+})

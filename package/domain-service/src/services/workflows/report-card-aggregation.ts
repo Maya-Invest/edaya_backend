@@ -1,7 +1,9 @@
-import type { AcademicPeriod, Assessment, AssessmentResult, ReportCardAggregation, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection } from '@edaya/core'
+import type { AcademicPeriod, Assessment, AssessmentResult, GradingPolicy, ReportCardAggregation, ReportCardDefinitionSection, ReportCardResult, ReportCardResultSection } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import {
   BusinessRuleViolationError,
+  calculateGrade,
+  describeGrade,
   ReportCardAggregationSource,
   ReportCardDefinitionSectionKind,
   ReportCardResultSection as ReportCardResultSectionEntity,
@@ -9,6 +11,7 @@ import {
   roundTo2,
   weightForPeriod,
 } from '@edaya/core'
+import { hydrateReportRevision } from '../../capabilities/academics/report-comment-revisions'
 
 type AggregationRepositories = Pick<SchoolRepositories, 'academicPeriods' | 'assessments' | 'assessmentResults' | 'results'>
 
@@ -103,18 +106,21 @@ export async function listAssessmentResultsForStudentAndPeriods(
 export function buildSubjectAverageFromAssessments(
   classSubjectId: string | readonly string[],
   assessmentsWithResults: Array<{ result: AssessmentResult, assessment: Assessment }>,
+  policy?: GradingPolicy,
 ): number | undefined {
   const leafResults = assessmentsWithResults
-    .filter(({ assessment, result }) => (typeof classSubjectId === 'string' ? assessment.classSubjectId === classSubjectId : classSubjectId.includes(assessment.classSubjectId)) && assessment.marksStatus === 'submitted' && result.score !== undefined)
+    .filter(({ assessment, result }) => (typeof classSubjectId === 'string' ? assessment.classSubjectId === classSubjectId : classSubjectId.includes(assessment.classSubjectId)) && assessment.marksStatus === 'submitted' && result.designation !== 'absent' && result.designation !== 'exempt' && (result.score !== undefined || result.originalEntry !== undefined))
   if (leafResults.length === 0) {
     return undefined
   }
   const totalWeight = leafResults.reduce((sum, { assessment }) => sum + assessment.coefficient, 0)
   const weightedPoints = leafResults.reduce((sum, { result, assessment }) => {
-    const normalizedScore = ((result.score ?? 0) / assessment.maxScore) * 20
+    const normalizedScore = policy
+      ? calculateGrade(result.originalEntry ?? { kind: 'numeric', value: result.score!, maximum: assessment.maxScore }, policy).value
+      : ((result.score ?? 0) / assessment.maxScore) * 20
     return sum + normalizedScore * assessment.coefficient
   }, 0)
-  return totalWeight === 0 ? 0 : roundTo2(weightedPoints / totalWeight)
+  return totalWeight === 0 ? 0 : policy ? weightedPoints / totalWeight : roundTo2(weightedPoints / totalWeight)
 }
 
 export interface PriorReportCardLoadResult {
@@ -159,6 +165,7 @@ export async function loadReportAggregationContext(
   studentId: string,
   aggregation: ReportCardAggregation,
   target?: AcademicPeriod,
+  draftPolicyRevision?: number,
 ): Promise<ReportAggregationContext> {
   if (new Set(aggregation.sourcePeriodIds).size !== aggregation.sourcePeriodIds.length || (target && aggregation.sourcePeriodIds.includes(target.id)))
     throw new BusinessRuleViolationError('AGGREGATED_REPORT_CARD_PERIODS_INVALID', 'Contributing periods must be distinct and exclude the target')
@@ -173,10 +180,10 @@ export async function loadReportAggregationContext(
     : { publishedByPeriodId: new Map<string, ReportCardResult>(), missingOrDraftPeriodIds: [] }
   return {
     publishedPeriods,
-    priorResultsByPeriodId: prior.publishedByPeriodId,
+    priorResultsByPeriodId: new Map([...prior.publishedByPeriodId].map(([id, result]) => [id, draftPolicyRevision !== undefined && result.revisedDraft?.gradingPolicyRevision === draftPolicyRevision ? hydrateReportRevision(result.revisedDraft) : result])),
     readiness: {
       canPublish: unpublishedPeriodIds.length === 0 && prior.missingOrDraftPeriodIds.length === 0
-        && [...prior.publishedByPeriodId.values()].every(result => !result.calculationStale && !result.pendingCorrectionIds?.length && !result.pendingAssessmentIds?.length),
+        && [...prior.publishedByPeriodId.values()].every(result => !result.revisedDraft && !result.calculationStale && !result.pendingCorrectionIds?.length && !result.pendingAssessmentIds?.length),
       unpublishedPeriodIds,
       missingOrDraftReportCardPeriodIds: prior.missingOrDraftPeriodIds,
     },
@@ -196,6 +203,7 @@ export function buildSubjectAverageFromPriorReportCards(
   aggregation: ReportCardAggregation,
   priorResultsByPeriodId: ReadonlyMap<string, ReportCardResult>,
   subject?: { id: string, byClassSubject: ReadonlyMap<string, string> },
+  policy?: GradingPolicy,
 ): number | undefined {
   let sumWeights = 0
   let sumWeightedPoints = 0
@@ -207,7 +215,7 @@ export function buildSubjectAverageFromPriorReportCards(
     const findSubject = (sections: readonly ReportCardResultSection[]): number | undefined => {
       for (const section of sections) {
         if (section.classSubjectId && subject?.byClassSubject.get(section.classSubjectId) === subject?.id)
-          return section.average
+          return policy ? section.grading?.value ?? section.average : section.average
         const nested = findSubject(section.subResults)
         if (nested !== undefined)
           return nested
@@ -225,12 +233,13 @@ export function buildSubjectAverageFromPriorReportCards(
   if (sumWeights === 0) {
     return undefined
   }
-  return roundTo2(sumWeightedPoints / sumWeights)
+  return policy ? sumWeightedPoints / sumWeights : roundTo2(sumWeightedPoints / sumWeights)
 }
 
 export function buildGroupResultFromChildren(
   section: ReportCardDefinitionSection,
   childResults: ReportCardResultSection[],
+  policy?: GradingPolicy,
 ): ReportCardResultSection | null {
   if (childResults.length === 0) {
     return null
@@ -240,14 +249,15 @@ export function buildGroupResultFromChildren(
   for (const childResult of childResults) {
     if (childResult.average !== undefined) {
       sumWeights += childResult.weight
-      sumWeightedPoints += childResult.average * childResult.weight
+      sumWeightedPoints += (childResult.grading?.value ?? childResult.average) * childResult.weight
     }
   }
   return new ReportCardResultSectionEntity({
     sectionId: section.id,
     sectionKind: ReportCardDefinitionSectionKind.Group,
     name: section.name,
-    average: sumWeights === 0 ? undefined : sumWeightedPoints / sumWeights,
+    grading: sumWeights && policy ? describeGrade(sumWeightedPoints / sumWeights, policy) : undefined,
+    average: sumWeights === 0 ? undefined : policy ? describeGrade(sumWeightedPoints / sumWeights, policy).reportedValue : sumWeightedPoints / sumWeights,
     weight: section.weight,
     parentSectionId: section.parentSectionId,
     subResults: childResults,

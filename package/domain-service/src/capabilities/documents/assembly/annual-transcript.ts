@@ -6,7 +6,7 @@ import {
   ReportCardResultStatus,
 } from '@edaya/core'
 
-import { formatDocumentDate } from '../document-format'
+import { formatDocumentDate, formatReportAverage } from '../document-format'
 import { fail, requireYear } from './shared'
 
 export async function assembleAnnualTranscript(
@@ -39,7 +39,7 @@ export async function assembleAnnualTranscript(
     return {
       cells: [
         resultPeriod?.name ?? entry.periodId,
-        entry.overallAverage !== undefined ? `${entry.overallAverage}` : '—',
+        entry.overallAverage !== undefined ? `${formatReportAverage(entry.overallAverage, entry.grading, locale)}${entry.grading ? ` · ${entry.grading.mention.code}` : ''}` : '—',
       ],
     }
   })
@@ -61,7 +61,7 @@ export async function assembleAnnualTranscript(
         classLabel: classGroup.name,
         schoolYear: year.name,
         date: formatDocumentDate(new Date(), locale, timeZone),
-        columns: locale.startsWith('en') ? ['Period', 'Average'] : ['Période', 'Moyenne'],
+        columns: [locale.startsWith('en') ? 'Period' : 'Période', result.aggregateLabel ?? (locale.startsWith('en') ? 'Average' : 'Moyenne')],
         rows,
       },
       sourceVersion,

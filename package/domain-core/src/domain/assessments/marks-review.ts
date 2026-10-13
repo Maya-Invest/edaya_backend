@@ -21,6 +21,7 @@ export const marksReviewSchema = z.object({
 })
 
 export const markCorrectionValuesSchema = z.object({
+  mentionId: z.string().min(1).nullable().optional(),
   score: z.number().finite().nonnegative().nullable(),
   designation: z.enum(['scored', 'absent', 'exempt']),
   notes: z.string().trim().min(1).nullable(),
@@ -30,6 +31,7 @@ export const requestMarksCorrectionSchema = z.object({
   requestId: z.string().trim().min(1).max(200),
   assessmentId: z.string().trim().min(1),
   expectedRevision: z.number().int().nonnegative(),
+  expectedGradingRevision: z.number().int().nonnegative().optional(),
   reason: z.string().trim().min(1),
   changes: z.array(z.object({ resultId: z.string().min(1), proposed: markCorrectionValuesSchema }).strict()).min(1).max(500),
 }).strict()
@@ -46,6 +48,7 @@ export const marksCorrectionSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected', 'withdrawn']),
   version: z.number().int().nonnegative(),
   baseRevision: z.number().int().nonnegative(),
+  baseGradingRevision: z.number().int().nonnegative().optional(),
   authorSubjectId: z.string(),
   reason: z.string(),
   createdAt: zodDate(),

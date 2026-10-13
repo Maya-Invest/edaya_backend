@@ -12,7 +12,7 @@ export interface AnnualReportCardDocumentContext extends ReportCardDocumentConte
 export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentContext) {
   const locale = input.locale ?? 'fr-FR'
   const lang = catalogLangFromLocale(locale)
-  const formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: input.result.grading?.decimalPlaces ?? 2, maximumFractionDigits: input.result.grading?.decimalPlaces ?? 2 })
   const format = (value: number | undefined) => value === undefined ? '—' : formatter.format(value)
   const periods = [...input.periods].sort((a, b) => a.period.startDate.getTime() - b.period.startDate.getTime() || a.period.id.localeCompare(b.period.id))
   const subjectId = (section: ReportCardResultSection) => {
@@ -53,7 +53,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
       ? input.subjectNameByClassSubjectId?.get(section.classSubjectId!) ?? section.name
       : catalogBulletinSection(catalogText(section.name, lang), lang),
     kind,
-    average: format(section.average),
+    average: `${format(section.average)}${section.grading ? ` · ${section.grading.mention.code}` : ''}`,
     coefficient: String(section.weight),
     total: format(section.average === undefined ? undefined : section.average * section.weight),
     rank: section.rank === undefined ? undefined : `${section.rank} / ${input.result.classSize ?? '—'}`,
@@ -101,7 +101,7 @@ export function buildAnnualReportCardV1Payload(input: AnnualReportCardDocumentCo
   rows.push({
     coefficient: String(gradedSubjects.reduce((sum, section) => sum + section.weight, 0)),
     total: gradedSubjects.length ? format(gradedSubjects.reduce((sum, section) => sum + section.average! * section.weight, 0)) : '—',
-    name: lang === 'en' ? 'Overall average' : 'Moyenne générale',
+    name: input.result.aggregateLabel ?? (lang === 'en' ? 'Overall average' : 'Moyenne générale'),
     kind: 'totals',
     average: format(input.result.overallAverage),
     rank: input.result.rank === undefined ? undefined : `${input.result.rank} / ${input.result.classSize ?? '—'}`,

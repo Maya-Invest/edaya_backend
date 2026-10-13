@@ -5,6 +5,8 @@ export interface StoredReportCardResultSection {
   sectionId: string
   sectionKind: ReportCardDefinitionSectionKind
   name: string
+  grading?: import('@edaya/core').CalculatedGrade
+  rank?: number
   average: number
   weight: number
   parentSectionId?: string | null
@@ -32,6 +34,8 @@ export function serializeReportCardResultSection(section: ReportCardResultSectio
     sectionKind: section.sectionKind,
     name: section.name,
     average: section.average,
+    grading: section.grading,
+    rank: section.rank,
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? null,
     classSubjectId: section.classSubjectId ?? null,
@@ -57,6 +61,8 @@ export function deserializeReportCardResultSection(raw: StoredReportCardResultSe
     sectionKind: section.sectionKind,
     name: section.name,
     average: section.average,
+    grading: section.grading,
+    rank: section.rank,
     weight: section.weight,
     parentSectionId: section.parentSectionId ?? undefined,
     classSubjectId: section.classSubjectId ?? undefined,

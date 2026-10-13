@@ -15,7 +15,7 @@ export function visibleReportRevision(original: ReportCardResult, state?: Teache
 /** An annual regeneration must retain its current grades when applying historical feedback. */
 export function applyReportCommentRevision(original: ReportCardResult, snapshot: unknown): ReportCardResult {
   const revised = hydrateReportRevision(snapshot)
-  if (original.aggregation?.source !== ReportCardAggregationSource.ReportCards)
+  if (!original.grading && !original.revisedDraft && original.gradingPolicyRevision === undefined && original.aggregation?.source !== ReportCardAggregationSource.ReportCards)
     return revised
   const comments = new Map<string, string | undefined>()
   const collect = (nodes: readonly ReportCardResultSection[]) => {

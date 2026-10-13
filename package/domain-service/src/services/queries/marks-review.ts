@@ -1,6 +1,7 @@
 import type { MarksCorrection } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import { denyResourceAccess } from '@edaya/authorization'
+import { assessmentGradingPolicy } from '../../capabilities/academics/grading'
 import { assessmentRoster } from '../../capabilities/academics/marks-state'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 
@@ -57,7 +58,7 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
   const byStudent = new Map(results.map(result => [result.studentId, result]))
   const missingStudentIds = roster.filter((id) => {
     const result = byStudent.get(id)
-    return !result || (result.score === undefined && result.designation !== 'absent' && result.designation !== 'exempt')
+    return !result || (result.score === undefined && result.mentionId === undefined && result.designation !== 'absent' && result.designation !== 'exempt')
   })
   const published = await repositories.assessmentDependencies.publishedMarkIds(base.actor.schoolId, results.map(row => row.id))
   const history = await repositories.marksCorrections.forAssessment(base.actor.schoolId, assessment.id)
@@ -66,6 +67,7 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
   const editable = await base.access.marksReview.can('submit', assessment)
   return {
     assessment: assessment.data,
+    gradingPolicy: await assessmentGradingPolicy(repositories, assessment),
     students: students.map(student => ({ id: student.id, firstName: student.firstName, lastName: student.lastName })),
     results: results.map(result => result.data),
     missingStudentIds,

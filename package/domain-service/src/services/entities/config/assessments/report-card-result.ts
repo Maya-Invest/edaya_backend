@@ -1,5 +1,6 @@
 import type { ReportCardResult } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
+import type { AssessmentsWorkflowRepositories } from '../../../runtime/workflow-repository-catalog'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { assertDraftReportCardForTeacherComment, BusinessRuleViolationError, ReportCardResultStatus } from '@edaya/core'
@@ -29,12 +30,13 @@ function reportCardResultTenant(): EntityTenantResolver<ReportCardResult> {
   })
 }
 
-async function validateReportCardResultSave(
+export async function validateReportCardResultSave(
   result: ReportCardResult,
   existing: ReportCardResult | undefined,
-  repositories: SchoolRepositories,
+  repositories: AssessmentsWorkflowRepositories,
+  gradingRepublication = false,
 ): Promise<void> {
-  if (existing) {
+  if (existing && !gradingRepublication) {
     assertDraftReportCardForTeacherComment(existing)
   }
   const [student, classGroup, period, definition] = await Promise.all([
@@ -57,10 +59,19 @@ async function validateReportCardResultSave(
     denyResourceAccess()
   }
 
+  if (!gradingRepublication && (JSON.stringify(result.revisedDraft) !== JSON.stringify(existing?.revisedDraft) || JSON.stringify(result.publicationHistory) !== JSON.stringify(existing?.publicationHistory ?? [])))
+    throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Report revisions are command owned')
+
   if (result.status === ReportCardResultStatus.Published) {
+    const policy = (await repositories.gradeLevels.findById(classGroup.gradeLevelId))?.gradingPolicyFor(period.academicYearId)
+    if (policy && (policy.status !== 'completed' || result.gradingPolicyRevision !== policy.revision || result.calculationStale))
+      throw new BusinessRuleViolationError('GRADING_UPDATE_IN_PROGRESS', 'Publish only a current, fully recalculated report')
+
     const context = await scopeReportAssessmentContext(repositories, await loadReportAssessmentContext(repositories, student.schoolId, result.studentId, result.aggregation?.sourcePeriodIds ?? [result.periodId]), definition.id, classGroup.id)
     if (context.assessments.some(assessment => assessment.marksStatus !== 'submitted'))
       throw new BusinessRuleViolationError('REPORT_CARD_MARKS_NOT_SUBMITTED', 'Every applicable evaluation must be submitted before publication')
+    if (result.sourceAssessments.length !== context.assessments.length || context.assessments.some(assessment => !result.sourceAssessments.some(source => source.assessmentId === assessment.id && source.revision === assessment.marksRevision)))
+      throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the report from the current evaluation sheets')
     const expectedMarks = context.results.map(({ result: mark }) => mark)
     if (result.sourceMarks.length !== expectedMarks.length || expectedMarks.some(mark => !result.sourceMarks.some(source => source.resultId === mark.id && source.revision === mark.revision)))
       throw new BusinessRuleViolationError('REPORT_CARD_SOURCE_REVISION_CONFLICT', 'Regenerate the report from the current submitted marks')
@@ -76,7 +87,7 @@ async function validateReportCardResultSave(
     periodId: result.periodId,
     status: ReportCardResultStatus.Published,
   })
-  if (!published || published.status !== ReportCardResultStatus.Published) {
+  if (gradingRepublication || !published || published.status !== ReportCardResultStatus.Published) {
     return
   }
   throw new BusinessRuleViolationError('PUBLISHED_REPORT_CARD_IMMUTABLE', `Published report card for student ${result.studentId} and period ${result.periodId} is immutable`)

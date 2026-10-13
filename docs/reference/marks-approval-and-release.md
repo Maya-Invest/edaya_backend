@@ -4,7 +4,7 @@ This document describes the remediation contracts. The verification status and f
 
 ## Marks sheets
 
-An evaluation follows **Draft → Submitted**. Teachers freely edit Draft marks. Submission requires a numeric score, absence, or exemption for every student enrolled at the scheduled date (homework: due date), freezes that roster and grading configuration, and makes marks official and visible to families immediately. Absence and exemption contribute neither score nor weight; blank marks are incomplete, never zero. Activity completion remains independent.
+An evaluation follows **Draft → Submitted**. Teachers freely edit Draft marks. Submission requires a numeric score or configured mention (according to the level policy), absence, or exemption for every student enrolled at the scheduled date (homework: due date), freezes that roster and grading configuration, and makes marks official and visible to families immediately. Absence and exemption contribute neither score nor weight; blank marks are incomplete, never zero. Activity completion remains independent.
 
 Submitted sheets cannot return to Draft. Teachers and staff with mark-edit authority may propose selected scores, designations, and mark comments in one pending batch per evaluation. Each request stores immutable before/after values, source revisions, author, and reason. Staff with class-scoped `GRADE_VALIDATE` approve or reject the whole batch; rejection needs a reason. The author may withdraw. The author cannot review their own request across profiles, including school owners. The original submitter may review someone else's correction. `GRADE_UNLOCK` never overrides submission or published-report locks.
 
@@ -20,7 +20,7 @@ Each logical marks or comment edit receives a new request ID; retries retain the
 
 ## Reports
 
-Reports retain two-decimal precision through persistence and document generation. No-score results remain distinct from zero. Subject and group sections remain present without an average so their comments survive an all-absent or all-exempt sheet; documents and apps display an em dash for no score and retain two decimals for numeric results. Placement is the enrollment effective at period end; missing or overlapping placements fail explicitly. Submitted transferred marks match curriculum subject IDs and use destination report weights.
+Legacy reports retain two-decimal precision. Explicitly applied level/year policies calculate at full precision and round or truncate only the reported value, using the configured precision. No-score results remain distinct from zero. Subject and group sections remain present without an average so their comments survive an all-absent or all-exempt sheet; documents and apps display an em dash for no score and retain two decimals for numeric results. Placement is the enrollment effective at period end; missing or overlapping placements fail explicitly. Submitted transferred marks match curriculum subject IDs and use destination report weights.
 
 Regeneration preserves comments using definition and section identity, including nested groups. Removing or repurposing a commented section raises a conflict until the comment is cleared or reconciled. Published snapshots are immutable. Publication is serialized by student and period and replays the journaled report ID under current authorization.
 
@@ -40,4 +40,17 @@ Release gates are backend `bun run repo ci qualify staging`, native PostgreSQL t
 
 The separately managed reset must retire old sessions, cached school data, and pending mobile mutations. Do not choose a remote reset target or delete Identity/storage data through this implementation. Release each repository independently after its required gates, then verify submission and corrections, report publication/rendering, finance reconciliation, files/photos, family feedback, and multiple-device delivery before reopening.
 
-Teacher aggregate endpoint proposals, SMS delivery, payment-provider integrations, subscriptions, pairing codes, and correction/reissue of published reports remain deferred.
+Teacher aggregate endpoint proposals, SMS delivery, payment-provider integrations, subscriptions, pairing codes, remain deferred; grading-policy changes can create reviewed revisions of published reports.
+
+
+## Configurable grading policies
+
+Each grade level has a revisioned policy for the current published academic year. A policy snapshots an editable scale, numeric-first or mention-first entry, rounding/truncation, precision, and an aggregate label. Numeric entries normalize their own evaluation maximum to the scale maximum. Mentions contribute configured points directly. Coefficients apply before rounding; the rounded reported value determines the matched mention. Original teacher entries and conversion provenance remain separate from derived values.
+
+Continuous intervals require stable IDs, unique codes, labels, complete coverage, and no overlap. Lower bounds are inclusive and upper bounds exclusive, except the final maximum. Existing closed-interval scales and published results remain unchanged until an administrator explicitly applies a revised policy. Removing a mention retains its original points for existing entries; applying a smaller scale must retain and reassign any removed mention whose points would be outside that scale. Switching mention records to numeric-first requires explicit equivalents in the configuration form.
+
+`configureGrading` uses the current revision and a single confirmation. Durable work processes at most 50 marks or five reports per page, then annual dependencies and class rankings. Cursor advancement and the next outbox record commit together under the academic-state lock. Newer policies supersede old work; failures expose a sanitized status and `retryGrading` resumes the cursor. Crashed exhausted work is projected as Failed when the level is read. Historical years are excluded. Label-only edits do not recalculate marks.
+
+Published roots and their issued documents remain available while `revisedDraft` is reviewed. Republication requires its exact grading revision and draft version, current sources, completed work, and the usual marks/correction and annual-source prerequisites. Earlier publication snapshots remain in `publicationHistory`. Family readers receive the published root only. Original marks remain subject to the existing permanent publication locks.
+
+Deploy compatible backend/API, web configuration and grading, and teacher/guardian readers before administrators enable mention-first policies. Prepare both generated clients from the same reviewed backend revision. No automatic configuration application occurs during migration. Separate course credits, honours/AP adjustments, repeats, and cross-year cumulative GPA are not implemented.

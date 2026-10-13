@@ -12,6 +12,8 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "aggregateLabel": { "type": "string" },
+    "gradingMaximum": { "type": "string" },
     "republicLabel": {
       "type": "string"
     },

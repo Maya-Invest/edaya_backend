@@ -1,4 +1,5 @@
 export * from './adapters'
+export { dispatchGradingRecalculation } from './capabilities/academics/durable-grading'
 export * from './capabilities/documents'
 export * from './capabilities/files'
 export * from './capabilities/invitations'
@@ -6,4 +7,5 @@ export * from './capabilities/notifications'
 export * from './capabilities/onboarding'
 export * from './capabilities/scheduling-jobs'
 export * from './ports'
+
 export * from './services'

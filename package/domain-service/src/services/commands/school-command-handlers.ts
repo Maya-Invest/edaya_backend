@@ -278,6 +278,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     configureClassSubjectTimetable: payload => workflows.academics.configureClassSubjectTimetable(payload as ConfigureClassSubjectTimetableInput),
     recordLessonSessionProgress: payload => workflows.academics.recordLessonSessionProgress(payload as RecordLessonSessionProgressInput),
     // assessments
+    configureGrading: payload => workflows.assessments.configureGrading(payload as import('../workflows/grading-configuration').ConfigureGradingInput),
+    retryGrading: payload => workflows.assessments.retryGrading(payload as import('../workflows/grading-configuration').RetryGradingInput),
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),
     createReportCardDefinition: payload => workflows.assessments.createReportCardDefinition(payload as CreateReportCardDefinitionInput),
     createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),

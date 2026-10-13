@@ -1,6 +1,6 @@
-import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from '@edaya/core'
-import { z } from '@hono/zod-openapi'
-import { conversationResponseSchema, markConversationReadResponseSchema } from './conversations'
+import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from "@edaya/core";
+import { z } from "@hono/zod-openapi";
+import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import {
   academicPeriodResponseSchema,
   academicYearResponseSchema,
@@ -59,9 +59,9 @@ import {
   subjectMatterResponseSchema,
   subjectResponseSchema,
   teacherResponseSchema,
-} from './entities'
-import { marksCorrectionResponseSchema } from './marks-corrections'
-import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from './teacher-corrections'
+} from "./entities";
+import { marksCorrectionResponseSchema } from "./marks-corrections";
+import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
 const familyFeedbackCampaignCommandResponseSchema = z.object({
   id: z.string().min(1),
@@ -84,35 +84,35 @@ const familyFeedbackCampaignCommandResponseSchema = z.object({
   answersPurgedAt: z.string().optional(),
   moderatorStaffId: z.string().optional(),
   themeDraft: z.string().optional(),
-}).openapi('FamilyFeedbackCampaignCommandResponse')
+}).openapi("FamilyFeedbackCampaignCommandResponse");
 
 const permissionResolutionReportSchema = z.object({
-  changes: z.array(z.object({ staffId: z.string(), staffName: z.string(), academicYearId: z.string(), permission: z.nativeEnum(Permission), change: z.enum(['added', 'changed', 'removed']), beforeScopes: z.array(grantScopeSchema), afterScopes: z.array(grantScopeSchema) })),
+  changes: z.array(z.object({ staffId: z.string(), staffName: z.string(), academicYearId: z.string(), permission: z.nativeEnum(Permission), change: z.enum(["added", "changed", "removed"]), beforeScopes: z.array(grantScopeSchema), afterScopes: z.array(grantScopeSchema) })),
   warnings: z.array(permissionResolutionWarningSchema.extend({ staffId: z.string(), staffName: z.string(), academicYearId: z.string(), assignmentId: z.string() })),
-}).openapi('PermissionResolutionReport')
+}).openapi("PermissionResolutionReport");
 
 export const resolveIncidentWithOutcomesResponseSchema = z.object({
   incident: incidentResponseSchema,
   involvements: z.array(studentIncidentInvolvementResponseSchema),
   sanctions: z.array(studentDisciplinaryActionResponseSchema),
-}).openapi('ResolveIncidentWithOutcomesResponse')
+}).openapi("ResolveIncidentWithOutcomesResponse");
 
 export const commandMessageResponseSchema = z.object({
   message: z.string(),
-}).openapi('CommandMessageResponse')
+}).openapi("CommandMessageResponse");
 
-export const lessonSessionCommandListResponseSchema = z.array(lessonSessionResponseSchema).openapi('LessonSessionCommandListResponse')
+export const lessonSessionCommandListResponseSchema = z.array(lessonSessionResponseSchema).openapi("LessonSessionCommandListResponse");
 export const materializedOccurrenceCommandResponseSchema = z.union([
   lessonSessionResponseSchema,
   activitySessionResponseSchema,
-]).openapi('MaterializedOccurrenceCommandResponse')
+]).openapi("MaterializedOccurrenceCommandResponse");
 export const materializedOccurrenceCommandListResponseSchema = z.array(
   materializedOccurrenceCommandResponseSchema,
-).openapi('MaterializedOccurrenceCommandListResponse')
-export const attendanceCommandListResponseSchema = z.array(attendanceResponseSchema).openapi('AttendanceCommandListResponse')
-export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi('AssessmentResultCommandListResponse')
-export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi('MessageDeliveryCommandListResponse')
-export const studentServiceEnrollmentCommandListResponseSchema = z.array(studentServiceEnrollmentResponseSchema).openapi('StudentServiceEnrollmentCommandListResponse')
+).openapi("MaterializedOccurrenceCommandListResponse");
+export const attendanceCommandListResponseSchema = z.array(attendanceResponseSchema).openapi("AttendanceCommandListResponse");
+export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
+export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
+export const studentServiceEnrollmentCommandListResponseSchema = z.array(studentServiceEnrollmentResponseSchema).openapi("StudentServiceEnrollmentCommandListResponse");
 export const allocationPreviewResponseSchema = z.object({
   accountId: z.string().min(1),
   availableBefore: z.number().int().nonnegative(),
@@ -122,11 +122,11 @@ export const allocationPreviewResponseSchema = z.object({
     amount: z.number().positive(),
     label: z.string().min(1),
   })),
-}).openapi('AllocationPreviewResponse')
+}).openapi("AllocationPreviewResponse");
 export const retiredFinanceCommandResponseSchema = z.object({
   code: z.string().min(1),
   message: z.string().min(1),
-}).openapi('RetiredFinanceCommandResponse')
+}).openapi("RetiredFinanceCommandResponse");
 
 const timetablePlacementSchema = z.object({
   classSubjectId: z.string().min(1),
@@ -140,43 +140,43 @@ const timetablePlacementSchema = z.object({
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime(),
   }),
-}).openapi('TimetablePlacement')
+}).openapi("TimetablePlacement");
 
 const unmetTimetableWorkloadSchema = z.object({
   classSubjectId: z.string().min(1),
   weekKey: z.string().date(),
   required: z.number().int().positive(),
   placed: z.number().int().nonnegative(),
-}).openapi('UnmetTimetableWorkload')
+}).openapi("UnmetTimetableWorkload");
 
 export const generateClassGroupTimetableResponseSchema = z.object({
   classGroupId: z.string().min(1),
   sessions: z.array(lessonSessionResponseSchema),
   placements: z.array(timetablePlacementSchema),
   unmetWorkloads: z.array(unmetTimetableWorkloadSchema),
-}).openapi('GenerateClassGroupTimetableResponse')
+}).openapi("GenerateClassGroupTimetableResponse");
 
 export const generateSchoolTimetableResponseSchema = z.object({
   academicYearId: z.string().min(1),
   classGroups: z.array(generateClassGroupTimetableResponseSchema),
   skippedClassGroupIds: z.array(z.string().min(1)),
-}).openapi('GenerateSchoolTimetableResponse')
+}).openapi("GenerateSchoolTimetableResponse");
 
 export const renderClassLogbookResponseSchema = z.object({
   fileName: z.string().min(1),
-  contentType: z.literal('application/pdf'),
+  contentType: z.literal("application/pdf"),
   downloadUrl: z.string().min(1),
   expiresAt: z.string().datetime(),
   subjectCount: z.number().int().nonnegative(),
   sessionCount: z.number().int().nonnegative(),
-}).openapi('RenderClassLogbookResponse')
+}).openapi("RenderClassLogbookResponse");
 
 export const documentIssuanceProjectionResponseSchema = z.object({
   id: z.string().min(1),
   templateKey: z.string().min(1),
   templateVersion: z.string().min(1),
   title: z.string().min(1),
-  locale: z.enum(['fr', 'en']),
+  locale: z.enum(["fr", "en"]),
   academicYearId: z.string().min(1),
   sourceType: z.string().min(1),
   sourceId: z.string().min(1),
@@ -193,17 +193,17 @@ export const documentIssuanceProjectionResponseSchema = z.object({
   voidReason: z.string().min(1).optional(),
   createdAt: z.string().datetime(),
   familyDownload: z.boolean(),
-}).openapi('DocumentIssuanceProjectionResponse')
+}).openapi("DocumentIssuanceProjectionResponse");
 
 export const documentIssuanceBatchResponseSchema = z.object({
   items: z.array(z.object({
     sourceId: z.string().min(1),
     requestId: z.string().min(1),
-    status: z.enum(['requested', 'denied']),
+    status: z.enum(["requested", "denied"]),
     issuanceId: z.string().min(1).optional(),
     failureCode: z.string().min(1).optional(),
   })),
-}).openapi('DocumentIssuanceBatchResponse')
+}).openapi("DocumentIssuanceBatchResponse");
 
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
@@ -226,71 +226,71 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   updateStaffMemberStatus: staffMemberResponseSchema,
   updateStaffMemberProfile: staffMemberResponseSchema,
   updateTeacherSelfProfile: teacherResponseSchema,
-  linkActorSubject: z.discriminatedUnion('kind', [
+  linkActorSubject: z.discriminatedUnion("kind", [
     z.object({
-      kind: z.literal('staff'),
+      kind: z.literal("staff"),
       entity: staffMemberResponseSchema,
     }),
     z.object({
-      kind: z.literal('guardian'),
+      kind: z.literal("guardian"),
       entity: guardianResponseSchema,
     }),
     z.object({
-      kind: z.literal('student'),
+      kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
     z.object({
-      kind: z.literal('teacher'),
+      kind: z.literal("teacher"),
       entity: teacherResponseSchema,
     }),
-  ]).openapi('LinkActorSubjectResponse'),
-  relinkActorSubject: z.discriminatedUnion('kind', [
+  ]).openapi("LinkActorSubjectResponse"),
+  relinkActorSubject: z.discriminatedUnion("kind", [
     z.object({
-      kind: z.literal('staff'),
+      kind: z.literal("staff"),
       entity: staffMemberResponseSchema,
     }),
     z.object({
-      kind: z.literal('guardian'),
+      kind: z.literal("guardian"),
       entity: guardianResponseSchema,
     }),
     z.object({
-      kind: z.literal('student'),
+      kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
     z.object({
-      kind: z.literal('teacher'),
+      kind: z.literal("teacher"),
       entity: teacherResponseSchema,
     }),
-  ]).openapi('RelinkActorSubjectResponse'),
-  unlinkActorSubject: z.discriminatedUnion('kind', [
+  ]).openapi("RelinkActorSubjectResponse"),
+  unlinkActorSubject: z.discriminatedUnion("kind", [
     z.object({
-      kind: z.literal('staff'),
+      kind: z.literal("staff"),
       entity: staffMemberResponseSchema,
     }),
     z.object({
-      kind: z.literal('guardian'),
+      kind: z.literal("guardian"),
       entity: guardianResponseSchema,
     }),
     z.object({
-      kind: z.literal('student'),
+      kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
     z.object({
-      kind: z.literal('teacher'),
+      kind: z.literal("teacher"),
       entity: teacherResponseSchema,
     }),
-  ]).openapi('UnlinkActorSubjectResponse'),
-  assignStaffPermission: staffManualPermissionAssignmentResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi('AssignStaffPermissionResponse'),
-  configureStaffPermissionScopeDefaults: staffPermissionScopeDefaultsResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi('ConfigureStaffPermissionScopeDefaultsResponse'),
-  removeStaffPermission: z.object({ assignmentId: z.string(), resolution: permissionResolutionReportSchema }).openapi('RemoveStaffPermissionResponse'),
-  configurePermissionProfile: staffPermissionProfileResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi('ConfigurePermissionProfileResponse'),
-  applyStaffPermissionProfile: staffPermissionProfileBindingResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi('ApplyStaffPermissionProfileResponse'),
-  reorderStaffPermissionProfiles: z.object({ bindings: z.array(staffPermissionProfileBindingResponseSchema), resolution: permissionResolutionReportSchema }).openapi('ReorderStaffPermissionProfilesResponse'),
+  ]).openapi("UnlinkActorSubjectResponse"),
+  assignStaffPermission: staffManualPermissionAssignmentResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("AssignStaffPermissionResponse"),
+  configureStaffPermissionScopeDefaults: staffPermissionScopeDefaultsResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ConfigureStaffPermissionScopeDefaultsResponse"),
+  removeStaffPermission: z.object({ assignmentId: z.string(), resolution: permissionResolutionReportSchema }).openapi("RemoveStaffPermissionResponse"),
+  configurePermissionProfile: staffPermissionProfileResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ConfigurePermissionProfileResponse"),
+  applyStaffPermissionProfile: staffPermissionProfileBindingResponseSchema.and(z.object({ resolution: permissionResolutionReportSchema })).openapi("ApplyStaffPermissionProfileResponse"),
+  reorderStaffPermissionProfiles: z.object({ bindings: z.array(staffPermissionProfileBindingResponseSchema), resolution: permissionResolutionReportSchema }).openapi("ReorderStaffPermissionProfilesResponse"),
   removeStaffPermissionProfile: z.object({
     resolution: permissionResolutionReportSchema,
     staffId: z.string().min(1),
     profileId: z.string().min(1),
-  }).openapi('RemoveStaffPermissionProfileResponse'),
+  }).openapi("RemoveStaffPermissionProfileResponse"),
   configureSubject: subjectResponseSchema,
   configureSubjectCategory: subjectCategoryResponseSchema,
   configureSubjectMatter: subjectMatterResponseSchema,
@@ -301,30 +301,30 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   sendAccountInvitation: z.object({
     invitation: accountInvitationResponseSchema,
     token: z.string(),
-  }).openapi('SendAccountInvitationResponse'),
+  }).openapi("SendAccountInvitationResponse"),
   resendAccountInvitation: z.object({
     invitation: accountInvitationResponseSchema,
     token: z.string(),
-  }).openapi('ResendAccountInvitationResponse'),
+  }).openapi("ResendAccountInvitationResponse"),
   revokeAccountInvitation: accountInvitationResponseSchema,
-  acceptAccountInvitation: z.discriminatedUnion('kind', [
+  acceptAccountInvitation: z.discriminatedUnion("kind", [
     z.object({
-      kind: z.literal('staff'),
+      kind: z.literal("staff"),
       entity: staffMemberResponseSchema,
     }),
     z.object({
-      kind: z.literal('guardian'),
+      kind: z.literal("guardian"),
       entity: guardianResponseSchema,
     }),
     z.object({
-      kind: z.literal('student'),
+      kind: z.literal("student"),
       entity: studentResponseSchema,
     }),
     z.object({
-      kind: z.literal('teacher'),
+      kind: z.literal("teacher"),
       entity: teacherResponseSchema,
     }),
-  ]).openapi('AcceptAccountInvitationResponse'),
+  ]).openapi("AcceptAccountInvitationResponse"),
   assignStaffToClass: staffAssignmentResponseSchema,
   assignStaffToClassSubject: staffAssignmentResponseSchema,
   assignStaffToLessonSession: staffAssignmentResponseSchema,
@@ -359,6 +359,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   setClassSubjectOffered: classSubjectResponseSchema,
   configureClassSubjectTimetable: classSubjectResponseSchema,
   recordLessonSessionProgress: classSubjectProgressResponseSchema,
+  configureGrading: gradeLevelResponseSchema,
+  retryGrading: gradeLevelResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
   createReportCardDefinition: definitionResponseSchema,
   createReportCardDefinitionSection: sectionResponseSchema,
@@ -383,7 +385,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   rejectAssessmentMarksCorrection: marksCorrectionResponseSchema,
   withdrawAssessmentMarksCorrection: marksCorrectionResponseSchema,
   completeAssessment: assessmentResponseSchema,
-  recordAssessmentResults: z.array(assessmentResultResponseSchema).openapi('RecordAssessmentResultsResponse'),
+  recordAssessmentResults: z.array(assessmentResultResponseSchema).openapi("RecordAssessmentResultsResponse"),
   recordAssessmentResult: assessmentResultResponseSchema,
   recordAssessmentResultCompliance: assessmentResultResponseSchema,
   listClassSubjectAssessmentResultsForPeriod: assessmentResultCommandListResponseSchema,
@@ -404,8 +406,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     uploadUrl: z.string().url(),
     expiresAt: z.coerce.date(),
     headers: z.record(z.string()).optional(),
-    status: z.literal('pending_upload'),
-  }).openapi('CreateSchoolIssuanceAssetUploadResponse'),
+    status: z.literal("pending_upload"),
+  }).openapi("CreateSchoolIssuanceAssetUploadResponse"),
   completeSchoolIssuanceAssetUpload: attachmentResponseSchema,
   clearSchoolIssuanceAsset: schoolResponseSchema,
   recordIncident: incidentResponseSchema,
@@ -439,7 +441,7 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     chargeId: z.string().min(1),
     amount: z.number(),
     kind: z.string().min(1),
-  }).openapi('AllocationResponse'),
+  }).openapi("AllocationResponse"),
   refundAvailableBalance: paymentResponseSchema,
   createProfilePhotoUpload: z.object({
     attachmentId: z.string(),
@@ -447,16 +449,16 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     uploadUrl: z.string().url(),
     expiresAt: z.coerce.date(),
     headers: z.record(z.string()).optional(),
-    status: z.literal('pending_upload'),
-  }).openapi('CreateProfilePhotoUploadResponse'),
+    status: z.literal("pending_upload"),
+  }).openapi("CreateProfilePhotoUploadResponse"),
   createTeacherSignatureUpload: z.object({
     attachmentId: z.string(),
     storageKey: z.string(),
     uploadUrl: z.string().url(),
     expiresAt: z.coerce.date(),
     headers: z.record(z.string()).optional(),
-    status: z.literal('pending_upload'),
-  }).openapi('CreateTeacherSignatureUploadResponse'),
+    status: z.literal("pending_upload"),
+  }).openapi("CreateTeacherSignatureUploadResponse"),
   completeTeacherSignatureUpload: teacherResponseSchema,
   clearTeacherSignature: teacherResponseSchema,
   completeProfilePhotoUpload: attachmentResponseSchema,
@@ -475,9 +477,9 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     campaignId: z.string().min(1),
     slotId: z.string().min(1),
     studentId: z.string().min(1),
-    status: z.literal('completed'),
+    status: z.literal("completed"),
     alreadyCompleted: z.boolean(),
-  }).openapi('FamilyFeedbackSubmitReceipt'),
+  }).openapi("FamilyFeedbackSubmitReceipt"),
   saveFamilyFeedbackThemeDraft: familyFeedbackCampaignCommandResponseSchema,
   publishFamilyFeedbackCampaign: familyFeedbackCampaignCommandResponseSchema,
   archiveFamilyFeedbackCampaign: familyFeedbackCampaignCommandResponseSchema,
@@ -507,13 +509,13 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   updateNotificationContact: z.union([
     staffMemberResponseSchema,
     guardianResponseSchema,
-  ]).openapi('UpdateNotificationContactResponse'),
+  ]).openapi("UpdateNotificationContactResponse"),
   registerPushDevice: commandMessageResponseSchema,
   unregisterPushDevice: commandMessageResponseSchema,
   updateSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
   resetSchoolNotificationTemplates: schoolNotificationTemplatesResponseSchema,
-}
+};
 
 export function resolveCommandResponseSchema(methodName: string): z.ZodTypeAny {
-  return commandResponseByMethod[methodName] ?? commandMessageResponseSchema
+  return commandResponseByMethod[methodName] ?? commandMessageResponseSchema;
 }

@@ -28,6 +28,7 @@ interface ReportCardLocaleLabels {
   readonly disciplines: string;
   readonly semesterAverage: string;
   readonly moyOver20: string;
+  readonly average: string;
   readonly coef: string;
   readonly total: string;
   readonly rank: string;
@@ -104,6 +105,7 @@ const REPORT_CARD_LABELS = {
     disciplines: "Disciplines",
     semesterAverage: "Moy. trimestrielle",
     moyOver20: "Moy./20",
+    average: "Moy.",
     coef: "Coef",
     total: "Total",
     rank: "Rang",
@@ -155,6 +157,7 @@ const REPORT_CARD_LABELS = {
     disciplines: "Subjects",
     semesterAverage: "Semester average",
     moyOver20: "Avg/20",
+    average: "Avg",
     coef: "Coef",
     total: "Total",
     rank: "Rank",

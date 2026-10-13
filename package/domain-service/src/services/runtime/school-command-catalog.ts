@@ -57,6 +57,8 @@ export type SchoolCommandKey
     | 'setClassSubjectOffered'
     | 'configureClassSubjectTimetable'
     | 'recordLessonSessionProgress'
+    | 'configureGrading'
+    | 'retryGrading'
     | 'createGradeScale'
     | 'createReportCardDefinition'
     | 'createReportCardDefinitionSection'
@@ -260,6 +262,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'setClassSubjectOffered',
   'configureClassSubjectTimetable',
   'recordLessonSessionProgress',
+  'configureGrading',
+  'retryGrading',
   'createGradeScale',
   'createReportCardDefinition',
   'createReportCardDefinitionSection',
