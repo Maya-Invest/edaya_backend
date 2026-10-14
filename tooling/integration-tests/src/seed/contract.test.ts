@@ -75,6 +75,17 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     expect(failures).toEqual([])
   })
 
+  it('seeds minimum-only scales with persistent interval identities', async () => {
+    const { application } = getContext()
+    const scale = (await application.repositories.gradeScales.findById('ci-gs-20'))!
+    expect(scale.intervalConvention).toBe('continuous')
+    expect(scale.ranges.map(row => row.id)).toEqual(['ci-gs-20-d', 'ci-gs-20-c', 'ci-gs-20-b', 'ci-gs-20-a'])
+    expect(scale.ranges.map(row => row.maxScore)).toEqual([10, 14, 16, 20])
+    expect(scale.findRange(9.999)?.letter).toBe('D')
+    expect(scale.findRange(10)?.letter).toBe('C')
+    expect(scale.findRange(20)?.letter).toBe('A')
+  })
+
   it('materializes only linked recipients and preserves explicit inbox history', async () => {
     const { application } = getContext()
     const guardian = await application.repositories.guardians.findById('ci-g1')

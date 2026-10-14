@@ -1,6 +1,6 @@
 import type { FixtureDataset } from '@edaya/fixtures'
 import type { ReportCardsSeedPort } from './port'
-import { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionStatus } from '@edaya/core'
+import { rangesFromThresholds, ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionStatus } from '@edaya/core'
 import { seedDateTime } from '../../support/seed-date'
 
 export interface DevReportCardSeedCounts {
@@ -27,15 +27,18 @@ export async function seedDevReportCards(
       minScore: scale.minScore,
       maxScore: scale.maxScore,
       decimalPlaces: scale.decimalPlaces ?? 1,
+      intervalConvention: 'continuous',
+      roundingMode: scale.roundingMode ?? 'nearest',
       description: scale.description ?? undefined,
       isDefault: scale.isDefault ?? false,
-      ranges: (scale.ranges ?? []).map(range => ({
+      ranges: rangesFromThresholds((scale.ranges ?? []).map(range => ({
+        id: range.id ?? `${scale.id}-${range.letter}`,
+        gpaValue: range.gpaValue ?? undefined,
         letter: range.letter,
         minScore: range.minScore,
-        maxScore: range.maxScore,
         isPassing: range.isPassing,
         interpretation: range.interpretation ?? undefined,
-      })),
+      })), scale.maxScore).map(range => ({ ...range, id: range.id! })),
     })
   }
 

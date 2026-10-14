@@ -5,6 +5,7 @@ import type {
   ReportCardSectionSeedRecord,
   ReportCardsSeedPort,
 } from './port'
+import { GradeScale } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
 import { seedDevReportCards } from './workflow'
@@ -48,6 +49,14 @@ describe('report-cards seed port workflow', () => {
       results: generated.length,
     })
     expect(scales).toHaveLength(demoCiDataset.entities.gradeScales?.length ?? 0)
+    const seeded = new GradeScale({ ...scales[0]!, ranges: [...scales[0]!.ranges] })
+    expect(seeded.intervalConvention).toBe('continuous')
+    expect(seeded.ranges.map(row => row.id)).toEqual(demoCiDataset.entities.gradeScales![0]!.ranges.map(row => row.id))
+    expect(seeded.ranges.every(row => !!row.id)).toBe(true)
+    expect(seeded.findRange(9.999)?.letter).toBe('D')
+    expect(seeded.findRange(10)?.letter).toBe('C')
+    expect(seeded.findRange(20)?.letter).toBe('A')
+    expect(seeded.findRange(20.001)).toBeUndefined()
     expect(definitions).toHaveLength(demoCiDataset.extensions?.reportCardDefinitionFixtures?.length ?? 0)
     expect(published).toHaveLength(publishedCount)
     expect(generated[0]?.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T12:00:00\.000Z$/)

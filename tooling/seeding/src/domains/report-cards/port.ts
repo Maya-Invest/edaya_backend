@@ -1,6 +1,8 @@
 import type { ReportCardDefinitionKind, ReportCardDefinitionSectionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 
 export interface GradeScaleRangeSeedRecord {
+  id: string
+  gpaValue?: number
   letter: string
   minScore: number
   maxScore: number
@@ -15,6 +17,8 @@ export interface GradeScaleSeedRecord {
   minScore: number
   maxScore: number
   decimalPlaces: number
+  intervalConvention: 'continuous'
+  roundingMode: 'nearest' | 'truncate'
   description?: string
   isDefault: boolean
   ranges: readonly GradeScaleRangeSeedRecord[]

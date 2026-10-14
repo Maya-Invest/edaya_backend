@@ -9,6 +9,7 @@ import type {
 import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
 import {
+  rangesFromThresholds,
   ReportCardDefinitionKind,
   ReportCardDefinitionSection,
   ReportCardDefinitionSectionKind,
@@ -47,42 +48,39 @@ function roundTo2(value: number): number {
 }
 
 function buildGradeScaleRanges(maxScore: number, passingGrade: number) {
-  const failMax = roundTo2(Math.max(0, passingGrade - 0.01))
   const span = maxScore - passingGrade
   const step = span / 3
-  const band1Max = roundTo2(passingGrade + step - 0.01)
-  const band2Max = roundTo2(passingGrade + step * 2 - 0.01)
 
-  return [
+  return rangesFromThresholds([
     {
+      id: randomUUID(),
       letter: 'D',
       minScore: 0,
-      maxScore: failMax,
       isPassing: false,
       interpretation: 'Insuffisant',
     },
     {
+      id: randomUUID(),
       letter: 'C',
       minScore: passingGrade,
-      maxScore: band1Max,
       isPassing: true,
       interpretation: 'Passable',
     },
     {
+      id: randomUUID(),
       letter: 'B',
       minScore: roundTo2(passingGrade + step),
-      maxScore: band2Max,
       isPassing: true,
       interpretation: 'Bien',
     },
     {
+      id: randomUUID(),
       letter: 'A',
       minScore: roundTo2(passingGrade + step * 2),
-      maxScore,
       isPassing: true,
       interpretation: 'Très bien',
     },
-  ]
+  ], maxScore)
 }
 
 function periodLabel(structure: StructureTemplateReportCardStructure): string {
@@ -114,6 +112,8 @@ async function ensureGradeScale(
     minScore: 0,
     maxScore: structure.gradingScale,
     decimalPlaces: structure.gradingScale <= 10 ? 1 : 2,
+    intervalConvention: 'continuous',
+    roundingMode: 'nearest',
     description: `Barème ${structure.gradingScale} — seuil de réussite à ${structure.passingGrade}.`,
     isDefault: gradeScaleByTemplateId.size === 0,
     ranges: buildGradeScaleRanges(structure.gradingScale, structure.passingGrade),

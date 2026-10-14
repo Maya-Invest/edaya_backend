@@ -4,7 +4,7 @@ import type {
   FixtureReportCardGradeScale,
   FixtureReportCardResult,
 } from '../../types'
-import { ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
+import { rangesFromThresholds, ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 import { demoCiClassRosters } from '../rosters'
 
@@ -16,14 +16,16 @@ export const demoCiGradeScales = [
     minScore: 0,
     maxScore: 20,
     decimalPlaces: 2,
+    intervalConvention: 'continuous',
+    roundingMode: 'nearest',
     description: 'Barème standard — note sur 20, seuil de réussite à 10.',
     isDefault: true,
-    ranges: [
-      { letter: 'D', minScore: 0, maxScore: 9.99, isPassing: false, interpretation: 'Insuffisant' },
-      { letter: 'C', minScore: 10, maxScore: 13.99, isPassing: true, interpretation: 'Assez bien' },
-      { letter: 'B', minScore: 14, maxScore: 15.99, isPassing: true, interpretation: 'Bien' },
-      { letter: 'A', minScore: 16, maxScore: 20, isPassing: true, interpretation: 'Très bien' },
-    ],
+    ranges: rangesFromThresholds([
+      { id: 'ci-gs-20-d', letter: 'D', minScore: 0, isPassing: false, interpretation: 'Insuffisant' },
+      { id: 'ci-gs-20-c', letter: 'C', minScore: 10, isPassing: true, interpretation: 'Assez bien' },
+      { id: 'ci-gs-20-b', letter: 'B', minScore: 14, isPassing: true, interpretation: 'Bien' },
+      { id: 'ci-gs-20-a', letter: 'A', minScore: 16, isPassing: true, interpretation: 'Très bien' },
+    ], 20),
   },
 ] as const satisfies readonly GradeScaleInput[]
 
