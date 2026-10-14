@@ -225,6 +225,8 @@ export const coreCommands = [
   command("record-lesson-session-progress", "recordLessonSessionProgress", commandSchemas.recordLessonSessionProgressCommandSchema),
   command("configure-grading", "configureGrading", commandSchemas.configureGradingCommandSchema),
   command("retry-grading", "retryGrading", commandSchemas.retryGradingCommandSchema),
+  command("configure-grade-scale", "configureGradeScale", commandSchemas.configureGradeScaleCommandSchema),
+  command("configure-report-card-definition", "configureReportCardDefinition", commandSchemas.configureReportCardDefinitionCommandSchema),
   command("create-grade-scale", "createGradeScale", commandSchemas.createGradeScaleCommandSchema),
   command("create-report-card-definition", "createReportCardDefinition", commandSchemas.createReportCardDefinitionCommandSchema),
   command("create-report-card-definition-section", "createReportCardDefinitionSection", commandSchemas.createReportCardDefinitionSectionCommandSchema),

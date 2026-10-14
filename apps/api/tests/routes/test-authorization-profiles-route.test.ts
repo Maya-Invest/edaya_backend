@@ -23,8 +23,8 @@ function createProfilesApp() {
   ]);
   const emptyList = mock(async () => []);
   const findByIds = mock(async (ids: string[]) => [
-    { id: "school-a", name: "Lycée — Cocody" },
-    { id: "school-b", name: "Campus Nord" },
+    { id: "school-a", name: "Lycée — Cocody", shortName: "Saved name" },
+    { id: "school-b", name: "Campus Nord", shortName: "Campus" },
   ].filter(school => ids.includes(school.id)));
 
   const app = new Hono<AppBindings>();
@@ -77,7 +77,7 @@ describe("authorization profiles route", () => {
           actorId: "staff-a",
           schoolId: "school-a",
           schoolName: "Lycée — Cocody",
-          schoolShortName: "Cocody",
+          schoolShortName: "Saved name",
         },
         {
           kind: "staff",

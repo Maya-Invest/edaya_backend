@@ -2294,6 +2294,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-grade-scale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-grade-scale */
+        post: operations["commands.configureGradeScale"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-report-card-definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-report-card-definition */
+        post: operations["commands.configureReportCardDefinition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-grade-scale": {
         parameters: {
             query?: never;
@@ -12690,13 +12724,12 @@ export interface components {
         School: {
             id: string;
             name: string;
+            shortName?: string;
             timeZone: string;
             financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
-            /** @enum {string|null} */
-            type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
             city?: string | null;
             /** @default false */
@@ -12739,10 +12772,9 @@ export interface components {
         };
         OnboardingRegisterSchoolRequest: {
             name: string;
+            shortName?: string;
             timeZone: string;
             financeCurrency?: string;
-            /** @enum {string|null} */
-            type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
             city?: string | null;
             id?: string;
@@ -13147,13 +13179,12 @@ export interface components {
         RegisterSchoolCommand: {
             id: string;
             name: string;
+            shortName?: string;
             timeZone: string;
             financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
-            /** @enum {string|null} */
-            type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
             city?: string | null;
             /** @default false */
@@ -13196,38 +13227,25 @@ export interface components {
         };
         UpdateSchoolConfigurationCommand: {
             name?: string;
+            shortName?: string;
             timeZone?: string;
             financeCurrency?: string;
             ownerSubjectId?: string | null;
             consortiumId?: string | null;
             pendingOwnerStaffId?: string | null;
-            /** @enum {string|null} */
-            type?: "primary" | "secondary" | "k12" | "vocational" | "other" | null;
             country?: string | null;
             city?: string | null;
-            /** @default false */
-            enforceScheduleConflicts: boolean;
-            /** @default true */
-            timetableEnforceWorkloadFulfillment: boolean;
-            /** @default true */
-            timetableExcludeBreakSlots: boolean;
-            /** @default 1 */
-            timetableMinDayGapSameSubject: number;
-            /** @default [] */
-            timetablePreferredPeriodDefinitionIds: string[];
-            /** @default false */
-            timetableAllowUnassignedTeacherPlacements: boolean;
-            /** @default false */
-            timetableUseHomeroomTeacherFallback: boolean;
-            /**
-             * @default weekly
-             * @enum {string}
-             */
-            timetableGenerationMode: "weekly" | "free";
-            /** @default 1 */
-            timetableMinPeriodSpan: number;
-            /** @default 1 */
-            timetableMaxPeriodSpan: number;
+            enforceScheduleConflicts?: boolean;
+            timetableEnforceWorkloadFulfillment?: boolean;
+            timetableExcludeBreakSlots?: boolean;
+            timetableMinDayGapSameSubject?: number;
+            timetablePreferredPeriodDefinitionIds?: string[];
+            timetableAllowUnassignedTeacherPlacements?: boolean;
+            timetableUseHomeroomTeacherFallback?: boolean;
+            /** @enum {string} */
+            timetableGenerationMode?: "weekly" | "free";
+            timetableMinPeriodSpan?: number;
+            timetableMaxPeriodSpan?: number;
             postalAddress?: string | null;
             phone?: string | null;
             email?: string | null;
@@ -14925,6 +14943,87 @@ export interface components {
                 isPassing: boolean;
             }[];
         };
+        ConfigureGradeScaleCommand: {
+            requestId: string;
+            id: string;
+            expectedRevision: number;
+            /** @enum {string} */
+            action: "metadata" | "interval" | "remove-interval" | "convert" | "delete";
+            metadata?: {
+                name: string;
+                minScore: number;
+                maxScore: number;
+                /** @default 1 */
+                decimalPlaces: number;
+                /**
+                 * @default nearest
+                 * @enum {string}
+                 */
+                roundingMode: "nearest" | "truncate";
+                description?: string | null;
+            };
+            interval?: {
+                id: string;
+                letter: string;
+                minScore: number;
+                gpaValue?: number | null;
+                interpretation?: string | null;
+                isPassing: boolean;
+            };
+            intervalId?: string;
+        };
+        ReportCardDefinition: {
+            /** @default 0 */
+            revision: number;
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            gradeLevelId: string;
+            gradeScaleId: string;
+            name: string;
+            /**
+             * @default custom
+             * @enum {string}
+             */
+            kind: "default" | "custom";
+            /**
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "published";
+            /** @default false */
+            isDefault: boolean;
+            description?: string | null;
+            createdAt?: unknown;
+        };
+        ConfigureReportCardDefinitionCommand: {
+            requestId: string;
+            id: string;
+            expectedRevision: number;
+            /** @enum {string} */
+            action: "metadata" | "section" | "remove-section";
+            metadata?: {
+                name: string;
+                description?: string | null;
+            };
+            section?: {
+                id: string;
+                name: string;
+                /**
+                 * @default group
+                 * @enum {string}
+                 */
+                kind: "group" | "subject";
+                /** @enum {string|null} */
+                role?: "matieres" | "synthese" | "appreciation" | null;
+                coefficient?: number | null;
+                order: number;
+                weight: number;
+                parentSectionId?: string | null;
+                subjectId?: string | null;
+            };
+            sectionId?: string;
+        };
         GradeScaleRangeCommandValue: {
             id?: string;
             letter: string;
@@ -14960,29 +15059,9 @@ export interface components {
             createdAt?: unknown;
             ranges: components["schemas"]["GradeScaleRangeCommandValue"][];
         };
-        ReportCardDefinition: {
-            id: string;
-            schoolId: string;
-            academicYearId: string;
-            gradeLevelId: string;
-            gradeScaleId: string;
-            name: string;
-            /**
-             * @default custom
-             * @enum {string}
-             */
-            kind: "default" | "custom";
-            /**
-             * @default draft
-             * @enum {string}
-             */
-            status: "draft" | "published";
-            /** @default false */
-            isDefault: boolean;
-            description?: string | null;
-            createdAt?: unknown;
-        };
         CreateReportCardDefinitionCommand: {
+            /** @default 0 */
+            revision: number;
             id: string;
             schoolId: string;
             academicYearId: string;
@@ -28176,6 +28255,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GradeLevel"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureGradeScale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-grade-scale payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigureGradeScaleCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-grade-scale */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeScale"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureReportCardDefinition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-report-card-definition payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigureReportCardDefinitionCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-report-card-definition */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCardDefinition"];
                 };
             };
             /** @description Invalid request payload */

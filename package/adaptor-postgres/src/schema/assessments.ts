@@ -60,6 +60,7 @@ export const gradeScales = pgTable('grade_scales', {
 }, table => definePerformanceIndexes('grade_scales', table))
 
 export const reportCardDefinitions = pgTable('report_card_definitions', {
+  revision: integer('revision').notNull().default(0),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   academicYearId: text('academic_year_id').notNull(),
@@ -82,7 +83,7 @@ export const reportCardDefinitionSections = pgTable('report_card_definition_sect
   role: text('role'),
   coefficient: real('coefficient'),
   order: integer('order_val').notNull(),
-  weight: integer('weight').notNull(),
+  weight: real('weight').notNull(),
   parentSectionId: text('parent_section_id'),
   subjectId: text('subject_id'),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),

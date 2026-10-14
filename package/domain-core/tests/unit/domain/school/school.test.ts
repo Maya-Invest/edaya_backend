@@ -1,4 +1,4 @@
-import { School, SchoolType, TimetableGenerationMode } from '@edaya/core'
+import { School, TimetableGenerationMode } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('School entity', () => {
@@ -12,7 +12,7 @@ describe('School entity', () => {
     const school = new School({
       ...baseArgs,
       ownerSubjectId: 'staff-owner',
-      type: SchoolType.Secondary,
+      shortName: 'School',
       country: 'Cameroon',
       city: 'Douala',
     })
@@ -21,7 +21,7 @@ describe('School entity', () => {
     expect(school.name).toBe('Edaya High School')
     expect(school.timeZone).toBe('Africa/Douala')
     expect(school.ownerSubjectId).toBe('staff-owner')
-    expect(school.type).toBe(SchoolType.Secondary)
+    expect(school.shortName).toBe('School')
     expect(school.location).toBe('Douala, Cameroon')
     expect(school.timetableEnforceWorkloadFulfillment).toBe(true)
     expect(school.timetableExcludeBreakSlots).toBe(true)

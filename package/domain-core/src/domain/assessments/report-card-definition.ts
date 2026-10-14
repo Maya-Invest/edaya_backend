@@ -13,6 +13,7 @@ export enum ReportCardDefinitionStatus {
 }
 
 export const reportCardDefinitionSchema = z.object({
+  revision: z.number().int().nonnegative().default(0),
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
@@ -44,6 +45,7 @@ export class ReportCardDefinition {
     this.data = parseDomain(reportCardDefinitionSchema, args)
   }
 
+  get revision() { return this.data.revision }
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
   get academicYearId() { return this.data.academicYearId }

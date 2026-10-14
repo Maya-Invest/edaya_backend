@@ -280,6 +280,8 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     // assessments
     configureGrading: payload => workflows.assessments.configureGrading(payload as import('../workflows/grading-configuration').ConfigureGradingInput),
     retryGrading: payload => workflows.assessments.retryGrading(payload as import('../workflows/grading-configuration').RetryGradingInput),
+    configureGradeScale: payload => workflows.assessments.configureGradeScale(payload as Parameters<AssessmentsServiceWorkflow['configureGradeScale']>[0]),
+    configureReportCardDefinition: payload => workflows.assessments.configureReportCardDefinition(payload as Parameters<AssessmentsServiceWorkflow['configureReportCardDefinition']>[0]),
     createGradeScale: payload => workflows.assessments.createGradeScale(payload as CreateGradeScaleInput),
     createReportCardDefinition: payload => workflows.assessments.createReportCardDefinition(payload as CreateReportCardDefinitionInput),
     createReportCardDefinitionSection: payload => workflows.assessments.createReportCardDefinitionSection(payload as CreateReportCardDefinitionSectionInput),

@@ -1,11 +1,11 @@
+import type { AppRouteHandler } from "@/http/types";
 import { listIdentitiesForSubject } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createMessageObjectSchema } from "stoker/openapi/schemas";
-import type { AppRouteHandler } from "@/http/types";
-import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
 import { resolveAuthenticatedSession } from "@/http/dependencies/session-actor";
+import { getErrorMessage, unauthorizedResponse } from "@/http/responses";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
 import { schoolApiPath } from "@/lib/school-api/routes/paths";
 
@@ -67,7 +67,7 @@ export const getAuthorizationProfilesHandler: AppRouteHandler<typeof getAuthoriz
           actorId: identity.actorId,
           schoolId: identity.schoolId,
           schoolName: school.name,
-          schoolShortName: deriveSchoolShortName(school.name),
+          schoolShortName: school.shortName,
         }];
       }),
     }, HttpStatusCodes.OK);
@@ -77,20 +77,4 @@ export const getAuthorizationProfilesHandler: AppRouteHandler<typeof getAuthoriz
   }
 };
 
-export function deriveSchoolShortName(name: string): string {
-  const emDashParts = name.split("—");
-  if (emDashParts.length > 1) {
-    const tail = emDashParts[emDashParts.length - 1]?.trim();
-    if (tail) {
-      return tail;
-    }
-  }
-  const hyphenParts = name.split(" - ");
-  if (hyphenParts.length > 1) {
-    const tail = hyphenParts[hyphenParts.length - 1]?.trim();
-    if (tail) {
-      return tail;
-    }
-  }
-  return name.split(/\s+/)[0] ?? name;
-}
+export { deriveSchoolShortName } from "@edaya/core";

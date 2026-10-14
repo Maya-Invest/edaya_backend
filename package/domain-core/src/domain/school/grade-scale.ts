@@ -37,6 +37,14 @@ function refineGradeScale(data: any, ctx: z.RefinementCtx) {
     })
   }
   if (!data.ranges || data.ranges.length === 0) {
+    if (data.intervalConvention === 'continuous' && !data.isDefault && data.minScore < data.maxScore) {
+      for (const bound of [data.minScore, data.maxScore]) {
+        const scaled = bound * 10 ** data.decimalPlaces
+        if (Math.abs(scaled - Math.round(scaled)) > Number.EPSILON * Math.max(1, Math.abs(scaled)) * 4)
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Scale bounds must be representable at the configured precision' })
+      }
+      return
+    }
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'ranges must contain at least one range',
@@ -126,6 +134,8 @@ export class GradeScale {
   get description() { return this.data.description }
   get createdAt() { return this.data.createdAt }
 
+  get isComplete(): boolean { return this.ranges.length > 0 }
+
   get passingScore(): number {
     const passingRanges = this.ranges.filter(range => range.isPassing)
     if (passingRanges.length === 0) {
@@ -135,6 +145,14 @@ export class GradeScale {
   }
 
   findRange(score: number): GradeScaleRange | undefined {
+    if (score < this.minScore || score > this.maxScore || !Number.isFinite(score))
+      return undefined
     return this.ranges.find((r, index) => score >= r.minScore && (score < r.maxScore || (score === r.maxScore && (this.intervalConvention === 'legacy-closed' || index === this.ranges.length - 1))))
   }
+}
+
+/** Minimums are the authored values; upper bounds are compatibility output. */
+export function rangesFromThresholds(ranges: readonly Omit<GradeScaleRange, 'maxScore'>[], maximum: number): GradeScaleRange[] {
+  const ordered = [...ranges].sort((a, b) => a.minScore - b.minScore)
+  return ordered.map((range, index) => ({ ...range, maxScore: ordered[index + 1]?.minScore ?? maximum }))
 }

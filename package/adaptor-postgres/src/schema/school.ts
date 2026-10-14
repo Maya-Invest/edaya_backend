@@ -22,7 +22,7 @@ export const schools = pgTable('schools', {
   ownerSubjectId: text('owner_subject_id'),
   consortiumId: text('consortium_id'),
   pendingOwnerStaffId: text('pending_owner_staff_id'),
-  type: text('type'),
+  shortName: text('short_name').notNull(),
   country: text('country'),
   city: text('city'),
   enforceScheduleConflicts: boolean('enforce_schedule_conflicts').notNull().default(false),

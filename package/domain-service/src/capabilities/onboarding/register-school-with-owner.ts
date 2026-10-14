@@ -1,4 +1,4 @@
-import type { School, SchoolType } from '@edaya/core'
+import type { School } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import { randomUUID } from 'node:crypto'
@@ -15,10 +15,10 @@ export interface RegisterSchoolOwnerSession {
 }
 
 export interface RegisterSchoolWithOwnerInput {
+  shortName?: string
   name: string
   timeZone: string
   financeCurrency?: string
-  type?: SchoolType
   country?: string
   city?: string
   requestId: string
@@ -97,10 +97,10 @@ export async function registerSchoolWithOwner(
     const school = await service.setupWorkflow.registerSchool({
       id: schoolId,
       name: input.name,
+      shortName: input.shortName,
       timeZone: input.timeZone,
       financeCurrency: input.financeCurrency,
       ownerSubjectId: subjectId,
-      ...(input.type ? { type: input.type } : {}),
       ...(input.country ? { country: input.country } : {}),
       ...(input.city ? { city: input.city } : {}),
     })

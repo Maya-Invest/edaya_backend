@@ -1197,6 +1197,16 @@ export const clientBindings = {
         "requestSchemaName": "RetryGradingCommand",
         "responseSchemaName": "GradeLevel"
       },
+      "configureGradeScale": {
+        "publicName": "configure-grade-scale",
+        "requestSchemaName": "ConfigureGradeScaleCommand",
+        "responseSchemaName": "GradeScale"
+      },
+      "configureReportCardDefinition": {
+        "publicName": "configure-report-card-definition",
+        "requestSchemaName": "ConfigureReportCardDefinitionCommand",
+        "responseSchemaName": "ReportCardDefinition"
+      },
       "createGradeScale": {
         "publicName": "create-grade-scale",
         "requestSchemaName": "CreateGradeScaleCommand",

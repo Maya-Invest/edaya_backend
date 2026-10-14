@@ -148,7 +148,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
         pendingOwnerStaffId: changes.pendingOwnerStaffId === undefined
           ? existing.pendingOwnerStaffId
           : changes.pendingOwnerStaffId,
-        type: changes.type === undefined ? existing.type : changes.type,
+        shortName: changes.shortName ?? existing.shortName,
         country: changes.country === undefined ? existing.country : changes.country,
         city: changes.city === undefined ? existing.city : changes.city,
         enforceScheduleConflicts: changes.enforceScheduleConflicts ?? existing.enforceScheduleConflicts,

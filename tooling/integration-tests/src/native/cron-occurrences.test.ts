@@ -60,8 +60,8 @@ beforeAll(async () => {
   await runMigrations(handles[0]!.db, { driver: 'node-postgres' })
   await query(`CREATE TABLE cron_fixture_effects (id bigserial PRIMARY KEY);
     DELETE FROM cron_job_schedules;
-    INSERT INTO schools (id, name, time_zone, created_at) VALUES
-      ('cron-native-a', 'Cron A', 'UTC', now()), ('cron-native-b', 'Cron B', 'UTC', now());
+    INSERT INTO schools (id, name, short_name, time_zone, created_at) VALUES
+      ('cron-native-a', 'Cron A', 'Cron A', 'UTC', now()), ('cron-native-b', 'Cron B', 'Cron B', 'UTC', now());
     INSERT INTO cron_job_schedules (id, job_key, cron_expression, enabled, next_run_at, created_at, updated_at)
     VALUES ('cron-native', 'expireAccountInvitations', '*/5 * * * *', true, '2026-09-14T12:00:00Z', now(), now())`)
 })

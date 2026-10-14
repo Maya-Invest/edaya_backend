@@ -56,7 +56,7 @@ export async function updateSchool(app: SchoolService, input: { schoolId: string
     timeZone: input.timeZone ?? existing.timeZone,
     ownerSubjectId: input.ownerSubjectId ?? existing.ownerSubjectId,
     financeCurrency: input.financeCurrency ?? existing.financeCurrency,
-    type: input.type ?? existing.type,
+    shortName: input.shortName ?? existing.shortName,
     country: input.country ?? existing.country,
     city: input.city ?? existing.city,
     createdAt: existing.createdAt,

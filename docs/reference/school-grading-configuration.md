@@ -1,0 +1,13 @@
+# School and grading configuration
+
+Migration `0041_configuration_editors.sql` saves a school's existing derived short name, removes the school type column, adds report-model revisions, and preserves fractional section weights. School creation without `shortName` derives the existing default; later partial updates retain the persisted value. Profile responses use that value. School updates omit defaults for unspecified fields so individual profile sections can save independently. Currency and private issuance-asset policies remain enforced by existing entity/command policies.
+
+`configureGradeScale` accepts `requestId`, `id`, `expectedRevision` and an action (`metadata`, `interval`, `remove-interval`, `convert`, `delete`). New metadata creates an empty continuous scale. Interval writes accept stable IDs and minimum thresholds, derive upper bounds, and validate unique codes/thresholds, increasing coverage, scale limits and assigned points. The first interval must start at the scale minimum; it cannot be removed while later intervals exist. A default or referenced scale cannot become empty or be deleted. Incomplete scales cannot be used in a level policy or report generation.
+
+Legacy closed intervals retain their behavior until explicit conversion. Catalog edits do not change captured grading policies or reports. Applying a catalog revision to a grade level continues to use the existing confirmation, revision check and durable recalculation workflow.
+
+`configureReportCardDefinition` accepts `requestId`, model `id`, `expectedRevision` and `metadata`, `section` or `remove-section`. Changes use one transaction and the academic-state lock. Managed writes authorize school ownership and configuration permissions. Each section change advances the containing model revision. Editors with stale revisions must reload. Model metadata preserves year, level, default/publication status and IDs. Section validation rejects foreign subjects, invalid parents, cycles, non-positive weights and deletion of parents with children.
+
+Model edits never enqueue recalculation or mutate existing results, review decisions, attachments or publication history. Only a subsequent explicit generation or regeneration captures the edited model. Models continue to inherit the grade-level/year grading policy.
+
+Verification covers migration backfill, partial school contracts, saved profile labels, empty and legacy scales, threshold boundaries, CAS conflicts, denied writes, fractional weights, unchanged published reports, and explicit regeneration. Web browser acceptance covers separate editors, minimum-only inputs, permissions, French/English, keyboard focus, narrow screens and 200% text.

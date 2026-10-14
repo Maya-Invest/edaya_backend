@@ -1,9 +1,9 @@
-import { ActorAssuranceLevel } from "@edaya/authorization";
 import type { StructureTemplateDefinition } from "@edaya/service";
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import type { AppRouteHandler } from "@/http/types";
 import { randomUUID } from "node:crypto";
-import { BusinessRuleViolationError, SchoolType } from "@edaya/core";
+import { ActorAssuranceLevel } from "@edaya/authorization";
+import { BusinessRuleViolationError } from "@edaya/core";
 import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
@@ -23,9 +23,9 @@ const commandMessageSchema = createMessageObjectSchema();
 
 const onboardingRegisterSchoolRequestSchema = z.object({
   name: z.string().trim().min(1),
+  shortName: z.string().trim().min(1).optional(),
   timeZone: z.string().trim().min(1),
   financeCurrency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
-  type: z.nativeEnum(SchoolType).nullable().optional(),
   country: z.string().trim().min(1).nullable().optional(),
   city: z.string().trim().min(1).nullable().optional(),
   id: z.string().trim().min(1).optional(),
@@ -253,9 +253,9 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   try {
     const result = await registerSchoolWithOwner(c.get("schoolApp"), toOwnerSession(session), {
       name: body.name,
+      shortName: body.shortName,
       timeZone: body.timeZone,
       financeCurrency: body.financeCurrency,
-      ...(body.type ? { type: body.type } : {}),
       ...(body.country ? { country: body.country } : {}),
       ...(body.city ? { city: body.city } : {}),
       ...(body.id ? { id: body.id } : {}),

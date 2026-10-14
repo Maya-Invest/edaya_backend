@@ -4,17 +4,19 @@ import { SCHOOL_CREST_PURPOSE, SCHOOL_LOGO_PURPOSE } from '../documents/document
 import { TimetableGenerationMode } from '../scheduling/timetable-generation-mode'
 import { parseDomain, zodDate } from '../shared/utils'
 
-export enum SchoolType {
-  Primary = 'primary',
-  Secondary = 'secondary',
-  K12 = 'k12',
-  Vocational = 'vocational',
-  Other = 'other',
+export function deriveSchoolShortName(name: string): string {
+  for (const separator of ['—', ' - ']) {
+    const parts = name.split(separator)
+    if (parts.length > 1 && parts.at(-1)?.trim())
+      return parts.at(-1)!.trim()
+  }
+  return name.trim().split(/\s+/)[0] ?? name.trim()
 }
 
 const schoolSchemaBase = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   name: z.string().trim().min(1, 'name must not be blank'),
+  shortName: z.string().trim().min(1, 'shortName must not be blank').optional(),
   timeZone: z.string().trim().min(1, 'timeZone must not be blank').refine((val) => {
     try {
       new Intl.DateTimeFormat('en-US', { timeZone: val }).format()
@@ -28,7 +30,6 @@ const schoolSchemaBase = z.object({
   ownerSubjectId: z.string().trim().min(1, 'ownerSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   consortiumId: z.string().trim().min(1, 'consortiumId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   pendingOwnerStaffId: z.string().trim().min(1, 'pendingOwnerStaffId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  type: z.nativeEnum(SchoolType).nullable().optional().transform(v => v === null ? undefined : v),
   country: z.string().trim().min(1, 'country must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   city: z.string().trim().min(1, 'city must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   enforceScheduleConflicts: z.boolean().default(false),
@@ -93,7 +94,7 @@ export class School {
   readonly data: SchoolData
 
   constructor(args: SchoolInput) {
-    this.data = parseDomain(schoolSchema, args)
+    this.data = parseDomain(schoolSchema, { ...args, shortName: args.shortName ?? deriveSchoolShortName(args.name) })
   }
 
   get id() { return this.data.id }
@@ -103,7 +104,7 @@ export class School {
   get ownerSubjectId() { return this.data.ownerSubjectId }
   get consortiumId() { return this.data.consortiumId }
   get pendingOwnerStaffId() { return this.data.pendingOwnerStaffId }
-  get type() { return this.data.type }
+  get shortName() { return this.data.shortName ?? deriveSchoolShortName(this.name) }
   get country() { return this.data.country }
   get city() { return this.data.city }
   get enforceScheduleConflicts() { return this.data.enforceScheduleConflicts }

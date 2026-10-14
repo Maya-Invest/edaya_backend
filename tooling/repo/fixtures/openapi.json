@@ -2045,6 +2045,10 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string",
+            "minLength": 1
+          },
           "timeZone": {
             "type": "string",
             "minLength": 1
@@ -2067,17 +2071,6 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
-          },
-          "type": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "primary",
-              "secondary",
-              "k12",
-              "vocational",
-              "other"
-            ]
           },
           "country": {
             "type": "string",
@@ -2218,6 +2211,10 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string",
+            "minLength": 1
+          },
           "timeZone": {
             "type": "string",
             "minLength": 1
@@ -2225,17 +2222,6 @@
           "financeCurrency": {
             "type": "string",
             "pattern": "^[A-Z]{3}$"
-          },
-          "type": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "primary",
-              "secondary",
-              "k12",
-              "vocational",
-              "other"
-            ]
           },
           "country": {
             "type": "string",
@@ -4128,6 +4114,10 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string",
+            "minLength": 1
+          },
           "timeZone": {
             "type": "string",
             "minLength": 1
@@ -4150,17 +4140,6 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
-          },
-          "type": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "primary",
-              "secondary",
-              "k12",
-              "vocational",
-              "other"
-            ]
           },
           "country": {
             "type": "string",
@@ -4299,6 +4278,10 @@
             "type": "string",
             "minLength": 1
           },
+          "shortName": {
+            "type": "string",
+            "minLength": 1
+          },
           "timeZone": {
             "type": "string",
             "minLength": 1
@@ -4322,17 +4305,6 @@
             "nullable": true,
             "minLength": 1
           },
-          "type": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "primary",
-              "secondary",
-              "k12",
-              "vocational",
-              "other"
-            ]
-          },
           "country": {
             "type": "string",
             "nullable": true
@@ -4342,57 +4314,47 @@
             "nullable": true
           },
           "enforceScheduleConflicts": {
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "timetableEnforceWorkloadFulfillment": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "timetableExcludeBreakSlots": {
-            "type": "boolean",
-            "default": true
+            "type": "boolean"
           },
           "timetableMinDayGapSameSubject": {
             "type": "integer",
-            "minimum": 0,
-            "default": 1
+            "minimum": 0
           },
           "timetablePreferredPeriodDefinitionIds": {
             "type": "array",
             "items": {
               "type": "string",
               "minLength": 1
-            },
-            "default": []
+            }
           },
           "timetableAllowUnassignedTeacherPlacements": {
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "timetableUseHomeroomTeacherFallback": {
-            "type": "boolean",
-            "default": false
+            "type": "boolean"
           },
           "timetableGenerationMode": {
             "type": "string",
             "enum": [
               "weekly",
               "free"
-            ],
-            "default": "weekly"
+            ]
           },
           "timetableMinPeriodSpan": {
             "type": "integer",
             "minimum": 0,
-            "exclusiveMinimum": true,
-            "default": 1
+            "exclusiveMinimum": true
           },
           "timetableMaxPeriodSpan": {
             "type": "integer",
             "minimum": 0,
-            "exclusiveMinimum": true,
-            "default": 1
+            "exclusiveMinimum": true
           },
           "postalAddress": {
             "type": "string",
@@ -12777,6 +12739,302 @@
           "ranges"
         ]
       },
+      "ConfigureGradeScaleCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "metadata",
+              "interval",
+              "remove-interval",
+              "convert",
+              "delete"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minScore": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxScore": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decimalPlaces": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3,
+                "default": 1
+              },
+              "roundingMode": {
+                "type": "string",
+                "enum": [
+                  "nearest",
+                  "truncate"
+                ],
+                "default": "nearest"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name",
+              "minScore",
+              "maxScore"
+            ]
+          },
+          "interval": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "letter": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minScore": {
+                "type": "number",
+                "minimum": 0
+              },
+              "gpaValue": {
+                "type": "number",
+                "nullable": true,
+                "minimum": 0
+              },
+              "interpretation": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              },
+              "isPassing": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "letter",
+              "minScore",
+              "isPassing"
+            ]
+          },
+          "intervalId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "expectedRevision",
+          "action"
+        ]
+      },
+      "ReportCardDefinition": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schoolId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeLevelId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradeScaleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "custom"
+            ],
+            "default": "custom"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "default": "draft"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "createdAt": {}
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "academicYearId",
+          "gradeLevelId",
+          "gradeScaleId",
+          "name"
+        ]
+      },
+      "ConfigureReportCardDefinitionCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "metadata",
+              "section",
+              "remove-section"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "section": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "group",
+                  "subject"
+                ],
+                "default": "group"
+              },
+              "role": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "matieres",
+                  "synthese",
+                  "appreciation"
+                ]
+              },
+              "coefficient": {
+                "type": "number",
+                "nullable": true,
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              },
+              "parentSectionId": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              },
+              "subjectId": {
+                "type": "string",
+                "nullable": true,
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "order",
+              "weight"
+            ]
+          },
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestId",
+          "id",
+          "expectedRevision",
+          "action"
+        ]
+      },
       "GradeScaleRangeCommandValue": {
         "type": "object",
         "properties": {
@@ -12894,72 +13152,14 @@
           "ranges"
         ]
       },
-      "ReportCardDefinition": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "schoolId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "academicYearId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeLevelId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "gradeScaleId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "default",
-              "custom"
-            ],
-            "default": "custom"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "published"
-            ],
-            "default": "draft"
-          },
-          "isDefault": {
-            "type": "boolean",
-            "default": false
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "minLength": 1
-          },
-          "createdAt": {}
-        },
-        "required": [
-          "id",
-          "schoolId",
-          "academicYearId",
-          "gradeLevelId",
-          "gradeScaleId",
-          "name"
-        ]
-      },
       "CreateReportCardDefinitionCommand": {
         "type": "object",
         "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "id": {
             "type": "string",
             "minLength": 1
@@ -45194,6 +45394,266 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GradeLevel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-grade-scale": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-grade-scale",
+        "operationId": "commands.configureGradeScale",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureGradeScale",
+        "x-edaya-command-public-name": "configure-grade-scale",
+        "x-edaya-request-schema": "ConfigureGradeScaleCommand",
+        "x-edaya-response-schema": "GradeScale",
+        "requestBody": {
+          "description": "configure-grade-scale payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureGradeScaleCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-grade-scale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeScale"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/configure-report-card-definition": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "configure-report-card-definition",
+        "operationId": "commands.configureReportCardDefinition",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "configureReportCardDefinition",
+        "x-edaya-command-public-name": "configure-report-card-definition",
+        "x-edaya-request-schema": "ConfigureReportCardDefinitionCommand",
+        "x-edaya-response-schema": "ReportCardDefinition",
+        "requestBody": {
+          "description": "configure-report-card-definition payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureReportCardDefinitionCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed configure-report-card-definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCardDefinition"
                 }
               }
             }

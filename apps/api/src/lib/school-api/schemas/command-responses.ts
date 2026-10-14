@@ -361,6 +361,8 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   recordLessonSessionProgress: classSubjectProgressResponseSchema,
   configureGrading: gradeLevelResponseSchema,
   retryGrading: gradeLevelResponseSchema,
+  configureGradeScale: gradeScaleResponseSchema,
+  configureReportCardDefinition: definitionResponseSchema,
   createGradeScale: gradeScaleResponseSchema,
   createReportCardDefinition: definitionResponseSchema,
   createReportCardDefinitionSection: sectionResponseSchema,

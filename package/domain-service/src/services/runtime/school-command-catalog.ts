@@ -59,6 +59,8 @@ export type SchoolCommandKey
     | 'recordLessonSessionProgress'
     | 'configureGrading'
     | 'retryGrading'
+    | 'configureGradeScale'
+    | 'configureReportCardDefinition'
     | 'createGradeScale'
     | 'createReportCardDefinition'
     | 'createReportCardDefinitionSection'
@@ -264,6 +266,8 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'recordLessonSessionProgress',
   'configureGrading',
   'retryGrading',
+  'configureGradeScale',
+  'configureReportCardDefinition',
   'createGradeScale',
   'createReportCardDefinition',
   'createReportCardDefinitionSection',

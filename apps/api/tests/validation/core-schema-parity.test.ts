@@ -5,6 +5,7 @@ import {
   recordAttendanceCommandSchema,
   recordPaymentCommandSchema,
   registerSchoolCommandSchema,
+  updateSchoolConfigurationCommandSchema,
   registerStudentCommandSchema,
 } from "@/lib/school-api/schemas/commands";
 
@@ -101,4 +102,12 @@ describe("API command schemas cover core create required fields", () => {
       allowedOmissions: ["schoolId", "accountId", "academicYearId", "kind", "currency", "status", "recordedById", "reversedAt", "reversedById", "reversesPaymentId", "reversedByPaymentId"],
     });
   });
+});
+
+
+test("school section patches do not inject defaults or erase other sections", () => {
+  const input = { schoolId: "school", name: "New school name", shortName: "Saved" };
+  expect(updateSchoolConfigurationCommandSchema.parse(input)).toEqual(input);
+  expect(updateSchoolConfigurationCommandSchema.parse({ schoolId: "school", phone: null })).toEqual({ schoolId: "school", phone: null });
+  expect(updateSchoolConfigurationCommandSchema.safeParse({ schoolId: "school", shortName: "   " }).success).toBe(false);
 });

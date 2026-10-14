@@ -22,7 +22,7 @@ export const gradingPolicySchema = z.object({
   /** Durable cursor; one transaction processes at most one bounded page. */
   cursor: z.object({ phase: z.enum(['marks', 'reports', 'annual', 'rankings', 'done']), classId: z.string().default(''), assessmentId: z.string().default(''), afterId: z.string().default('') }).optional(),
 }).superRefine((policy, ctx) => {
-  if (policy.scale.intervalConvention !== 'continuous')
+  if (!policy.scale.ranges.length || policy.scale.intervalConvention !== 'continuous')
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scale'], message: 'Apply a scale with complete continuous intervals' })
   if (policy.scale.minScore !== 0 || policy.scale.maxScore <= 0)
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scale'], message: 'An aggregation scale must start at zero and have a positive maximum' })

@@ -1,5 +1,5 @@
 import { AuthorizationErrorCode } from '@edaya/authorization'
-import { AcademicPeriodType, AttendanceMode, GradeLevel, SchoolType } from '@edaya/core'
+import { AcademicPeriodType, AttendanceMode, GradeLevel } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
 import {
@@ -22,12 +22,12 @@ describeIntegration('setup lifecycle journey', () => {
     const school = await updateSchool(app, {
       schoolId: 'school',
       name: 'Edaya International School',
-      type: SchoolType.K12,
+      shortName: 'Edaya',
       country: 'CM',
       city: 'Douala',
     })
     expect(school.name).toBe('Edaya International School')
-    expect(school.type).toBe(SchoolType.K12)
+    expect(school.shortName).toBe('Edaya')
 
     const yearOne = await app.setupWorkflow.createAcademicYear({
       id: 'year-1',

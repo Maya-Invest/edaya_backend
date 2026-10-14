@@ -2,6 +2,7 @@ import type { AcademicPeriod, Assessment, AssessmentInput, AssessmentResult, Ass
 import type { ReportAssessmentContext } from '../../capabilities/academics/report-assessment-context'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AssessmentsWorkflowRepositories } from '../runtime/workflow-repository-catalog'
+import type { ConfigureGradeScaleInput, ConfigureReportModelInput } from './configuration-editors'
 import type { ConfigureGradingInput, RetryGradingInput } from './grading-configuration'
 import type { MarksReviewInput } from './marks-review'
 import type { ReportAggregationContext } from './report-card-aggregation'
@@ -17,10 +18,11 @@ import { DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-docum
 import { documentNumberLockKey } from '../../capabilities/documents/persist-requested-issuance'
 import { REPORT_CARD_PUBLISHED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { schoolCommandScope } from '../commands/school-command-scope'
-
 import { validateReportCardResultSave } from '../entities/config/assessments/report-card-result'
+
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { ConfigurationEditorsWorkflow } from './configuration-editors'
 import { DocumentsServiceWorkflow } from './documents'
 import { GradingConfigurationWorkflow } from './grading-configuration'
 import { MarksCorrectionsWorkflow } from './marks-corrections'
@@ -76,6 +78,9 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     super(base)
     this.repositories = pickWorkflowRepositories('assessments', base.repositories)
   }
+
+  configureGradeScale(input: ConfigureGradeScaleInput) { return new ConfigurationEditorsWorkflow(this.baseService).configureScale(input) }
+  configureReportCardDefinition(input: ConfigureReportModelInput) { return new ConfigurationEditorsWorkflow(this.baseService).configureModel(input) }
 
   configureGrading(input: ConfigureGradingInput) { return new GradingConfigurationWorkflow(this.baseService).configure(input) }
   retryGrading(input: RetryGradingInput) { return new GradingConfigurationWorkflow(this.baseService).retry(input) }
@@ -706,6 +711,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     if (!definition) {
       throw new BusinessRuleViolationError('UNKNOWN_REPORT_CARD_DEFINITION', `Unknown report card definition: ${reportCardDefinitionId}`)
     }
+    await this.requireCompleteScale(definition.gradeScaleId)
     return definition
   }
 
@@ -720,7 +726,14 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     if (!definition) {
       throw new BusinessRuleViolationError('NO_DEFAULT_REPORT_CARD_DEFINITION', `No default report card definition for grade level ${gradeLevelId}`)
     }
+    await this.requireCompleteScale(definition.gradeScaleId)
     return definition
+  }
+
+  private async requireCompleteScale(id: string) {
+    const scale = await this.repositories.gradeScales.findById(id)
+    if (!scale?.isComplete)
+      throw new BusinessRuleViolationError('GRADE_SCALE_INCOMPLETE', 'Report generation requires a complete scale')
   }
 
   private async buildAttendanceSummary({

@@ -1,4 +1,4 @@
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, SchoolType, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -62,7 +62,6 @@ export const requestAttendanceJustificationCommandSchema = z.object({
 
 export const registerSchoolCommandSchema = objectFromSchema(schoolSchema)
   .extend({
-    type: z.nativeEnum(SchoolType).nullable().optional(),
     country: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
   })
@@ -81,7 +80,16 @@ export const updateSchoolConfigurationCommandSchema = objectFromSchema(schoolSch
   })
   .extend({
     schoolId: field.id(),
-    type: z.nativeEnum(SchoolType).nullable().optional(),
+    enforceScheduleConflicts: z.boolean().optional(),
+    timetableEnforceWorkloadFulfillment: z.boolean().optional(),
+    timetableExcludeBreakSlots: z.boolean().optional(),
+    timetableMinDayGapSameSubject: z.number().int().nonnegative().optional(),
+    timetablePreferredPeriodDefinitionIds: z.array(field.id()).optional(),
+    timetableAllowUnassignedTeacherPlacements: z.boolean().optional(),
+    timetableUseHomeroomTeacherFallback: z.boolean().optional(),
+    timetableGenerationMode: z.enum(["weekly", "free"]).optional(),
+    timetableMinPeriodSpan: z.number().int().positive().optional(),
+    timetableMaxPeriodSpan: z.number().int().positive().optional(),
     country: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
     postalAddress: z.string().nullable().optional(),
@@ -1196,3 +1204,22 @@ export const createTeacherSignatureUploadCommandSchema = z.object({
 }).strict().openapi("CreateTeacherSignatureUploadCommand");
 export const completeTeacherSignatureUploadCommandSchema = z.object({ attachmentId: z.string().trim().min(1) }).strict().openapi("CompleteTeacherSignatureUploadCommand");
 export const clearTeacherSignatureCommandSchema = z.object({ requestId: z.string().trim().min(1), attachmentId: z.string().trim().min(1) }).strict().openapi("ClearTeacherSignatureCommand");
+
+export const configureGradeScaleCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+  expectedRevision: z.number().int().nonnegative(),
+  action: z.enum(["metadata", "interval", "remove-interval", "convert", "delete"]),
+  metadata: objectFromSchema(gradeScaleSchema).pick({ name: true, minScore: true, maxScore: true, decimalPlaces: true, roundingMode: true, description: true }).optional(),
+  interval: coreGradeScaleRangeSchema.omit({ maxScore: true }).extend({ id: field.id() }).optional(),
+  intervalId: field.id().optional(),
+}).openapi("ConfigureGradeScaleCommand");
+export const configureReportCardDefinitionCommandSchema = z.object({
+  requestId: field.id(),
+  id: field.id(),
+  expectedRevision: z.number().int().nonnegative(),
+  action: z.enum(["metadata", "section", "remove-section"]),
+  metadata: objectFromSchema(reportCardDefinitionSchema).pick({ name: true, description: true }).optional(),
+  section: objectFromSchema(reportCardDefinitionSectionSchema).omit({ reportCardDefinitionId: true, createdAt: true }).optional(),
+  sectionId: field.id().optional(),
+}).openapi("ConfigureReportCardDefinitionCommand");

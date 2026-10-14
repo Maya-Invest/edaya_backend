@@ -15,7 +15,7 @@ export async function installSchemaBeforeTypedGrants(db: PGlite): Promise<void> 
 
 export async function seedAuthorizationPlacement(db: PGlite): Promise<void> {
   await db.exec(`
-    INSERT INTO schools (id, name, time_zone, finance_currency, created_at) VALUES ('school-a', 'A', 'UTC', 'USD', now()), ('school-b', 'B', 'UTC', 'USD', now());
+    INSERT INTO schools (id, name, short_name, time_zone, finance_currency, created_at) VALUES ('school-a', 'A', 'A', 'UTC', 'USD', now()), ('school-b', 'B', 'B', 'UTC', 'USD', now());
     INSERT INTO academic_years (id, school_id, name, start_date, end_date, status, created_at) VALUES
       ('year-a', 'school-a', 'A', '2026-01-01', '2026-12-31', 'published', now()),
       ('year-old', 'school-a', 'Old', '2025-01-01', '2025-12-31', 'archived', now()),

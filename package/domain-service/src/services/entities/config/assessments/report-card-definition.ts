@@ -2,7 +2,7 @@ import type { ReportCardDefinition } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
-import { BusinessRuleViolationError } from '@edaya/core'
+import { BusinessRuleViolationError, ReportCardDefinition as Definition } from '@edaya/core'
 import { requireSchool } from '../../../require-school'
 import { config } from '../../entity-config'
 
@@ -13,6 +13,11 @@ export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinitio
     repository: repositories.definitions,
     tenant: directSchoolTenant(),
     resource: 'definitions',
+    writeLockGroup: 'academic-state',
+    hooks: { postSave: async (definition, existing, repos) => {
+      if (existing)
+        await repos.definitions.forSchool!(definition.schoolId).save(new Definition({ ...definition.data, revision: existing.revision + 1 }))
+    } },
 
     gates: {
       preSave: validateReportCardDefinitionSave,
@@ -23,9 +28,13 @@ export const reportCardDefinitionConfig: EntityConfigFactory<ReportCardDefinitio
 
 async function validateReportCardDefinitionSave(
   definition: ReportCardDefinition,
-  _existing: ReportCardDefinition | undefined,
+  existing: ReportCardDefinition | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (existing && definition.revision !== existing.revision)
+    throw new BusinessRuleViolationError('REPORT_MODEL_REVISION_CONFLICT', 'Reload the report model before saving')
+  if (existing && (definition.academicYearId !== existing.academicYearId || definition.gradeLevelId !== existing.gradeLevelId))
+    throw new BusinessRuleViolationError('REPORT_MODEL_SCOPE_FIXED', 'The year and grade level cannot change')
   await requireSchool(repositories.schools, definition.schoolId)
   const [academicYear, gradeLevel, gradeScale] = await Promise.all([
     repositories.academicYears.findById(definition.academicYearId),
@@ -41,6 +50,8 @@ async function validateReportCardDefinitionSave(
   if (!gradeScale || gradeScale.schoolId !== definition.schoolId) {
     denyResourceAccess()
   }
+  if (!gradeScale.isComplete)
+    throw new BusinessRuleViolationError('GRADE_SCALE_INCOMPLETE', 'Choose a complete grade scale')
   const policy = gradeLevel.gradingPolicyFor(definition.academicYearId)
   if (policy && definition.gradeScaleId !== policy.scale.id)
     throw new BusinessRuleViolationError('GRADING_SCALE_INHERITED', 'Report models must use the grade level grading scale')

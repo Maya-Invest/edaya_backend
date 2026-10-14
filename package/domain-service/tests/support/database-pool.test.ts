@@ -7,7 +7,7 @@ let first: Awaited<ReturnType<typeof acquireDatabase>>
 // Without the package bunfig, each test retained another Wasm database.
 test('service test fixture can persist data during a test', async () => {
   first = await acquireDatabase()
-  await first.db.exec('INSERT INTO schools (id, name, time_zone, created_at) VALUES (\'pool-cleanup-check\', \'Fixture\', \'UTC\', now())')
+  await first.db.exec('INSERT INTO schools (id, name, short_name, time_zone, created_at) VALUES (\'pool-cleanup-check\', \'Fixture\', \'Fixture\', \'UTC\', now())')
   expect(await first.repositories.schools.count()).toBe(1)
 })
 
