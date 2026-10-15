@@ -1,7 +1,7 @@
 /** Public command names, syntax and effects: shared by routing, help and docs. */
 export const commandCatalog = {
   dev: { mode: 'spawn', syntax: 'dev', description: 'Start local API/auth and file service with persistent data and OTP capture enabled.' },
-  seed: { mode: 'compound', syntax: 'seed [clean] [--staging] [--scope NAME] [--clean] [--yes] [--repair] [--skip-profile-photos] [--skip-attachments] [--no-progress]', description: 'Seed local/staging data with background work paused. clean deletes data; --clean prompts unless --yes. Scopes: all, school, auth, auth:link, access, profile-pictures, service-account, validate, doctor.' },
+  seed: { mode: 'compound', syntax: 'seed [clean] [--staging] [--scope NAME] [--clean] [--yes] [--repair] [--skip-profile-photos] [--skip-attachments] [--no-progress]', description: 'Seed local/staging data with background work paused. clean deletes data; --clean prompts unless --yes. Scopes: all, school, auth, auth:link, access, profile-pictures, service-account, s2s-clients, validate, doctor.' },
   db: { mode: 'compound', syntax: 'db migrate <school|identity> <local|staging|production>\ndb reset school <staging|production> [--yes]\ndb wipe identity <local|staging> [--yes]\ndb generate\ndb flatten [--yes]\ndb browser school', description: 'Migrate schemas, reset school schemas, wipe Account data, generate migrations, replace migration history, or browse local school data.' },
   check: { mode: 'compound', syntax: 'check <openapi|boundaries|test-naming|commands>', description: 'Read-only artifact, import, test-name and generated command-documentation checks.' },
   doctor: { mode: 'spawn', syntax: 'doctor', description: 'Check configuration ownership, Worker parity, environment files and repository layout.' },

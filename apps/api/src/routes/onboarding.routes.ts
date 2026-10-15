@@ -2,7 +2,7 @@ import type { StructureTemplateDefinition } from "@edaya/service";
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import type { AppRouteHandler } from "@/http/types";
 import { randomUUID } from "node:crypto";
-import { ActorAssuranceLevel } from "@edaya/authorization";
+import { ActorAssuranceLevel, resolveChildrenAiS2sKeyMode } from "@edaya/authorization";
 import { BusinessRuleViolationError } from "@edaya/core";
 import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
@@ -264,6 +264,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
+      childrenAiS2sKeyMode: resolveChildrenAiS2sKeyMode(c.env.NODE_ENV),
     });
 
     return c.json(
@@ -518,6 +519,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         existingActor: c.get("actor") ?? undefined,
         inviteBaseUrl: resolveInviteBaseUrl(c.env),
         allowPublicSchoolRegistration,
+        childrenAiS2sKeyMode: resolveChildrenAiS2sKeyMode(c.env.NODE_ENV),
       },
     );
     const { structure, ...rest } = result;

@@ -9,6 +9,7 @@ export const SEED_CLI_SCOPES = [
   'access',
   'profile-pictures',
   'service-account',
+  's2s-clients',
   'validate',
   'doctor',
 ] as const

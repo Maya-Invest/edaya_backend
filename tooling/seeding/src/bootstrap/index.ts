@@ -6,6 +6,12 @@ export {
   type ProvisionSeedingServiceAccountResult,
   SEEDING_SERVICE_ID,
 } from './service-account'
+export {
+  CHILDREN_AI_S2S_CLIENT_ID,
+  logProvisionedChildrenAiS2sClient,
+  provisionChildrenAiS2sClientHttp,
+  type ProvisionChildrenAiS2sClientResult,
+} from './s2s-client'
 export { bootstrapHttpCoreSession } from './session/http-core-session'
 export {
   formatHttpBootstrapFailure,

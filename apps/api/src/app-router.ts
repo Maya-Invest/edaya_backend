@@ -1,4 +1,5 @@
 import { createRouter } from "@/http/create-app";
+import { childrenAiResolveGuardianHandler, childrenAiResolveGuardianRoute } from "@/routes/children-ai-internal.routes";
 import { getAuthorizationProfilesHandler, getAuthorizationProfilesRoute } from "@/routes/authorization-profiles.route";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
@@ -110,6 +111,7 @@ router
   .openapi(getAuthorizationProfilesRoute, getAuthorizationProfilesHandler)
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
+  .openapi(childrenAiResolveGuardianRoute, childrenAiResolveGuardianHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)

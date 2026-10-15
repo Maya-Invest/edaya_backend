@@ -6,6 +6,8 @@ import { isAccountAuthRoute } from "./account-auth";
 /** Authentication deliberately precedes school context and actor resolution. */
 export const dispatchAuthentication: MiddlewareHandler<AppBindings> = async (c, next) => {
   const path = c.req.path;
+  if (path === "/internal/children-ai" || path.startsWith("/internal/children-ai/"))
+    return next();
   if (path === "/internal" || path.startsWith("/internal/"))
     return c.json({ code: "not_found" }, 404);
   if (path !== "/auth" && !path.startsWith("/auth/") && path !== "/.well-known/jwks.json")

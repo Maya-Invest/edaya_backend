@@ -1,3 +1,4 @@
+export * from './children-ai'
 export * from './documents'
 export * from './files'
 export * from './invitations'
