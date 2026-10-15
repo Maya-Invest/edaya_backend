@@ -88,9 +88,9 @@ Le seed dev utilise **`demoCiDataset`** par d√©faut (`sch-edaya-ci-cocody`, 30 √
 Mot de passe : `DevPassword1!`
 
 ```bash
-cd edaya_backend && bun repo seed clean --yes
+cd edaya_backend && bun repo ops seed clean --yes
 bun repo dev          # terminal 1
-bun repo seed    # terminal 2, once API is ready
+bun repo ops seed    # terminal 2, once API is ready
 ```
 
-`bun repo seed` loads this dataset. Route tests seed a slice of it (structure plus auth-linked guardians). Auth bootstrap seeds the school, owner, and one guardian.
+`bun repo ops seed` loads this dataset. Route tests seed a slice of it (structure plus auth-linked guardians). Auth bootstrap seeds the school, owner, and one guardian.

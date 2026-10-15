@@ -4,7 +4,7 @@
  *
  * Prerequisites:
  *   - bun repo dev
- *   - bun repo seed
+ *   - bun repo ops seed
  *   - apps/api/config.local.jsonc: RUNTIME=local, EMAIL_TRANSPORT=log
  */
 import { loadDotenvFiles } from '../../../apps/api/src/runtime/shared/env/local-loader.ts'
@@ -134,7 +134,7 @@ async function main() {
 
   const deliveries = await listDeliveries(client, announcementId)
   if (deliveries.length === 0) {
-    fail('No MessageDelivery rows — run: bun repo seed --scope auth:link')
+    fail('No MessageDelivery rows — run: bun repo ops seed --scope auth:link')
   }
   log('Materialized deliveries', `${deliveries.length} row(s)`)
 

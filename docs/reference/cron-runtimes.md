@@ -5,7 +5,7 @@ Scheduled jobs are defined in `@edaya/service` (`package/domain-service/src/capa
 | Profile | Entry | Env source | Command |
 |---------|-------|------------|---------|
 | **local** | `apps/api/src/entries/cron-local.ts` | `apps/api/.env` | `bun cron:local` (root) |
-| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun repo deploy production`, `bun repo deploy staging` |
+| **worker** | `apps/api/src/entries/worker.ts` (`scheduled` + `queue`) | `wrangler.jsonc` + Wrangler secrets | `bun repo ops emergency-deploy production`, `bun repo ops emergency-deploy staging` |
 
 ## Environment variables
 
@@ -27,7 +27,7 @@ Local cron uses the same PGlite school database as `bun run repo dev`. Identity 
 
 ## Local (one-shot against PGlite)
 
-Requires a seeded local database (`bun run repo dev` at least once, or `bun run repo maintenance seed` with API running).
+Requires a seeded local database (`bun run repo dev` at least once, or `bun repo ops seed` with API running).
 
 ```sh
 bun --filter @edaya/api cron:local
@@ -67,8 +67,8 @@ Queue names per deploy profile:
 Deploy with the API worker:
 
 ```sh
-bun repo deploy staging    # staging
-bun repo deploy production # production
+bun repo ops emergency-deploy staging    # staging
+bun repo ops emergency-deploy production # production
 ```
 
 ## Architecture
@@ -106,7 +106,7 @@ After deploying the merged API worker with heartbeat + queue:
 2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `*/5 * * * *` cron trigger.
 3. Verify queue consumers are attached to the API worker (Queues → `edaya-cron-jobs-*`).
 
-`bun repo doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.
+`bun repo check doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.
 
 ### Schedule changes without redeploy
 

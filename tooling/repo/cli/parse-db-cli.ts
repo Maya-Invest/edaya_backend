@@ -28,7 +28,7 @@ export function parseDbCliArgs(args: readonly string[]): ParsedDbCli {
       throw new Error(commandUsage('db'))
     const target = rest.shift()
     if (!target || !targets.has(target) || rest.length)
-      throw new Error('Usage: bun repo db migrate <school|identity> <local|staging|production>')
+      throw new Error('Usage: bun repo ops db migrate <school|identity> <local|staging|production>')
     return database === 'identity' ? { kind: 'identity-migrate', target: target as DbMigrateTarget } : { kind: 'migrate', target: target as DbMigrateTarget, slice: 'school' }
   }
   if (action === 'reset') {
@@ -36,13 +36,13 @@ export function parseDbCliArgs(args: readonly string[]): ParsedDbCli {
       throw new Error(commandUsage('db'))
     const target = rest.shift()
     if (target !== 'staging' && target !== 'production')
-      throw new Error('Usage: bun repo db reset school <staging|production> [--yes]')
+      throw new Error('Usage: bun repo ops db reset school <staging|production> [--yes]')
     return { kind: 'reset', target, yes: yesFlag(rest) }
   }
   if (action === 'wipe') {
     const [database, target, ...flags] = rest
     if (database !== 'identity' || (target !== 'local' && target !== 'staging'))
-      throw new Error('Usage: bun repo db wipe identity <local|staging> [--yes]')
+      throw new Error('Usage: bun repo ops db wipe identity <local|staging> [--yes]')
     return { kind: 'identity-wipe', target, yes: yesFlag(flags) }
   }
   if (action === 'flatten') {

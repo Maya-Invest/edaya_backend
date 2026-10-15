@@ -24,7 +24,7 @@ export async function fixture(command: string[], cwd: string): Promise<void> {
     start('tooling/repo/dev/local-files.ts')
     await waitForUrl(`${env.LOCAL_FILES_URL}/health`, 120, () => services.assertRunning())
     if (process.env.EDAYA_FIXTURE_SEED === 'true')
-      await run(['bun', '--no-env-file', 'tooling/repo/ops/main.ts', 'maintenance', 'seed'], { env })
+      await run(['bun', '--no-env-file', 'tooling/repo/ops/main.ts', 'ops', 'seed'], { env })
     await run(command, { cwd, env, timeout: 150 * 60000 })
   }
   finally {

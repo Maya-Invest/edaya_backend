@@ -65,7 +65,7 @@ async function main() {
       console.error(redact(error instanceof Error ? error.message : 'R2 CORS configuration failed'))
       console.error('')
       console.error('Could not configure CORS automatically. Either:')
-      console.error('  1. Run `wrangler login`, then retry `bun run repo maintenance smoke r2 staging` or tooling/repo/dev/r2-configure-cors.ts')
+      console.error('  1. Run `wrangler login`, then retry `bun repo ops smoke r2 staging` or tooling/repo/dev/r2-configure-cors.ts')
       console.error('  2. Set CORS manually in Cloudflare dashboard (R2 → bucket → Settings → CORS)')
       console.error(JSON.stringify(buildWranglerR2CorsPolicy(allowedOrigins), null, 2))
       throw new Error('R2 CORS configuration failed')

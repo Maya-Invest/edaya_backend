@@ -64,7 +64,7 @@ await applySchoolMigrations(resolved.databaseUrl)
 
 console.log(`\n${resolved.label} database reset complete.`)
 if (target === 'staging') {
-  console.log('Run `bun repo seed --staging` to load demo data.')
+  console.log('Run `bun repo ops seed staging` to load demo data.')
 }
 else {
   console.log('Production has no automated seed — provision data manually after reset.')

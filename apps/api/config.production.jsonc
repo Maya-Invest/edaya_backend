@@ -1,6 +1,6 @@
 {
 // Worker application settings. Credentials belong in secrets files.
-// Apply explicitly: bun repo vars push production
+// Apply explicitly: bun repo ops vars push production
   // Optional identity policy: REQUIRE_EMAIL_VERIFICATION, REQUIRE_PRIVILEGED_TOTP,
   // AUTH_PROVIDER_GENERATION. Boolean settings use string values "true" / "false".
   // Phone auth stays disabled until all provider settings AND secrets are configured.

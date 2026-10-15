@@ -61,8 +61,8 @@ describe('parseSeedCliArgs', () => {
   })
 
   it('documents the lean command set', () => {
-    expect(seedCliUsage()).toContain('bun repo seed clean')
-    expect(seedCliUsage()).toContain('bun repo seed --staging')
+    expect(seedCliUsage()).toContain('bun repo ops seed clean')
+    expect(seedCliUsage()).toContain('bun repo ops seed staging')
     expect(seedCliUsage()).not.toContain('seed:smoke')
   })
 })

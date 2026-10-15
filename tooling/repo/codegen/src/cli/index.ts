@@ -6,7 +6,7 @@ import { parseCli } from './parse-args'
 import { printUsage } from './usage'
 
 export async function main(): Promise<void> {
-	if (process.argv.slice(2).some(arg => arg === '--help' || arg === '-h')) {
+	if (process.argv.length === 3 && ['--help', '-h'].includes(process.argv[2])) {
 		printUsage()
 		return
 	}
@@ -61,7 +61,7 @@ export async function main(): Promise<void> {
 	})
 
 	if (changed.length > 0) {
-		console.error('Generated client artifacts are out of date. Run `bun repo codegen generate` and commit the changes.')
+		console.error('Generated client artifacts are out of date. Run `bun repo generate client` and commit the changes.')
 		console.error('Changed files:')
 		for (const path of changed) {
 			console.error(`  - ${path}`)

@@ -1,6 +1,6 @@
 # Phone verification operations
 
-See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun run repo maintenance vars` commands.
+See [API configuration and secrets](api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
 
 Phone login and contact linking use the same Account policy in web, guardian and teacher. Launch accepts only Côte d’Ivoire mobile numbers: +225 followed by ten digits starting with 01, 05 or 07. Formatting spaces, parentheses, periods and hyphens are normalized. A destination without a configured SMS prefix returns `phone_country_unsupported` before preparing an OTP. The longest configured prefix wins; v1 supports the `africas_talking` provider only. North America/Twilio is deferred.
 
@@ -61,7 +61,7 @@ Put `AFRICAS_TALKING_USERNAME` and, if using a registered custom sender, `AFRICA
 
 For coordinated GitHub releases, merge only the API key into the existing `STAGING_IDENTITY_SECRETS` JSON secret. The release merges it with `STAGING_API_SECRETS`; duplicate fields must agree. Keep phone mode in `config.staging.jsonc` because staging preflight rejects `PHONE_AUTH_MODE` in secret payloads. Cloudflare documents [environment-specific secret storage](https://developers.cloudflare.com/workers/configuration/secrets/).
 
-Once the credentials are complete and the Identity migrations have been applied, set `PHONE_AUTH_MODE` to `sms_only` in `apps/api/config.staging.jsonc`. Retain its existing `sms_routes` and `AFRICAS_TALKING_SANDBOX=false`. Upload secrets before enabling the mode (from `apps/api`, `bunx wrangler secret bulk secrets.staging.json --env staging`), or use the coordinated staging release's secret upload. Apply the settings with `bun run repo maintenance vars push staging`; editing a local file alone does not configure the deployed Worker. Code releases preserve the deployed phone mode. Production has a separate configuration.
+Once the credentials are complete and the Identity migrations have been applied, set `PHONE_AUTH_MODE` to `sms_only` in `apps/api/config.staging.jsonc`. Retain its existing `sms_routes` and `AFRICAS_TALKING_SANDBOX=false`. Upload secrets before enabling the mode (from `apps/api`, `bunx wrangler secret bulk secrets.staging.json --env staging`), or use the coordinated staging release's secret upload. Apply the settings with `bun repo ops vars push staging`; editing a local file alone does not configure the deployed Worker. Code releases preserve the deployed phone mode. Production has a separate configuration.
 
 After deployment, inspect `https://staging.api.edayaplus.com/auth/edaya/methods`, then request a code through staging with a controlled CI test phone. Verify receipt and successful login, and test an explicit resend after cooldown. A provider `accepted` result alone does not establish handset delivery. Do not enable the deployed test-code reveal endpoint.
 
@@ -91,7 +91,7 @@ School SMS dispatch commits a `sending` marker before network access. Interrupte
 
 ## Router rollout and rollback
 
-No database migration is required for the router: existing text status and message-ID columns are used. Pause API, scheduler and jobs with the existing operational controls, pause queue delivery, and let active work finish before switching code/configuration. Deploy the new code while paused, upload credentials, publish the selected config (`bun run repo maintenance vars push staging`), then explicitly delete the obsolete binding (`bun run repo maintenance vars delete staging PHONE_SMS_ROUTES`). Verify `SMS_ROUTES` and disabled/enabled consumer settings before resuming. Repeat with target `production` only for an authorized production release. Code deployment alone preserves variables and does not perform this configuration migration.
+No database migration is required for the router: existing text status and message-ID columns are used. Pause API, scheduler and jobs with the existing operational controls, pause queue delivery, and let active work finish before switching code/configuration. Deploy the new code while paused, upload credentials, publish the selected config (`bun repo ops vars push staging`), then explicitly delete the obsolete binding (`bun repo ops vars delete staging PHONE_SMS_ROUTES`). Verify `SMS_ROUTES` and disabled/enabled consumer settings before resuming. Repeat with target `production` only for an authorized production release. Code deployment alone preserves variables and does not perform this configuration migration.
 
 For rollback, keep work paused, disable phone authentication and school SMS, restore the previous code's required route/configuration bindings, then restore the older code. Older workers must not process held SMS attempts: their retry behavior does not recognize the new terminal states. Do not blanket-reset jobs to pending. Activation and real handset qualification are separate from this code change.
 

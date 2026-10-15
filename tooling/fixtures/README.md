@@ -24,7 +24,7 @@ Records use `satisfies *Input` from `@edaya/core` so schema changes fail at comp
 
 | Dataset | Import | Purpose |
 |---------|--------|---------|
-| `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan). `bun repo seed` loads it in full. |
+| `demoCiDataset` | `@edaya/fixtures` | Collège ivoirien (Abidjan). `bun repo ops seed` loads it in full. |
 | `bootstrapSeedDataset()` | `@edaya/fixtures` | School, owner `ci-st8`, guardian `ci-g1` |
 | `routeSeedDataset()` | `@edaya/fixtures` | Structure plus auth-linked guardians `ci-g1`–`ci-g6` and their students |
 

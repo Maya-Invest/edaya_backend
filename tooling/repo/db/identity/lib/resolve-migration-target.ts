@@ -3,7 +3,7 @@ import { loadConfiguration } from '../../../../../apps/api/configuration/index.t
 
 export function resolveIdentityMigrationTarget(args: readonly string[], source: Record<string, string | undefined>, root: string): { databaseUrl: string, label: string } {
   if (args.length !== 1 || (args.length && !['local', 'staging', 'production'].includes(args[0]!)))
-    throw new Error('Usage: bun repo db migrate identity <local|staging|production>')
+    throw new Error('Usage: bun repo ops db migrate identity <local|staging|production>')
   const target = args[0]
   let databaseUrl: string | undefined
   if (target === 'local') {

@@ -6,14 +6,14 @@ HTTP seed orchestration for local dev, staging, and integration tests.
 
 | Command | Purpose |
 |---------|---------|
-| `bun repo seed` | Full local demo seed |
-| `bun repo seed --staging` | Full staging seed |
-| `bun repo seed --scope doctor` | Diagnose seed health (sign-in, grants, data checks) |
-| `bun repo seed --scope doctor --repair` | Diagnose and run minimal HTTP repair chain |
-| `bun repo seed clean` | Wipe local school `.data/` (stop `bun repo dev` first) |
-| `bun repo seed clean --staging` | Wipe Neon staging school DB (destructive) |
+| `bun repo ops seed` | Full local demo seed |
+| `bun repo ops seed staging` | Full staging seed |
+| `bun repo ops seed --scope doctor` | Diagnose seed health (sign-in, grants, data checks) |
+| `bun repo ops seed --scope doctor --repair` | Diagnose and run minimal HTTP repair chain |
+| `bun repo ops seed clean` | Wipe local school `.data/` (stop `bun repo dev` first) |
+| `bun repo ops seed clean staging` | Wipe Neon staging school DB (destructive) |
 
-Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo seed --help`.
+Granular scopes (power users): `bun repo ops seed --scope <name>` — see `bun repo ops seed --help`.
 
 | Scope | Purpose |
 |-------|---------|
@@ -25,7 +25,7 @@ Granular scopes (power users): `bun repo seed --scope <name>` — see `bun repo 
 | `service-account` | Provision seeding service account |
 | `validate` | Manifest entity counts + dashboard queries |
 
-Staging smoke: `bun repo smoke api staging` (full tier-1 checks in `@edaya/integration-tests`).
+Staging smoke: `bun repo ops smoke api staging` (full tier-1 checks in `@edaya/integration-tests`).
 
 ## Environment (repo root `.env`)
 
@@ -34,28 +34,28 @@ Copy `.env.example` → `.env` at the **repo root** (gitignored). `apps/api/conf
 | Variable | Used by | Default |
 |----------|---------|---------|
 | `SEED_REFERENCE_DATE` | Fixture rolling dates | `2026-09-17` |
-| `SEED_API_URL` | School API for `bun repo seed` | `http://localhost:9999` |
+| `SEED_API_URL` | School API for `bun repo ops seed` | `http://localhost:9999` |
 | `SEED_API_URL` | Central identity API for auth provisioning | `http://localhost:9999` |
 | `SEED_APP_ORIGIN` | Local identity `Origin` header | `http://localhost:5173` |
-| `SEED_STAGING_API_URL` | `bun repo seed --staging` | `https://staging.api.edayaplus.com` |
+| `SEED_STAGING_API_URL` | `bun repo ops seed staging` | `https://staging.api.edayaplus.com` |
 | `SEED_STAGING_API_URL` | Staging Central Identity API | `https://staging.api.edayaplus.com` |
 | `SEED_STAGING_APP_ORIGIN` | Staging identity `Origin` header | `https://staging.app.edayaplus.com` |
 
 Optional secrets in the same file: `STAGING_DATABASE_URL`, `PRODUCTION_DATABASE_URL`.
 
 ```sh
-bun repo seed clean --yes && bun repo seed              # local school fresh start
-bun repo seed clean --staging --yes && bun repo seed --staging   # staging school fresh start
-# Account/auth data: `bun repo db wipe identity local --yes` (or staging)
+bun repo ops seed clean --yes && bun repo ops seed              # local school fresh start
+bun repo ops seed clean staging --yes && bun repo ops seed staging   # staging school fresh start
+# Account/auth data: `bun repo ops db wipe identity local --yes` (or staging)
 # or
-bun repo seed --clean                 # prompts; add --yes for automation
-bun repo seed --staging --clean       # prompts; add --yes for automation
+bun repo ops seed --clean                 # prompts; add --yes for automation
+bun repo ops seed staging --clean       # prompts; add --yes for automation
 ```
 
 ## Local dev flow
 
 1. Start the API: `bun repo dev`
-2. Seed: `bun repo seed`
+2. Seed: `bun repo ops seed`
 3. Log in at http://localhost:5173/login
 
 After `rm -rf .data`, **stop `bun repo dev` first**, then restart before seeding. See [docs/reference/local-dev.md](../../docs/reference/local-dev.md).
@@ -67,13 +67,13 @@ Profile photo seed uploads fixture JPEGs through the API file-storage flow. Loca
 | Situation | Behavior |
 |-----------|----------|
 | `bun repo dev` running (API + local-files) | Photos seed normally |
-| API only (no local-files) | `bun repo seed` **auto-skips** photos with a clear message |
-| Explicit opt-out | `bun repo seed --skip-profile-photos` |
+| API only (no local-files) | `bun repo ops seed` **auto-skips** photos with a clear message |
+| Explicit opt-out | `bun repo ops seed --skip-profile-photos` |
 | Staging / remote API | API uses R2-backed storage |
 
 ### Repair without wipe
 
-`bun repo seed --scope doctor --repair` runs the minimal chain (`auth:link` → `service-account` → `access` → `profile-pictures`) based on repairable findings. Broken state (missing auth or school) still requires `bun repo seed` or a wipe.
+`bun repo ops seed --scope doctor --repair` runs the minimal chain (`auth:link` → `service-account` → `access` → `profile-pictures`) based on repairable findings. Broken state (missing auth or school) still requires `bun repo ops seed` or a wipe.
 
 ## Architecture
 

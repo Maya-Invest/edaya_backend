@@ -115,7 +115,7 @@ async function createBackend(): Promise<DbBrowserBackend> {
   const resolvedDir = resolveRepoLocalPath(dataDir)
   if (!existsSync(resolvedDir)) {
     console.error(`School database not found: ${resolvedDir}`)
-    console.error('Start the API and run `bun repo seed` first.')
+    console.error('Start the API and run `bun repo ops seed` first.')
     process.exit(1)
   }
 

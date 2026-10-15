@@ -141,7 +141,7 @@ async function diagnoseMissingActor(client: HttpSeedClient): Promise<string | un
 
   if (response.ok && body?.session && body?.user) {
     const email = body.user.email ?? 'unknown'
-    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo seed --staging\``
+    return `Auth session is valid for ${email} but no portal actor is linked — run \`bun repo ops seed staging\``
   }
 
   return undefined
@@ -195,7 +195,7 @@ async function checkServiceAccount(apiUrl: string, apiKey: string): Promise<Smok
       label: 'Service account entity access',
       status: 'failed',
       detail: response.status === 401 || response.status === 500
-        ? `${response.status} — service account key may be missing on staging; run \`bun repo seed --staging\``
+        ? `${response.status} — service account key may be missing on staging; run \`bun repo ops seed staging\``
         : `${response.status}`,
     }
   }

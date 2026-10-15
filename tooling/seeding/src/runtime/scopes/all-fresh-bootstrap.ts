@@ -72,7 +72,7 @@ export async function tryRunAllFreshBootstrap(
   if (!serviceAccountApiKeyFromProvision) {
     throw new Error(
       'Seeding service account already exists but the profile API key is not available. '
-      + 'Run `bun repo seed --scope service-account` or wipe `.data` and run `bun repo seed`.',
+      + 'Run `bun repo ops seed --scope service-account` or wipe `.data` and run `bun repo ops seed`.',
     )
   }
 
@@ -83,7 +83,7 @@ export async function tryRunAllFreshBootstrap(
   if (!seedingAuthKey) {
     throw new Error(
       'Seeding service account is not ready after provisioning. '
-      + 'Stop `bun repo dev`, run `bun repo seed clean --yes`, restart the API, then `bun repo seed`.',
+      + 'Stop `bun repo dev`, run `bun repo ops seed clean --yes`, restart the API, then `bun repo ops seed`.',
     )
   }
 

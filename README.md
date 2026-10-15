@@ -1,6 +1,6 @@
 # Edaya Core
 
-See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun run repo maintenance vars` commands.
+See [API configuration and secrets](docs/reference/api-configuration.md) for JSONC settings, secrets-only files, and the `bun repo ops vars` commands.
 
 Monorepo for the Edaya platform backend: a **Hono API** (`apps/api`) with scheduled cron jobs, shared libraries under **`package/`** (domain, authorization, school service, adaptors, generated API clients), and **`tooling/`** harnesses.
 
@@ -142,14 +142,14 @@ More detail: [docs/reference/runtime-boundaries.md](./docs/reference/runtime-bou
 |---------|------|------|
 | `@edaya/repo` | `tooling/repo` | Repo CLI, CI checks, OpenAPI client generator, school and identity migration commands, local file server |
 | `@edaya/fixtures` | `tooling/fixtures` | Shared seed IDs, fixture records, assets, and minimal test helpers |
-| `@edaya/seeding` | `tooling/seeding` | Seed workflows and HTTP orchestration (`bun run repo maintenance seed`) |
+| `@edaya/seeding` | `tooling/seeding` | Seed workflows and HTTP orchestration (`bun repo ops seed`) |
 | `@edaya/integration-tests` | `tooling/integration-tests` | Integration tests, staging smoke, and notification smoke |
 
 The generator's shared contract lives in `package/api-client/src/contract`, exposed as `@maya-invest/edaya-api-client/contract`. The API imports this dependency-free contract; generation code remains in tooling. Tooling uses the root TypeScript and Bun/Node type dependencies.
 
 See [backend tooling audit](docs/reference/backend-tooling-audit.md) for the consolidation decisions and validation.
 
-Run `bun run repo dev` to start the API and local file server directly with Bun. Use `bun run repo maintenance seed` to populate the local development data.
+Run `bun run repo dev` to start the API and local file server directly with Bun. Use `bun repo ops seed` to populate the local development data.
 
 ## Prerequisites
 
@@ -192,7 +192,7 @@ See [docs/reference/local-dev.md](./docs/reference/local-dev.md) for database op
 
 ## Commands
 
-**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun run repo dev`, `bun run repo maintenance seed`, `bun run repo maintenance db …`, etc. **No Turbo in `bun repo`** — use root scripts below.
+**Development and ops:** [`bun repo`](./docs/reference/repo-cli.md) — `bun run repo dev`, `bun repo ops seed`, `bun repo ops db …`, etc. Repository commands coordinate checks and operations; root scripts below run workspace tasks.
 
 **Turbo quality** (root `package.json`):
 

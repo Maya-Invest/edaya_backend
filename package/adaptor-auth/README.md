@@ -28,7 +28,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 
 await runMigrations(db, { driver: 'pglite' }) // PGlite local/tests (`.data/identity`)
 // or { driver: 'postgres-js' } with drizzle-orm/postgres-js (CLI migrate + identity process)
-// Worker skips startup migrations; apply them with `bun repo db migrate`.
+// Worker skips startup migrations; apply them with `bun repo ops db migrate`.
 
 betterAuth({
   database: drizzleAdapter(db, {

@@ -2,7 +2,7 @@
 
 The API worker wires adapters from **`RUNTIME` only**. Scheduled cron jobs run on the same worker (`scheduled()` handler). Each profile has a fixed adapter matrix; bootstrap code does not upgrade adaptors when unrelated vendor env vars are present.
 
-**Configuration:** `bun run repo dev` loads `apps/api/config.local.jsonc` plus secrets from `.env`. Wrangler smoke and R2 tools load `config.staging.jsonc` plus `.dev.vars` secrets. Deployed variables are updated explicitly with `bun run repo maintenance vars push <staging|production>`; code deployment preserves them. See [API configuration](api-configuration.md).
+**Configuration:** `bun run repo dev` loads `apps/api/config.local.jsonc` plus secrets from `.env`. Wrangler smoke and R2 tools load `config.staging.jsonc` plus `.dev.vars` secrets. Deployed variables are updated explicitly with `bun repo ops vars push <staging|production>`; code deployment preserves them. See [API configuration](api-configuration.md).
 
 See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runtimes.md) for commands and env loading.
 
@@ -12,7 +12,7 @@ See also [api-runtimes.md](./api-runtimes.md) and [cron-runtimes.md](./cron-runt
 |---------|---------|---------|
 | **`local`** | Day-to-day development | `bun run repo dev` |
 | **`in-memory`** | Fast automated tests | `bun test` (harness sets env) |
-| **`worker`** | Staging / production deploy; optional local smoke | `bun repo deploy production`, `bun repo deploy staging`, `bun --filter @edaya/api dev:worker` |
+| **`worker`** | Staging / production deploy; optional local smoke | `bun repo ops emergency-deploy production`, `bun repo ops emergency-deploy staging`, `bun --filter @edaya/api dev:worker` |
 
 **worker** is not a separate `RUNTIME` value. It means `RUNTIME=worker` executed through `wrangler dev` (Miniflare) with `.dev.vars` and Cloudflare bindings — same adapter wiring as a deployed Worker.
 
@@ -69,7 +69,7 @@ Cron does not use file storage (`noOpFileStorage`).
 
 ## CI guardrails
 
-`bun repo doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `config.local.jsonc`, local-files always started by `bun run repo dev`, in-memory notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
+`bun repo check doctor` runs structural checks from `tooling/repo/lib/runtime-boundaries.ts` to prevent regressions (flat file-storage resolver, persisted PGlite in `config.local.jsonc`, local-files always started by `bun run repo dev`, in-memory notify/docs gates, no separate `@edaya/notify` or docs/Gotenberg process, single heartbeat cron + `CRON_JOBS` queue and `BROWSER` binding in `wrangler.jsonc`, no legacy `apps/cron` or `apps/notify` packages).
 
 ## Related packages
 

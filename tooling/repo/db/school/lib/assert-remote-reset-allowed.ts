@@ -40,7 +40,7 @@ export function assertRemoteResetAllowed(
   }
 
   if (isLocalDatabaseUrl(trimmed)) {
-    throw new Error('Remote reset requires a Postgres connection string. Use `bun repo seed clean` for local `.data`.')
+    throw new Error('Remote reset requires a Postgres connection string. Use `bun repo ops seed clean` for local `.data`.')
   }
 
   if (destructiveOverrideEnabled()) {

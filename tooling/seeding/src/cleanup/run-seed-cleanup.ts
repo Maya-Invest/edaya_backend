@@ -77,7 +77,7 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<boolean> 
     }
 
     console.log(`Local school cleanup complete. ${IDENTITY_AUTH_WIPE_HINT}`)
-    console.log('Restart `bun repo dev`, then run `bun repo seed`.')
+    console.log('Restart `bun repo dev`, then run `bun repo ops seed`.')
     return true
   }
 
@@ -94,6 +94,6 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<boolean> 
   const result = await wipeStagingSchoolDatabase(databaseUrl)
   console.log(`Staging school database wiped (${result.tableCount} public tables truncated).`)
   console.log(IDENTITY_AUTH_WIPE_HINT)
-  console.log('Staging school cleanup complete. Run `bun repo db migrate school staging` if needed, then `bun repo seed --staging`.')
+  console.log('Staging school cleanup complete. Run `bun repo ops db migrate school staging` if needed, then `bun repo ops seed staging`.')
   return true
 }

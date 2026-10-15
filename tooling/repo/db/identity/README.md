@@ -5,9 +5,9 @@ Apply Account and provider migrations, or perform guarded identity cleanup. Sche
 Run from the backend root:
 
 ```sh
-bun repo db migrate identity local                 # AUTH_DATABASE_URL, or STAGING_/PRODUCTION_ variants
-bun repo db wipe identity local --yes        # delete .data/identity after stopping identity
-bun repo db wipe identity staging --yes      # guarded staging identity cleanup
+bun repo ops db migrate identity local                 # AUTH_DATABASE_URL, or STAGING_/PRODUCTION_ variants
+bun repo ops db wipe identity local --yes        # delete .data/identity after stopping identity
+bun repo ops db wipe identity staging --yes      # guarded staging identity cleanup
 ```
 
-Local identity startup already migrates PGlite. School commands remain under `bun repo db`; select the identity database for these commands.
+Local identity startup already migrates PGlite. School commands remain under `bun repo ops db`; select the identity database for these commands.

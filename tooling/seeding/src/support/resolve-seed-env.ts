@@ -14,7 +14,7 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '')
 }
 
-/** Local API base URL (`bun repo seed`, `bun repo seed --scope doctor`, …). */
+/** Local API base URL (`bun repo ops seed`, `bun repo ops seed --scope doctor`, …). */
 export function resolveLocalSeedApiUrl(): string {
   const configured = process.env['SEED_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_LOCAL_API_URL)
@@ -24,7 +24,7 @@ export function resolveLocalSeedAuthUrl(): string {
   return resolveLocalSeedApiUrl()
 }
 
-/** Staging API base URL (`bun repo seed --staging`, `bun repo smoke api staging`). */
+/** Staging API base URL (`bun repo ops seed staging`, `bun repo ops smoke api staging`). */
 export function resolveStagingSeedApiUrl(): string {
   const configured = process.env['SEED_STAGING_API_URL']?.trim()
   return normalizeUrl(configured || DEFAULT_STAGING_API_URL)

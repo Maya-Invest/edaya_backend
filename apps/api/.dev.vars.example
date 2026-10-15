@@ -21,4 +21,4 @@ CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE_AUTH=postgresql://edaya
 # Preserve existing account secrets and keyrings. ACCOUNT_SECURITY_KEYS is an encoded
 # JSON object mapping version to a base64-encoded 32-byte key. FCM is encoded JSON too.
 # From apps/api: bunx wrangler secret bulk secrets.staging.json --env staging
-# From repo root: bun repo vars push staging (configuration update only).
+# From repo root: bun repo ops vars push staging (configuration update only).

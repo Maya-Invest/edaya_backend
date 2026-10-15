@@ -41,7 +41,7 @@ edaya_backend/
 | `@edaya/service` (`package/domain-service`) | `SchoolService`, workflows, entity configs, notifications, cron jobs, `SchoolRepositories` | HTTP routes, Drizzle schema, identity runtime |
 | `package/adaptor-postgres` | Drizzle schema, `drizzle/`, repos, `runMigrations()` for school DB | Wrangler, `.dev.vars`, Neon CLI scripts |
 | `tooling/repo/db/school` | School migration application and guarded reset commands | School SQL source files (those live in adaptor-postgres) |
-| `tooling/seeding` | HTTP seed scripts against running API (`bun run repo maintenance seed`, …) | API route handlers |
+| `tooling/seeding` | HTTP seed scripts against running API (`bun repo ops seed`, …) | API route handlers |
 | `apps/api` | Hono, OpenAPI, Account composition, Hyperdrive bindings, DI, runtime registry | Migration CLI scripts and seed data |
 
 **Domain dependency direction:** `@edaya/service` → `@edaya/authorization` → `@edaya/core`. Adaptors and `apps/api` may depend on any combination needed at the wiring layer.
@@ -90,16 +90,16 @@ edaya_backend/
 |--------|------------------|
 | `bun run repo dev` | Identity, school API, and local files in watch mode |
 | `bun --filter @edaya/api dev:worker` | `@edaya/api` `dev:worker` |
-| `bun run repo maintenance seed` / `bun run repo maintenance seed --staging` / `bun run repo maintenance seed --scope doctor` / `bun run repo maintenance smoke api staging` | `@edaya/seeding` / `@edaya/integration-tests` |
-| `bun run repo maintenance db generate` | `@edaya/adaptor-postgres` |
-| `bun run repo maintenance db migrate school local` | `repo migration commands` — school (local) |
-| `bun run repo maintenance db migrate school staging` | `repo migration commands` — school (staging) |
-| `bun run repo maintenance db migrate school production` | `repo migration commands` — school (production) |
+| `bun repo ops seed` / `bun repo ops seed staging` / `bun repo ops seed --scope doctor` / `bun repo ops smoke api staging` | `@edaya/seeding` / `@edaya/integration-tests` |
+| `bun repo ops db generate` | `@edaya/adaptor-postgres` |
+| `bun repo ops db migrate school local` | `repo migration commands` — school (local) |
+| `bun repo ops db migrate school staging` | `repo migration commands` — school (staging) |
+| `bun repo ops db migrate school production` | `repo migration commands` — school (production) |
 | `bun run repo generate openapi` | Export OpenAPI + regenerate client bindings |
 | `bun repo check openapi` | Drift check for generated artifacts |
-| `bun repo deploy production` | `@edaya/api` `deploy:production` |
-| `bun repo deploy staging` | `@edaya/api` `deploy:staging` |
-| `bun run repo maintenance smoke api staging` | `@edaya/integration-tests` |
+| `bun repo ops emergency-deploy production` | `@edaya/api` `deploy:production` |
+| `bun repo ops emergency-deploy staging` | `@edaya/api` `deploy:staging` |
+| `bun repo ops smoke api staging` | `@edaya/integration-tests` |
 
 Webapp deploy scripts live in **edaya_frontend**. See [cross-repo-workflow.md](./cross-repo-workflow.md).
 

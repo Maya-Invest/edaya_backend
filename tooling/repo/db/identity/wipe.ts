@@ -48,7 +48,7 @@ function parseArgs(argv: string[]): { target: WipeTarget, yes: boolean } {
   const args = argv.slice(2)
   const [target, ...flags] = args
   if ((target !== 'local' && target !== 'staging') || flags.length > 1 || flags.some(flag => !['--yes', '-y'].includes(flag)))
-    throw new Error('Usage: bun repo db wipe identity <local|staging> [--yes]')
+    throw new Error('Usage: bun repo ops db wipe identity <local|staging> [--yes]')
 
   return {
     target,
@@ -77,7 +77,7 @@ async function probeIdentityReachable(baseUrl: string): Promise<boolean> {
 async function wipeLocal(): Promise<void> {
   const databaseUrl = process.env['AUTH_DATABASE_URL'] ?? 'pglite:.data/identity'
   if (!isLocalAuthDatabaseUrl(databaseUrl)) {
-    throw new Error('Local wipe expects AUTH_DATABASE_URL=pglite:.data/identity. Use `bun repo db wipe identity staging` for Neon.')
+    throw new Error('Local wipe expects AUTH_DATABASE_URL=pglite:.data/identity. Use `bun repo ops db wipe identity staging` for Neon.')
   }
 
   const identityUrl = process.env['API_ORIGIN'] ?? `http://localhost:${process.env['PORT'] ?? '9999'}`
@@ -151,7 +151,7 @@ async function main(): Promise<void> {
   }
 
   await wipeStaging()
-  console.log('Staging identity cleanup complete. Re-run school `bun repo seed --staging` after identity is reachable.')
+  console.log('Staging identity cleanup complete. Re-run school `bun repo ops seed staging` after identity is reachable.')
 }
 
 try {

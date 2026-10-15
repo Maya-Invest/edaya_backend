@@ -19,7 +19,7 @@ export function assertStagingIdentityDatabaseUrl(databaseUrl: string): void {
   }
 
   if (isLocalAuthDatabaseUrl(trimmed)) {
-    throw new Error('Refusing to wipe a local/ephemeral AUTH_DATABASE_URL. Use `bun repo db wipe identity local` for `.data/identity`.')
+    throw new Error('Refusing to wipe a local/ephemeral AUTH_DATABASE_URL. Use `bun repo ops db wipe identity local` for `.data/identity`.')
   }
 
   const allowDestructive = process.env['SEED_ALLOW_DESTRUCTIVE']?.trim().toLowerCase()

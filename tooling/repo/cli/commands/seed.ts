@@ -67,12 +67,12 @@ export async function dispatchSeedCommand(args: readonly string[]): Promise<numb
       return interrupted ? 130 : 0
     })
     if (code !== 0)
-      console.error(`Seeding failed; background processing remains paused. Inspect bun run repo maintenance status ${target} before resuming scheduler and jobs.`)
+      console.error(`Seeding failed; background processing remains paused. Inspect bun repo ops status ${target} before resuming scheduler and jobs.`)
     return code
   }
   catch (error) {
     console.error(redact(error instanceof Error ? error.message : 'Seeding failed'))
-    console.error(`Inspect bun run repo maintenance status ${target}; after resolving the failure, resume scheduler and jobs explicitly${target === 'staging' ? ' and resume Cloudflare queue delivery' : ''}.`)
+    console.error(`Inspect bun repo ops status ${target}; after resolving the failure, resume scheduler and jobs explicitly${target === 'staging' ? ' and resume Cloudflare queue delivery' : ''}.`)
     return 1
   }
   finally {

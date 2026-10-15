@@ -8,7 +8,7 @@ export interface WaitForApiOptions {
 
 function formatProbeFailure(path: string, status: number, body: string): string {
   if (status === 500 && /could not open file|pglite|disk i\/o error/i.test(body)) {
-    return `${path} returned 500 (local PGlite is corrupted — stop bun repo dev, run \`rm -rf .data\`, restart, then \`bun repo seed\`)`
+    return `${path} returned 500 (local PGlite is corrupted — stop bun repo dev, run \`rm -rf .data\`, restart, then \`bun repo ops seed\`)`
   }
 
   if (body.trim()) {
