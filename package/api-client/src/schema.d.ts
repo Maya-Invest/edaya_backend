@@ -473,6 +473,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/children-ai/resolve-guardian": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a guardian and linked students for Children AI (sibling secret) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Identity subject to resolve */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChildrenAiResolveGuardianRequest"];
+                };
+            };
+            responses: {
+                /** @description Guardian school and children */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChildrenAiResolveGuardianResponse"];
+                    };
+                };
+                /** @description Invalid resolve secret */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/onboarding/register-school": {
         parameters: {
             query?: never;
@@ -12720,6 +12783,22 @@ export interface components {
                     studentId: string;
                 })[];
             }[];
+        };
+        ChildrenAiResolveGuardianResponse: {
+            schoolId: string;
+            displayName: string;
+            children: {
+                studentId: string;
+                schoolId: string;
+                firstName: string;
+                lastName: string;
+                classLabel?: string;
+                /** @enum {string} */
+                grade?: "6e" | "5e" | "4e" | "3e";
+            }[];
+        };
+        ChildrenAiResolveGuardianRequest: {
+            subjectId: string;
         };
         School: {
             id: string;

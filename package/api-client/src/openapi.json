@@ -2034,6 +2034,73 @@
           "items"
         ]
       },
+      "ChildrenAiResolveGuardianResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "schoolId": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "classLabel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "grade": {
+                  "type": "string",
+                  "enum": [
+                    "6e",
+                    "5e",
+                    "4e",
+                    "3e"
+                  ]
+                }
+              },
+              "required": [
+                "studentId",
+                "schoolId",
+                "firstName",
+                "lastName"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "displayName",
+          "children"
+        ]
+      },
+      "ChildrenAiResolveGuardianRequest": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "subjectId"
+        ]
+      },
       "School": {
         "type": "object",
         "properties": {
@@ -32160,6 +32227,78 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/children-ai/resolve-guardian": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Resolve a guardian and linked students for Children AI (sibling secret)",
+        "requestBody": {
+          "description": "Identity subject to resolve",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildrenAiResolveGuardianRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guardian school and children",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildrenAiResolveGuardianResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid resolve secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {

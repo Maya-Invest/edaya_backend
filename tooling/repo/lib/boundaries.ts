@@ -151,7 +151,10 @@ export function findBoundaryViolations(
     if (!existsSync(searchDirectory)) {
       return []
     }
-    const matches = (statSync(searchDirectory).isFile() ? [searchDirectory] : [...walkFiles(searchDirectory)]).filter(filePath => !check.excludePath || !filePath.startsWith(`${resolve(repoRoot, check.excludePath)}/`)).flatMap(filePath => (
+    const excludedPrefix = check.excludePath
+      ? `${resolve(repoRoot, check.excludePath).replaceAll('\\', '/')}/`
+      : undefined
+    const matches = (statSync(searchDirectory).isFile() ? [searchDirectory] : [...walkFiles(searchDirectory)]).filter(filePath => !excludedPrefix || !filePath.replaceAll('\\', '/').startsWith(excludedPrefix)).flatMap(filePath => (
       findMatchesInFile(filePath, check.pattern, repoRoot)
     ))
 

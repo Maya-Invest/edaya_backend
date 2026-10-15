@@ -16,7 +16,7 @@ export function commandDocumentation(write = false, root = repoRoot): void {
   const updated = `${text.slice(0, from + start.length)}\n\n${`\`\`\`text\n${help().trimEnd()}\n\`\`\``}\n\n${text.slice(to)}`
   if (write)
     writeFileSync(file, updated)
-  else if (text !== updated)
+  else if (text.replaceAll('\r\n', '\n') !== updated.replaceAll('\r\n', '\n'))
     throw new Error('Command documentation drift. Run bun tooling/repo/cli/command-docs.ts --write')
 }
 if (import.meta.main) {
