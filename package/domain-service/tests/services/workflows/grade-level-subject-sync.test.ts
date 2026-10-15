@@ -3,15 +3,88 @@ import { describe, expect, it } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
-async function createContext() {
-  const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true })
+async function createContext(owner = true) {
+  const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner })
   const repositories = fixture.schoolRepositories
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-6', schoolId: 'sch1', name: '6', label: '6', order: 6 }))
   return { service: fixture.app, repositories }
 }
 
+async function createWorkloadContext(owner = true) {
+  const context = await createContext(owner)
+  const { repositories } = context
+  await repositories.subjects.save(new Subject({ id: 'subj-math', schoolId: 'sch1', name: 'Math', code: 'MATH', defaultCoefficient: 2 }))
+  await repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'gls-math', gradeLevelId: 'gl-6', academicYearId: 'ay1', subjectId: 'subj-math', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2 }))
+  for (const id of ['6a', '6b']) {
+    await repositories.classGroups.save(new ClassGroup({ id, schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: id }))
+    await repositories.classSubjects.save(new ClassSubject({ id: `cs-${id}`, classGroupId: id, subjectId: 'subj-math', gradeLevelSubjectId: 'gls-math', periodsPerWeek: 3, minPeriodSpan: 1, maxPeriodSpan: 2, completedPercentage: 25, isOffered: id === '6a' }))
+  }
+  await repositories.gradeLevels.save(new GradeLevel({ id: 'gl-5', schoolId: 'sch1', name: '5', label: '5', order: 5 }))
+  await repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'gls-other', gradeLevelId: 'gl-5', academicYearId: 'ay1', subjectId: 'subj-math', periodsPerWeek: 7 }))
+  return context
+}
+
 describe('grade level subject inheritance through native policies', () => {
+  it('saves subject details and shared workload together, preserving class state and other allocations', async () => {
+    const { service, repositories } = await createWorkloadContext()
+    await service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', name: 'Mathematics', color: SubjectColor.Sky, periodsPerWeek: 5, minPeriodSpan: 2, maxPeriodSpan: 3 })
+    const subject = await repositories.subjects.findById('subj-math')
+    expect(subject?.name).toBe('Mathematics')
+    expect(subject?.color).toBe(SubjectColor.Sky)
+    expect(subject?.code).toBe('MATH')
+    expect(subject?.defaultCoefficient).toBe(2)
+    expect((await repositories.gradeLevelSubjects.findById('gls-math'))?.periodsPerWeek).toBe(5)
+    expect((await repositories.gradeLevelSubjects.findById('gls-other'))?.periodsPerWeek).toBe(7)
+    for (const id of ['6a', '6b']) {
+      const row = await repositories.classSubjects.findById(`cs-${id}`)
+      expect(row?.periodsPerWeek).toBe(5)
+      expect(row?.minPeriodSpan).toBe(2)
+      expect(row?.maxPeriodSpan).toBe(3)
+      expect(row?.completedPercentage).toBe(25)
+      expect(row?.isOffered).toBe(id === '6a')
+    }
+    await service.setupWorkflow.createClassGroup({ id: '6c', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6C' })
+    const inherited = await repositories.classSubjects.findOne({ classGroupId: '6c', gradeLevelSubjectId: 'gls-math' })
+    expect(inherited?.periodsPerWeek).toBe(5)
+    expect(inherited?.minPeriodSpan).toBe(2)
+    expect(inherited?.maxPeriodSpan).toBe(3)
+  })
+
+  it('preserves omitted workload fields and clears explicitly null settings on the subject and classes', async () => {
+    const { service, repositories } = await createWorkloadContext()
+    await service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', name: 'Maths' })
+    expect((await repositories.classSubjects.findById('cs-6a'))?.periodsPerWeek).toBe(3)
+    await service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', periodsPerWeek: null, minPeriodSpan: null, maxPeriodSpan: null })
+    for (const row of [await repositories.gradeLevelSubjects.findById('gls-math'), ...await repositories.classSubjects.list({ gradeLevelSubjectId: 'gls-math' })]) {
+      expect(row?.periodsPerWeek).toBeUndefined()
+      expect(row?.minPeriodSpan).toBeUndefined()
+      expect(row?.maxPeriodSpan).toBeUndefined()
+    }
+  })
+
+  it('rejects invalid workload and rolls back workload when the combined metadata save fails', async () => {
+    const { service, repositories } = await createWorkloadContext()
+    for (const changes of [{ periodsPerWeek: 0 }, { periodsPerWeek: 1.5 }, { minPeriodSpan: 3, maxPeriodSpan: 1 }, { minPeriodSpan: 3 }]) {
+      await expect(service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', name: 'Changed', ...changes })).rejects.toThrow()
+    }
+    await expect(service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', categoryId: 'missing-category', periodsPerWeek: 5 })).rejects.toThrow()
+    const classSubject = (await repositories.classSubjects.findById('cs-6b'))!
+    await repositories.classSubjects.save(new ClassSubject({ ...classSubject.data, minPeriodSpan: 2 }))
+    await expect(service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', name: 'Changed', maxPeriodSpan: 1 })).rejects.toThrow()
+    expect((await repositories.subjects.findById('subj-math'))?.name).toBe('Math')
+    expect((await repositories.gradeLevelSubjects.findById('gls-math'))?.periodsPerWeek).toBe(3)
+    expect((await repositories.classSubjects.findById('cs-6a'))?.periodsPerWeek).toBe(3)
+    expect((await repositories.classSubjects.findById('cs-6a'))?.maxPeriodSpan).toBe(2)
+  })
+
+  it('denies a combined workload save without curriculum permissions', async () => {
+    const { service, repositories } = await createWorkloadContext(false)
+    await expect(service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'gls-math', name: 'Changed', periodsPerWeek: 5 })).rejects.toThrow()
+    expect((await repositories.subjects.findById('subj-math'))?.name).toBe('Math')
+    expect((await repositories.gradeLevelSubjects.findById('gls-math'))?.periodsPerWeek).toBe(3)
+  })
+
   it('mirrors grade level subjects to every class in the grade and new classes', async () => {
     const { service, repositories } = await createContext()
     await repositories.gradeLevels.save(new GradeLevel({

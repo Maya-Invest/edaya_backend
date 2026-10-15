@@ -14833,6 +14833,13 @@ export interface components {
             gradeLevelSubjectId: string;
             coefficient?: number;
             isOptional?: boolean;
+            name?: string;
+            categoryId?: string;
+            /** @enum {string} */
+            color?: "mint" | "sky" | "warm";
+            periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
         };
         GradeLevelSubjectMatter: {
             id: string;

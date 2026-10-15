@@ -38,6 +38,12 @@ export interface UpdateGradeLevelSubjectInput {
   gradeLevelSubjectId: string
   coefficient?: number
   isOptional?: boolean
+  name?: string
+  categoryId?: string
+  color?: SubjectInput['color']
+  periodsPerWeek?: number | null
+  minPeriodSpan?: number | null
+  maxPeriodSpan?: number | null
 }
 
 export interface AddCustomClassSubjectInput {
@@ -139,25 +145,48 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     })
   }
 
-  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
+  async updateGradeLevelSubject({ gradeLevelSubjectId, coefficient, isOptional, name, categoryId, color, periodsPerWeek, minPeriodSpan, maxPeriodSpan }: UpdateGradeLevelSubjectInput): Promise<GradeLevelSubject> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireGradeLevelSubject(gradeLevelSubjectId)
+      const workload = {
+        ...(periodsPerWeek !== undefined ? { periodsPerWeek: periodsPerWeek ?? undefined } : {}),
+        ...(minPeriodSpan !== undefined ? { minPeriodSpan: minPeriodSpan ?? undefined } : {}),
+        ...(maxPeriodSpan !== undefined ? { maxPeriodSpan: maxPeriodSpan ?? undefined } : {}),
+      }
+      const nextMin = minPeriodSpan === undefined ? existing.minPeriodSpan : minPeriodSpan
+      const nextMax = maxPeriodSpan === undefined ? existing.maxPeriodSpan : maxPeriodSpan
+      if (nextMin != null && nextMax != null && nextMax < nextMin) {
+        throw new BusinessRuleViolationError('GRADE_LEVEL_SUBJECT_PERIOD_SPAN_INVALID', 'maxPeriodSpan must be greater than or equal to minPeriodSpan')
+      }
       const updated = await saveGradeLevelSubjectEntity(this.baseService, {
         ...existing.data,
+        ...workload,
         coefficient: coefficient ?? existing.coefficient,
         isOptional: isOptional ?? existing.isOptional,
         createdAt: existing.createdAt,
       })
+
+      if (name !== undefined || categoryId !== undefined || color !== undefined) {
+        const subject = await this.baseService.entities.subjects.findById(existing.subjectId)
+        if (!subject) {
+          denyResourceAccess()
+        }
+        await this.baseService.entities.subjects.save(subject.copyWith({ name, categoryId, color }))
+      }
 
       const classSubjects = await this.repositories.classSubjects.list({ gradeLevelSubjectId })
       const isOptionalChanged = updated.isOptional !== existing.isOptional
       for (const classSubject of classSubjects) {
         const next = new ClassSubject({
           ...classSubject.data,
+          ...workload,
           coefficient: coefficient ?? classSubject.coefficient,
           isOffered: isOptionalChanged ? !updated.isOptional : classSubject.isOffered,
           createdAt: classSubject.createdAt,
         })
+        if (next.minPeriodSpan !== undefined && next.maxPeriodSpan !== undefined && next.maxPeriodSpan < next.minPeriodSpan) {
+          throw new BusinessRuleViolationError('GRADE_LEVEL_SUBJECT_PERIOD_SPAN_INVALID', 'maxPeriodSpan must be greater than or equal to minPeriodSpan')
+        }
         const scope = await this.baseService.access.curriculum.assertUpdateSubject(next, classSubject)
         await assertClassSubjectGradingMutable(next, classSubject, this.repositories)
         await this.repositories.classSubjects.forAccess(scope).save(next)

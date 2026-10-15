@@ -442,6 +442,12 @@ export const updateGradeLevelSubjectCommandSchema = z.object({
   gradeLevelSubjectId: field.id(),
   coefficient: z.number().positive().optional(),
   isOptional: z.boolean().optional(),
+  name: field.text().optional(),
+  categoryId: field.id().optional(),
+  color: z.enum(["mint", "sky", "warm"]).optional(),
+  periodsPerWeek: z.number().int().positive().nullable().optional(),
+  minPeriodSpan: z.number().int().positive().nullable().optional(),
+  maxPeriodSpan: z.number().int().positive().nullable().optional(),
 }).openapi("UpdateGradeLevelSubjectCommand");
 
 export const addCustomClassSubjectCommandSchema = objectFromSchema(classSubjectSchema)
