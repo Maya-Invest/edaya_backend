@@ -4,7 +4,7 @@ import type { ProfilePicturesSeedPort } from '../port'
 import { AttachmentStatus, parseAttachmentIdFromContentUrl } from '@edaya/core'
 import { buildAttachmentContentUrl } from '@edaya/service'
 import { withSeedPortError } from '../../../support/seed-port-error'
-import { postCoreCommand, postEntityFindById } from '../../../transport/http/core-entity'
+import { postCoreCommand, postEntityFindById, postEntitySave } from '../../../transport/http/core-entity'
 
 export interface CreateHttpProfilePicturesSeedPortOptions {
   client: HttpSeedClient
@@ -120,6 +120,12 @@ export function createHttpProfilePicturesSeedPort(
     }),
     setStaffPhotoUrl: (staffId, photoUrl) => withSeedPortError('profilePictures.setStaffPhotoUrl', async () => {
       await postCoreCommand(requestOptions, 'updateStaffMemberProfile', { staffId, photoUrl })
+    }),
+    setTeacherPhotoUrl: (teacherId, photoUrl) => withSeedPortError('profilePictures.setTeacherPhotoUrl', async () => {
+      const teacher = await postEntityFindById(requestOptions, 'teachers', teacherId)
+      if (!teacher || typeof teacher !== 'object')
+        throw new Error(`Teacher ${teacherId} not found`)
+      await postEntitySave(requestOptions, 'teachers', { ...teacher, photoUrl })
     }),
   }
 }

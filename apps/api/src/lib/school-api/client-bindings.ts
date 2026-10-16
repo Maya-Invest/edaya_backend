@@ -32,6 +32,12 @@ const manualClientRoutes: Pick<
       requestSchemaName: "ScopeRenderRequest",
       responseSchemaName: "ScopeRenderResponse",
     },
+    scopeSelectionsRender: {
+      method: "POST",
+      path: "authorization/scope-selections/render",
+      requestSchemaName: "ScopeSelectionsRenderRequest",
+      responseSchemaName: "ScopeSelectionsRenderResponse",
+    },
   },
   onboarding: {
     registerSchool: {

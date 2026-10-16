@@ -32,8 +32,9 @@ export function countPublishedPhotosFromPeople(
   students: readonly unknown[],
   staffMembers: readonly unknown[],
   guardians: readonly unknown[],
+  teachers: readonly unknown[],
 ): number {
-  return [...students, ...staffMembers, ...guardians].filter(personHasPublishedPhoto).length
+  return [...students, ...staffMembers, ...guardians, ...teachers].filter(personHasPublishedPhoto).length
 }
 
 export function countGuardianLinks(dataset: FixtureDataset): number {
@@ -285,7 +286,7 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'disciplinary-actions': countArray(entities.disciplinaryActions),
     'student-disciplinary-actions': countArray(entities.studentDisciplinaryActions),
     'attachments': countAttachments(dataset),
-    'profile-photos': staff + students + guardians,
+    'profile-photos': staff + students + guardians + countArray(entities.teachers),
     'school-branding': entities.school ? 1 : 0,
   }
 }

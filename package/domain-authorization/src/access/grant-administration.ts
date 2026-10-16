@@ -15,6 +15,11 @@ export interface DelegatedGrant {
 /** Validate the complete placement against this tenant, including redundant parent IDs. */
 export async function validateGrantTargets(facts: AccessFacts, grant: DelegatedGrant): Promise<void> {
   validatePermissionScopes(grant.permission, grant.scopes)
+  await validateScopeSelectionTargets(facts, grant)
+}
+
+/** Validate saved selections without treating them as grants for a particular action. */
+export async function validateScopeSelectionTargets(facts: AccessFacts, grant: { scopes: readonly GrantScope[], academicYearId: string }): Promise<void> {
   await facts.one('academicYears', grant.academicYearId)
   for (const scope of grant.scopes) {
     switch (scope.kind) {

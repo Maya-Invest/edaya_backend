@@ -6,6 +6,8 @@ import {
   getPermissionCatalogRoute,
   postScopeRenderHandler,
   postScopeRenderRoute,
+  postScopeSelectionsRenderHandler,
+  postScopeSelectionsRenderRoute,
 } from "@/routes/authorization.routes";
 import {
   createServiceAccountHandler,
@@ -110,6 +112,7 @@ router
   .openapi(getAuthorizationProfilesRoute, getAuthorizationProfilesHandler)
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
+  .openapi(postScopeSelectionsRenderRoute, postScopeSelectionsRenderHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)

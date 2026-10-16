@@ -62,6 +62,6 @@ export function resolveProfilePicturePath(fileName: string): string {
   return path.join(DEV_FIXTURES_PICTURES_DIR, fileName)
 }
 
-export function buildSeedProfileAttachmentId(ownerKind: 'student' | 'guardian' | 'staff', ownerId: string): string {
+export function buildSeedProfileAttachmentId(ownerKind: 'student' | 'guardian' | 'staff' | 'teacher', ownerId: string): string {
   return `att-prof-${ownerKind}-${ownerId}`
 }

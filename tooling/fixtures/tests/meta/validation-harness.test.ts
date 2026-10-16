@@ -23,6 +23,12 @@ describe('seed validation harness', () => {
     expect(counts.students).toBe(countStudents(dataset))
     expect(targets.find(target => target.entity === 'students')?.minCount).toBe(countStudents(dataset))
     expect(targets.find(target => target.entity === 'guardians')?.minCount).toBe(countGuardians(dataset))
+    expect(counts['profile-photos']).toBe(
+      (dataset.entities.staffMembers?.length ?? 0)
+      + countStudents(dataset)
+      + countGuardians(dataset)
+      + (dataset.entities.teachers?.length ?? 0),
+    )
   })
 
   it('counts published portraits from people records, not generic attachments', () => {
@@ -30,6 +36,7 @@ describe('seed validation harness', () => {
       [{ photoAttachmentId: 'att-s1' }, { photoUrl: '' }],
       [{ photoUrl: 'https://files.example/st1' }],
       [{ photoUrl: 'https://files.example/g1' }, {}],
-    )).toBe(3)
+      [{ photoUrl: 'https://files.example/t1' }, { photoUrl: null }],
+    )).toBe(4)
   })
 })

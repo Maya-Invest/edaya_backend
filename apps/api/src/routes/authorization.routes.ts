@@ -1,6 +1,6 @@
 import { coreRouteErrorResponses } from "@/lib/school-api/routes/shared";
-import { grantScopeSchema, grantScopesSchema, Permission } from "@edaya/core";
-import { AccessFacts, listPermissionCatalog, renderGrantScopes } from "@edaya/authorization";
+import { grantScopeSchema, grantScopesSchema, Permission, permissionScopeSelectionsSchema } from "@edaya/core";
+import { AccessFacts, listPermissionCatalog, renderGrantScopes, renderScopeSelections } from "@edaya/authorization";
 import { createRoute, z } from "@hono/zod-openapi";
 import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
@@ -136,6 +136,52 @@ export const postScopeRenderHandler: AppRouteHandler<typeof postScopeRenderRoute
       scopes: await renderGrantScopes(facts, { ...item, academicYearId: body.academicYearId }),
     })));
     return c.json({ items }, HttpStatusCodes.OK);
+  }
+  catch (error) {
+    return routeErrorResponse(c, error);
+  }
+};
+
+const scopeSelectionsRenderRequestSchema = z.object({
+  academicYearId: z.string().trim().min(1),
+  scopes: permissionScopeSelectionsSchema,
+}).openapi("ScopeSelectionsRenderRequest");
+
+const scopeSelectionsRenderResponseSchema = z.object({
+  scopes: z.array(z.object({ scope: grantScopeSchema, label: z.string(), missing: z.boolean() })),
+}).openapi("ScopeSelectionsRenderResponse");
+
+export const postScopeSelectionsRenderRoute = createRoute({
+  method: "post",
+  path: schoolApiPath("authorization", "scope-selections", "render"),
+  tags: ["Core Authorization"],
+  summary: "Label saved scope selections for the access-control UI",
+  request: { body: jsonContent(scopeSelectionsRenderRequestSchema, "Scope selections") },
+  ...clientRouteOperation({
+    namespace: "authorization",
+    clientKey: "scopeSelectionsRender",
+    path: "authorization/scope-selections/render",
+    requestSchemaName: "ScopeSelectionsRenderRequest",
+    responseSchemaName: "ScopeSelectionsRenderResponse",
+  }),
+  responses: {
+    ...coreRouteErrorResponses,
+    [HttpStatusCodes.OK]: jsonContent(scopeSelectionsRenderResponseSchema, "Rendered scope selections"),
+  },
+});
+
+export const postScopeSelectionsRenderHandler: AppRouteHandler<typeof postScopeSelectionsRenderRoute> = async (c) => {
+  const actor = c.get("actor");
+  const interactiveActor = actor && requireSchoolInteractiveActor(actor);
+  if (!interactiveActor) {
+    return unauthorizedResponse(c);
+  }
+  const body = c.req.valid("json");
+  const service = c.get("schoolApp").forActor(interactiveActor);
+  try {
+    await service.baseService.access.staffPermissions.assertRead();
+    const facts = new AccessFacts(interactiveActor, service.baseService.repositories);
+    return c.json({ scopes: await renderScopeSelections(facts, body) }, HttpStatusCodes.OK);
   }
   catch (error) {
     return routeErrorResponse(c, error);

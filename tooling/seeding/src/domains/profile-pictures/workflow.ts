@@ -42,21 +42,14 @@ async function mapWithConcurrency<T>(
 async function seedProfilePhotoForOwner(
   port: ProfilePicturesSeedPort,
   schoolId: string,
-  ownerKind: AttachmentOwnerKind,
+  ownerKind: AttachmentOwnerKind.Staff | AttachmentOwnerKind.Guardian | AttachmentOwnerKind.Student | AttachmentOwnerKind.Teacher,
   ownerId: string,
   pickPictureFile: () => string,
   setPhotoUrl: (photoUrl: string) => Promise<void>,
 ): Promise<void> {
   const pictureFileName = pickPictureFile()
   const body = await readFile(resolveProfilePicturePath(pictureFileName))
-  const attachmentId = buildSeedProfileAttachmentId(
-    ownerKind === AttachmentOwnerKind.Staff
-      ? 'staff'
-      : ownerKind === AttachmentOwnerKind.Guardian
-        ? 'guardian'
-        : 'student',
-    ownerId,
-  )
+  const attachmentId = buildSeedProfileAttachmentId(ownerKind, ownerId)
 
   const uploaded = await port.uploadProfilePhoto({
     attachmentId,
@@ -82,21 +75,27 @@ export async function seedDevProfilePictures(
   const staffMembers = dataset.entities.staffMembers ?? []
   const students = dataset.entities.students ?? []
   const guardians = dataset.entities.guardians ?? []
+  const teachers = dataset.entities.teachers ?? []
   const targets = [
     ...staffMembers.map(staff => ({
-      ownerKind: AttachmentOwnerKind.Staff,
+      ownerKind: AttachmentOwnerKind.Staff as const,
       ownerId: staff.id,
       setPhotoUrl: (photoUrl: string) => port.setStaffPhotoUrl(staff.id, photoUrl),
     })),
     ...students.map(student => ({
-      ownerKind: AttachmentOwnerKind.Student,
+      ownerKind: AttachmentOwnerKind.Student as const,
       ownerId: student.id,
       setPhotoUrl: (photoUrl: string) => port.setStudentPhotoUrl(student.id, photoUrl),
     })),
     ...guardians.map(guardian => ({
-      ownerKind: AttachmentOwnerKind.Guardian,
+      ownerKind: AttachmentOwnerKind.Guardian as const,
       ownerId: guardian.id,
       setPhotoUrl: (photoUrl: string) => port.setGuardianPhotoUrl(guardian.id, photoUrl),
+    })),
+    ...teachers.map(teacher => ({
+      ownerKind: AttachmentOwnerKind.Teacher as const,
+      ownerId: teacher.id,
+      setPhotoUrl: (photoUrl: string) => port.setTeacherPhotoUrl(teacher.id, photoUrl),
     })),
   ]
 

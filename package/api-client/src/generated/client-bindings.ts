@@ -2166,6 +2166,12 @@ export const clientBindings = {
         "path": "authorization/scope/render",
         "requestSchemaName": "ScopeRenderRequest",
         "responseSchemaName": "ScopeRenderResponse"
+      },
+      "scopeSelectionsRender": {
+        "method": "POST",
+        "path": "authorization/scope-selections/render",
+        "requestSchemaName": "ScopeSelectionsRenderRequest",
+        "responseSchemaName": "ScopeSelectionsRenderResponse"
       }
     },
     "onboarding": {

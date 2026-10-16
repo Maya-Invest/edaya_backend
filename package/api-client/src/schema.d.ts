@@ -473,6 +473,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/authorization/scope-selections/render": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Label saved scope selections for the access-control UI */
+        post: operations["authorization.scopeSelectionsRender"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/onboarding/register-school": {
         parameters: {
             query?: never;
@@ -12721,6 +12738,88 @@ export interface components {
                 })[];
             }[];
         };
+        ScopeSelectionsRenderResponse: {
+            scopes: {
+                scope: {
+                    /** @enum {string} */
+                    kind: "school";
+                } | {
+                    /** @enum {string} */
+                    kind: "all";
+                    /** @enum {string} */
+                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                } | {
+                    /** @enum {string} */
+                    kind: "grade_level";
+                    gradeLevelId: string;
+                } | {
+                    /** @enum {string} */
+                    kind: "grade_level_subject";
+                    gradeLevelId: string;
+                    gradeLevelSubjectId?: string;
+                } | {
+                    /** @enum {string} */
+                    kind: "class_group";
+                    classGroupId: string;
+                } | {
+                    /** @enum {string} */
+                    kind: "class_subject";
+                    classGroupId: string;
+                    classSubjectId?: string;
+                } | {
+                    /** @enum {string} */
+                    kind: "activity";
+                    activityId?: string;
+                    classGroupId?: string;
+                } | {
+                    /** @enum {string} */
+                    kind: "student";
+                    studentId: string;
+                };
+                label: string;
+                missing: boolean;
+            }[];
+        };
+        ScopeSelectionsRenderRequest: {
+            academicYearId: string;
+            /** @default [] */
+            scopes: ({
+                /** @enum {string} */
+                kind: "school";
+            } | {
+                /** @enum {string} */
+                kind: "all";
+                /** @enum {string} */
+                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+            } | {
+                /** @enum {string} */
+                kind: "grade_level";
+                gradeLevelId: string;
+            } | {
+                /** @enum {string} */
+                kind: "grade_level_subject";
+                gradeLevelId: string;
+                gradeLevelSubjectId?: string;
+            } | {
+                /** @enum {string} */
+                kind: "class_group";
+                classGroupId: string;
+            } | {
+                /** @enum {string} */
+                kind: "class_subject";
+                classGroupId: string;
+                classSubjectId?: string;
+            } | {
+                /** @enum {string} */
+                kind: "activity";
+                activityId?: string;
+                classGroupId?: string;
+            } | {
+                /** @enum {string} */
+                kind: "student";
+                studentId: string;
+            })[];
+        };
         School: {
             id: string;
             name: string;
@@ -20539,6 +20638,84 @@ export interface operations {
                 };
             };
             /** @description Access denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "authorization.scopeSelectionsRender": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Scope selections */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScopeSelectionsRenderRequest"];
+            };
+        };
+        responses: {
+            /** @description Rendered scope selections */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScopeSelectionsRenderResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
             403: {
                 headers: {
                     [name: string]: unknown;

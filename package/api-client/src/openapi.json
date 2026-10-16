@@ -2034,6 +2034,403 @@
           "items"
         ]
       },
+      "ScopeSelectionsRenderResponse": {
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "scope": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "school"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "all"
+                          ]
+                        },
+                        "grain": {
+                          "type": "string",
+                          "enum": [
+                            "grade_level",
+                            "grade_level_subject",
+                            "class_group",
+                            "class_subject",
+                            "activity",
+                            "student"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "grain"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "grade_level"
+                          ]
+                        },
+                        "gradeLevelId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "gradeLevelId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "grade_level_subject"
+                          ]
+                        },
+                        "gradeLevelId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "gradeLevelSubjectId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "gradeLevelId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "class_group"
+                          ]
+                        },
+                        "classGroupId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "classGroupId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "class_subject"
+                          ]
+                        },
+                        "classGroupId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "classSubjectId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "classGroupId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "activity"
+                          ]
+                        },
+                        "activityId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "classGroupId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "student"
+                          ]
+                        },
+                        "studentId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "studentId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "missing": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "scope",
+                "label",
+                "missing"
+              ]
+            }
+          }
+        },
+        "required": [
+          "scopes"
+        ]
+      },
+      "ScopeSelectionsRenderRequest": {
+        "type": "object",
+        "properties": {
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "school"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "all"
+                      ]
+                    },
+                    "grain": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level",
+                        "grade_level_subject",
+                        "class_group",
+                        "class_subject",
+                        "activity",
+                        "student"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "grain"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "grade_level_subject"
+                      ]
+                    },
+                    "gradeLevelId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gradeLevelSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "gradeLevelId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_group"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "class_subject"
+                      ]
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classSubjectId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "classGroupId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "activity"
+                      ]
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "classGroupId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "student"
+                      ]
+                    },
+                    "studentId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "studentId"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "academicYearId"
+        ]
+      },
       "School": {
         "type": "object",
         "properties": {
@@ -32163,6 +32560,136 @@
           },
           "403": {
             "description": "Access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/authorization/scope-selections/render": {
+      "post": {
+        "tags": [
+          "Core Authorization"
+        ],
+        "summary": "Label saved scope selections for the access-control UI",
+        "operationId": "authorization.scopeSelectionsRender",
+        "x-edaya-kind": "authorization",
+        "x-edaya-client-key": "scopeSelectionsRender",
+        "x-edaya-client-path": "authorization/scope-selections/render",
+        "x-edaya-request-schema": "ScopeSelectionsRenderRequest",
+        "x-edaya-response-schema": "ScopeSelectionsRenderResponse",
+        "requestBody": {
+          "description": "Scope selections",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScopeSelectionsRenderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendered scope selections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopeSelectionsRenderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
             "content": {
               "application/json": {
                 "schema": {

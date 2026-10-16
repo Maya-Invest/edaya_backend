@@ -1,5 +1,5 @@
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { MessageDeliveryRecipientKind, MessageDeliveryStatus } from '@edaya/core'
+import { AttachmentOwnerKind, AttachmentStatus, MessageDeliveryRecipientKind, MessageDeliveryStatus, TEACHER_PORTRAIT_PURPOSE } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
 import {
   DEMO_CI_DASHBOARD_ACADEMIC_PERIOD_ID,
@@ -20,6 +20,7 @@ import {
   buildSeedValidationTargets,
 } from '@edaya/fixtures/meta/validation-harness'
 import { SEED_SCHOOL_ID } from '@edaya/fixtures/shared/ids'
+import { buildSeedProfileAttachmentId } from '@edaya/fixtures/shared/profile-pictures'
 import { createInProcessCommunicationsSeedPort } from '@edaya/seeding'
 import { isSeedEntityKey, seedEntityPublicName } from '@edaya/seeding/http'
 import { buildSchoolOverview } from '@edaya/service'
@@ -38,7 +39,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
         continue
       }
       if (target.entity === 'profile-photos') {
-        const people = await Promise.all((['students', 'staffMembers', 'guardians'] as const).map(async (entityKey) => {
+        const people = await Promise.all((['students', 'staffMembers', 'guardians', 'teachers'] as const).map(async (entityKey) => {
           const response = await app.request(createAppRequest(`/core/entities/${seedEntityPublicName(entityKey)}/list`, {
             method: 'POST',
             headers,
@@ -49,7 +50,7 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
           }
           return unwrapEntityList(await response.json())
         }))
-        const count = countPublishedPhotosFromPeople(people[0], people[1], people[2])
+        const count = countPublishedPhotosFromPeople(people[0], people[1], people[2], people[3])
         if (count < target.minCount) {
           failures.push(`${target.entity}: expected >= ${target.minCount}, got ${count}`)
         }
@@ -73,6 +74,34 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     }
 
     expect(failures).toEqual([])
+  })
+
+  it('publishes a downloadable portrait for every seeded teacher', async () => {
+    const { application, app, authHeaders } = getContext()
+    const headers = await authHeaders()
+    for (const teacher of demoCiDataset.entities.teachers ?? []) {
+      const attachmentId = buildSeedProfileAttachmentId('teacher', teacher.id)
+      const saved = await application.repositories.teachers.findById(teacher.id)
+      expect(saved?.photoUrl).toEndWith(`/core/files/${attachmentId}/content`)
+      const attachment = await application.repositories.attachments.findById(attachmentId)
+      expect(attachment?.data).toMatchObject({
+        ownerKind: AttachmentOwnerKind.Teacher,
+        ownerId: teacher.id,
+        purpose: TEACHER_PORTRAIT_PURPOSE,
+        status: AttachmentStatus.Ready,
+        mimeType: 'image/jpeg',
+      })
+      const response = await app.request(createAppRequest(`/core/files/${attachmentId}/download-url`, { headers }))
+      expect(response.status).toBe(200)
+      const grant = await response.json() as { downloadUrl: string }
+      // In-process fixtures issue memory:// grants; the API exposes those bytes at its memory route.
+      const storageKey = decodeURIComponent(new URL(grant.downloadUrl).pathname.slice(1))
+      expect(attachment?.storageKey).toBe(storageKey)
+      const image = await app.request(createAppRequest(`/core/files/memory/${encodeURIComponent(storageKey)}`, { headers }))
+      expect(image.status).toBe(200)
+      expect(image.headers.get('content-type')).toBe('image/jpeg')
+      expect(new Uint8Array(await image.arrayBuffer()).slice(0, 2)).toEqual(new Uint8Array([0xFF, 0xD8]))
+    }
   })
 
   it('seeds minimum-only scales with persistent interval identities', async () => {

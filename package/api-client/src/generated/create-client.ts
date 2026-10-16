@@ -59,6 +59,7 @@ type AuthorizationClients<TSchemas extends Record<string, unknown>> = {
   profiles: () => Promise<SchemaName<TSchemas, 'AuthorizationProfilesResponse'>>
   permissionCatalog: () => Promise<SchemaName<TSchemas, 'PermissionCatalogResponse'>>
   scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeRenderResponse'>>
+  scopeSelectionsRender: (payload: SchemaName<TSchemas, 'ScopeSelectionsRenderRequest'>) => Promise<SchemaName<TSchemas, 'ScopeSelectionsRenderResponse'>>
 }
 
 type FilesClients<TSchemas extends Record<string, unknown>> = {
@@ -182,6 +183,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     profiles: () => transport.request('GET', resolveClientRoutePath('authorization/profiles')),
     permissionCatalog: () => transport.request('GET', resolveClientRoutePath('authorization/permission-catalog')),
     scopeRender: (payload: SchemaName<TSchemas, 'ScopeRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope/render'), { body: payload }),
+    scopeSelectionsRender: (payload: SchemaName<TSchemas, 'ScopeSelectionsRenderRequest'>) => transport.request('POST', resolveClientRoutePath('authorization/scope-selections/render'), { body: payload }),
   } as AuthorizationClients<TSchemas>,
     files: {
     createUploadIntent: (payload: SchemaName<TSchemas, 'CreateFileUploadIntentRequest'>) => transport.request('POST', resolveClientRoutePath('files/upload-intents'), { body: payload }),

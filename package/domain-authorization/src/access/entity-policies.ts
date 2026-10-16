@@ -49,7 +49,7 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
   attachments: { read: [Permission.ATTACHMENT_READ], write: [Permission.ATTACHMENT_CONFIGURE] },
   classGroups: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_UPDATE, Permission.QUERY_CLASS_DIRECTORY_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE, Permission.GRADE_READ, Permission.CLASS_LOGBOOK_READ, Permission.ATTENDANCE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
   gradeLevels: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_UPDATE, Permission.QUERY_CLASS_DIRECTORY_READ, Permission.GRADE_INPUT, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE, Permission.DISCIPLINE_CREATE, Permission.GRADE_READ, Permission.CLASS_LOGBOOK_READ, Permission.ATTENDANCE_READ], write: [Permission.SCHOOL_STRUCTURE_CONFIGURE] },
-  gradeScales: { read: [Permission.GRADE_READ], write: [Permission.EXAM_CONFIG_CONFIGURE] },
+  gradeScales: { read: [Permission.GRADE_READ, Permission.REPORT_CARD_CONFIGURE, Permission.EXAM_CONFIG_CONFIGURE], write: [Permission.EXAM_CONFIG_CONFIGURE] },
   resourceAssignments: { read: [Permission.RESOURCE_READ], write: [Permission.RESOURCE_CONFIGURE] },
   resources: { read: [Permission.RESOURCE_READ], write: [Permission.RESOURCE_CONFIGURE] },
   schools: { read: Permission.QUERY_WORKSPACE_READ, write: Permission.SCHOOL_LIFECYCLE_MANAGE },

@@ -40,6 +40,12 @@ export function createInProcessProfilePicturesSeedPort(
     setStaffPhotoUrl: (staffId, photoUrl) => withSeedPortError('profilePictures.setStaffPhotoUrl', async () => {
       await service.setupWorkflow.updateStaffMemberProfile({ staffId, photoUrl })
     }),
+    setTeacherPhotoUrl: (teacherId, photoUrl) => withSeedPortError('profilePictures.setTeacherPhotoUrl', async () => {
+      const teacher = await service.baseService.entities.teachers.findById(teacherId)
+      if (!teacher)
+        throw new Error(`Teacher ${teacherId} not found`)
+      await service.baseService.entities.teachers.save(teacher.copyWith({ photoUrl }))
+    }),
   }
 }
 
