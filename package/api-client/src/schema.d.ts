@@ -13448,7 +13448,6 @@ export interface components {
                         maxScore: number;
                         gpaValue?: number | null;
                         interpretation?: string | null;
-                        isPassing: boolean;
                     }[];
                 };
                 /** @default {} */
@@ -15046,7 +15045,6 @@ export interface components {
                 maxScore: number;
                 gpaValue?: number | null;
                 interpretation?: string | null;
-                isPassing: boolean;
             }[];
         };
         ConfigureGradeScaleCommand: {
@@ -15074,7 +15072,6 @@ export interface components {
                 minScore: number;
                 gpaValue?: number | null;
                 interpretation?: string | null;
-                isPassing: boolean;
             };
             intervalId?: string;
         };
@@ -15086,6 +15083,7 @@ export interface components {
             academicYearId: string;
             gradeLevelId: string;
             gradeScaleId: string;
+            passThreshold?: number | null;
             name: string;
             /**
              * @default custom
@@ -15111,6 +15109,7 @@ export interface components {
             metadata?: {
                 name: string;
                 description?: string | null;
+                passThreshold?: number | null;
             };
             section?: {
                 id: string;
@@ -15137,7 +15136,6 @@ export interface components {
             maxScore: number;
             gpaValue?: number | null;
             interpretation?: string | null;
-            isPassing: boolean;
         };
         CreateGradeScaleCommand: {
             id: string;
@@ -15173,6 +15171,7 @@ export interface components {
             academicYearId: string;
             gradeLevelId: string;
             gradeScaleId: string;
+            passThreshold?: number | null;
             name: string;
             /**
              * @default custom
@@ -15919,7 +15918,6 @@ export interface components {
                     id: string;
                     code: string;
                     label: string;
-                    isPassing: boolean;
                 };
                 /** @enum {string} */
                 provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
@@ -16024,7 +16022,6 @@ export interface components {
                     id: string;
                     code: string;
                     label: string;
-                    isPassing: boolean;
                 };
                 /** @enum {string} */
                 provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
@@ -16115,7 +16112,6 @@ export interface components {
                     id: string;
                     code: string;
                     label: string;
-                    isPassing: boolean;
                 };
                 /** @enum {string} */
                 provenance: "numeric-normalization" | "mention-points" | "explicit-equivalent";
@@ -18155,7 +18151,6 @@ export interface components {
                         maxScore: number;
                         gpaValue?: number | null;
                         interpretation?: string | null;
-                        isPassing: boolean;
                     }[];
                 };
                 /** @default {} */

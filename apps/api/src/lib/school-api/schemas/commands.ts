@@ -1225,7 +1225,7 @@ export const configureReportCardDefinitionCommandSchema = z.object({
   id: field.id(),
   expectedRevision: z.number().int().nonnegative(),
   action: z.enum(["metadata", "section", "remove-section"]),
-  metadata: objectFromSchema(reportCardDefinitionSchema).pick({ name: true, description: true }).optional(),
+  metadata: objectFromSchema(reportCardDefinitionSchema).pick({ name: true, description: true, passThreshold: true }).optional(),
   section: objectFromSchema(reportCardDefinitionSectionSchema).omit({ reportCardDefinitionId: true, createdAt: true }).optional(),
   sectionId: field.id().optional(),
 }).openapi("ConfigureReportCardDefinitionCommand");

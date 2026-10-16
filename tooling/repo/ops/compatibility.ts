@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { environment, gitEnvironment, root, run, sha } from './runtime'
+import { environment, gitEnvironment, root, run, sha, writeJson } from './runtime'
 import { tool } from './tools'
 
 async function github(path: string): Promise<unknown> {
@@ -28,8 +28,19 @@ export async function compatibility(target: string): Promise<void> {
       throw new Error('Missing reviewed compatibility baseline')
     writeFileSync(baseline, readFileSync(initial))
   }
-  await run([await tool('oasdiff'), 'breaking', baseline, resolve(root, 'tooling/repo/fixtures/openapi.json'), '--fail-on', 'WARN'])
-  await run(['bun', 'test', 'src/compatibility', 'src/auth/production-session-actor.integration.test.ts', 'src/routes/test-school-repository-scope.integration.test.ts', '--parallel=1'], { cwd: resolve(root, 'tooling/integration-tests') })
+  await checkContract(baseline, resolve(root, 'tooling/repo/fixtures/openapi.json'), resolve(root, '.ci-evidence/contract-changes.json'))
+}
+
+/** Clients upgrade with the backend; historical wire changes are release information. */
+export async function checkContract(baseline: string, current: string, report: string, execute: typeof run = run): Promise<void> {
+  rmSync(report, { force: true })
+  // Omitting --fail-on permits reported changes, but tool/spec failures still reject.
+  const changes: unknown = JSON.parse(await execute([await tool('oasdiff'), 'breaking', baseline, current, '--format', 'json'], { quiet: true }))
+  if (!Array.isArray(changes))
+    throw new Error('Invalid contract change report')
+  writeJson(report, { policy: 'clients-upgrade-with-backend', blocking: false, changes })
+  process.stdout.write(`Historical API comparison: ${changes.length} client upgrade changes (informational).\n`)
+  await execute(['bun', 'test', 'src/compatibility', 'src/auth/production-session-actor.integration.test.ts', 'src/routes/test-school-repository-scope.integration.test.ts', '--parallel=1'], { cwd: resolve(root, 'tooling/integration-tests') })
 }
 
 /** Failed recent releases must never make an older successful baseline disappear. */

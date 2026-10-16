@@ -487,7 +487,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
       publicationHistory: existing?.publicationHistory,
       rank: existing?.status === ReportCardResultStatus.Published && !publishing ? undefined : existing?.rank,
       classSize: existing?.classSize,
-      passThreshold: policy ? policy.scale.ranges.find(range => range.isPassing)?.minScore : existing?.passThreshold,
+      passThreshold: definition.passThreshold,
       teacherComment: existing?.teacherComment,
       principalComment: existing?.principalComment,
       status: canPublish && publishing ? (existing?.status ?? ReportCardResultStatus.Draft) : ReportCardResultStatus.Draft,

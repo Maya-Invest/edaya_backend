@@ -32,7 +32,7 @@ beforeAll(async () => {
   await repositories.classSubjects.save(new ClassSubject({ id: 'report-math-class', classGroupId: 'report-class', subjectId: 'report-math' }))
   await repositories.students.save(new Student({ id: 'report-student', schoolId: school.id, firstName: 'Synthetic', lastName: 'Student' }))
   await repositories.enrollments.save(new StudentClassEnrollment({ id: 'report-enrollment', studentId: 'report-student', classGroupId: 'report-class', academicYearId: 'report-year', enrollmentIndex: 1 }))
-  await repositories.gradeScales.save(new GradeScale({ id: 'report-scale', schoolId: school.id, name: '20 points', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }] }))
+  await repositories.gradeScales.save(new GradeScale({ id: 'report-scale', schoolId: school.id, name: '20 points', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
   await repositories.definitions.save(new ReportCardDefinition({ id: 'report-definition', schoolId: school.id, academicYearId: 'report-year', gradeLevelId: 'report-grade', gradeScaleId: 'report-scale', name: 'Report' }))
 }, 30000)
 afterAll(() => Promise.all(handles.map(handle => handle.dispose())))

@@ -9,7 +9,7 @@ export const gradeScaleRangeSchema = z.object({
   maxScore: z.number().finite().nonnegative(),
   gpaValue: z.number().finite().nonnegative().nullable().optional().transform(v => v === null ? undefined : v),
   interpretation: z.string().trim().min(1, 'interpretation must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
-  isPassing: z.boolean(),
+
 })
 export type GradeScaleRange = z.infer<typeof gradeScaleRangeSchema>
 
@@ -135,14 +135,6 @@ export class GradeScale {
   get createdAt() { return this.data.createdAt }
 
   get isComplete(): boolean { return this.ranges.length > 0 }
-
-  get passingScore(): number {
-    const passingRanges = this.ranges.filter(range => range.isPassing)
-    if (passingRanges.length === 0) {
-      return this.minScore
-    }
-    return Math.min(...passingRanges.map(range => range.minScore))
-  }
 
   findRange(score: number): GradeScaleRange | undefined {
     if (score < this.minScore || score > this.maxScore || !Number.isFinite(score))

@@ -36,7 +36,7 @@ export async function seedDevReportCards(
         gpaValue: range.gpaValue ?? undefined,
         letter: range.letter,
         minScore: range.minScore,
-        isPassing: range.isPassing,
+
         interpretation: range.interpretation ?? undefined,
       })), scale.maxScore).map(range => ({ ...range, id: range.id! })),
     })
@@ -52,6 +52,7 @@ export async function seedDevReportCards(
       academicYearId: definition.academicYearId,
       gradeLevelId: definition.gradeLevelId,
       gradeScaleId: definition.gradeScaleId,
+      passThreshold: definition.passThreshold ?? undefined,
       name: definition.name,
       kind: definition.kind ?? ReportCardDefinitionKind.Default,
       status: definition.status ?? ReportCardDefinitionStatus.Draft,

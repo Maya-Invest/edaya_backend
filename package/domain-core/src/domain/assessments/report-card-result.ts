@@ -37,7 +37,7 @@ export const reportCardResultBaseSchema = z.object({
   overallAverage: z.number().finite().nonnegative('overallAverage must be a finite, non-negative number').nullable().optional().transform(v => v === null ? undefined : v),
   rank: z.number().int().nonnegative('rank must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
   classSize: z.number().int().nonnegative('classSize must be a non-negative integer').nullable().optional().transform(v => v === null ? undefined : v),
-  passThreshold: z.number().finite().nonnegative('passThreshold must be a finite, non-negative number').transform(v => roundTo2(v)).nullable().optional().transform(v => v === null ? undefined : v),
+  passThreshold: z.number().finite().nonnegative('passThreshold must be a finite, non-negative number').nullable().optional().transform(v => v === null ? undefined : v),
   teacherComment: z.string().trim().min(1, 'teacherComment must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   principalComment: z.string().trim().min(1, 'principalComment must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   status: z.nativeEnum(ReportCardResultStatus).default(ReportCardResultStatus.Draft),
@@ -120,6 +120,11 @@ export class ReportCardResult {
   get rank() { return this.data.rank }
   get classSize() { return this.data.classSize }
   get passThreshold() { return this.data.passThreshold }
+  /** Classification belongs only to this captured report's overall average. */
+  get isPassing(): boolean | undefined {
+    return this.passThreshold === undefined || this.overallAverage === undefined ? undefined : this.overallAverage >= this.passThreshold
+  }
+
   get teacherComment() { return this.data.teacherComment }
   get principalComment() { return this.data.principalComment }
   get status() { return this.data.status }

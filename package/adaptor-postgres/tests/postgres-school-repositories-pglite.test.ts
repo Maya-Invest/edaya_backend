@@ -1,4 +1,4 @@
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, School, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, ReportCardDefinition, ReportCardResult, School, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -16,6 +16,20 @@ describe('PostgresSchoolRepositories with PGlite', () => {
 
   afterEach(async () => {
     await pglite.close()
+  })
+
+  test('round-trips optional report thresholds without losing three-decimal precision', async () => {
+    const model = new ReportCardDefinition({ id: 'threshold-model', schoolId: 'school', academicYearId: 'year', gradeLevelId: 'level', gradeScaleId: 'scale', name: 'Report', passThreshold: 10.125 })
+    await repos.definitions.save(model)
+    const saved = (await repos.definitions.findById(model.id))!
+    expect(saved.passThreshold).toBe(10.125)
+    await repos.definitions.save(new ReportCardDefinition({ ...saved.data, passThreshold: null }))
+    expect((await repos.definitions.findById(model.id))?.passThreshold).toBeUndefined()
+    const result = new ReportCardResult({ id: 'threshold-result', reportCardDefinitionId: model.id, studentId: 'student', classGroupId: 'class', periodId: 'period', assessmentResultCount: 0, sectionResults: [], attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, overallAverage: 10.12, passThreshold: 10.125 })
+    await repos.results.save(result)
+    const captured = (await repos.results.findById(result.id))!
+    expect(captured.passThreshold).toBe(10.125)
+    expect(captured.isPassing).toBe(false)
   })
 
   test('round-trips a fractional assessment score', async () => {

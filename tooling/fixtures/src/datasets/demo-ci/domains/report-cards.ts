@@ -18,20 +18,19 @@ export const demoCiGradeScales = [
     decimalPlaces: 2,
     intervalConvention: 'continuous',
     roundingMode: 'nearest',
-    description: 'Barème standard — note sur 20, seuil de réussite à 10.',
+    description: 'Barème standard — note sur 20.',
     isDefault: true,
     ranges: rangesFromThresholds([
-      { id: 'ci-gs-20-d', letter: 'D', minScore: 0, isPassing: false, interpretation: 'Insuffisant' },
-      { id: 'ci-gs-20-c', letter: 'C', minScore: 10, isPassing: true, interpretation: 'Assez bien' },
-      { id: 'ci-gs-20-b', letter: 'B', minScore: 14, isPassing: true, interpretation: 'Bien' },
-      { id: 'ci-gs-20-a', letter: 'A', minScore: 16, isPassing: true, interpretation: 'Très bien' },
+      { id: 'ci-gs-20-d', letter: 'D', minScore: 0, interpretation: 'Insuffisant' },
+      { id: 'ci-gs-20-c', letter: 'C', minScore: 10, interpretation: 'Assez bien' },
+      { id: 'ci-gs-20-b', letter: 'B', minScore: 14, interpretation: 'Bien' },
+      { id: 'ci-gs-20-a', letter: 'A', minScore: 16, interpretation: 'Très bien' },
     ], 20),
   },
 ] as const satisfies readonly GradeScaleInput[]
 
 export const demoCiReportCardGradeScaleFixtures = [
   {
-    narrativePassingScore: 10,
     scale: demoCiGradeScales[0],
   },
 ] as const satisfies readonly FixtureReportCardGradeScale[]
@@ -108,6 +107,7 @@ export const demoCiReportCardDefinitionFixtures = [
       academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
       gradeLevelId: 'ci-gl-6',
       gradeScaleId: 'ci-gs-20',
+      passThreshold: 10,
       name: 'Bulletin trimestriel — 6ème',
       kind: ReportCardDefinitionKind.Default,
       status: ReportCardDefinitionStatus.Published,
@@ -124,6 +124,7 @@ export const demoCiReportCardDefinitionFixtures = [
       academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
       gradeLevelId: 'ci-gl-5',
       gradeScaleId: 'ci-gs-20',
+      passThreshold: 10,
       name: 'Bulletin trimestriel — 5ème',
       kind: ReportCardDefinitionKind.Default,
       status: ReportCardDefinitionStatus.Published,
@@ -140,6 +141,7 @@ export const demoCiReportCardDefinitionFixtures = [
       academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
       gradeLevelId: 'ci-gl-4',
       gradeScaleId: 'ci-gs-20',
+      passThreshold: 10,
       name: 'Bulletin trimestriel — 4ème',
       kind: ReportCardDefinitionKind.Default,
       status: ReportCardDefinitionStatus.Published,
@@ -156,6 +158,7 @@ export const demoCiReportCardDefinitionFixtures = [
       academicYearId: DEMO_CI_ACADEMIC_YEAR_ID,
       gradeLevelId: 'ci-gl-3',
       gradeScaleId: 'ci-gs-20',
+      passThreshold: 10,
       name: 'Bulletin trimestriel — 3ème',
       kind: ReportCardDefinitionKind.Default,
       status: ReportCardDefinitionStatus.Published,

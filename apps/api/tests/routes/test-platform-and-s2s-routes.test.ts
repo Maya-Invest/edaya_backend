@@ -14,6 +14,8 @@ import { S2S_API_KEY_PREFIX } from "@edaya/authorization";
 
 const PLATFORM_OPERATOR_EMAIL = "platform.operator@edaya.test";
 const SECOND_OPERATOR_EMAIL = "platform.second@edaya.test";
+// These HTTP cases install migrations and seed a fresh embedded database.
+const DATABASE_SETUP_TIMEOUT = 120_000;
 
 function platformHeaders(token: string, extra: Record<string, string> = {}) {
   return {
@@ -37,7 +39,7 @@ describe("platform actor and s2s client routes", () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       env: { PLATFORM_BOOTSTRAP_EMAILS: PLATFORM_OPERATOR_EMAIL },
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
 
     const token = await signInPlatformOperator(app);
     const me = await app.request(createAppRequest("/core/platform/me", {
@@ -132,6 +134,7 @@ describe("platform actor and s2s client routes", () => {
       }),
     }));
     expect(writeSave.status).toBe(200);
+    expect((await application.repositories.gradeLevels.findById("grade-level-s2s-write"))?.name).toBe("S2S Write Grade");
 
     const writeCannotMint = await app.request(createAppRequest("/core/s2s-clients", {
       method: "POST",
@@ -199,13 +202,13 @@ describe("platform actor and s2s client routes", () => {
       body: JSON.stringify({}),
     }));
     expect(invalidS2s.status).toBe(401);
-  }, 60_000);
+  }, DATABASE_SETUP_TIMEOUT);
 
   it("keeps director JWT school access without X-Actor-Kind platform", async () => {
     const { app, runtime, application } = await createCoreRouteTestApp({
       env: { PLATFORM_BOOTSTRAP_EMAILS: PLATFORM_OPERATOR_EMAIL },
     });
-    await seedDevSchoolAndAuthLinks(application, runtime);
+    await seedDevSchoolAndAuthLinks(application, runtime, { includeAccessSeed: false });
     const token = await signInDirectorWithBearer(app);
     const response = await app.request(createAppRequest("/core/entities/schools/list", {
       method: "POST",
@@ -216,10 +219,11 @@ describe("platform actor and s2s client routes", () => {
       body: JSON.stringify({}),
     }));
     expect(response.status).toBe(200);
+    expect((await response.json() as { id: string }[]).map(school => school.id)).toEqual([SEED_SCHOOL_ID]);
 
     const platformDenied = await app.request(createAppRequest("/core/platform/me", {
       headers: { authorization: `Bearer ${token}` },
     }));
     expect(platformDenied.status).toBe(401);
-  }, 30_000);
+  }, DATABASE_SETUP_TIMEOUT);
 });

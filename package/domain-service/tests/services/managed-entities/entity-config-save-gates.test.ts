@@ -67,7 +67,7 @@ describe('Entity config save gates', () => {
       name: 'Default',
       minScore: 0,
       maxScore: 100,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 100, isPassing: true }],
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 100 }],
       isDefault: true,
     }))
 
@@ -77,7 +77,7 @@ describe('Entity config save gates', () => {
       name: 'Other default',
       minScore: 0,
       maxScore: 100,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 100, isPassing: true }],
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 100 }],
       isDefault: true,
     }))).rejects.toBeInstanceOf(BusinessRuleViolationError)
   })
@@ -109,7 +109,7 @@ describe('Entity config save gates', () => {
       name: 'Test scale',
       minScore: 0,
       maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }],
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }],
     }))
     await repositories.reportCardDefinitionRepository.save(new ReportCardDefinition({
       id: 'definition-existing',

@@ -10,9 +10,9 @@ const scale = {
   decimalPlaces: 2,
   intervalConvention: 'continuous' as const,
   ranges: [
-    { id: 'fail', letter: 'F', interpretation: 'Insuffisant', minScore: 0, maxScore: 2, isPassing: false, gpaValue: 0 },
-    { id: 'pass', letter: 'B', interpretation: 'Bien', minScore: 2, maxScore: 3.5, isPassing: true, gpaValue: 3 },
-    { id: 'excellent', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, isPassing: true, gpaValue: 4 },
+    { id: 'fail', letter: 'F', interpretation: 'Insuffisant', minScore: 0, maxScore: 2, gpaValue: 0 },
+    { id: 'pass', letter: 'B', interpretation: 'Bien', minScore: 2, maxScore: 3.5, gpaValue: 3 },
+    { id: 'excellent', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, gpaValue: 4 },
   ],
 }
 const policy = gradingPolicySchema.parse({ academicYearId: 'year', revision: 1, mode: 'mention-first', aggregateLabel: 'GPA', scale })
@@ -66,6 +66,6 @@ describe('grading policies', () => {
     const fractional = { ...scale, maxScore: 4.35, decimalPlaces: 1, ranges: scale.ranges.map((range, index) => index === 2 ? { ...range, maxScore: 4.35 } : range) }
     expect(() => new GradeScale(fractional)).toThrow('configured precision')
     expect(new GradeScale({ ...fractional, decimalPlaces: 2 }).maxScore).toBe(4.35)
-    expect(new GradeScale({ ...fractional, intervalConvention: 'legacy-closed', ranges: [{ letter: 'A', minScore: 0, maxScore: 4.35, isPassing: true }] }).maxScore).toBe(4.35)
+    expect(new GradeScale({ ...fractional, intervalConvention: 'legacy-closed', ranges: [{ letter: 'A', minScore: 0, maxScore: 4.35 }] }).maxScore).toBe(4.35)
   })
 })

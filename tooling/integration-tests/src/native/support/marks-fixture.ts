@@ -29,7 +29,7 @@ export async function fixture(prefix: string) {
   await r.classSubjects.save(new ClassSubject({ id: id('subject'), classGroupId: id('class'), subjectId: id('math') }))
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))
-  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 10.5, maxScore: 20, isPassing: true }] }))
+  await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 10.5, maxScore: 20 }] }))
   await r.definitions.save(new ReportCardDefinition({ id: id('definition'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), gradeScaleId: id('scale'), name: 'Report' }))
   await r.sections.save(new ReportCardDefinitionSection({ id: id('root'), reportCardDefinitionId: id('definition'), kind: ReportCardDefinitionSectionKind.Group, name: 'Subjects', order: 1, weight: 1 }))
   await r.sections.save(new ReportCardDefinitionSection({ id: id('math-section'), reportCardDefinitionId: id('definition'), parentSectionId: id('root'), subjectId: id('math'), kind: ReportCardDefinitionSectionKind.Subject, name: 'Math', order: 1, weight: 1 }))

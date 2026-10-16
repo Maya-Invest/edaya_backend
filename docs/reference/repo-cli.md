@@ -14,9 +14,9 @@ bun run repo build staging
 bun run repo ci qualify staging
 ```
 
-`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then schema compatibility and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
+`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then API regressions, an informational historical schema comparison and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
 
-Compatibility uses checksum-pinned oasdiff 1.11.7. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment. With no successful history, `tooling/repo/fixtures/compatibility/bootstrap.json` is the initial existing-contract snapshot to review. Behavioral API/authentication regression suites remain mandatory independently of schema generation. Successfully generating a new client is not a compatibility test for installed clients.
+Clients are expected to upgrade with the backend; compatibility with older clients does not block release. Checksum-pinned oasdiff 1.11.7 reports historical contract changes in `.ci-evidence/contract-changes.json`. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment, falling back to the preserved `tooling/repo/fixtures/compatibility/bootstrap.json` snapshot when no successful deployment exists. Comparison/tool errors still fail qualification. The existing `compatibility` evidence key requires the handwritten HTTP, actor-assurance and tenant-scope regression suites to pass; schema changes cannot suppress those tests. Current OpenAPI drift, generated-client and application regression checks also remain mandatory. Qualify matching frontend and mobile clients before rolling out a contract change.
 
 ## Cloudflare and migrations
 

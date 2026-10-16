@@ -16,7 +16,7 @@ async function fixture(actor: SchoolScopedActorMetadata = staff) {
   onTestFinished(() => db.close());
   await seedAuthorizationRelationships(db);
   await db.exec("UPDATE academic_periods SET is_published = true WHERE id = 'period-a'");
-  await repositories.gradeScales.save(new GradeScale({ id: "scale", schoolId: "school-a", name: "20 points", minScore: 0, maxScore: 20, ranges: [{ letter: "A", minScore: 0, maxScore: 20, isPassing: true }] }));
+  await repositories.gradeScales.save(new GradeScale({ id: "scale", schoolId: "school-a", name: "20 points", minScore: 0, maxScore: 20, ranges: [{ letter: "A", minScore: 0, maxScore: 20 }] }));
   await repositories.definitions.save(new ReportCardDefinition({ id: "definition", schoolId: "school-a", academicYearId: "year-a", gradeLevelId: "level-a", gradeScaleId: "scale", name: "Report" }));
   const result = new ReportCardResult({
     id: "report",

@@ -19,7 +19,7 @@ export interface ConfigureReportModelInput {
   id: string
   expectedRevision: number
   action: 'metadata' | 'section' | 'remove-section'
-  metadata?: { name: string, description?: string | null }
+  metadata?: { name: string, description?: string | null, passThreshold?: number | null }
   section?: Omit<ReportCardDefinitionSectionInput, 'reportCardDefinitionId' | 'createdAt'>
   sectionId?: string
 }

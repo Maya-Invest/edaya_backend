@@ -49,7 +49,7 @@ export const calculatedGradeSchema = z.object({
   units: z.enum(['numeric', 'points']),
   value: z.number().finite().nonnegative(),
   reportedValue: z.number().finite().nonnegative(),
-  mention: z.object({ id: z.string(), code: z.string(), label: z.string(), isPassing: z.boolean() }),
+  mention: z.object({ id: z.string(), code: z.string(), label: z.string() }),
   provenance: z.enum(['numeric-normalization', 'mention-points', 'explicit-equivalent']),
 })
 export type CalculatedGrade = z.infer<typeof calculatedGradeSchema>
@@ -67,7 +67,7 @@ export function describeGrade(value: number, policy: GradingPolicy, provenance: 
   const range = new GradeScale(policy.scale).findRange(reportedValue)
   if (!range?.id)
     throw new Error('GRADING_VALUE_OUTSIDE_SCALE')
-  return { policyRevision: policy.revision, scaleId: policy.scale.id, scaleRevision: policy.scale.revision, mode: policy.mode, decimalPlaces: policy.scale.decimalPlaces, roundingMode: policy.scale.roundingMode, maximum: policy.scale.maxScore, units: policy.mode === 'mention-first' ? 'points' : 'numeric', value, reportedValue, mention: { id: range.id, code: range.letter, label: range.interpretation ?? range.letter, isPassing: range.isPassing }, provenance }
+  return { policyRevision: policy.revision, scaleId: policy.scale.id, scaleRevision: policy.scale.revision, mode: policy.mode, decimalPlaces: policy.scale.decimalPlaces, roundingMode: policy.scale.roundingMode, maximum: policy.scale.maxScore, units: policy.mode === 'mention-first' ? 'points' : 'numeric', value, reportedValue, mention: { id: range.id, code: range.letter, label: range.interpretation ?? range.letter }, provenance }
 }
 
 export function calculateGrade(entry: OriginalGradeEntry, policy: GradingPolicy): CalculatedGrade {

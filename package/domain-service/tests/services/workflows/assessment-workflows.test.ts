@@ -236,7 +236,7 @@ describe('SchoolService assessment workflows', () => {
       name: '20-point',
       minScore: 0,
       maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 16, maxScore: 20, isPassing: true }],
+      ranges: [{ letter: 'A', minScore: 16, maxScore: 20 }],
     })
     expect(gradeScale.name).toBe('20-point')
     expect(await repositories.gradeScales.findById('gs1')).toBeDefined()

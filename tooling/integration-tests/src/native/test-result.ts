@@ -10,7 +10,8 @@ export function nativeTestExitCode(childExitCode: number, junit: string): number
     const total = count('tests')
     const failures = count('failures')
     const errors = count('errors') ?? 0
-    if (total === null || failures === null || failures > 0 || errors > 0)
+    const skipped = count('skipped') ?? 0
+    if (total === null || failures === null || failures > 0 || errors > 0 || skipped > 0)
       return 1
     tests += total
   }

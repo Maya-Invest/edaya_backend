@@ -15,3 +15,10 @@ test('native runner accepts executed passing tests and preserves process failure
   expect(nativeTestExitCode(0, report)).toBe(0)
   expect(nativeTestExitCode(2, report)).toBe(2)
 })
+
+test('native runner rejects skipped required tests, including an entirely skipped suite', () => {
+  for (const skipped of [1, 8]) {
+    expect(nativeTestExitCode(0, `<testsuites><testsuite tests="8" failures="0" errors="0" skipped="${skipped}" /></testsuites>`)).toBe(1)
+  }
+  expect(nativeTestExitCode(0, '<testsuites><testsuite tests="8" failures="0" errors="0" skipped="0" /></testsuites>')).toBe(0)
+})

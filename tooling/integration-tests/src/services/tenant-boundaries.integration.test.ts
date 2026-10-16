@@ -329,7 +329,7 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Standard',
       minScore: 0,
       maxScore: 20,
-      ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }],
+      ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }],
     }))
     await saveReportCardDefinition(schoolBApp, {
       id: 'definition-b',

@@ -1,4 +1,4 @@
-import type { Assessment, AssessmentResult, GradeScale, ReportCardDefinitionSection, ReportCardResult } from '@edaya/core'
+import type { Assessment, AssessmentResult, GradeScale, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult } from '@edaya/core'
 import type { StoreDatabase } from '../postgres-store'
 import type { StoredReportCardResultSection } from './entity-store-helpers'
 import type { EntityStores } from './entity-stores-types'
@@ -16,7 +16,7 @@ import {
   ReportCardResultStatus,
 } from '@edaya/core'
 import { deserializeJsonb } from '../lib/mappers'
-import { customStore, defaultStore } from '../lib/store-factory'
+import { customStore } from '../lib/store-factory'
 import * as schema from '../postgres-schema'
 import {
   deserializeReportCardResultSection,
@@ -154,7 +154,12 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
       }),
     ),
 
-    definitions: defaultStore(db, schema.reportCardDefinitions, ReportCardDefinitionCtor),
+    definitions: customStore(
+      db,
+      schema.reportCardDefinitions,
+      (entity: ReportCardDefinition) => ({ ...entity.data, description: entity.description ?? null, passThreshold: entity.passThreshold == null ? null : String(entity.passThreshold) }),
+      row => new ReportCardDefinitionCtor({ ...row, passThreshold: row.passThreshold == null ? undefined : numericToNumber(row.passThreshold) }),
+    ),
 
     sections: customStore(
       db,
@@ -214,7 +219,7 @@ export function createAssessmentsEntityStores(db: StoreDatabase): Pick<EntitySto
         overallAverage: entity.overallAverage == null ? null : String(entity.overallAverage),
         rank: entity.rank ?? null,
         classSize: entity.classSize ?? null,
-        passThreshold: entity.passThreshold == null ? null : numberToNumeric(entity.passThreshold),
+        passThreshold: entity.passThreshold == null ? null : String(entity.passThreshold),
         teacherComment: entity.teacherComment ?? null,
         principalComment: entity.principalComment ?? null,
         status: entity.status,

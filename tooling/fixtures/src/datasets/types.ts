@@ -67,7 +67,6 @@ export interface FixtureReportCardSection {
 
 export interface FixtureReportCardGradeScale {
   scale: GradeScaleInput
-  narrativePassingScore: number
 }
 
 export interface FixtureReportCardDefinition {

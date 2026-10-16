@@ -7,7 +7,7 @@ export interface GradeScaleRangeSeedRecord {
   minScore: number
   maxScore: number
   interpretation?: string
-  isPassing: boolean
+
 }
 
 export interface GradeScaleSeedRecord {
@@ -25,6 +25,7 @@ export interface GradeScaleSeedRecord {
 }
 
 export interface ReportCardDefinitionSeedRecord {
+  passThreshold?: number
   id: string
   schoolId: string
   academicYearId: string

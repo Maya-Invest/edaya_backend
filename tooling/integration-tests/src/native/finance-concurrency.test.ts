@@ -1,12 +1,14 @@
 import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import type { SQL } from 'drizzle-orm'
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
-import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
 import {
   AcademicYear,
   AllocationKind,
   CatalogServiceStatus,
   ChargeStatus,
+  Guardian,
+  GuardianStudentLink,
   noOpFileStorage,
   noOpNotificationGateway,
   PaymentKind,
@@ -46,13 +48,14 @@ const actor = createStaffActorMetadata({
   authenticatedAt: new Date(),
   assuranceLevel: ActorAssuranceLevel.Strong,
 })
-const services = handles.map((handle, index) => new SchoolApplication({
+const applications = handles.map((handle, index) => new SchoolApplication({
   repositories: repositories[index]!,
   atomicExecution: new PostgresAtomicExecution(handle.db as PostgresTransactionalDb),
   commandJournal: new PostgresCommandJournal(),
   notificationGateway: noOpNotificationGateway,
   fileStorage: noOpFileStorage,
-}).forActor(actor))
+}))
+const services = applications.map(application => application.forActor(actor))
 const repos = repositories[0]!
 const paymentDate = new Date('2026-09-08T00:00:00Z')
 const yearId = 'finance-year'
@@ -284,4 +287,31 @@ test('canonical 60k/40k/120k scenario and allocation reversal', async () => {
   expect((await repos.studentCharges.findById('native-enr-60'))?.allocatedAmount.amount).toBe(0)
   const recon = await services[0]!.financeWorkflow.reconcileStudentYearAccount({ accountId: id })
   expect(recon.balanced).toBe(true)
+})
+
+test('family reads committed finance changes from a second connection and loses access after unlinking', async () => {
+  const studentId = 'native-family-student'
+  await student(studentId)
+  await student('native-unlinked-student')
+  await catalog('native-family-catalog', 1000, '2026-02-01')
+  await services[0]!.financeWorkflow.enrollStudentInService({ id: 'native-family-charge', studentId, catalogServiceId: 'native-family-catalog' })
+  await repos.guardians.save(new Guardian({ id: 'native-family', schoolId: actor.schoolId, subjectId: 'native-family-subject', firstName: 'Family', lastName: 'Reader' }))
+  await repos.guardianLinks.save(new GuardianStudentLink({ id: 'native-family-link', schoolId: actor.schoolId, guardianId: 'native-family', studentId, isBillingContact: true }))
+  const family = applications[1]!.forActor(createGuardianActorMetadata({ schoolId: actor.schoolId, guardianId: 'native-family', subjectId: 'native-family-subject', academicYearId: yearId, requestId: 'family-read', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
+  const summary = () => family.financeWorkflow.getStudentFinanceSummary({ studentId, academicYearId: yearId })
+  expect((await summary()).outstanding.amount).toBe(1000)
+  const payment = { id: 'native-family-payment', studentId, academicYearId: yearId, amount: 400, paymentDate, method: PaymentMethod.Cash, allocation: { mode: 'fifo' as const } }
+  await services[0]!.financeWorkflow.recordPayment(payment)
+  await services[0]!.financeWorkflow.recordPayment(payment)
+  expect((await summary()).outstanding.amount).toBe(600)
+  const history = await family.financeWorkflow.getPaymentSettlementHistory({ accountId: accountId(studentId) })
+  const allocations = history.allocations.filter(row => row.causedByPaymentId === payment.id && row.kind === 'settle')
+  expect(allocations).toHaveLength(1)
+  await services[0]!.financeWorkflow.reversePayment({ paymentId: payment.id, reverseAllocationIds: allocations.map(row => row.id) })
+  expect((await summary()).outstanding.amount).toBe(1000)
+  expect((await summary()).available.amount).toBe(0)
+  await expect(family.financeWorkflow.getStudentFinanceSummary({ studentId: 'native-unlinked-student', academicYearId: yearId })).rejects.toThrow()
+  await repos.guardianLinks.delete('native-family-link')
+  await expect(summary()).rejects.toThrow()
+  expect((await services[0]!.financeWorkflow.getStudentFinanceSummary({ studentId, academicYearId: yearId })).outstanding.amount).toBe(1000)
 })

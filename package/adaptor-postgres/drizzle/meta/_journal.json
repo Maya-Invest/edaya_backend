@@ -295,6 +295,13 @@
       "when": 1791936000000,
       "tag": "0041_configuration_editors",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792108800000,
+      "tag": "0042_report_card_pass_threshold",
+      "breakpoints": true
     }
   ]
 }

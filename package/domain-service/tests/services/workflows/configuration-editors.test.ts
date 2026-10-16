@@ -1,10 +1,10 @@
-import { GradeScale, ReportCardDefinition, ReportCardDefinitionStatus, ReportCardResultStatus, School, StaffMember, Subject } from '@edaya/core'
+import { GradeScale, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionStatus, ReportCardResultStatus, School, StaffMember, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestStaffActor } from '../../support/test-actor'
 import { createReportCardContext } from './report-card-workflow-context'
 
 const metadata = { name: 'GPA', minScore: 0, maxScore: 4, decimalPlaces: 2, roundingMode: 'nearest' as const }
-const interval = { id: 'fail', letter: 'F', interpretation: 'Not passing', minScore: 0, isPassing: false, gpaValue: 0 }
+const interval = { id: 'fail', letter: 'F', interpretation: 'Not passing', minScore: 0, gpaValue: 0 }
 
 describe('configuration editors', () => {
   test('persists an empty scale, derives thresholds and rejects stale saves without altering previous intervals', async () => {
@@ -15,7 +15,7 @@ describe('configuration editors', () => {
     await expect(f.service.assessmentsWorkflow.createReportCardDefinition({ id: 'bad-model', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', gradeScaleId: scale.id, name: 'Incomplete' })).rejects.toMatchObject({ code: 'GRADE_SCALE_INCOMPLETE' })
     scale = await configure({ id: scale.id, requestId: 'first', expectedRevision: 0, action: 'interval', interval })
     expect(scale.ranges[0]?.maxScore).toBe(4)
-    const next = { ...interval, id: 'excellent', letter: 'A', interpretation: 'Excellent', minScore: 3.5, isPassing: true, gpaValue: 4 }
+    const next = { ...interval, id: 'excellent', letter: 'A', interpretation: 'Excellent', minScore: 3.5, gpaValue: 4 }
     scale = await configure({ id: scale.id, requestId: 'second', expectedRevision: scale.revision, action: 'interval', interval: next })
     expect(scale.findRange(3.499)?.id).toBe('fail')
     expect(scale.findRange(3.5)?.id).toBe('excellent')
@@ -44,7 +44,7 @@ describe('configuration editors', () => {
     const f = await createReportCardContext()
     const original = (await f.repositories.gradeScales.findById('grade-scale'))!
     await expect(f.service.assessmentsWorkflow.configureGradeScale({ id: original.id, requestId: 'legacy-write', expectedRevision: 0, action: 'interval', interval })).rejects.toMatchObject({ code: 'GRADE_SCALE_CONVERSION_REQUIRED' })
-    const legacy = new GradeScale({ ...original.data, ranges: [{ letter: 'F', minScore: 0, maxScore: 9.99, isPassing: false }, { letter: 'A', minScore: 10, maxScore: 20, isPassing: true }] })
+    const legacy = new GradeScale({ ...original.data, ranges: [{ letter: 'F', minScore: 0, maxScore: 9.99 }, { letter: 'A', minScore: 10, maxScore: 20 }] })
     await f.repositories.gradeScales.save(legacy)
     const scale = await f.service.assessmentsWorkflow.configureGradeScale({ id: legacy.id, requestId: 'convert', expectedRevision: 0, action: 'convert' })
     expect(scale.intervalConvention).toBe('continuous')
@@ -74,6 +74,55 @@ describe('configuration editors', () => {
     const regenerated = await f.service.assessmentsWorkflow.generateReportCardResult(request)
     expect(JSON.stringify(regenerated.sectionResults)).toContain('Mathematics')
     expect(original.sectionResults[0]?.subResults[0]?.name).toBe('Math')
+  })
+
+  test('report thresholds are optional, preserve omission, clear with null and validate scale bounds and precision', async () => {
+    const f = await createReportCardContext()
+    const configure = f.service.assessmentsWorkflow.configureReportCardDefinition.bind(f.service.assessmentsWorkflow)
+    const original = (await f.repositories.definitions.findById('def1'))!
+    expect(original.passThreshold).toBeUndefined()
+    let model = await configure({ id: original.id, requestId: 'threshold', expectedRevision: 0, action: 'metadata', metadata: { name: original.name, passThreshold: 10.1 } })
+    expect(model.passThreshold).toBe(10.1)
+    model = await configure({ id: model.id, requestId: 'omitted-threshold', expectedRevision: model.revision, action: 'metadata', metadata: { name: 'Renamed' } })
+    expect(model.passThreshold).toBe(10.1)
+    for (const [index, value] of [-1, 20.1, 10.12, Number.NaN, Number.POSITIVE_INFINITY].entries()) {
+      await expect(configure({ id: model.id, requestId: `invalid-threshold-${index}`, expectedRevision: model.revision, action: 'metadata', metadata: { name: model.name, passThreshold: value } })).rejects.toThrow()
+    }
+    await expect(configure({ id: model.id, requestId: 'stale-threshold', expectedRevision: 0, action: 'metadata', metadata: { name: model.name, passThreshold: 12 } })).rejects.toMatchObject({ code: 'REPORT_MODEL_REVISION_CONFLICT' })
+    model = await configure({ id: model.id, requestId: 'clear-threshold', expectedRevision: model.revision, action: 'metadata', metadata: { name: model.name, passThreshold: null } })
+    expect(model.passThreshold).toBeUndefined()
+    for (const value of [0, 20]) {
+      model = await configure({ id: model.id, requestId: `endpoint-${value}`, expectedRevision: model.revision, action: 'metadata', metadata: { name: model.name, passThreshold: value } })
+      expect(model.passThreshold).toBe(value)
+    }
+  })
+
+  test('report models sharing a scale capture independent thresholds only when generated', async () => {
+    const f = await createReportCardContext()
+    const original = (await f.repositories.definitions.findById('def1'))!
+    const scale = (await f.repositories.gradeScales.findById(original.gradeScaleId))!
+    await f.repositories.gradeScales.save(new GradeScale({ ...scale.data, ranges: [...scale.ranges], decimalPlaces: 3 }))
+    const request = { id: 'threshold-report', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: original.id }
+    const first = await f.service.assessmentsWorkflow.generateReportCardResult(request)
+    expect(first.isPassing).toBeUndefined()
+    const configure = f.service.assessmentsWorkflow.configureReportCardDefinition.bind(f.service.assessmentsWorkflow)
+    let model = await configure({ id: original.id, requestId: 'first-model-threshold', expectedRevision: 0, action: 'metadata', metadata: { name: original.name, passThreshold: 16.001 } })
+    expect((await f.repositories.results.findById(first.id))?.passThreshold).toBeUndefined()
+    let result = await f.service.assessmentsWorkflow.generateReportCardResult(request)
+    expect(result.passThreshold).toBe(16.001)
+    expect(result.isPassing).toBe(false)
+    const second = await f.service.assessmentsWorkflow.createReportCardDefinition({ ...original.data, id: 'second-model', passThreshold: 15.999 })
+    for (const section of await f.repositories.sections.list({ reportCardDefinitionId: original.id }))
+      await f.repositories.sections.save(new ReportCardDefinitionSection({ ...section.data, id: `second-${section.id}`, reportCardDefinitionId: second.id, parentSectionId: section.parentSectionId ? `second-${section.parentSectionId}` : undefined }))
+    const secondResult = await f.service.assessmentsWorkflow.generateReportCardResult({ ...request, id: 'second-report', reportCardDefinitionId: second.id })
+    expect(secondResult.isPassing).toBe(true)
+    expect(secondResult.overallAverage).toBe(result.overallAverage)
+    expect(secondResult.sectionResults.map(row => row.average)).toEqual(result.sectionResults.map(row => row.average))
+    model = await configure({ id: original.id, requestId: 'equal-threshold', expectedRevision: model.revision, action: 'metadata', metadata: { name: original.name, passThreshold: 16 } })
+    result = await f.service.assessmentsWorkflow.generateReportCardResult(request)
+    expect(result.isPassing).toBe(true)
+    await configure({ id: original.id, requestId: 'unset-threshold', expectedRevision: model.revision, action: 'metadata', metadata: { name: original.name, passThreshold: null } })
+    expect((await f.service.assessmentsWorkflow.generateReportCardResult(request)).isPassing).toBeUndefined()
   })
 
   test('rejects foreign subjects, cycles and reparenting under subject rows atomically', async () => {
@@ -109,7 +158,7 @@ describe('configuration editors', () => {
     await f.repositories.staffMembers.save(new StaffMember({ id: 'reader', schoolId: 'sch1', subjectId: 'reader', firstName: 'Read', lastName: 'Only' }))
     const service = f.forActor(createTestStaffActor('sch1', 'reader'))
     await expect(service.assessmentsWorkflow.configureGradeScale({ id: 'denied', expectedRevision: 0, requestId: 'denied-scale', action: 'metadata', metadata })).rejects.toMatchObject({ code: 'forbidden' })
-    await expect(service.assessmentsWorkflow.configureReportCardDefinition({ id: 'def1', expectedRevision: 0, requestId: 'denied-model', action: 'metadata', metadata: { name: 'Denied' } })).rejects.toMatchObject({ code: 'forbidden' })
+    await expect(service.assessmentsWorkflow.configureReportCardDefinition({ id: 'def1', expectedRevision: 0, requestId: 'denied-model', action: 'metadata', metadata: { name: 'Denied', passThreshold: 10 } })).rejects.toMatchObject({ code: 'forbidden' })
     await expect(service.assessmentsWorkflow.configureReportCardDefinition({ id: 'def1', expectedRevision: 0, requestId: 'denied-section', action: 'remove-section', sectionId: 'sec-math' })).rejects.toMatchObject({ code: 'forbidden' })
     expect(await f.repositories.gradeScales.findById('denied')).toBeUndefined()
     expect((await f.repositories.definitions.findById('def1'))?.revision).toBe(0)
@@ -120,7 +169,7 @@ describe('configuration editors', () => {
     const model = (await f.repositories.definitions.findById('def1'))!
     await f.repositories.definitions.save(new ReportCardDefinition({ ...model.data, status: ReportCardDefinitionStatus.Published, isDefault: true }))
     const report = (await f.repositories.results.findById('published'))!
-    const updated = await f.service.assessmentsWorkflow.configureReportCardDefinition({ id: model.id, expectedRevision: 0, requestId: 'published-edit', action: 'metadata', metadata: { name: 'Revised title' } })
+    const updated = await f.service.assessmentsWorkflow.configureReportCardDefinition({ id: model.id, expectedRevision: 0, requestId: 'published-edit', action: 'metadata', metadata: { name: 'Revised title', passThreshold: 10 } })
     expect(updated.status).toBe(ReportCardDefinitionStatus.Published)
     expect(updated.isDefault).toBe(true)
     expect((await f.repositories.results.findById(report.id))?.data).toEqual(report.data)

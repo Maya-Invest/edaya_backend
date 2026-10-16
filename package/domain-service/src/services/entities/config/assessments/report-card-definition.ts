@@ -55,6 +55,13 @@ async function validateReportCardDefinitionSave(
   const policy = gradeLevel.gradingPolicyFor(definition.academicYearId)
   if (policy && definition.gradeScaleId !== policy.scale.id)
     throw new BusinessRuleViolationError('GRADING_SCALE_INHERITED', 'Report models must use the grade level grading scale')
+  const scale = policy?.scale ?? gradeScale.data
+  if (definition.passThreshold !== undefined) {
+    const value = definition.passThreshold
+    const scaled = value * 10 ** scale.decimalPlaces
+    if (value < scale.minScore || value > scale.maxScore || Math.abs(scaled - Math.round(scaled)) > Number.EPSILON * Math.max(1, Math.abs(scaled)) * 4)
+      throw new BusinessRuleViolationError('INVALID_REPORT_PASS_THRESHOLD', 'Passing threshold must be within the inherited scale bounds and precision')
+  }
   if (!definition.isDefault)
     return
 

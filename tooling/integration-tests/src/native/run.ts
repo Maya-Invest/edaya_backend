@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve as resolvePath } from 'node:path'
 import process from 'node:process'
 import { nativeTestExitCode } from './test-result'
 
@@ -42,7 +42,12 @@ async function main() {
     const exitCode = await new Promise<number>((resolve, reject) => {
       const child = spawn('bun', ['test', seedSuite ? 'src/seed' : 'src/native', '--parallel=1', '--reporter=junit', `--reporter-outfile=${reportPath}`, ...process.argv.slice(2).filter(arg => arg !== '--seed')], {
         stdio: 'inherit',
-        env: { ...process.env, EDAYA_NATIVE_SEED: seedSuite ? '1' : '', EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres` },
+        env: {
+          ...process.env,
+          EDAYA_BENCHMARK_OUTPUT: process.env.EDAYA_BENCHMARK_OUTPUT ?? resolvePath(import.meta.dirname, '../../../../.ci-evidence/dashboard-benchmark.json'),
+          EDAYA_NATIVE_SEED: seedSuite ? '1' : '',
+          EDAYA_NATIVE_TEST_URL: `postgres://edaya_rc@127.0.0.1:${port}/postgres`,
+        },
       })
       const interrupt = () => child.kill('SIGINT')
       process.once('SIGINT', interrupt)

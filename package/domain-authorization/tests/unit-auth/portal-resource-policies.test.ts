@@ -111,7 +111,7 @@ describe('portal actions use current relationships and publication', () => {
   })
 
   async function reportCards() {
-    await fixture.repositories.gradeScales.save(new GradeScale({ id: 'scale', schoolId: 'school-a', name: 'Scale', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20, isPassing: true }] }))
+    await fixture.repositories.gradeScales.save(new GradeScale({ id: 'scale', schoolId: 'school-a', name: 'Scale', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 0, maxScore: 20 }] }))
     await fixture.repositories.definitions.save(new ReportCardDefinition({ id: 'definition', schoolId: 'school-a', academicYearId: 'year-a', gradeLevelId: 'level-a', gradeScaleId: 'scale', name: 'Term' }))
     for (const [id, studentId, classGroupId] of [['card', 'student-a', 'class-a'], ['unrelated-card', 'student-other', 'class-other']] as const) {
       await fixture.repositories.results.save(new ReportCardResult({ id, reportCardDefinitionId: 'definition', studentId, classGroupId, periodId: 'period-a', sectionResults: sections(), attendanceSummary: new AttendanceSummary({ presentCount: 1, absenceCount: 0, lateCount: 0 }), assessmentResultCount: 2, overallAverage: 11 }))

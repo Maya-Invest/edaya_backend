@@ -56,28 +56,28 @@ function buildGradeScaleRanges(maxScore: number, passingGrade: number) {
       id: randomUUID(),
       letter: 'D',
       minScore: 0,
-      isPassing: false,
+
       interpretation: 'Insuffisant',
     },
     {
       id: randomUUID(),
       letter: 'C',
       minScore: passingGrade,
-      isPassing: true,
+
       interpretation: 'Passable',
     },
     {
       id: randomUUID(),
       letter: 'B',
       minScore: roundTo2(passingGrade + step),
-      isPassing: true,
+
       interpretation: 'Bien',
     },
     {
       id: randomUUID(),
       letter: 'A',
       minScore: roundTo2(passingGrade + step * 2),
-      isPassing: true,
+
       interpretation: 'Très bien',
     },
   ], maxScore)
@@ -114,7 +114,7 @@ async function ensureGradeScale(
     decimalPlaces: structure.gradingScale <= 10 ? 1 : 2,
     intervalConvention: 'continuous',
     roundingMode: 'nearest',
-    description: `Barème ${structure.gradingScale} — seuil de réussite à ${structure.passingGrade}.`,
+    description: `Barème ${structure.gradingScale}.`,
     isDefault: gradeScaleByTemplateId.size === 0,
     ranges: buildGradeScaleRanges(structure.gradingScale, structure.passingGrade),
   })
@@ -363,6 +363,7 @@ export async function applyReportCardsFromTemplate(
       academicYearId: input.academicYearId,
       gradeLevelId: level.gradeLevelId,
       gradeScaleId,
+      passThreshold: structure.passingGrade,
       name: `Bulletin ${periodLabel(structure)} — ${level.gradeLevelName}`,
       kind: ReportCardDefinitionKind.Default,
       status: ReportCardDefinitionStatus.Published,

@@ -60,6 +60,7 @@ export const gradeScales = pgTable('grade_scales', {
 }, table => definePerformanceIndexes('grade_scales', table))
 
 export const reportCardDefinitions = pgTable('report_card_definitions', {
+  passThreshold: numeric('pass_threshold'),
   revision: integer('revision').notNull().default(0),
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
@@ -114,7 +115,7 @@ export const reportCardResults = pgTable('report_card_results', {
   overallAverage: numeric('overall_average'),
   rank: integer('rank'),
   classSize: integer('class_size'),
-  passThreshold: numeric('pass_threshold', { precision: 8, scale: 2 }),
+  passThreshold: numeric('pass_threshold'),
   teacherComment: text('teacher_comment'),
   principalComment: text('principal_comment'),
   status: text('status').notNull(),

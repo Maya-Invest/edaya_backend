@@ -27,6 +27,26 @@ function unwrapDomainEntity(entity: unknown): unknown {
   return entity;
 }
 
+function serializeNestedEntities(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(serializeNestedEntities);
+  }
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    const unwrapped = unwrapDomainEntity(value);
+    // Only domain instances are unwrapped; retain dates and plain data envelopes.
+    return unwrapped === value ? value : serializeNestedEntities(unwrapped);
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nested]) => [key, serializeNestedEntities(nested)]),
+  );
+}
+
 export function serializeCommandResult(result: unknown): unknown {
   if (Array.isArray(result)) {
     return result.map(serializeCommandResult);
@@ -59,5 +79,5 @@ export function serializeCommandResult(result: unknown): unknown {
     };
   }
 
-  return unwrapDomainEntity(result);
+  return serializeNestedEntities(unwrapDomainEntity(result));
 }

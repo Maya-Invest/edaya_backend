@@ -43,7 +43,7 @@ describe('onboarding report-card scales', () => {
       expect(reloaded.ranges.map(entry => entry.id)).toEqual(ids)
       expect(reloaded.ranges[1]?.interpretation).toBe('Edited mention')
       await expect(configure({ id: scale.id, expectedRevision: 0, requestId: 'stale-onboarded', action: 'interval', interval: { ...minimumOnly, id: row.id! } })).rejects.toMatchObject({ code: 'GRADE_SCALE_REVISION_CONFLICT' })
-      scale = await configure({ id: scale.id, expectedRevision: scale.revision, requestId: 'add-onboarded', action: 'interval', interval: { id: 'additional', letter: 'D+', interpretation: 'Developing', minScore: passing / 2, isPassing: false } })
+      scale = await configure({ id: scale.id, expectedRevision: scale.revision, requestId: 'add-onboarded', action: 'interval', interval: { id: 'additional', letter: 'D+', interpretation: 'Developing', minScore: passing / 2 } })
       expect(scale.findRange(passing / 2)?.id).toBe('additional')
       scale = await configure({ id: scale.id, expectedRevision: scale.revision, requestId: 'remove-onboarded', action: 'remove-interval', intervalId: 'additional' })
       expect(scale.ranges.map(entry => entry.id)).toEqual(ids)

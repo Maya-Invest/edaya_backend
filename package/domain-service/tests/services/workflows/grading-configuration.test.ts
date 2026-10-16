@@ -10,9 +10,9 @@ async function fixture(published = false) {
   const year = (await f.repositories.academicYears.findById('ay1'))!
   await f.repositories.academicYears.save(new AcademicYear({ ...year.data, startDate: new Date('2020-01-01'), endDate: new Date('2099-12-31') }))
   const scale = new GradeScale({ id: 'points', schoolId: 'sch1', name: 'Points', minScore: 0, maxScore: 4, intervalConvention: 'continuous', decimalPlaces: 2, ranges: [
-    { id: 'f', letter: 'F', interpretation: 'Fail', minScore: 0, maxScore: 2, isPassing: false, gpaValue: 0 },
-    { id: 'b', letter: 'B', interpretation: 'Good', minScore: 2, maxScore: 3.5, isPassing: true, gpaValue: 3 },
-    { id: 'a', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, isPassing: true, gpaValue: 4 },
+    { id: 'f', letter: 'F', interpretation: 'Fail', minScore: 0, maxScore: 2, gpaValue: 0 },
+    { id: 'b', letter: 'B', interpretation: 'Good', minScore: 2, maxScore: 3.5, gpaValue: 3 },
+    { id: 'a', letter: 'A', interpretation: 'Excellent', minScore: 3.5, maxScore: 4, gpaValue: 4 },
   ] })
   await f.repositories.gradeScales.save(scale)
   const report = { id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' }

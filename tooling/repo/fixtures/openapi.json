@@ -5101,16 +5101,12 @@
                             "type": "string",
                             "nullable": true,
                             "minLength": 1
-                          },
-                          "isPassing": {
-                            "type": "boolean"
                           }
                         },
                         "required": [
                           "letter",
                           "minScore",
-                          "maxScore",
-                          "isPassing"
+                          "maxScore"
                         ]
                       }
                     }
@@ -13147,16 +13143,12 @@
                   "type": "string",
                   "nullable": true,
                   "minLength": 1
-                },
-                "isPassing": {
-                  "type": "boolean"
                 }
               },
               "required": [
                 "letter",
                 "minScore",
-                "maxScore",
-                "isPassing"
+                "maxScore"
               ]
             }
           }
@@ -13260,16 +13252,12 @@
                 "type": "string",
                 "nullable": true,
                 "minLength": 1
-              },
-              "isPassing": {
-                "type": "boolean"
               }
             },
             "required": [
               "id",
               "letter",
-              "minScore",
-              "isPassing"
+              "minScore"
             ]
           },
           "intervalId": {
@@ -13311,6 +13299,11 @@
           "gradeScaleId": {
             "type": "string",
             "minLength": 1
+          },
+          "passThreshold": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           },
           "name": {
             "type": "string",
@@ -13386,6 +13379,11 @@
                 "type": "string",
                 "nullable": true,
                 "minLength": 1
+              },
+              "passThreshold": {
+                "type": "number",
+                "nullable": true,
+                "minimum": 0
               }
             },
             "required": [
@@ -13494,16 +13492,12 @@
             "type": "string",
             "nullable": true,
             "minLength": 1
-          },
-          "isPassing": {
-            "type": "boolean"
           }
         },
         "required": [
           "letter",
           "minScore",
-          "maxScore",
-          "isPassing"
+          "maxScore"
         ]
       },
       "CreateGradeScaleCommand": {
@@ -13610,6 +13604,11 @@
           "gradeScaleId": {
             "type": "string",
             "minLength": 1
+          },
+          "passThreshold": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
           },
           "name": {
             "type": "string",
@@ -17059,16 +17058,12 @@
                   },
                   "label": {
                     "type": "string"
-                  },
-                  "isPassing": {
-                    "type": "boolean"
                   }
                 },
                 "required": [
                   "id",
                   "code",
-                  "label",
-                  "isPassing"
+                  "label"
                 ]
               },
               "provenance": {
@@ -17501,16 +17496,12 @@
                   },
                   "label": {
                     "type": "string"
-                  },
-                  "isPassing": {
-                    "type": "boolean"
                   }
                 },
                 "required": [
                   "id",
                   "code",
-                  "label",
-                  "isPassing"
+                  "label"
                 ]
               },
               "provenance": {
@@ -17854,16 +17845,12 @@
                   },
                   "label": {
                     "type": "string"
-                  },
-                  "isPassing": {
-                    "type": "boolean"
                   }
                 },
                 "required": [
                   "id",
                   "code",
-                  "label",
-                  "isPassing"
+                  "label"
                 ]
               },
               "provenance": {
@@ -26158,16 +26145,12 @@
                           "type": "string",
                           "nullable": true,
                           "minLength": 1
-                        },
-                        "isPassing": {
-                          "type": "boolean"
                         }
                       },
                       "required": [
                         "letter",
                         "minScore",
-                        "maxScore",
-                        "isPassing"
+                        "maxScore"
                       ]
                     }
                   }

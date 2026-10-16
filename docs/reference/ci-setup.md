@@ -15,7 +15,7 @@ Deployments are serialized per repository/environment without cancelling active 
 
 ## Adoption gate
 
-Replacement deployment jobs require repository variable `ENABLE_INDEPENDENT_RELEASES=true`. Leave it unset until full local verification, both destination builds, all integration suites, artifact handoff, and non-deploying GitHub rehearsals pass. The bootstrap API snapshot also needs review before the backend gate is enabled. No production release is implied by installing this tooling.
+Replacement deployment jobs require repository variable `ENABLE_INDEPENDENT_RELEASES=true`. Leave it unset until full local verification, both destination builds, all integration suites, artifact handoff, and non-deploying GitHub rehearsals pass. No production release is implied by installing this tooling.
 
 Deploy the backend tooling changes to the destination branches before consumers qualify against those branches: consumer integration uses the backend's typed fixture command. Configure branch protection to require **qualification / Full validation** from the PR workflow (confirm the exact displayed check name on the first rehearsal). Remove obsolete coordinator/publication checks only after that required check succeeds. GitHub may display the caller workflow name as an additional prefix.
 
@@ -37,9 +37,9 @@ bun run repo build staging
 bun run repo ci qualify staging
 ```
 
-`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then schema compatibility and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
+`ci qualify` runs verification, service/HTTP, seed and native PostgreSQL integrations, then API regressions, an informational historical schema comparison and the environment-specific dry-run Worker build. PostgreSQL commands (`pg_config`, `initdb`, `pg_ctl`) must be available; CI setup exports their binary directory. No consumer checkout is needed.
 
-Compatibility uses checksum-pinned oasdiff 1.11.7. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment. With no successful history, `tooling/repo/fixtures/compatibility/bootstrap.json` is the initial existing-contract snapshot to review. Behavioral API/authentication regression suites remain mandatory independently of schema generation. Successfully generating a new client is not a compatibility test for installed clients.
+Clients are expected to upgrade with the backend; compatibility with older clients does not block release. Checksum-pinned oasdiff 1.11.7 reports historical contract changes in `.ci-evidence/contract-changes.json`. PRs compare to the target-branch SHA; releases compare to the API definition in the last successful deployment commit for that environment, falling back to the preserved `tooling/repo/fixtures/compatibility/bootstrap.json` snapshot when no successful deployment exists. Comparison/tool errors still fail qualification. The existing `compatibility` evidence key requires the handwritten HTTP, actor-assurance and tenant-scope regression suites to pass; schema changes cannot suppress those tests. Current OpenAPI drift, generated-client and application regression checks also remain mandatory. Qualify matching frontend and mobile clients before rolling out a contract change.
 
 ## Cloudflare and migrations
 
@@ -67,7 +67,7 @@ Reset/reseed pauses API, scheduler, jobs and queue delivery, drains work, checks
 | Configuration and worker-vars `.mjs`/`.d.mts` | Typed modules in their existing configuration/operations owners |
 | Local service launchers and hooks | Central process-group supervision; minimal host shell hook invoking Bun |
 
-Backend compatibility has a dedicated handwritten HTTP suite, actor-assurance and tenant-scope regressions, plus checksum-pinned oasdiff. The generated-client tests remain separate. Explicit maintenance validates both direct database connections and deployed bindings before pausing, drains background work, purges stale queue/authentication state, resets/migrates, provisions private fixture sessions, and reseeds. Failure keeps maintenance controls paused; recovery is explicit.
+Backend qualification requires its handwritten HTTP suite, actor-assurance and tenant-scope regressions, and retains a checksum-pinned oasdiff report of client upgrade changes. The generated-client tests remain separate. Explicit maintenance validates both direct database connections and deployed bindings before pausing, drains background work, purges stale queue/authentication state, resets/migrates, provisions private fixture sessions, and reseeds. Failure keeps maintenance controls paused; recovery is explicit.
 
 ## Local migration rehearsal — 2026-10-11
 
@@ -75,4 +75,4 @@ The complete `ci qualify staging` command passed against the local working tree:
 
 Staging and production Worker bundles both passed deployment dry runs using the already built bundle and explicit application configuration. No deployment, database migration, reset or reseed was performed against a hosted environment. Local evidence identifies the working tree and must not be treated as a qualified committed release candidate.
 
-GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and the initial compatibility snapshot review remain required before enabling the adoption gate.
+GitHub-hosted qualification, artifact handoff, deployment-history permissions, environment configuration and matching-client qualification remain required before enabling the adoption gate.

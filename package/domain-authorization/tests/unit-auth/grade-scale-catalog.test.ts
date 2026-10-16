@@ -11,7 +11,7 @@ describe('grading configuration catalog access', () => {
     fixture = await createAuthorizationDatabase()
     await seedAuthorizationRelationships(fixture.db)
     for (const schoolId of ['school-a', 'school-b']) {
-      await fixture.repositories.gradeScales.save(new GradeScale({ id: `scale-${schoolId}`, schoolId, name: 'Sur 20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: `range-${schoolId}`, letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20, isPassing: true }] }))
+      await fixture.repositories.gradeScales.save(new GradeScale({ id: `scale-${schoolId}`, schoolId, name: 'Sur 20', minScore: 0, maxScore: 20, intervalConvention: 'continuous', ranges: [{ id: `range-${schoolId}`, letter: 'A', interpretation: 'Pass', minScore: 0, maxScore: 20 }] }))
     }
   })
   afterEach(async () => {

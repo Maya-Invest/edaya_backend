@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
 import { attendanceRecordCreateSchema, paymentCreateSchema, schoolCreateSchema, studentClassEnrollmentCreateSchema, studentCreateSchema } from "@edaya/core";
+import { describe, expect, test } from "bun:test";
 import {
   enrollStudentCommandSchema,
   recordAttendanceCommandSchema,
   recordPaymentCommandSchema,
   registerSchoolCommandSchema,
-  updateSchoolConfigurationCommandSchema,
   registerStudentCommandSchema,
+  updateSchoolConfigurationCommandSchema,
 } from "@/lib/school-api/schemas/commands";
 
 interface AnySchema {
@@ -104,10 +104,23 @@ describe("API command schemas cover core create required fields", () => {
   });
 });
 
-
 test("school section patches do not inject defaults or erase other sections", () => {
   const input = { schoolId: "school", name: "New school name", shortName: "Saved" };
   expect(updateSchoolConfigurationCommandSchema.parse(input)).toEqual(input);
   expect(updateSchoolConfigurationCommandSchema.parse({ schoolId: "school", phone: null })).toEqual({ schoolId: "school", phone: null });
   expect(updateSchoolConfigurationCommandSchema.safeParse({ schoolId: "school", shortName: "   " }).success).toBe(false);
+});
+
+test("report model threshold patches distinguish omission, zero and explicit clearing", async () => {
+  const { configureReportCardDefinitionCommandSchema, createReportCardDefinitionCommandSchema } = await import("@/lib/school-api/schemas/commands");
+  const base = { requestId: "request", id: "model", expectedRevision: 0, action: "metadata" as const };
+  const omitted = configureReportCardDefinitionCommandSchema.parse({ ...base, metadata: { name: "Report" } });
+  expect(Object.hasOwn(omitted.metadata!, "passThreshold")).toBe(false);
+  const cleared = configureReportCardDefinitionCommandSchema.parse({ ...base, metadata: { name: "Report", passThreshold: null } });
+  expect(Object.hasOwn(cleared.metadata!, "passThreshold")).toBe(true);
+  expect(cleared.metadata).toEqual({ name: "Report", passThreshold: undefined });
+  expect(configureReportCardDefinitionCommandSchema.parse({ ...base, metadata: { name: "Report", passThreshold: 0 } }).metadata).toEqual({ name: "Report", passThreshold: 0 });
+  const create = { id: "new", schoolId: "school", academicYearId: "year", gradeLevelId: "level", gradeScaleId: "scale", name: "Report" };
+  expect((createReportCardDefinitionCommandSchema.parse(create) as { passThreshold?: number }).passThreshold).toBeUndefined();
+  expect((createReportCardDefinitionCommandSchema.parse({ ...create, passThreshold: 10.125 }) as { passThreshold?: number }).passThreshold).toBe(10.125);
 });

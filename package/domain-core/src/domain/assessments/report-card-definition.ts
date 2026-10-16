@@ -19,6 +19,7 @@ export const reportCardDefinitionSchema = z.object({
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   gradeLevelId: z.string().trim().min(1, 'gradeLevelId must not be blank'),
   gradeScaleId: z.string().trim().min(1, 'gradeScaleId must not be blank'),
+  passThreshold: z.number().finite().nonnegative().nullable().optional().transform(v => v === null ? undefined : v),
   name: z.string().trim().min(1, 'name must not be blank'),
   kind: z.nativeEnum(ReportCardDefinitionKind).default(ReportCardDefinitionKind.Custom),
   status: z.nativeEnum(ReportCardDefinitionStatus).default(ReportCardDefinitionStatus.Draft),
@@ -45,6 +46,7 @@ export class ReportCardDefinition {
     this.data = parseDomain(reportCardDefinitionSchema, args)
   }
 
+  get passThreshold() { return this.data.passThreshold }
   get revision() { return this.data.revision }
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
