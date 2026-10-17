@@ -20,11 +20,11 @@ import {
 import { createTestApp } from '../utils/test-adapter'
 
 const STAFF_TEACHING_WRITE_TEST_PERMISSIONS: readonly Permission[] = [
-  Permission.CLASS_LOGBOOK_CREATE,
+  Permission.CLASS_LOGBOOK_MANAGE,
   Permission.ATTENDANCE_RECORD,
   Permission.DISCIPLINE_CREATE,
-  Permission.GRADE_INPUT,
-  Permission.CLASS_LOGBOOK_UPDATE,
+  Permission.GRADE_MANAGE,
+  Permission.CLASS_LOGBOOK_MANAGE,
 ]
 
 async function setupBaselineFixture() {

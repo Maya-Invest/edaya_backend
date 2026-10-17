@@ -627,7 +627,7 @@ describe('Entity config save gates', () => {
     })
     const { app, repositories, schoolRepositories } = await createTestApp(staffActor)
     await schoolRepositories.academicYears.save(new AcademicYear({ id: 'archive-year', schoolId: 'school', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive', schoolId: 'school', academicYearId: 'archive-year', staffId: staffActor.staffMemberId, permission: Permission.STAFF_ARCHIVE, scopes: [{ kind: 'school' }] }))
+    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive', schoolId: 'school', academicYearId: 'archive-year', staffId: staffActor.staffMemberId, permission: Permission.STAFF_MANAGE, scopes: [{ kind: 'school' }] }))
     const staffMember = new StaffMember({
       id: 'staff-1',
       schoolId: 'school',
@@ -657,7 +657,7 @@ describe('Entity config save gates', () => {
       timeZone: 'UTC',
       ownerSubjectId: 'subject-owner',
     }))
-    await app.baseService.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive-owner', schoolId: 'school', academicYearId: 'year-1', staffId: 'staff-test', permission: Permission.STAFF_ARCHIVE, scopes: [{ kind: 'school' }] }))
+    await app.baseService.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'archive-owner', schoolId: 'school', academicYearId: 'year-1', staffId: 'staff-test', permission: Permission.STAFF_MANAGE, scopes: [{ kind: 'school' }] }))
     const owner = new StaffMember({
       id: 'owner',
       schoolId: 'school',

@@ -24,7 +24,7 @@ export const teacherCorrectionSchema = z.object({
   periodId: id.optional(),
   workflow: correctionWorkflowSchema,
   targetId: id,
-  status: z.enum(['pending', 'approved', 'rejected', 'withdrawn']),
+  status: z.enum(['pending', 'approved_pending_publication', 'published', 'approved', 'rejected', 'withdrawn']),
   version: z.number().int().nonnegative(),
   baseVersion: z.number().int().nonnegative(),
   authorSubjectId: id,
@@ -51,4 +51,4 @@ export const validateTeacherLogbookSchema = z.object({ requestId: id.max(200), l
 export const editTeacherIncidentSchema = z.object({ requestId: id.max(200), expectedVersion: z.number().int().nonnegative(), proposal: correctionProposalSchema.options[3] }).strict()
 export const takeOverTeacherIncidentSchema = z.object({ requestId: id.max(200), incidentId: id }).strict()
 export const appendIncidentFollowUpSchema = takeOverTeacherIncidentSchema.extend({ text: id.max(20000) })
-export const teacherCorrectionsQuerySchema = z.object({ workflow: z.enum(['grades', ...correctionWorkflowSchema.options]).optional(), status: z.enum(['pending', 'approved', 'rejected', 'withdrawn']).default('pending'), classGroupId: id.optional(), periodId: id.optional(), teacherSubjectId: id.optional(), studentId: id.optional(), search: z.string().optional(), from: zodDate().optional(), to: zodDate().optional(), offset: z.number().int().nonnegative().default(0), limit: z.number().int().min(1).max(100).default(25) })
+export const teacherCorrectionsQuerySchema = z.object({ workflow: z.enum(['grades', ...correctionWorkflowSchema.options]).optional(), status: z.enum(['pending', 'approved_pending_publication', 'published', 'approved', 'rejected', 'withdrawn']).default('pending'), classGroupId: id.optional(), periodId: id.optional(), teacherSubjectId: id.optional(), studentId: id.optional(), search: z.string().optional(), from: zodDate().optional(), to: zodDate().optional(), offset: z.number().int().nonnegative().default(0), limit: z.number().int().min(1).max(100).default(25) })

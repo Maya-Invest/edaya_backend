@@ -1,4 +1,4 @@
-import type { GrantScope, Permission } from '@edaya/core'
+import type { GrantScope, Permission, UserScopeSelection } from '@edaya/core'
 
 export interface StaffPermissionAssignmentSeedRecord {
   id: string
@@ -31,7 +31,7 @@ export interface ApplyStaffPermissionProfileSeedRecord {
   staffId: string
   profileId: string
   academicYearId: string
-  customScopes: GrantScope[]
+  customScopes: UserScopeSelection[]
   useDefaultScopes: boolean
 }
 

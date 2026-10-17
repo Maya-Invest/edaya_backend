@@ -33,7 +33,7 @@ export async function preparePermissionProfileCatalogDelete(
           schoolId: grant.schoolId,
           academicYearId: grant.academicYearId,
           permission: grant.permission,
-          customScopes: grant.scopes,
+          customScopes: grant.scopes.filter(scope => scope.kind !== 'school'),
           useDefaultScopes: false,
           status: grant.status,
           startsAt: grant.startsAt,

@@ -6,7 +6,7 @@ import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/sup
 describe('delegation of typed manual authority', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   const now = new Date('2026-05-01T00:00:00Z')
-  const grant = { permission: Permission.GRADE_INPUT, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }], startsAt: new Date('2026-01-01'), endsAt: new Date('2026-12-31') }
+  const grant = { permission: Permission.GRADE_MANAGE, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }], startsAt: new Date('2026-01-01'), endsAt: new Date('2026-12-31') }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...grant, id: 'held', schoolId: 'school-a', staffId: 'staff-a' }))

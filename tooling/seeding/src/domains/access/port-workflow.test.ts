@@ -83,8 +83,10 @@ describe('access seed port workflow', () => {
     expect(memory.profileBindings.filter(binding => binding.staffId === 'ci-st7').map(binding => binding.profileId))
       .toEqual(['pp-educator'])
     expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director')?.customScopes).toEqual([
-      { kind: 'school' },
+      { kind: 'all', grain: 'grade_level' },
+      { kind: 'all', grain: 'grade_level_subject' },
       { kind: 'all', grain: 'class_group' },
+      { kind: 'all', grain: 'class_subject' },
     ])
   })
 

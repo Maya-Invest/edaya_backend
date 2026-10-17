@@ -5,7 +5,7 @@ import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
-async function createAccessControlContext(permissions: readonly Permission[] = [Permission.ACCESS_CONTROL_ASSIGN, Permission.ACCESS_CONTROL_READ], notificationGateway = noOpNotificationGateway) {
+async function createAccessControlContext(permissions: readonly Permission[] = [Permission.ACCESS_CONTROL_MANAGE, Permission.ACCESS_CONTROL_READ], notificationGateway = noOpNotificationGateway) {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'staff-admin'), { notificationGateway })
   const repositories = fixture.schoolRepositories
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
@@ -17,7 +17,7 @@ async function createAccessControlContext(permissions: readonly Permission[] = [
 }
 
 describe('SchoolService access-control workflows', () => {
-  test('linkActorSubject links a staff member when caller has ACCESS_CONTROL_ASSIGN', async () => {
+  test('linkActorSubject links a staff member when caller has ACCESS_CONTROL_MANAGE', async () => {
     const { repositories, service } = await createAccessControlContext()
 
     const result = await service.accessControlWorkflow.linkActorSubject({
@@ -30,7 +30,7 @@ describe('SchoolService access-control workflows', () => {
     expect((await repositories.staffMembers.findById('st1'))?.subjectId).toBe(result.entity.subjectId)
   })
 
-  test('linkActorSubject rejects callers without ACCESS_CONTROL_ASSIGN', async () => {
+  test('linkActorSubject rejects callers without ACCESS_CONTROL_MANAGE', async () => {
     const { service } = await createAccessControlContext(
       [Permission.ACCESS_CONTROL_READ],
     )
@@ -165,7 +165,7 @@ describe('SchoolService access-control workflows', () => {
       schoolId: 'sch1',
       academicYearId: 'ay1',
       permission: Permission.ACCESS_CONTROL_READ,
-      customScopes: [{ kind: 'school' }],
+      customScopes: [],
     })
 
     expect(assignment.permission).toBe(Permission.ACCESS_CONTROL_READ)
@@ -205,7 +205,7 @@ describe('SchoolService access-control workflows', () => {
     } satisfies Partial<BusinessRuleViolationError>)
   })
 
-  test('linkActorSubject links a guardian when caller has ACCESS_CONTROL_ASSIGN', async () => {
+  test('linkActorSubject links a guardian when caller has ACCESS_CONTROL_MANAGE', async () => {
     const { repositories, service } = await createAccessControlContext()
 
     const result = await service.accessControlWorkflow.linkActorSubject({

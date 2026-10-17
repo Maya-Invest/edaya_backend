@@ -1,6 +1,6 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
@@ -55,6 +55,96 @@ describe('authorization policies against native repository scopes', () => {
     }))
   }
 
+  test('assessment setup supplies only authorized subjects and class size without marks or a student directory', async () => {
+    await addGrant(Permission.ASSESSMENT_MANAGE, 'math', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    const service = schoolService()
+    const context = await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
+    expect(context.assessmentsRaw.map(row => row.id)).toEqual(['assessment-math'])
+    expect(context.classSubjectsRaw.map(row => row.id)).toEqual(['math-a'])
+    expect(context.classSize).toBeGreaterThan(0)
+    expect(context.markResults).toEqual([])
+    await expect(service.baseService.entities.assessmentResults.list()).rejects.toThrow()
+    await expect(service.baseService.entities.students.list()).rejects.toThrow()
+    await expect(service.getAssessmentEditorContext({ classGroupId: 'class-other', periodId: 'period-a' })).rejects.toThrow()
+    await expect(service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'missing' })).rejects.toThrow()
+  })
+
+  test('assessment management preserves teacher deletion denial and live assignment removal', async () => {
+    const exams = schoolService(teacher).baseService.entities.assessments
+    const before = (await repositories.assessments.findById('assessment-math'))!
+    await exams.save(new Assessment({ ...before.data, title: 'Teacher edit' }))
+    await expect(exams.delete(before.id)).rejects.toThrow()
+    await db.exec('DELETE FROM teacher_assignments')
+    await expect(exams.save(new Assessment({ ...before.data, title: 'Removed teacher' }))).rejects.toThrow()
+  })
+
+  test('assessment context distinguishes unreadable marks from empty marks and follows current subject grants', async () => {
+    await addGrant(Permission.ASSESSMENT_MANAGE)
+    await addGrant(Permission.GRADE_READ, 'math', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    await repositories.assessmentResults.save(new AssessmentResult({ id: 'former-student-mark', assessmentId: 'assessment-math', studentId: 'student-other', score: 19 }))
+    const service = schoolService()
+    const context = await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
+    expect(context.assessmentsRaw.map(row => row.id).sort()).toEqual(['assessment-french', 'assessment-math'])
+    expect(context.markResults.map(row => row.assessmentId)).toEqual(['assessment-math'])
+    expect(context.markResults[0]!.results.map(row => [row.id, row.score])).toEqual([['1-math', 10]])
+    expect(context.classSize).toBe(1)
+    await repositories.assessmentResults.delete('1-math')
+    expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([{ assessmentId: 'assessment-math', results: [] }])
+    await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_READ}-math`)
+    expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([])
+  })
+
+  test('assessment setup and mark entry remain independent business actions', async () => {
+    const assessment = (await repositories.assessments.findById('assessment-math'))!
+    await addGrant(Permission.ASSESSMENT_MANAGE)
+    const access = new AccessPolicies(staff, repositories)
+    await access.entity('assessments').assertSave(new Assessment({ ...assessment.data, title: 'Setup only' }), assessment)
+    const service = schoolService()
+    await service.assessmentsWorkflow.createAssessment({ ...assessment.data, id: 'assessment-setup-only', title: 'Setup only' })
+    await expect(service.baseService.entities.assessments.findById('assessment-setup-only')).rejects.toThrow()
+    const editable = (await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).assessmentsRaw.find(row => row.id === 'assessment-setup-only')!
+    await service.baseService.entities.assessments.save(new Assessment({ ...editable, title: 'Edited through bounded context' }))
+    expect((await repositories.assessments.findById(editable.id))?.title).toBe('Edited through bounded context')
+    await service.baseService.entities.assessments.delete(editable.id)
+    expect(await repositories.assessments.findById(editable.id)).toBeUndefined()
+    await expect(access.grades.assertInput({ assessmentId: assessment.id, studentId: 'student-a' })).rejects.toThrow()
+    await repositories.staffPermissionAssignments.delete(`${Permission.ASSESSMENT_MANAGE}-class-a`)
+    await addGrant(Permission.GRADE_MANAGE)
+    await access.grades.assertInput({ assessmentId: assessment.id, studentId: 'student-a' })
+    await expect(access.entity('assessments').assertSave(new Assessment({ ...assessment.data, title: 'Marks only' }), assessment)).rejects.toThrow()
+  })
+
+  test('assessment context mark reads retain teacher and guardian relationship isolation', async () => {
+    await addGrant(Permission.GRADE_READ, 'class-other')
+    const teacherContext = await schoolService(teacher).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
+    expect(teacherContext.markResults.flatMap(row => row.results.map(result => result.id))).toEqual(['1-math'])
+    const familyContext = await schoolService(guardian).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
+    expect(familyContext.markResults.flatMap(row => row.results)).toEqual([])
+    await db.exec('UPDATE assessments SET marks_status = \'submitted\'')
+    const submitted = await schoolService(guardian).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
+    expect(submitted.markResults.flatMap(row => row.results.map(result => result.id)).sort()).toEqual(['1-math', '2-french'])
+    await db.exec('DELETE FROM teacher_assignments; DELETE FROM guardian_student_links')
+    await expect(schoolService(teacher).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).rejects.toThrow()
+    await expect(schoolService(guardian).getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).rejects.toThrow()
+  })
+
+  test('activity class scope cannot edit a shared definition or manage another class participant', async () => {
+    const activity = new Activity({ id: 'club', schoolId: 'school-a', name: 'Club', category: ActivityCategory.Science, coach: 'Coach', schedule: 'Friday', participants: 0, capacity: 20, description: 'Science club', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') })
+    await repositories.activities.save(activity)
+    for (const classGroupId of ['class-a', 'class-other'])
+      await repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id: `club-${classGroupId}`, activityId: activity.id, classGroupId }))
+    await addGrant(Permission.ACTIVITY_MANAGE, 'club', { scopes: [{ kind: 'activity', classGroupId: 'class-a' }] })
+    await addGrant(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'club', { scopes: [{ kind: 'activity', classGroupId: 'class-a' }] })
+    const access = new AccessPolicies(staff, repositories)
+    await expect(access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity({ ...activity.data, name: 'Changed' }), activity)).rejects.toThrow()
+    await expect(schoolService().baseService.entities.activities.delete(activity.id)).rejects.toThrow()
+    const enrollment = new ActivityEnrollment({ id: 'club-student', activityId: activity.id, studentId: 'student-a', status: ActivityEnrollmentStatus.Approved })
+    await access.assertSave(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'activityEnrollments', enrollment)
+    await expect(access.assertSave(Permission.ACTIVITY_ENROLLMENT_MANAGE, 'activityEnrollments', new ActivityEnrollment({ ...enrollment.data, studentId: 'student-other' }), enrollment)).rejects.toThrow()
+    await addGrant(Permission.ACTIVITY_MANAGE, 'club', { scopes: [{ kind: 'activity', activityId: 'club' }] })
+    await access.assertSave(Permission.ACTIVITY_MANAGE, 'activities', new Activity({ ...activity.data, name: 'Changed' }), activity)
+  })
+
   test('read, single, count and pagination have identical tenant and class boundaries', async () => {
     await addGrant(Permission.GRADE_READ)
     const access = new AccessPolicies(staff, repositories)
@@ -69,7 +159,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('a read grant never contributes placement to a write grant', async () => {
     await addGrant(Permission.GRADE_READ, 'class-other')
-    await addGrant(Permission.GRADE_INPUT)
+    await addGrant(Permission.GRADE_MANAGE)
     const access = new AccessPolicies(staff, repositories)
     await access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })
     await expect(access.grades.assertInput({ assessmentId: 'assessment-other', studentId: 'student-other' })).rejects.toThrow()
@@ -94,7 +184,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('uses current facts after expiration, relationship removal and selected-year changes', async () => {
-    await addGrant(Permission.GRADE_INPUT, 'class-a', { endsAt: new Date('2000-01-01') })
+    await addGrant(Permission.GRADE_MANAGE, 'class-a', { endsAt: new Date('2000-01-01') })
     const access = new AccessPolicies(staff, repositories)
     await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })).rejects.toThrow()
     const teacherAccess = new AccessPolicies(teacher, repositories)
@@ -107,7 +197,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('assignments confer authority directly and removal takes effect without grant synchronization', async () => {
     await db.exec(`INSERT INTO staff_assignments (id, staff_id, academic_year_id, role, permissions, class_group_id, created_at)
-      VALUES ('assignment', 'staff-a', 'year-a', 'Supervisor', '["GRADE_INPUT"]', 'class-a', now())`)
+      VALUES ('assignment', 'staff-a', 'year-a', 'Supervisor', '["GRADE_MANAGE"]', 'class-a', now())`)
     const access = new AccessPolicies(staff, repositories)
     await access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })
     expect(await repositories.staffPermissionAssignments.count()).toBe(0)
@@ -116,7 +206,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('selected guardian profile never inherits the same person’s staff or teaching grants', async () => {
-    await addGrant(Permission.GRADE_INPUT)
+    await addGrant(Permission.GRADE_MANAGE)
     await db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
     const access = new AccessPolicies(guardian, repositories)
     await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })).rejects.toThrow()
@@ -126,16 +216,16 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('updates check both old and proposed placement, including every student', async () => {
-    await addGrant(Permission.GRADE_INPUT)
+    await addGrant(Permission.GRADE_MANAGE)
     const access = new AccessPolicies(staff, repositories)
     const old = (await repositories.assessmentResults.findById('3-other'))!
     const moved = new AssessmentResult({ ...old.data, assessmentId: 'assessment-math', studentId: 'student-a' })
-    await expect(access.assertSave(Permission.GRADE_INPUT, 'assessmentResults', moved, old)).rejects.toThrow()
+    await expect(access.assertSave(Permission.GRADE_MANAGE, 'assessmentResults', moved, old)).rejects.toThrow()
     const local = (await repositories.assessmentResults.findById('1-math'))!
     const foreignStudent = new AssessmentResult({ ...local.data, studentId: 'student-b' })
-    await expect(access.assertSave(Permission.GRADE_INPUT, 'assessmentResults', foreignStudent, local)).rejects.toThrow()
+    await expect(access.assertSave(Permission.GRADE_MANAGE, 'assessmentResults', foreignStudent, local)).rejects.toThrow()
     const updated = new AssessmentResult({ ...local.data, score: 18 })
-    const scope = await access.assertSave(Permission.GRADE_INPUT, 'assessmentResults', updated, local)
+    const scope = await access.assertSave(Permission.GRADE_MANAGE, 'assessmentResults', updated, local)
     await repositories.assessmentResults.forAccess(scope).save(updated)
     expect((await repositories.assessmentResults.findById(local.id))?.score).toBe(18)
   })
@@ -159,7 +249,7 @@ describe('authorization policies against native repository scopes', () => {
     await repositories.s2sClients.save(new S2sClient({ ...client.data, accessClass: 'write' }))
     await access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })
     await expect(access.grades.assertInput({ assessmentId: 'assessment-b', studentId: 'student-b' })).rejects.toThrow()
-    for (const action of [Permission.ACCESS_CONTROL_ASSIGN, Permission.SERVICE_ACCOUNT_CREATE, Permission.PLATFORM_USER_CREATE, Permission.S2S_CLIENT_CREATE]) {
+    for (const action of [Permission.ACCESS_CONTROL_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.PLATFORM_USER_MANAGE, Permission.S2S_CLIENT_MANAGE]) {
       await expect(access.assertSchool(action)).rejects.toThrow()
     }
     await repositories.s2sClients.save(new S2sClient({ ...client.data, revokedAt: new Date() }))
@@ -167,7 +257,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('platform grants are live, profile-isolated and bounded when delegated', async () => {
-    const user = new PlatformUser({ id: 'operator', subjectId: 'person-a', email: 'operator@example.com', isActive: true, createdBySubjectId: 'bootstrap', permissions: [Permission.PLATFORM_USER_READ, Permission.PLATFORM_USER_CREATE, Permission.S2S_CLIENT_CREATE] })
+    const user = new PlatformUser({ id: 'operator', subjectId: 'person-a', email: 'operator@example.com', isActive: true, createdBySubjectId: 'bootstrap', permissions: [Permission.PLATFORM_USER_READ, Permission.PLATFORM_USER_MANAGE, Permission.S2S_CLIENT_MANAGE] })
     await repositories.platformUsers.save(user)
     const actor = createPlatformActorMetadata({ actorId: user.id, subjectId: user.subjectId, email: user.email, authenticatedAt: new Date(), requestId: 'test' })
     expect('permissions' in actor).toBe(false)
@@ -180,46 +270,46 @@ describe('authorization policies against native repository scopes', () => {
     await expect(createPlatformUser(repositories.platformUsers, actor, {
       subjectId: 'new-operator',
       email: 'new@example.com',
-      permissions: [Permission.S2S_CLIENT_REVOKE],
+      permissions: [Permission.S2S_CLIENT_READ],
     }, atomic)).rejects.toThrow()
     expect(await repositories.platformUsers.count()).toBe(1)
     await expect(createS2sClient(repositories, actor, { schoolId: 'missing-school', clientId: 'missing', accessClass: 'read' }, atomic)).rejects.toThrow()
     expect(await repositories.s2sClients.count()).toBe(0)
     const created = await createS2sClient(repositories, actor, { schoolId: 'school-a', clientId: 'valid', accessClass: 'read' }, atomic)
     expect(created.client.schoolId).toBe('school-a')
-    await repositories.platformUsers.save(new PlatformUser({ ...user.data, permissions: [Permission.PLATFORM_USER_CREATE] }))
+    await repositories.platformUsers.save(new PlatformUser({ ...user.data, permissions: [Permission.PLATFORM_USER_MANAGE] }))
     await expect(policies.readUsers()).rejects.toThrow()
     await repositories.platformUsers.save(new PlatformUser({ ...user.data, isActive: false }))
     await expect(policies.createUser()).rejects.toThrow()
   })
 
-  test('grade creation and editing bind separate actions, including managed writes', async () => {
-    await addGrant(Permission.GRADE_UPDATE)
+  test('grade management includes input and edit while read access remains separate', async () => {
+    await addGrant(Permission.GRADE_MANAGE)
     const service = schoolService()
     const before = (await repositories.assessmentResults.findById('1-math'))!
     await service.baseService.entities.assessmentResults.save(new AssessmentResult({ ...before.data, score: 17 }))
     expect((await repositories.assessmentResults.findById(before.id))?.score).toBe(17)
     await expect(service.baseService.entities.assessmentResults.save(new AssessmentResult({ ...before.data, id: 'new-result' }))).rejects.toThrow()
-    await expect(service.baseService.access.grades.assertInput(before)).rejects.toThrow()
+    await service.baseService.access.grades.assertInput(before)
     await service.baseService.access.grades.assertUpdate(before)
-    await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_UPDATE}-class-a`)
-    await addGrant(Permission.GRADE_INPUT)
+    await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_MANAGE}-class-a`)
+    await addGrant(Permission.GRADE_READ)
     await expect(service.baseService.entities.assessmentResults.save(new AssessmentResult({ ...before.data, score: 18 }))).rejects.toThrow()
     expect((await repositories.assessmentResults.findById(before.id))?.score).toBe(17)
   })
 
   test('alternative actions cannot combine authority across old and proposed placement or batch targets', async () => {
-    await addGrant(Permission.GRADE_INPUT, 'class-a')
-    await addGrant(Permission.GRADE_UPDATE, 'class-other')
+    await addGrant(Permission.GRADE_MANAGE, 'class-a')
+    await addGrant(Permission.GRADE_VALIDATE, 'class-other')
     const access = new AccessPolicies(staff, repositories)
     const before = (await repositories.assessmentResults.findById('1-math'))!
     const moved = new AssessmentResult({ ...before.data, assessmentId: 'assessment-other', studentId: 'student-other' })
-    await expect(access.assertSave([Permission.GRADE_INPUT, Permission.GRADE_UPDATE], 'assessmentResults', moved, before)).rejects.toThrow()
-    await expect(access.assertResources([Permission.GRADE_INPUT, Permission.GRADE_UPDATE], 'assessmentResults', ['1-math', '3-other'])).rejects.toThrow()
+    await expect(access.assertSave([Permission.GRADE_MANAGE, Permission.GRADE_VALIDATE], 'assessmentResults', moved, before)).rejects.toThrow()
+    await expect(access.assertResources([Permission.GRADE_MANAGE, Permission.GRADE_VALIDATE], 'assessmentResults', ['1-math', '3-other'])).rejects.toThrow()
   })
 
   test('a mixed-class batch fails without persisting its allowed first row', async () => {
-    await addGrant(Permission.GRADE_UPDATE)
+    await addGrant(Permission.GRADE_MANAGE)
     const local = (await repositories.assessmentResults.findById('1-math'))!
     const unrelated = (await repositories.assessmentResults.findById('3-other'))!
     await expect(schoolService().baseService.entities.assessmentResults.batchSave([
@@ -275,18 +365,18 @@ describe('authorization policies against native repository scopes', () => {
         dueDate: new Date('2026-01-01'),
       }))
     }
-    await addGrant(Permission.QUERY_OVERDUE_FEES_READ, 'unused', { scopes: [{ kind: 'student', studentId: 'student-a' }] })
+    await addGrant(Permission.OVERDUE_BALANCE_READ, 'unused', { scopes: [{ kind: 'student', studentId: 'student-a' }] })
     const service = schoolService()
     expect(await service.getOverdueFeeCount('school-a')).toBe(1)
     await expect(service.getOverdueFeeCount('school-b')).rejects.toThrow()
     const scoped = repositories.studentCharges.forAccess(await service.baseService.access.finance.overdueChargesScope())
     expect((await scoped.list()).map(row => row.studentId)).toEqual(['student-a'])
-    await repositories.staffPermissionAssignments.delete(`${Permission.QUERY_OVERDUE_FEES_READ}-unused`)
+    await repositories.staffPermissionAssignments.delete(`${Permission.OVERDUE_BALANCE_READ}-unused`)
     await expect(service.getOverdueFeeCount('school-a')).rejects.toThrow()
   })
 
   test('payment reversal uses only PAYMENT_REVERSE and cannot rewrite receipt details', async () => {
-    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'all', grain: 'student' }] })
     const accountId = studentYearAccountId('school-a', 'student-a', 'year-a', 'USD')
     await repositories.studentYearAccounts.save(new StudentYearAccount({
       id: accountId,
@@ -322,7 +412,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('PAYMENT_REVERSE cannot create or rewrite payment details', async () => {
-    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.PAYMENT_REVERSE, 'school', { scopes: [{ kind: 'all', grain: 'student' }] })
     const accountId = studentYearAccountId('school-a', 'student-a', 'year-a', 'USD')
     await repositories.studentYearAccounts.save(new StudentYearAccount({
       id: accountId,
@@ -359,7 +449,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('charge cancellation preserves recording authority for creation and financial details', async () => {
-    await addGrant(Permission.PAYMENT_CANCEL, 'school', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.PAYMENT_CANCEL, 'school', { scopes: [{ kind: 'all', grain: 'student' }] })
     await repositories.catalogServices.save(new CatalogService({
       id: 'cancel-catalog',
       schoolId: 'school-a',
@@ -496,8 +586,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('workspace and structure permissions do not disclose staff or authorize staff mutations', async () => {
-    await addGrant(Permission.QUERY_WORKSPACE_READ, 'workspace', { scopes: [{ kind: 'school' }] })
-    await addGrant(Permission.SCHOOL_STRUCTURE_CONFIGURE, 'structure', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.SCHOOL_CONFIGURE, 'structure', { scopes: [{ kind: 'school' }] })
     const people = schoolService().baseService.entities.staffMembers
     expect((await people.findById('staff-a'))?.id).toBe('staff-a')
     expect(await people.findById('staff-b')).toBeUndefined()
@@ -511,16 +600,16 @@ describe('authorization policies against native repository scopes', () => {
     await expect(people.save(new StaffMember({ ...original.data, id: 'new-staff' }))).rejects.toThrow()
   })
 
-  test('student create, update and archive permissions have distinct effects', async () => {
+  test('student creation stays separate from scoped management and archiving', async () => {
     const students = schoolService().baseService.entities.students
     const before = (await repositories.students.findById('student-a'))!
-    await addGrant(Permission.STUDENT_UPDATE, 'update', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.STUDENT_MANAGE, 'update', { scopes: [{ kind: 'all', grain: 'student' }] })
     await students.save(new Student({ ...before.data, firstName: 'Changed' }))
     await expect(students.save(new Student({ ...before.data, id: 'new-student' }))).rejects.toThrow()
-    await expect(students.save(new Student({ ...before.data, status: StudentStatus.Inactive }))).rejects.toThrow()
+    await students.save(new Student({ ...before.data, status: StudentStatus.Inactive }))
     await addGrant(Permission.STUDENT_CREATE, 'create', { scopes: [{ kind: 'school' }] })
     await students.save(new Student({ ...before.data, id: 'new-student' }))
-    await addGrant(Permission.STUDENT_ARCHIVE, 'archive', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.STUDENT_MANAGE, 'archive', { scopes: [{ kind: 'all', grain: 'student' }] })
     await students.save(new Student({ ...before.data, status: StudentStatus.Inactive }))
     expect((await repositories.students.findById('student-a'))?.status).toBe(StudentStatus.Inactive)
   })
@@ -528,13 +617,11 @@ describe('authorization policies against native repository scopes', () => {
   test('grade input does not authorize exam creation; exam scopes preserve subject isolation', async () => {
     const exams = schoolService().baseService.entities.assessments
     const before = (await repositories.assessments.findById('assessment-math'))!
-    await addGrant(Permission.GRADE_INPUT)
+    await addGrant(Permission.GRADE_MANAGE)
     await expect(exams.save(new Assessment({ ...before.data, id: 'new-exam' }))).rejects.toThrow()
-    await addGrant(Permission.EXAM_CONFIG_CREATE, 'exam', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    await addGrant(Permission.ASSESSMENT_MANAGE, 'exam', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
     await exams.save(new Assessment({ ...before.data, id: 'new-exam' }))
     await expect(exams.save(new Assessment({ ...before.data, id: 'other-exam', classSubjectId: 'french-a' }))).rejects.toThrow()
-    await expect(exams.save(new Assessment({ ...before.data, title: 'Changed' }))).rejects.toThrow()
-    await addGrant(Permission.EXAM_CONFIG_UPDATE, 'exam', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
     await exams.save(new Assessment({ ...before.data, title: 'Changed' }))
   })
 
@@ -546,10 +633,10 @@ describe('authorization policies against native repository scopes', () => {
     await expect(records.save(record.copyWith({ status: AttendanceStatus.Present }))).rejects.toThrow()
     const reviewed = record.copyWith({ justificationStatus: AttendanceJustificationStatus.Excused, reason: 'Medical', justifiedAt: new Date(), justifiedByStaffId: 'staff-a' })
     await expect(records.save(reviewed)).rejects.toThrow()
-    await addGrant(Permission.ATTENDANCE_JUSTIFY, 'justify', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.ATTENDANCE_MANAGE, 'justify', { scopes: [{ kind: 'all', grain: 'class_group' }] })
     await records.save(record.copyWith({ justificationStatus: AttendanceJustificationStatus.Pending, reason: 'Medical' }))
     await expect(records.save(reviewed)).rejects.toThrow()
-    await addGrant(Permission.ATTENDANCE_VALIDATE, 'validate', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.ATTENDANCE_VALIDATE, 'validate', { scopes: [{ kind: 'all', grain: 'class_group' }] })
     await records.save(reviewed)
     expect((await repositories.attendance.findById(record.id))?.justificationStatus).toBe(AttendanceJustificationStatus.Excused)
   })
@@ -584,7 +671,7 @@ describe('authorization policies against native repository scopes', () => {
   test('linking uses access-control authority and preserves profile data without granting profile-update authority', async () => {
     const helper = new StaffMember({ id: 'helper', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff', code: 'HELPER', email: 'helper@example.com' })
     await repositories.staffMembers.save(helper)
-    await addGrant(Permission.ACCESS_CONTROL_ASSIGN, 'link', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.ACCESS_CONTROL_MANAGE, 'link', { scopes: [{ kind: 'school' }] })
     const service = schoolService()
     await service.accessControlWorkflow.linkActorSubject({ staffMemberId: helper.id, subjectId: 'helper-person' })
     expect((await repositories.staffMembers.findById(helper.id))?.subjectId).toBe('helper-person')
@@ -592,13 +679,13 @@ describe('authorization policies against native repository scopes', () => {
     await service.accessControlWorkflow.unlinkActorSubject({ staffMemberId: helper.id })
     expect((await repositories.staffMembers.findById(helper.id))?.subjectId).toBeUndefined()
     await expect(service.accessControlWorkflow.linkActorSubject({ staffMemberId: 'staff-b', subjectId: 'foreign' })).rejects.toThrow()
-    await repositories.staffPermissionAssignments.delete(`${Permission.ACCESS_CONTROL_ASSIGN}-link`)
+    await repositories.staffPermissionAssignments.delete(`${Permission.ACCESS_CONTROL_MANAGE}-link`)
     await expect(service.accessControlWorkflow.linkActorSubject({ staffMemberId: helper.id, subjectId: 'denied' })).rejects.toThrow()
     expect((await repositories.staffMembers.findById(helper.id))?.subjectId).toBeUndefined()
   })
 
   test('profile updates cannot relink identities or bypass ownership transfer', async () => {
-    await addGrant(Permission.STUDENT_UPDATE, 'profile', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.STUDENT_MANAGE, 'profile', { scopes: [{ kind: 'all', grain: 'student' }] })
     const student = (await repositories.students.findById('student-a'))!
     await expect(schoolService().baseService.entities.students.save(new Student({ ...student.data, subjectId: 'new-person' }))).rejects.toThrow()
     expect((await repositories.students.findById(student.id))?.subjectId).toBeUndefined()
@@ -618,12 +705,12 @@ describe('authorization policies against native repository scopes', () => {
 
   test('curriculum updates authorize every mirrored class and roll back partial changes', async () => {
     await inheritedCurriculum()
-    await addGrant(Permission.ACADEMIC_PROGRAM_UPDATE)
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE)
     const workflow = schoolService().academicsWorkflow
     await expect(workflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'grade-math', coefficient: 5 })).rejects.toThrow()
     expect((await repositories.gradeLevelSubjects.findById('grade-math'))?.coefficient).toBe(2)
     expect((await repositories.classSubjects.findById('math-a'))?.coefficient).toBe(2)
-    await addGrant(Permission.ACADEMIC_PROGRAM_UPDATE, 'class-other')
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-other')
     await workflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'grade-math', coefficient: 5 })
     for (const id of ['math-a', 'math-other']) {
       const subject = (await repositories.classSubjects.findById(id))!
@@ -634,7 +721,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('curriculum removal retains all rows when teaching or assessment dependencies exist', async () => {
     await inheritedCurriculum()
-    await addGrant(Permission.ACADEMIC_PROGRAM_DELETE, 'class-a', { scopes: [{ kind: 'school' }] })
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-a', { scopes: [{ kind: 'all', grain: 'class_subject' }] })
     await repositories.subjectMatters.save(new SubjectMatter({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 }))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'allocation-delete', classSubjectId: 'math-a', subjectMatterId: 'topic-delete', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
     await expect(schoolService().academicsWorkflow.removeSubjectFromGradeLevel({ gradeLevelSubjectId: 'grade-math' })).rejects.toMatchObject({ code: 'CLASS_SUBJECT_HAS_DEPENDENCIES' })

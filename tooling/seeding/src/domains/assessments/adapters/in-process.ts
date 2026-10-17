@@ -30,7 +30,7 @@ export function createInProcessAssessmentsSeedPort(
       const subjectId = staff.subjectId ?? `fixture-editor:${staff.id}`
       if (!staff.subjectId)
         await service.accessControlWorkflow.linkActorSubject({ staffMemberId: staff.id, subjectId })
-      for (const permission of [Permission.GRADE_INPUT, Permission.GRADE_UPDATE, Permission.GRADE_READ]) {
+      for (const permission of [Permission.GRADE_MANAGE, Permission.GRADE_MANAGE, Permission.GRADE_READ]) {
         await service.accessControlWorkflow.assignStaffPermission({ id: `seed-editor:${group.id}:${permission}`, schoolId: group.schoolId, staffId: staff.id, academicYearId: group.academicYearId, permission, customScopes: [{ kind: 'class_group', classGroupId: group.id }], useDefaultScopes: false })
       }
       return application.forActor(createStaffActorMetadata({ schoolId: group.schoolId, staffMemberId: staff.id, subjectId, academicYearId: group.academicYearId, requestId: `seed-editor:${assessmentId}`, authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))

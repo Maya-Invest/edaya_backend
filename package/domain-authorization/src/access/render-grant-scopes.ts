@@ -1,4 +1,4 @@
-import type { GrantScope, Permission } from '@edaya/core'
+import type { GrantScope, Permission, UserScopeSelection } from '@edaya/core'
 import type { AccessFacts } from './facts'
 import { permissionScopeSelectionsSchema, validatePermissionScopes } from '@edaya/core'
 import { AuthorizationError } from '../model/errors'
@@ -34,12 +34,15 @@ async function label(facts: AccessFacts, scope: GrantScope): Promise<string> {
 /** Deleted, foreign and mismatched references share one non-disclosing display state. */
 export async function renderGrantScopes(facts: AccessFacts, input: { permission: Permission, scopes: readonly GrantScope[], academicYearId: string }) {
   validatePermissionScopes(input.permission, input.scopes)
-  return renderScopeSelections(facts, input)
+  return renderScopes(facts, input)
 }
 
-/** Defaults may mix grains and school scope, even when no permission currently uses them. */
-export async function renderScopeSelections(facts: AccessFacts, input: { scopes: readonly GrantScope[], academicYearId: string }) {
-  permissionScopeSelectionsSchema.parse(input.scopes)
+/** Defaults contain resource selections only, including dormant selections. */
+export async function renderScopeSelections(facts: AccessFacts, input: { scopes: readonly UserScopeSelection[], academicYearId: string }) {
+  return renderScopes(facts, { ...input, scopes: permissionScopeSelectionsSchema.parse(input.scopes) })
+}
+
+async function renderScopes<T extends GrantScope>(facts: AccessFacts, input: { scopes: readonly T[], academicYearId: string }) {
   await facts.one('academicYears', input.academicYearId)
   return Promise.all(input.scopes.map(async (scope) => {
     try {

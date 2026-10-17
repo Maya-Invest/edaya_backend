@@ -10,7 +10,7 @@ describe('service accounts cannot be administered through ordinary staff entitie
   let service: SchoolService
   let account: StaffMember
   const actor = createStaffActorMetadata({ staffMemberId: 'staff-a', subjectId: 'person-a', schoolId: 'school-a', requestId: 'service-target', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong })
-  const requested = { permission: Permission.GRADE_INPUT, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }] }
+  const requested = { permission: Permission.GRADE_MANAGE, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }] }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')

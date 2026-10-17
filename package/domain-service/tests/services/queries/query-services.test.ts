@@ -66,24 +66,27 @@ describe('SchoolService aggregate and timetable queries', () => {
         }],
       }))
     }
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'fee-reader', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERDUE_FEES_READ, scopes: [{ kind: 'student', studentId: 'student-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'fee-reader', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.OVERDUE_BALANCE_READ, scopes: [{ kind: 'student', studentId: 'student-a' }] }))
     expect(await service.getOverdueFeeCount('school-a')).toBe(1)
     await expect(service.getOverdueFeeCount('school-b')).rejects.toBeInstanceOf(AuthorizationError)
     await fixture.repositories.staffPermissionAssignments.delete('fee-reader')
     await expect(service.getOverdueFeeCount('school-a')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('overview requires its own school action and rejects cross-school parameters', async () => {
+  test('overview exposes only authorized business counts and rejects cross-school parameters', async () => {
     const input = { schoolId: 'school-a', academicYearId: 'year-a', academicPeriodId: 'period-a', referenceDate: new Date('2026-05-01') }
-    await expect(service.getSchoolOverview(input)).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERVIEW_READ, scopes: [{ kind: 'school' }] }))
+    expect((await service.getSchoolOverview(input)).kpis.studentCount).toBe(0)
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.STUDENT_READ, scopes: [{ kind: 'all', grain: 'student' }] }))
     expect((await service.getSchoolOverview(input)).kpis.studentCount).toBe(2)
     await expect(service.getSchoolOverview({ ...input, schoolId: 'school-b' })).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.getPublishedReportCardCount('school-a')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('overview and shell counts reject foreign years, periods and class ids before aggregation', async () => {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_OVERVIEW_READ, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'overview', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.STUDENT_READ, scopes: [{ kind: 'all', grain: 'student' }] }))
+    for (const permission of [Permission.CLASS_READ, Permission.ENROLLMENT_READ])
+      await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'staff-reader', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.STAFF_READ, scopes: [{ kind: 'school' }] }))
     const input = { schoolId: 'school-a', academicYearId: 'year-a', academicPeriodId: 'period-a' }
     await expect(service.getSchoolOverview({ ...input, academicYearId: 'year-b', academicPeriodId: 'period-b' })).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.getSchoolOverview({ ...input, academicPeriodId: 'period-b' })).rejects.toBeInstanceOf(AuthorizationError)
@@ -95,7 +98,7 @@ describe('SchoolService aggregate and timetable queries', () => {
   })
 
   test('timetable authorization covers the class and its events and rejects missing or unrelated classes', async () => {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const input = { classGroupId: 'class-a', startDate: new Date('2026-05-01'), endDate: new Date('2026-05-31') }
     const result = await service.getClassGroupTimetable(input)
     expect(result.classGroupId).toBe('class-a')
@@ -105,7 +108,7 @@ describe('SchoolService aggregate and timetable queries', () => {
   })
 
   test('teacher timetable authorization filters assigned sessions and rejects other teachers and family actors', async () => {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'timetable', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     await fixture.repositories.lessonSessions.save(new LessonSession({
       id: 'math-session',
       schoolId: 'school-a',
@@ -149,7 +152,7 @@ describe('SchoolService aggregate and timetable queries', () => {
   })
 
   test.each(['staff', 'teacher', 'guardian', 'student'] as const)('%s availability scopes supporting reads before building cells', async (kind) => {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'space', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.QUERY_TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'space', staffId: 'staff-a', schoolId: 'school-a', academicYearId: 'year-a', permission: Permission.TIMETABLE_READ, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     await fixture.db.exec('UPDATE students SET subject_id = \'person-a\' WHERE id = \'student-a\'')
     const identity = { schoolId: 'school-a', subjectId: 'person-a', requestId: 'space', authenticatedAt: new Date() }
     const actor = kind === 'teacher'

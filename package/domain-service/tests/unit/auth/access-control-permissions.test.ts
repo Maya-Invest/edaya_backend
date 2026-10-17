@@ -26,12 +26,15 @@ describe('permission administration actions', () => {
   })
 
   test('an assigner must also hold every delegated action and cannot use assignment authority to read grant administration', async () => {
-    await fixture.repositories.staffPermissionAssignments.save(grant(Permission.ACCESS_CONTROL_ASSIGN))
+    await fixture.repositories.staffPermissionAssignments.save(grant(Permission.ACCESS_CONTROL_MANAGE))
     await expect(service().list()).rejects.toThrow()
     await expect(service().save(grant(Permission.STAFF_READ))).rejects.toThrow()
     await fixture.repositories.staffPermissionAssignments.save(grant(Permission.STAFF_READ))
     const delegated = new StaffPermissionAssignment({ ...grant(Permission.STAFF_READ).data, id: 'delegated', scopes: [{ kind: 'school' }] })
-    await service().save(delegated)
-    expect(await fixture.repositories.staffPermissionAssignments.findById('delegated')).toBeDefined()
+    await expect(service().save(delegated)).rejects.toThrow()
+    const workflow = new SchoolApplication({ repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: noOpFileStorage }).forActor(actor).accessControlWorkflow
+    await workflow.assignStaffPermission({ id: 'delegated-source', schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission: Permission.STAFF_READ, customScopes: [], useDefaultScopes: false })
+    expect(await fixture.repositories.staffManualPermissionAssignments.findById('delegated-source')).toBeDefined()
+    await expect(service().list()).rejects.toThrow()
   })
 })

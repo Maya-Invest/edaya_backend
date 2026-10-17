@@ -3,14 +3,26 @@ import type { AccessPolicies } from './access-policies'
 import { Permission, StudentClassEnrollmentStatus } from '@edaya/core'
 import { AccessFacts, denied } from './facts'
 
-const reviewPermissions = { attendance: Permission.ATTENDANCE_VALIDATE, report_comments: Permission.REPORT_CARD_PUBLISH, logbook: Permission.CLASS_LOGBOOK_VALIDATE, discipline: Permission.DISCIPLINE_VALIDATE } as const
+const reviewPermissions = { attendance: Permission.ATTENDANCE_VALIDATE, report_comments: Permission.REPORT_CARD_REVIEW_COMMENTS, logbook: Permission.CLASS_LOGBOOK_VALIDATE, discipline: Permission.DISCIPLINE_VALIDATE } as const
 
 /** Keeps each correction action and its complete resource placement together. */
 export class TeacherCorrectionsAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
 
   queueScope(workflow: CorrectionWorkflow) {
-    return this.access.scope(reviewPermissions[workflow], 'classGroups')
+    return this.access.scope(workflow === 'report_comments' ? [reviewPermissions[workflow], Permission.REPORT_CARD_PUBLISH] : reviewPermissions[workflow], 'classGroups')
+  }
+
+  assertPublishReport(resultId: string) {
+    if (this.access.actor.kind !== 'staff')
+      denied()
+    return this.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [resultId])
+  }
+
+  assertRead(workflow: CorrectionWorkflow, classGroupId: string) {
+    if (this.access.actor.kind !== 'staff')
+      denied()
+    return this.access.assertResources(workflow === 'report_comments' ? [reviewPermissions[workflow], Permission.REPORT_CARD_PUBLISH] : reviewPermissions[workflow], 'classGroups', [classGroupId], 'read')
   }
 
   assertReview(workflow: CorrectionWorkflow, classGroupId: string, intent: 'read' | 'write' = 'write') {
@@ -35,11 +47,11 @@ export class TeacherCorrectionsAccessPolicy {
   }
 
   async assertLogbookProposal(lessonSessionId: string, matterIds: readonly string[]) {
-    await this.access.assertResources([Permission.CLASS_LOGBOOK_CREATE, Permission.CLASS_LOGBOOK_UPDATE], 'lessonSessions', [lessonSessionId])
+    await this.access.assertResources([Permission.CLASS_LOGBOOK_MANAGE], 'lessonSessions', [lessonSessionId])
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
     const lesson = await facts.one('lessonSessions', lessonSessionId)
     for (const id of matterIds) {
-      await this.access.assertResources(Permission.CLASS_LOGBOOK_CREATE, 'classSubjectMatters', [id])
+      await this.access.assertResources(Permission.CLASS_LOGBOOK_MANAGE, 'classSubjectMatters', [id])
       const matter = await facts.one('classSubjectMatters', id)
       if (matter.classSubjectId !== lesson.classSubjectId)
         denied()

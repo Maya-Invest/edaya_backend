@@ -209,6 +209,7 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     markConversationRead: payload => workflows.conversations.markRead(payload as Parameters<ConversationsWorkflow['markRead']>[0]),
     requestTeacherCorrection: payload => workflows.teacherCorrections.request(payload as z.input<typeof requestTeacherCorrectionSchema>),
     reviseTeacherCorrection: payload => workflows.teacherCorrections.revise(payload as z.input<typeof reviseTeacherCorrectionSchema>),
+    publishReportCommentCorrection: payload => workflows.teacherCorrections.publishReportCorrection(payload as z.input<typeof decideTeacherCorrectionSchema>),
     approveTeacherCorrection: payload => workflows.teacherCorrections.decide('approve', payload as z.input<typeof decideTeacherCorrectionSchema>),
     rejectTeacherCorrection: payload => workflows.teacherCorrections.decide('reject', payload as z.input<typeof rejectTeacherCorrectionSchema>),
     withdrawTeacherCorrection: payload => workflows.teacherCorrections.decide('withdraw', payload as z.input<typeof decideTeacherCorrectionSchema>),

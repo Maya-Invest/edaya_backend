@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Permission } from '../permissions/permission'
-import { permissionScope } from '../permissions/permission-scopes'
+import { corePermissionDefinition } from '../permissions/permission-catalog'
 import { permissionResolutionWarningSchema, permissionScopeSelectionsSchema } from '../permissions/permission-selections'
 import { parseDomain, zodDate } from '../shared/utils'
 import { refineEndsAtNotBeforeStartsAtOptional } from '../value-objects/date-time-range'
@@ -22,8 +22,11 @@ export const staffManualPermissionAssignmentBaseSchema = z.object({
 })
 export const staffManualPermissionAssignmentSchema = staffManualPermissionAssignmentBaseSchema.superRefine((data, ctx) => {
   refineEndsAtNotBeforeStartsAtOptional(data, ctx)
-  if (permissionScope(data.permission) === 'platform')
+  const definition = corePermissionDefinition(data.permission)
+  if (!definition.staffAssignable)
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Platform actions cannot be staff permissions', path: ['permission'] })
+  if (definition.scopePolicy.mode === 'none' && data.customScopes.length > 0)
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Unscoped permissions do not accept resource selections', path: ['customScopes'] })
 })
 export type StaffManualPermissionAssignmentInput = z.input<typeof staffManualPermissionAssignmentSchema>
 export type StaffManualPermissionAssignmentData = z.infer<typeof staffManualPermissionAssignmentSchema>
@@ -32,7 +35,11 @@ export class StaffManualPermissionAssignment {
   readonly data: StaffManualPermissionAssignmentData
   constructor(args: StaffManualPermissionAssignmentInput) {
     const parsed = parseDomain(staffManualPermissionAssignmentSchema, args)
-    this.data = { ...parsed, updatedAt: parsed.updatedAt ?? parsed.createdAt }
+    this.data = {
+      ...parsed,
+      ...(corePermissionDefinition(parsed.permission).scopePolicy.mode === 'none' ? { customScopes: [], useDefaultScopes: false } : {}),
+      updatedAt: parsed.updatedAt ?? parsed.createdAt,
+    }
   }
 
   get id() { return this.data.id }

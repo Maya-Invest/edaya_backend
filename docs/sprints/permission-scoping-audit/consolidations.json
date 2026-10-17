@@ -1,0 +1,766 @@
+{
+  "revision": "business-capability consolidation, 2026-10-16",
+  "baseline": [
+    {
+      "permission": "SCHOOL_STRUCTURE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SCHOOL_STRUCTURE_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SCHOOL_LIFECYCLE_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SCHOOL_SETTINGS_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STAFF_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STAFF_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STAFF_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STAFF_ARCHIVE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACCESS_CONTROL_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACCESS_CONTROL_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACCESS_CONTROL_ASSIGN",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SERVICE_ACCOUNT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SERVICE_ACCOUNT_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SERVICE_ACCOUNT_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SERVICE_ACCOUNT_REVOKE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SERVICE_ACCOUNT_ROTATE_KEY",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_PROGRAM_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_PROGRAM_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_PROGRAM_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_PROGRAM_DELETE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_PROGRAM_ASSIGN",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_CATALOG_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_CATALOG_DELETE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_CATALOG_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACADEMIC_CATALOG_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_ARCHIVE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_HEALTH_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_HEALTH_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_NOTE_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_NOTE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "STUDENT_NOTE_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PARENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PARENT_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PARENT_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PARENT_ARCHIVE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ENROLLMENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ENROLLMENT_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ENROLLMENT_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ENROLLMENT_ARCHIVE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DISCIPLINE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DISCIPLINE_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DISCIPLINE_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DISCIPLINE_VALIDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DISCIPLINE_ARCHIVE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTENDANCE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTENDANCE_RECORD",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTENDANCE_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTENDANCE_JUSTIFY",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTENDANCE_VALIDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "EXAM_CONFIG_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "EXAM_CONFIG_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "EXAM_CONFIG_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "EXAM_CONFIG_DELETE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GRADE_SCALE_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GRADE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GRADE_INPUT",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GRADE_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GRADE_VALIDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_GENERATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_PUBLISH",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_EXPORT",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_COMMENT",
+      "staffAssignable": true
+    },
+    {
+      "permission": "REPORT_CARD_REVIEW_COMMENTS",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CLASS_LOGBOOK_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CLASS_LOGBOOK_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CLASS_LOGBOOK_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CLASS_LOGBOOK_VALIDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "TIMETABLE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "TIMETABLE_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "TIMETABLE_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CALENDAR_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FINANCIAL_CONFIG_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FINANCIAL_CATALOG_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PAYMENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PAYMENT_RECORD",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PAYMENT_ALLOCATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PAYMENT_CANCEL",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PAYMENT_REVERSE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FINANCIAL_REPORT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DOCUMENT_VOID",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FAMILY_FEEDBACK_CAMPAIGN_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FAMILY_FEEDBACK_CAMPAIGN_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FAMILY_FEEDBACK_MODERATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "FAMILY_FEEDBACK_PUBLISH",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SCHOOL_MESSAGES_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "SCHOOL_MESSAGES_REPLY",
+      "staffAssignable": true
+    },
+    {
+      "permission": "TEACHER_MESSAGES_REVIEW",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_UPDATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_SEND",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_DELETE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "COMMUNICATION_SEND_BROADCAST",
+      "staffAssignable": true
+    },
+    {
+      "permission": "RESOURCE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "RESOURCE_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTACHMENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ATTACHMENT_CONFIGURE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACTIVITY_CREATE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACTIVITY_ENROLLMENT_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACTIVITY_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "ACTIVITY_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "RESOURCE_ASSIGNMENT_MANAGE",
+      "staffAssignable": true
+    },
+    {
+      "permission": "RESOURCE_ASSIGNMENT_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CALENDAR_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CLASS_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "CURRICULUM_PROGRESS_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "DASHBOARD_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "GUARDIAN_SELF_READ",
+      "staffAssignable": false
+    },
+    {
+      "permission": "OVERDUE_BALANCE_READ",
+      "staffAssignable": true
+    },
+    {
+      "permission": "PERSONAL_COMMUNICATIONS_READ",
+      "staffAssignable": false
+    },
+    {
+      "permission": "WORKSPACE_ACCESS",
+      "staffAssignable": false
+    },
+    {
+      "permission": "PLATFORM_REGISTER_SCHOOL",
+      "staffAssignable": false
+    },
+    {
+      "permission": "PLATFORM_USER_READ",
+      "staffAssignable": false
+    },
+    {
+      "permission": "PLATFORM_USER_CREATE",
+      "staffAssignable": false
+    },
+    {
+      "permission": "PLATFORM_USER_DEACTIVATE",
+      "staffAssignable": false
+    },
+    {
+      "permission": "S2S_CLIENT_READ",
+      "staffAssignable": false
+    },
+    {
+      "permission": "S2S_CLIENT_CREATE",
+      "staffAssignable": false
+    },
+    {
+      "permission": "S2S_CLIENT_REVOKE",
+      "staffAssignable": false
+    },
+    {
+      "permission": "S2S_CLIENT_ROTATE_KEY",
+      "staffAssignable": false
+    }
+  ],
+  "groups": [
+    {
+      "target": "SCHOOL_CONFIGURE",
+      "sources": [
+        "SCHOOL_STRUCTURE_CONFIGURE",
+        "SCHOOL_SETTINGS_UPDATE",
+        "CALENDAR_MANAGE"
+      ],
+      "scope": "N",
+      "reason": "A school setup administrator maintains structure, ordinary settings and calendars; lifecycle release remains a separate sign-off.",
+      "allow": "Maintain class/term structure, school branding and school holidays",
+      "deny": "Publish an academic year or edit student records with school setup authority"
+    },
+    {
+      "target": "STAFF_MANAGE",
+      "sources": [
+        "STAFF_CREATE",
+        "STAFF_UPDATE",
+        "STAFF_ARCHIVE"
+      ],
+      "scope": "N",
+      "reason": "Hiring, correcting and deactivating human staff records are one workforce maintenance capability; access grants and service credentials remain separate.",
+      "allow": "Create, correct and archive a non-owner staff record",
+      "deny": "Modify grants, deactivate self or bypass owner protections"
+    },
+    {
+      "target": "ACCESS_CONTROL_MANAGE",
+      "sources": [
+        "ACCESS_CONTROL_CONFIGURE",
+        "ACCESS_CONTROL_ASSIGN"
+      ],
+      "scope": "N",
+      "reason": "Editing an applied profile can change effective authority just as assigning it can; one access-administration capability avoids a misleading template-versus-assignment boundary.",
+      "allow": "Maintain permission profiles and assign only authority held for the complete target, scope and validity",
+      "deny": "Add unheld authority through a profile edit or delegate beyond the actor scope/year/validity"
+    },
+    {
+      "target": "SERVICE_ACCOUNT_MANAGE",
+      "sources": [
+        "SERVICE_ACCOUNT_CREATE",
+        "SERVICE_ACCOUNT_UPDATE",
+        "SERVICE_ACCOUNT_REVOKE",
+        "SERVICE_ACCOUNT_ROTATE_KEY"
+      ],
+      "scope": "N",
+      "reason": "One human integration administrator owns provisioning, metadata, rotation and revocation; machine callers and read-only auditors remain excluded.",
+      "allow": "Provision, configure, rotate and revoke a service account within held delegation",
+      "deny": "Use ordinary staff maintenance or a service caller to administer credentials"
+    },
+    {
+      "target": "ACADEMIC_PROGRAM_MANAGE",
+      "sources": [
+        "ACADEMIC_PROGRAM_CREATE",
+        "ACADEMIC_PROGRAM_UPDATE",
+        "ACADEMIC_PROGRAM_DELETE",
+        "ACADEMIC_PROGRAM_ASSIGN"
+      ],
+      "scope": "S",
+      "reason": "Constructing, allocating, correcting and removing a placed curriculum is one coordinator workflow; target containment, not CRUD tokens, bounds its authority.",
+      "allow": "Create a grade allocation with grade authority, or maintain and synchronize completely covered class/subject allocations",
+      "deny": "Use one subject grant to synchronize a whole class, create a new grade-level allocation without its grade, or edit shared dictionary definitions"
+    },
+    {
+      "target": "ACADEMIC_CATALOG_MANAGE",
+      "sources": [
+        "ACADEMIC_CATALOG_CREATE",
+        "ACADEMIC_CATALOG_UPDATE",
+        "ACADEMIC_CATALOG_DELETE"
+      ],
+      "scope": "N",
+      "reason": "Shared subject/matter/category maintenance has one responsible administrator; dependency protection remains an invariant.",
+      "allow": "Create, edit and remove an unused shared subject definition",
+      "deny": "Change a class allocation or delete a definition with protected live dependencies"
+    },
+    {
+      "target": "STUDENT_MANAGE",
+      "sources": [
+        "STUDENT_UPDATE",
+        "STUDENT_ARCHIVE"
+      ],
+      "scope": "L",
+      "reason": "Correcting and archiving an existing student dossier are one registrar maintenance capability, bounded by caseload and complete affected targets.",
+      "allow": "Correct and archive an authorized student with all affected placements covered",
+      "deny": "Create an unenrolled student, edit health/notes, or archive across uncovered placements"
+    },
+    {
+      "target": "STUDENT_NOTE_MANAGE",
+      "sources": [
+        "STUDENT_NOTE_CREATE",
+        "STUDENT_NOTE_UPDATE"
+      ],
+      "scope": "L",
+      "reason": "An author creates and maintains their own pastoral notes; ownership and visibility restrictions continue to limit edits and deletion.",
+      "allow": "Create, edit and delete an own permitted note for a covered student",
+      "deny": "Impersonate another author, edit their note or elevate its visibility"
+    },
+    {
+      "target": "PARENT_MANAGE",
+      "sources": [
+        "PARENT_CREATE",
+        "PARENT_UPDATE",
+        "PARENT_ARCHIVE"
+      ],
+      "scope": "N",
+      "reason": "A registrar maintains shared guardian identities, child links and portal-access status through one capability; child-scoped contact reads and staff access administration retain independent boundaries.",
+      "allow": "Create, correct and archive a shared guardian record and maintain authorized child links/portal status under existing relationship protections",
+      "deny": "Use child-scoped read authority or guardian self-service to alter shared access flags, or assign staff permissions through guardian management"
+    },
+    {
+      "target": "ENROLLMENT_MANAGE",
+      "sources": [
+        "ENROLLMENT_CREATE",
+        "ENROLLMENT_UPDATE",
+        "ENROLLMENT_ARCHIVE"
+      ],
+      "scope": "C",
+      "reason": "Admission, transfer and withdrawal are one class-placement workflow; source and destination coverage constrain changes.",
+      "allow": "Enroll, transfer and withdraw when all existing/proposed class placements are covered",
+      "deny": "Transfer into an uncovered class or administer activity participation"
+    },
+    {
+      "target": "DISCIPLINE_MANAGE",
+      "sources": [
+        "DISCIPLINE_UPDATE",
+        "DISCIPLINE_ARCHIVE"
+      ],
+      "scope": "C",
+      "reason": "Official incident content corrections and cancellation/cleanup belong to the class supervisor; reporting and adjudication remain separate responsibilities.",
+      "allow": "Correct, cancel or clean up an authorized class incident under existing state rules",
+      "deny": "Resolve sanctions or change an incident with an uncovered participant/placement"
+    },
+    {
+      "target": "ATTENDANCE_MANAGE",
+      "sources": [
+        "ATTENDANCE_UPDATE",
+        "ATTENDANCE_JUSTIFY"
+      ],
+      "scope": "C",
+      "reason": "Register maintenance includes corrections, removal and recording an explanation; approving an explanation or submitted teacher correction stays separate.",
+      "allow": "Correct class A official attendance and record an absence explanation",
+      "deny": "Approve/reject an explanation, bypass submitted-correction review or alter class B"
+    },
+    {
+      "target": "ASSESSMENT_MANAGE",
+      "sources": [
+        "EXAM_CONFIG_CREATE",
+        "EXAM_CONFIG_UPDATE",
+        "EXAM_CONFIG_DELETE"
+      ],
+      "scope": "S",
+      "reason": "A subject coordinator maintains draft assessments through one capability; marks, review state and shared grading scales stay separate.",
+      "allow": "Create, edit and delete a covered draft assessment, subject to existing dependency/state rules",
+      "deny": "Edit another subject, change marks/review state or delete a protected assessment"
+    },
+    {
+      "target": "GRADE_MANAGE",
+      "sources": [
+        "GRADE_INPUT",
+        "GRADE_UPDATE"
+      ],
+      "scope": "S",
+      "reason": "Entering, editing and submitting draft marks are already alternatives in the same workflow; retain one authoring capability and a separate correction reviewer.",
+      "allow": "Enter, edit and submit draft marks in the authorized subject",
+      "deny": "Approve corrections or overwrite published/locked source marks outside the correction workflow"
+    },
+    {
+      "target": "CLASS_LOGBOOK_MANAGE",
+      "sources": [
+        "CLASS_LOGBOOK_CREATE",
+        "CLASS_LOGBOOK_UPDATE"
+      ],
+      "scope": "S",
+      "reason": "Recording and correcting draft lesson progress are one subject author workflow; review and pastoral notes remain independent.",
+      "allow": "Create and edit covered subject lesson/progress entries",
+      "deny": "Validate submitted corrections or edit student notes through logbook authority"
+    },
+    {
+      "target": "TIMETABLE_MANAGE",
+      "sources": [
+        "TIMETABLE_CREATE",
+        "TIMETABLE_UPDATE"
+      ],
+      "scope": "C",
+      "reason": "Class scheduling includes creation, rescheduling and removal; whole-school calendar and activity definition administration have different target boundaries.",
+      "allow": "Create, reschedule and remove covered class lesson sessions",
+      "deny": "Change school holidays or a shared activity definition using timetable authority"
+    },
+    {
+      "target": "COMMUNICATION_DRAFT_MANAGE",
+      "sources": [
+        "COMMUNICATION_CREATE",
+        "COMMUNICATION_UPDATE",
+        "COMMUNICATION_DELETE"
+      ],
+      "scope": "N",
+      "reason": "A communications editor owns draft creation, correction and removal; sending remains a deliberate separate release capability.",
+      "allow": "Create, edit and remove school announcement drafts under existing state restrictions",
+      "deny": "Send an announcement or directly materialize delivery rows as an ordinary human"
+    },
+    {
+      "target": "TIMETABLE_READ",
+      "sources": [
+        "TIMETABLE_READ",
+        "CALENDAR_READ"
+      ],
+      "scope": "C",
+      "reason": "Viewing a class schedule includes its applicable calendar; a separate calendar-query permission provides no demonstrated independent responsibility.",
+      "allow": "Read class A schedule and applicable ancestor calendar",
+      "deny": "Read class B private events or mutate school holidays"
+    },
+    {
+      "target": "CLASS_LOGBOOK_READ",
+      "sources": [
+        "CLASS_LOGBOOK_READ",
+        "CURRICULUM_PROGRESS_READ"
+      ],
+      "scope": "S",
+      "reason": "Subject progress is the read projection of the same lesson logbook workflow; one scoped observation capability covers both.",
+      "allow": "Read/export covered subject logbook and curriculum progress",
+      "deny": "Read another subject or pastoral notes through lesson-progress authority"
+    },
+    {
+      "target": "WORKSPACE_ACCESS",
+      "sources": [
+        "WORKSPACE_ACCESS",
+        "DASHBOARD_READ"
+      ],
+      "scope": "R",
+      "reason": "Opening the dashboard needs no assignable permission once every card enforces its own business read authority.",
+      "allow": "Open selected-profile workspace and see only cards authorized by domain reads",
+      "deny": "Obtain domain totals from workspace/dashboard access alone"
+    },
+    {
+      "target": "PLATFORM_USER_MANAGE",
+      "sources": [
+        "PLATFORM_USER_CREATE",
+        "PLATFORM_USER_DEACTIVATE"
+      ],
+      "scope": "P",
+      "reason": "An operator administrator owns account provisioning and deactivation; read-only inspection, self-protection and bounded delegation remain distinct.",
+      "allow": "Provision an operator with a held subset and deactivate another eligible operator",
+      "deny": "Deactivate self or delegate platform authority the actor does not hold"
+    },
+    {
+      "target": "S2S_CLIENT_MANAGE",
+      "sources": [
+        "S2S_CLIENT_CREATE",
+        "S2S_CLIENT_REVOKE",
+        "S2S_CLIENT_ROTATE_KEY"
+      ],
+      "scope": "P",
+      "reason": "A platform integration administrator owns a client credential lifecycle; read-only inventory access and school-service administration stay separate.",
+      "allow": "Create a school-bound client, rotate its key and revoke it through admitted commands",
+      "deny": "Use a school owner/service account to administer platform credentials or use a revoked key"
+    }
+  ],
+  "rule": "Separate capabilities only for a named real workflow requiring one while denying the other, or an incompatible target boundary; retain field/state/actor constraints inside policies.",
+  "runtime_changed": false,
+  "renames": [
+    {
+      "source": "EXAM_CONFIG_READ",
+      "target": "ASSESSMENT_READ",
+      "reason": "Assessment terminology covers homework, quizzes, projects and exams."
+    }
+  ]
+}

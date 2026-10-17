@@ -1,6 +1,6 @@
 import type { DocumentIssuance, DocumentTemplateKey } from '@edaya/core'
 import type { AccessPolicies } from './access-policies'
-import { assertAnnualReportCardSources, BusinessRuleViolationError, DocumentAudience, DocumentIssuanceStatus, DocumentSourceType, EnrollmentEndReason, Permission, publishedReportSource, reportCardAcademicVersion, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core'
+import { assertAnnualReportCardSources, BusinessRuleViolationError, DocumentAudience, DocumentIssuanceStatus, DocumentSourceType, EnrollmentEndReason, OccurrenceStatus, Permission, publishedReportSource, reportCardAcademicVersion, ReportCardResultStatus, StudentClassEnrollmentStatus } from '@edaya/core'
 import { AccessFacts, denied } from './facts'
 
 export interface DocumentIssueTarget {
@@ -83,7 +83,7 @@ export class DocumentAccessPolicy {
     if (actor.kind === 'guardian' || actor.kind === 'student') {
       if (!FAMILY_TEMPLATES.has(issuance.templateKey) || !issuance.isFamilyCurrent || !issuance.studentId)
         return denied('This document is not available for family download')
-      await this.access.assertResources(Permission.QUERY_STUDENT_DETAIL_READ, 'students', [issuance.studentId], 'read')
+      await this.access.assertResources(Permission.STUDENT_READ, 'students', [issuance.studentId], 'read')
       await this.assertFamilySourceStillPermitted(issuance)
       return
     }
@@ -122,14 +122,15 @@ export class DocumentAccessPolicy {
 
   readScope() {
     return this.access.scope([
-      Permission.QUERY_STUDENT_DETAIL_READ,
-      Permission.QUERY_CLASS_DIRECTORY_READ,
+      Permission.STUDENT_READ,
+      Permission.CLASS_READ,
       Permission.PAYMENT_READ,
       Permission.REPORT_CARD_READ,
+      Permission.REPORT_CARD_EXPORT,
       Permission.CLASS_LOGBOOK_READ,
       Permission.DISCIPLINE_READ,
       Permission.ATTENDANCE_READ,
-      Permission.QUERY_TIMETABLE_READ,
+      Permission.TIMETABLE_READ,
       Permission.ENROLLMENT_READ,
       Permission.DOCUMENT_VOID,
     ], 'documentIssuances')
@@ -143,7 +144,7 @@ export class DocumentAccessPolicy {
         if (!target.studentId)
           return denied('Student is required')
         await this.access.assertResources(
-          target.templateKey !== 'annual-transcript.v1' ? Permission.REPORT_CARD_PUBLISH : [Permission.REPORT_CARD_READ, Permission.QUERY_REPORT_CARD_DETAIL_READ],
+          target.templateKey !== 'annual-transcript.v1' ? Permission.REPORT_CARD_EXPORT : [Permission.REPORT_CARD_READ],
           'students',
           [target.studentId],
         )
@@ -161,7 +162,7 @@ export class DocumentAccessPolicy {
         if (!target.studentId)
           return denied('Student is required')
         await this.access.assertResources(
-          [Permission.ENROLLMENT_READ, Permission.QUERY_ENROLLMENT_HISTORY_READ, Permission.STUDENT_UPDATE, Permission.QUERY_STUDENT_DETAIL_READ],
+          [Permission.ENROLLMENT_READ, Permission.STUDENT_MANAGE, Permission.STUDENT_READ],
           'students',
           [target.studentId],
           'read',
@@ -185,20 +186,26 @@ export class DocumentAccessPolicy {
         if (!target.classGroupId)
           return denied('Class is required')
         await this.access.assertResources(
-          target.templateKey === 'class-timetable.v1' ? Permission.QUERY_TIMETABLE_READ : Permission.QUERY_CLASS_DIRECTORY_READ,
+          target.templateKey === 'class-timetable.v1' ? Permission.TIMETABLE_READ : Permission.CLASS_READ,
           'classGroups',
           [target.classGroupId],
           'read',
         )
         return
-      case 'teacher-timetable.v1':
-        if (target.classGroupId)
-          await this.access.assertResources(Permission.QUERY_TIMETABLE_READ, 'classGroups', [target.classGroupId], 'read')
-        else if (this.access.actor.kind === 'teacher')
-          await this.access.assertResources(Permission.QUERY_TIMETABLE_READ, 'teachers', [this.access.actor.teacherId], 'read')
-        else
-          await this.access.assertSchool(Permission.QUERY_TIMETABLE_READ)
+      case 'teacher-timetable.v1': {
+        const facts = new AccessFacts(this.access.actor, this.access.repositories)
+        const teacherId = target.teacherId ?? target.sourceId
+        await facts.one('teachers', teacherId)
+        if (this.access.actor.kind === 'teacher' && this.access.actor.teacherId !== teacherId)
+          denied()
+        await facts.one('academicYears', target.academicYearId)
+        const classes = await facts.list('classGroups', { academicYearId: target.academicYearId })
+        const sessions = classes.length ? (await facts.list('lessonSessions', { classGroupId: { $in: classes.map(group => group.id) }, timetableGenerated: true, status: { $ne: OccurrenceStatus.Cancelled } })).filter(session => session.timetableTeacherIds.includes(teacherId)) : []
+        if (!sessions.length)
+          denied('Teacher timetable has no authorized sessions')
+        await this.access.assertResources(Permission.TIMETABLE_READ, 'lessonSessions', sessions.map(session => session.id), 'read')
         return
+      }
       case 'attendance-sheet.v1':
         if (!target.classGroupId)
           return denied('Class is required')

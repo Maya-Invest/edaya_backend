@@ -10,6 +10,7 @@ export interface DocumentAssemblyContext<R extends keyof SchoolRepositories, A e
   access: Pick<AccessPolicies, A>
 }
 export interface AssembleDocumentInput {
+  reportPublication?: true
   templateKey: DocumentTemplateKey
   sourceId: string
   locale: DocumentLocale

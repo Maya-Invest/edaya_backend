@@ -1,29 +1,13 @@
 import type { Permission } from '../permissions/permission'
-import { permissionScope } from '@edaya/core'
-import { HUMAN_ONLY_PERMISSIONS } from '../permissions/permission-assurance'
-
-const S2S_DENIED_PERMISSION_PREFIXES = [
-  'SERVICE_ACCOUNT_',
-  'ACCESS_CONTROL_',
-] as const
+import { corePermissionDefinition } from '@edaya/core'
 
 export function isS2sDeniedPermission(permission: Permission): boolean {
-  if (permissionScope(permission) === 'platform' || HUMAN_ONLY_PERMISSIONS.has(permission)) {
-    return true
-  }
-  return S2S_DENIED_PERMISSION_PREFIXES.some(prefix => permission.startsWith(prefix))
+  return corePermissionDefinition(permission).s2sAccess === 'none'
 }
-
 export function isS2sReadPermission(permission: Permission): boolean {
-  return permission.endsWith('_READ') || permission.startsWith('QUERY_')
+  return corePermissionDefinition(permission).s2sAccess === 'read'
 }
-
 export function s2sMayExercise(accessClass: 'read' | 'write', permission: Permission): boolean {
-  if (isS2sDeniedPermission(permission)) {
-    return false
-  }
-  if (accessClass === 'read') {
-    return isS2sReadPermission(permission)
-  }
-  return true
+  const allowed = corePermissionDefinition(permission).s2sAccess
+  return allowed === 'read' || (allowed === 'write' && accessClass === 'write')
 }

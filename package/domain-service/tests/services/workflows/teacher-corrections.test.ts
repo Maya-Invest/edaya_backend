@@ -12,7 +12,7 @@ async function fixture(documentRenderer?: DocumentRendererPort) {
   for (const [id, kind] of [['subject', TeacherAssignmentKind.Subject], ['homeroom', TeacherAssignmentKind.Homeroom]] as const) await f.repositories.teacherAssignments.save(new TeacherAssignment({ id, teacherId: 'teacher1', academicYearId: 'ay1', classGroupId: 'cg1', classSubjectId: kind === TeacherAssignmentKind.Subject ? 'cs1' : undefined, kind }))
   const teacher = f.forActor(createTeacherActorMetadata({ schoolId: 'sch1', teacherId: 'teacher1', subjectId: 'teacher-subject', academicYearId: 'ay1', requestId: 'teacher', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
   await f.repositories.staffMembers.save(new StaffMember({ id: 'reviewer', schoolId: 'sch1', firstName: 'Review', lastName: 'Staff', subjectId: 'reviewer-subject' }))
-  for (const permission of [Permission.ATTENDANCE_VALIDATE, Permission.CLASS_LOGBOOK_VALIDATE, Permission.DISCIPLINE_VALIDATE, Permission.REPORT_CARD_PUBLISH]) await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
+  for (const permission of [Permission.ATTENDANCE_VALIDATE, Permission.CLASS_LOGBOOK_VALIDATE, Permission.DISCIPLINE_VALIDATE, Permission.REPORT_CARD_REVIEW_COMMENTS]) await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
   const reviewer = f.forActor(createStaffActorMetadata({ schoolId: 'sch1', staffMemberId: 'reviewer', subjectId: 'reviewer-subject', academicYearId: 'ay1', requestId: 'reviewer', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
   return { ...f, teacher, reviewer }
 }
@@ -144,7 +144,7 @@ describe('teacher corrections across workflows', () => {
     await expect(f.reviewer.getTeacherCorrection({ correctionId: 'outside' })).rejects.toBeDefined()
     expect((await f.reviewer.listTeacherCorrections({ studentId: 'other' })).total).toBe(0)
     await f.repositories.staffMembers.save(new StaffMember({ id: 'teacher-staff', schoolId: 'sch1', subjectId: 'teacher-subject', firstName: 'Ada', lastName: 'Teacher' }))
-    await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'self-grant', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'teacher-staff', permission: Permission.ATTENDANCE_VALIDATE, scopes: [{ kind: 'school' }] }))
+    await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'self-grant', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'teacher-staff', permission: Permission.ATTENDANCE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     const self = f.forActor(createStaffActorMetadata({ schoolId: 'sch1', staffMemberId: 'teacher-staff', subjectId: 'teacher-subject', academicYearId: 'ay1', requestId: 'self', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
     await expect(self.teacherCorrectionsWorkflow.decide('approve', { requestId: 'self-approve', correctionId: row.id, expectedVersion: 0 })).rejects.toBeDefined()
   })
@@ -163,7 +163,13 @@ describe('teacher corrections across workflows', () => {
     expect((await f.repositories.documentIssuances.findById(original.id))?.status).toBe(DocumentIssuanceStatus.Ready)
     const proposal = { workflow: 'report_comments' as const, targetId: report.id, teacherComment: 'Corrected general comment', sections: [{ sectionId: 'sec-math', comment: 'Corrected subject comment' }] }
     const request = await f.teacher.teacherCorrectionsWorkflow.request({ requestId: 'comment-request', expectedVersion: 0, reason: 'Correct student feedback', proposal })
-    const approved = await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'comment-approve', correctionId: request.id, expectedVersion: 0, confirmConsequences: true })
+    const reviewed = await f.reviewer.teacherCorrectionsWorkflow.decide('approve', { requestId: 'comment-approve', correctionId: request.id, expectedVersion: 0, confirmConsequences: true })
+    expect(reviewed.status).toBe('approved_pending_publication')
+    expect(reviewed.documentIssuanceId).toBeUndefined()
+    expect((await f.repositories.results.findById(report.id))?.teacherComment).toBe('Original general comment')
+    await expect(f.reviewer.teacherCorrectionsWorkflow.publishReportCorrection({ requestId: 'reviewer-cannot-publish', correctionId: request.id, expectedVersion: reviewed.version })).rejects.toThrow()
+    expect((await f.reviewer.teacherCorrectionsWorkflow.detail({ correctionId: request.id })).allowedActions).toMatchObject({ publish: false })
+    const approved = await f.service.teacherCorrectionsWorkflow.publishReportCorrection({ requestId: 'comment-publish', correctionId: request.id, expectedVersion: reviewed.version })
     expect(approved.documentIssuanceId).toBeDefined()
     expect((await f.repositories.results.findById(report.id))?.teacherComment).toBe('Original general comment')
     const state = await f.repositories.teacherCorrections.state('sch1', 'report_comments', report.id)

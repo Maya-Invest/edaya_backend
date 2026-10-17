@@ -27,7 +27,7 @@ test('lifecycle grants publish periods and years without granting structural edi
 })
 
 test('structure grants cannot publish through direct writes or combine publication with a structural edit', async () => {
-  const { service, year, period, schoolRepositories } = await fixture(Permission.SCHOOL_STRUCTURE_CONFIGURE)
+  const { service, year, period, schoolRepositories } = await fixture(Permission.SCHOOL_CONFIGURE)
   for (const name of [period.name, 'Changed'])
     await expect(service.baseService.entities.academicPeriods.save(new AcademicPeriod({ ...period.data, name, isPublished: true }))).rejects.toMatchObject({ code: 'forbidden' })
   for (const name of [year.name, 'Changed'])

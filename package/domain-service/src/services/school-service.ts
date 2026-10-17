@@ -9,6 +9,8 @@ import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from
 import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
+import { getActivityRoster } from './queries/activity-roster'
+import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
 
 import { buildSchoolOverview } from './queries/school-overview'
@@ -96,6 +98,10 @@ export class SchoolService {
   async getTeacherWorkflowState(input: Parameters<TeacherCorrectionsWorkflow['getWorkflowState']>[0]) { return this.teacherCorrectionsWorkflow.getWorkflowState(input) }
   async listTeacherCorrections(input: Parameters<TeacherCorrectionsWorkflow['list']>[0]) { return this.teacherCorrectionsWorkflow.list(input) }
   async getTeacherCorrection(input: { correctionId: string }) { return this.teacherCorrectionsWorkflow.detail(input) }
+
+  async getActivityRoster(input: { activityId: string }) { return getActivityRoster(this.baseService, input) }
+
+  async getAssessmentEditorContext(input: { classGroupId: string, periodId: string }) { return getAssessmentEditorContext(this.baseService, input) }
 
   async getAssessmentMarksReview(input: { assessmentId: string }) { return getAssessmentMarksReview(this.baseService, input) }
   async listAssessmentMarksReviews(input: MarksQueueInput) { return listAssessmentMarksReviews(this.baseService, input) }

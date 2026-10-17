@@ -16,7 +16,7 @@ import { normalizeCommandRequest } from '../commands/command-execution'
 import { schoolCommandScope } from '../commands/school-command-scope'
 import { getAssessmentMarksReview } from '../queries/marks-review'
 
-const permissions = { attendance: Permission.ATTENDANCE_VALIDATE, report_comments: Permission.REPORT_CARD_PUBLISH, logbook: Permission.CLASS_LOGBOOK_VALIDATE, discipline: Permission.DISCIPLINE_VALIDATE } as const
+const permissions = { attendance: Permission.ATTENDANCE_VALIDATE, report_comments: Permission.REPORT_CARD_REVIEW_COMMENTS, logbook: Permission.CLASS_LOGBOOK_VALIDATE, discipline: Permission.DISCIPLINE_VALIDATE } as const
 const equal = (a: unknown, b: unknown) => normalizeCommandRequest(JSON.parse(JSON.stringify(a ?? null))) === normalizeCommandRequest(JSON.parse(JSON.stringify(b ?? null)))
 function fail(code: string, message: string): never {
   throw new BusinessRuleViolationError(code, message)
@@ -141,7 +141,7 @@ export class TeacherCorrectionsWorkflow {
         fail('CORRECTION_SOURCE_CHANGED', 'The record changed; reload before requesting a correction')
       if (equal(target.before, input.proposal))
         fail('CORRECTION_UNCHANGED', 'The proposed values are unchanged')
-      if ((await this.repositories.teacherCorrections.forTarget(this.actor.schoolId, input.proposal.workflow, input.proposal.targetId)).some(row => row.status === 'pending'))
+      if ((await this.repositories.teacherCorrections.forTarget(this.actor.schoolId, input.proposal.workflow, input.proposal.targetId)).some(row => row.status === 'pending' || row.status === 'approved_pending_publication'))
         fail('CORRECTION_PENDING', 'Revise or withdraw the existing pending request')
       const row: TeacherCorrection = { id: crypto.randomUUID(), schoolId: this.actor.schoolId, workflow: input.proposal.workflow, targetId: input.proposal.targetId, classGroupId: target.classGroupId, studentIds: target.studentIds, ...('periodId' in target ? { periodId: target.periodId } : {}), status: 'pending', version: 0, baseVersion: target.version, authorSubjectId: this.human().subjectId, reason: input.reason, before: target.before, proposal: input.proposal, consequences: target.consequences, createdAt: new Date(), revisions: [] }
       // Preserve staff justification decisions, original participants and published facts for the reviewer.
@@ -168,14 +168,15 @@ export class TeacherCorrectionsWorkflow {
       await this.authorizeProposal(input.proposal)
     }, async () => {
       const row = await this.require(input.correctionId)
-      if (row.status !== 'pending' || row.version !== input.expectedVersion)
+      if ((row.status !== 'pending' && row.status !== 'approved_pending_publication') || row.version !== input.expectedVersion)
         fail('CORRECTION_VERSION_CONFLICT', 'The request changed; reload it')
       const target = await this.target(input.proposal)
-      if (target.version !== row.baseVersion || !equal(target.before, row.before))
+      if (row.workflow !== 'report_comments' && (target.version !== row.baseVersion || !equal(target.before, row.before)))
         fail('CORRECTION_SOURCE_CHANGED', 'The official record changed')
       if (equal(target.before, input.proposal))
         fail('CORRECTION_UNCHANGED', 'The proposed values are unchanged')
-      const revised: TeacherCorrection = { ...row, version: row.version + 1, reason: input.reason, proposal: input.proposal, revisions: [...row.revisions, { version: row.version, reason: row.reason, before: row.before, proposal: row.proposal, at: new Date() }] }
+      const revised: TeacherCorrection = { ...row, status: 'pending', decidedAt: undefined, decidedBy: undefined, baseVersion: target.version, before: target.before, version: row.version + 1, reason: input.reason, proposal: input.proposal, revisions: [...row.revisions, { version: row.version, reason: row.reason, before: row.before, proposal: row.proposal, at: new Date() }] }
+      await this.remember(row.workflow, `correction:${row.id}`, 'revised', { snapshot: target.snapshot }, true)
       await this.repositories.teacherCorrections.save(revised)
       await notifyTeacherCorrection(this.base, revised, 'revised', permissions[revised.workflow])
       return revised
@@ -200,7 +201,7 @@ export class TeacherCorrectionsWorkflow {
       }
     }, async () => {
       const row = await this.require(input.correctionId)
-      if (row.status !== 'pending' || row.version !== input.expectedVersion)
+      if ((row.status !== 'pending' && !(action !== 'approve' && row.status === 'approved_pending_publication')) || row.version !== input.expectedVersion)
         fail('CORRECTION_VERSION_CONFLICT', 'The request changed; reload it')
       if (action === 'approve') {
         const target = await this.target(row.proposal)
@@ -209,14 +210,51 @@ export class TeacherCorrectionsWorkflow {
           fail('CORRECTION_SOURCE_CHANGED', 'The official record or staff decision changed; request a fresh correction')
         if (row.consequences.some(c => c !== 'review_discipline_outcomes') && !input.confirmConsequences)
           fail('CORRECTION_CONFIRM_CONSEQUENCES', 'Confirm the displayed justification or document consequence')
-        documentIssuanceId = await this.apply(row.proposal)
+        if (row.workflow !== 'report_comments')
+          documentIssuanceId = await this.apply(row.proposal)
       }
-      const decided: TeacherCorrection = { ...row, version: row.version + 1, status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'withdrawn', decidedAt: new Date(), decidedBy: this.human().subjectId, ...('reason' in input && typeof input.reason === 'string' ? { rejectionReason: input.reason } : {}) }
+      const decided: TeacherCorrection = { ...row, version: row.version + 1, status: action === 'approve' ? row.workflow === 'report_comments' ? 'approved_pending_publication' : 'approved' : action === 'reject' ? 'rejected' : 'withdrawn', decidedAt: new Date(), decidedBy: this.human().subjectId, ...('reason' in input && typeof input.reason === 'string' ? { rejectionReason: input.reason } : {}) }
       await this.repositories.teacherCorrections.save(decided)
       if (action !== 'withdraw')
         await notifyTeacherCorrection(this.base, decided, action === 'approve' ? 'approved' : 'rejected', permissions[decided.workflow])
       return { ...decided, ...(documentIssuanceId ? { documentIssuanceId } : {}) }
     }, result => 'documentIssuanceId' in result && typeof result.documentIssuanceId === 'string' ? [{ id: result.documentIssuanceId, kind: DOCUMENT_RENDER_KIND, version: 1, resourceType: 'document-issuance', resourceId: result.documentIssuanceId }] : [])
+  }
+
+  private async canPublishReportCorrection(row: TeacherCorrection): Promise<boolean> {
+    if (this.actor.kind !== 'staff' || row.workflow !== 'report_comments')
+      return false
+    try {
+      await this.base.access.teacherCorrections.assertPublishReport(row.targetId)
+      return true
+    }
+    catch (error) {
+      if (!(error instanceof AuthorizationError))
+        throw error
+      return false
+    }
+  }
+
+  async publishReportCorrection(raw: z.input<typeof decideTeacherCorrectionSchema>) {
+    const input = decideTeacherCorrectionSchema.parse(raw)
+    return this.run('publishReportCommentCorrection', input, async () => {
+      const row = await this.require(input.correctionId)
+      if (this.human().kind !== 'staff' || row.workflow !== 'report_comments')
+        denyResourceAccess()
+      await this.base.access.teacherCorrections.assertPublishReport(row.targetId)
+    }, async () => {
+      const row = await this.require(input.correctionId)
+      if (row.status !== 'approved_pending_publication' || row.version !== input.expectedVersion)
+        fail('CORRECTION_VERSION_CONFLICT', 'The correction changed; reload it')
+      const target = await this.target(row.proposal)
+      const original = await this.state(row.workflow, `correction:${row.id}`)
+      if (target.version !== row.baseVersion || !equal(target.before, row.before) || !equal(target.snapshot, original?.payload['snapshot']))
+        fail('CORRECTION_SOURCE_CHANGED', 'The official record changed; the author must revise and resubmit for review')
+      const documentIssuanceId = await this.apply(row.proposal)
+      const published: TeacherCorrection = { ...row, status: 'published', version: row.version + 1 }
+      await this.repositories.teacherCorrections.save(published)
+      return { ...published, documentIssuanceId }
+    }, result => result.documentIssuanceId ? [{ id: result.documentIssuanceId, kind: DOCUMENT_RENDER_KIND, version: 1, resourceType: 'document-issuance', resourceId: result.documentIssuanceId }] : [])
   }
 
   private async apply(proposal: CorrectionProposal): Promise<string | undefined> {
@@ -264,7 +302,7 @@ export class TeacherCorrectionsWorkflow {
       const documents = await this.repositories.documentIssuances.forSchool!(this.actor.schoolId).list({ sourceId: record.id, status: DocumentIssuanceStatus.Ready })
       const templateKey = documents.some(document => document.templateKey === 'annual-report-card.v1') ? 'annual-report-card.v1' : REPORT_CARD_TEMPLATE_KEY
       const previous = documents.filter(document => document.templateKey === templateKey).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
-      const assembled = await assembleDocumentSource(this.base, { templateKey, sourceId: record.id, locale: previous?.locale ?? 'fr' })
+      const assembled = await assembleDocumentSource(this.base, { templateKey, sourceId: record.id, locale: previous?.locale ?? 'fr', reportPublication: true })
       const issuance = await persistRequestedIssuance(this.base, { requestId: `comment-revision:${record.id}:${stored.version}`, templateKey, locale: previous?.locale ?? 'fr', assembled, replacesIssuanceId: previous?.id, deferReplacement: true })
       await this.repositories.teacherCorrections.saveState({ ...revision, payload: { ...revision.payload, issuanceId: issuance.id } })
       return issuance.id
@@ -503,7 +541,7 @@ export class TeacherCorrectionsWorkflow {
     if (this.human().subjectId !== row.authorSubjectId) {
       if (this.actor.kind !== 'staff')
         denyResourceAccess()
-      await this.base.access.teacherCorrections.assertReview(row.workflow, row.classGroupId, 'read')
+      await this.base.access.teacherCorrections.assertRead(row.workflow, row.classGroupId)
     }
     else {
       await this.authorizeProposal(row.proposal)
@@ -543,7 +581,7 @@ export class TeacherCorrectionsWorkflow {
           throw error
       }
     }
-    return { context: await this.labels({ ...row, studentIds: [...new Set([...row.studentIds, ...(row.proposal.workflow === 'discipline' ? row.proposal.studentIds : [])])] }), correction: row, original: { ...state?.payload, fieldNames, ...(issuance ? { documentOutcome: { issuanceId: issuance.id, status: issuance.status, failureCode: issuance.failureCode } } : {}) }, history: history?.history ?? [], allowedActions: { approve: row.status === 'pending' && canReview, reject: row.status === 'pending' && canReview, withdraw: row.status === 'pending' && this.human().subjectId === row.authorSubjectId } }
+    return { context: await this.labels({ ...row, studentIds: [...new Set([...row.studentIds, ...(row.proposal.workflow === 'discipline' ? row.proposal.studentIds : [])])] }), correction: row, original: { ...state?.payload, fieldNames, ...(issuance ? { documentOutcome: { issuanceId: issuance.id, status: issuance.status, failureCode: issuance.failureCode } } : {}) }, history: history?.history ?? [], allowedActions: { approve: row.status === 'pending' && canReview, reject: ['pending', 'approved_pending_publication'].includes(row.status) && canReview, withdraw: ['pending', 'approved_pending_publication'].includes(row.status) && this.human().subjectId === row.authorSubjectId, publish: row.status === 'approved_pending_publication' && await this.canPublishReportCorrection(row) } }
   }
 
   async list(raw: z.input<typeof teacherCorrectionsQuerySchema>) {
@@ -566,10 +604,10 @@ export class TeacherCorrectionsWorkflow {
           throw error
       }
     }
-    if (!input.workflow || input.workflow === 'grades') {
+    if ((!input.workflow || input.workflow === 'grades') && input.status !== 'approved_pending_publication' && input.status !== 'published') {
       try {
         const scope = await this.base.access.marksReview.queueScope()
-        const page = await this.repositories.marksCorrections.list(scope, { ...input, offset: 0, limit: input.offset + input.limit })
+        const page = await this.repositories.marksCorrections.list(scope, { ...input, status: input.status, offset: 0, limit: input.offset + input.limit })
         const sheets = new Map((await this.repositories.assessments.forAccess(scope).findByIds(page.items.map(c => c.assessmentId))).map(s => [s.id, s]))
         for (const row of page.items) {
           const sheet = sheets.get(row.assessmentId)
@@ -600,7 +638,7 @@ export class TeacherCorrectionsWorkflow {
         continue
       try {
         const scope = await this.base.access.teacherCorrections.queueScope(workflow)
-        for (const status of ['pending', 'approved', 'rejected', 'withdrawn'] as const) {
+        for (const status of ['pending', 'approved_pending_publication', 'published', 'approved', 'rejected', 'withdrawn'] as const) {
           const rows = await this.repositories.teacherCorrections.list(scope, { workflow, status, offset: 0, limit: Number.MAX_SAFE_INTEGER })
           facetRows.push(...rows.items)
         }
@@ -610,7 +648,7 @@ export class TeacherCorrectionsWorkflow {
           throw error
       }
     }
-    if (!input.workflow || input.workflow === 'grades') {
+    if ((!input.workflow || input.workflow === 'grades') && input.status !== 'approved_pending_publication' && input.status !== 'published') {
       try {
         const scope = await this.base.access.marksReview.queueScope()
         for (const status of ['pending', 'approved', 'rejected', 'withdrawn'] as const) {

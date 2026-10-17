@@ -14,7 +14,7 @@ describe('authority from current staff assignments', () => {
     await fixture.db.close()
   })
 
-  function assignment(target: { classGroupId?: string, classSubjectId?: string, lessonSessionId?: string, assessmentId?: string }, permission = Permission.GRADE_INPUT) {
+  function assignment(target: { classGroupId?: string, classSubjectId?: string, lessonSessionId?: string, assessmentId?: string }, permission = Permission.GRADE_MANAGE) {
     return new StaffAssignment({ id: 'duty', staffId: 'staff-a', academicYearId: 'year-a', responsibility: 'Invigilator', permissions: [permission], ...target })
   }
 
@@ -36,7 +36,7 @@ describe('authority from current staff assignments', () => {
     await access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })
     await expect(access.grades.assertInput({ assessmentId: 'second-math', studentId: 'student-a' })).rejects.toThrow()
     await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-other' })).rejects.toThrow()
-    const results = fixture.repositories.assessmentResults.forAccess(await access.scope(Permission.GRADE_INPUT, 'assessmentResults', 'write'))
+    const results = fixture.repositories.assessmentResults.forAccess(await access.scope(Permission.GRADE_MANAGE, 'assessmentResults', 'write'))
     expect((await results.list()).map(row => row.id)).toEqual(['1-math'])
     await fixture.repositories.staffAssignments.delete('duty')
     await expect(access.grades.assertInput({ assessmentId: 'assessment-math', studentId: 'student-a' })).rejects.toThrow()
@@ -57,17 +57,17 @@ describe('authority from current staff assignments', () => {
 
   test('assignment delegation preserves exact scope and cannot produce broader manual grants', async () => {
     await fixture.repositories.staffAssignments.save(assignment({ classSubjectId: 'math-a' }))
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'administrator', schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission: Permission.ACCESS_CONTROL_ASSIGN, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'administrator', schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: 'school' }] }))
     await fixture.repositories.staffMembers.save(new StaffMember({ id: 'helper', schoolId: 'school-a', firstName: 'Helper', lastName: 'Staff' }))
     const access = new AccessPolicies(actor, fixture.repositories)
-    const same = new StaffAssignment({ ...assignment({ classSubjectId: 'math-a' }).data, permissions: [Permission.GRADE_INPUT], id: 'delegated', staffId: 'helper' })
+    const same = new StaffAssignment({ ...assignment({ classSubjectId: 'math-a' }).data, permissions: [Permission.GRADE_MANAGE], id: 'delegated', staffId: 'helper' })
     await fixture.atomic.execute(async () => {
       const scope = await access.entity('staffAssignments').assertSave(same)
       await fixture.repositories.staffAssignments.forAccess(scope).save(same)
     })
-    const broader = new StaffAssignment({ id: 'broad', staffId: 'helper', academicYearId: 'year-a', responsibility: 'Invigilator', classGroupId: 'class-a', permissions: [Permission.GRADE_INPUT] })
+    const broader = new StaffAssignment({ id: 'broad', staffId: 'helper', academicYearId: 'year-a', responsibility: 'Invigilator', classGroupId: 'class-a', permissions: [Permission.GRADE_MANAGE] })
     await expect(access.entity('staffAssignments').assertSave(broader)).rejects.toThrow()
-    await expect(access.entity('staffPermissionAssignments').assertSave(new StaffPermissionAssignment({ id: 'manual', schoolId: 'school-a', staffId: 'helper', academicYearId: 'year-a', permission: Permission.GRADE_INPUT, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))).rejects.toThrow()
+    await expect(access.entity('staffPermissionAssignments').assertSave(new StaffPermissionAssignment({ id: 'manual', schoolId: 'school-a', staffId: 'helper', academicYearId: 'year-a', permission: Permission.GRADE_MANAGE, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))).rejects.toThrow()
     expect(await fixture.repositories.staffPermissionAssignments.count()).toBe(1)
     expect(await fixture.repositories.staffAssignments.count()).toBe(2)
   })

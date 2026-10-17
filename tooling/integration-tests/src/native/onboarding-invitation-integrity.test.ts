@@ -106,7 +106,7 @@ beforeAll(async () => {
     schoolId: inviteSchoolId,
     academicYearId: 'invite-year',
     staffId,
-    permission: Permission.ACCESS_CONTROL_ASSIGN,
+    permission: Permission.ACCESS_CONTROL_MANAGE,
     scopes: [{ kind: 'school' }],
   }))
 })

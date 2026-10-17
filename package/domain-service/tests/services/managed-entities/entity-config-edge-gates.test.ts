@@ -258,7 +258,7 @@ describe('entity config edge gates', () => {
     await teacherContext.schoolRepositories.gradeLevels.save(new GradeLevel({ id: 'grade-note', schoolId: 'school', name: 'Grade', label: 'G', order: 1 }))
     await teacherContext.schoolRepositories.classGroups.save(new ClassGroup({ id: 'teacher-class', schoolId: 'school', academicYearId: 'year-note', gradeLevelId: 'grade-note', name: 'Class' }))
     await teacherContext.schoolRepositories.enrollments.save(new StudentClassEnrollment({ id: 'teacher-enrollment', studentId: student.id, classGroupId: 'teacher-class', academicYearId: 'year-note', enrollmentIndex: 1 }))
-    await teacherContext.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'notes', schoolId: 'school', academicYearId: 'year-note', staffId: 'teacher', permission: Permission.CLASS_LOGBOOK_UPDATE, scopes: [{ kind: 'class_group', classGroupId: 'teacher-class' }] }))
+    await teacherContext.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'notes', schoolId: 'school', academicYearId: 'year-note', staffId: 'teacher', permission: Permission.STUDENT_NOTE_MANAGE, scopes: [{ kind: 'class_group', classGroupId: 'teacher-class' }] }))
 
     await expect(teacherContext.app.baseService.entities.studentNotes.save(new StudentNote({
       id: 'admin-only-note',
@@ -337,7 +337,7 @@ describe('entity config edge gates', () => {
       assuranceLevel: ActorAssuranceLevel.Standard,
     }))
     await standardCoordinator.schoolRepositories.academicYears.save(new AcademicYear({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await standardCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-standard', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'school' }] }))
+    await standardCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-standard', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'all', grain: 'student' }] }))
     await standardCoordinator.repositories.studentRepository.save(new Student({
       id: 'student-health-standard',
       schoolId: 'school',
@@ -362,7 +362,7 @@ describe('entity config edge gates', () => {
       assuranceLevel: ActorAssuranceLevel.Verified,
     }))
     await verifiedCoordinator.schoolRepositories.academicYears.save(new AcademicYear({ id: 'health-year', schoolId: 'school', name: 'Health year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-    await verifiedCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-verified', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'school' }] }))
+    await verifiedCoordinator.schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'health-update', schoolId: 'school', academicYearId: 'health-year', staffId: 'coordinator-verified', permission: Permission.STUDENT_HEALTH_UPDATE, scopes: [{ kind: 'all', grain: 'student' }] }))
     await verifiedCoordinator.repositories.studentRepository.save(new Student({
       id: 'student-health-verified',
       schoolId: 'school',

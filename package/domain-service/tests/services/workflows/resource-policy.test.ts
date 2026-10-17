@@ -15,7 +15,7 @@ describe('resource policies and atomic placement invariants', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   let service: SchoolService
   async function grant(permission: Permission) {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: permission === Permission.RESOURCE_CONFIGURE ? [{ kind: 'school' }] : [{ kind: 'all', grain: 'class_group' }] }))
   }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
@@ -32,7 +32,7 @@ describe('resource policies and atomic placement invariants', () => {
   afterEach(async () => fixture.db.close())
 
   test('read scope includes each valid placement kind and excludes other years and schools before counts', async () => {
-    await grant(Permission.RESOURCE_READ)
+    await grant(Permission.RESOURCE_ASSIGNMENT_READ)
     for (const [id, target] of Object.entries({ ...targets, class: { classGroupId: 'class-a' }, old: { classGroupId: 'class-old' }, foreign: { classGroupId: 'class-b' } }))
       await fixture.repositories.resourceAssignments.save(new ResourceAssignment({ id, resourceId: id === 'foreign' ? 'foreign-room' : 'room', ...target }))
     const entities = service.baseService.entities.resourceAssignments
@@ -44,18 +44,18 @@ describe('resource policies and atomic placement invariants', () => {
   })
 
   test('read authority cannot assign a resource; command writes and revocation use current configure grants', async () => {
-    await grant(Permission.RESOURCE_READ)
+    await grant(Permission.RESOURCE_ASSIGNMENT_READ)
     const input = { id: 'assign', resourceId: 'room', lessonSessionId: 'lesson' }
     await expect(service.setupWorkflow.assignResourceToLessonSession(input)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.RESOURCE_CONFIGURE)
+    await grant(Permission.RESOURCE_ASSIGNMENT_MANAGE)
     await service.setupWorkflow.assignResourceToLessonSession(input)
     expect(await fixture.repositories.resourceAssignments.findById('assign')).toBeDefined()
-    await fixture.db.exec('UPDATE staff_permission_assignments SET ends_at = \'2000-01-01\' WHERE id = \'RESOURCE_CONFIGURE\'')
+    await fixture.db.exec('UPDATE staff_permission_assignments SET ends_at = \'2000-01-01\' WHERE id = \'RESOURCE_ASSIGNMENT_MANAGE\'')
     await expect(service.setupWorkflow.removeResourceAssignment({ id: 'assign' })).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('reassignment checks both existing and proposed year/tenant before changing rows', async () => {
-    await grant(Permission.RESOURCE_CONFIGURE)
+    await grant(Permission.RESOURCE_ASSIGNMENT_MANAGE)
     const existing = new ResourceAssignment({ id: 'assigned', resourceId: 'room', lessonSessionId: 'lesson' })
     await service.baseService.entities.resourceAssignments.save(existing)
     for (const target of [{ resourceId: 'foreign-room', lessonSessionId: 'lesson' }, { resourceId: 'room', classGroupId: 'class-old' }, { resourceId: 'room', assessmentId: 'assessment-b' }])
@@ -66,7 +66,7 @@ describe('resource policies and atomic placement invariants', () => {
   })
 
   test('a mixed authorized/foreign batch persists nothing', async () => {
-    await grant(Permission.RESOURCE_CONFIGURE)
+    await grant(Permission.RESOURCE_ASSIGNMENT_MANAGE)
     await expect(service.baseService.entities.resourceAssignments.batchSave([
       new ResourceAssignment({ id: 'first', resourceId: 'room', lessonSessionId: 'lesson' }),
       new ResourceAssignment({ id: 'second', resourceId: 'other-room', classGroupId: 'class-b' }),
@@ -84,7 +84,7 @@ describe('resource policies and atomic placement invariants', () => {
   })
 
   test('adjacent reservations and untimed homework can share a resource in one batch', async () => {
-    await grant(Permission.RESOURCE_CONFIGURE)
+    await grant(Permission.RESOURCE_ASSIGNMENT_MANAGE)
     const exam = (await fixture.repositories.assessments.findById('exam'))!
     await fixture.repositories.assessments.save(new Assessment({ ...exam.data, startsAt: endsAt, endsAt: new Date('2026-05-01T10:00:00Z') }))
     await fixture.repositories.assessments.save(new Assessment({ ...exam.data, id: 'homework', kind: AssessmentKind.Homework, lessonSessionId: 'lesson', startsAt: undefined, endsAt: undefined, dueAt: new Date('2026-05-02') }))
@@ -97,10 +97,12 @@ describe('resource policies and atomic placement invariants', () => {
   })
 
   test('class reservations and occurrence reservations enforce the same cross-class rule', async () => {
-    await grant(Permission.RESOURCE_CONFIGURE)
+    await grant(Permission.RESOURCE_ASSIGNMENT_MANAGE)
     await service.baseService.entities.resourceAssignments.save(new ResourceAssignment({ id: 'occurrence', resourceId: 'room', lessonSessionId: 'lesson' }))
     await expect(service.baseService.entities.resourceAssignments.save(new ResourceAssignment({ id: 'class', resourceId: 'room', classGroupId: 'class-other' }))).rejects.toMatchObject({ code: 'RESOURCE_ALREADY_ASSIGNED_TO_CLASS' })
     await service.baseService.entities.resourceAssignments.save(new ResourceAssignment({ id: 'class', resourceId: 'room', classGroupId: 'class-a' }))
+    await expect(service.baseService.entities.resources.delete('room')).rejects.toBeInstanceOf(AuthorizationError)
+    await grant(Permission.RESOURCE_CONFIGURE)
     await expect(service.baseService.entities.resources.delete('room')).rejects.toMatchObject({ code: 'RESOURCE_HAS_DEPENDENCIES' })
   })
 

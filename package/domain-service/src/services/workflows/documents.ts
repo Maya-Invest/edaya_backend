@@ -370,6 +370,7 @@ export class DocumentsServiceWorkflow extends BaseServiceWorkflow {
     const assembled = await assembleDocumentSource(this.baseService, {
       templateKey: 'report-card.v1',
       sourceId: input.resultId,
+      reportPublication: true,
       locale,
       studentId: input.studentId,
     })

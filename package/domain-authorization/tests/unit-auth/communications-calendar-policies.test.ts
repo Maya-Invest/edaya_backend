@@ -1,5 +1,5 @@
 import type { MessageDeliveryRecipientKind } from '@edaya/core'
-import { AccessPolicies, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { ActorAssuranceLevel, AccessPolicies, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, Guardian, MessageDelivery, Permission, StaffPermissionAssignment, AnnouncementTargetKind as Target } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
@@ -9,7 +9,7 @@ const actors = [
   createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }),
   createStudentActorMetadata({ ...identity, studentId: 'student-a' }),
   createTeacherActorMetadata({ ...identity, teacherId: 'teacher-a' }),
-  createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a' }),
+  createStaffActorMetadata({ ...identity, staffMemberId: 'staff-a', assuranceLevel: ActorAssuranceLevel.Verified }),
 ] as const
 
 describe('communications and calendar scope boundaries', () => {
@@ -130,16 +130,20 @@ describe('communications and calendar scope boundaries', () => {
     }
   })
 
-  test('class timetable grants can mutate their class event but cannot change school, grade, unrelated or proposed placements', async () => {
+  test('calendar configuration stays separate from class timetable management', async () => {
     await calendars()
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'calendar-writer', staffId: 'staff-a', schoolId: 'school-a', permission: Permission.TIMETABLE_UPDATE, academicYearId: 'year-a', scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'calendar-writer', staffId: 'staff-a', schoolId: 'school-a', permission: Permission.TIMETABLE_MANAGE, academicYearId: 'year-a', scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const access = new AccessPolicies(actors[3], fixture.repositories)
     const before = (await fixture.repositories.calendarEvents.findById('class'))!
-    await access.entity('calendarEvents').assertSave(before, before)
+    await expect(access.entity('calendarEvents').assertSave(before, before)).rejects.toThrow()
     for (const id of ['level', 'school', 'unrelated', 'old', 'foreign']) {
       const event = (await fixture.repositories.calendarEvents.findById(id))!
       await expect(access.entity('calendarEvents').assertSave(event, event)).rejects.toThrow()
     }
     await expect(access.entity('calendarEvents').assertSave(new CalendarEvent({ ...before.data, scopeKind: CalendarEventScopeKind.School, scopeId: undefined }), before)).rejects.toThrow()
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'school-config', staffId: 'staff-a', schoolId: 'school-a', permission: Permission.SCHOOL_CONFIGURE, academicYearId: 'year-a', scopes: [{ kind: 'school' }] }))
+    await access.entity('calendarEvents').assertSave(before, before)
+    await access.entity('calendarEvents').assertDelete(['class'])
+    await expect(access.entity('calendarEvents').assertDelete(['foreign'])).rejects.toThrow()
   })
 })

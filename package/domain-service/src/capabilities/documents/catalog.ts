@@ -38,7 +38,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { portrait: 'optional', logo: 'optional', crest: 'optional', stamp: 'optional', signature: 'optional' },
-    issuePermissions: [P.REPORT_CARD_PUBLISH],
+    issuePermissions: [P.REPORT_CARD_EXPORT],
     titles: { fr: 'Bulletin trimestriel de notes', en: 'Trimester report card' },
   },
   'annual-report-card.v1': {
@@ -52,7 +52,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', crest: 'optional', stamp: 'optional', signature: 'optional', portrait: 'optional' },
-    issuePermissions: [P.REPORT_CARD_PUBLISH],
+    issuePermissions: [P.REPORT_CARD_EXPORT],
     titles: { fr: 'Bulletin annuel', en: 'Annual report card' },
   },
   'logbook.v1': {
@@ -80,7 +80,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', stamp: 'optional', signature: 'optional' },
-    issuePermissions: [P.ENROLLMENT_READ, P.QUERY_ENROLLMENT_HISTORY_READ, P.QUERY_STUDENT_DETAIL_READ],
+    issuePermissions: [P.ENROLLMENT_READ, P.ENROLLMENT_READ, P.STUDENT_READ],
     titles: { fr: 'Certificat de scolarité', en: 'Schooling certificate' },
   },
   'enrollment-record.v1': {
@@ -94,7 +94,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', portrait: 'optional' },
-    issuePermissions: [P.ENROLLMENT_READ, P.QUERY_ENROLLMENT_HISTORY_READ, P.QUERY_STUDENT_DETAIL_READ],
+    issuePermissions: [P.ENROLLMENT_READ, P.ENROLLMENT_READ, P.STUDENT_READ],
     titles: { fr: 'Fiche d\'inscription', en: 'Enrollment record' },
   },
   'student-id-card.v1': {
@@ -108,7 +108,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { portrait: 'blocking', logo: 'optional' },
-    issuePermissions: [P.ENROLLMENT_READ, P.QUERY_STUDENT_DETAIL_READ],
+    issuePermissions: [P.ENROLLMENT_READ, P.STUDENT_READ],
     titles: { fr: 'Carte d\'élève', en: 'Student ID card' },
   },
   'invoice.v1': {
@@ -192,7 +192,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', stamp: 'optional', signature: 'optional' },
-    issuePermissions: [P.ENROLLMENT_READ, P.QUERY_ENROLLMENT_HISTORY_READ],
+    issuePermissions: [P.ENROLLMENT_READ, P.ENROLLMENT_READ],
     titles: { fr: 'Certificat de radiation', en: 'Withdrawal certificate' },
   },
   'annual-transcript.v1': {
@@ -206,7 +206,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', crest: 'optional' },
-    issuePermissions: [P.REPORT_CARD_READ, P.QUERY_REPORT_CARD_DETAIL_READ],
+    issuePermissions: [P.REPORT_CARD_READ, P.REPORT_CARD_READ],
     titles: { fr: 'Relevé annuel', en: 'Annual transcript' },
   },
   'convocation.v1': {
@@ -220,7 +220,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: false,
     familyDownload: true,
     assets: { logo: 'optional', stamp: 'optional' },
-    issuePermissions: [P.ENROLLMENT_READ, P.QUERY_STUDENT_DETAIL_READ],
+    issuePermissions: [P.ENROLLMENT_READ, P.STUDENT_READ],
     titles: { fr: 'Convocation', en: 'Convocation' },
   },
   'class-timetable.v1': {
@@ -234,7 +234,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: true,
     familyDownload: false,
     assets: { logo: 'optional' },
-    issuePermissions: [P.QUERY_TIMETABLE_READ],
+    issuePermissions: [P.TIMETABLE_READ],
     titles: { fr: 'Emploi du temps de classe', en: 'Class timetable' },
   },
   'teacher-timetable.v1': {
@@ -248,7 +248,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: true,
     familyDownload: false,
     assets: { logo: 'optional' },
-    issuePermissions: [P.QUERY_TIMETABLE_READ],
+    issuePermissions: [P.TIMETABLE_READ],
     titles: { fr: 'Emploi du temps enseignant', en: 'Teacher timetable' },
   },
   'class-roster.v1': {
@@ -262,7 +262,7 @@ const CATALOG: Record<DocumentTemplateKey, DocumentTemplateCatalogEntry> = {
     teacherOperational: true,
     familyDownload: false,
     assets: { logo: 'optional' },
-    issuePermissions: [P.QUERY_CLASS_DIRECTORY_READ],
+    issuePermissions: [P.CLASS_READ],
     titles: { fr: 'Liste de classe', en: 'Class roster' },
   },
   'attendance-sheet.v1': {

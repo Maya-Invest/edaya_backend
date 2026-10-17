@@ -40,7 +40,7 @@ export function createAuthorizationScenario() {
   const subjects = [new Subject({ id: 'v1-math', schoolId: ids.school, name: 'Fixture math', createdAt })]
   const classSubjects = [new ClassSubject({ id: 'v1-class-math', classGroupId: ids.class, subjectId: subjects[0]!.id, createdAt })]
   const teacherAssignments = [new TeacherAssignment({ id: 'v1-teaching', teacherId: ids.teacher, academicYearId: ids.year, kind: TeacherAssignmentKind.Subject, classSubjectId: classSubjects[0]!.id, createdAt })]
-  const staffPermissionAssignments = [new StaffPermissionAssignment({ id: 'v1-student-read', staffId: ids.staff, schoolId: ids.school, academicYearId: ids.year, permission: Permission.QUERY_STUDENT_DETAIL_READ, scopes: [{ kind: 'student', studentId: ids.child }, { kind: 'student', studentId: ids.sibling }], createdAt })]
+  const staffPermissionAssignments = [new StaffPermissionAssignment({ id: 'v1-student-read', staffId: ids.staff, schoolId: ids.school, academicYearId: ids.year, permission: Permission.STUDENT_READ, scopes: [{ kind: 'student', studentId: ids.child }, { kind: 'student', studentId: ids.sibling }], createdAt })]
   const context = { schoolId: ids.school, academicYearId: ids.year, requestId: 'v1-authorization-fixture', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Strong }
   const actors = {
     owner: createStaffActorMetadata({ ...context, staffMemberId: ids.owner, subjectId: ids.sharedSubject }),

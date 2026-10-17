@@ -810,7 +810,7 @@ describe('timetable generation workflow', () => {
     const { service, repositories } = await createWorkflowContext()
     const school = (await repositories.schools.findById('school-1'))!
     await repositories.schools.save(new School({ ...school.data, ownerSubjectId: undefined }))
-    for (const [id, permission, classGroupId] of [['create', Permission.TIMETABLE_CREATE, 'class-1'], ['other-read', Permission.QUERY_TIMETABLE_READ, 'class-2']] as const)
+    for (const [id, permission, classGroupId] of [['create', Permission.TIMETABLE_MANAGE, 'class-1'], ['other-read', Permission.TIMETABLE_READ, 'class-2']] as const)
       await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id, staffId: 'staff-1', schoolId: 'school-1', academicYearId: 'year-1', permission, scopes: [{ kind: 'class_group', classGroupId }] }))
     const input = { classGroupId: 'class-1', academicYearId: 'year-1', startDate: weekStart, endDate: weekEnd }
     const generated = await service.timetableGenerationWorkflow.generateClassGroupTimetable(input)

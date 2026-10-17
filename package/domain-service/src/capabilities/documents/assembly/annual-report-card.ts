@@ -18,7 +18,7 @@ export async function assembleAnnualReportCard(
   title: string,
   branding: Record<string, unknown>,
 ): Promise<AssembledDocumentSource> {
-  const { annual, contributors } = await base.access.reportCards.annualDocumentContext(input.sourceId)
+  const { annual, contributors } = await base.access.reportCards.annualDocumentContext(input.sourceId, input.reportPublication)
   const revision = await base.repositories.teacherCorrections.state(base.actor.schoolId, 'report_comments', annual.result.id)
   const snapshot = revision?.payload['snapshot']
   const result = snapshot ? applyReportCommentRevision(annual.result, snapshot) : annual.result

@@ -1282,6 +1282,11 @@ export const clientBindings = {
         "requestSchemaName": "ReviseTeacherCorrectionCommand",
         "responseSchemaName": "TeacherCorrectionResponse"
       },
+      "publishReportCommentCorrection": {
+        "publicName": "publish-report-comment-correction",
+        "requestSchemaName": "PublishReportCommentCorrectionCommand",
+        "responseSchemaName": "TeacherCorrectionResponse"
+      },
       "approveTeacherCorrection": {
         "publicName": "approve-teacher-correction",
         "requestSchemaName": "ApproveTeacherCorrectionCommand",
@@ -1848,6 +1853,16 @@ export const clientBindings = {
         "publicName": "get-teacher-correction",
         "requestSchemaName": "GetTeacherCorrectionQuery",
         "responseSchemaName": "TeacherCorrectionDetailResponse"
+      },
+      "getActivityRoster": {
+        "publicName": "get-activity-roster",
+        "requestSchemaName": "GetActivityRosterQuery",
+        "responseSchemaName": "ActivityRosterResponse"
+      },
+      "getAssessmentEditorContext": {
+        "publicName": "get-assessment-editor-context",
+        "requestSchemaName": "GetAssessmentEditorContextQuery",
+        "responseSchemaName": "AssessmentEditorContextResponse"
       },
       "getAssessmentMarksReview": {
         "publicName": "get-assessment-marks-review",

@@ -51,7 +51,7 @@ export function createHttpAccessSeedPort(options: CreateHttpAccessSeedPortOption
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await postEntityFindById(requestOptions, 'schools', schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await postCoreCommand(requestOptions, 'assignStaffPermission', { ...record, customScopes: record.scopes, useDefaultScopes: false })
+      await postCoreCommand(requestOptions, 'assignStaffPermission', { ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       const { command, payload } = staffAssignmentCommand(record)

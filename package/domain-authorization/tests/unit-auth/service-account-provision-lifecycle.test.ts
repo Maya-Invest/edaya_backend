@@ -16,7 +16,7 @@ import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/sup
 describe('service accounts with live grants and transactions', () => {
   let fixture: Awaited<ReturnType<typeof createAuthorizationDatabase>>
   const actor = createStaffActorMetadata({ subjectId: 'person-a', staffMemberId: 'staff-a', schoolId: 'school-a', requestId: 'test', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified })
-  const scopedGrant = { permission: Permission.GRADE_INPUT, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }] }
+  const scopedGrant = { permission: Permission.GRADE_MANAGE, academicYearId: 'year-a', scopes: [{ kind: 'class_group' as const, classGroupId: 'class-a' }] }
   beforeEach(async () => {
     fixture = await createAuthorizationDatabase()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
@@ -38,7 +38,7 @@ describe('service accounts with live grants and transactions', () => {
     const grants = await fixture.repositories.staffPermissionAssignments.list({ staffId: result.staffMember.id })
     expect(grants).toHaveLength(1)
     expect(grants[0]?.scopes).toEqual(scopedGrant.scopes)
-    expect(grants[0]?.permission).toBe(Permission.GRADE_INPUT)
+    expect(grants[0]?.permission).toBe(Permission.GRADE_MANAGE)
     expect(await listServiceAccounts(fixture.repositories, actor)).toHaveLength(1)
   })
 
@@ -111,7 +111,7 @@ describe('service accounts with live grants and transactions', () => {
     const delegated = await create()
     const elevated = await createServiceAccount(fixture.repositories, actor, { serviceId: 'owner', displayName: 'Owner', elevated: true }, fixture.atomic)
     await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
-    for (const permission of [Permission.SERVICE_ACCOUNT_ROTATE_KEY, Permission.SERVICE_ACCOUNT_UPDATE, Permission.SERVICE_ACCOUNT_REVOKE]) {
+    for (const permission of [Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE]) {
       await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({
         id: permission,
         schoolId: 'school-a',

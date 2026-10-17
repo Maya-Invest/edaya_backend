@@ -93,7 +93,7 @@ describe('platform user provision', () => {
 
   test('defaults created permissions to a subset of the caller', async () => {
     const { repository, users } = createPlatformUserRepository()
-    users.push(new PlatformUser({ id: 'platform-op', subjectId: 'subject-op', email: 'op@edaya.test', permissions: [Permission.PLATFORM_USER_READ, Permission.PLATFORM_USER_CREATE], isActive: true, createdBySubjectId: 'bootstrap' }))
+    users.push(new PlatformUser({ id: 'platform-op', subjectId: 'subject-op', email: 'op@edaya.test', permissions: [Permission.PLATFORM_USER_READ, Permission.PLATFORM_USER_MANAGE], isActive: true, createdBySubjectId: 'bootstrap' }))
     const limited = platformActor()
     const created = await createPlatformUser(repository as never, limited, {
       subjectId: 'sub-2',
@@ -101,7 +101,7 @@ describe('platform user provision', () => {
     }, atomic)
     expect(created.permissions).toEqual([
       Permission.PLATFORM_USER_READ,
-      Permission.PLATFORM_USER_CREATE,
+      Permission.PLATFORM_USER_MANAGE,
     ])
   })
 
@@ -121,7 +121,7 @@ describe('platform user provision', () => {
       .toMatchObject({ code: 'PLATFORM_USER_SELF_DEACTIVATE' })
   })
 
-  test('denies create when the caller lacks PLATFORM_USER_CREATE', async () => {
+  test('denies create when the caller lacks PLATFORM_USER_MANAGE', async () => {
     const { repository, users } = createPlatformUserRepository()
     users.push(new PlatformUser({ id: 'platform-op', subjectId: 'subject-op', email: 'op@edaya.test', permissions: [Permission.PLATFORM_USER_READ], isActive: true, createdBySubjectId: 'bootstrap' }))
     await expect(createPlatformUser(

@@ -11,7 +11,7 @@ export class NotificationDeliveryAccessPolicy {
     const actor = this.access.actor
     if (actor.kind !== 'system' || actor.systemId !== 'notify-adapter' || actor.schoolId !== request.schoolId)
       return denied('Only the notification dispatcher may resolve a delivery recipient')
-    const scope = await this.access.scope(Permission.QUERY_COMMUNICATIONS_READ, 'messageDeliveries')
+    const scope = await this.access.scope(Permission.PERSONAL_COMMUNICATIONS_READ, 'messageDeliveries')
     const delivery = await this.access.repositories.messageDeliveries.forAccess(scope).findById(request.deliveryId)
     if (!delivery || delivery.subjectId !== request.subjectId || !delivery.recipientKind || !delivery.recipientId
       || delivery.status === MessageDeliveryStatus.Cancelled

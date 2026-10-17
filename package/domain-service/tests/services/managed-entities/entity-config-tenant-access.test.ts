@@ -158,7 +158,7 @@ describe('Entity config tenant and access gates', () => {
       schoolId: 'school',
       requestId: 'request',
       authenticatedAt: new Date('2026-05-01T00:00:00Z'),
-      assuranceLevel: ActorAssuranceLevel.Standard,
+      assuranceLevel: ActorAssuranceLevel.Verified,
     })
     const { app, repositories, schoolRepositories } = await createTestApp(configureActor)
 
@@ -178,7 +178,7 @@ describe('Entity config tenant and access gates', () => {
       order: 1,
     }))
 
-    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'configure', schoolId: 'school', academicYearId: 'year-1', staffId: configureActor.staffMemberId, permission: Permission.SCHOOL_STRUCTURE_CONFIGURE, scopes: [{ kind: 'school' }] }))
+    await schoolRepositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'configure', schoolId: 'school', academicYearId: 'year-1', staffId: configureActor.staffMemberId, permission: Permission.SCHOOL_CONFIGURE, scopes: [{ kind: 'school' }] }))
 
     const classGroup = new ClassGroup({
       id: 'class-new',

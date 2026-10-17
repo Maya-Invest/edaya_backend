@@ -24,7 +24,7 @@ export async function assembleReportDocument(
   title: string,
   branding: Record<string, unknown>,
 ): Promise<AssembledDocumentSource> {
-  const context = await base.access.reportCards.documentContext(input.sourceId)
+  const context = await base.access.reportCards.documentContext(input.sourceId, input.reportPublication)
   if (context.result.status !== ReportCardResultStatus.Published || !context.period.isPublished)
     fail(DOCUMENT_FAILURES.SOURCE_UNPUBLISHED, 'Report documents require a published result and academic period')
   const revision = await base.repositories.teacherCorrections.state(base.actor.schoolId, 'report_comments', context.result.id)

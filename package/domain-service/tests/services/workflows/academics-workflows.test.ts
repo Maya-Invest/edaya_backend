@@ -161,7 +161,7 @@ describe('SchoolService academics workflows', () => {
     const input = { id: 'progress', classSubjectMatterId: 'csm1', lessonSessionId: 'sess1', completedPercentage: 40 }
     await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'read', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'user1', permission: Permission.CLASS_LOGBOOK_READ, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
     await expect(service.academicsWorkflow.recordLessonSessionProgress(input)).rejects.toBeInstanceOf(AuthorizationError)
-    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'create', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'user1', permission: Permission.CLASS_LOGBOOK_CREATE, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
+    await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'create', schoolId: 'sch1', academicYearId: 'ay1', staffId: 'user1', permission: Permission.CLASS_LOGBOOK_MANAGE, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
     expect((await service.academicsWorkflow.recordLessonSessionProgress(input)).completedPercentage).toBe(40)
     await repositories.staffPermissionAssignments.delete('create')
     await expect(service.academicsWorkflow.recordLessonSessionProgress({ ...input, id: 'revoked', completedPercentage: 60 })).rejects.toBeInstanceOf(AuthorizationError)

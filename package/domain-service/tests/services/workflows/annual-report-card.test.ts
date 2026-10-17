@@ -174,7 +174,9 @@ describe('official annual report card workflow', () => {
     const issued = await f.request()
     await dispatchDocumentRender(f.application)
     const correction = await teacher.teacherCorrectionsWorkflow.request({ requestId: 'annual-feedback-request', expectedVersion: f.annual.version, reason: 'Clarify the annual council feedback', proposal: { workflow: 'report_comments', targetId: f.annual.id, teacherComment: 'Steady progress throughout the year.', sections: [] } })
-    const decision = await f.service.teacherCorrectionsWorkflow.decide('approve', { requestId: 'annual-feedback-approve', correctionId: correction.id, expectedVersion: 0, confirmConsequences: true })
+    const approval = await f.service.teacherCorrectionsWorkflow.decide('approve', { requestId: 'annual-feedback-approve', correctionId: correction.id, expectedVersion: 0, confirmConsequences: true })
+    expect(approval.status).toBe('approved_pending_publication')
+    const decision = await f.service.teacherCorrectionsWorkflow.publishReportCorrection({ requestId: 'annual-feedback-publish', correctionId: correction.id, expectedVersion: approval.version, confirmConsequences: true })
     const revised = (await f.repositories.documentIssuances.findById(decision.documentIssuanceId!))!
     expect(revised.templateKey).toBe('annual-report-card.v1')
     expect((await f.repositories.documentIssuances.findById(issued.id))?.status).toBe(DocumentIssuanceStatus.Ready)

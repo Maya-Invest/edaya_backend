@@ -72,6 +72,7 @@ export type SchoolCommandKey
     | 'reviseAssessmentMarksCorrection'
     | 'requestTeacherCorrection'
     | 'reviseTeacherCorrection'
+    | 'publishReportCommentCorrection'
     | 'approveTeacherCorrection'
     | 'rejectTeacherCorrection'
     | 'withdrawTeacherCorrection'
@@ -279,6 +280,7 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'reviseAssessmentMarksCorrection',
   'requestTeacherCorrection',
   'reviseTeacherCorrection',
+  'publishReportCommentCorrection',
   'approveTeacherCorrection',
   'rejectTeacherCorrection',
   'withdrawTeacherCorrection',

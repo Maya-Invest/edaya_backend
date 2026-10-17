@@ -1,5 +1,5 @@
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createServiceStaffActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
-import { Permission, StaffMember, StaffPermissionAssignment } from '@edaya/core'
+import { corePermissionDefinition, Permission, StaffMember, StaffPermissionAssignment } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase } from '../../../adaptor-postgres/tests/support/authorization-database'
 
@@ -14,17 +14,17 @@ describe('assurance and account kind in complete policies', () => {
 
   const identity = { schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', requestId: 'assurance', authenticatedAt: new Date() }
   async function grant(permission: Permission) {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: corePermissionDefinition(permission).scopePolicy.mode === 'resources' ? [{ kind: 'all', grain: 'student' }] : [{ kind: 'school' }] }))
   }
 
-  test.each([Permission.SERVICE_ACCOUNT_CREATE, Permission.SERVICE_ACCOUNT_UPDATE, Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE, Permission.FINANCIAL_CONFIG_UPDATE])('%s needs verified human assurance and a current grant', async (permission) => {
+  test.each([Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.PAYMENT_RECORD, Permission.PAYMENT_CANCEL, Permission.PAYMENT_REVERSE, Permission.FINANCIAL_CATALOG_MANAGE])('%s needs verified human assurance and a current grant', async (permission) => {
     await grant(permission)
     const standard = new AccessPolicies(createStaffActorMetadata({ ...identity, assuranceLevel: ActorAssuranceLevel.Standard }), fixture.repositories)
     const verified = new AccessPolicies(createStaffActorMetadata({ ...identity, assuranceLevel: ActorAssuranceLevel.Verified }), fixture.repositories)
-    await expect(standard.assertSchool(permission)).rejects.toBeInstanceOf(AuthorizationError)
-    await verified.assertSchool(permission)
+    await expect(standard.scope(permission, 'students', 'write')).rejects.toBeInstanceOf(AuthorizationError)
+    await verified.scope(permission, 'students', 'write')
     await fixture.repositories.staffPermissionAssignments.delete(permission)
-    await expect(verified.assertSchool(permission)).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(verified.scope(permission, 'students', 'write')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test('owner authority bypasses service-management step-up only, and disappears after ownership transfer', async () => {
@@ -40,17 +40,17 @@ describe('assurance and account kind in complete policies', () => {
     const existing = (await fixture.repositories.staffMembers.findById('staff-a'))!
     await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated }))
     const access = new AccessPolicies(createServiceStaffActorMetadata(identity), fixture.repositories)
-    for (const permission of [Permission.SERVICE_ACCOUNT_READ, Permission.SERVICE_ACCOUNT_CREATE, Permission.SERVICE_ACCOUNT_UPDATE, Permission.SERVICE_ACCOUNT_REVOKE, Permission.SERVICE_ACCOUNT_ROTATE_KEY]) {
+    for (const permission of [Permission.SERVICE_ACCOUNT_READ, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE, Permission.SERVICE_ACCOUNT_MANAGE]) {
       await grant(permission)
       await expect(access.assertSchool(permission)).rejects.toThrow()
     }
     await grant(Permission.PAYMENT_RECORD)
-    await access.assertSchool(Permission.PAYMENT_RECORD)
-    await grant(Permission.ACCESS_CONTROL_ASSIGN)
+    await access.scope(Permission.PAYMENT_RECORD, 'students', 'write')
+    await grant(Permission.ACCESS_CONTROL_MANAGE)
     if (elevated)
-      await access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)
-    else await expect(access.assertSchool(Permission.ACCESS_CONTROL_ASSIGN)).rejects.toThrow()
+      await access.assertSchool(Permission.ACCESS_CONTROL_MANAGE)
+    else await expect(access.assertSchool(Permission.ACCESS_CONTROL_MANAGE)).rejects.toThrow()
     await fixture.repositories.staffMembers.save(new StaffMember({ ...existing.data, subjectId: undefined, accountKind: 'service', serviceId: 'integration', serviceElevated: elevated, isActive: false }))
-    await expect(access.assertSchool(Permission.PAYMENT_RECORD)).rejects.toThrow()
+    await expect(access.scope(Permission.PAYMENT_RECORD, 'students', 'write')).rejects.toThrow()
   })
 })

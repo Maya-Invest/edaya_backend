@@ -338,9 +338,27 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
       return matches('gradeLevelId', target.gradeLevelId)
   }
   if (target.kind === 'activity') {
-    if (name === 'activities')
-      return matches('id', target.activityId)
+    if (name === 'activities') {
+      const placement = target.classGroupId
+        ? exists(s.classActivityEnrollments, schoolId, and(
+            sql`${s.classActivityEnrollments.activityId} = ${value('id')}`,
+            eq(s.classActivityEnrollments.classGroupId, target.classGroupId),
+            year ? yearPredicate(s.classActivityEnrollments, year, schoolId, new Set()) : undefined,
+          )!)
+        : undefined
+      return and(matches('id', target.activityId), placement)!
+    }
     if (columns['activityId']) {
+      if (target.classGroupId && columns['studentId']) {
+        return and(matches('activityId', target.activityId), exists(s.studentClassEnrollments, schoolId, and(
+          sql`${s.studentClassEnrollments.studentId} = ${value('studentId')}`,
+          eq(s.studentClassEnrollments.classGroupId, target.classGroupId),
+          activeEnrollment(year),
+        )!), exists(s.classActivityEnrollments, schoolId, and(
+          sql`${s.classActivityEnrollments.activityId} = ${value('activityId')}`,
+          eq(s.classActivityEnrollments.classGroupId, target.classGroupId),
+        )!))!
+      }
       return and(matches('activityId', target.activityId), target.classGroupId ? (columns['classGroupId'] ? matches('classGroupId', target.classGroupId) : sql`false`) : undefined)!
     }
   }

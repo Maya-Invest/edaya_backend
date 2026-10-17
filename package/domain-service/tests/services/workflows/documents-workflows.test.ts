@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata } from '@edaya/authorization'
-import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, LessonSession, Student, StudentClassEnrollment, Teacher } from '@edaya/core'
+import { AcademicYear, AttachmentOwnerKind, AttachmentStatus, BusinessRuleViolationError, ClassGroup, ClassSubject, createInMemoryFileStorage, DocumentIssuanceStatus, GradeLevel, Guardian, GuardianStudentLink, LessonSession, Student, StudentClassEnrollment, Subject, Teacher } from '@edaya/core'
 import { dispatchDocumentRender, resolveAttachmentReadPolicy } from '@edaya/service'
 import {
   describe,
@@ -319,6 +319,8 @@ test('generated timetables issue class and teacher PDFs immediately without prot
   const { app, application, schoolRepositories: repositories } = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner: true, documentRenderer: renderer(), fileStorage: createInMemoryFileStorage() })
   await seedSchooling(repositories)
   await repositories.teachers.save(new Teacher({ id: 'teacher', schoolId: 'sch1', firstName: 'Ada', lastName: 'Teacher' }))
+  await repositories.subjects.save(new Subject({ id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
+  await repositories.classSubjects.save(new ClassSubject({ id: 'math', classGroupId: 'cg1', subjectId: 'subject-math' }))
   const lesson = new LessonSession({ id: 'generated', schoolId: 'sch1', classGroupId: 'cg1', classSubjectId: 'math', timetableGenerated: true, timetableTeacherIds: ['teacher'], displayLabel: 'Math', startsAt: new Date('2026-04-15T08:00Z'), endsAt: new Date('2026-04-15T09:00Z') })
   await repositories.lessonSessions.save(lesson)
   const issued = []

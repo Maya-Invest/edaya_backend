@@ -185,7 +185,7 @@ describe('communications workflows with production policies and transactions', (
 
   test('communication update authority cannot send, and send authority cannot edit message content', async () => {
     await fixture.db.exec('UPDATE schools SET owner_subject_id = null WHERE id = \'school-a\'')
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'update', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.COMMUNICATION_UPDATE, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'update', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.COMMUNICATION_DRAFT_MANAGE, scopes: [{ kind: 'school' }] }))
     const before = await announcement(Target.ClassGroup, 'class-a')
     await expect(service().communicationsWorkflow.publishAnnouncement({ announcementId: 'announcement' })).rejects.toBeInstanceOf(AuthorizationError)
     await fixture.repositories.staffPermissionAssignments.delete('update')

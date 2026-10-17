@@ -9,7 +9,7 @@ async function fixture() {
   const gateway = new RecordingNotificationGateway()
   const f = await createReportCardContext({ marksApproved: false, notificationGateway: gateway })
   await f.repositories.staffMembers.save(new StaffMember({ id: 'reviewer', schoolId: 'sch1', firstName: 'Review', lastName: 'Staff', subjectId: 'reviewer-login' }))
-  for (const permission of [Permission.GRADE_VALIDATE, Permission.GRADE_UNLOCK, Permission.GRADE_READ]) {
+  for (const permission of [Permission.GRADE_VALIDATE, Permission.GRADE_READ]) {
     await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
   }
   const reviewer = f.forActor(createStaffActorMetadata({ schoolId: 'sch1', staffMemberId: 'reviewer', subjectId: 'reviewer-login', academicYearId: 'ay1', requestId: 'reviewer', authenticatedAt: new Date(), assuranceLevel: ActorAssuranceLevel.Verified }))
@@ -46,7 +46,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     const assessment = (await f.repositories.assessments.findById('ass1'))!
     await f.repositories.assessments.save(new Assessment({ ...assessment.data, kind: AssessmentKind.Homework, dueAt: assessment.startsAt, startsAt: undefined, endsAt: undefined }))
-    for (const permission of [Permission.GRADE_INPUT, Permission.GRADE_UPDATE]) {
+    for (const permission of [Permission.GRADE_MANAGE, Permission.GRADE_MANAGE]) {
       await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: `editor-${permission}`, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
     }
     await f.reviewer.assessmentsWorkflow.recordAssessmentResult({ requestId: 'reviewer-edit', expectedRevision: 0, id: 'ar1', studentId: 'stu1', assessmentId: 'ass1', score: 42 })
@@ -303,7 +303,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    for (const permission of [Permission.GRADE_INPUT, Permission.GRADE_UPDATE])
+    for (const permission of [Permission.GRADE_MANAGE, Permission.GRADE_MANAGE])
       await f.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: `edit-${permission}`, schoolId: 'sch1', staffId: 'reviewer', academicYearId: 'ay1', permission, scopes: [{ kind: 'class_group', classGroupId: 'cg1' }] }))
     const correction = await f.reviewer.assessmentsWorkflow.requestAssessmentMarksCorrection(correctionInput())
     expect((await f.reviewer.listAssessmentMarksReviews({})).items[0]!.allowedActions.approve).toBe(false)

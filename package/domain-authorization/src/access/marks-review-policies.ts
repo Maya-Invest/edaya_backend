@@ -9,7 +9,7 @@ export type MarksAction = 'submit' | 'approve'
 export class MarksReviewAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
   edit(assessmentId: string) {
-    return this.access.assertResources([Permission.GRADE_INPUT, Permission.GRADE_UPDATE], 'assessments', [assessmentId])
+    return this.access.assertResources([Permission.GRADE_MANAGE], 'assessments', [assessmentId])
   }
 
   detail(assessmentId: string) {
@@ -25,7 +25,7 @@ export class MarksReviewAccessPolicy {
   assertClassAction(action: MarksAction, classGroupId: string) {
     if (action !== 'submit' && this.access.actor.kind !== 'staff')
       denied('Marks review requires a staff profile')
-    const permission = action === 'submit' ? [Permission.GRADE_INPUT, Permission.GRADE_UPDATE] : Permission.GRADE_VALIDATE
+    const permission = action === 'submit' ? [Permission.GRADE_MANAGE] : Permission.GRADE_VALIDATE
     return this.access.assertResources(permission, 'classGroups', [classGroupId])
   }
 

@@ -34,10 +34,10 @@ describe('typed staff grants coordinated migration', () => {
   }
 
   test('preserves manual provenance, status, validity, action and class/subject wildcard meaning', async () => {
-    await grant('manual', 'GRADE_INPUT', 'class-a;class-other,class-a')
-    await grant('subject', 'EXAM_CONFIG_CREATE', 'class-a:math-a,class-other:*')
+    await grant('manual', 'GRADE_MANAGE', 'class-a;class-other,class-a')
+    await grant('subject', 'ASSESSMENT_MANAGE', 'class-a:math-a,class-other:*')
     await grant('all-classes', 'GRADE_READ', '*')
-    await grant('all-subjects', 'EXAM_CONFIG_READ', '*:*')
+    await grant('all-subjects', 'ASSESSMENT_READ', '*:*')
     await grant('school', 'PAYMENT_RECORD', '')
     await db.exec('UPDATE staff_permission_assignments SET status = \'inactive\', starts_at = \'2026-03-01\', ends_at = \'2026-07-01\' WHERE id = \'manual\'')
     await migrate()
@@ -61,7 +61,7 @@ describe('typed staff grants coordinated migration', () => {
   test('converted wildcard and subject grants retain their meaning in native policy queries', async () => {
     await seedPre0009AuthorizationRelationships(db)
     await grant('grades', 'GRADE_READ', '*')
-    await grant('exams', 'EXAM_CONFIG_READ', 'class-a:math-a,class-other:*')
+    await grant('exams', 'ASSESSMENT_READ', 'class-a:math-a,class-other:*')
     await migrate()
     for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0010' && name < '0037').sort())
       await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
@@ -81,7 +81,7 @@ describe('typed staff grants coordinated migration', () => {
     expect((await grades.list({ $orderBy: [{ field: 'id', direction: 'asc' }] })).map(row => row.id)).toEqual(['1-math', '2-french', '3-other'])
     expect(await grades.count()).toBe(3)
     expect(await grades.findById('4-foreign')).toBeUndefined()
-    const exams = repositories.assessments.forAccess(await access.scope(Permission.EXAM_CONFIG_READ, 'assessments'))
+    const exams = repositories.assessments.forAccess(await access.scope(Permission.ASSESSMENT_READ, 'assessments'))
     expect((await exams.list()).map(row => row.id).sort()).toEqual(['assessment-math', 'assessment-other'])
     expect(await exams.findById('assessment-french')).toBeUndefined()
     await db.exec('UPDATE staff_permission_assignments SET ends_at = \'2000-01-01\' WHERE id = \'grades\'')
@@ -90,24 +90,24 @@ describe('typed staff grants coordinated migration', () => {
 
   test('removes verified assignment copies while retaining identical manual grants and assignments', async () => {
     await db.exec(`INSERT INTO staff_assignments (id, staff_id, academic_year_id, role, permissions, class_group_id, created_at)
-      VALUES ('assignment', 'staff-a', 'year-a', 'Supervision', '["GRADE_INPUT"]', 'class-a', now())`)
-    await grant('derived', 'GRADE_INPUT', 'class-a', 'assignment')
-    await grant('manual', 'GRADE_INPUT', 'class-a')
+      VALUES ('assignment', 'staff-a', 'year-a', 'Supervision', '["GRADE_MANAGE"]', 'class-a', now())`)
+    await grant('derived', 'GRADE_MANAGE', 'class-a', 'assignment')
+    await grant('manual', 'GRADE_MANAGE', 'class-a')
     await migrate()
     expect((await db.query('SELECT id FROM staff_permission_assignments')).rows).toEqual([{ id: 'manual' }])
     expect((await db.query('SELECT id FROM staff_assignments')).rows).toEqual([{ id: 'assignment' }])
   })
 
   test.each([
-    ['GRADE_INPUT', 'class-b'],
-    ['GRADE_INPUT', 'class-old'],
-    ['GRADE_INPUT', 'missing'],
-    ['GRADE_INPUT', ''],
-    ['EXAM_CONFIG_CREATE', 'class-a:math-other'],
-    ['EXAM_CONFIG_CREATE', '*:math-a'],
-    ['EXAM_CONFIG_CREATE', 'class-a'],
+    ['GRADE_MANAGE', 'class-b'],
+    ['GRADE_MANAGE', 'class-old'],
+    ['GRADE_MANAGE', 'missing'],
+    ['GRADE_MANAGE', ''],
+    ['ASSESSMENT_MANAGE', 'class-a:math-other'],
+    ['ASSESSMENT_MANAGE', '*:math-a'],
+    ['ASSESSMENT_MANAGE', 'class-a'],
     ['PAYMENT_RECORD', '*'],
-    ['QUERY_STUDENT_DETAIL_READ', 'student-a'],
+    ['STUDENT_READ', 'student-a'],
     ['UNKNOWN', 'class-a'],
   ])('rejects ambiguous or invalid %s scope %s and rolls the whole migration back', async (permission, path) => {
     await grant('valid', 'GRADE_READ', 'class-a')
@@ -119,14 +119,14 @@ describe('typed staff grants coordinated migration', () => {
   })
 
   test('rejects orphaned derived provenance instead of silently deleting a possible manual grant', async () => {
-    await grant('orphan', 'GRADE_INPUT', 'class-a', 'missing-assignment')
+    await grant('orphan', 'GRADE_MANAGE', 'class-a', 'missing-assignment')
     await expect(migrate()).rejects.toThrow('no matching authoritative assignment')
   })
 
   test('rejects copied grants whose independently changed scope would be lost', async () => {
     await db.exec(`INSERT INTO staff_assignments (id, staff_id, academic_year_id, role, permissions, class_group_id, created_at)
-      VALUES ('assignment', 'staff-a', 'year-a', 'Supervision', '["GRADE_INPUT"]', 'class-a', now())`)
-    await grant('changed', 'GRADE_INPUT', 'class-other', 'assignment')
+      VALUES ('assignment', 'staff-a', 'year-a', 'Supervision', '["GRADE_MANAGE"]', 'class-a', now())`)
+    await grant('changed', 'GRADE_MANAGE', 'class-other', 'assignment')
     await expect(migrate()).rejects.toThrow('differs from its assignment')
   })
 })

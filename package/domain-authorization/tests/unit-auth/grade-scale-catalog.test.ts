@@ -18,7 +18,7 @@ describe('grading configuration catalog access', () => {
     await fixture.db.close()
   })
 
-  test.each([Permission.REPORT_CARD_CONFIGURE, Permission.EXAM_CONFIG_CONFIGURE])('%s can read its school scales without a school-wide marks grant', async (permission) => {
+  test.each([Permission.GRADE_SCALE_CONFIGURE])('%s can read its school scales without a school-wide marks grant', async (permission) => {
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'configure', schoolId: 'school-a', staffId: 'staff-a', permission, academicYearId: 'year-a', scopes: [{ kind: 'school' }] }))
     // The seeded principal's marks access is scoped to classes; scales have no class placement.
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'marks', schoolId: 'school-a', staffId: 'staff-a', permission: Permission.GRADE_READ, academicYearId: 'year-a', scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))

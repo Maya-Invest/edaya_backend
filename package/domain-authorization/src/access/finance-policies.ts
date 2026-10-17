@@ -7,11 +7,11 @@ export class FinanceAccessPolicy {
   constructor(private readonly access: AccessPolicies) {}
 
   overdueChargesScope() {
-    return this.access.scope(Permission.QUERY_OVERDUE_FEES_READ, 'studentCharges')
+    return this.access.scope(Permission.OVERDUE_BALANCE_READ, 'studentCharges')
   }
 
   agingScope() {
-    return this.access.scope(Permission.QUERY_OVERDUE_FEES_READ, 'studentCharges')
+    return this.access.scope(Permission.OVERDUE_BALANCE_READ, 'studentCharges')
   }
 
   reconciliationScope() {

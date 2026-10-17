@@ -21,7 +21,7 @@ async function createInvitationContext(options: { guardians?: Guardian[], teache
   await repositories.schools.save(new School({ id: 'sch1', name: 'Edaya School', timeZone: 'Europe/Paris', pendingOwnerStaffId: options.pendingOwnerStaffId, ownerSubjectId: options.ownerSubjectId }))
   for (const school of options.extraSchools ?? []) await repositories.schools.save(school)
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
-  await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'assign', schoolId: 'sch1', academicYearId: 'ay1', staffId: actor.staffMemberId, permission: Permission.ACCESS_CONTROL_ASSIGN, scopes: [{ kind: 'school' }] }))
+  await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'assign', schoolId: 'sch1', academicYearId: 'ay1', staffId: actor.staffMemberId, permission: Permission.ACCESS_CONTROL_MANAGE, scopes: [{ kind: 'school' }] }))
   await repositories.staffMembers.save(new StaffMember({ id: 'st9', schoolId: 'sch1', firstName: 'Paul', lastName: 'Martin', email: 'p.martin@school.edu', isActive: true }))
   for (const guardian of options.guardians ?? []) await repositories.guardians.save(guardian)
   for (const teacher of options.teachers ?? []) await repositories.teachers.save(teacher)

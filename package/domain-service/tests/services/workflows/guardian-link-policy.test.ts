@@ -19,7 +19,7 @@ describe('guardian linking uses its own action and shared enrollment validation'
   })
   afterEach(async () => fixture.db.close())
   async function grant(permission: Permission) {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', staffId: 'staff-a', academicYearId: 'year-a', permission, scopes: permission === Permission.PARENT_READ ? [{ kind: 'all', grain: 'student' }] : [{ kind: 'school' }] }))
   }
   const input = { id: 'new-link', guardianId: 'new-guardian', studentId: 'student-a' }
 
@@ -27,13 +27,13 @@ describe('guardian linking uses its own action and shared enrollment validation'
     await grant(Permission.PARENT_READ)
     await expect(service.studentWorkflow.linkGuardianToStudent(input)).rejects.toBeInstanceOf(AuthorizationError)
     await fixture.repositories.staffPermissionAssignments.delete(Permission.PARENT_READ)
-    await grant(Permission.PARENT_UPDATE)
+    await grant(Permission.PARENT_MANAGE)
     await service.studentWorkflow.linkGuardianToStudent(input)
     expect((await fixture.repositories.guardianLinks.findById(input.id))?.studentId).toBe(input.studentId)
   })
 
   test('direct saves and commands retain same-school enrollment and foreign-target invariants', async () => {
-    await grant(Permission.PARENT_UPDATE)
+    await grant(Permission.PARENT_MANAGE)
     await fixture.repositories.enrollments.delete('enrollment-a')
     await expect(service.studentWorkflow.linkGuardianToStudent(input)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.guardianLinks.save(new GuardianStudentLink({ ...input, schoolId: 'school-a', relationship: 'parent' }))).rejects.toBeInstanceOf(AuthorizationError)
@@ -42,7 +42,7 @@ describe('guardian linking uses its own action and shared enrollment validation'
   })
 
   test('selected guardians cannot acquire new relationships from the same login’s staff authority', async () => {
-    await grant(Permission.PARENT_UPDATE)
+    await grant(Permission.PARENT_MANAGE)
     const guardianService = new SchoolService({ ...service.baseService, actor: createGuardianActorMetadata({ ...identity, guardianId: 'guardian-a' }) })
     await expect(guardianService.studentWorkflow.linkGuardianToStudent({ ...input, guardianId: 'guardian-a', studentId: 'student-other' })).rejects.toBeInstanceOf(AuthorizationError)
   })

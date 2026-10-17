@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Permission } from '../permissions/permission'
-import { permissionScope } from '../permissions/permission-scopes'
+import { corePermissionDefinition } from '../permissions/permission-catalog'
 import { parseDomain, zodDate } from '../shared/utils'
 
 function refineStaffPermissionProfile(
@@ -23,7 +23,7 @@ function refineStaffPermissionProfile(
       continue
     }
     seen.add(permission)
-    if (permissionScope(permission) === 'platform') {
+    if (!corePermissionDefinition(permission).staffAssignable) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Platform permissions cannot be included in staff profiles',

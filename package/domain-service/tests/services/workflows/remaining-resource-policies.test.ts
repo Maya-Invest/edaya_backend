@@ -1,7 +1,7 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { GrantScope } from '@edaya/core'
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, ClassSubject, GradeLevelSubject, GradeLevelSubjectMatter, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, ClassSubject, corePermissionDefinition, GradeLevelSubject, GradeLevelSubjectMatter, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -24,8 +24,8 @@ describe('remaining resource policies against native SQL and transactions', () =
   function service(actor: SchoolScopedActorMetadata = staff) {
     return new SchoolService({ actor, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
   }
-  async function grant(permission: Permission, scopes: GrantScope[] = [{ kind: 'school' }]) {
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes }))
+  async function grant(permission: Permission, scopes?: GrantScope[]) {
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: scopes ?? (corePermissionDefinition(permission).scopePolicy.mode === 'resources' ? [{ kind: 'all', grain: 'class_group' }] : [{ kind: 'school' }]) }))
   }
   async function expire(permission: Permission) {
     const before = (await fixture.repositories.staffPermissionAssignments.findById(permission))!
@@ -120,21 +120,21 @@ describe('remaining resource policies against native SQL and transactions', () =
     expect((await entities.list()).map(row => row.id)).toEqual(['other', 'own'])
     const before = (await fixture.repositories.teacherUnavailabilities.findById('own'))!
     await expect(entities.save(before)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ACCESS_CONTROL_ASSIGN)
+    await grant(Permission.ACCESS_CONTROL_MANAGE)
     await entities.save(new TeacherUnavailability({ ...before.data, reason: 'Changed' }))
     for (const proposal of [{ ...before.data, teacherId: 'teacher-b' }, { ...before.data, academicYearId: 'year-old' }, { ...before.data, id: 'old' }])
       await expect(entities.save(new TeacherUnavailability(proposal))).rejects.toBeInstanceOf(AuthorizationError)
     await expect(entities.batchSave([new TeacherUnavailability({ ...before.data, reason: 'Rolled back' }), new TeacherUnavailability({ ...before.data, id: 'new', teacherId: 'teacher-b' })])).rejects.toBeInstanceOf(AuthorizationError)
     expect((await fixture.repositories.teacherUnavailabilities.findById('own'))?.reason).toBe('Changed')
-    await expire(Permission.ACCESS_CONTROL_ASSIGN)
+    await expire(Permission.ACCESS_CONTROL_MANAGE)
     await expect(entities.delete('own')).rejects.toBeInstanceOf(AuthorizationError)
   })
 
   test.each([guardian, student])('$kind activity visibility follows approved enrollment and current family links', async (actor) => {
     await activities()
     await fixture.db.exec('UPDATE schools SET owner_subject_id = \'person-a\' WHERE id = \'school-a\'')
-    for (const action of [Permission.ENROLLMENT_CREATE, Permission.ENROLLMENT_UPDATE, Permission.ENROLLMENT_ARCHIVE])
-      await grant(action)
+    for (const action of [Permission.ACTIVITY_ENROLLMENT_MANAGE])
+      await grant(action, [{ kind: 'all', grain: 'activity' }])
     for (const [id, activityId, studentId, status] of [['own', 'club', 'student-a', ActivityEnrollmentStatus.Approved], ['pending', 'other-club', 'student-a', ActivityEnrollmentStatus.Pending], ['other', 'other-club', 'student-other', ActivityEnrollmentStatus.Approved]] as const)
       await fixture.repositories.activityEnrollments.save(new ActivityEnrollment({ id, activityId, studentId, status }))
     const entities = service(actor).baseService.entities
@@ -155,22 +155,38 @@ describe('remaining resource policies against native SQL and transactions', () =
     }
   })
 
-  test('student activity enrollment separates read, create, update and archive and rejects foreign batches', async () => {
+  test('activity roster exposes bounded identities and eligible students without dossier authority', async () => {
+    await activities()
+    for (const [id, activityId, classGroupId] of [['a', 'club', 'class-a'], ['other', 'club', 'class-other'], ['b', 'other-club', 'class-other']] as const)
+      await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id, activityId, classGroupId }))
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'activity', activityId: 'club', classGroupId: 'class-a' }])
+    await grant(Permission.ACTIVITY_ENROLLMENT_MANAGE, [{ kind: 'activity', activityId: 'club', classGroupId: 'class-a' }, { kind: 'activity', activityId: 'other-club', classGroupId: 'class-other' }])
+    const roster = await service().getActivityRoster({ activityId: 'club' })
+    expect(roster.eligibleStudentIds).toEqual(['student-a'])
+    expect(roster.classes.map(row => row.id)).toEqual(['class-a'])
+    expect(roster.students).toEqual([{ id: 'student-a', firstName: expect.any(String), lastName: expect.any(String), matricule: undefined, classGroupId: 'class-a' }])
+    await expect(service().baseService.entities.students.findById('student-a')).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service().getActivityRoster({ activityId: 'foreign-club' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expire(Permission.ACTIVITY_ENROLLMENT_MANAGE)
+    expect((await service().getActivityRoster({ activityId: 'club' })).eligibleStudentIds).toEqual([])
+    await expire(Permission.ACTIVITY_READ)
+    await expect(service().getActivityRoster({ activityId: 'club' })).rejects.toBeInstanceOf(AuthorizationError)
+  })
+
+  test('student activity enrollment separates reads from enrollment management and rejects foreign batches', async () => {
     await activities()
     const entities = service().baseService.entities.activityEnrollments
     const own = new ActivityEnrollment({ id: 'own', activityId: 'club', studentId: 'student-a', status: ActivityEnrollmentStatus.Pending })
-    await grant(Permission.ENROLLMENT_READ)
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'activity', activityId: 'club' }])
     await expect(entities.save(own)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ENROLLMENT_CREATE)
+    await grant(Permission.ACTIVITY_ENROLLMENT_MANAGE, [{ kind: 'activity', activityId: 'club' }])
     await entities.save(own)
-    await expect(entities.save(new ActivityEnrollment({ ...own.data, status: ActivityEnrollmentStatus.Approved }))).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ENROLLMENT_UPDATE)
+    await grant(Permission.ACTIVITY_ENROLLMENT_MANAGE, [{ kind: 'activity', activityId: 'club' }])
     await entities.save(new ActivityEnrollment({ ...own.data, status: ActivityEnrollmentStatus.Approved }))
     await expect(entities.batchSave([new ActivityEnrollment({ ...own.data, id: 'valid-new' }), new ActivityEnrollment({ ...own.data, id: 'foreign', studentId: 'student-b' })])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await entities.count()).toBe(1)
     await expect(entities.save(new ActivityEnrollment({ ...own.data, activityId: 'foreign-club' }))).rejects.toBeInstanceOf(AuthorizationError)
-    await expect(entities.delete(own.id)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ENROLLMENT_ARCHIVE)
+    await grant(Permission.ACTIVITY_ENROLLMENT_MANAGE, [{ kind: 'activity', activityId: 'club' }])
     await entities.delete(own.id)
     expect(await entities.count()).toBe(0)
   })
@@ -179,18 +195,18 @@ describe('remaining resource policies against native SQL and transactions', () =
     await activities()
     for (const [id, classGroupId, activityId] of [['own', 'class-a', 'club'], ['other', 'class-other', 'club'], ['foreign', 'class-b', 'foreign-club']] as const)
       await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id, classGroupId, activityId }))
-    await grant(Permission.QUERY_TIMETABLE_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
-    await grant(Permission.TIMETABLE_UPDATE, [{ kind: 'class_group', classGroupId: 'class-other' }])
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACTIVITY_MANAGE, [{ kind: 'activity', classGroupId: 'class-other' }])
     const entities = service().baseService.entities.classActivityEnrollments
     expect((await entities.list()).map(row => row.id)).toEqual(['other', 'own'])
     expect(await entities.count()).toBe(2)
     expect(await entities.findById('foreign')).toBeUndefined()
     const own = (await fixture.repositories.classActivityEnrollments.findById('own'))!
     await expect(entities.save(new ClassActivityEnrollment({ ...own.data, classGroupId: 'class-other' }))).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.TIMETABLE_UPDATE, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACTIVITY_MANAGE, [{ kind: 'activity', classGroupId: 'class-a' }])
     await expect(entities.save(new ClassActivityEnrollment({ ...own.data, classGroupId: 'class-other' }))).rejects.toBeInstanceOf(AuthorizationError)
     await expect(entities.save(new ClassActivityEnrollment({ ...own.data, classGroupId: 'class-old' }))).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.TIMETABLE_CREATE, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACTIVITY_MANAGE, [{ kind: 'activity', classGroupId: 'class-a' }])
     await expect(entities.batchSave([new ClassActivityEnrollment({ id: 'new', activityId: 'other-club', classGroupId: 'class-a' }), new ClassActivityEnrollment({ id: 'bad', activityId: 'foreign-club', classGroupId: 'class-a' })])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.classActivityEnrollments.findById('new')).toBeUndefined()
   })
@@ -205,7 +221,7 @@ describe('remaining resource policies against native SQL and transactions', () =
       await fixture.repositories.classActivityEnrollments.save(new ClassActivityEnrollment({ id, classGroupId, activityId: id === 'own' ? 'club' : 'private-club' }))
     expect(await service(teacher).baseService.entities.classActivityEnrollments.count()).toBe(0)
     await fixture.repositories.teacherAssignments.save(new TeacherAssignment({ id: 'homeroom', teacherId: 'teacher-a', academicYearId: 'year-a', kind: TeacherAssignmentKind.Homeroom, classGroupId: 'class-a' }))
-    await grant(Permission.TIMETABLE_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
     for (const actor of [teacher, staff]) {
       const activities = service(actor).baseService.entities.activities
       expect((await activities.list()).map(row => row.id)).toEqual(['club', 'other-club'])
@@ -221,9 +237,9 @@ describe('remaining resource policies against native SQL and transactions', () =
     await fixture.repositories.teacherAssignments.delete('homeroom')
     expect(await service(teacher).baseService.entities.classActivityEnrollments.count()).toBe(0)
     expect(await service(teacher).baseService.entities.activities.count()).toBe(0)
-    await grant(Permission.TIMETABLE_READ, [{ kind: 'all', grain: 'class_group' }])
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'all', grain: 'class_group' }])
     expect((await service().baseService.entities.activities.list()).map(row => row.id)).toEqual(['club', 'other-club', 'private-club'])
-    await grant(Permission.TIMETABLE_READ, [{ kind: 'class_group', classGroupId: 'missing-class' }])
+    await grant(Permission.ACTIVITY_READ, [{ kind: 'class_group', classGroupId: 'missing-class' }])
     expect(await service().baseService.entities.activities.count()).toBe(0)
   })
 
@@ -242,7 +258,7 @@ describe('remaining resource policies against native SQL and transactions', () =
 
   test('shared grade curriculum reads preserve linked class scope and foreign isolation', async () => {
     await curriculum()
-    await grant(Permission.QUERY_CLASS_CURRICULUM_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
     for (const actor of [staff, teacher, guardian, student]) {
       const entities = service(actor).baseService.entities.gradeLevelSubjectMatters
       expect((await entities.list()).map(row => row.id)).toEqual(['own'])
@@ -258,17 +274,17 @@ describe('remaining resource policies against native SQL and transactions', () =
 
   test('changing shared curriculum requires update authority for every affected class', async () => {
     await curriculum()
-    await grant(Permission.ACADEMIC_PROGRAM_UPDATE, [{ kind: 'class_group', classGroupId: 'class-a' }])
-    await grant(Permission.QUERY_CLASS_CURRICULUM_READ, [{ kind: 'class_group', classGroupId: 'class-other' }])
+    await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'class_group', classGroupId: 'class-other' }])
     const entities = service().baseService.entities.gradeLevelSubjectMatters
     const own = (await fixture.repositories.gradeLevelSubjectMatters.findById('own'))!
     const changed = new GradeLevelSubjectMatter({ ...own.data, subjectMatterId: 'other-matter' })
     await expect(entities.save(changed)).rejects.toBeInstanceOf(AuthorizationError)
     expect((await fixture.repositories.gradeLevelSubjectMatters.findById('own'))?.subjectMatterId).toBe('matter')
-    await grant(Permission.ACADEMIC_PROGRAM_UPDATE, [{ kind: 'class_group', classGroupId: 'class-a' }, { kind: 'class_group', classGroupId: 'class-other' }])
+    await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }, { kind: 'class_group', classGroupId: 'class-other' }])
     await entities.save(changed)
     expect((await fixture.repositories.gradeLevelSubjectMatters.findById('own'))?.subjectMatterId).toBe('other-matter')
-    await expire(Permission.ACADEMIC_PROGRAM_UPDATE)
+    await expire(Permission.ACADEMIC_PROGRAM_MANAGE)
     await expect(entities.save(own)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
@@ -283,9 +299,12 @@ describe('remaining resource policies against native SQL and transactions', () =
       subjectMatters: () => entities.subjectMatters.save(new SubjectMatter({ ...matter.data, name: 'Changed' })),
       gradeLevelSubjects: () => entities.gradeLevelSubjects.save(new GradeLevelSubject({ ...grade.data, coefficient: 2 })),
     }[resource]
-    await grant(Permission.ACADEMIC_PROGRAM_UPDATE, [{ kind: 'class_group', classGroupId: 'class-a' }])
+    await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }])
     await expect(change()).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ACADEMIC_PROGRAM_UPDATE, [{ kind: 'all', grain: 'class_group' }])
+    if (resource === 'gradeLevelSubjects')
+      await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'all', grain: 'class_group' }])
+    else
+      await grant(Permission.ACADEMIC_CATALOG_MANAGE)
     await change()
     expect(resource === 'subjects'
       ? (await fixture.repositories.subjects.findById('math'))?.name
@@ -294,18 +313,16 @@ describe('remaining resource policies against native SQL and transactions', () =
         : (await fixture.repositories.gradeLevelSubjects.findById('grade-math'))?.coefficient).toBe(resource === 'gradeLevelSubjects' ? 2 : 'Changed')
   })
 
-  test('grade curriculum creation and deletion retain their distinct actions and roll back mixed foreign batches', async () => {
+  test('grade curriculum management covers creation and deletion and rolls back mixed foreign batches', async () => {
     await curriculum()
     const entities = service().baseService.entities.gradeLevelSubjectMatters
     const proposal = new GradeLevelSubjectMatter({ id: 'new', gradeLevelSubjectId: 'grade-math', subjectMatterId: 'other-matter' })
-    await grant(Permission.ACADEMIC_PROGRAM_UPDATE, [{ kind: 'all', grain: 'class_group' }])
+    await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'all', grain: 'class_group' }])
     await expect(entities.save(proposal)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ACADEMIC_PROGRAM_CREATE)
+    await grant(Permission.ACADEMIC_PROGRAM_MANAGE)
     await expect(entities.batchSave([proposal, new GradeLevelSubjectMatter({ id: 'bad', gradeLevelSubjectId: 'grade-foreign', subjectMatterId: 'foreign-matter' })])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.gradeLevelSubjectMatters.findById('new')).toBeUndefined()
     await entities.save(proposal)
-    await expect(entities.delete('new')).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.ACADEMIC_PROGRAM_DELETE)
     await expect(entities.batchDelete(['new', 'foreign'])).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.gradeLevelSubjectMatters.findById('new')).toBeDefined()
     await entities.delete('new')

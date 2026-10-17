@@ -10,7 +10,7 @@ export function createInProcessAccessSeedPort(application: SeedApplication): Acc
     schoolExists: schoolId => withSeedPortError('access.schoolExists', async () =>
       Boolean(await application.repositories.schools.findById(schoolId))),
     saveStaffPermissionAssignment: record => withSeedPortError('access.saveStaffPermissionAssignment', async () => {
-      await service.accessControlWorkflow.assignStaffPermission({ ...record, customScopes: record.scopes, useDefaultScopes: false })
+      await service.accessControlWorkflow.assignStaffPermission({ ...record, customScopes: record.scopes.filter(scope => scope.kind !== 'school'), useDefaultScopes: false })
     }),
     saveStaffAssignment: record => withSeedPortError('access.saveStaffAssignment', async () => {
       await service.baseService.entities.staffAssignments.save(new StaffAssignment({

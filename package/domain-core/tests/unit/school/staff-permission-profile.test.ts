@@ -7,9 +7,9 @@ describe('StaffPermissionProfile', () => {
       id: 'profile',
       schoolId: 'school',
       name: 'Mixed',
-      permissions: [Permission.PAYMENT_READ, Permission.GRADE_INPUT],
+      permissions: [Permission.PAYMENT_READ, Permission.GRADE_MANAGE],
     })
-    expect(profile.permissions).toEqual([Permission.PAYMENT_READ, Permission.GRADE_INPUT])
+    expect(profile.permissions).toEqual([Permission.PAYMENT_READ, Permission.GRADE_MANAGE])
   })
 
   test('accepts school permissions', () => {

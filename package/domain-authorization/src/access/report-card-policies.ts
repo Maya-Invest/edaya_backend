@@ -20,18 +20,18 @@ export class ReportCardAccessPolicy {
   }
 
   async assertHomeroomComment(input: { studentId: string, resultId: string }) {
-    await this.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'students', [input.studentId])
-    await this.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [input.resultId])
+    await this.access.assertResources(Permission.REPORT_CARD_COMMENT, 'students', [input.studentId])
+    await this.access.assertResources(Permission.REPORT_CARD_COMMENT, 'results', [input.resultId])
   }
 
   readScope() {
-    return this.access.scope([Permission.QUERY_REPORT_CARD_DETAIL_READ, Permission.GRADE_READ, Permission.REPORT_CARD_READ], 'results')
+    return this.access.scope([Permission.REPORT_CARD_READ, Permission.GRADE_READ], 'results')
   }
 
-  private async documentTarget(resultId: string) {
+  private async documentTarget(resultId: string, publication = false) {
     if (['teacher', 'guardian', 'student'].includes(this.access.actor.kind))
       return denied('Document generation requires publication authority')
-    const scope = await this.access.assertResources(Permission.REPORT_CARD_PUBLISH, 'results', [resultId])
+    const scope = await this.access.assertResources(publication ? Permission.REPORT_CARD_PUBLISH : Permission.REPORT_CARD_EXPORT, 'results', [resultId])
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
     const result = await facts.one('results', resultId)
     const student = await facts.one('students', result.studentId)
@@ -46,8 +46,8 @@ export class ReportCardAccessPolicy {
     return { scope, facts, result, student, school, period, classGroup, academicYear, definition }
   }
 
-  async documentContext(resultId: string) {
-    const { scope, facts, result, student, school, period, classGroup, academicYear, definition } = await this.documentTarget(resultId)
+  async documentContext(resultId: string, publication = false) {
+    const { scope, facts, result, student, school, period, classGroup, academicYear, definition } = await this.documentTarget(resultId, publication)
     const subjectIds = new Set<string>()
     function collect(sections: readonly ReportCardResultSection[]) {
       for (const section of sections) {
@@ -76,12 +76,12 @@ export class ReportCardAccessPolicy {
     const homeroomTeacherName = [...new Set(homeroomTeachers.map(teacher => teacher.name))].join(', ') || undefined
 
     const peerResults = await this.access.repositories.results.forAccess(scope).list({ classGroupId: classGroup.id, periodId: period.id, reportCardDefinitionId: definition.id, status: ReportCardResultStatus.Published })
-    const attachments = await this.access.repositories.attachments.forAccess(await this.access.scope(Permission.REPORT_CARD_PUBLISH, 'attachments')).list({ ownerKind: AttachmentOwnerKind.ReportCard, ownerId: result.id })
+    const attachments = await this.access.repositories.attachments.forAccess(await this.access.scope(publication ? Permission.REPORT_CARD_PUBLISH : Permission.REPORT_CARD_EXPORT, 'attachments')).list({ ownerKind: AttachmentOwnerKind.ReportCard, ownerId: result.id })
     return { result, student, school, period, classGroup, academicYear, subjects, teacherNameByClassSubjectId, teachersByClassSubjectId, homeroomTeacherName, homeroomTeachers, peerResults, attachments }
   }
 
-  async annualDocumentContext(resultId: string) {
-    const annual = await this.documentContext(resultId)
+  async annualDocumentContext(resultId: string, publication = false) {
+    const annual = await this.documentContext(resultId, publication)
     const ids = annual.result.aggregation?.sourcePeriodIds ?? []
     const facts = new AccessFacts(this.access.actor, this.access.repositories)
     const contributors: Array<Awaited<ReturnType<ReportCardAccessPolicy['documentContext']>>> = []
@@ -89,7 +89,7 @@ export class ReportCardAccessPolicy {
       const reports = await facts.list('results', { studentId: annual.student.id, periodId, status: ReportCardResultStatus.Published })
       if (reports.length !== 1)
         throw new BusinessRuleViolationError('DOCUMENT_SOURCE_UNPUBLISHED', 'Each contributing period must have one published report')
-      const context = await this.documentContext(reports[0]!.id)
+      const context = await this.documentContext(reports[0]!.id, publication)
       context.result = await publishedReportSource(context.result, annual.result.aggregation?.sourceReportVersions?.find(source => source.periodId === periodId)?.sourceVersion)
       if (context.result.grading?.scaleId !== annual.result.grading?.scaleId || context.result.grading?.maximum !== annual.result.grading?.maximum)
         throw new BusinessRuleViolationError('DOCUMENT_INPUT_CONFLICT', 'Annual report sources must use the same grading scale')
@@ -106,7 +106,7 @@ export class ReportCardAccessPolicy {
         return denied('A report document must retain its report card owner')
     }
     const { result, period } = await this.documentTarget(resultId)
-    const scope = await this.access.assertSave(Permission.REPORT_CARD_PUBLISH, 'attachments', attachment, existing)
+    const scope = await this.access.assertSave(Permission.REPORT_CARD_EXPORT, 'attachments', attachment, existing)
     return { scope, result, period }
   }
 }

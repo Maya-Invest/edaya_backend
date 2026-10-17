@@ -15,6 +15,6 @@ describe('buildDevAccessSeedRecords — demo-ci leadership scopes', () => {
       expect(() => validatePermissionScopes(permission as Permission, scopes)).not.toThrow()
       expect(scopes.every(scope => scope.kind === 'class_group' || scope.kind === 'class_subject')).toBe(true)
     }
-    expect(director?.scopesByPermission?.[Permission.QUERY_TIMETABLE_READ]?.length).toBeGreaterThan(0)
+    expect(director?.scopesByPermission?.[Permission.TIMETABLE_READ]?.length).toBeGreaterThan(0)
   })
 })

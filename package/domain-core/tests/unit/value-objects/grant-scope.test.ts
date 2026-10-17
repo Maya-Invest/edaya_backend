@@ -51,11 +51,11 @@ describe('typed staff grant scopes', () => {
   })
 
   test('each action admits only its catalog grain; platform actions cannot be staff grants', () => {
-    expect(() => validatePermissionScopes(Permission.GRADE_INPUT, [{ kind: 'class_group', classGroupId: 'class' }])).not.toThrow()
-    expect(() => validatePermissionScopes(Permission.GRADE_INPUT, [{ kind: 'school' }])).toThrow()
-    expect(() => validatePermissionScopes(Permission.GRADE_INPUT, [{ kind: 'student', studentId: 'student' }])).toThrow()
-    expect(() => validatePermissionScopes(Permission.PAYMENT_RECORD, [{ kind: 'all', grain: 'student' }])).toThrow()
-    expect(() => validatePermissionScopes(Permission.PLATFORM_USER_CREATE, [{ kind: 'school' }])).toThrow()
+    expect(() => validatePermissionScopes(Permission.GRADE_MANAGE, [{ kind: 'class_group', classGroupId: 'class' }])).not.toThrow()
+    expect(() => validatePermissionScopes(Permission.GRADE_MANAGE, [{ kind: 'school' }])).toThrow()
+    expect(() => validatePermissionScopes(Permission.GRADE_MANAGE, [{ kind: 'student', studentId: 'student' }])).toThrow()
+    expect(() => validatePermissionScopes(Permission.PAYMENT_RECORD, [{ kind: 'all', grain: 'student' }])).not.toThrow()
+    expect(() => validatePermissionScopes(Permission.PLATFORM_USER_MANAGE, [{ kind: 'school' }])).toThrow()
   })
 
   test('equivalent scopes ignore order', () => {

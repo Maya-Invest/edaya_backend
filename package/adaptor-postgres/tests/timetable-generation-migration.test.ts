@@ -11,9 +11,9 @@ test('migrates every generated state without changing identities or widening per
       CREATE TABLE staff_manual_permission_assignments (id text, permission text);
       CREATE TABLE staff_assignments (id text, permissions jsonb);
       CREATE TABLE staff_permission_profiles (id text, permissions jsonb);
-      INSERT INTO staff_permission_assignments VALUES ('publish', 'TIMETABLE_PUBLISH'), ('create', 'TIMETABLE_CREATE');
+      INSERT INTO staff_permission_assignments VALUES ('publish', 'TIMETABLE_PUBLISH'), ('create', 'TIMETABLE_MANAGE');
       INSERT INTO staff_manual_permission_assignments SELECT * FROM staff_permission_assignments;
-      INSERT INTO staff_assignments VALUES ('staff', '["TIMETABLE_PUBLISH", "TIMETABLE_CREATE"]');
+      INSERT INTO staff_assignments VALUES ('staff', '["TIMETABLE_PUBLISH", "TIMETABLE_MANAGE"]');
       INSERT INTO staff_permission_profiles VALUES ('profile', '["TIMETABLE_PUBLISH"]');
     `)
     await db.exec(await Bun.file(new URL('../drizzle/0039_timetable_generation_final.sql', import.meta.url)).text())
@@ -25,8 +25,8 @@ test('migrates every generated state without changing identities or widening per
     await db.exec('INSERT INTO lesson_sessions(id) VALUES (\'new\')')
     expect((await db.query('SELECT timetable_generated FROM lesson_sessions WHERE id=\'new\'')).rows).toEqual([{ timetable_generated: false }])
     for (const table of ['staff_permission_assignments', 'staff_manual_permission_assignments'])
-      expect((await db.query(`SELECT permission FROM ${table}`)).rows).toEqual([{ permission: 'TIMETABLE_CREATE' }])
-    expect((await db.query('SELECT permissions FROM staff_assignments')).rows).toEqual([{ permissions: ['TIMETABLE_CREATE'] }])
+      expect((await db.query(`SELECT permission FROM ${table}`)).rows).toEqual([{ permission: 'TIMETABLE_MANAGE' }])
+    expect((await db.query('SELECT permissions FROM staff_assignments')).rows).toEqual([{ permissions: ['TIMETABLE_MANAGE'] }])
     expect((await db.query('SELECT permissions FROM staff_permission_profiles')).rows).toEqual([{ permissions: [] }])
   }
   finally { await db.close() }

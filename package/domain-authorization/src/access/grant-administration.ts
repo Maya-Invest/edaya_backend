@@ -62,6 +62,36 @@ export async function validateScopeSelectionTargets(facts: AccessFacts, grant: {
   }
 }
 
+/** Dynamic parent containment; enumerated children never imply future parent authority. */
+async function contains(facts: AccessFacts, held: AuthorityScope, requested: AuthorityScope, year: string): Promise<boolean> {
+  if (authorityScopeContains(held, requested))
+    return true
+  if (requested.kind === 'all')
+    return false
+  if (held.kind === 'activity' && requested.kind === 'activity_session')
+    return (!held.activityId || held.activityId === requested.activityId) && (!held.classGroupId || held.classGroupId === requested.classGroupId)
+  if (held.kind !== 'grade_level' && held.kind !== 'grade_level_subject' && !(held.kind === 'all' && held.grain === 'grade_level'))
+    return false
+  if ('gradeLevelId' in requested) {
+    if (held.kind === 'grade_level')
+      return requested.gradeLevelId === held.gradeLevelId
+    return held.kind === 'all'
+  }
+  if (!('classGroupId' in requested) || !requested.classGroupId)
+    return false
+  const group = await facts.one('classGroups', requested.classGroupId)
+  if (group.academicYearId !== year || (held.kind !== 'all' && group.gradeLevelId !== held.gradeLevelId))
+    return false
+  if (held.kind !== 'grade_level_subject')
+    return true
+  if (!('classSubjectId' in requested) || !requested.classSubjectId)
+    return false
+  if (!held.gradeLevelSubjectId)
+    return true
+  const subject = await facts.one('classSubjects', requested.classSubjectId)
+  return subject.classGroupId === group.id && subject.gradeLevelSubjectId === held.gradeLevelSubjectId
+}
+
 /** An administrator can delegate only authority they hold for the same action and year. */
 export async function assertGrantDelegation(facts: AccessFacts, grants: readonly DelegatedGrant[]): Promise<void> {
   await facts.validateActor()
@@ -79,9 +109,9 @@ export async function assertGrantDelegation(facts: AccessFacts, grants: readonly
     const held = await facts.staffGrants(requested.permission, requested.academicYearId)
     const startsAt = requested.startsAt ?? facts.now
     for (const scope of requested.scopes) {
-      if (!held.some(grant => (!grant.startsAt || grant.startsAt <= startsAt)
-        && (!grant.endsAt || (requested.endsAt !== undefined && requested.endsAt <= grant.endsAt))
-        && grant.scopes.some(heldScope => authorityScopeContains(heldScope, scope)))) {
+      const candidates = held.filter(grant => (!grant.startsAt || grant.startsAt <= startsAt) && (!grant.endsAt || (requested.endsAt !== undefined && requested.endsAt <= grant.endsAt)))
+      const matches = await Promise.all(candidates.flatMap(grant => grant.scopes.map(heldScope => contains(facts, heldScope, scope, requested.academicYearId))))
+      if (!matches.some(Boolean)) {
         denied('Delegation exceeds the administrator’s action, scope, year, or validity period')
       }
     }
@@ -99,7 +129,10 @@ export async function assertAssignmentDelegation(facts: AccessFacts, assignment:
   for (const permission of assignment.permissions) {
     const held = await facts.staffGrants(permission, assignment.academicYearId)
     const requested: AuthorityScope[] = scopesForStaffAssignmentPermission(permission, target)
-    if (requested.some(scope => !held.some(grant => !grant.endsAt && grant.scopes.some(existing => authorityScopeContains(existing, scope)))))
-      denied('Assignment exceeds the administrator’s action, placement, year, or validity period')
+    for (const scope of requested) {
+      const matches = await Promise.all(held.filter(grant => !grant.endsAt).flatMap(grant => grant.scopes.map(existing => contains(facts, existing, scope, assignment.academicYearId))))
+      if (!matches.some(Boolean))
+        denied('Assignment exceeds the administrator’s action, placement, year, or validity period')
+    }
   }
 }

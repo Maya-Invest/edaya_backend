@@ -75,11 +75,11 @@ describe('discipline policies authorize the incident and its participants', () =
 
   test('read grants cannot contribute to create scope and updates check both academic placements', async () => {
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'read', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_READ, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'read', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_READ, scopes: [{ kind: 'all', grain: 'student' }] }))
     await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'create', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_CREATE, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const other = (await fixture.repositories.incidents.findById('other'))!
     await expect(service.baseService.entities.incidents.save(new Incident({ ...other.data, id: 'new-other' }))).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'update', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_UPDATE, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'update', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_MANAGE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     const own = (await fixture.repositories.incidents.findById('class'))!
     await expect(service.baseService.entities.incidents.save(new Incident({ ...own.data, classGroupId: 'class-old' }))).rejects.toBeInstanceOf(AuthorizationError)
     const old = (await fixture.repositories.incidents.findById('old'))!
@@ -89,14 +89,14 @@ describe('discipline policies authorize the incident and its participants', () =
 
   test('resolution requires validation authority and never borrows content-update authority', async () => {
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    for (const permission of [Permission.DISCIPLINE_READ, Permission.DISCIPLINE_UPDATE])
-      await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'school' }] }))
+    for (const permission of [Permission.DISCIPLINE_READ, Permission.DISCIPLINE_MANAGE])
+      await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
     const before = (await fixture.repositories.incidents.findById('class'))!
     const resolved = new Incident({ ...before.data, status: IncidentStatus.Resolved, resolutionNotes: 'Resolved', resolvedAt: new Date(), resolvedByStaffId: 'staff-a', updatedAt: new Date() })
     await expect(service.baseService.entities.incidents.save(resolved)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.behaviorWorkflow.resolveIncident({ incidentId: before.id })).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.staffPermissionAssignments.delete(Permission.DISCIPLINE_UPDATE)
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.delete(Permission.DISCIPLINE_MANAGE)
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     await expect(service.baseService.entities.incidents.save(new Incident({ ...resolved.data, title: 'Changed content' }))).rejects.toBeInstanceOf(AuthorizationError)
     await service.behaviorWorkflow.resolveIncident({ incidentId: before.id })
     expect((await fixture.repositories.incidents.findById(before.id))?.status).toBe(IncidentStatus.Resolved)
@@ -104,7 +104,7 @@ describe('discipline policies authorize the incident and its participants', () =
 
   test('validation alone resolves existing participants without borrowing create or read authority', async () => {
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     const result = await service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'math', involvedStudents: [{ id: 'math', studentId: 'student-a', role: IncidentInvolvementRole.Subject }] })
     expect(result.incident.status).toBe(IncidentStatus.Resolved)
     expect(result.involvements.map(row => row.id)).toEqual(['math'])
@@ -114,7 +114,7 @@ describe('discipline policies authorize the incident and its participants', () =
 
   test('resolving cannot add or alter participants without their distinct mutation authority', async () => {
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'school' }] }))
+    await fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: 'validate', schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission: Permission.DISCIPLINE_VALIDATE, scopes: [{ kind: 'all', grain: 'class_group' }] }))
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'math', involvedStudents: [{ id: 'math', studentId: 'student-a', role: IncidentInvolvementRole.Witness }] })).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.behaviorWorkflow.resolveIncidentWithOutcomes({ incidentId: 'class', involvedStudents: [{ id: 'new', studentId: 'student-a', role: IncidentInvolvementRole.Subject }] })).rejects.toBeInstanceOf(AuthorizationError)
     expect((await fixture.repositories.incidents.findById('math'))?.status).toBe(IncidentStatus.Open)
@@ -127,22 +127,24 @@ describe('discipline policies authorize the incident and its participants', () =
     await expect(service.baseService.entities.incidents.save(new Incident({ ...before.data, id: 'resolved-create', status: IncidentStatus.Resolved, resolvedAt: new Date(), resolvedByStaffId: 'staff-a', updatedAt: new Date() }))).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test('cancellation and deletion require archive authority, with update additionally required for content changes', async () => {
+  test('management combines editing, cancellation and deletion within scope, while create grants and revocation deny them', async () => {
     service = new SchoolService({ actor: staff, repositories: fixture.repositories, atomicExecution: fixture.atomic, notificationGateway: noOpNotificationGateway, fileStorage: testFileStorage })
-    const grant = async (permission: Permission) => fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'school' }] }))
-    await grant(Permission.DISCIPLINE_UPDATE)
+    const grant = async (permission: Permission) => fixture.repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ id: permission, schoolId: 'school-a', academicYearId: 'year-a', staffId: 'staff-a', permission, scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] }))
+    await grant(Permission.DISCIPLINE_CREATE)
+    await grant(Permission.DISCIPLINE_READ)
     const before = (await fixture.repositories.incidents.findById('class'))!
-    const cancelled = new Incident({ ...before.data, status: IncidentStatus.Cancelled })
+    const cancelled = new Incident({ ...before.data, status: IncidentStatus.Cancelled, title: 'Changed' })
     await expect(service.baseService.entities.incidents.save(cancelled)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.incidents.delete(before.id)).rejects.toBeInstanceOf(AuthorizationError)
-    await fixture.repositories.staffPermissionAssignments.delete(Permission.DISCIPLINE_UPDATE)
-    await grant(Permission.DISCIPLINE_ARCHIVE)
-    await expect(service.baseService.entities.incidents.save(new Incident({ ...cancelled.data, title: 'Changed' }))).rejects.toBeInstanceOf(AuthorizationError)
+    await grant(Permission.DISCIPLINE_MANAGE)
+    const other = (await fixture.repositories.incidents.findById('other'))!
+    await expect(service.baseService.entities.incidents.save(new Incident({ ...other.data, status: IncidentStatus.Cancelled }))).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.baseService.entities.incidents.delete(other.id)).rejects.toBeInstanceOf(AuthorizationError)
     await service.baseService.entities.incidents.save(cancelled)
-    await fixture.repositories.staffPermissionAssignments.delete(Permission.DISCIPLINE_ARCHIVE)
-    await grant(Permission.DISCIPLINE_UPDATE)
+    await fixture.repositories.staffPermissionAssignments.delete(Permission.DISCIPLINE_MANAGE)
     await expect(service.baseService.entities.incidents.save(before)).rejects.toBeInstanceOf(AuthorizationError)
-    await grant(Permission.DISCIPLINE_ARCHIVE)
+    await expect(service.baseService.entities.incidents.delete(before.id)).rejects.toBeInstanceOf(AuthorizationError)
+    await grant(Permission.DISCIPLINE_MANAGE)
     await service.baseService.entities.incidents.delete(before.id)
     expect(await fixture.repositories.incidents.findById(before.id)).toBeUndefined()
   })

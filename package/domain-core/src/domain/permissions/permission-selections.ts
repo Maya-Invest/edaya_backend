@@ -1,9 +1,10 @@
+import type { grantScopeSchema } from './grant-scope'
 import { z } from 'zod'
-import { grantScopeSchema, validatePermissionScopes } from './grant-scope'
+import { userScopeSelectionSchema, validatePermissionScopes } from './grant-scope'
 import { Permission } from './permission'
-import { permissionScope } from './permission-scopes'
+import { corePermissionDefinition } from './permission-catalog'
 
-export const permissionScopeSelectionsSchema = z.array(grantScopeSchema).default([]).superRefine((scopes, ctx) => {
+export const permissionScopeSelectionsSchema = z.array(userScopeSelectionSchema).default([]).superRefine((scopes, ctx) => {
   const keys = scopes.map(scope => JSON.stringify(scope))
   if (new Set(keys).size !== keys.length)
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Scope selections must be unique' })
@@ -18,8 +19,13 @@ export const permissionResolutionWarningSchema = z.object({
 })
 export type PermissionResolutionWarning = z.infer<typeof permissionResolutionWarningSchema>
 
-/** Apply the existing action validator to each selection; never translate between grains. */
+/** Unscoped assignments resolve automatically; selected resources never translate between grains. */
 export function scopesForPermission(permission: Permission, selections: readonly z.infer<typeof grantScopeSchema>[]) {
+  const definition = corePermissionDefinition(permission)
+  if (!definition.staffAssignable)
+    return []
+  if (definition.scopePolicy.mode === 'none')
+    return [{ kind: 'school' as const }]
   const compatible = selections.filter((scope) => {
     try {
       validatePermissionScopes(permission, [scope])
@@ -39,10 +45,12 @@ export function scopesForPermission(permission: Permission, selections: readonly
 /** Invitation presets explicitly select broad scopes; ordinary assignment forms do not. */
 export function presetScopeSelections(permissions: readonly Permission[]) {
   return [...new Map(permissions.flatMap((permission) => {
-    const grain = permissionScope(permission)
-    if (grain === 'platform')
+    const policy = corePermissionDefinition(permission).scopePolicy
+    if (policy.mode !== 'resources')
       return []
-    const scope = grain ? { kind: 'all' as const, grain } : { kind: 'school' as const }
-    return [[JSON.stringify(scope), scope] as const]
+    return policy.allowedKinds.map((grain) => {
+      const scope = { kind: 'all' as const, grain }
+      return [JSON.stringify(scope), scope] as const
+    })
   })).values()]
 }

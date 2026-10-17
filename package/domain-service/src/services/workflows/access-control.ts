@@ -1,10 +1,10 @@
-import type { GrantScope, Guardian, StaffManualPermissionAssignmentInput, StaffMember, StaffPermissionProfile, Student, Teacher } from '@edaya/core'
+import type { Guardian, StaffManualPermissionAssignmentInput, StaffMember, StaffPermissionProfile, Student, Teacher, UserScopeSelection } from '@edaya/core'
 import type { PermissionResolutionReport } from '../../capabilities/access-control/resolve-staff-profile-grants'
 import type { BaseSchoolService } from '../base-school-service'
 import type { AccessControlWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { randomUUID } from 'node:crypto'
 
-import { BusinessRuleViolationError, findPublishedAcademicYear, grantScopesEquivalent, permissionScope, StaffManualPermissionAssignment as StaffManualPermissionAssignmentEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, StaffPermissionProfile as StaffPermissionProfileEntity, StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsEntity, validatePermissionScopes } from '@edaya/core'
+import { BusinessRuleViolationError, corePermissionDefinition, findPublishedAcademicYear, grantScopesEquivalent, StaffManualPermissionAssignment as StaffManualPermissionAssignmentEntity, StaffPermissionProfileBinding as StaffPermissionProfileBindingEntity, StaffPermissionProfile as StaffPermissionProfileEntity, StaffPermissionScopeDefaults as StaffPermissionScopeDefaultsEntity, validatePermissionScopes } from '@edaya/core'
 import { planStaffPermissionGrants, resolveStaffProfileGrants, validateScopeSelections } from '../../capabilities/access-control/resolve-staff-profile-grants'
 import { linkSubjectToActor, relinkSubjectToActor, unlinkSubjectFromActor } from '../account-linking/link-subject-to-actor'
 
@@ -38,7 +38,7 @@ export interface ApplyStaffPermissionProfileInput {
   staffId: string
   profileId: string
   academicYearId?: string
-  customScopes: readonly GrantScope[]
+  customScopes: readonly UserScopeSelection[]
   useDefaultScopes: boolean
   previewOnly?: boolean
 }
@@ -59,7 +59,7 @@ export type AssignStaffPermissionInput = StaffManualPermissionAssignmentInput & 
 export interface ConfigureStaffPermissionScopeDefaultsInput {
   staffId: string
   academicYearId: string
-  scopes: readonly GrantScope[]
+  scopes: readonly UserScopeSelection[]
   previewOnly?: boolean
 }
 
@@ -153,7 +153,7 @@ export class AccessControlServiceWorkflow extends BaseServiceWorkflow {
       if (await this.repositories.staffPermissionAssignments.findById(input.id))
         throw new BusinessRuleViolationError('PROFILE_BOUND_GRANT_LOCKED', 'Generated grants cannot be edited directly')
       const assignment = new StaffManualPermissionAssignmentEntity({ ...input, schoolId: staff.schoolId, academicYearId, createdAt: existing?.createdAt, updatedAt: new Date() })
-      if (permissionScope(assignment.permission) === 'platform')
+      if (!corePermissionDefinition(assignment.permission).staffAssignable)
         throw new BusinessRuleViolationError('PERMISSION_SCOPE_INVALID', 'Platform actions cannot be staff permissions')
       for (const scope of assignment.customScopes) validatePermissionScopes(assignment.permission, [scope])
       await validateScopeSelections(this.baseService.repositories, staff.schoolId, academicYearId, assignment.customScopes)
