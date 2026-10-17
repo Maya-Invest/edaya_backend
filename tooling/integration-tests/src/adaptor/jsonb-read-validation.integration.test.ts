@@ -87,6 +87,16 @@ describe('[Postgres PGlite] JSONB read validation', () => {
       WHERE id = 'spa-corrupt-2'
     `)
 
+    expect((await repos.staffPermissionAssignments.findById('spa-corrupt-2'))?.scopes).toEqual([
+      { kind: 'class_subject', classGroupId: 'class-1', classSubjectId: 'math' },
+    ])
+
+    await db.execute(sql`
+      UPDATE staff_permission_assignments
+      SET scopes = '[{"kind":"student","studentId":"student-1"}]'::jsonb
+      WHERE id = 'spa-corrupt-2'
+    `)
+
     await expect(repos.staffPermissionAssignments.findById('spa-corrupt-2')).rejects.toBeInstanceOf(DomainValidationError)
   })
 })

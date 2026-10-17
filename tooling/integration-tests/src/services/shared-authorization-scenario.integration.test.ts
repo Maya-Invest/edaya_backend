@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/pglite'
 
 describe('shared two-school authorization scenario', () => {
   let db: PGlite
+  let repositories: PostgresSchoolRepositories
   let application: SchoolApplication
   let scenario: ReturnType<typeof createAuthorizationScenario>
 
@@ -17,7 +18,7 @@ describe('shared two-school authorization scenario', () => {
     scenario = createAuthorizationScenario()
     db = new PGlite()
     const connection = drizzle(db)
-    const repositories = new PostgresSchoolRepositories(connection)
+    repositories = new PostgresSchoolRepositories(connection)
     await repositories.init({ driver: 'pglite' })
     // Trusted arrangement of an isolated database, not a public or CLI mutation seed.
     async function arrange<T>(repository: BaseRepositoryInterface<T>, records: T[]) {
@@ -94,7 +95,11 @@ describe('shared two-school authorization scenario', () => {
     expect(await teacher.list()).toEqual([])
     expect(await teacher.count()).toBe(0)
     expect(await teacher.findById(scenario.ids.child)).toBeUndefined()
-    await owner.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...scenario.staffPermissionAssignments[0]!.data, endsAt: new Date('2000-01-01T00:00:00Z') }))
+    const expired = new StaffPermissionAssignment({ ...scenario.staffPermissionAssignments[0]!.data, endsAt: new Date('2000-01-01T00:00:00Z') })
+    // Derived grants cannot be edited through generic entity commands. Arrange
+    // persisted expiry directly to verify that an existing service rechecks it.
+    await expect(owner.staffPermissionAssignments.save(expired)).rejects.toBeInstanceOf(AuthorizationError)
+    await repositories.staffPermissionAssignments.save(expired)
     await expect(staff.list()).rejects.toBeInstanceOf(AuthorizationError)
     expect(await owner.students.count()).toBe(3)
   })

@@ -1,6 +1,6 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevelSubject, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, GradeLevelSubject, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
@@ -54,6 +54,59 @@ describe('authorization policies against native repository scopes', () => {
       ...extra,
     }))
   }
+
+  test('many selected classes support dashboard and roster reads without expanding every relationship tree', async () => {
+    const classIds = ['class-a', 'class-other']
+    for (let index = 0; index < 10; index++) {
+      const id = `selected-${index}`
+      await db.query(`INSERT INTO class_groups (id, school_id, grade_level_id, name, academic_year_id, created_at)
+        VALUES ($1, 'school-a', 'level-a', $1, 'year-a', now())`, [id])
+      classIds.push(id)
+    }
+    for (const permission of Object.values(Permission)) {
+      const definition = corePermissionDefinition(permission)
+      if (!definition.staffAssignable)
+        continue
+      if (definition.scopePolicy.mode === 'none')
+        await addGrant(permission, 'unscoped', { scopes: [{ kind: 'school' }] })
+      else if (definition.scopePolicy.mode === 'resources' && definition.scopePolicy.allowedKinds.includes('class_group'))
+        await addGrant(permission, 'selected', { scopes: classIds.map(classGroupId => ({ kind: 'class_group', classGroupId })) })
+    }
+    const service = schoolService()
+    const overview = await service.getSchoolOverview({ schoolId: 'school-a', academicYearId: 'year-a', academicPeriodId: 'period-a' })
+    expect(overview.kpis.studentCount).toBe(2)
+    expect(overview.classRiskRows.map(row => row.classGroupId).sort()).toEqual([...classIds].sort())
+    const roster = service.baseService.entities.students
+    expect((await roster.list()).map(row => row.id).sort()).toEqual(['student-a', 'student-other'])
+    expect(await roster.count()).toBe(2)
+    expect(await roster.findById('student-b')).toBeUndefined()
+    const classes = service.baseService.entities.classGroups
+    expect(await classes.count()).toBe(12)
+    expect(await classes.findById('class-old')).toBeUndefined()
+    expect(await classes.findById('class-b')).toBeUndefined()
+    const mark = (await repositories.assessmentResults.findById('1-math'))!
+    await service.baseService.access.grades.assertInput({ assessmentId: mark.assessmentId, studentId: mark.studentId })
+    await expect(service.baseService.access.grades.assertInput({ assessmentId: 'assessment-b', studentId: 'student-b' })).rejects.toThrow()
+  })
+
+  test('batched class alternatives preserve shared placement, year restrictions and proposed-write checks', async () => {
+    for (const permission of [Permission.DISCIPLINE_READ, Permission.DISCIPLINE_CREATE])
+      await addGrant(permission, 'selected', { scopes: [{ kind: 'class_group', classGroupId: 'class-a' }, { kind: 'class_group', classGroupId: 'class-other' }] })
+    await repositories.incidents.save(new Incident({ id: 'incident', schoolId: 'school-a', title: 'Incident', description: 'Incident', date: new Date('2026-05-01'), kind: IncidentKind.MinorInfraction, reporterId: 'staff-a', classGroupId: 'class-a' }))
+    const own = new StudentIncidentInvolvement({ id: 'own', incidentId: 'incident', studentId: 'student-a', role: IncidentInvolvementRole.Subject })
+    const mismatched = new StudentIncidentInvolvement({ id: 'mismatched', incidentId: 'incident', studentId: 'student-other', role: IncidentInvolvementRole.Subject })
+    await repositories.studentIncidentInvolvements.batchSave([own, mismatched])
+    const service = schoolService()
+    expect((await service.baseService.entities.studentIncidentInvolvements.list()).map(row => row.id)).toEqual(['own'])
+    await repositories.studentIncidentInvolvements.delete('mismatched')
+    await repositories.studentIncidentInvolvements.delete('own')
+    await expect(service.baseService.entities.studentIncidentInvolvements.save(new StudentIncidentInvolvement({ ...mismatched.data, id: 'proposed' }))).rejects.toBeInstanceOf(AuthorizationError)
+    await service.baseService.entities.studentIncidentInvolvements.save(new StudentIncidentInvolvement({ ...own.data, id: 'allowed' }))
+    // The same class with a different year must stay a separate alternative.
+    await addGrant(Permission.STUDENT_READ, 'current', { scopes: [{ kind: 'class_group', classGroupId: 'class-a' }] })
+    await addGrant(Permission.STUDENT_READ, 'old', { academicYearId: 'year-old', scopes: [{ kind: 'class_group', classGroupId: 'class-other' }] })
+    expect((await service.baseService.entities.students.list()).map(row => row.id)).toEqual(['student-a'])
+  })
 
   test('assessment setup supplies only authorized subjects and class size without marks or a student directory', async () => {
     await addGrant(Permission.ASSESSMENT_MANAGE, 'math', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
@@ -373,6 +426,37 @@ describe('authorization policies against native repository scopes', () => {
     expect((await scoped.list()).map(row => row.studentId)).toEqual(['student-a'])
     await repositories.staffPermissionAssignments.delete(`${Permission.OVERDUE_BALANCE_READ}-unused`)
     await expect(service.getOverdueFeeCount('school-a')).rejects.toThrow()
+  })
+
+  test.each(['grade_level', 'all'] as const)('%s grade grants reach enrolled students and payments through their current class', async (kind) => {
+    await db.exec(`INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at)
+      VALUES ('level-other', 'school-a', 'Other', 'Other', 2, now());
+      UPDATE class_groups SET grade_level_id = 'level-other' WHERE id = 'class-other'`)
+    for (const permission of [Permission.STUDENT_READ, Permission.ENROLLMENT_READ, Permission.PAYMENT_READ, Permission.PAYMENT_RECORD]) {
+      await addGrant(permission, 'grades', { scopes: [kind === 'all' ? { kind: 'all', grain: 'grade_level' } : { kind: 'grade_level', gradeLevelId: 'level-a' }] })
+    }
+    const service = schoolService()
+    const students = service.baseService.entities.students
+    const expected = kind === 'all' ? ['student-a', 'student-other'] : ['student-a']
+    expect((await students.list()).map(row => row.id).sort()).toEqual(expected)
+    expect(await students.count()).toBe(expected.length)
+    expect((await students.findById('student-a'))?.id).toBe('student-a')
+    expect(await students.findById('student-b')).toBeUndefined()
+    expect(await service.baseService.entities.enrollments.count()).toBe(expected.length)
+    const receipt = { id: 'grade-payment', studentId: 'student-a', academicYearId: 'year-a', amount: 10, paymentDate: new Date(), method: PaymentMethod.Cash }
+    await service.financeWorkflow.recordPayment(receipt)
+    expect(await service.baseService.entities.payments.count()).toBe(1)
+    expect((await service.baseService.entities.payments.findById(receipt.id))?.amount.amount).toBe(10)
+    await expect(service.financeWorkflow.recordPayment({ ...receipt, id: 'foreign-payment', studentId: 'student-b' })).rejects.toBeInstanceOf(AuthorizationError)
+    await expect(service.financeWorkflow.recordPayment({ ...receipt, id: 'old-year-payment', academicYearId: 'year-old' })).rejects.toBeInstanceOf(AuthorizationError)
+    await db.exec('UPDATE student_class_enrollments SET class_group_id = \'class-other\' WHERE id = \'enrollment-a\'')
+    expect((await students.list()).map(row => row.id).sort()).toEqual(kind === 'all' ? expected : [])
+    if (kind === 'grade_level')
+      await expect(service.financeWorkflow.recordPayment({ ...receipt, id: 'transferred-payment' })).rejects.toBeInstanceOf(AuthorizationError)
+    await db.exec('UPDATE student_class_enrollments SET status = \'withdrawn\' WHERE id = \'enrollment-a\'')
+    expect(await students.findById('student-a')).toBeUndefined()
+    await expect(service.financeWorkflow.recordPayment({ ...receipt, id: 'withdrawn-payment' })).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await repositories.payments.count()).toBe(1)
   })
 
   test('payment reversal uses only PAYMENT_REVERSE and cannot rewrite receipt details', async () => {

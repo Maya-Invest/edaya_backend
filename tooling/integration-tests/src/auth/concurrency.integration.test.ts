@@ -189,7 +189,7 @@ describeIntegration('Shared-repository multi-actor concurrency safeguards', () =
         return await operation
       }
       catch (error) {
-        throw new Error(`${name}: ${error instanceof Error ? error.message : String(error)}`)
+        throw new Error(`${name}: ${error instanceof Error ? error.message : String(error)}`, { cause: error })
       }
     }
     const [attendanceRecord, paymentRecord, _studentDetailResult, feeSummaryResult] = await Promise.all([

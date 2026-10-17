@@ -119,11 +119,37 @@ const attachmentOwners: Partial<Record<AttachmentOwnerKind, PgTable>> = {
 export function compileResourceAccess(table: PgTable, scope: ResourceAccessScope, proposed?: Record<string, unknown>): SQL {
   if (getTableName(tables[scope.resource]) !== getTableName(table))
     throw new Error('Access scope resource does not match repository')
-  const clauses = scope.clauses.map(clause => compileClause(table, clause, scope.schoolId, proposed))
+  // Compile equivalent class alternatives once. Repeating the full relationship
+  // tree for every selected class can exhaust PostgreSQL/PGlite planner resources.
+  // A correlated class ID preserves the requirement that all placements in one
+  // clause match the SAME class (including incident/student and proposed targets).
+  const classGroups = new Map<string, { clause: ResourceAccessClause, ids: Set<string> }>()
+  const clauses: SQL[] = []
+  for (const clause of scope.clauses) {
+    if (clause.target.kind !== 'class_group') {
+      clauses.push(compileClause(table, clause, scope.schoolId, proposed))
+      continue
+    }
+    const key = JSON.stringify({ ...clause, target: undefined })
+    const group = classGroups.get(key) ?? { clause, ids: new Set<string>() }
+    group.ids.add(clause.target.classGroupId)
+    classGroups.set(key, group)
+  }
+  for (const { clause, ids } of classGroups.values()) {
+    if (ids.size === 1) {
+      clauses.push(compileClause(table, clause, scope.schoolId, proposed))
+      continue
+    }
+    const target = { kind: 'class_group' as const, classGroupId: sql`"grant_classes"."id"` }
+    const alternatives = sql.join([...ids].map(id => sql`(${id}::text)`), sql`, `)
+    clauses.push(sql`exists (select 1 from (values ${alternatives}) as "grant_classes"("id") where ${compileClause(table, { ...clause, target }, scope.schoolId, proposed)})`)
+  }
   return and(schoolScope(table, scope.schoolId, proposed), clauses.length ? or(...clauses)! : sql`false`)!
 }
 
-function compileClause(table: PgTable, clause: ResourceAccessClause, schoolId: string, proposed?: Record<string, unknown>): SQL {
+type CompiledClause = Omit<ResourceAccessClause, 'target'> & { target: AccessTarget | { kind: 'class_group', classGroupId: SQL } }
+
+function compileClause(table: PgTable, clause: CompiledClause, schoolId: string, proposed?: Record<string, unknown>): SQL {
   const value = values(table, proposed)
   if (getTableName(table) === 'attachments') {
     const owners = clause.attachmentOwners ?? Object.values(AttachmentOwnerKind)
@@ -198,7 +224,7 @@ function announcementAudienceTargets(target: Extract<AccessTarget, { kind: 'audi
   return or(...targets)!
 }
 
-function calendarAudiencePredicate(table: PgTable, target: AccessTarget, schoolId: string, year?: string, proposed?: Record<string, unknown>): SQL {
+function calendarAudiencePredicate(table: PgTable, target: CompiledClause['target'], schoolId: string, year?: string, proposed?: Record<string, unknown>): SQL {
   if (target.kind === 'records' || target.kind === 'recipient' || target.kind === 'audience')
     return targetPredicate(table, target, schoolId, year, new Set(), proposed)
   if (target.kind === 'school')
@@ -222,7 +248,7 @@ function calendarAudiencePredicate(table: PgTable, target: AccessTarget, schoolI
 // that grain through tenant-bound relationships; it is not school authority.
 type GrantPattern<T = GrantScope> = T extends { kind: string }
   ? Pick<T, 'kind'> & Partial<Omit<T, 'kind'>> : never
-type TargetPattern = Exclude<AccessTarget, GrantScope> | GrantPattern
+type TargetPattern = Exclude<AccessTarget, GrantScope> | Exclude<GrantPattern, { kind: 'class_group' }> | { kind: 'class_group', classGroupId?: string | SQL }
 
 function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string, year: string | undefined, visited: Set<string>, proposed?: Record<string, unknown>): SQL {
   if (target.kind === 'all') {
@@ -236,7 +262,7 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
   const seen = new Set([...visited, name])
   const columns = getTableColumns(table)
   const value = values(table, proposed)
-  const matches = (field: string, id: string | undefined): SQL => id === undefined ? sql`${value(field)} is not null` : sql`${value(field)} = ${id}`
+  const matches = (field: string, id: string | SQL | undefined): SQL => id === undefined ? sql`${value(field)} is not null` : sql`${value(field)} = ${id}`
   const via = (field: string, parent: PgTable): SQL => exists(parent, schoolId, and(sql`${getTableColumns(parent)['id']!} = ${value(field)}`, targetPredicate(parent, target, schoolId, year, seen))!)
 
   if (['student_incident_involvements', 'student_disciplinary_actions'].includes(name)
@@ -366,6 +392,10 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
   if (name === 'students') {
     return exists(s.studentClassEnrollments, schoolId, and(sql`${s.studentClassEnrollments.studentId} = ${value('id')}`, activeEnrollment(year), targetPredicate(s.studentClassEnrollments, target, schoolId, year, seen))!)
   }
+  // Enrollment is the bridge from a student to its class/grade. Following its
+  // studentId first loops back to the student and rejects valid grade scopes.
+  if (name === 'student_class_enrollments')
+    return via('classGroupId', s.classGroups)
   if (['assessment_results', 'attendance_records'].includes(name)) {
     const paths = (parents[name] ?? []).map(([field, parent]) => via(field, parent))
     return paths.length ? or(...paths)! : sql`false`
