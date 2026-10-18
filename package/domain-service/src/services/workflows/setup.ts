@@ -16,7 +16,7 @@ import { seedSchoolNotificationTemplates } from '../../capabilities/notification
 import { requireSchool } from '../require-school'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
-import { syncGradeLevelSubjectsToClassGroup } from './grade-level-subject-sync'
+import { syncSubjectsToClassGroup } from './subject-sync'
 
 export interface CreateAcademicYearInput {
   id: string
@@ -317,7 +317,7 @@ export class SetupServiceWorkflow extends BaseServiceWorkflow {
     return this.baseService.atomicExecution.execute(async () => {
       const classGroup = await this.saveConstructed(this.baseService.entities.classGroups, new ClassGroup(input))
       await this.baseService.atomicExecution.execute(async () => {
-        await syncGradeLevelSubjectsToClassGroup(this.baseService, classGroup)
+        await syncSubjectsToClassGroup(this.baseService, classGroup)
       })
       return classGroup
     })

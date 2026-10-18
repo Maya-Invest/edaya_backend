@@ -1,4 +1,4 @@
-import type { CatalogService, CommandJson, FinanceReconciliation, Payment, PaymentMethod, SchoolFinanceAging, StudentCharge, StudentServiceEnrollment, StudentYearAccount } from '@edaya/core'
+import type { CatalogService, CommandJson, FinanceReadInput, FinanceReconciliation, Payment, PaymentMethod, SchoolFinanceAging, StudentCharge, StudentServiceEnrollment, StudentYearAccount } from '@edaya/core'
 import type { BaseSchoolService } from '../base-school-service'
 import type { SchoolCommandKey } from '../runtime/school-command-catalog'
 import type { FinanceWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -578,7 +578,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     assertCurrencyAgreement(currency, [...accounts.map(row => row.currency), ...charges.map(row => row.currency)])
     const referenceDate = new Date()
     const outstanding = charges.reduce((sum, charge) => sum + remainingChargeObligation(charge), 0)
-    const overdue = charges.reduce((sum, charge) => sum + overdueInstallmentRemainder(charge, charge.allocatedAmount.amount, referenceDate), 0)
+    const overdue = charges.reduce((sum, charge) => sum + Math.min(remainingChargeObligation(charge), overdueInstallmentRemainder(charge, charge.allocatedAmount.amount, referenceDate)), 0)
     return new StudentFinanceSummary({
       studentId: input.studentId,
       academicYearId: input.academicYearId,
@@ -618,6 +618,48 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     const chargeScope = await this.baseService.access.finance.agingScope()
     const currency = await requireSchoolCurrency(this.repositories, this.schoolId())
     return this.repositories.financeProjections.aging({ ...input, currency, referenceDate: new Date() }, chargeScope)
+  }
+
+  private async financeReadContext(input: { schoolId: string, academicYearId: string }) {
+    this.checkActorSchool(input.schoolId)
+    const [charges, accounts, payments, currency] = await Promise.all([
+      this.baseService.access.entity('studentCharges').readScope(),
+      this.baseService.access.entity('studentYearAccounts').readScope(),
+      this.baseService.access.entity('payments').readScope(),
+      requireSchoolCurrency(this.repositories, this.schoolId()),
+    ])
+    if (!charges.clauses.length || !accounts.clauses.length || !payments.clauses.length)
+      denyResourceAccess()
+    return { scopes: { charges, accounts, payments }, input: { ...input, currency, referenceDate: new Date() } }
+  }
+
+  async getFinanceOverview(input: { schoolId: string, academicYearId: string }) {
+    const context = await this.financeReadContext(input)
+    return this.repositories.financeProjections.overview(context.input, context.scopes)
+  }
+
+  async getFeeFinanceOverview(input: { schoolId: string, academicYearId: string, feeId: string }) {
+    const context = await this.financeReadContext(input)
+    const fee = await this.repositories.catalogServices.forAccess(await this.baseService.access.entity('catalogServices').readScope()).findById(input.feeId)
+    if (!fee || fee.academicYearId !== input.academicYearId)
+      fail('NOT_FOUND', 'Fee not found in the selected academic year')
+    return this.repositories.financeProjections.overview({ ...context.input, feeId: fee.id }, context.scopes)
+  }
+
+  async getFinanceBillingPage(input: Omit<FinanceReadInput, 'currency' | 'referenceDate' | 'chargeId'>) {
+    const context = await this.financeReadContext(input)
+    return this.repositories.financeProjections.billingPage({ ...input, ...context.input }, context.scopes)
+  }
+
+  async getFinancePaymentsPage(input: Omit<FinanceReadInput, 'currency' | 'referenceDate' | 'chargeId'>) {
+    const context = await this.financeReadContext(input)
+    return this.repositories.financeProjections.paymentsPage({ ...input, ...context.input }, context.scopes)
+  }
+
+  async getFinanceBillingDetail(input: { schoolId: string, academicYearId: string, chargeId: string }) {
+    const context = await this.financeReadContext(input)
+    const page = await this.repositories.financeProjections.billingPage({ ...context.input, chargeId: input.chargeId, limit: 1 }, context.scopes)
+    return page.rows[0] ?? null
   }
 
   async getFinanceReconciliation(input: { schoolId: string, academicYearId?: string }): Promise<FinanceReconciliation> {

@@ -30,11 +30,11 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
     expect(demoCiClassGroups).toHaveLength(5)
     expect(demoCiStaffMembers).toHaveLength(5)
     expect(demoCiDataset.entities.teachers).toHaveLength(5)
-    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(34)
-    expect(demoCiSubjects).toHaveLength(8)
+    expect(demoCiDataset.entities.teacherAssignments).toHaveLength(36)
+    expect(demoCiSubjects).toHaveLength(28)
     expect(demoCiSubjectMatters.length).toBeGreaterThan(8)
     expect(demoCiSubjectMatters.some(matter => matter.name === 'Fractions et proportions')).toBe(true)
-    expect(demoCiClassSubjects).toHaveLength(33)
+    expect(demoCiClassSubjects).toHaveLength(35)
     expect(demoCiDataset.entities.students).toHaveLength(30)
     expect(demoCiAllStudentIds).toHaveLength(30)
     expect(demoCiSchedulingSlots).toHaveLength(6)
@@ -99,7 +99,18 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
       minPeriodSpan: 1,
       maxPeriodSpan: 2,
     })
-    expect(demoCiClassSubjects.filter(entry => entry.subjectId === 'ci-subj-math')).toHaveLength(5)
+    const mathSubjects = demoCiSubjects.filter(subject => subject.code === 'MATH')
+    expect(mathSubjects).toHaveLength(4)
+    expect(new Set(mathSubjects.map(subject => subject.gradeLevelId)).size).toBe(4)
+    const mathIds = new Set(mathSubjects.map(subject => subject.id))
+    const mathOfferings = demoCiClassSubjects.filter(entry => mathIds.has(entry.subjectId))
+    expect(mathOfferings).toHaveLength(5)
+    for (const offering of mathOfferings) {
+      const subject = mathSubjects.find(entry => entry.id === offering.subjectId)!
+      const group = demoCiClassGroups.find(entry => entry.id === offering.classGroupId)!
+      expect(subject.gradeLevelId).toBe(group.gradeLevelId)
+      expect(subject.academicYearId).toBe(group.academicYearId)
+    }
   })
 
   it('uses a realistic default min day gap for timetable generation', () => {
@@ -116,8 +127,8 @@ describe('demo-ci dataset (Côte d\'Ivoire)', () => {
       .map(assignment => assignment.classSubjectId)
       .filter((classSubjectId): classSubjectId is string => Boolean(classSubjectId))
 
-    expect(classSubjectIds).toHaveLength(33)
-    expect(assignedClassSubjectIds).toHaveLength(33)
+    expect(classSubjectIds).toHaveLength(35)
+    expect(assignedClassSubjectIds).toHaveLength(35)
     for (const classSubjectId of classSubjectIds) {
       expect(assignedClassSubjectIds).toContain(classSubjectId)
     }

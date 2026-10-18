@@ -13,7 +13,7 @@ describe('buildDevAccessSeedRecords — demo-ci leadership scopes', () => {
     expect(selections.length).toBeGreaterThan(0)
     for (const [permission, scopes] of selections) {
       expect(() => validatePermissionScopes(permission as Permission, scopes)).not.toThrow()
-      expect(scopes.every(scope => scope.kind === 'class_group' || scope.kind === 'class_subject')).toBe(true)
+      expect(scopes.every(scope => scope.kind === 'class_group' || scope.kind === 'subject')).toBe(true)
     }
     expect(director?.scopesByPermission?.[Permission.TIMETABLE_READ]?.length).toBeGreaterThan(0)
   })

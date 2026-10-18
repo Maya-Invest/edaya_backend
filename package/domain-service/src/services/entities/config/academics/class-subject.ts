@@ -24,7 +24,6 @@ export const classSubjectConfig: EntityConfigFactory<ClassSubject> = ({ reposito
 function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
   return existing.classGroupId === classSubject.classGroupId
     && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
     && existing.periodsPerWeek === classSubject.periodsPerWeek
     && existing.minPeriodSpan === classSubject.minPeriodSpan
@@ -36,7 +35,6 @@ function isProgressOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: 
 function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
   return existing.classGroupId === classSubject.classGroupId
     && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
     && existing.periodsPerWeek === classSubject.periodsPerWeek
     && existing.minPeriodSpan === classSubject.minPeriodSpan
@@ -48,7 +46,6 @@ function isOfferedOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: C
 function isTimetableOnlyClassSubjectUpdate(existing: ClassSubject, classSubject: ClassSubject): boolean {
   return existing.classGroupId === classSubject.classGroupId
     && existing.subjectId === classSubject.subjectId
-    && existing.gradeLevelSubjectId === classSubject.gradeLevelSubjectId
     && existing.coefficient === classSubject.coefficient
     && existing.completedPercentage === classSubject.completedPercentage
     && existing.isOffered === classSubject.isOffered
@@ -59,72 +56,27 @@ function isTimetableOnlyClassSubjectUpdate(existing: ClassSubject, classSubject:
     )
 }
 
-function isCustomClassSubject(classSubject: ClassSubject): boolean {
-  return !classSubject.gradeLevelSubjectId
-}
-
-async function validateClassSubjectSave(
-  classSubject: ClassSubject,
-  existing: ClassSubject | undefined,
-  repositories: SchoolRepositories,
-): Promise<void> {
+async function validateClassSubjectSave(classSubject: ClassSubject, existing: ClassSubject | undefined, repositories: SchoolRepositories): Promise<void> {
   await assertClassSubjectGradingMutable(classSubject, existing, repositories)
-  if (!repositories.classGroups || !repositories.subjects) {
-    return
-  }
-  const [classGroup, subject] = await Promise.all([
+  const [group, subject] = await Promise.all([
     repositories.classGroups.findById(classSubject.classGroupId),
     repositories.subjects.findById(classSubject.subjectId),
   ])
-  if (!classGroup || !subject || subject.schoolId !== classGroup.schoolId) {
+  if (!group || !subject || group.schoolId !== subject.schoolId || group.gradeLevelId !== subject.gradeLevelId || group.academicYearId !== subject.academicYearId)
     denyResourceAccess()
-  }
-  if (existing && isProgressOnlyClassSubjectUpdate(existing, classSubject)) {
+  if (existing && existing.classGroupId === classSubject.classGroupId && existing.subjectId === classSubject.subjectId
+    && existing.coefficient === classSubject.coefficient && existing.periodsPerWeek === classSubject.periodsPerWeek
+    && existing.minPeriodSpan === classSubject.minPeriodSpan && existing.maxPeriodSpan === classSubject.maxPeriodSpan
+    && existing.isOffered === classSubject.isOffered && existing.completedPercentage === classSubject.completedPercentage) {
     return
   }
-  if (existing && isOfferedOnlyClassSubjectUpdate(existing, classSubject)) {
+  if (existing && (isProgressOnlyClassSubjectUpdate(existing, classSubject) || isOfferedOnlyClassSubjectUpdate(existing, classSubject) || isTimetableOnlyClassSubjectUpdate(existing, classSubject)))
     return
-  }
-  if (existing && isTimetableOnlyClassSubjectUpdate(existing, classSubject)) {
-    return
-  }
-  if (!classSubject.gradeLevelSubjectId) {
-    if (existing && !isCustomClassSubject(existing)) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_INHERITED_FROM_GRADE_LEVEL',
-        'Inherited class subjects cannot be converted to custom subjects',
-      )
-    }
-    const duplicate = await repositories.classSubjects.findOne({
-      classGroupId: classSubject.classGroupId,
-      subjectId: classSubject.subjectId,
-    })
-    if (duplicate && duplicate.id !== classSubject.id) {
-      throw new BusinessRuleViolationError(
-        'CLASS_SUBJECT_ALREADY_EXISTS',
-        `Subject ${classSubject.subjectId} is already offered in class group ${classSubject.classGroupId}`,
-      )
-    }
-    return
-  }
-  if (!existing) {
-    throw new BusinessRuleViolationError(
-      'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-      'Class subjects are inherited from grade level allocation and cannot be created directly',
-    )
-  }
-  throw new BusinessRuleViolationError(
-    'CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL',
-    'Inherited class subjects can only be updated through grade level sync or setClassSubjectOffered',
-  )
+  throw new BusinessRuleViolationError('CLASS_SUBJECT_MANAGED_BY_SUBJECT', 'Class offerings are managed through subject synchronization')
 }
 
-/** Custom allocations may be removed only while unused; inherited curriculum is command-owned. */
-export async function validateClassSubjectDelete(classSubject: ClassSubject, repositories: SchoolRepositories): Promise<void> {
-  if (classSubject.gradeLevelSubjectId) {
-    throw new BusinessRuleViolationError('CLASS_SUBJECT_MANAGED_AT_GRADE_LEVEL', 'Remove inherited subjects through grade-level curriculum management')
-  }
-  await assertClassSubjectUnused(classSubject, repositories)
+export async function validateClassSubjectDelete(_classSubject: ClassSubject, _repositories: SchoolRepositories): Promise<void> {
+  throw new BusinessRuleViolationError('CLASS_SUBJECT_MANAGED_BY_SUBJECT', 'Remove subjects through curriculum management; disable individual class offerings instead')
 }
 
 /** Also applies when a curriculum command removes inherited allocations. */

@@ -1,7 +1,7 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { GrantScope } from '@edaya/core'
 import { ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createServiceStaffActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, ClassSubject, corePermissionDefinition, GradeLevelSubject, GradeLevelSubjectMatter, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, ClassActivityEnrollment, corePermissionDefinition, noOpNotificationGateway, Permission, StaffMember, StaffPermissionAssignment, StudentHealthProfile, Subject, SubjectMatter, Teacher, TeacherAssignment, TeacherAssignmentKind, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../../adaptor-postgres/tests/support/authorization-database'
 import { SchoolService } from '../../../src/services/school-service'
@@ -244,89 +244,99 @@ describe('remaining resource policies against native SQL and transactions', () =
   })
 
   async function curriculum() {
-    await fixture.repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'grade-math', academicYearId: 'year-a', gradeLevelId: 'level-a', subjectId: 'math' }))
-    await fixture.repositories.gradeLevelSubjects.save(new GradeLevelSubject({ id: 'grade-foreign', academicYearId: 'year-b', gradeLevelId: 'level-b', subjectId: 'foreign-math' }))
-    for (const [id, gradeLevelSubjectId] of [['math-a', 'grade-math'], ['math-other', 'grade-math'], ['math-b', 'grade-foreign']] as const) {
-      const before = (await fixture.repositories.classSubjects.findById(id))!
-      await fixture.repositories.classSubjects.save(new ClassSubject({ ...before.data, gradeLevelSubjectId }))
-    }
     for (const [id, subjectId] of [['matter', 'math'], ['other-matter', 'math'], ['foreign-matter', 'foreign-math']] as const)
       await fixture.repositories.subjectMatters.save(new SubjectMatter({ id, subjectId, name: id, sequenceOrder: 1 }))
-    for (const [id, gradeLevelSubjectId, subjectMatterId] of [['own', 'grade-math', 'matter'], ['foreign', 'grade-foreign', 'foreign-matter']] as const)
-      await fixture.repositories.gradeLevelSubjectMatters.save(new GradeLevelSubjectMatter({ id, gradeLevelSubjectId, subjectMatterId }))
   }
+
+  test('subject scopes work before classes and isolate subject, grade, year and school', async () => {
+    await fixture.db.exec('INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at) VALUES (\'empty-grade\', \'school-a\', \'Empty\', \'Empty\', 2, now())')
+    const input = { id: 'empty-math', schoolId: 'school-a', gradeLevelId: 'empty-grade', academicYearId: 'year-a', name: 'Math', categoryId: 'category-school-a-scientific' }
+    const existing = (await fixture.repositories.subjects.findById('math'))!
+    input.categoryId = existing.categoryId
+    for (const permission of [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE])
+      await grant(permission, [{ kind: 'subject', gradeLevelId: 'empty-grade' }])
+    await service().academicsWorkflow.configureSubject(input)
+    await service().academicsWorkflow.configureSubject({ ...input, id: 'empty-math-2' })
+    expect(await fixture.repositories.classSubjects.count({ subjectId: input.id })).toBe(0)
+    expect((await service().baseService.entities.subjects.list()).map(row => row.id).sort()).toEqual(['empty-math', 'empty-math-2'])
+    await fixture.repositories.subjects.save(new Subject({ ...input, id: 'old-math', academicYearId: 'year-old' }))
+    expect(await service().baseService.entities.subjects.count()).toBe(2)
+    for (const permission of [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE])
+      await grant(permission, [{ kind: 'subject', gradeLevelId: 'empty-grade', subjectId: input.id }])
+    expect((await service().baseService.entities.subjects.list()).map(row => row.id)).toEqual([input.id])
+    await service().academicsWorkflow.updateSubject({ subjectId: input.id, name: 'Updated' })
+    for (const subjectId of ['empty-math-2', 'old-math', 'math', 'foreign-math'])
+      await expect(service().academicsWorkflow.updateSubject({ subjectId, name: 'Denied' })).rejects.toBeInstanceOf(AuthorizationError)
+    await service().academicsWorkflow.configureSubjectMatter({ id: 'empty-chapter', subjectId: input.id, name: 'Numbers', sequenceOrder: 1 })
+    expect((await service().baseService.entities.subjectMatters.list()).map(row => row.id)).toEqual(['empty-chapter'])
+    await service().academicsWorkflow.removeSubject({ subjectId: input.id })
+    expect(await fixture.repositories.subjects.findById(input.id)).toBeUndefined()
+  }, 60_000)
 
   test('shared grade curriculum reads preserve linked class scope and foreign isolation', async () => {
     await curriculum()
     await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'class_group', classGroupId: 'class-a' }])
     for (const actor of [staff, teacher, guardian, student]) {
-      const entities = service(actor).baseService.entities.gradeLevelSubjectMatters
-      expect((await entities.list()).map(row => row.id)).toEqual(['own'])
-      expect(await entities.count()).toBe(1)
-      expect(await entities.list({ $offset: 1, $limit: 1 })).toEqual([])
-      expect(await entities.findById('foreign')).toBeUndefined()
-      const own = (await fixture.repositories.gradeLevelSubjectMatters.findById('own'))!
+      const entities = service(actor).baseService.entities.subjectMatters
+      expect((await entities.list()).map(row => row.id)).toEqual(['matter', 'other-matter'])
+      expect(await entities.count()).toBe(2)
+      expect(await entities.list({ $offset: 2, $limit: 1 })).toEqual([])
+      expect(await entities.findById('foreign-matter')).toBeUndefined()
+      const own = (await fixture.repositories.subjectMatters.findById('matter'))!
       await expect(entities.save(own)).rejects.toBeInstanceOf(AuthorizationError)
     }
     await fixture.repositories.teacherAssignments.delete('teaching')
-    expect(await service(teacher).baseService.entities.gradeLevelSubjectMatters.count()).toBe(0)
+    expect(await service(teacher).baseService.entities.subjectMatters.count()).toBe(0)
   })
 
   test('changing shared curriculum requires update authority for every affected class', async () => {
     await curriculum()
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }])
     await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'class_group', classGroupId: 'class-other' }])
-    const entities = service().baseService.entities.gradeLevelSubjectMatters
-    const own = (await fixture.repositories.gradeLevelSubjectMatters.findById('own'))!
-    const changed = new GradeLevelSubjectMatter({ ...own.data, subjectMatterId: 'other-matter' })
+    const entities = service().baseService.entities.subjectMatters
+    const own = (await fixture.repositories.subjectMatters.findById('matter'))!
+    const changed = new SubjectMatter({ ...own.data, name: 'Changed' })
     await expect(entities.save(changed)).rejects.toBeInstanceOf(AuthorizationError)
-    expect((await fixture.repositories.gradeLevelSubjectMatters.findById('own'))?.subjectMatterId).toBe('matter')
+    expect((await fixture.repositories.subjectMatters.findById('matter'))?.name).toBe('matter')
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }, { kind: 'class_group', classGroupId: 'class-other' }])
     await entities.save(changed)
-    expect((await fixture.repositories.gradeLevelSubjectMatters.findById('own'))?.subjectMatterId).toBe('other-matter')
+    expect((await fixture.repositories.subjectMatters.findById('matter'))?.name).toBe('Changed')
     await expire(Permission.ACADEMIC_PROGRAM_MANAGE)
     await expect(entities.save(own)).rejects.toBeInstanceOf(AuthorizationError)
   })
 
-  test.each(['subjects', 'subjectMatters', 'gradeLevelSubjects'] as const)('%s shared details cannot be changed through authority for only one consumer class', async (resource) => {
+  test.each(['subjects', 'subjectMatters'] as const)('%s shared details cannot be changed through authority for only one consumer class', async (resource) => {
     await curriculum()
     const entities = service().baseService.entities
     const subject = (await fixture.repositories.subjects.findById('math'))!
     const matter = (await fixture.repositories.subjectMatters.findById('matter'))!
-    const grade = (await fixture.repositories.gradeLevelSubjects.findById('grade-math'))!
     const change = {
       subjects: () => entities.subjects.save(new Subject({ ...subject.data, name: 'Changed' })),
       subjectMatters: () => entities.subjectMatters.save(new SubjectMatter({ ...matter.data, name: 'Changed' })),
-      gradeLevelSubjects: () => entities.gradeLevelSubjects.save(new GradeLevelSubject({ ...grade.data, coefficient: 2 })),
     }[resource]
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'class_group', classGroupId: 'class-a' }])
     await expect(change()).rejects.toBeInstanceOf(AuthorizationError)
-    if (resource === 'gradeLevelSubjects')
-      await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'all', grain: 'class_group' }])
-    else
-      await grant(Permission.ACADEMIC_CATALOG_MANAGE)
+    await grant(Permission.ACADEMIC_PROGRAM_MANAGE, [{ kind: 'all', grain: 'class_group' }])
     await change()
     expect(resource === 'subjects'
       ? (await fixture.repositories.subjects.findById('math'))?.name
-      : resource === 'subjectMatters'
-        ? (await fixture.repositories.subjectMatters.findById('matter'))?.name
-        : (await fixture.repositories.gradeLevelSubjects.findById('grade-math'))?.coefficient).toBe(resource === 'gradeLevelSubjects' ? 2 : 'Changed')
+      : (await fixture.repositories.subjectMatters.findById('matter'))?.name).toBe('Changed')
   })
 
   test('grade curriculum management covers creation and deletion and rolls back mixed foreign batches', async () => {
     await curriculum()
-    const entities = service().baseService.entities.gradeLevelSubjectMatters
-    const proposal = new GradeLevelSubjectMatter({ id: 'new', gradeLevelSubjectId: 'grade-math', subjectMatterId: 'other-matter' })
+    const entities = service().baseService.entities.subjectMatters
+    const proposal = new SubjectMatter({ id: 'new', subjectId: 'math', name: 'New', sequenceOrder: 2 })
     await grant(Permission.ACADEMIC_PROGRAM_READ, [{ kind: 'all', grain: 'class_group' }])
     await expect(entities.save(proposal)).rejects.toBeInstanceOf(AuthorizationError)
     await grant(Permission.ACADEMIC_PROGRAM_MANAGE)
-    await expect(entities.batchSave([proposal, new GradeLevelSubjectMatter({ id: 'bad', gradeLevelSubjectId: 'grade-foreign', subjectMatterId: 'foreign-matter' })])).rejects.toBeInstanceOf(AuthorizationError)
-    expect(await fixture.repositories.gradeLevelSubjectMatters.findById('new')).toBeUndefined()
+    await expect(entities.batchSave([proposal, new SubjectMatter({ id: 'bad', subjectId: 'foreign-math', name: 'Bad', sequenceOrder: 2 })])).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await fixture.repositories.subjectMatters.findById('new')).toBeUndefined()
     await entities.save(proposal)
-    await expect(entities.batchDelete(['new', 'foreign'])).rejects.toBeInstanceOf(AuthorizationError)
-    expect(await fixture.repositories.gradeLevelSubjectMatters.findById('new')).toBeDefined()
+    await expect(entities.batchDelete(['new', 'foreign-matter'])).rejects.toBeInstanceOf(AuthorizationError)
+    expect(await fixture.repositories.subjectMatters.findById('new')).toBeDefined()
     await entities.delete('new')
-    expect(await fixture.repositories.gradeLevelSubjectMatters.findById('new')).toBeUndefined()
+    expect(await fixture.repositories.subjectMatters.findById('new')).toBeUndefined()
   })
 
   test('a service account uses explicit health grants and cannot infer authority from the owner login', async () => {

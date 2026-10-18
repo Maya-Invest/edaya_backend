@@ -18,10 +18,8 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
   classSubjectMatters: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
   classSubjectProgress: { read: [Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.GRADE_MANAGE], write: Permission.CLASS_LOGBOOK_MANAGE, delete: Permission.CLASS_LOGBOOK_MANAGE },
   classSubjects: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
-  gradeLevelSubjectMatters: { read: [Permission.ACADEMIC_PROGRAM_READ], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
-  gradeLevelSubjects: { read: [Permission.ACADEMIC_PROGRAM_READ], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
-  subjectMatters: { read: [Permission.ACADEMIC_CATALOG_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_CATALOG_MANAGE, delete: Permission.ACADEMIC_CATALOG_MANAGE },
-  subjects: { read: [Permission.ACADEMIC_CATALOG_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_CATALOG_MANAGE, delete: Permission.ACADEMIC_CATALOG_MANAGE },
+  subjectMatters: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
+  subjects: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
   subjectCategories: { read: [Permission.ACADEMIC_CATALOG_READ], write: Permission.ACADEMIC_CATALOG_MANAGE, delete: Permission.ACADEMIC_CATALOG_MANAGE },
   accountInvitations: { read: [Permission.ACCESS_CONTROL_MANAGE], write: [] },
   assessmentResults: { read: Permission.GRADE_READ, write: Permission.GRADE_MANAGE, delete: Permission.GRADE_MANAGE },
@@ -141,7 +139,7 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
     const scope = await this.access.assertResources(action, this.resource, ids, 'write', 'delete')
     if (this.resource === 'activities')
       await assertActivityPlacements(this.access, scope, ids)
-    if (['subjects', 'subjectMatters', 'gradeLevelSubjects', 'gradeLevelSubjectMatters'].includes(this.resource)) {
+    if (['subjects', 'subjectMatters'].includes(this.resource)) {
       const records = await this.access.repositories[this.resource].forAccess(scope).findByIds([...ids])
       await assertCurriculumPlacements(this.access, action, this.resource, records)
     }

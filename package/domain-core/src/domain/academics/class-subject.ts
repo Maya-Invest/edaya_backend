@@ -6,7 +6,6 @@ export const classSubjectSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   classGroupId: z.string().trim().min(1, 'classGroupId must not be blank'),
   subjectId: z.string().trim().min(1, 'subjectId must not be blank'),
-  gradeLevelSubjectId: z.string().trim().min(1, 'gradeLevelSubjectId must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   coefficient: z.number().positive('coefficient must be a finite, strictly positive number').nullable().optional().transform(v => v === null ? undefined : v),
   periodsPerWeek: z.number().int().positive('periodsPerWeek must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
   minPeriodSpan: z.number().int().positive('minPeriodSpan must be a strictly positive integer').nullable().optional().transform(v => v === null ? undefined : v),
@@ -39,7 +38,6 @@ export class ClassSubject {
   get id() { return this.data.id }
   get classGroupId() { return this.data.classGroupId }
   get subjectId() { return this.data.subjectId }
-  get gradeLevelSubjectId() { return this.data.gradeLevelSubjectId ?? undefined }
   get coefficient() { return this.data.coefficient ?? undefined }
   get periodsPerWeek() { return this.data.periodsPerWeek ?? undefined }
   get minPeriodSpan() { return this.data.minPeriodSpan ?? undefined }

@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, AuthorizationErrorCode, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
+import { AcademicPeriodType, AnnouncementTargetKind, AssessmentKind, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceStatus, CalendarEventKind, CalendarEventScopeKind, ClassSubject, DisciplinaryAction, DisciplinaryActionKind, GradeLevel, GradeScale, IncidentInvolvementRole, IncidentKind, PaymentMethod, Resource, ResourceKind, School, StaffMember, StudentNoteVisibility, StudentStatus, Subject, SubjectMatter } from '@edaya/core'
 import { createAttachmentUpload } from '@edaya/service'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -131,13 +131,12 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject({ id: 'subject-a', schoolId: 'school-a', name: 'Local subject' }),
+      new Subject({ id: 'subject-a', gradeLevelId: 'level-a', academicYearId: 'year-a', schoolId: 'school-a', name: 'Local subject' }),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-subject-a',
       classGroupId: 'class-a',
       subjectId: 'subject-a',
-      gradeLevelSubjectId: 'gls-subject-a',
     })
     await createClassGroup(schoolBApp, {
       id: 'class-b',
@@ -147,13 +146,12 @@ describeIntegration('tenant boundary safeguards', () => {
       name: 'Grade 6 B',
     })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject({ id: 'subject-b', schoolId: 'school-b', name: 'Outside subject' }),
+      new Subject({ id: 'subject-b', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Outside subject' }),
     )
     const classSubjectB = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b',
       classGroupId: 'class-b',
       subjectId: 'subject-b',
-      gradeLevelSubjectId: 'gls-subject-b',
     })
     await expect(saveLessonSession(app, {
       id: 'invalid-school-session',
@@ -384,13 +382,12 @@ describeIntegration('tenant boundary safeguards', () => {
       targetId: 'staff-b',
     })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
     await schoolBApp.baseService.entities.subjects.save(
-      new Subject({ id: 'subject-b-assessment', schoolId: 'school-b', name: 'Assessment subject' }),
+      new Subject({ id: 'subject-b-assessment', gradeLevelId: 'level-b', academicYearId: 'year-b', schoolId: 'school-b', name: 'Assessment subject' }),
     )
     const classSubjectBForAssessment = await saveClassSubject(schoolBApp, {
       id: 'class-subject-b-assessment',
       classGroupId: 'class-b',
       subjectId: 'subject-b-assessment',
-      gradeLevelSubjectId: 'gls-subject-b-assessment',
     })
     await saveAssessment(schoolBApp, {
       id: 'assessment-b',
@@ -403,11 +400,11 @@ describeIntegration('tenant boundary safeguards', () => {
       startsAt: new Date('2026-09-15T09:00:00Z'),
       endsAt: new Date('2026-09-15T10:00:00Z'),
     })
-    await expect(saveClassSubject(app, {
+    await expect(app.baseService.entities.classSubjects.save(new ClassSubject({
       id: 'invalid-course',
       classGroupId: 'class-a',
       subjectId: 'subject-b',
-    })).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
+    }))).rejects.toMatchObject({ code: AuthorizationErrorCode.Forbidden })
 
     for (const lessonSessionId of ['missing-session', sessionB.id]) {
       await expect(reviewAttendanceJustification(app, {

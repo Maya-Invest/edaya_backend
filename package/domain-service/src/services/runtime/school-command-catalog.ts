@@ -47,13 +47,9 @@ export type SchoolCommandKey
     | 'configureSubject'
     | 'configureSubjectCategory'
     | 'configureSubjectMatter'
-    | 'offerSubjectToClass'
-    | 'assignMatterToClassSubject'
-    | 'offerSubjectToGradeLevel'
-    | 'removeSubjectFromGradeLevel'
-    | 'updateGradeLevelSubject'
-    | 'assignMatterToGradeLevelSubject'
-    | 'addCustomClassSubject'
+    | 'removeSubjectMatter'
+    | 'removeSubject'
+    | 'updateSubject'
     | 'setClassSubjectOffered'
     | 'configureClassSubjectTimetable'
     | 'recordLessonSessionProgress'
@@ -255,13 +251,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'configureSubject',
   'configureSubjectCategory',
   'configureSubjectMatter',
-  'offerSubjectToClass',
-  'assignMatterToClassSubject',
-  'offerSubjectToGradeLevel',
-  'removeSubjectFromGradeLevel',
-  'updateGradeLevelSubject',
-  'assignMatterToGradeLevelSubject',
-  'addCustomClassSubject',
+  'removeSubjectMatter',
+  'removeSubject',
+  'updateSubject',
   'setClassSubjectOffered',
   'configureClassSubjectTimetable',
   'recordLessonSessionProgress',

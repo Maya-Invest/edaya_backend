@@ -12,6 +12,7 @@ export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories
     repository: repositories.classGroups,
     tenant: directSchoolTenant(),
     resource: 'classGroups',
+    writeLockGroup: 'academic-state',
 
     gates: {
       preSave: validateClassGroupSave,
@@ -39,6 +40,10 @@ export async function validateClassGroupSave(
   }
   if (classGroup.homeroomStaffId && (!homeroomStaff || homeroomStaff.schoolId !== classGroup.schoolId)) {
     denyResourceAccess()
+  }
+  if (existing && (existing.gradeLevelId !== classGroup.gradeLevelId || existing.academicYearId !== classGroup.academicYearId)
+    && await repositories.classSubjects.count({ classGroupId: classGroup.id })) {
+    throw new BusinessRuleViolationError('CLASS_GROUP_CURRICULUM_PLACEMENT_IMMUTABLE', 'A class with subject offerings cannot move to another grade or academic year')
   }
   if (existing && classGroup.capacity !== undefined) {
     const activeEnrollmentCount = await repositories.enrollments.count({

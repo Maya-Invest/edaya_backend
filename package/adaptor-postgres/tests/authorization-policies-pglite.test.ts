@@ -1,6 +1,6 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import { AccessPolicies, ActorAssuranceLevel, AuthorizationError, createGuardianActorMetadata, createPlatformActorMetadata, createPlatformUser, createS2sActorMetadata, createS2sClient, createStaffActorMetadata, createStudentActorMetadata, createSystemActorMetadata, createTeacherActorMetadata, PlatformPolicies } from '@edaya/authorization'
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, GradeLevelSubject, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Activity, ActivityCategory, ActivityEnrollment, ActivityEnrollmentStatus, Assessment, AssessmentResult, Attachment, AttachmentOwnerKind, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, CatalogService, CatalogServiceCategory, CatalogServiceStatus, ChargeStatus, ClassActivityEnrollment, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, corePermissionDefinition, Incident, IncidentInvolvementRole, IncidentKind, LessonSession, noOpNotificationGateway, Payment, PaymentKind, PaymentMethod, PaymentStatus, Permission, PlatformUser, S2sClient, StaffMember, StaffPermissionAssignment, Student, StudentCharge, StudentIncidentInvolvement, StudentServiceEnrollment, StudentStatus, StudentYearAccount, studentYearAccountId, SubjectMatter, Teacher } from '@edaya/core'
 import { SchoolService } from '@edaya/service'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
@@ -109,7 +109,7 @@ describe('authorization policies against native repository scopes', () => {
   })
 
   test('assessment setup supplies only authorized subjects and class size without marks or a student directory', async () => {
-    await addGrant(Permission.ASSESSMENT_MANAGE, 'math', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    await addGrant(Permission.ASSESSMENT_MANAGE, 'math', { scopes: [{ kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' }] })
     const service = schoolService()
     const context = await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
     expect(context.assessmentsRaw.map(row => row.id)).toEqual(['assessment-math'])
@@ -133,7 +133,7 @@ describe('authorization policies against native repository scopes', () => {
 
   test('assessment context distinguishes unreadable marks from empty marks and follows current subject grants', async () => {
     await addGrant(Permission.ASSESSMENT_MANAGE)
-    await addGrant(Permission.GRADE_READ, 'math', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    await addGrant(Permission.GRADE_READ, 'math', { scopes: [{ kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' }] })
     await repositories.assessmentResults.save(new AssessmentResult({ id: 'former-student-mark', assessmentId: 'assessment-math', studentId: 'student-other', score: 19 }))
     const service = schoolService()
     const context = await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })
@@ -703,7 +703,7 @@ describe('authorization policies against native repository scopes', () => {
     const before = (await repositories.assessments.findById('assessment-math'))!
     await addGrant(Permission.GRADE_MANAGE)
     await expect(exams.save(new Assessment({ ...before.data, id: 'new-exam' }))).rejects.toThrow()
-    await addGrant(Permission.ASSESSMENT_MANAGE, 'exam', { scopes: [{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }] })
+    await addGrant(Permission.ASSESSMENT_MANAGE, 'exam', { scopes: [{ kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' }] })
     await exams.save(new Assessment({ ...before.data, id: 'new-exam' }))
     await expect(exams.save(new Assessment({ ...before.data, id: 'other-exam', classSubjectId: 'french-a' }))).rejects.toThrow()
     await exams.save(new Assessment({ ...before.data, title: 'Changed' }))
@@ -778,38 +778,38 @@ describe('authorization policies against native repository scopes', () => {
     expect((await repositories.staffMembers.findById('staff-a'))?.subjectId).toBe('person-a')
   })
   async function inheritedCurriculum() {
-    const gradeSubject = new GradeLevelSubject({ id: 'grade-math', gradeLevelId: 'level-a', academicYearId: 'year-a', subjectId: 'math', coefficient: 2, periodsPerWeek: 4, minPeriodSpan: 2, maxPeriodSpan: 3 })
-    await repositories.gradeLevelSubjects.save(gradeSubject)
+    const gradeSubject = (await repositories.subjects.findById('math'))!.copyWith({ coefficient: 2, periodsPerWeek: 4, minPeriodSpan: 2, maxPeriodSpan: 3 })
+    await repositories.subjects.save(gradeSubject)
     for (const id of ['math-a', 'math-other']) {
       const subject = (await repositories.classSubjects.findById(id))!
-      await repositories.classSubjects.save(new ClassSubject({ ...subject.data, gradeLevelSubjectId: gradeSubject.id, coefficient: 2, periodsPerWeek: 4, minPeriodSpan: 2, maxPeriodSpan: 3 }))
+      await repositories.classSubjects.save(new ClassSubject({ ...subject.data, coefficient: 2, periodsPerWeek: 4, minPeriodSpan: 2, maxPeriodSpan: 3 }))
     }
     return gradeSubject
   }
 
-  test('curriculum updates authorize every mirrored class and roll back partial changes', async () => {
+  test.each(['class_group', 'subject'] as const)('%s curriculum updates authorize every mirrored class and roll back partial changes', async (kind) => {
     await inheritedCurriculum()
-    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE)
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-a', { scopes: [kind === 'subject' ? { kind, gradeLevelId: 'level-a', subjectId: 'math', classGroupId: 'class-a' } : { kind, classGroupId: 'class-a' }] })
     const workflow = schoolService().academicsWorkflow
-    await expect(workflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'grade-math', coefficient: 5 })).rejects.toThrow()
-    expect((await repositories.gradeLevelSubjects.findById('grade-math'))?.coefficient).toBe(2)
+    await expect(workflow.updateSubject({ subjectId: 'math', coefficient: 5 })).rejects.toThrow()
+    expect((await repositories.subjects.findById('math'))?.coefficient).toBe(2)
     expect((await repositories.classSubjects.findById('math-a'))?.coefficient).toBe(2)
-    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-other')
-    await workflow.updateGradeLevelSubject({ gradeLevelSubjectId: 'grade-math', coefficient: 5 })
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-other', { scopes: [kind === 'subject' ? { kind, gradeLevelId: 'level-a', subjectId: 'math', classGroupId: 'class-other' } : { kind, classGroupId: 'class-other' }] })
+    await workflow.updateSubject({ subjectId: 'math', coefficient: 5 })
     for (const id of ['math-a', 'math-other']) {
       const subject = (await repositories.classSubjects.findById(id))!
       expect([subject.coefficient, subject.periodsPerWeek, subject.minPeriodSpan, subject.maxPeriodSpan]).toEqual([5, 4, 2, 3])
     }
-    expect((await repositories.gradeLevelSubjects.findById('grade-math'))?.periodsPerWeek).toBe(4)
+    expect((await repositories.subjects.findById('math'))?.periodsPerWeek).toBe(4)
   })
 
   test('curriculum removal retains all rows when teaching or assessment dependencies exist', async () => {
     await inheritedCurriculum()
-    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-a', { scopes: [{ kind: 'all', grain: 'class_subject' }] })
+    await addGrant(Permission.ACADEMIC_PROGRAM_MANAGE, 'class-a', { scopes: [{ kind: 'all', grain: 'subject' }] })
     await repositories.subjectMatters.save(new SubjectMatter({ id: 'topic-delete', subjectId: 'math', name: 'Topic', sequenceOrder: 1 }))
     await repositories.classSubjectMatters.save(new ClassSubjectMatter({ id: 'allocation-delete', classSubjectId: 'math-a', subjectMatterId: 'topic-delete', status: ClassSubjectMatterStatus.NotStarted, completedPercentage: 0 }))
-    await expect(schoolService().academicsWorkflow.removeSubjectFromGradeLevel({ gradeLevelSubjectId: 'grade-math' })).rejects.toMatchObject({ code: 'CLASS_SUBJECT_HAS_DEPENDENCIES' })
-    expect(await repositories.gradeLevelSubjects.findById('grade-math')).toBeDefined()
+    await expect(schoolService().academicsWorkflow.removeSubject({ subjectId: 'math' })).rejects.toMatchObject({ code: 'CLASS_SUBJECT_HAS_DEPENDENCIES' })
+    expect(await repositories.subjects.findById('math')).toBeDefined()
     expect(await repositories.classSubjectMatters.findById('allocation-delete')).toBeDefined()
     expect(await repositories.classSubjects.findById('math-a')).toBeDefined()
     expect(await repositories.classSubjects.findById('math-other')).toBeDefined()

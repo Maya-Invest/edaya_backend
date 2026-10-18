@@ -76,9 +76,11 @@ The same `GrantScope` union is used in persistence, application code, and contra
 - `school` for actions whose catalog grain is school-wide.
 - `all` with an explicit grain for every resource at that grain.
 - `grade_level` or `class_group` with their identifiers.
-- `grade_level_subject` or `class_subject` with an explicit parent and optional subject. Omitted subject means all subjects of that parent.
+- `subject` with `gradeLevelId`, optional `subjectId`, and optional `classGroupId`. Omitted subject means all subjects in the grade; omitted class includes all matching classes, including future classes in the grant’s year. Multiple class restrictions use separate scope entries. `ClassSubject` remains a teaching record, not a permission scope.
 - `activity` with an activity, a class, or both.
 - `student` with a student identifier.
+
+The catalog flag `subjectClassRequired` rejects unrestricted Subject selections and the global Subject wildcard for class-required actions. Target validation checks the Subject and class against the grade, school and grant year. Delegation cannot remove a class or subject restriction. Shared curriculum writes still require authority over every affected class.
 
 The action's catalog grain, tenant, year, parent relationships, and validity constrain delegation. Empty or ambiguous selections are rejected. Platform actions cannot be persisted as school staff grants.
 
@@ -151,3 +153,9 @@ The local dataset importer uses the explicit `fixture-seed` system identity. It 
 ## Guardian conversations
 
 ConversationAccessPolicy authorizes current selected profiles and produces conversation-ID scopes before SQL page/count/content reads. Teacher eligibility follows active family enrollments and effective subject/homeroom assignments; original assignment IDs prevent replacements inheriting history. Guardians retain history while family access remains valid, but cannot reply after teaching ends. School enquiry read/reply and teacher oversight use separate school-wide permissions. Oversight cannot reply or change participant read positions. Notification dispatch revalidates the exact profile and conversation relationship.
+
+### Subject ownership
+
+A Subject belongs to one school, grade level and academic year. Names and codes are descriptive, not unique identifiers. Chapters belong directly to that Subject; class offerings and class chapter progress remain separate. Subject and chapter writes require `ACADEMIC_PROGRAM_MANAGE` for the parent and every affected class offering. Subject categories retain the catalogue permissions. A scoped grade grant can create subjects and chapters before classes exist.
+
+`configureSubject` and `configureSubjectMatter` atomically create their class mirrors. `updateSubject` applies explicit coefficient/workload changes to offerings without resetting progress or unrelated class toggles. `removeSubject` and `removeSubjectMatter` preserve teaching and assessment history by rejecting deletion when dependent records remain. Generic Subject saves and deletes are not public API operations.

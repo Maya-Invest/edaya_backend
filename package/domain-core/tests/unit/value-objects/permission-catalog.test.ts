@@ -38,7 +38,7 @@ describe('canonical permission scope catalog', () => {
     expect(scopesForPermission(permission, [])).toEqual([])
     expect(scopesForPermission(permission, [{ kind: 'class_group', classGroupId: 'a' }])).toEqual([{ kind: 'class_group', classGroupId: 'a' }])
     expect(scopesForPermission(permission, [{ kind: 'school' }])).toEqual([])
-    expect(() => validatePermissionScopes(permission, [{ kind: 'class_subject', classGroupId: 'a' }])).toThrow()
+    expect(() => validatePermissionScopes(permission, [{ kind: 'subject', gradeLevelId: 'level', classGroupId: 'a' }])).toThrow()
   })
 
   test('platform and unknown actions cannot turn an empty selection into a staff grant', () => {

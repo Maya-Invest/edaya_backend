@@ -1,5 +1,5 @@
-import type { AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeLevelSubjectInput, GradeLevelSubjectMatterInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionInput, ReportCardResultInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
-import { academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeLevelSubjectMatterSchema, gradeLevelSubjectSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, reportCardSnapshotSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
+import type { AcademicPeriodInput, AcademicYearInput, AccountInvitationInput, ActivityEnrollmentInput, ActivityInput, ActivitySessionInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceInput, AttendanceRecordInput, AttendanceSummary, CalendarEventInput, CatalogInstallmentTemplate, CatalogServiceInput, ChargeInstallment, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, ClassSubjectMatterInput, ClassSubjectProgressInput, DisciplinaryActionInput, DocumentIssuanceInput, GradeLevelInput, GradeScaleInput, GradeScaleRange, GuardianInput, GuardianStudentLinkInput, IncidentInput, LessonSessionInput, MessageDeliveryInput, PaymentInput, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionInput, ReportCardResultInput, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, SchoolNotificationTemplatesInput, StaffAssignmentInput, StaffManualPermissionAssignmentInput, StaffMemberInput, StaffPermissionAssignmentInput, StaffPermissionProfileBindingInput, StaffPermissionProfileInput, StaffPermissionScopeDefaultsInput, StudentChargeInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, StudentPhotoSubmissionInput, StudentServiceEnrollmentInput, StudentYearAccountInput, SubjectCategoryInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput, TeacherUnavailabilityInput } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationKind, accountInvitationSchema, AccountInvitationStatus, activityEnrollmentSchema, activitySchema, activitySessionSchema, announcementSchema, announcementTargetSchema, assessmentResultSchema, assessmentSchema, attachmentSchema, attendanceRecordSchema, attendanceSchema, calendarEventSchema, catalogServiceSchema, classActivityEnrollmentSchema, classGroupSchema, classSubjectMatterSchema, classSubjectProgressSchema, classSubjectSchema, attendanceSummarySchema as coreAttendanceSummarySchema, catalogInstallmentTemplateSchema as coreCatalogInstallmentTemplateSchema, chargeInstallmentSchema as coreChargeInstallmentSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, reportCardResultSectionSchema as coreReportCardResultSectionSchema, disciplinaryActionSchema, documentIssuanceSchema, gradeLevelSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, incidentSchema, lessonSessionSchema, messageDeliverySchema, paymentSchema, periodDefinitionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, reportCardSnapshotSchema, resourceAssignmentSchema, resourceSchema, scheduleSchema, schoolNotificationTemplatesSchema, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentSchema, staffMemberSchema, staffPermissionAssignmentSchema, staffPermissionProfileBindingSchema, staffPermissionProfileSchema, staffPermissionScopeDefaultsSchema, studentChargeSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentPhotoSubmissionSchema, studentSchema, studentServiceEnrollmentSchema, studentYearAccountSchema, subjectCategorySchema, subjectMatterSchema, subjectSchema, TeacherAssignmentKind, teacherAssignmentSchema, TeacherAssignmentStatus, teacherSchema, TeacherUnavailabilityRecurrence, teacherUnavailabilitySchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
 import { createQueryOptionsSchema, field, lazySchema, objectFromSchema, responseSchema, unwrapShape, valueSchema } from "./helpers";
 
@@ -53,8 +53,6 @@ export const schoolNotificationTemplatesResponseSchema = responseSchema<SchoolNo
 export const subjectResponseSchema = responseSchema<SubjectInput>("Subject", unwrapShape(subjectSchema));
 export const subjectCategoryResponseSchema = responseSchema<SubjectCategoryInput>("SubjectCategory", unwrapShape(subjectCategorySchema));
 export const subjectMatterResponseSchema = responseSchema<SubjectMatterInput>("SubjectMatter", unwrapShape(subjectMatterSchema));
-export const gradeLevelSubjectResponseSchema = responseSchema<GradeLevelSubjectInput>("GradeLevelSubject", unwrapShape(gradeLevelSubjectSchema));
-export const gradeLevelSubjectMatterResponseSchema = responseSchema<GradeLevelSubjectMatterInput>("GradeLevelSubjectMatter", unwrapShape(gradeLevelSubjectMatterSchema));
 export const classGroupResponseSchema = responseSchema<ClassGroupInput>("ClassGroup", unwrapShape(classGroupSchema));
 export const classSubjectResponseSchema = responseSchema<ClassSubjectInput>("ClassSubject", unwrapShape(classSubjectSchema));
 export const classSubjectMatterResponseSchema = responseSchema<ClassSubjectMatterInput>("ClassSubjectMatter", unwrapShape(classSubjectMatterSchema));
@@ -370,6 +368,8 @@ export const schoolNotificationTemplatesQuerySchema = createQueryOptionsSchema({
 });
 
 export const subjectQuerySchema = createQueryOptionsSchema({
+  gradeLevelId: field.id(),
+  academicYearId: field.id(),
   id: field.id(),
   schoolId: field.id(),
   name: field.string(),
@@ -402,22 +402,7 @@ export const classSubjectQuerySchema = createQueryOptionsSchema({
   id: field.id(),
   classGroupId: field.id(),
   subjectId: field.id(),
-  gradeLevelSubjectId: field.id(),
   periodsPerWeek: field.number(),
-});
-
-export const gradeLevelSubjectQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  gradeLevelId: field.id(),
-  academicYearId: field.id(),
-  subjectId: field.id(),
-  periodsPerWeek: field.number(),
-});
-
-export const gradeLevelSubjectMatterQuerySchema = createQueryOptionsSchema({
-  id: field.id(),
-  gradeLevelSubjectId: field.id(),
-  subjectMatterId: field.id(),
 });
 
 export const classSubjectMatterQuerySchema = createQueryOptionsSchema({

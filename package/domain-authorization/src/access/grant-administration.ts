@@ -31,24 +31,24 @@ export async function validateScopeSelectionTargets(facts: AccessFacts, grant: {
       case 'grade_level':
         await facts.one('gradeLevels', scope.gradeLevelId)
         break
-      case 'grade_level_subject': {
+      case 'subject': {
         await facts.one('gradeLevels', scope.gradeLevelId)
-        if (scope.gradeLevelSubjectId) {
-          const subject = await facts.one('gradeLevelSubjects', scope.gradeLevelSubjectId)
+        if (scope.subjectId) {
+          const subject = await facts.one('subjects', scope.subjectId)
           if (subject.gradeLevelId !== scope.gradeLevelId || subject.academicYearId !== grant.academicYearId)
             denied('Grant subject belongs to a different placement or academic year')
         }
+        if (scope.classGroupId) {
+          const group = await facts.one('classGroups', scope.classGroupId)
+          if (group.gradeLevelId !== scope.gradeLevelId || group.academicYearId !== grant.academicYearId)
+            denied('Grant class belongs to a different grade or academic year')
+        }
         break
       }
-      case 'class_group':
-      case 'class_subject': {
+      case 'class_group': {
         const group = await facts.one('classGroups', scope.classGroupId)
         if (group.academicYearId !== grant.academicYearId)
           denied('Grant placement belongs to a different academic year')
-        if (scope.kind === 'class_subject' && scope.classSubjectId
-          && (await facts.one('classSubjects', scope.classSubjectId)).classGroupId !== group.id) {
-          denied()
-        }
         break
       }
       case 'activity': {
@@ -70,26 +70,40 @@ async function contains(facts: AccessFacts, held: AuthorityScope, requested: Aut
     return false
   if (held.kind === 'activity' && requested.kind === 'activity_session')
     return (!held.activityId || held.activityId === requested.activityId) && (!held.classGroupId || held.classGroupId === requested.classGroupId)
-  if (held.kind !== 'grade_level' && held.kind !== 'grade_level_subject' && !(held.kind === 'all' && held.grain === 'grade_level'))
+  if (held.kind !== 'grade_level' && held.kind !== 'subject' && !(held.kind === 'all' && ['grade_level', 'subject'].includes(held.grain)))
     return false
+  let gradeLevelId: string | undefined
+  let subjectId: string | undefined
+  let classGroupId: string | undefined
   if ('gradeLevelId' in requested) {
-    if (held.kind === 'grade_level')
-      return requested.gradeLevelId === held.gradeLevelId
-    return held.kind === 'all'
+    gradeLevelId = requested.gradeLevelId
+    if (requested.kind === 'subject') {
+      subjectId = requested.subjectId
+      classGroupId = requested.classGroupId
+    }
   }
-  if (!('classGroupId' in requested) || !requested.classGroupId)
+  else if ('classGroupId' in requested && requested.classGroupId) {
+    classGroupId = requested.classGroupId
+    const group = await facts.one('classGroups', classGroupId)
+    if (group.academicYearId !== year)
+      return false
+    gradeLevelId = group.gradeLevelId
+    if ('classSubjectId' in requested && requested.classSubjectId) {
+      const offering = await facts.one('classSubjects', requested.classSubjectId)
+      if (offering.classGroupId !== classGroupId)
+        return false
+      subjectId = offering.subjectId
+    }
+  }
+  if (!gradeLevelId || (held.kind !== 'all' && held.gradeLevelId !== gradeLevelId))
     return false
-  const group = await facts.one('classGroups', requested.classGroupId)
-  if (group.academicYearId !== year || (held.kind !== 'all' && group.gradeLevelId !== held.gradeLevelId))
-    return false
-  if (held.kind !== 'grade_level_subject')
+  if (held.kind === 'grade_level' || (held.kind === 'all' && held.grain === 'grade_level'))
     return true
-  if (!('classSubjectId' in requested) || !requested.classSubjectId)
+  // Subject authority may delegate a subject or an exact teaching occurrence, never a whole class/grade.
+  if (requested.kind !== 'subject' && !subjectId)
     return false
-  if (!held.gradeLevelSubjectId)
-    return true
-  const subject = await facts.one('classSubjects', requested.classSubjectId)
-  return subject.classGroupId === group.id && subject.gradeLevelSubjectId === held.gradeLevelSubjectId
+  return held.kind === 'all' || ((!held.subjectId || held.subjectId === subjectId)
+    && (!held.classGroupId || held.classGroupId === classGroupId))
 }
 
 /** An administrator can delegate only authority they hold for the same action and year. */

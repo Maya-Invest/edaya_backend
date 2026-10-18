@@ -54,13 +54,13 @@ export async function runSeedCleanup(options: CleanupOptions): Promise<boolean> 
 
     if (await probeLocalApiReachable(apiUrl)) {
       throw new Error(
-        `Local API is running at ${apiUrl}. Stop \`bun repo dev\` before wiping .data — `
+        `Local API is running at ${apiUrl}. Stop \`bun repo dev\` before wiping .data/school — `
         + 'deleting databases while the API is up corrupts PGlite.',
       )
     }
 
     const confirmed = await confirm(
-      'Delete local school PGlite under .data/?',
+      'Delete local school PGlite under .data/school/?',
       options.yes,
     )
     if (!confirmed) {

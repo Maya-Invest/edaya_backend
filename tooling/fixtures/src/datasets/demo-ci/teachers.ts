@@ -5,15 +5,15 @@ import { demoCiClassSubjects, demoCiSubjects } from './school'
 
 type DemoCiTeacherId = 'ci-t1' | 'ci-t2' | 'ci-t3' | 'ci-t4' | 'ci-t5'
 
-const SUBJECT_TEACHER_BY_ID: Record<string, DemoCiTeacherId> = {
-  'ci-subj-math': 'ci-t1',
-  'ci-subj-pc': 'ci-t1',
-  'ci-subj-fr': 'ci-t3',
-  'ci-subj-hg': 'ci-t4',
-  'ci-subj-edhc': 'ci-t4',
-  'ci-subj-svt': 'ci-t5',
-  'ci-subj-ang': 'ci-t5',
-  'ci-subj-eps': 'ci-t2',
+const SUBJECT_TEACHER_BY_CODE: Record<string, DemoCiTeacherId> = {
+  MATH: 'ci-t1',
+  PC: 'ci-t1',
+  FR: 'ci-t3',
+  HG: 'ci-t4',
+  EDHC: 'ci-t4',
+  SVT: 'ci-t5',
+  ANG: 'ci-t5',
+  EPS: 'ci-t2',
 }
 
 const subjectNameById = Object.fromEntries(demoCiSubjects.map(subject => [subject.id, subject.name]))
@@ -58,7 +58,7 @@ export const demoCiTeachers = [
 
 export const demoCiTeacherAssignments = [
   ...demoCiClassSubjects.map((classSubject) => {
-    const teacherId = SUBJECT_TEACHER_BY_ID[classSubject.subjectId]
+    const teacherId = SUBJECT_TEACHER_BY_CODE[demoCiSubjects.find(subject => subject.id === classSubject.subjectId)!.code]
     if (!teacherId) {
       throw new Error(`Missing demo-ci teacher mapping for subject ${classSubject.subjectId}`)
     }

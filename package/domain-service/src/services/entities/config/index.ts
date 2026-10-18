@@ -1,8 +1,6 @@
 export { classSubjectConfig } from './academics/class-subject'
 export { classSubjectMatterConfig } from './academics/class-subject-matter'
 export { classSubjectProgressConfig, validateClassSubjectProgressSave } from './academics/class-subject-progress'
-export { gradeLevelSubjectConfig, validateGradeLevelSubjectDelete, validateGradeLevelSubjectSave } from './academics/grade-level-subject'
-export { gradeLevelSubjectMatterConfig, validateGradeLevelSubjectMatterSave } from './academics/grade-level-subject-matter'
 export { subjectConfig } from './academics/subject'
 export { subjectCategoryConfig } from './academics/subject-category'
 export { subjectMatterConfig } from './academics/subject-matter'

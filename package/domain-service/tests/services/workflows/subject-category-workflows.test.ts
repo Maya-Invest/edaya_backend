@@ -1,4 +1,4 @@
-import { BusinessRuleViolationError, Subject } from '@edaya/core'
+import { AcademicYear, BusinessRuleViolationError, GradeLevel } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -24,19 +24,15 @@ describe('subject category catalog', () => {
     expect(renamed.name).toBe('Numérique')
     expect((await repositories.subjectCategories.findById(category.id))?.name).toBe('Numérique')
 
-    const subject = new Subject({
-      id: 'subj-info',
-      schoolId: 'sch1',
-      name: 'Informatique',
-      categoryId: category.id,
-    })
-    await service.baseService.entities.subjects.save(subject)
+    await repositories.gradeLevels.save(new GradeLevel({ id: 'grade1', schoolId: 'sch1', name: '6ème', label: '6ème', order: 1 }))
+    await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
+    const subject = await service.academicsWorkflow.configureSubject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subj-info', schoolId: 'sch1', name: 'Informatique', categoryId: category.id })
 
     await expect(service.baseService.entities.subjectCategories.delete(category.id))
       .rejects
       .toBeInstanceOf(BusinessRuleViolationError)
 
-    await service.baseService.entities.subjects.delete(subject.id)
+    await service.academicsWorkflow.removeSubject({ subjectId: subject.id })
     await service.baseService.entities.subjectCategories.delete(category.id)
     expect(await repositories.subjectCategories.findById(category.id)).toBeUndefined()
   })

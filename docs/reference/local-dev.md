@@ -94,6 +94,12 @@ Point `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` in `.dev.vars` 
 
 See [api-runtimes.md](./api-runtimes.md).
 
+## Grade/year subject cutover
+
+Migration `0044_grade_year_subjects.sql` requires empty curriculum and staff grant tables. It deliberately rejects populated legacy data. Reset and reseed the school database for this breaking model change; keep the separate identity/account database and existing migration history. Back up the local school store before resetting it and stop the local API while changing its persisted data.
+
+The web and mobile clients must be regenerated from the same backend candidate. The new `Subject` owns its grade, academic year, metadata and workload. `ClassSubject.subjectId` references that subject; chapters no longer have grade-allocation links. Use `configureSubject`, `updateSubject`, `removeSubject`, `configureSubjectMatter` and `removeSubjectMatter`. Existing grade-allocation endpoints and grant payloads are not compatible. Subject grant payloads use `{ kind: 'subject', gradeLevelId, subjectId? }`.
+
 ## Environment credentials matrix
 
 | Concern | Local dev (`bun run repo dev`) | Staging | Production |

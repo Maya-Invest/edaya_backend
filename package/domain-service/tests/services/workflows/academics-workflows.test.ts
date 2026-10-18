@@ -10,7 +10,7 @@ async function createContext({ existingProgress = false, matterCompletedPercenta
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'gl1', schoolId: 'sch1', name: 'Grade', label: 'G', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Class' }))
-  for (const id of ['subj1', 'subj-math']) await repositories.subjects.save(new Subject({ id, schoolId: 'sch1', name: id }))
+  for (const id of ['subj1', 'subj-math']) await repositories.subjects.save(new Subject({ gradeLevelId: 'gl1', academicYearId: 'ay1', id, schoolId: 'sch1', name: id }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subj1', coefficient: 1, completedPercentage: 0 }))
   const matters = matterList ?? [{ id: 'csm1', completedPercentage: matterCompletedPercentage }, { id: 'other-matter', completedPercentage: 50 }]
   for (const matter of matters) {
@@ -106,6 +106,8 @@ describe('SchoolService academics workflows', () => {
     const subject = await service.academicsWorkflow.configureSubject({
       id: 'subj-math',
       schoolId: 'sch1',
+      gradeLevelId: 'gl1',
+      academicYearId: 'ay1',
       name: 'Mathematics',
       category: SubjectCategory.Scientific,
       color: SubjectColor.Sky,
@@ -123,16 +125,11 @@ describe('SchoolService academics workflows', () => {
     expect((await repositories.subjectMatters.findById(matter.id))?.data).toEqual(matter.data)
   })
 
-  test('addCustomClassSubject and setClassSubjectOffered manage class offerings', async () => {
+  test('configureSubject and setClassSubjectOffered manage class offerings', async () => {
     const { repositories, service } = await createContext()
 
-    const created = await service.academicsWorkflow.addCustomClassSubject({
-      id: 'cs-custom',
-      classGroupId: 'cg1',
-      subjectId: 'subj-math',
-      coefficient: 2,
-    })
-    expect(created.isOffered).toBe(true)
+    await service.academicsWorkflow.configureSubject({ id: 'new-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Math', coefficient: 2, classSubjectIdsByClassGroupId: { cg1: 'cs-custom' } })
+    expect((await repositories.classSubjects.findById('cs-custom'))?.isOffered).toBe(true)
 
     const updated = await service.academicsWorkflow.setClassSubjectOffered({
       classSubjectId: 'cs1',

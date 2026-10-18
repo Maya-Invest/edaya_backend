@@ -128,7 +128,7 @@ describe('configuration editors', () => {
   test('rejects foreign subjects, cycles and reparenting under subject rows atomically', async () => {
     const f = await createReportCardContext()
     await f.repositories.schools.save(new School({ id: 'foreign', name: 'Foreign', timeZone: 'UTC' }))
-    await f.repositories.subjects.save(new Subject({ id: 'foreign-subject', schoolId: 'foreign', name: 'Secret' }))
+    await f.repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'foreign-subject', schoolId: 'foreign', name: 'Secret' }))
     const write = (section: any, requestId: string) => f.service.assessmentsWorkflow.configureReportCardDefinition({ id: 'def1', expectedRevision: 0, action: 'section', requestId, section })
     const math = (await f.repositories.sections.findById('sec-math'))!
     await expect(write({ ...math.data, subjectId: 'foreign-subject' }, 'foreign')).rejects.toThrow()

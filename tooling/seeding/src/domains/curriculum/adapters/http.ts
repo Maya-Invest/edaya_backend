@@ -21,16 +21,10 @@ export function createHttpCurriculumSeedPort(
 
   return {
     saveSubject: record => withSeedPortError('curriculum.saveSubject', async () => {
-      await postCoreCommand(requestOptions, 'configureSubject', new Subject(record).data)
+      await postCoreCommand(requestOptions, 'configureSubject', { ...new Subject(record).data, classSubjectIdsByClassGroupId: record.classSubjectIdsByClassGroupId })
     }),
     saveSubjectMatter: record => withSeedPortError('curriculum.saveSubjectMatter', async () => {
       await postCoreCommand(requestOptions, 'configureSubjectMatter', record)
-    }),
-    offerSubjectToGradeLevel: record => withSeedPortError('curriculum.offerSubjectToGradeLevel', async () => {
-      await postCoreCommand(requestOptions, 'offerSubjectToGradeLevel', record)
-    }),
-    assignMatterToGradeLevelSubject: record => withSeedPortError('curriculum.assignMatterToGradeLevelSubject', async () => {
-      await postCoreCommand(requestOptions, 'assignMatterToGradeLevelSubject', record)
     }),
   }
 }

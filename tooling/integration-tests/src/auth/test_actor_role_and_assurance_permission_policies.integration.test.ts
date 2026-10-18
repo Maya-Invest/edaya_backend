@@ -99,13 +99,12 @@ async function setupBaselineFixture() {
 
   // Academics setup
   await app.baseService.entities.subjects.save(
-    new Subject({ id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
+    new Subject({ gradeLevelId: 'grade-7', academicYearId: 'acad-year', id: 'english-lit', schoolId: 'school', name: 'English Literature' }),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-subject-english',
     classGroupId: 'class-7a',
     subjectId: 'english-lit',
-    gradeLevelSubjectId: 'gls-english-lit',
   })
 
   await saveStaffAssignment(app, {

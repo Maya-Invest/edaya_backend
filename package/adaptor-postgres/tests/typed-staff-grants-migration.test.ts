@@ -71,15 +71,34 @@ describe('typed staff grants coordinated migration', () => {
     await db.exec('DELETE FROM staff_permission_assignments')
     await db.exec(readFileSync(resolve(migrationDirectory, '0037_permission_scope_defaults.sql'), 'utf8'))
     const marksBefore = await db.query('SELECT id, score FROM assessment_results ORDER BY id')
-    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0038').sort())
+    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0038' && name < '0044').sort())
       await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
+    // The subject cutover requires empty curriculum tables. Recreate this frozen
+    // fixture explicitly, preserving the identifiers used by the policy assertions.
+    await db.exec(`
+      CREATE TEMP TABLE fixture_subjects AS SELECT to_jsonb(subjects) AS data FROM subjects;
+      CREATE TEMP TABLE fixture_offerings AS SELECT to_jsonb(class_subjects) AS data FROM class_subjects;
+      DELETE FROM class_subjects;
+      DELETE FROM subjects;
+    `)
+    await db.exec(readFileSync(resolve(migrationDirectory, '0044_grade_year_subjects.sql'), 'utf8'))
+    await db.exec(`
+      INSERT INTO subjects SELECT (jsonb_populate_record(NULL::subjects, data || jsonb_build_object(
+        'grade_level_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'level-a' ELSE 'level-b' END,
+        'academic_year_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'year-a' ELSE 'year-b' END,
+        'is_optional', false))).* FROM fixture_subjects;
+      INSERT INTO class_subjects SELECT (jsonb_populate_record(NULL::class_subjects, data)).* FROM fixture_offerings;
+    `)
     expect((await db.query('SELECT id, score FROM assessment_results ORDER BY id')).rows).toEqual(marksBefore.rows)
     const repositories = new PostgresSchoolRepositories(drizzle(db))
     // Historical migrations keep their original identifiers. Explicitly translate
     // this fixture when re-creating grants under the current catalog.
     for (const row of converted.rows) {
       const permission = String(row.permission) === 'EXAM_CONFIG_READ' ? Permission.ASSESSMENT_READ : row.permission
-      await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...row, permission }))
+      const scopes = row.id === 'exams'
+        ? [{ kind: 'subject' as const, gradeLevelId: 'level-a', subjectId: 'math', classGroupId: 'class-a' }, { kind: 'subject' as const, gradeLevelId: 'level-a', classGroupId: 'class-other' }]
+        : row.scopes
+      await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...row, permission, scopes }))
     }
     const access = new AccessPolicies(createStaffActorMetadata({ schoolId: 'school-a', staffMemberId: 'staff-a', subjectId: 'person-a', academicYearId: 'year-a', requestId: 'migrated-grants', authenticatedAt: new Date() }), repositories)
     const grades = repositories.assessmentResults.forAccess(await access.grades.readScope())

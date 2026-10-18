@@ -16,6 +16,8 @@ export interface StaffAssignmentResolvedTarget {
   readonly schoolId: string
   readonly classGroupId: string
   readonly classSubjectId?: string
+  readonly gradeLevelId?: string
+  readonly subjectId?: string
   readonly activityId?: string
   readonly lessonSessionId?: string
   readonly activitySessionId?: string
@@ -54,6 +56,8 @@ async function resolvePlacement(
       schoolId: classGroup.schoolId,
       classGroupId: classSubject.classGroupId,
       classSubjectId: assignment.classSubjectId,
+      gradeLevelId: classGroup.gradeLevelId,
+      subjectId: classSubject.subjectId,
     }
   }
 
@@ -114,11 +118,11 @@ export function assertPermissionAllowedOnStaffAssignmentTarget(permission: Permi
 
 export function scopesForStaffAssignmentPermission(permission: Permission, target: StaffAssignmentResolvedTarget): AuthorityScope[] {
   assertPermissionAllowedOnStaffAssignmentTarget(permission, target.kind)
-  const { classGroupId, classSubjectId, lessonSessionId, activitySessionId, assessmentId, activityId } = target
+  const { classGroupId, classSubjectId, lessonSessionId, activitySessionId, assessmentId, activityId, gradeLevelId, subjectId } = target
   if (target.kind === 'class_group')
     return [{ kind: 'class_group', classGroupId }]
-  if (target.kind === 'class_subject' && classSubjectId)
-    return [{ kind: 'class_subject', classGroupId, classSubjectId }]
+  if (target.kind === 'class_subject' && gradeLevelId && subjectId)
+    return [{ kind: 'subject', gradeLevelId, subjectId, classGroupId }]
   if (target.kind === 'lesson_session' && lessonSessionId && classSubjectId)
     return [{ kind: 'lesson_session', lessonSessionId, classGroupId, classSubjectId }]
   if (target.kind === 'activity_session' && activitySessionId && activityId)

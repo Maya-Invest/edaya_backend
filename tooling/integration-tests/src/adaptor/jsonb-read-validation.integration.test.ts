@@ -83,12 +83,12 @@ describe('[Postgres PGlite] JSONB read validation', () => {
 
     await db.execute(sql`
       UPDATE staff_permission_assignments
-      SET scopes = '[{"kind":"class_subject","classGroupId":"class-1","classSubjectId":"math"}]'::jsonb
+      SET scopes = '[{"kind":"subject","gradeLevelId":"grade-1","classGroupId":"class-1","subjectId":"math"}]'::jsonb
       WHERE id = 'spa-corrupt-2'
     `)
 
     expect((await repos.staffPermissionAssignments.findById('spa-corrupt-2'))?.scopes).toEqual([
-      { kind: 'class_subject', classGroupId: 'class-1', classSubjectId: 'math' },
+      { kind: 'subject', gradeLevelId: 'grade-1', classGroupId: 'class-1', subjectId: 'math' },
     ])
 
     await db.execute(sql`

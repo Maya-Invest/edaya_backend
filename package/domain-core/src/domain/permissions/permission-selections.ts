@@ -48,7 +48,7 @@ export function presetScopeSelections(permissions: readonly Permission[]) {
     const policy = corePermissionDefinition(permission).scopePolicy
     if (policy.mode !== 'resources')
       return []
-    return policy.allowedKinds.map((grain) => {
+    return policy.allowedKinds.filter(grain => grain !== 'subject' || !policy.subjectClassRequired).map((grain) => {
       const scope = { kind: 'all' as const, grain }
       return [JSON.stringify(scope), scope] as const
     })

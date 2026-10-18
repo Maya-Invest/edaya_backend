@@ -25,7 +25,7 @@ describe('authority from current staff assignments', () => {
     for (const assessmentId of ['assessment-french', 'assessment-other', 'assessment-b'])
       await expect(access.grades.assertInput({ assessmentId, studentId: 'student-a' })).rejects.toBeInstanceOf(AuthorizationError)
     expect(await fixture.repositories.staffPermissionAssignments.count()).toBe(0)
-    expect((await describeActionGrants(actor, fixture.repositories))[0]?.scopes).toEqual([{ kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' }])
+    expect((await describeActionGrants(actor, fixture.repositories))[0]?.scopes).toEqual([{ kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' }])
   })
 
   test('an assessment duty cannot affect another assessment for the same subject', async () => {

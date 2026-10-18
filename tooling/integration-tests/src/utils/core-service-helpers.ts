@@ -284,62 +284,17 @@ export async function saveClassSubject(
   app: SchoolService,
   input: ArgsOf<typeof ClassSubject>,
 ): Promise<ClassSubject> {
-  if (!input.gradeLevelSubjectId) {
-    const classSubject = new ClassSubject(input)
-    await app.baseService.entities.classSubjects.save(classSubject)
-    return classSubject
-  }
-
-  const classGroup = await app.baseService.repositories.classGroups.findById(input.classGroupId)
-  if (!classGroup) {
-    throw new Error(`saveClassSubject: unknown class group ${input.classGroupId}`)
-  }
-
-  let classSubject = input.id
-    ? await app.baseService.repositories.classSubjects.findById(input.id)
-    : undefined
-  classSubject ??= await app.baseService.repositories.classSubjects.findOne({
-    classGroupId: input.classGroupId,
-    subjectId: input.subjectId,
-  }) ?? undefined
-
-  if (!classSubject) {
-    const gradeLevelSubject = await app.baseService.repositories.gradeLevelSubjects.findById(input.gradeLevelSubjectId)
-    if (!gradeLevelSubject) {
-      await app.academicsWorkflow.offerSubjectToGradeLevel({
-        id: input.gradeLevelSubjectId,
-        gradeLevelId: classGroup.gradeLevelId,
-        academicYearId: classGroup.academicYearId,
-        subjectId: input.subjectId,
-        classSubjectIdsByClassGroupId: input.id
-          ? { [input.classGroupId]: input.id }
-          : undefined,
-      })
-    }
-    classSubject = input.id
-      ? await app.baseService.repositories.classSubjects.findById(input.id)
-      : await app.baseService.repositories.classSubjects.findOne({
-          classGroupId: input.classGroupId,
-          subjectId: input.subjectId,
-        })
-    if (!classSubject) {
-      throw new Error(`saveClassSubject: failed to materialize class subject for ${input.subjectId}`)
-    }
-    return classSubject
-  }
-
-  const updated = new ClassSubject({
-    id: classSubject.id,
-    classGroupId: classSubject.classGroupId,
-    subjectId: classSubject.subjectId,
-    gradeLevelSubjectId: classSubject.gradeLevelSubjectId,
-    coefficient: input.coefficient ?? classSubject.coefficient,
-    completedPercentage: input.completedPercentage ?? classSubject.completedPercentage,
-    isOffered: input.isOffered ?? classSubject.isOffered,
-    createdAt: classSubject.createdAt,
-  })
-  await app.baseService.entities.classSubjects.save(updated)
-  return updated
+  await app.academicsWorkflow.syncSubjectsToClassGroup(input.classGroupId, { [input.subjectId]: { classSubjectId: input.id } })
+  const classSubject = await app.baseService.repositories.classSubjects.findOne({ classGroupId: input.classGroupId, subjectId: input.subjectId })
+  if (!classSubject)
+    throw new Error(`Missing offering for ${input.subjectId}`)
+  if (input.coefficient !== undefined)
+    await app.academicsWorkflow.updateSubject({ subjectId: input.subjectId, coefficient: input.coefficient })
+  if (input.isOffered !== undefined)
+    await app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: classSubject.id, isOffered: input.isOffered })
+  if (input.completedPercentage !== undefined)
+    await app.baseService.entities.classSubjects.save(new ClassSubject({ ...classSubject.data, completedPercentage: input.completedPercentage }))
+  return (await app.baseService.repositories.classSubjects.findById(classSubject.id))!
 }
 
 export async function saveClassSubjectMatter(

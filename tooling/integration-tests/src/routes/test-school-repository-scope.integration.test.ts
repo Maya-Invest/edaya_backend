@@ -21,8 +21,10 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     const { application, app, authHeaders } = getContext()
     const repos = application.repositories
     const school = (await repos.schools.list({ $limit: 1 }))[0]!
-    await repos.subjects.save(new Subject({ id: 'scope-foreign-subject', schoolId: 'other-school', name: 'Foreign' }))
-    await repos.subjects.save(new Subject({ id: 'scope-local-subject', schoolId: school.id, name: 'Local' }))
+    const classGroup = (await repos.classGroups.list({ schoolId: school.id, $limit: 1 }))[0]!
+    const placement = { gradeLevelId: classGroup.gradeLevelId, academicYearId: classGroup.academicYearId }
+    await repos.subjects.save(new Subject({ ...placement, id: 'scope-foreign-subject', schoolId: 'other-school', name: 'Foreign' }))
+    await repos.subjects.save(new Subject({ ...placement, id: 'scope-local-subject', schoolId: school.id, name: 'Local' }))
     for (const [id, subjectId] of [['0-foreign-matter', 'scope-foreign-subject'], ['1-local-matter', 'scope-local-subject'], ['2-local-matter', 'scope-local-subject']]) {
       await repos.subjectMatters.save(new SubjectMatter({ id: id!, subjectId: subjectId!, name: 'Scope test', sequenceOrder: 1 }))
     }
@@ -62,19 +64,22 @@ describeWithLightSchool('trusted school repository scope', (getContext) => {
     expect(await scoped.findById('scope-valid-insert')).toBeDefined()
   })
 
-  it('rejects mixed-school HTTP writes before any local mutation', async () => {
+  it('routes chapter writes through commands and rejects foreign mutations', async () => {
     const { application, app, authHeaders } = getContext()
     const repos = application.repositories
     const headers = await authHeaders()
     const request = (action: string, body: unknown) => app.request(`/core/entities/subject-matters/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
+    const command = (action: string, body: unknown) => app.request(`/core/commands/${action}`, { method: 'POST', headers, body: JSON.stringify(body) })
     const proposed = (id: string) => new SubjectMatter({ id, subjectId: 'scope-local-subject', name: 'HTTP mutation', sequenceOrder: 1 }).data
-    expect((await request('save', proposed('0-foreign-matter'))).status).toBe(403)
-    expect((await request('batch-save', { entities: [proposed('http-rolled-back'), proposed('0-foreign-matter')] })).status).toBe(403)
+    expect((await request('save', proposed('0-foreign-matter'))).status).toBe(404)
+    expect((await request('batch-save', { entities: [proposed('http-rolled-back'), proposed('0-foreign-matter')] })).status).toBe(404)
+    expect((await request('batch-delete', { ids: ['1-local-matter', '0-foreign-matter'] })).status).toBe(404)
     expect(await repos.subjectMatters.findById('http-rolled-back')).toBeUndefined()
-    expect((await request('batch-delete', { ids: ['1-local-matter', '0-foreign-matter'] })).status).toBe(403)
     expect(await repos.subjectMatters.findById('1-local-matter')).toBeDefined()
-    expect(await repos.subjectMatters.findById('0-foreign-matter')).toBeDefined()
-    expect((await request('save', proposed('http-valid-insert'))).status).toBe(200)
+    expect((await command('configure-subject-matter', proposed('0-foreign-matter'))).status).toBe(403)
+    expect((await command('remove-subject-matter', { subjectMatterId: '0-foreign-matter' })).status).toBe(403)
+    expect((await repos.subjectMatters.findById('0-foreign-matter'))?.subjectId).toBe('scope-foreign-subject')
+    expect((await command('configure-subject-matter', proposed('http-valid-insert'))).status).toBe(200)
     expect((await repos.subjectMatters.findById('http-valid-insert'))?.subjectId).toBe('scope-local-subject')
   })
 

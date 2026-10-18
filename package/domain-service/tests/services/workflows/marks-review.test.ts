@@ -1,5 +1,5 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, GradeLevelSubject, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createReportCardContext } from './report-card-workflow-context'
 
@@ -61,17 +61,15 @@ describe('evaluation marks review', () => {
 
   test('curriculum edits and resynchronization cannot change submitted grading configuration', async () => {
     const f = await fixture()
-    const group = (await f.repositories.classGroups.findById('cg1'))!
-    const subject = (await f.repositories.classSubjects.findById('cs1'))!
-    const allocation = new GradeLevelSubject({ id: 'gls1', gradeLevelId: group.gradeLevelId, academicYearId: group.academicYearId, subjectId: subject.subjectId, coefficient: 1, isOptional: false })
-    await f.repositories.gradeLevelSubjects.save(allocation)
-    await f.repositories.classSubjects.save(new ClassSubject({ ...subject.data, gradeLevelSubjectId: allocation.id, coefficient: 1 }))
+    const offering = (await f.repositories.classSubjects.findById('cs1'))!
+    const allocation = (await f.repositories.subjects.findById(offering.subjectId))!.copyWith({ coefficient: 1 })
+    await f.repositories.subjects.save(allocation)
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'freeze-curriculum', expectedRevision: 1 })
-    await expect(f.service.academicsWorkflow.updateGradeLevelSubject({ gradeLevelSubjectId: allocation.id, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
-    await expect(f.service.academicsWorkflow.offerSubjectToGradeLevel({ ...allocation.data, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
+    await expect(f.service.academicsWorkflow.updateSubject({ subjectId: allocation.id, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
+    await expect(f.service.academicsWorkflow.configureSubject({ ...allocation.data, coefficient: 2 })).rejects.toMatchObject({ code: 'ASSESSMENT_MARKS_FROZEN' })
     expect((await f.repositories.classSubjects.findById('cs1'))!.coefficient).toBe(1)
-    expect((await f.repositories.gradeLevelSubjects.findById('gls1'))!.coefficient).toBe(1)
+    expect((await f.repositories.subjects.findById(allocation.id))!.coefficient).toBe(1)
   })
 
   test('batch grades preserve revision counts, reject duplicate targets and roll back mixed invalid writes', async () => {
@@ -127,7 +125,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.edit()
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 1 })
-    await f.repositories.subjects.save(new Subject({ id: 'art', schoolId: 'sch1', name: 'Art' }))
+    await f.repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'art', schoolId: 'sch1', name: 'Art' }))
     await f.repositories.classSubjects.save(new ClassSubject({ ...(await f.repositories.classSubjects.findById('cs1'))!.data, id: 'cs-art', subjectId: 'art' }))
     await f.repositories.assessments.save(new Assessment({ ...(await f.repositories.assessments.findById('ass1'))!.data, id: 'ass-art', classSubjectId: 'cs-art' }))
     await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar-art', assessmentId: 'ass-art', studentId: 'stu1', score: 50 }))

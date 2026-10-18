@@ -4,14 +4,15 @@ export const WORKFLOW_REPOSITORY_KEYS = {
   setup: ['schools', 'academicYears', 'staffPermissionProfiles', 'gradeLevels'],
   accessControl: ['staffMembers', 'guardians', 'students', 'guardianLinks', 'teachers', 'staffPermissionProfiles', 'staffPermissionProfileBindings', 'staffPermissionAssignments', 'staffPermissionScopeDefaults', 'staffManualPermissionAssignments', 'academicYears'],
   academics: [
+    'subjects',
+    'subjectMatters',
+    'sections',
     'assessments',
     'lessonSessions',
     'classGroups',
     'classSubjectProgress',
     'classSubjectMatters',
     'classSubjects',
-    'gradeLevelSubjects',
-    'gradeLevelSubjectMatters',
     'gradeLevels',
   ],
   assessments: [

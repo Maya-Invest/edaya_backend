@@ -6,7 +6,7 @@ export async function createReportCardContext({ existingReportCard, notification
   const fixture = await createStudentTransitionContext({ notificationGateway, documentRenderer })
   const { repositories } = fixture
   for (const id of ['per1', 'per-t1', 'per-unpublished']) await repositories.academicPeriods.save(new AcademicPeriod({ id, schoolId: 'sch1', academicYearId: 'ay1', name: id, type: AcademicPeriodType.Trimester, isPublished: academicPeriodPublished && id !== 'per-unpublished', startDate: new Date('2026-01-01'), endDate: new Date('2026-03-31') }))
-  await repositories.subjects.save(new Subject({ id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
+  await repositories.subjects.save(new Subject({ gradeLevelId: 'grade1', academicYearId: 'ay1', id: 'subject-math', schoolId: 'sch1', name: 'Math' }))
   await repositories.classSubjects.save(new ClassSubject({ id: 'cs1', classGroupId: 'cg1', subjectId: 'subject-math', coefficient: 1, isOffered: true, completedPercentage: 0 }))
   await repositories.gradeScales.save(new GradeScale({ id: 'grade-scale', schoolId: 'sch1', name: '20 points', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 16, maxScore: 20 }] }))
   await repositories.definitions.save(new ReportCardDefinition({ id: 'def1', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'grade1', gradeScaleId: 'grade-scale', name: 'Report' }))

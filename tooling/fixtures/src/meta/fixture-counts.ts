@@ -63,23 +63,6 @@ export function buildClassStudentIds(
   return buildClassStudentIdsFromEnrollments(dataset.entities.enrollments ?? [])
 }
 
-function countUniqueGradeLevelSubjects(dataset: FixtureDataset): number {
-  const classGroups = dataset.entities.classGroups ?? []
-  const classSubjects = dataset.entities.classSubjects ?? []
-  const gradeLevelByClassId = Object.fromEntries(
-    classGroups.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
-  )
-  const seen = new Set<string>()
-  for (const offering of classSubjects) {
-    const gradeLevelId = gradeLevelByClassId[offering.classGroupId]
-    if (!gradeLevelId) {
-      continue
-    }
-    seen.add(`${gradeLevelId}:${offering.subjectId}`)
-  }
-  return seen.size
-}
-
 function mattersBySubjectId(
   subjectMatters: NonNullable<FixtureDataset['entities']['subjectMatters']>,
 ): Map<string, NonNullable<FixtureDataset['entities']['subjectMatters']>[number][]> {
@@ -90,26 +73,6 @@ function mattersBySubjectId(
     grouped.set(matter.subjectId, existing)
   }
   return grouped
-}
-
-function countGradeLevelSubjectMatters(dataset: FixtureDataset): number {
-  const subjectMattersBySubjectId = mattersBySubjectId(dataset.entities.subjectMatters ?? [])
-  const classGroups = dataset.entities.classGroups ?? []
-  const classSubjects = dataset.entities.classSubjects ?? []
-  const gradeLevelByClassId = Object.fromEntries(
-    classGroups.map(classGroup => [classGroup.id, classGroup.gradeLevelId]),
-  )
-  const seen = new Set<string>()
-  for (const offering of classSubjects) {
-    const gradeLevelId = gradeLevelByClassId[offering.classGroupId]
-    if (!gradeLevelId) {
-      continue
-    }
-    for (const matter of subjectMattersBySubjectId.get(offering.subjectId) ?? []) {
-      seen.add(`${gradeLevelId}:${offering.subjectId}:${matter.id}`)
-    }
-  }
-  return seen.size
 }
 
 function countClassSubjectProgress(dataset: FixtureDataset): number {
@@ -249,8 +212,6 @@ export function resolveExpectedCounts(dataset: FixtureDataset) {
     'guardian-links': countGuardianLinks(dataset),
     'subjects': countArray(entities.subjects),
     'subject-matters': countArray(entities.subjectMatters),
-    'grade-level-subjects': countUniqueGradeLevelSubjects(dataset),
-    'grade-level-subject-matters': countGradeLevelSubjectMatters(dataset),
     'class-subjects': countArray(entities.classSubjects),
     'class-subject-matters': countClassSubjectMatters(dataset),
     'teachers': countArray(entities.teachers),

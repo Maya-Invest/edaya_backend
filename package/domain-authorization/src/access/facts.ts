@@ -144,7 +144,7 @@ export class AccessFacts {
     return target
   }
 
-  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string }>, homerooms: string[] }> {
+  async teaching(teacherId = this.actor.kind === 'teacher' ? this.actor.teacherId : undefined): Promise<{ year: string | undefined, subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }>, homerooms: string[] }> {
     if (!teacherId)
       return { year: undefined, subjects: [], homerooms: [] }
     const year = await this.academicYear()
@@ -155,7 +155,7 @@ export class AccessFacts {
       academicYearId: year,
       status: TeacherAssignmentStatus.Active,
     })).filter(assignment => effectiveAt(assignment, this.now))
-    const subjects: Array<{ classGroupId: string, classSubjectId: string }> = []
+    const subjects: Array<{ classGroupId: string, classSubjectId: string, gradeLevelId: string, subjectId: string }> = []
     const homerooms: string[] = []
     for (const assignment of assignments) {
       if (assignment.kind === TeacherAssignmentKind.Subject && assignment.classSubjectId) {
@@ -163,7 +163,7 @@ export class AccessFacts {
         const group = await this.one('classGroups', subject.classGroupId)
         if (group.academicYearId !== year)
           denied()
-        subjects.push({ classGroupId: group.id, classSubjectId: subject.id })
+        subjects.push({ classGroupId: group.id, classSubjectId: subject.id, gradeLevelId: group.gradeLevelId, subjectId: subject.subjectId })
       }
       if (assignment.kind === TeacherAssignmentKind.Homeroom && assignment.classGroupId) {
         const group = await this.one('classGroups', assignment.classGroupId)

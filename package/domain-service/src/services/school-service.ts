@@ -124,6 +124,16 @@ export class SchoolService {
     return this.financeWorkflow.getSchoolFinanceAging(input)
   }
 
+  getFinanceOverview(input: Parameters<FinanceServiceWorkflow['getFinanceOverview']>[0]) { return this.financeWorkflow.getFinanceOverview(input) }
+
+  getFeeFinanceOverview(input: Parameters<FinanceServiceWorkflow['getFeeFinanceOverview']>[0]) { return this.financeWorkflow.getFeeFinanceOverview(input) }
+
+  getFinanceBillingPage(input: Parameters<FinanceServiceWorkflow['getFinanceBillingPage']>[0]) { return this.financeWorkflow.getFinanceBillingPage(input) }
+
+  getFinancePaymentsPage(input: Parameters<FinanceServiceWorkflow['getFinancePaymentsPage']>[0]) { return this.financeWorkflow.getFinancePaymentsPage(input) }
+
+  getFinanceBillingDetail(input: Parameters<FinanceServiceWorkflow['getFinanceBillingDetail']>[0]) { return this.financeWorkflow.getFinanceBillingDetail(input) }
+
   getFinanceReconciliation(input: { schoolId: string, academicYearId?: string }) {
     this.checkActorSchool(input.schoolId)
     return this.financeWorkflow.getFinanceReconciliation(input)

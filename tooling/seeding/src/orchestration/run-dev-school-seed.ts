@@ -340,7 +340,7 @@ export async function runDevSchoolSeed(
     studentServiceEnrollments: financeCounts.studentServiceEnrollments,
     payments: financeCounts.payments,
     documentIssuances: documentCounts.documentIssuances,
-    classSubjectMatters: curriculumPlan.gradeLevelSubjectMatters.length,
+    classSubjectMatters: curriculumPlan.classSubjectMatterCount,
     resources: fixtureCounts.resources ?? 0,
     schedules: fixtureCounts.schedules ?? 0,
     lessonSessions: fixtureCounts['lesson-sessions'] ?? 0,

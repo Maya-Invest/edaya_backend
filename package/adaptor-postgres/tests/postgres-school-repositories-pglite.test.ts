@@ -1,4 +1,4 @@
-import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, GradeLevelSubject, LessonSession, PeriodDefinition, ReportCardDefinition, ReportCardResult, School, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
+import { AccountInvitation, AccountInvitationContactChannel, AccountInvitationKind, AccountInvitationStatus, Assessment, AssessmentKind, AssessmentResult, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, DayOfWeek, LessonSession, PeriodDefinition, ReportCardDefinition, ReportCardResult, School, Subject, TeacherUnavailability, TeacherUnavailabilityRecurrence } from '@edaya/core'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { drizzle } from 'drizzle-orm/pglite'
@@ -134,11 +134,12 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       endTime: '09:00',
       isTeachingSlot: false,
     }))
-    await repos.gradeLevelSubjects.save(new GradeLevelSubject({
-      id: 'grade-subject-1',
+    await repos.subjects.save(new Subject({
+      id: 'subject-1',
+      schoolId: 'school-1',
+      name: 'Math',
       gradeLevelId: 'grade-1',
       academicYearId: 'year-1',
-      subjectId: 'subject-1',
       periodsPerWeek: 5,
     }))
     await repos.classSubjects.save(new ClassSubject({
@@ -163,7 +164,7 @@ describe('PostgresSchoolRepositories with PGlite', () => {
       dayOfWeek: DayOfWeek.Monday,
       isTeachingSlot: false,
     })
-    expect((await repos.gradeLevelSubjects.findById('grade-subject-1'))?.periodsPerWeek).toBe(5)
+    expect((await repos.subjects.findById('subject-1'))?.periodsPerWeek).toBe(5)
     expect((await repos.classSubjects.findById('class-subject-1'))?.periodsPerWeek).toBe(5)
     expect(await repos.lessonSessions.findById('lesson-1')).toMatchObject({
       scheduleId: undefined,

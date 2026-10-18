@@ -127,7 +127,7 @@ describe("onboarding apply-structure-template route", () => {
 
     expect(summary.gradeLevelCount).toBe(2);
     expect(summary.classGroupCount).toBe(3);
-    expect(summary.subjectCount).toBe(14);
+    expect(summary.subjectCount).toBe(28);
 
     const ownerStaff = await application.repositories.staffMembers.findOne({ subjectId });
     const schoolId = ownerStaff?.schoolId;
@@ -158,8 +158,6 @@ describe("onboarding apply-structure-template route", () => {
     const gradeLevels = (await application.repositories.gradeLevels.list()).filter(entry => entry.schoolId === schoolId);
     const classGroups = (await application.repositories.classGroups.list()).filter(entry => entry.schoolId === schoolId);
     const subjects = (await application.repositories.subjects.list()).filter(entry => entry.schoolId === schoolId);
-    const gradeLevelSubjects = (await application.repositories.gradeLevelSubjects.list()).filter(entry =>
-      gradeLevels.some(level => level.id === entry.gradeLevelId));
     const classSubjects = (await application.repositories.classSubjects.list()).filter(entry =>
       classGroups.some(group => group.id === entry.classGroupId));
 
@@ -168,10 +166,14 @@ describe("onboarding apply-structure-template route", () => {
     expect(gradeLevels.map(level => level.name).sort()).toEqual(["Quatrième", "Troisième"]);
     expect(gradeLevels.map(level => level.label).sort()).toEqual(["3ème", "4ème"]);
     expect(classGroups).toHaveLength(3);
-    expect(subjects).toHaveLength(14);
-    expect(gradeLevelSubjects).toHaveLength(28);
+    expect(subjects).toHaveLength(28);
     expect(classSubjects).toHaveLength(42);
-    expect(classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true);
+    for (const offering of classSubjects) {
+      const subject = subjects.find(entry => entry.id === offering.subjectId)!;
+      const group = classGroups.find(entry => entry.id === offering.classGroupId)!;
+      expect(subject.gradeLevelId).toBe(group.gradeLevelId);
+      expect(subject.academicYearId).toBe(group.academicYearId);
+    }
     expect(classGroups.map(group => group.name).sort()).toEqual(["3ème A", "4ème 1", "4ème 2"]);
   });
 

@@ -5,7 +5,6 @@ import type {
   ClassSubject,
   ClassSubjectMatter,
   ClassSubjectProgress,
-  GradeLevelSubject,
   SubjectMatter,
 } from '@edaya/core'
 import type { StoreDatabase } from '../postgres-store'
@@ -22,8 +21,6 @@ import {
   ClassSubjectMatterStatus,
   ClassSubjectProgress as ClassSubjectProgressCtor,
   GradeLevel as GradeLevelCtor,
-  GradeLevelSubject as GradeLevelSubjectCtor,
-  GradeLevelSubjectMatter as GradeLevelSubjectMatterCtor,
   PeriodDefinition as PeriodDefinitionCtor,
   SubjectCategoryEntity as SubjectCategoryCtor,
   Subject as SubjectCtor,
@@ -35,7 +32,7 @@ import {
   enumValue,
 } from './entity-store-helpers'
 
-export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectCategories' | 'subjectMatters' | 'gradeLevelSubjects' | 'gradeLevelSubjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
+export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStores, 'academicYears' | 'academicPeriods' | 'periodDefinitions' | 'gradeLevels' | 'subjects' | 'subjectCategories' | 'subjectMatters' | 'classGroups' | 'classSubjects' | 'classSubjectMatters' | 'classSubjectProgress' | 'activities' | 'activityEnrollments' | 'classActivityEnrollments'> {
   return {
     academicYears: customStore(
       db,
@@ -118,37 +115,6 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
       }),
     ),
 
-    gradeLevelSubjects: customStore(
-      db,
-      schema.gradeLevelSubjects,
-      (entity: GradeLevelSubject) => ({
-        id: entity.id,
-        gradeLevelId: entity.gradeLevelId,
-        academicYearId: entity.academicYearId,
-        subjectId: entity.subjectId,
-        coefficient: entity.coefficient ?? null,
-        periodsPerWeek: entity.periodsPerWeek ?? null,
-        minPeriodSpan: entity.minPeriodSpan ?? null,
-        maxPeriodSpan: entity.maxPeriodSpan ?? null,
-        isOptional: entity.isOptional,
-        createdAt: entity.createdAt,
-      }),
-      row => new GradeLevelSubjectCtor({
-        id: row.id,
-        gradeLevelId: row.gradeLevelId,
-        academicYearId: row.academicYearId,
-        subjectId: row.subjectId,
-        coefficient: row.coefficient,
-        periodsPerWeek: row.periodsPerWeek,
-        minPeriodSpan: row.minPeriodSpan,
-        maxPeriodSpan: row.maxPeriodSpan,
-        isOptional: row.isOptional,
-        createdAt: row.createdAt,
-      }),
-    ),
-
-    gradeLevelSubjectMatters: defaultStore(db, schema.gradeLevelSubjectMatters, GradeLevelSubjectMatterCtor),
-
     classGroups: defaultStore(db, schema.classGroups, ClassGroupCtor),
 
     classSubjects: customStore(
@@ -158,7 +124,6 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         id: entity.id,
         classGroupId: entity.classGroupId,
         subjectId: entity.subjectId,
-        gradeLevelSubjectId: entity.gradeLevelSubjectId ?? null,
         coefficient: entity.coefficient ?? null,
         periodsPerWeek: entity.periodsPerWeek ?? null,
         minPeriodSpan: entity.minPeriodSpan ?? null,
@@ -171,7 +136,6 @@ export function createAcademicsEntityStores(db: StoreDatabase): Pick<EntityStore
         id: row.id,
         classGroupId: row.classGroupId,
         subjectId: row.subjectId,
-        gradeLevelSubjectId: row.gradeLevelSubjectId,
         coefficient: row.coefficient,
         periodsPerWeek: row.periodsPerWeek,
         minPeriodSpan: row.minPeriodSpan,

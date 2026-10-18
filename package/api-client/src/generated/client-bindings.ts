@@ -448,14 +448,14 @@ export const clientBindings = {
       "subjects": {
         "publicName": "subjects",
         "schemaName": "Subject",
-        "allowDirectSave": true,
+        "allowDirectSave": false,
         "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
         }
       },
       "subjectCategories": {
@@ -474,32 +474,6 @@ export const clientBindings = {
       "subjectMatters": {
         "publicName": "subject-matters",
         "schemaName": "SubjectMatter",
-        "allowDirectSave": true,
-        "publicOperations": {
-          "create": true,
-          "update": true,
-          "delete": true,
-          "batchCreate": true,
-          "batchUpdate": true,
-          "batchDelete": true
-        }
-      },
-      "gradeLevelSubjects": {
-        "publicName": "grade-level-subjects",
-        "schemaName": "GradeLevelSubject",
-        "allowDirectSave": false,
-        "publicOperations": {
-          "create": false,
-          "update": false,
-          "delete": false,
-          "batchCreate": false,
-          "batchUpdate": false,
-          "batchDelete": false
-        }
-      },
-      "gradeLevelSubjectMatters": {
-        "publicName": "grade-level-subject-matters",
-        "schemaName": "GradeLevelSubjectMatter",
         "allowDirectSave": false,
         "publicOperations": {
           "create": false,
@@ -1137,40 +1111,20 @@ export const clientBindings = {
         "requestSchemaName": "SubjectMatterConfigCommand",
         "responseSchemaName": "SubjectMatter"
       },
-      "offerSubjectToClass": {
-        "publicName": "offer-subject-to-class",
-        "requestSchemaName": "OfferSubjectToClassCommand",
-        "responseSchemaName": "ClassSubject"
-      },
-      "assignMatterToClassSubject": {
-        "publicName": "assign-matter-to-class-subject",
-        "requestSchemaName": "AssignMatterToClassSubjectCommand",
-        "responseSchemaName": "ClassSubjectMatter"
-      },
-      "offerSubjectToGradeLevel": {
-        "publicName": "offer-subject-to-grade-level",
-        "requestSchemaName": "OfferSubjectToGradeLevelCommand",
-        "responseSchemaName": "GradeLevelSubject"
-      },
-      "removeSubjectFromGradeLevel": {
-        "publicName": "remove-subject-from-grade-level",
-        "requestSchemaName": "RemoveSubjectFromGradeLevelCommand",
+      "removeSubjectMatter": {
+        "publicName": "remove-subject-matter",
+        "requestSchemaName": "RemoveSubjectMatterCommand",
         "responseSchemaName": "CommandMessageResponse"
       },
-      "updateGradeLevelSubject": {
-        "publicName": "update-grade-level-subject",
-        "requestSchemaName": "UpdateGradeLevelSubjectCommand",
-        "responseSchemaName": "GradeLevelSubject"
+      "removeSubject": {
+        "publicName": "remove-subject",
+        "requestSchemaName": "RemoveSubjectCommand",
+        "responseSchemaName": "CommandMessageResponse"
       },
-      "assignMatterToGradeLevelSubject": {
-        "publicName": "assign-matter-to-grade-level-subject",
-        "requestSchemaName": "AssignMatterToGradeLevelSubjectCommand",
-        "responseSchemaName": "GradeLevelSubjectMatter"
-      },
-      "addCustomClassSubject": {
-        "publicName": "add-custom-class-subject",
-        "requestSchemaName": "AddCustomClassSubjectCommand",
-        "responseSchemaName": "ClassSubject"
+      "updateSubject": {
+        "publicName": "update-subject",
+        "requestSchemaName": "UpdateSubjectCommand",
+        "responseSchemaName": "Subject"
       },
       "setClassSubjectOffered": {
         "publicName": "set-class-subject-offered",
@@ -1923,6 +1877,31 @@ export const clientBindings = {
         "publicName": "get-school-finance-aging",
         "requestSchemaName": "GetSchoolFinanceAgingQuery",
         "responseSchemaName": "SchoolFinanceAgingResponse"
+      },
+      "getFinanceOverview": {
+        "publicName": "get-finance-overview",
+        "requestSchemaName": "GetFinanceOverviewQuery",
+        "responseSchemaName": "FinanceOverviewResponse"
+      },
+      "getFeeFinanceOverview": {
+        "publicName": "get-fee-finance-overview",
+        "requestSchemaName": "GetFeeFinanceOverviewQuery",
+        "responseSchemaName": "FinanceOverviewResponse"
+      },
+      "getFinanceBillingPage": {
+        "publicName": "get-finance-billing-page",
+        "requestSchemaName": "GetFinanceBillingPageQuery",
+        "responseSchemaName": "FinanceBillingPageResponse"
+      },
+      "getFinancePaymentsPage": {
+        "publicName": "get-finance-payments-page",
+        "requestSchemaName": "GetFinancePaymentsPageQuery",
+        "responseSchemaName": "FinancePaymentsPageResponse"
+      },
+      "getFinanceBillingDetail": {
+        "publicName": "get-finance-billing-detail",
+        "requestSchemaName": "GetFinanceBillingDetailQuery",
+        "responseSchemaName": "FinanceBillingDetailResponse"
       },
       "getFinanceReconciliation": {
         "publicName": "get-finance-reconciliation",

@@ -30,7 +30,7 @@ export async function createTimetableBenchmarkFixture(classCount: number, weeks:
   await repositories.gradeLevels.save(new GradeLevel({ id: 'grade', schoolId: 'school', name: 'Grade 6', label: 'G6', order: 1 }))
   const groups = Array.from({ length: classCount }, (_, index) => new ClassGroup({ id: `class-${index}`, schoolId: 'school', academicYearId: 'year', gradeLevelId: 'grade', name: `Class ${String(index).padStart(2, '0')}` }))
   await repositories.classGroups.batchSave(groups)
-  const subjects = Array.from({ length: 4 }, (_, index) => new Subject({ id: `subject-${index}`, schoolId: 'school', name: `Subject ${index}`, category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
+  const subjects = Array.from({ length: 4 }, (_, index) => new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: `subject-${index}`, schoolId: 'school', name: `Subject ${index}`, category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
   await repositories.subjects.batchSave(subjects)
   const classSubjects = groups.flatMap(group => subjects.map((subject, index) => new ClassSubject({ id: `${group.id}-${subject.id}`, classGroupId: group.id, subjectId: subject.id, periodsPerWeek: 2, minPeriodSpan: 1, maxPeriodSpan: index === 0 ? 2 : 1 })))
   await repositories.classSubjects.batchSave(classSubjects)

@@ -1,5 +1,5 @@
 import type { MessageDeliveryRecipientKind } from '@edaya/core'
-import { ActorAssuranceLevel, AccessPolicies, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
+import { AccessPolicies, ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata, createStudentActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
 import { Announcement, AnnouncementStatus, AnnouncementTarget, CalendarEvent, CalendarEventKind, CalendarEventScopeKind, Guardian, MessageDelivery, Permission, StaffPermissionAssignment, AnnouncementTargetKind as Target } from '@edaya/core'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'

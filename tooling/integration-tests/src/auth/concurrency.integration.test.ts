@@ -73,13 +73,12 @@ async function createConcurrencyFixture() {
 
   // Offer subject and class details
   await app.baseService.entities.subjects.save(
-    new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+    new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' }),
   )
   const classSubject = await saveClassSubject(app, {
     id: 'class-math',
     classGroupId: 'class',
     subjectId: 'math',
-    gradeLevelSubjectId: 'gls-math',
   })
 
   const session = await saveLessonSession(app, {

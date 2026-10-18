@@ -45,13 +45,12 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' }),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-math',
       classGroupId: 'class',
       subjectId: 'math',
-      gradeLevelSubjectId: 'gls-math',
     })
     await app.baseService.entities.subjectMatters.save(
       new SubjectMatter({ id: 'fractions', subjectId: 'math', name: 'Fractions', sequenceOrder: 1 }),
@@ -239,7 +238,7 @@ describeIntegration('atomic workflow safeguards', () => {
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await app.baseService.entities.subjects.save(
-      new Subject({ id: 'general', schoolId: 'school', name: 'General' }),
+      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'general', schoolId: 'school', name: 'General' }),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-general',
@@ -283,13 +282,12 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject({ id: 'math', schoolId: 'school', name: 'Mathematics' }),
+      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' }),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-math',
       classGroupId: 'class',
       subjectId: 'math',
-      gradeLevelSubjectId: 'gls-math',
     })
     await saveSchedule(app, {
       id: 'weekly-math',

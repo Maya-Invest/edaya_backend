@@ -46,21 +46,24 @@ export async function scopeSelectionIsValid(repositories: SchoolRepositories, sc
     case 'school': case 'all': return true
     case 'student': return sameSchool(await repositories.students.findById(scope.studentId))
     case 'grade_level': return sameSchool(await repositories.gradeLevels.findById(scope.gradeLevelId))
-    case 'grade_level_subject': {
+    case 'subject': {
       if (!sameSchool(await repositories.gradeLevels.findById(scope.gradeLevelId)))
         return false
-      if (!scope.gradeLevelSubjectId)
-        return true
-      const subject = await repositories.gradeLevelSubjects.findById(scope.gradeLevelSubjectId)
-      return Boolean(subject && subject.gradeLevelId === scope.gradeLevelId && subject.academicYearId === academicYearId)
+      if (scope.subjectId) {
+        const subject = await repositories.subjects.findById(scope.subjectId)
+        if (!subject || subject.schoolId !== schoolId || subject.gradeLevelId !== scope.gradeLevelId || subject.academicYearId !== academicYearId)
+          return false
+      }
+      if (scope.classGroupId) {
+        const group = await repositories.classGroups.findById(scope.classGroupId)
+        if (!group || group.schoolId !== schoolId || group.gradeLevelId !== scope.gradeLevelId || group.academicYearId !== academicYearId)
+          return false
+      }
+      return true
     }
-    case 'class_group': case 'class_subject': {
+    case 'class_group': {
       const group = await repositories.classGroups.findById(scope.classGroupId)
-      if (!group || group.schoolId !== schoolId || group.academicYearId !== academicYearId)
-        return false
-      if (scope.kind !== 'class_subject' || !scope.classSubjectId)
-        return true
-      return (await repositories.classSubjects.findById(scope.classSubjectId))?.classGroupId === group.id
+      return Boolean(group && group.schoolId === schoolId && group.academicYearId === academicYearId)
     }
     case 'activity': {
       if (scope.activityId && !sameSchool(await repositories.activities.findById(scope.activityId)))

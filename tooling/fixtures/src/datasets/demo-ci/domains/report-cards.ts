@@ -7,6 +7,7 @@ import type {
 import { rangesFromThresholds, ReportCardDefinitionKind, ReportCardDefinitionSectionRole, ReportCardDefinitionStatus } from '@edaya/core'
 import { DEMO_CI_ACADEMIC_YEAR_ID, DEMO_CI_SCHOOL_ID } from '../../../shared/ids'
 import { demoCiClassRosters } from '../rosters'
+import { demoCiSubjectId } from '../school'
 
 export const demoCiGradeScales = [
   {
@@ -95,7 +96,7 @@ function buildSections(
       weight: 0,
       subjectIds: [],
     },
-  ]
+  ].map(section => ({ ...section, subjectIds: section.subjectIds.map(id => demoCiSubjectId(id, `ci-gl-${prefix.split('-').at(-1)}`)) }))
 }
 
 export const demoCiReportCardDefinitionFixtures = [

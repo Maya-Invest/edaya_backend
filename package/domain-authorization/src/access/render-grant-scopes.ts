@@ -13,16 +13,12 @@ async function label(facts: AccessFacts, scope: GrantScope): Promise<string> {
       return `${student.firstName} ${student.lastName}`
     }
     case 'class_group': return (await facts.one('classGroups', scope.classGroupId)).name
-    case 'class_subject': {
-      const group = await facts.one('classGroups', scope.classGroupId)
-      const subject = scope.classSubjectId ? await facts.one('classSubjects', scope.classSubjectId) : undefined
-      return `${group.name} / ${subject ? (await facts.one('subjects', subject.subjectId)).name : 'All subjects'}`
-    }
     case 'grade_level': return (await facts.one('gradeLevels', scope.gradeLevelId)).name
-    case 'grade_level_subject': {
+    case 'subject': {
       const grade = await facts.one('gradeLevels', scope.gradeLevelId)
-      const subject = scope.gradeLevelSubjectId ? await facts.one('gradeLevelSubjects', scope.gradeLevelSubjectId) : undefined
-      return `${grade.name} / ${subject ? (await facts.one('subjects', subject.subjectId)).name : 'All subjects'}`
+      const subject = scope.subjectId ? await facts.one('subjects', scope.subjectId) : undefined
+      const classLabel = scope.classGroupId ? (await facts.one('classGroups', scope.classGroupId)).name : 'All classes'
+      return `${grade.name} / ${subject?.name ?? 'All subjects'} / ${classLabel}`
     }
     case 'activity': {
       const activity = scope.activityId ? (await facts.one('activities', scope.activityId)).name : 'All activities'

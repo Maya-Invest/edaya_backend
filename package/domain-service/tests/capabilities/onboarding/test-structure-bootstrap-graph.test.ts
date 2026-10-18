@@ -56,17 +56,17 @@ describe('buildStructureBootstrapGraph', () => {
     const entries = curriculumEntriesForLevel(college, '4EME')
     expect(graph.gradeLevels).toHaveLength(1)
     expect(graph.classGroups).toHaveLength(2)
-    expect(graph.gradeLevelSubjects).toHaveLength(entries.length)
+    expect(graph.subjects).toHaveLength(entries.length)
     expect(graph.classSubjects).toHaveLength(entries.length * 2)
-    expect(graph.classSubjects.every(entry => entry.gradeLevelSubjectId)).toBe(true)
+    expect(graph.classSubjects.every(entry => entry.subjectId)).toBe(true)
     expect(graph.classSubjectMatters.length).toBeGreaterThan(0)
     expect(graph.subjectCount).toBe(graph.subjects.length)
     expect(graph.classSubjectCount).toBe(entries.length * 2)
 
     for (const classSubject of graph.classSubjects) {
-      const gls = graph.gradeLevelSubjects.find(entry => entry.id === classSubject.gradeLevelSubjectId)
+      const gls = graph.subjects.find(entry => entry.id === classSubject.subjectId)
       expect(gls).toBeTruthy()
-      expect(classSubject.subjectId).toBe(gls!.subjectId)
+      expect(classSubject.subjectId).toBe(gls!.id)
       expect(classSubject.isOffered).toBe(!gls!.isOptional)
     }
   })

@@ -9,7 +9,6 @@ const relatedFields: Record<string, PgTable> = {
   academicYearId: schema.academicYears,
   periodId: schema.academicPeriods,
   gradeLevelId: schema.gradeLevels,
-  gradeLevelSubjectId: schema.gradeLevelSubjects,
   subjectMatterId: schema.subjectMatters,
   classGroupId: schema.classGroups,
   classSubjectId: schema.classSubjects,
@@ -37,7 +36,7 @@ const relatedFields: Record<string, PgTable> = {
   resourceId: schema.resources,
   announcementId: schema.announcements,
 }
-const academicSubjectTables = new Set(['subject_matters', 'class_subjects', 'grade_level_subjects', 'report_card_definition_sections'])
+const academicSubjectTables = new Set(['class_subjects', 'subject_matters', 'report_card_definition_sections'])
 const anchors: Record<string, Array<[string, PgTable]>> = {
   staff_assignments: [
     ['classGroupId', schema.classGroups],

@@ -1,4 +1,4 @@
-import { ClassSubject, GradeLevelSubject, LessonSession } from '@edaya/core'
+import { ClassSubject, LessonSession, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 const lessonBase = {
@@ -36,11 +36,12 @@ describe('timetable preparation domain contracts', () => {
   })
 
   test('accepts nullable weekly workload on grade and class subjects', () => {
-    const gradeSubject = new GradeLevelSubject({
-      id: 'grade-subject-1',
+    const gradeSubject = new Subject({
+      id: 'subject-1',
+      schoolId: 'school-1',
+      name: 'Math',
       gradeLevelId: 'grade-1',
       academicYearId: 'year-1',
-      subjectId: 'subject-1',
       periodsPerWeek: 5,
     })
     const classSubject = new ClassSubject({

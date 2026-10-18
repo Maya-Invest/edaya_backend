@@ -2107,7 +2107,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/commands/offer-subject-to-class": {
+    "/core/commands/remove-subject-matter": {
         parameters: {
             query?: never;
             header?: never;
@@ -2116,15 +2116,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** offer-subject-to-class */
-        post: operations["commands.offerSubjectToClass"];
+        /** remove-subject-matter */
+        post: operations["commands.removeSubjectMatter"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/commands/assign-matter-to-class-subject": {
+    "/core/commands/remove-subject": {
         parameters: {
             query?: never;
             header?: never;
@@ -2133,15 +2133,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** assign-matter-to-class-subject */
-        post: operations["commands.assignMatterToClassSubject"];
+        /** remove-subject */
+        post: operations["commands.removeSubject"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/core/commands/offer-subject-to-grade-level": {
+    "/core/commands/update-subject": {
         parameters: {
             query?: never;
             header?: never;
@@ -2150,76 +2150,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** offer-subject-to-grade-level */
-        post: operations["commands.offerSubjectToGradeLevel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/commands/remove-subject-from-grade-level": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** remove-subject-from-grade-level */
-        post: operations["commands.removeSubjectFromGradeLevel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/commands/update-grade-level-subject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** update-grade-level-subject */
-        post: operations["commands.updateGradeLevelSubject"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/commands/assign-matter-to-grade-level-subject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** assign-matter-to-grade-level-subject */
-        post: operations["commands.assignMatterToGradeLevelSubject"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/commands/add-custom-class-subject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** add-custom-class-subject */
-        post: operations["commands.addCustomClassSubject"];
+        /** update-subject */
+        post: operations["commands.updateSubject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4770,6 +4702,91 @@ export interface paths {
         put?: never;
         /** get-school-finance-aging */
         post: operations["queries.getSchoolFinanceAging"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-finance-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-finance-overview */
+        post: operations["queries.getFinanceOverview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-fee-finance-overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-fee-finance-overview */
+        post: operations["queries.getFeeFinanceOverview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-finance-billing-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-finance-billing-page */
+        post: operations["queries.getFinanceBillingPage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-finance-payments-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-finance-payments-page */
+        post: operations["queries.getFinancePaymentsPage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-finance-billing-detail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-finance-billing-detail */
+        post: operations["queries.getFinanceBillingDetail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9009,74 +9026,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/core/entities/subjects/save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Save Subjects */
-        post: operations["entities.subjects.save"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subjects/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Delete Subjects */
-        post: operations["entities.subjects.delete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subjects/batch-save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch save Subjects */
-        post: operations["entities.subjects.batchSave"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subjects/batch-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch delete Subjects */
-        post: operations["entities.subjects.batchDelete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/core/entities/subject-categories/list": {
         parameters: {
             query?: never;
@@ -9273,210 +9222,6 @@ export interface paths {
         };
         /** Get Subject Matters */
         get: operations["entities.subjectMatters.get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subject-matters/save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Save Subject Matters */
-        post: operations["entities.subjectMatters.save"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subject-matters/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Delete Subject Matters */
-        post: operations["entities.subjectMatters.delete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subject-matters/batch-save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch save Subject Matters */
-        post: operations["entities.subjectMatters.batchSave"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/subject-matters/batch-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Batch delete Subject Matters */
-        post: operations["entities.subjectMatters.batchDelete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subjects/list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** List Grade Level Subjects */
-        post: operations["entities.gradeLevelSubjects.list"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subjects/one": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Find one Grade Level Subjects */
-        post: operations["entities.gradeLevelSubjects.one"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subjects/count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Count Grade Level Subjects */
-        post: operations["entities.gradeLevelSubjects.count"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subjects/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Grade Level Subjects */
-        get: operations["entities.gradeLevelSubjects.get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subject-matters/list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** List Grade Level Subject Matters */
-        post: operations["entities.gradeLevelSubjectMatters.list"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subject-matters/one": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Find one Grade Level Subject Matters */
-        post: operations["entities.gradeLevelSubjectMatters.one"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subject-matters/count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Count Grade Level Subject Matters */
-        post: operations["entities.gradeLevelSubjectMatters.count"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/core/entities/grade-level-subject-matters/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Grade Level Subject Matters */
-        get: operations["entities.gradeLevelSubjectMatters.get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -12616,25 +12361,21 @@ export interface components {
                     /** @enum {string} */
                     kind: "all";
                     /** @enum {string} */
-                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                    grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                 } | {
                     /** @enum {string} */
                     kind: "grade_level";
                     gradeLevelId: string;
                 } | {
                     /** @enum {string} */
-                    kind: "grade_level_subject";
+                    kind: "subject";
                     gradeLevelId: string;
-                    gradeLevelSubjectId?: string;
+                    subjectId?: string;
+                    classGroupId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "class_group";
                     classGroupId: string;
-                } | {
-                    /** @enum {string} */
-                    kind: "class_subject";
-                    classGroupId: string;
-                    classSubjectId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "activity";
@@ -12693,9 +12434,10 @@ export interface components {
             } | {
                 /** @enum {string} */
                 mode: "resources";
-                allowedKinds: ("grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student")[];
+                allowedKinds: ("grade_level" | "subject" | "class_group" | "activity" | "student")[];
                 /** @enum {boolean} */
                 allowAll: true;
+                subjectClassRequired?: boolean;
             } | {
                 /** @enum {string} */
                 mode: "relationship";
@@ -12734,25 +12476,21 @@ export interface components {
                         /** @enum {string} */
                         kind: "all";
                         /** @enum {string} */
-                        grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                        grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                     } | {
                         /** @enum {string} */
                         kind: "grade_level";
                         gradeLevelId: string;
                     } | {
                         /** @enum {string} */
-                        kind: "grade_level_subject";
+                        kind: "subject";
                         gradeLevelId: string;
-                        gradeLevelSubjectId?: string;
+                        subjectId?: string;
+                        classGroupId?: string;
                     } | {
                         /** @enum {string} */
                         kind: "class_group";
                         classGroupId: string;
-                    } | {
-                        /** @enum {string} */
-                        kind: "class_subject";
-                        classGroupId: string;
-                        classSubjectId?: string;
                     } | {
                         /** @enum {string} */
                         kind: "activity";
@@ -12780,25 +12518,21 @@ export interface components {
                     /** @enum {string} */
                     kind: "all";
                     /** @enum {string} */
-                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                    grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                 } | {
                     /** @enum {string} */
                     kind: "grade_level";
                     gradeLevelId: string;
                 } | {
                     /** @enum {string} */
-                    kind: "grade_level_subject";
+                    kind: "subject";
                     gradeLevelId: string;
-                    gradeLevelSubjectId?: string;
+                    subjectId?: string;
+                    classGroupId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "class_group";
                     classGroupId: string;
-                } | {
-                    /** @enum {string} */
-                    kind: "class_subject";
-                    classGroupId: string;
-                    classSubjectId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "activity";
@@ -12817,25 +12551,21 @@ export interface components {
                     /** @enum {string} */
                     kind: "all";
                     /** @enum {string} */
-                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                    grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                 } | {
                     /** @enum {string} */
                     kind: "grade_level";
                     gradeLevelId: string;
                 } | {
                     /** @enum {string} */
-                    kind: "grade_level_subject";
+                    kind: "subject";
                     gradeLevelId: string;
-                    gradeLevelSubjectId?: string;
+                    subjectId?: string;
+                    classGroupId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "class_group";
                     classGroupId: string;
-                } | {
-                    /** @enum {string} */
-                    kind: "class_subject";
-                    classGroupId: string;
-                    classSubjectId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "activity";
@@ -12857,25 +12587,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -13155,25 +12881,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14039,25 +13761,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14087,25 +13805,21 @@ export interface components {
                     /** @enum {string} */
                     kind: "all";
                     /** @enum {string} */
-                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                    grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                 } | {
                     /** @enum {string} */
                     kind: "grade_level";
                     gradeLevelId: string;
                 } | {
                     /** @enum {string} */
-                    kind: "grade_level_subject";
+                    kind: "subject";
                     gradeLevelId: string;
-                    gradeLevelSubjectId?: string;
+                    subjectId?: string;
+                    classGroupId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "class_group";
                     classGroupId: string;
-                } | {
-                    /** @enum {string} */
-                    kind: "class_subject";
-                    classGroupId: string;
-                    classSubjectId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "activity";
@@ -14123,25 +13837,21 @@ export interface components {
                     /** @enum {string} */
                     kind: "all";
                     /** @enum {string} */
-                    grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                    grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
                 } | {
                     /** @enum {string} */
                     kind: "grade_level";
                     gradeLevelId: string;
                 } | {
                     /** @enum {string} */
-                    kind: "grade_level_subject";
+                    kind: "subject";
                     gradeLevelId: string;
-                    gradeLevelSubjectId?: string;
+                    subjectId?: string;
+                    classGroupId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "class_group";
                     classGroupId: string;
-                } | {
-                    /** @enum {string} */
-                    kind: "class_subject";
-                    classGroupId: string;
-                    classSubjectId?: string;
                 } | {
                     /** @enum {string} */
                     kind: "activity";
@@ -14176,25 +13886,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14226,25 +13932,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14290,25 +13992,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14364,25 +14062,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14419,25 +14113,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -14836,10 +14526,17 @@ export interface components {
         Subject: {
             id: string;
             schoolId: string;
+            gradeLevelId: string;
+            academicYearId: string;
             name: string;
             shortName?: string | null;
             code?: string | null;
-            defaultCoefficient?: number | null;
+            coefficient?: number | null;
+            periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
+            /** @default false */
+            isOptional: boolean;
             categoryId: string;
             /**
              * @default mint
@@ -14850,17 +14547,23 @@ export interface components {
         };
         SubjectConfigCommand: {
             id: string;
+            gradeLevelId: string;
+            academicYearId: string;
             name: string;
             shortName?: string | null;
             code?: string | null;
-            defaultCoefficient?: number | null;
+            coefficient?: number | null;
+            periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
+            isOptional?: boolean;
             categoryId: string;
-            /**
-             * @default mint
-             * @enum {string}
-             */
-            color: "mint" | "sky" | "warm";
+            /** @enum {string} */
+            color?: "mint" | "sky" | "warm";
             createdAt?: unknown;
+            classSubjectIdsByClassGroupId?: {
+                [key: string]: string;
+            };
         };
         SubjectCategory: {
             id: string;
@@ -14891,124 +14594,36 @@ export interface components {
             estimatedHours?: number | null;
             createdAt?: unknown;
         };
+        RemoveSubjectMatterCommand: {
+            subjectMatterId: string;
+        };
+        RemoveSubjectCommand: {
+            subjectId: string;
+        };
+        UpdateSubjectCommand: {
+            name?: string;
+            shortName?: string | null;
+            code?: string | null;
+            coefficient?: number | null;
+            periodsPerWeek?: number | null;
+            minPeriodSpan?: number | null;
+            maxPeriodSpan?: number | null;
+            isOptional?: boolean;
+            categoryId?: string;
+            /** @enum {string} */
+            color?: "mint" | "sky" | "warm";
+            subjectId: string;
+        };
         ClassSubject: {
             id: string;
             classGroupId: string;
             subjectId: string;
-            gradeLevelSubjectId?: string | null;
             coefficient?: number | null;
             periodsPerWeek?: number | null;
             minPeriodSpan?: number | null;
             maxPeriodSpan?: number | null;
             /** @default 0 */
             completedPercentage: number | null;
-            /** @default true */
-            isOffered: boolean;
-            createdAt?: unknown;
-        };
-        OfferSubjectToClassCommand: {
-            id: string;
-            classGroupId: string;
-            subjectId: string;
-            gradeLevelSubjectId?: string | null;
-            coefficient?: number | null;
-            periodsPerWeek?: number | null;
-            minPeriodSpan?: number | null;
-            maxPeriodSpan?: number | null;
-            /** @default true */
-            isOffered: boolean;
-            createdAt?: unknown;
-        };
-        ClassSubjectMatter: {
-            id: string;
-            classSubjectId: string;
-            subjectMatterId: string;
-            /** @enum {string} */
-            status: "not_started" | "in_progress" | "completed";
-            completedPercentage: number;
-            updatedByStaffId?: string | null;
-            startedAt?: unknown;
-            completedAt?: unknown;
-            notes?: string | null;
-            updatedAt?: unknown;
-        };
-        AssignMatterToClassSubjectCommand: {
-            id: string;
-            classSubjectId: string;
-            subjectMatterId: string;
-            notes?: string | null;
-            updatedAt?: unknown;
-        };
-        GradeLevelSubject: {
-            id: string;
-            gradeLevelId: string;
-            academicYearId: string;
-            subjectId: string;
-            coefficient?: number | null;
-            periodsPerWeek?: number | null;
-            minPeriodSpan?: number | null;
-            maxPeriodSpan?: number | null;
-            /** @default false */
-            isOptional: boolean;
-            createdAt?: unknown;
-        };
-        OfferSubjectToGradeLevelCommand: {
-            id: string;
-            gradeLevelId: string;
-            academicYearId: string;
-            subjectId: string;
-            coefficient?: number | null;
-            periodsPerWeek?: number | null;
-            minPeriodSpan?: number | null;
-            maxPeriodSpan?: number | null;
-            /** @default false */
-            isOptional: boolean;
-            createdAt?: unknown;
-            classSubjectIdsByClassGroupId?: {
-                [key: string]: string;
-            };
-            classSubjectMatterIdsByClassGroupId?: {
-                [key: string]: string;
-            };
-        };
-        RemoveSubjectFromGradeLevelCommand: {
-            gradeLevelSubjectId: string;
-        };
-        UpdateGradeLevelSubjectCommand: {
-            gradeLevelSubjectId: string;
-            coefficient?: number;
-            isOptional?: boolean;
-            name?: string;
-            categoryId?: string;
-            /** @enum {string} */
-            color?: "mint" | "sky" | "warm";
-            periodsPerWeek?: number | null;
-            minPeriodSpan?: number | null;
-            maxPeriodSpan?: number | null;
-        };
-        GradeLevelSubjectMatter: {
-            id: string;
-            gradeLevelSubjectId: string;
-            subjectMatterId: string;
-            createdAt?: unknown;
-        };
-        AssignMatterToGradeLevelSubjectCommand: {
-            id: string;
-            gradeLevelSubjectId: string;
-            subjectMatterId: string;
-            createdAt?: unknown;
-            classSubjectMatterIdsByClassGroupId?: {
-                [key: string]: string;
-            };
-        };
-        AddCustomClassSubjectCommand: {
-            id: string;
-            classGroupId: string;
-            subjectId: string;
-            coefficient?: number | null;
-            periodsPerWeek?: number | null;
-            minPeriodSpan?: number | null;
-            maxPeriodSpan?: number | null;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -18576,6 +18191,194 @@ export interface components {
             schoolId: string;
             academicYearId?: string;
         };
+        FinanceOverviewResponse: {
+            schoolId: string;
+            academicYearId: string;
+            currency: string;
+            /** @enum {string} */
+            scope: "authorized";
+            received: number;
+            refunded: number;
+            netCollected: number;
+            outstanding: number;
+            overdue: number;
+            overdueStudents: number;
+            availableCredit: number;
+            studentsAssigned: number;
+            netBilled: number;
+            applied: number;
+        };
+        GetFinanceOverviewQuery: {
+            schoolId: string;
+            academicYearId: string;
+        };
+        GetFeeFinanceOverviewQuery: {
+            schoolId: string;
+            academicYearId: string;
+            feeId: string;
+        };
+        FinanceBillingRow: {
+            classId: string | null;
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            studentId: string;
+            studentName: string;
+            enrollmentId: string;
+            catalogServiceId: string;
+            label: string;
+            currency: string;
+            status: string;
+            createdAt: string;
+            expectedAmount: number;
+            adjustmentAmount: number;
+            waiverAmount: number;
+            allocatedAmount: number;
+            netAmount: number;
+            remaining: number;
+            overdue: number;
+            availableCredit: number;
+            dueDate: string | null;
+            adjustmentReason: string | null;
+            adjustedAt: string | null;
+            adjustedById: string | null;
+            waiverReason: string | null;
+            waivedAt: string | null;
+            waivedById: string | null;
+            cancellationReason: string | null;
+            cancelledAt: string | null;
+            cancelledById: string | null;
+            accountId: string | null;
+            installments: {
+                id: string;
+                label: string;
+                expectedAmount: number;
+                dueDate?: string | null;
+            }[];
+        };
+        FinanceBillingPageResponse: {
+            rows: components["schemas"]["FinanceBillingRow"][];
+            total: number;
+        };
+        GetFinanceBillingPageQuery: {
+            schoolId: string;
+            academicYearId: string;
+            /** Format: date */
+            dueFrom?: string;
+            /** Format: date */
+            dueTo?: string;
+            paymentId?: string;
+            studentId?: string;
+            feeId?: string;
+            search?: string;
+            classGroupId?: string;
+            status?: string;
+            /** @enum {string} */
+            due?: "overdue" | "outstanding";
+            /** @enum {string} */
+            sort?: "student" | "label" | "net" | "applied" | "remaining" | "dueDate" | "status" | "paymentDate" | "amount";
+            /** @enum {string} */
+            direction?: "asc" | "desc";
+            /** @default 0 */
+            offset: number;
+            /** @default 50 */
+            limit: number;
+        };
+        FinancePaymentRow: {
+            classId: string | null;
+            hasActiveAllocations: boolean;
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            accountId: string;
+            studentId: string;
+            studentName: string;
+            kind: string;
+            currency: string;
+            paymentDate: string;
+            method: string;
+            status: string;
+            createdAt: string;
+            reference: string | null;
+            notes: string | null;
+            recordedById: string | null;
+            reversedAt: string | null;
+            reversedById: string | null;
+            reversedByPaymentId: string | null;
+            amount: number;
+        };
+        FinancePaymentsPageResponse: {
+            rows: components["schemas"]["FinancePaymentRow"][];
+            total: number;
+        };
+        GetFinancePaymentsPageQuery: {
+            schoolId: string;
+            academicYearId: string;
+            /** Format: date */
+            dueFrom?: string;
+            /** Format: date */
+            dueTo?: string;
+            paymentId?: string;
+            studentId?: string;
+            feeId?: string;
+            search?: string;
+            classGroupId?: string;
+            status?: string;
+            /** @enum {string} */
+            due?: "overdue" | "outstanding";
+            /** @enum {string} */
+            sort?: "student" | "label" | "net" | "applied" | "remaining" | "dueDate" | "status" | "paymentDate" | "amount";
+            /** @enum {string} */
+            direction?: "asc" | "desc";
+            /** @default 0 */
+            offset: number;
+            /** @default 50 */
+            limit: number;
+        };
+        FinanceBillingDetailResponse: {
+            classId: string | null;
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            studentId: string;
+            studentName: string;
+            enrollmentId: string;
+            catalogServiceId: string;
+            label: string;
+            currency: string;
+            status: string;
+            createdAt: string;
+            expectedAmount: number;
+            adjustmentAmount: number;
+            waiverAmount: number;
+            allocatedAmount: number;
+            netAmount: number;
+            remaining: number;
+            overdue: number;
+            availableCredit: number;
+            dueDate: string | null;
+            adjustmentReason: string | null;
+            adjustedAt: string | null;
+            adjustedById: string | null;
+            waiverReason: string | null;
+            waivedAt: string | null;
+            waivedById: string | null;
+            cancellationReason: string | null;
+            cancelledAt: string | null;
+            cancelledById: string | null;
+            accountId: string | null;
+            installments: {
+                id: string;
+                label: string;
+                expectedAmount: number;
+                dueDate?: string | null;
+            }[];
+        } | null;
+        GetFinanceBillingDetailQuery: {
+            schoolId: string;
+            academicYearId: string;
+            chargeId: string;
+        };
         FinanceReconciliationResponse: {
             schoolId: string;
             academicYearId?: string;
@@ -19057,25 +18860,21 @@ export interface components {
                 /** @enum {string} */
                 kind: "all";
                 /** @enum {string} */
-                grain: "grade_level" | "grade_level_subject" | "class_group" | "class_subject" | "activity" | "student";
+                grain: "grade_level" | "subject" | "class_group" | "activity" | "student";
             } | {
                 /** @enum {string} */
                 kind: "grade_level";
                 gradeLevelId: string;
             } | {
                 /** @enum {string} */
-                kind: "grade_level_subject";
+                kind: "subject";
                 gradeLevelId: string;
-                gradeLevelSubjectId?: string;
+                subjectId?: string;
+                classGroupId?: string;
             } | {
                 /** @enum {string} */
                 kind: "class_group";
                 classGroupId: string;
-            } | {
-                /** @enum {string} */
-                kind: "class_subject";
-                classGroupId: string;
-                classSubjectId?: string;
             } | {
                 /** @enum {string} */
                 kind: "activity";
@@ -19102,8 +18901,8 @@ export interface components {
         Filter_12: Record<string, never>;
         Filter_13: Record<string, never>;
         Filter_14: Record<string, never>;
-        Filter_64: Record<string, never>;
-        Filter_63: Record<string, never>;
+        Filter_62: Record<string, never>;
+        Filter_61: Record<string, never>;
         Filter_15: Record<string, never>;
         Filter_16: Record<string, never>;
         ResourcesBatchSave: {
@@ -19176,37 +18975,42 @@ export interface components {
         };
         Filter_32: Record<string, never>;
         Filter_33: Record<string, never>;
-        SubjectsBatchSave: {
-            entities: components["schemas"]["Subject"][];
-        };
         Filter_34: Record<string, never>;
         SubjectCategoriesBatchSave: {
             entities: components["schemas"]["SubjectCategory"][];
         };
         Filter_35: Record<string, never>;
-        SubjectMattersBatchSave: {
-            entities: components["schemas"]["SubjectMatter"][];
-        };
-        Filter_38: Record<string, never>;
-        Filter_39: Record<string, never>;
         Filter_36: Record<string, never>;
         ClassGroupsBatchSave: {
             entities: components["schemas"]["ClassGroup"][];
         };
         Filter_37: Record<string, never>;
-        Filter_40: Record<string, never>;
+        ClassSubjectMatter: {
+            id: string;
+            classSubjectId: string;
+            subjectMatterId: string;
+            /** @enum {string} */
+            status: "not_started" | "in_progress" | "completed";
+            completedPercentage: number;
+            updatedByStaffId?: string | null;
+            startedAt?: unknown;
+            completedAt?: unknown;
+            notes?: string | null;
+            updatedAt?: unknown;
+        };
+        Filter_38: Record<string, never>;
         ClassSubjectMattersBatchSave: {
             entities: components["schemas"]["ClassSubjectMatter"][];
         };
-        Filter_41: Record<string, never>;
+        Filter_39: Record<string, never>;
         ClassSubjectProgressBatchSave: {
             entities: components["schemas"]["ClassSubjectProgress"][];
         };
-        Filter_42: Record<string, never>;
+        Filter_40: Record<string, never>;
         ActivitiesBatchSave: {
             entities: components["schemas"]["Activity"][];
         };
-        Filter_43: Record<string, never>;
+        Filter_41: Record<string, never>;
         ActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ActivityEnrollment"][];
         };
@@ -19216,60 +19020,60 @@ export interface components {
             classGroupId: string;
             createdAt?: unknown;
         };
-        Filter_44: Record<string, never>;
+        Filter_42: Record<string, never>;
         ClassActivityEnrollmentsBatchSave: {
             entities: components["schemas"]["ClassActivityEnrollment"][];
         };
-        Filter_45: Record<string, never>;
+        Filter_43: Record<string, never>;
         AssessmentsBatchSave: {
             entities: components["schemas"]["Assessment"][];
         };
-        Filter_46: Record<string, never>;
-        Filter_47: Record<string, never>;
+        Filter_44: Record<string, never>;
+        Filter_45: Record<string, never>;
         GradeScalesBatchSave: {
             entities: components["schemas"]["GradeScale"][];
         };
-        Filter_48: Record<string, never>;
+        Filter_46: Record<string, never>;
         ReportCardDefinitionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinition"][];
         };
-        Filter_49: Record<string, never>;
+        Filter_47: Record<string, never>;
         ReportCardSectionsBatchSave: {
             entities: components["schemas"]["ReportCardDefinitionSection"][];
         };
+        Filter_48: Record<string, never>;
+        Filter_49: Record<string, never>;
         Filter_50: Record<string, never>;
         Filter_51: Record<string, never>;
-        Filter_52: Record<string, never>;
-        Filter_53: Record<string, never>;
         GuardiansBatchSave: {
             entities: components["schemas"]["Guardian"][];
         };
-        Filter_54: Record<string, never>;
+        Filter_52: Record<string, never>;
         GuardianStudentLinksBatchSave: {
             entities: components["schemas"]["GuardianStudentLink"][];
         };
-        Filter_56: Record<string, never>;
+        Filter_54: Record<string, never>;
         StudentNotesBatchSave: {
             entities: components["schemas"]["StudentNote"][];
         };
+        Filter_53: Record<string, never>;
         Filter_55: Record<string, never>;
-        Filter_57: Record<string, never>;
         StudentHealthProfilesBatchSave: {
             entities: components["schemas"]["StudentHealthProfile"][];
         };
-        Filter_58: Record<string, never>;
+        Filter_56: Record<string, never>;
         StudentDisciplinaryActionsBatchSave: {
             entities: components["schemas"]["StudentDisciplinaryAction"][];
         };
-        Filter_59: Record<string, never>;
+        Filter_57: Record<string, never>;
         DisciplinaryActionsBatchSave: {
             entities: components["schemas"]["DisciplinaryAction"][];
         };
-        Filter_60: Record<string, never>;
+        Filter_58: Record<string, never>;
         StudentIncidentInvolvementsBatchSave: {
             entities: components["schemas"]["StudentIncidentInvolvement"][];
         };
-        Filter_61: Record<string, never>;
+        Filter_59: Record<string, never>;
         IncidentsBatchSave: {
             entities: components["schemas"]["Incident"][];
         };
@@ -19343,7 +19147,7 @@ export interface components {
             createdAt?: unknown;
             updatedAt?: unknown;
         };
-        Filter_62: Record<string, never>;
+        Filter_60: Record<string, never>;
     };
     responses: never;
     parameters: never;
@@ -27641,255 +27445,21 @@ export interface operations {
             };
         };
     };
-    "commands.offerSubjectToClass": {
+    "commands.removeSubjectMatter": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description offer-subject-to-class payload */
+        /** @description remove-subject-matter payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["OfferSubjectToClassCommand"];
+                "application/json": components["schemas"]["RemoveSubjectMatterCommand"];
             };
         };
         responses: {
-            /** @description Executed offer-subject-to-class */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassSubject"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "commands.assignMatterToClassSubject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description assign-matter-to-class-subject payload */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["AssignMatterToClassSubjectCommand"];
-            };
-        };
-        responses: {
-            /** @description Executed assign-matter-to-class-subject */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassSubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "commands.offerSubjectToGradeLevel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description offer-subject-to-grade-level payload */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["OfferSubjectToGradeLevelCommand"];
-            };
-        };
-        responses: {
-            /** @description Executed offer-subject-to-grade-level */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubject"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "commands.removeSubjectFromGradeLevel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description remove-subject-from-grade-level payload */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RemoveSubjectFromGradeLevelCommand"];
-            };
-        };
-        responses: {
-            /** @description Executed remove-subject-from-grade-level */
+            /** @description Executed remove-subject-matter */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -27953,27 +27523,27 @@ export interface operations {
             };
         };
     };
-    "commands.updateGradeLevelSubject": {
+    "commands.removeSubject": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description update-grade-level-subject payload */
+        /** @description remove-subject payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["UpdateGradeLevelSubjectCommand"];
+                "application/json": components["schemas"]["RemoveSubjectCommand"];
             };
         };
         responses: {
-            /** @description Executed update-grade-level-subject */
+            /** @description Executed remove-subject */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GradeLevelSubject"];
+                    "application/json": components["schemas"]["CommandMessageResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -28031,105 +27601,27 @@ export interface operations {
             };
         };
     };
-    "commands.assignMatterToGradeLevelSubject": {
+    "commands.updateSubject": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description assign-matter-to-grade-level-subject payload */
+        /** @description update-subject payload */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["AssignMatterToGradeLevelSubjectCommand"];
+                "application/json": components["schemas"]["UpdateSubjectCommand"];
             };
         };
         responses: {
-            /** @description Executed assign-matter-to-grade-level-subject */
+            /** @description Executed update-subject */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GradeLevelSubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "commands.addCustomClassSubject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description add-custom-class-subject payload */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["AddCustomClassSubjectCommand"];
-            };
-        };
-        responses: {
-            /** @description Executed add-custom-class-subject */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClassSubject"];
+                    "application/json": components["schemas"]["Subject"];
                 };
             };
             /** @description Invalid request payload */
@@ -39887,6 +39379,396 @@ export interface operations {
             };
         };
     };
+    "queries.getFinanceOverview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-finance-overview payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinanceOverviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-finance-overview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceOverviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFeeFinanceOverview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-fee-finance-overview payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFeeFinanceOverviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-fee-finance-overview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceOverviewResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFinanceBillingPage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-finance-billing-page payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinanceBillingPageQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-finance-billing-page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceBillingPageResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFinancePaymentsPage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-finance-payments-page payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinancePaymentsPageQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-finance-payments-page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancePaymentsPageResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getFinanceBillingDetail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-finance-billing-detail payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFinanceBillingDetailQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-finance-billing-detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceBillingDetailResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "queries.getFinanceReconciliation": {
         parameters: {
             query?: never;
@@ -50249,7 +50131,7 @@ export interface operations {
         /** @description StaffManualPermissionAssignment query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_64"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50335,7 +50217,7 @@ export interface operations {
         /** @description StaffManualPermissionAssignment query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_64"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50432,7 +50314,7 @@ export interface operations {
         /** @description StaffManualPermissionAssignment query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_64"] & {
+                "application/json": components["schemas"]["Filter_62"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50606,7 +50488,7 @@ export interface operations {
         /** @description StaffPermissionScopeDefaults query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_63"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50692,7 +50574,7 @@ export interface operations {
         /** @description StaffPermissionScopeDefaults query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_63"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -50789,7 +50671,7 @@ export interface operations {
         /** @description StaffPermissionScopeDefaults query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_63"] & {
+                "application/json": components["schemas"]["Filter_61"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -61476,346 +61358,6 @@ export interface operations {
             };
         };
     };
-    "entities.subjects.save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subjects entity */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Subject"];
-            };
-        };
-        responses: {
-            /** @description Saved Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Subject"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjects.delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subjects delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityDelete"];
-            };
-        };
-        responses: {
-            /** @description Deleted Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjects.batchSave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subjects batch save request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["SubjectsBatchSave"];
-            };
-        };
-        responses: {
-            /** @description Batch saved Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjects.batchDelete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subjects batch delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityBatchDelete"];
-            };
-        };
-        responses: {
-            /** @description Batch deleted Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
     "entities.subjectCategories.list": {
         parameters: {
             query?: never;
@@ -62838,1060 +62380,6 @@ export interface operations {
                 };
             };
             /** @description Subject Matters not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjectMatters.save": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subject Matters entity */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["SubjectMatter"];
-            };
-        };
-        responses: {
-            /** @description Saved Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjectMatters.delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subject Matters delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityDelete"];
-            };
-        };
-        responses: {
-            /** @description Deleted Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjectMatters.batchSave": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subject Matters batch save request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["SubjectMattersBatchSave"];
-            };
-        };
-        responses: {
-            /** @description Batch saved Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Use a domain command for this entity */
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.subjectMatters.batchDelete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Subject Matters batch delete request */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CoreEntityBatchDelete"];
-            };
-        };
-        responses: {
-            /** @description Batch deleted Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjects.list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subjects query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_38"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Listed Grade Level Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubject"][];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjects.one": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subjects query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_38"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Found Grade Level Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubject"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Grade Level Subjects not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjects.count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subjects query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_38"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Counted Grade Level Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        count: number;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjects.get": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Fetched Grade Level Subjects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubject"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Grade Level Subjects not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjectMatters.list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subject Matters query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_39"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Listed Grade Level Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubjectMatter"][];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjectMatters.one": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subject Matters query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_39"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Found Grade Level Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Grade Level Subject Matters not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjectMatters.count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Grade Level Subject Matters query */
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["Filter_39"] & {
-                    $orderBy?: {
-                        field: string;
-                        /** @enum {string} */
-                        direction: "asc" | "desc";
-                    }[];
-                    $limit?: number;
-                    $offset?: number;
-                };
-            };
-        };
-        responses: {
-            /** @description Counted Grade Level Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        count: number;
-                    };
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Business rule violation */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
-                };
-            };
-            /** @description Internal server error occurred */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-        };
-    };
-    "entities.gradeLevelSubjectMatters.get": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Fetched Grade Level Subject Matters */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GradeLevelSubjectMatter"];
-                };
-            };
-            /** @description Invalid request payload */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Missing or invalid authorization session */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Access denied due to authorization policies */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        message: string;
-                    };
-                };
-            };
-            /** @description Grade Level Subject Matters not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -65148,7 +63636,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65234,7 +63722,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65331,7 +63819,7 @@ export interface operations {
         /** @description Class Subject Matters query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_40"] & {
+                "application/json": components["schemas"]["Filter_38"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65845,7 +64333,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -65931,7 +64419,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66028,7 +64516,7 @@ export interface operations {
         /** @description Class Subject Progress query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_41"] & {
+                "application/json": components["schemas"]["Filter_39"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66542,7 +65030,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66628,7 +65116,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -66725,7 +65213,7 @@ export interface operations {
         /** @description Activities query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_42"] & {
+                "application/json": components["schemas"]["Filter_40"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67239,7 +65727,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67325,7 +65813,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67422,7 +65910,7 @@ export interface operations {
         /** @description Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_43"] & {
+                "application/json": components["schemas"]["Filter_41"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -67936,7 +66424,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68022,7 +66510,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68119,7 +66607,7 @@ export interface operations {
         /** @description Class Activity Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_44"] & {
+                "application/json": components["schemas"]["Filter_42"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68633,7 +67121,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68719,7 +67207,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -68816,7 +67304,7 @@ export interface operations {
         /** @description Assessments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_45"] & {
+                "application/json": components["schemas"]["Filter_43"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69330,7 +67818,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69416,7 +67904,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69513,7 +68001,7 @@ export interface operations {
         /** @description Assessment Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_46"] & {
+                "application/json": components["schemas"]["Filter_44"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69687,7 +68175,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69773,7 +68261,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -69870,7 +68358,7 @@ export interface operations {
         /** @description Grade Scales query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_47"] & {
+                "application/json": components["schemas"]["Filter_45"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -70384,7 +68872,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -70470,7 +68958,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -70567,7 +69055,7 @@ export interface operations {
         /** @description Report Card Definitions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_48"] & {
+                "application/json": components["schemas"]["Filter_46"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71081,7 +69569,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71167,7 +69655,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71264,7 +69752,7 @@ export interface operations {
         /** @description Report Card Sections query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_49"] & {
+                "application/json": components["schemas"]["Filter_47"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71778,7 +70266,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71864,7 +70352,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -71961,7 +70449,7 @@ export interface operations {
         /** @description Report Card Results query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_50"] & {
+                "application/json": components["schemas"]["Filter_48"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72135,7 +70623,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72221,7 +70709,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72318,7 +70806,7 @@ export interface operations {
         /** @description Students query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_51"] & {
+                "application/json": components["schemas"]["Filter_49"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72492,7 +70980,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72578,7 +71066,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72675,7 +71163,7 @@ export interface operations {
         /** @description Student Enrollments query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_52"] & {
+                "application/json": components["schemas"]["Filter_50"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72849,7 +71337,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -72935,7 +71423,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -73032,7 +71520,7 @@ export interface operations {
         /** @description Guardians query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_53"] & {
+                "application/json": components["schemas"]["Filter_51"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -73546,7 +72034,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -73632,7 +72120,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -73729,7 +72217,7 @@ export interface operations {
         /** @description Guardian Student Links query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_54"] & {
+                "application/json": components["schemas"]["Filter_52"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -74243,7 +72731,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -74329,7 +72817,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -74426,7 +72914,7 @@ export interface operations {
         /** @description Student Notes query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_56"] & {
+                "application/json": components["schemas"]["Filter_54"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -74940,7 +73428,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75026,7 +73514,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75123,7 +73611,7 @@ export interface operations {
         /** @description Student Photo Submissions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_55"] & {
+                "application/json": components["schemas"]["Filter_53"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75297,7 +73785,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75383,7 +73871,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75480,7 +73968,7 @@ export interface operations {
         /** @description Student Health Profiles query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_57"] & {
+                "application/json": components["schemas"]["Filter_55"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -75994,7 +74482,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -76080,7 +74568,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -76177,7 +74665,7 @@ export interface operations {
         /** @description Student Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_58"] & {
+                "application/json": components["schemas"]["Filter_56"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -76691,7 +75179,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -76777,7 +75265,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -76874,7 +75362,7 @@ export interface operations {
         /** @description Disciplinary Actions query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_59"] & {
+                "application/json": components["schemas"]["Filter_57"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -77388,7 +75876,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -77474,7 +75962,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -77571,7 +76059,7 @@ export interface operations {
         /** @description Student Incident Involvements query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_60"] & {
+                "application/json": components["schemas"]["Filter_58"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78085,7 +76573,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78171,7 +76659,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78268,7 +76756,7 @@ export interface operations {
         /** @description Incidents query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_61"] & {
+                "application/json": components["schemas"]["Filter_59"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78782,7 +77270,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_62"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78868,7 +77356,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_62"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */
@@ -78965,7 +77453,7 @@ export interface operations {
         /** @description Document Issuances query */
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Filter_62"] & {
+                "application/json": components["schemas"]["Filter_60"] & {
                     $orderBy?: {
                         field: string;
                         /** @enum {string} */

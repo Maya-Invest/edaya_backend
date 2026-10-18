@@ -50,8 +50,6 @@ const classResources = new Set<CoreEntityKey>([
   'subjects',
   'subjectMatters',
   'gradeLevels',
-  'gradeLevelSubjects',
-  'gradeLevelSubjectMatters',
   'schedules',
   'lessonSessions',
   'activitySessions',
@@ -126,7 +124,7 @@ export async function teacherPolicy(facts: AccessFacts, action: P, resource: Cor
   }
   if (resource !== undefined && !teacherResources.has(resource))
     return []
-  const subjectClauses: ResourceAccessClause[] = teaching.subjects.map(subject => ({ target: { kind: 'class_subject', ...subject }, academicYearId: teaching.year }))
+  const subjectClauses: ResourceAccessClause[] = teaching.subjects.map(({ gradeLevelId, subjectId, classGroupId }) => ({ target: { kind: 'subject', gradeLevelId, subjectId, classGroupId }, academicYearId: teaching.year }))
   const homeroomClauses: ResourceAccessClause[] = teaching.homerooms.map(classGroupId => ({ target: { kind: 'class_group', classGroupId }, academicYearId: teaching.year }))
   if (intent === 'read') {
     if ([P.CLASS_LOGBOOK_READ].includes(action))

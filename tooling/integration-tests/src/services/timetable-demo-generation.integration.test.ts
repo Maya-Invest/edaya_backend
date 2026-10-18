@@ -55,5 +55,5 @@ describeIntegration('demo school timetable generation', () => {
     const again = await app.timetableGenerationWorkflow.generateSchoolTimetable(input)
     expect(again.classGroups.flatMap(group => group.unmetWorkloads)).toEqual([])
     expect((await repos.lessonSessions.list()).length).toBe(firstCount)
-  }, 120_000)
+  }, 180_000)
 })

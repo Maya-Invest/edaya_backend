@@ -42,7 +42,7 @@ async function validateReportCardSectionSave(
     throw new BusinessRuleViolationError('REPORT_SECTION_SCOPE_FIXED', 'A section cannot move to another report model')
   if (section.subjectId) {
     const subject = await repositories.subjects.findById(section.subjectId)
-    if (!subject || subject.schoolId !== definition.schoolId)
+    if (!subject || subject.schoolId !== definition.schoolId || subject.gradeLevelId !== definition.gradeLevelId || subject.academicYearId !== definition.academicYearId)
       denyResourceAccess()
   }
   if (section.kind === ReportCardDefinitionSectionKind.Subject && await repositories.sections.count({ parentSectionId: section.id }))

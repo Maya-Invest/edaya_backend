@@ -22,8 +22,6 @@ import type {
   DisciplinaryAction,
   DocumentIssuance,
   GradeLevel,
-  GradeLevelSubject,
-  GradeLevelSubjectMatter,
   GradeScale,
   Guardian,
   GuardianStudentLink,
@@ -103,8 +101,6 @@ export interface CoreEntityMap {
   subjects: Subject
   subjectCategories: SubjectCategoryEntity
   subjectMatters: SubjectMatter
-  gradeLevelSubjects: GradeLevelSubject
-  gradeLevelSubjectMatters: GradeLevelSubjectMatter
   classGroups: ClassGroup
   classSubjects: ClassSubject
   classSubjectMatters: ClassSubjectMatter
@@ -182,8 +178,6 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'subjects',
   'subjectCategories',
   'subjectMatters',
-  'gradeLevelSubjects',
-  'gradeLevelSubjectMatters',
   'classGroups',
   'classSubjects',
   'classSubjectMatters',

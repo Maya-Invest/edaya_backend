@@ -183,6 +183,7 @@ export function definePerformanceIndexes(tableName: string, table: Record<string
     case 'subjects':
       return [
         index('subjects_school_id_idx').on(col(table, 'schoolId')),
+        index('subjects_grade_year_idx').on(col(table, 'gradeLevelId'), col(table, 'academicYearId')),
         index('subjects_category_id_idx').on(col(table, 'categoryId')),
       ]
     case 'subject_matters':

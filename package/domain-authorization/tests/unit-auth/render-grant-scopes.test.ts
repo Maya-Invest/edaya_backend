@@ -17,18 +17,18 @@ describe('typed grant scope labels', () => {
 
   test('labels typed class and subject selections and explicitly marks stale targets', async () => {
     const scopes = await renderGrantScopes(facts(), { academicYearId: 'year-a', permission: Permission.ASSESSMENT_MANAGE, scopes: [
-      { kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-a' },
-      { kind: 'class_subject', classGroupId: 'class-a' },
-      { kind: 'class_subject', classGroupId: 'missing' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'missing' },
     ] })
-    expect(scopes.map(row => [row.label, row.missing])).toEqual([['A / Math', false], ['A / All subjects', false], ['Unavailable resource', true]])
+    expect(scopes.map(row => [row.label, row.missing])).toEqual([['A / Math / A', false], ['A / All subjects / A', false], ['Unavailable resource', true]])
   })
 
   test('foreign, wrong-year and mismatched-parent targets do not disclose resource labels', async () => {
     const scopes = await renderGrantScopes(facts(), { academicYearId: 'year-a', permission: Permission.ASSESSMENT_MANAGE, scopes: [
-      { kind: 'class_subject', classGroupId: 'class-b', classSubjectId: 'math-b' },
-      { kind: 'class_subject', classGroupId: 'class-old' },
-      { kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-other' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-b', subjectId: 'foreign-math' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-old' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math-other' },
     ] })
     expect(scopes.every(scope => scope.missing && scope.label === 'Unavailable resource')).toBe(true)
   })
@@ -44,11 +44,11 @@ describe('typed grant scope labels', () => {
     const scopes = await renderScopeSelections(facts(), { academicYearId: 'year-a', scopes: [
       { kind: 'all', grain: 'student' },
       { kind: 'grade_level', gradeLevelId: 'level-a' },
-      { kind: 'grade_level_subject', gradeLevelId: 'level-a' },
+      { kind: 'subject', gradeLevelId: 'level-a' },
       { kind: 'class_group', classGroupId: 'class-a' },
       { kind: 'activity', classGroupId: 'class-a' },
     ] })
-    expect(scopes.map(row => row.label)).toEqual(['All student resources', 'A', 'A / All subjects', 'A', 'A / All activities'])
+    expect(scopes.map(row => row.label)).toEqual(['All student resources', 'A', 'A / All subjects / All classes', 'A', 'A / All activities'])
     expect(scopes.every(row => !row.missing)).toBe(true)
     expect(await renderScopeSelections(facts(), { academicYearId: 'year-a', scopes: [] })).toEqual([])
   })
@@ -57,7 +57,7 @@ describe('typed grant scope labels', () => {
     const scopes = await renderScopeSelections(facts(), { academicYearId: 'year-a', scopes: [
       { kind: 'grade_level', gradeLevelId: 'level-b' },
       { kind: 'class_group', classGroupId: 'class-old' },
-      { kind: 'class_subject', classGroupId: 'class-a', classSubjectId: 'math-other' },
+      { kind: 'subject', gradeLevelId: 'level-a', classGroupId: 'class-a', subjectId: 'math-other' },
       { kind: 'activity', activityId: 'deleted' },
       { kind: 'student', studentId: 'deleted' },
     ] })

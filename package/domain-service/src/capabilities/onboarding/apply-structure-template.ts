@@ -5,7 +5,7 @@ import type { ClassNamingMode } from './structure-naming'
 import type { StructureTemplateCurriculumEntry, StructureTemplateDefinition, StructureTemplateId } from './structure-template-types'
 import { randomUUID } from 'node:crypto'
 import { requireActorSchoolId } from '@edaya/authorization'
-import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, GradeLevelSubject, GradeLevelSubjectMatter, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core'
+import { BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, GradeLevel, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core'
 
 import { applyReportCardsFromTemplate, collectLevelSubjects } from './apply-report-cards-from-template'
 import { ensureAcademicPeriodsFromTemplates } from './ensure-academic-periods-from-template'
@@ -41,8 +41,6 @@ export interface StructureBootstrapGraph {
   gradeLevels: GradeLevel[]
   subjects: Subject[]
   subjectMatters: SubjectMatter[]
-  gradeLevelSubjects: GradeLevelSubject[]
-  gradeLevelSubjectMatters: GradeLevelSubjectMatter[]
   classGroups: ClassGroup[]
   classSubjects: ClassSubject[]
   classSubjectMatters: ClassSubjectMatter[]
@@ -80,11 +78,6 @@ function subjectCategory(domain: string): SubjectCategory {
 
 function subjectColor(domain: string): SubjectColor {
   return DOMAIN_TO_COLOR[domain] ?? SubjectColor.Mint
-}
-
-function catalogSubjectKey(entry: StructureTemplateCurriculumEntry): string {
-  // Same subject code → one school catalog subject. Per-level programme lives on matters.
-  return entry.longName ?? entry.subjectCode
 }
 
 function catalogSubjectName(
@@ -195,14 +188,11 @@ export async function buildStructureBootstrapGraph(
   const gradeLevels: GradeLevel[] = []
   const subjects: Subject[] = []
   const subjectMatters: SubjectMatter[] = []
-  const gradeLevelSubjects: GradeLevelSubject[] = []
-  const gradeLevelSubjectMatters: GradeLevelSubjectMatter[] = []
   const classGroups: ClassGroup[] = []
   const classSubjects: ClassSubject[] = []
   const classSubjectMatters: ClassSubjectMatter[] = []
   const appliedLevels: AppliedStructureLevelSubjects[] = []
 
-  const subjectIds = new Map<string, string>()
   const matterIdsByKey = new Map<string, string>()
   const usedClassGroupIds = new Set<string>()
   const classSiblingCountByGradeSeed = new Map<string, number>()
@@ -210,12 +200,8 @@ export async function buildStructureBootstrapGraph(
   function ensureSubject(
     template: StructureTemplateDefinition,
     entry: StructureTemplateCurriculumEntry,
+    gradeLevelId: string,
   ): string {
-    const catalogKey = catalogSubjectKey(entry)
-    const existing = subjectIds.get(catalogKey)
-    if (existing) {
-      return existing
-    }
     const subject = template.subjects.find(item => item.code === entry.subjectCode)
     if (!subject) {
       throw new BusinessRuleViolationError(
@@ -224,14 +210,16 @@ export async function buildStructureBootstrapGraph(
       )
     }
     const subjectId = randomUUID()
-    subjectIds.set(catalogKey, subjectId)
     subjects.push(new Subject({
       id: subjectId,
       schoolId,
       name: catalogSubjectName(subject, entry),
       shortName: subject.shortName,
       code: subject.code,
-      defaultCoefficient: entry.coefficient ?? subject.defaultCoefficient,
+      gradeLevelId,
+      academicYearId,
+      coefficient: entry.coefficient ?? subject.defaultCoefficient,
+      isOptional: entry.isOptional ?? false,
       category: subjectCategory(subject.domain),
       color: subjectColor(subject.domain),
     }))
@@ -287,35 +275,23 @@ export async function buildStructureBootstrapGraph(
     }))
 
     const entries = curriculumEntriesForLevel(level.template, level.levelCode)
-    const levelGlSubjects: Array<{
-      gradeLevelSubject: GradeLevelSubject
+    const levelSubjects: Array<{
+      subject: Subject
       matterIds: string[]
     }> = []
 
+    const levelSubjectIds = new Map<StructureTemplateCurriculumEntry, string>()
     for (const entry of entries) {
-      const subjectId = ensureSubject(level.template, entry)
-      const gradeLevelSubjectId = randomUUID()
-      const gradeLevelSubject = new GradeLevelSubject({
-        id: gradeLevelSubjectId,
-        gradeLevelId,
-        academicYearId,
-        subjectId,
-        coefficient: entry.coefficient,
-        isOptional: entry.isOptional ?? false,
-      })
-      gradeLevelSubjects.push(gradeLevelSubject)
+      const subjectId = ensureSubject(level.template, entry, gradeLevelId)
+      levelSubjectIds.set(entry, subjectId)
+      const subject = subjects.find(candidate => candidate.id === subjectId)!
 
       const matterIds: string[] = []
       for (const [matterIndex, matterName] of entry.matters.entries()) {
         const matterId = ensureMatter(subjectId, matterName, matterIndex + 1)
         matterIds.push(matterId)
-        gradeLevelSubjectMatters.push(new GradeLevelSubjectMatter({
-          id: randomUUID(),
-          gradeLevelSubjectId,
-          subjectMatterId: matterId,
-        }))
       }
-      levelGlSubjects.push({ gradeLevelSubject, matterIds })
+      levelSubjects.push({ subject, matterIds })
       classSubjectCount += level.classCount
     }
 
@@ -329,7 +305,7 @@ export async function buildStructureBootstrapGraph(
         level.template,
         level.levelCode,
         entries,
-        entry => subjectIds.get(catalogSubjectKey(entry)),
+        entry => levelSubjectIds.get(entry),
       ),
     })
 
@@ -360,19 +336,18 @@ export async function buildStructureBootstrapGraph(
         capacity: level.capacity,
       }))
 
-      for (const { gradeLevelSubject, matterIds } of levelGlSubjects) {
+      for (const { subject, matterIds } of levelSubjects) {
         const classSubjectId = randomUUID()
         classSubjects.push(new ClassSubject({
           id: classSubjectId,
           classGroupId,
-          subjectId: gradeLevelSubject.subjectId,
-          gradeLevelSubjectId: gradeLevelSubject.id,
-          coefficient: gradeLevelSubject.coefficient,
-          periodsPerWeek: gradeLevelSubject.periodsPerWeek,
-          minPeriodSpan: gradeLevelSubject.minPeriodSpan,
-          maxPeriodSpan: gradeLevelSubject.maxPeriodSpan,
+          subjectId: subject.id,
+          coefficient: subject.coefficient,
+          periodsPerWeek: subject.periodsPerWeek,
+          minPeriodSpan: subject.minPeriodSpan,
+          maxPeriodSpan: subject.maxPeriodSpan,
           completedPercentage: 0,
-          isOffered: !gradeLevelSubject.isOptional,
+          isOffered: !subject.isOptional,
         }))
 
         for (const matterId of matterIds) {
@@ -392,8 +367,6 @@ export async function buildStructureBootstrapGraph(
     gradeLevels,
     subjects,
     subjectMatters,
-    gradeLevelSubjects,
-    gradeLevelSubjectMatters,
     classGroups,
     classSubjects,
     classSubjectMatters,
@@ -423,8 +396,6 @@ async function persistCurriculumEntities(
   await repos.gradeLevels.batchSave(graph.gradeLevels)
   await repos.subjects.batchSave(graph.subjects)
   await repos.subjectMatters.batchSave(graph.subjectMatters)
-  await repos.gradeLevelSubjects.batchSave(graph.gradeLevelSubjects)
-  await repos.gradeLevelSubjectMatters.batchSave(graph.gradeLevelSubjectMatters)
 }
 
 async function persistClassMirrorEntities(

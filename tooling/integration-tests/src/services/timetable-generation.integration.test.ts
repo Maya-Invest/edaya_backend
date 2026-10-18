@@ -56,13 +56,7 @@ describeIntegration('timetable generation lifecycle', () => {
       gradeLevelId: 'grade',
       name: 'Grade 6 A',
     }))
-    await schoolRepositories.subjects.save(new Subject({
-      id: 'math',
-      schoolId: 'school',
-      name: 'Mathematics',
-      category: SubjectCategory.Scientific,
-      color: SubjectColor.Mint,
-    }))
+    await schoolRepositories.subjects.save(new Subject({ gradeLevelId: 'grade', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Mint }))
     await schoolRepositories.classSubjects.save(new ClassSubject({
       id: 'class-math',
       classGroupId: 'class',

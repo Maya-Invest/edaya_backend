@@ -3,6 +3,7 @@ import type { SubjectMatter } from '@edaya/core'
 import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 
+import { BusinessRuleViolationError } from '@edaya/core'
 import { config } from '../../entity-config'
 import { indirectTenant } from '../../entity-config/tenant'
 import { validateClassSubjectMatterDelete } from './class-subject-matter'
@@ -14,7 +15,7 @@ export const subjectMatterConfig: EntityConfigFactory<SubjectMatter> = ({ reposi
     tenant: subjectMatterTenant(),
     resource: 'subjectMatters',
     writeLockGroup: 'academic-state',
-    gates: { preDelete: removeUnusedMatterLinks },
+    gates: { preSave: validateSubjectMatterSave, preDelete: removeUnusedMatterLinks },
 
     atomicExecution,
   })
@@ -29,9 +30,14 @@ function subjectMatterTenant(): EntityTenantResolver<SubjectMatter> {
 /** Delete mirrors before their anchor, in the already authorized parent transaction. */
 async function removeUnusedMatterLinks(matter: SubjectMatter, repositories: SchoolRepositories): Promise<void> {
   const classMatters = await repositories.classSubjectMatters.list({ subjectMatterId: matter.id })
-  const gradeMatters = await repositories.gradeLevelSubjectMatters.list({ subjectMatterId: matter.id })
   for (const mirrored of classMatters)
     await validateClassSubjectMatterDelete(mirrored, repositories)
   await repositories.classSubjectMatters.batchDelete(classMatters.map(entry => entry.id))
-  await repositories.gradeLevelSubjectMatters.batchDelete(gradeMatters.map(entry => entry.id))
+}
+
+export async function validateSubjectMatterSave(matter: SubjectMatter, existing: SubjectMatter | undefined, repositories: SchoolRepositories): Promise<void> {
+  if (existing && existing.subjectId !== matter.subjectId)
+    throw new BusinessRuleViolationError('SUBJECT_MATTER_IDENTITY_IMMUTABLE', 'A chapter cannot move to another subject')
+  if (!await repositories.subjects.findById(matter.subjectId))
+    throw new BusinessRuleViolationError('UNKNOWN_SUBJECT', 'Chapter subject does not exist')
 }

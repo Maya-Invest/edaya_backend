@@ -45,8 +45,6 @@ const tables: Record<CoreEntityKey, PgTable> = {
   subjects: s.subjects,
   subjectCategories: s.subjectCategories,
   subjectMatters: s.subjectMatters,
-  gradeLevelSubjects: s.gradeLevelSubjects,
-  gradeLevelSubjectMatters: s.gradeLevelSubjectMatters,
   classGroups: s.classGroups,
   classSubjects: s.classSubjects,
   classSubjectMatters: s.classSubjectMatters,
@@ -81,7 +79,6 @@ const parents: Record<string, readonly [string, PgTable][]> = {
   class_subject_matters: [['classSubjectId', s.classSubjects]],
   class_subject_progress: [['classSubjectMatterId', s.classSubjectMatters]],
   subject_matters: [['subjectId', s.subjects]],
-  grade_level_subject_matters: [['gradeLevelSubjectId', s.gradeLevelSubjects]],
   incidents: [['lessonSessionId', s.lessonSessions]],
   student_incident_involvements: [['incidentId', s.incidents]],
   student_disciplinary_actions: [['incidentId', s.incidents]],
@@ -246,9 +243,9 @@ function calendarAudiencePredicate(table: PgTable, target: CompiledClause['targe
 
 // An all-grain grant becomes a pattern without identifiers. It still has to reach
 // that grain through tenant-bound relationships; it is not school authority.
-type GrantPattern<T = GrantScope> = T extends { kind: string }
-  ? Pick<T, 'kind'> & Partial<Omit<T, 'kind'>> : never
-type TargetPattern = Exclude<AccessTarget, GrantScope> | Exclude<GrantPattern, { kind: 'class_group' }> | { kind: 'class_group', classGroupId?: string | SQL }
+type GrantPattern<T = Exclude<GrantScope, { kind: 'all' }>> = T extends { kind: string }
+  ? Pick<T, 'kind'> & { [K in Exclude<keyof T, 'kind'>]?: T[K] | SQL } : never
+type TargetPattern = Exclude<AccessTarget, GrantScope> | Extract<GrantScope, { kind: 'all' }> | Exclude<GrantPattern, { kind: 'class_group' }> | { kind: 'class_group', classGroupId?: string | SQL }
 
 function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string, year: string | undefined, visited: Set<string>, proposed?: Record<string, unknown>): SQL {
   if (target.kind === 'all') {
@@ -341,25 +338,31 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
     if (columns['classGroupId'])
       return matches('classGroupId', target.classGroupId)
   }
-  if (target.kind === 'class_subject') {
+  if (target.kind === 'subject') {
     if (name === 'class_subjects')
-      return and(matches('classGroupId', target.classGroupId), target.classSubjectId ? matches('id', target.classSubjectId) : undefined)!
+      return and(target.subjectId ? matches('subjectId', target.subjectId) : undefined, via('classGroupId', s.classGroups))!
+    // Teaching records must match the subject as well as the class.
     if (columns['classSubjectId'])
       return via('classSubjectId', s.classSubjects)
+    if (name === 'subjects') {
+      return and(matches('gradeLevelId', target.gradeLevelId), target.subjectId ? matches('id', target.subjectId) : undefined, target.classGroupId
+        ? exists(s.classSubjects, schoolId, and(
+            sql`${s.classSubjects.subjectId} = ${value('id')}`,
+            eq(s.classSubjects.classGroupId, target.classGroupId),
+            year ? yearPredicate(s.classSubjects, year, schoolId, new Set()) : undefined,
+          )!)
+        : undefined)!
+    }
     if (name === 'class_groups')
-      return matches('id', target.classGroupId)
-    // Class-wide resources are admitted only when the business policy selects them.
-    if (columns['classGroupId'])
-      return matches('classGroupId', target.classGroupId)
-  }
-  if (target.kind === 'grade_level' || target.kind === 'grade_level_subject') {
+      return and(matches('gradeLevelId', target.gradeLevelId), target.classGroupId ? matches('id', target.classGroupId) : undefined)!
     if (name === 'grade_levels')
       return matches('id', target.gradeLevelId)
-    if (name === 'grade_level_subjects') {
-      return and(matches('gradeLevelId', target.gradeLevelId), target.kind === 'grade_level_subject' && target.gradeLevelSubjectId ? matches('id', target.gradeLevelSubjectId) : undefined)!
-    }
-    if (target.kind === 'grade_level_subject' && columns['gradeLevelSubjectId'])
-      return via('gradeLevelSubjectId', s.gradeLevelSubjects)
+    if (columns['gradeLevelId'] && !target.classGroupId)
+      return matches('gradeLevelId', target.gradeLevelId)
+  }
+  if (target.kind === 'grade_level') {
+    if (name === 'grade_levels')
+      return matches('id', target.gradeLevelId)
     if (columns['gradeLevelId'])
       return matches('gradeLevelId', target.gradeLevelId)
   }
@@ -412,9 +415,9 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
     return via('classGroupId', s.classGroups)
   if (columns['classSubjectId'])
     return via('classSubjectId', s.classSubjects)
-  if (name === 'subjects' || name === 'grade_level_subjects' || name === 'grade_levels') {
+  if (name === 'subjects' || name === 'grade_levels') {
     const relation = name === 'grade_levels' ? s.classGroups : s.classSubjects
-    const foreign = name === 'subjects' ? s.classSubjects.subjectId : name === 'grade_level_subjects' ? s.classSubjects.gradeLevelSubjectId : s.classGroups.gradeLevelId
+    const foreign = name === 'subjects' ? s.classSubjects.subjectId : s.classGroups.gradeLevelId
     return exists(relation, schoolId, and(sql`${foreign} = ${value('id')}`, targetPredicate(relation, target, schoolId, year, seen))!)
   }
   if (name === 'catalog_services')
@@ -445,9 +448,9 @@ function occurrencePredicate(table: PgTable, target: OccurrenceTarget, schoolId:
     return or(...paths)!
   // Placement references may be read/checked as part of this occurrence's action.
   // Transactional records never inherit this wider reference scope.
-  if (['students', 'student_class_enrollments', 'class_groups', 'class_subjects', 'class_subject_matters', 'subjects', 'subject_matters', 'grade_levels', 'grade_level_subjects', 'grade_level_subject_matters'].includes(name)) {
-    const placement: AuthorityScope = 'classSubjectId' in target
-      ? { kind: 'class_subject', classGroupId: target.classGroupId, classSubjectId: target.classSubjectId }
+  if (['students', 'student_class_enrollments', 'class_groups', 'class_subjects', 'class_subject_matters', 'subjects', 'subject_matters', 'grade_levels'].includes(name)) {
+    const placement: TargetPattern = 'classSubjectId' in target
+      ? { kind: 'subject', classGroupId: target.classGroupId, gradeLevelId: sql`(select grade_level_id from class_groups where id = ${target.classGroupId} and school_id = ${schoolId})`, subjectId: sql`(select subject_id from class_subjects where id = ${target.classSubjectId} and class_group_id = ${target.classGroupId})` }
       : { kind: 'class_group', classGroupId: target.classGroupId }
     return targetPredicate(table, placement, schoolId, year, visited, proposed)
   }

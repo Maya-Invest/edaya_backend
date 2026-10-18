@@ -55,6 +55,26 @@ async function limitedAdministrator() {
 }
 
 describe('permission profile workflows', () => {
+  test('Subject defaults, profiles and manual previews retain the same class restriction on reload', async () => {
+    const { repositories, service } = await createProfileContext()
+    const scopes = [{ kind: 'subject' as const, gradeLevelId: 'grade-1', classGroupId: 'class-a' }]
+    await service.accessControlWorkflow.configureStaffPermissionScopeDefaults({ staffId: 'st1', academicYearId: 'ay1', scopes })
+    await service.accessControlWorkflow.configurePermissionProfile({ id: 'subject-profile', name: 'Subject', permissions: [Permission.ASSESSMENT_READ, Permission.ATTENDANCE_RECORD] })
+    const input = { staffId: 'st1', profileId: 'subject-profile', academicYearId: 'ay1', customScopes: [], useDefaultScopes: true }
+    const preview = await service.accessControlWorkflow.applyStaffPermissionProfile({ ...input, previewOnly: true })
+    const saved = await service.accessControlWorkflow.applyStaffPermissionProfile(input)
+    expect(saved.resolution).toEqual(preview.resolution)
+    expect(saved.warnings).toEqual([])
+    expect((await repositories.staffPermissionAssignments.list({ staffId: 'st1' })).map(row => row.scopes)).toEqual([scopes, scopes])
+    const manual = { id: 'subject-manual', schoolId: 'sch1', staffId: 'st1', academicYearId: 'ay1', permission: Permission.GRADE_READ, customScopes: scopes, useDefaultScopes: false }
+    const manualPreview = await service.accessControlWorkflow.assignStaffPermission({ ...manual, previewOnly: true })
+    expect((await service.accessControlWorkflow.assignStaffPermission(manual)).resolution).toEqual(manualPreview.resolution)
+    expect((await repositories.staffManualPermissionAssignments.findById(manual.id))?.customScopes).toEqual(scopes)
+    const broad = await service.accessControlWorkflow.configureStaffPermissionScopeDefaults({ staffId: 'st1', academicYearId: 'ay1', scopes: [{ kind: 'subject', gradeLevelId: 'grade-1' }] })
+    expect(broad.resolution.warnings).toContainEqual(expect.objectContaining({ permission: Permission.ATTENDANCE_RECORD, reason: 'missing_scope' }))
+    expect((await repositories.staffPermissionAssignments.list({ staffId: 'st1' })).map(row => row.permission).sort()).toEqual([Permission.ASSESSMENT_READ, Permission.GRADE_READ].sort())
+  })
+
   test('unscoped manual preview and save resolve identically without selections or defaults', async () => {
     const { repositories, service } = await createProfileContext()
     const input = { id: 'audit', schoolId: 'sch1', staffId: 'st1', academicYearId: 'ay1', permission: Permission.ACCESS_CONTROL_READ }

@@ -3,15 +3,14 @@ import { z } from 'zod'
 import { corePermissionDefinition } from './permission-catalog'
 
 const identifier = z.string().trim().min(1)
-export const grantGrainSchema = z.enum(['grade_level', 'grade_level_subject', 'class_group', 'class_subject', 'activity', 'student'])
+export const grantGrainSchema = z.enum(['grade_level', 'subject', 'class_group', 'activity', 'student'])
 
 /** A missing subject selects all subjects within the explicitly named class/grade. */
 export const userScopeSelectionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all'), grain: grantGrainSchema }).strict(),
   z.object({ kind: z.literal('grade_level'), gradeLevelId: identifier }).strict(),
-  z.object({ kind: z.literal('grade_level_subject'), gradeLevelId: identifier, gradeLevelSubjectId: identifier.optional() }).strict(),
+  z.object({ kind: z.literal('subject'), gradeLevelId: identifier, subjectId: identifier.optional(), classGroupId: identifier.optional() }).strict(),
   z.object({ kind: z.literal('class_group'), classGroupId: identifier }).strict(),
-  z.object({ kind: z.literal('class_subject'), classGroupId: identifier, classSubjectId: identifier.optional() }).strict(),
   z.object({ kind: z.literal('activity'), activityId: identifier.optional(), classGroupId: identifier.optional() }).strict(),
   z.object({ kind: z.literal('student'), studentId: identifier }).strict(),
 ])
@@ -43,6 +42,8 @@ export function validatePermissionScopes(permission: Permission, scopes: readonl
       return scope.kind === 'school'
     if (scope.kind === 'school')
       return false
+    if (policy.subjectClassRequired && ((scope.kind === 'subject' && !scope.classGroupId) || (scope.kind === 'all' && scope.grain === 'subject')))
+      return false
     return policy.allowedKinds.includes(scope.kind === 'all' ? scope.grain : scope.kind)
   })
   if (!valid)
@@ -59,11 +60,10 @@ export function grantScopeContains(granted: GrantScope, requested: GrantScope): 
     return false
   switch (granted.kind) {
     case 'class_group': return requested.kind === 'class_group' && granted.classGroupId === requested.classGroupId
-    case 'class_subject': return requested.kind === 'class_subject' && granted.classGroupId === requested.classGroupId
-      && (granted.classSubjectId === undefined || granted.classSubjectId === requested.classSubjectId)
     case 'grade_level': return requested.kind === 'grade_level' && granted.gradeLevelId === requested.gradeLevelId
-    case 'grade_level_subject': return requested.kind === 'grade_level_subject' && granted.gradeLevelId === requested.gradeLevelId
-      && (granted.gradeLevelSubjectId === undefined || granted.gradeLevelSubjectId === requested.gradeLevelSubjectId)
+    case 'subject': return requested.kind === 'subject' && granted.gradeLevelId === requested.gradeLevelId
+      && (granted.subjectId === undefined || granted.subjectId === requested.subjectId)
+      && (granted.classGroupId === undefined || granted.classGroupId === requested.classGroupId)
     case 'activity': return requested.kind === 'activity' && (granted.activityId === undefined || granted.activityId === requested.activityId)
       && (granted.classGroupId === undefined || granted.classGroupId === requested.classGroupId)
     case 'student': return requested.kind === 'student' && granted.studentId === requested.studentId

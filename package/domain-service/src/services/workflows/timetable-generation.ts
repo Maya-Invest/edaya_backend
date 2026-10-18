@@ -1,4 +1,4 @@
-import type { AcademicYear, Assessment, ClassGroup, ClassSubject, GradeLevelSubject, LessonSession as LessonSessionEntity, PeriodDefinition, School, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicYear, Assessment, ClassGroup, ClassSubject, LessonSession as LessonSessionEntity, PeriodDefinition, School, Subject, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { OccupiedInterval, ResolveTimetableSpaceInput, SolveTimetableInput, SolveTimetableResult, SpreadWeeklyTemplateInput, TimetableGenerationDefaults, TimetablePlacement, TimetableSubjectDemand } from '../../capabilities/timetable'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { randomUUID } from 'node:crypto'
@@ -75,7 +75,7 @@ function assignmentApplies(assignment: TeacherAssignment, startsAt: Date, endsAt
 function resolveClassSubjectPeriodsPerWeek(
   subject: ClassSubject,
   override: number | undefined,
-  gradeLevelSubject?: GradeLevelSubject,
+  curriculumSubject?: Subject,
 ): number | undefined {
   if (override !== undefined && Number.isInteger(override) && override > 0) {
     return override
@@ -83,8 +83,8 @@ function resolveClassSubjectPeriodsPerWeek(
   if (subject.periodsPerWeek && subject.periodsPerWeek > 0) {
     return subject.periodsPerWeek
   }
-  if (gradeLevelSubject?.periodsPerWeek && gradeLevelSubject.periodsPerWeek > 0) {
-    return gradeLevelSubject.periodsPerWeek
+  if (curriculumSubject?.periodsPerWeek && curriculumSubject.periodsPerWeek > 0) {
+    return curriculumSubject.periodsPerWeek
   }
   if (subject.coefficient && subject.coefficient > 0) {
     return Math.max(2, Math.round(subject.coefficient) + 1)
@@ -102,18 +102,18 @@ function resolvePositiveSpan(value: number | undefined): number | undefined {
 function resolveClassSubjectPeriodSpan(
   subject: ClassSubject,
   placementParameters: TimetablePlacementParameters | undefined,
-  gradeLevelSubject: GradeLevelSubject | undefined,
+  curriculumSubject: Subject | undefined,
   defaults: Pick<TimetableGenerationDefaults, 'defaultMinPeriodSpan' | 'defaultMaxPeriodSpan'>,
 ): { minPeriodSpan: number, maxPeriodSpan: number } {
   const minPeriodSpan = resolvePositiveSpan(placementParameters?.minPeriodSpanByClassSubjectId?.[subject.id])
     ?? resolvePositiveSpan(subject.minPeriodSpan)
-    ?? resolvePositiveSpan(gradeLevelSubject?.minPeriodSpan)
+    ?? resolvePositiveSpan(curriculumSubject?.minPeriodSpan)
     ?? defaults.defaultMinPeriodSpan
   const maxPeriodSpan = Math.max(
     minPeriodSpan,
     resolvePositiveSpan(placementParameters?.maxPeriodSpanByClassSubjectId?.[subject.id])
     ?? resolvePositiveSpan(subject.maxPeriodSpan)
-    ?? resolvePositiveSpan(gradeLevelSubject?.maxPeriodSpan)
+    ?? resolvePositiveSpan(curriculumSubject?.maxPeriodSpan)
     ?? defaults.defaultMaxPeriodSpan,
   )
   return { minPeriodSpan, maxPeriodSpan }
@@ -373,15 +373,12 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       knownAssignments ?? this.baseService.repositories.teacherAssignments.list({ kind: TeacherAssignmentKind.Subject, status: TeacherAssignmentStatus.Active }),
     ])
     const offered = classSubjects.filter(subject => subject.isOffered)
-    const gradeLevelSubjectIds = [...new Set(offered
-      .map(subject => subject.gradeLevelSubjectId)
-      .filter((gradeLevelSubjectId): gradeLevelSubjectId is string => Boolean(gradeLevelSubjectId)))]
-    const gradeLevelSubjects = gradeLevelSubjectIds.length > 0
-      ? await this.baseService.repositories.gradeLevelSubjects.findByIds(gradeLevelSubjectIds)
+    const subjectIds = [...new Set(offered.map(subject => subject.subjectId))]
+    const subjects = subjectIds.length > 0
+      ? await this.baseService.repositories.subjects.findByIds(subjectIds)
       : []
-    const gradeLevelSubjectById = new Map(gradeLevelSubjects.map(gradeLevelSubject => [gradeLevelSubject.id, gradeLevelSubject]))
-    const subjectEntities = await this.baseService.repositories.subjects.findByIds([...new Set(offered.map(subject => subject.subjectId))])
-    const labelBySubjectId = new Map(subjectEntities.map(subject => [subject.id, subject.name]))
+    const curriculumSubjectById = new Map(subjects.map(curriculumSubject => [curriculumSubject.id, curriculumSubject]))
+    const labelBySubjectId = new Map(subjects.map(subject => [subject.id, subject.name]))
     const homeroomTeacherIds = options.useHomeroomTeacherFallback
       ? await this.resolveHomeroomTeacherIds(context.classGroup, rangeStart, rangeEnd)
       : []
@@ -395,7 +392,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
       labelBySubjectId.get(subject.subjectId) ?? subject.subjectId,
       rangeStart,
       rangeEnd,
-      subject.gradeLevelSubjectId ? gradeLevelSubjectById.get(subject.gradeLevelSubjectId) : undefined,
+      curriculumSubjectById.get(subject.subjectId),
     ))
   }
 
@@ -686,7 +683,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     displayLabel: string,
     startsAt: Date,
     endsAt: Date,
-    gradeLevelSubject?: GradeLevelSubject,
+    curriculumSubject?: Subject,
   ): TimetableSubjectDemand {
     const teacherIds = [...new Set(assignments
       .filter(assignment => assignment.classSubjectId === subject.id && assignmentApplies(assignment, startsAt, endsAt))
@@ -700,7 +697,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     const periodsPerWeek = resolveClassSubjectPeriodsPerWeek(
       subject,
       input.placementParameters?.periodsPerWeekByClassSubjectId?.[subject.id],
-      gradeLevelSubject,
+      curriculumSubject,
     )
     if (!periodsPerWeek) {
       throw new BusinessRuleViolationError('TIMETABLE_WORKLOAD_REQUIRED', `Class subject ${displayLabel} has no valid periodsPerWeek`)
@@ -708,7 +705,7 @@ export class TimetableGenerationServiceWorkflow extends BaseServiceWorkflow {
     const { minPeriodSpan, maxPeriodSpan } = resolveClassSubjectPeriodSpan(
       subject,
       input.placementParameters,
-      gradeLevelSubject,
+      curriculumSubject,
       options,
     )
     return {

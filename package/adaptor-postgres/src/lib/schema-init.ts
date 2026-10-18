@@ -46,8 +46,6 @@ export const CLEAR_TABLE_ORDER = [
   'class_subject_progress',
   'class_subject_matters',
   'class_subjects',
-  'grade_level_subject_matters',
-  'grade_level_subjects',
   'assessments',
   'attendance_records',
   'message_deliveries',

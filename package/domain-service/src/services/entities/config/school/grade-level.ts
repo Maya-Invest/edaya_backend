@@ -26,6 +26,9 @@ export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories
     gates: { preSave: async (level, existing) => {
       if (normalizeCommandRequest(level.gradingPolicies) !== normalizeCommandRequest(existing?.gradingPolicies ?? []))
         throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Use the grading configuration command')
+    }, preDelete: async (level, repos) => {
+      if (await repos.subjects.count({ gradeLevelId: level.id }))
+        throw new BusinessRuleViolationError('GRADE_LEVEL_HAS_SUBJECTS', 'Remove subjects before deleting their grade level')
     } },
 
     atomicExecution,

@@ -25,7 +25,7 @@ export async function fixture(prefix: string) {
   await r.academicPeriods.save(new AcademicPeriod({ id: id('period'), schoolId: id('school'), academicYearId: id('year'), name: 'Term', isPublished: true, ...dates }))
   await r.gradeLevels.save(new GradeLevel({ id: id('grade'), schoolId: id('school'), name: 'Grade', label: 'Grade', order: 1 }))
   await r.classGroups.save(new ClassGroup({ id: id('class'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), name: 'Class' }))
-  await r.subjects.save(new Subject({ id: id('math'), schoolId: id('school'), name: 'Math' }))
+  await r.subjects.save(new Subject({ gradeLevelId: id('grade'), academicYearId: id('year'), id: id('math'), schoolId: id('school'), name: 'Math' }))
   await r.classSubjects.save(new ClassSubject({ id: id('subject'), classGroupId: id('class'), subjectId: id('math') }))
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))

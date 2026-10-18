@@ -84,9 +84,8 @@ describe('access seed port workflow', () => {
       .toEqual(['pp-educator'])
     expect(memory.profileBindings.find(binding => binding.profileId === 'pp-director')?.customScopes).toEqual([
       { kind: 'all', grain: 'grade_level' },
-      { kind: 'all', grain: 'grade_level_subject' },
+      { kind: 'all', grain: 'subject' },
       { kind: 'all', grain: 'class_group' },
-      { kind: 'all', grain: 'class_subject' },
     ])
   })
 
