@@ -315,14 +315,9 @@ export const removeAttachmentCommandSchema = z.object({
 
 export const registerStudentCommandSchema = objectFromSchema(studentSchema)
   .omit({
-    gender: true,
-    placeOfBirth: true,
-    nationality: true,
-    matricule: true,
     photoUrl: true,
     subjectId: true,
     status: true,
-    enrollmentDate: true,
   })
   .extend({
     sendAccountInvitation: field.optionalBoolean(),
@@ -564,14 +559,16 @@ export const reviewAttendanceJustificationCommandSchema = z.object({
   studentId: field.id(),
   attendanceId: field.id().optional(),
   lessonSessionId: field.id().optional(),
+  activitySessionId: field.id().optional(),
+  assessmentId: field.id().optional(),
   decision: z.union([
     z.literal(AttendanceJustificationStatus.Excused),
     z.literal(AttendanceJustificationStatus.Rejected),
   ]),
   reason: field.text(),
-  notes: optionalText(),
+  notes: z.string().nullable().optional(),
   reviewedAt: field.optionalDate(),
-}).openapi("ReviewAttendanceJustificationCommand");
+}).refine(input => [input.attendanceId, input.lessonSessionId, input.activitySessionId, input.assessmentId].filter(Boolean).length === 1, { message: "Exactly one attendance anchor is required" }).openapi("ReviewAttendanceJustificationCommand");
 
 export const recordLessonSessionAttendanceCommandSchema = z.object({
   lessonSessionId: field.id(),
@@ -817,7 +814,7 @@ const resolveIncidentInvolvementCommandSchema = z.object({
   id: field.id(),
   studentId: field.id(),
   role: z.nativeEnum(IncidentInvolvementRole),
-  notes: optionalText(),
+  notes: z.string().nullable().optional(),
   createdAt: field.optionalDate(),
 }).openapi("ResolveIncidentInvolvementCommandValue");
 
@@ -1214,3 +1211,10 @@ export const configureReportCardDefinitionCommandSchema = z.object({
   section: objectFromSchema(reportCardDefinitionSectionSchema).omit({ reportCardDefinitionId: true, createdAt: true }).optional(),
   sectionId: field.id().optional(),
 }).openapi("ConfigureReportCardDefinitionCommand");
+
+export const configureAcademicDisciplineCommandSchema = z.object({ id: field.id(), code: field.text(), name: field.text(), isActive: z.boolean().optional() }).openapi("ConfigureAcademicDisciplineCommand");
+export const configurePlacementStatusCommandSchema = z.object({ id: field.id(), code: field.text(), label: field.text(), isActive: z.boolean().optional() }).openapi("ConfigurePlacementStatusCommand");
+export const upsertStudentAcademicYearProfileCommandSchema = z.object({ studentId: field.id(), academicYearId: field.id(), placementStatusId: z.string().nullable().optional(), isRepeating: z.boolean().nullable().optional() }).openapi("UpsertStudentAcademicYearProfileCommand");
+export const upsertTeacherAcademicYearProfileCommandSchema = z.object({ teacherId: field.id(), academicYearId: field.id(), disciplineIds: z.array(field.id()).optional(), declaredHours: z.number().finite().nonnegative().nullable().optional(), hoursPeriod: z.enum(["unspecified", "week", "month", "term", "academic_year", "other"]).optional(), hoursPeriodLabel: z.string().nullable().optional() }).openapi("UpsertTeacherAcademicYearProfileCommand");
+export const removeStudentAcademicYearProfileCommandSchema = z.object({ id: field.id() }).openapi("RemoveStudentAcademicYearProfileCommand");
+export const removeTeacherAcademicYearProfileCommandSchema = z.object({ id: field.id() }).openapi("RemoveTeacherAcademicYearProfileCommand");

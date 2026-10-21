@@ -116,7 +116,14 @@ const onboardingStructureLevelSchema = z.object({
   classNamingMode: classNamingModeSchema.optional(),
 });
 
+const reviewedDisciplineMappingsSchema = z.array(z.object({
+  subjectCode: z.string().trim().min(1),
+  disciplineCode: z.string().trim().min(1),
+  disciplineName: z.string().trim().min(1),
+}));
+
 const onboardingApplyStructureTemplateRequestSchema = z.object({
+  disciplineMappings: reviewedDisciplineMappingsSchema.optional(),
   templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
   templateSnapshots: z.array(structureTemplateSnapshotSchema).optional(),
   levels: z.array(onboardingStructureLevelSchema).min(1),
@@ -175,6 +182,7 @@ const onboardingProvisionRequestSchema = z.object({
     })).min(1),
   }),
   structure: z.object({
+    disciplineMappings: reviewedDisciplineMappingsSchema.optional(),
     templates: z.array(z.string().trim().min(1).refine(isStructureTemplateId, "Invalid structure template id")).min(1),
     levels: z.array(onboardingStructureLevelSchema).min(1),
   }),
@@ -342,6 +350,7 @@ export const onboardingApplyStructureTemplateHandler: AppRouteHandler<typeof onb
         (body.templateSnapshots as StructureTemplateDefinition[] | undefined) ?? [],
       ),
       levels: body.levels,
+      disciplineMappings: body.disciplineMappings,
     });
     await recordOnboardingAccountProgress(c.get("schoolApp").repositories, actor, {
       maxReachedStep: 3,

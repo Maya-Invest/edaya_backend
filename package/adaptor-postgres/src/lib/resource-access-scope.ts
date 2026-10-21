@@ -8,6 +8,11 @@ import * as s from '../postgres-schema'
 import { schoolScope } from './school-scope'
 
 const tables: Record<CoreEntityKey, PgTable> = {
+  academicDisciplines: s.academicDisciplines,
+  placementStatuses: s.placementStatuses,
+  studentAcademicYearProfiles: s.studentAcademicYearProfiles,
+  teacherAcademicYearProfiles: s.teacherAcademicYearProfiles,
+
   schools: s.schools,
   academicYears: s.academicYears,
   academicPeriods: s.academicPeriods,

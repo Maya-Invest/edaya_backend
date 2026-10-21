@@ -2073,6 +2073,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/configure-academic-discipline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-academic-discipline */
+        post: operations["commands.configureAcademicDiscipline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/configure-placement-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** configure-placement-status */
+        post: operations["commands.configurePlacementStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/upsert-student-academic-year-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** upsert-student-academic-year-profile */
+        post: operations["commands.upsertStudentAcademicYearProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/upsert-teacher-academic-year-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** upsert-teacher-academic-year-profile */
+        post: operations["commands.upsertTeacherAcademicYearProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/remove-student-academic-year-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** remove-student-academic-year-profile */
+        post: operations["commands.removeStudentAcademicYearProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/remove-teacher-academic-year-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** remove-teacher-academic-year-profile */
+        post: operations["commands.removeTeacherAcademicYearProfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/configure-subject-category": {
         parameters: {
             query?: never;
@@ -5178,6 +5280,346 @@ export interface paths {
         put?: never;
         /** get-teacher-family-feedback-result */
         post: operations["queries.getTeacherFamilyFeedbackResult"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List AcademicDiscipline */
+        post: operations["entities.academicDisciplines.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one AcademicDiscipline */
+        post: operations["entities.academicDisciplines.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count AcademicDiscipline */
+        post: operations["entities.academicDisciplines.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get AcademicDiscipline */
+        get: operations["entities.academicDisciplines.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete AcademicDiscipline */
+        post: operations["entities.academicDisciplines.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/academic-disciplines/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete AcademicDiscipline */
+        post: operations["entities.academicDisciplines.batchDelete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List PlacementStatus */
+        post: operations["entities.placementStatuses.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one PlacementStatus */
+        post: operations["entities.placementStatuses.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count PlacementStatus */
+        post: operations["entities.placementStatuses.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get PlacementStatus */
+        get: operations["entities.placementStatuses.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete PlacementStatus */
+        post: operations["entities.placementStatuses.delete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/placement-statuses/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch delete PlacementStatus */
+        post: operations["entities.placementStatuses.batchDelete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-academic-year-profiles/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List StudentAcademicYearProfile */
+        post: operations["entities.studentAcademicYearProfiles.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-academic-year-profiles/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one StudentAcademicYearProfile */
+        post: operations["entities.studentAcademicYearProfiles.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-academic-year-profiles/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count StudentAcademicYearProfile */
+        post: operations["entities.studentAcademicYearProfiles.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/student-academic-year-profiles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get StudentAcademicYearProfile */
+        get: operations["entities.studentAcademicYearProfiles.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/teacher-academic-year-profiles/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List TeacherAcademicYearProfile */
+        post: operations["entities.teacherAcademicYearProfiles.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/teacher-academic-year-profiles/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one TeacherAcademicYearProfile */
+        post: operations["entities.teacherAcademicYearProfiles.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/teacher-academic-year-profiles/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count TeacherAcademicYearProfile */
+        post: operations["entities.teacherAcademicYearProfiles.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/teacher-academic-year-profiles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get TeacherAcademicYearProfile */
+        get: operations["entities.teacherAcademicYearProfiles.get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -12777,6 +13219,11 @@ export interface components {
             reportCardSectionCount: number;
         };
         OnboardingApplyStructureTemplateRequest: {
+            disciplineMappings?: {
+                subjectCode: string;
+                disciplineCode: string;
+                disciplineName: string;
+            }[];
             templates: string[];
             templateSnapshots?: components["schemas"]["StructureTemplateDefinition"][];
             levels: {
@@ -12840,6 +13287,11 @@ export interface components {
                 }[];
             };
             structure: {
+                disciplineMappings?: {
+                    subjectCode: string;
+                    disciplineCode: string;
+                    disciplineName: string;
+                }[];
                 templates: string[];
                 levels: {
                     gradeLevelId: string;
@@ -13471,6 +13923,7 @@ export interface components {
         Teacher: {
             id: string;
             schoolId: string;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
             code?: string | null;
@@ -13488,6 +13941,7 @@ export interface components {
         RegisterTeacherCommand: {
             id: string;
             schoolId: string;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
             code?: string | null;
@@ -13527,6 +13981,8 @@ export interface components {
         Guardian: {
             id: string;
             schoolId: string;
+            occupation?: string | null;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
             code?: string | null;
@@ -13553,6 +14009,8 @@ export interface components {
         Student: {
             id: string;
             schoolId: string;
+            nationalMatricule?: string | null;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
             gender?: string | null;
@@ -14235,10 +14693,17 @@ export interface components {
         RegisterStudentCommand: {
             id: string;
             schoolId: string;
+            nationalMatricule?: string | null;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
+            gender?: string | null;
             birthDate?: unknown;
+            placeOfBirth?: string | null;
+            nationality?: string | null;
+            matricule?: string | null;
             photoAttachmentId?: string | null;
+            enrollmentDate?: unknown;
             createdAt?: unknown;
             sendAccountInvitation?: boolean;
             inviteEmail?: string;
@@ -14324,6 +14789,8 @@ export interface components {
         RegisterGuardianCommand: {
             id: string;
             schoolId: string;
+            occupation?: string | null;
+            sourceFullName?: string | null;
             firstName: string;
             lastName: string;
             code?: string | null;
@@ -14382,6 +14849,8 @@ export interface components {
             notes?: string;
         };
         UpdateStudentProfileCommand: {
+            nationalMatricule?: string | null;
+            sourceFullName?: string | null;
             firstName?: string;
             lastName?: string;
             gender?: string | null;
@@ -14480,6 +14949,8 @@ export interface components {
             noteId: string;
         };
         UpdateGuardianContactMethodsCommand: {
+            occupation?: string | null;
+            sourceFullName?: string | null;
             firstName?: string;
             lastName?: string;
             code?: string | null;
@@ -14537,6 +15008,7 @@ export interface components {
             maxPeriodSpan?: number | null;
             /** @default false */
             isOptional: boolean;
+            disciplineId?: string | null;
             categoryId: string;
             /**
              * @default mint
@@ -14557,6 +15029,7 @@ export interface components {
             minPeriodSpan?: number | null;
             maxPeriodSpan?: number | null;
             isOptional?: boolean;
+            disciplineId?: string | null;
             categoryId: string;
             /** @enum {string} */
             color?: "mint" | "sky" | "warm";
@@ -14564,6 +15037,92 @@ export interface components {
             classSubjectIdsByClassGroupId?: {
                 [key: string]: string;
             };
+        };
+        AcademicDiscipline: {
+            id: string;
+            schoolId: string;
+            code: string;
+            name: string;
+            /** @default true */
+            isActive: boolean;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        ConfigureAcademicDisciplineCommand: {
+            id: string;
+            code: string;
+            name: string;
+            isActive?: boolean;
+        };
+        PlacementStatus: {
+            id: string;
+            schoolId: string;
+            code: string;
+            label: string;
+            /** @default true */
+            isActive: boolean;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        ConfigurePlacementStatusCommand: {
+            id: string;
+            code: string;
+            label: string;
+            isActive?: boolean;
+        };
+        StudentAcademicYearProfile: {
+            id: string;
+            schoolId: string;
+            studentId: string;
+            academicYearId: string;
+            placementStatusId?: string | null;
+            isRepeating?: boolean | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        UpsertStudentAcademicYearProfileCommand: {
+            studentId: string;
+            academicYearId: string;
+            placementStatusId?: string | null;
+            isRepeating?: boolean | null;
+        };
+        TeacherAcademicYearProfile: {
+            id: string;
+            schoolId: string;
+            teacherId: string;
+            academicYearId: string;
+            /** @default [] */
+            disciplineIds: string[];
+            declaredHours?: number | null;
+            /**
+             * @default unspecified
+             * @enum {string}
+             */
+            hoursPeriod: "unspecified" | "week" | "month" | "term" | "academic_year" | "other";
+            hoursPeriodLabel?: string | null;
+            createdAt?: unknown;
+            updatedAt?: unknown;
+        };
+        UpsertTeacherAcademicYearProfileCommand: {
+            teacherId: string;
+            academicYearId: string;
+            disciplineIds?: string[];
+            declaredHours?: number | null;
+            /** @enum {string} */
+            hoursPeriod?: "unspecified" | "week" | "month" | "term" | "academic_year" | "other";
+            hoursPeriodLabel?: string | null;
+        };
+        RemoveStudentAcademicYearProfileResponse: {
+            id: string;
+        };
+        RemoveStudentAcademicYearProfileCommand: {
+            id: string;
+        };
+        RemoveTeacherAcademicYearProfileResponse: {
+            id: string;
+        };
+        RemoveTeacherAcademicYearProfileCommand: {
+            id: string;
         };
         SubjectCategory: {
             id: string;
@@ -14609,6 +15168,7 @@ export interface components {
             minPeriodSpan?: number | null;
             maxPeriodSpan?: number | null;
             isOptional?: boolean;
+            disciplineId?: string | null;
             categoryId?: string;
             /** @enum {string} */
             color?: "mint" | "sky" | "warm";
@@ -16174,7 +16734,7 @@ export interface components {
             studentId: string;
             /** @enum {string} */
             role: "subject" | "witness" | "victim";
-            notes?: string;
+            notes?: string | null;
             createdAt?: string | null;
         };
         ResolveIncidentSanctionCommandValue: {
@@ -16916,9 +17476,11 @@ export interface components {
             studentId: string;
             attendanceId?: string;
             lessonSessionId?: string;
+            activitySessionId?: string;
+            assessmentId?: string;
             decision: "excused" | "rejected";
             reason: string;
-            notes?: string;
+            notes?: string | null;
             reviewedAt?: string | null;
         };
         RequestAttendanceJustificationCommand: {
@@ -18304,6 +18866,7 @@ export interface components {
             recordedById: string | null;
             reversedAt: string | null;
             reversedById: string | null;
+            reversesPaymentId: string | null;
             reversedByPaymentId: string | null;
             amount: number;
         };
@@ -18760,15 +19323,19 @@ export interface components {
         GetTeacherFamilyFeedbackResultQuery: {
             id: string;
         };
-        Filter_1: Record<string, never>;
+        Filter_63: Record<string, never>;
         CoreEntityDelete: {
             id: string;
         };
-        SchoolsBatchSave: {
-            entities: components["schemas"]["School"][];
-        };
         CoreEntityBatchDelete: {
             ids: string[];
+        };
+        Filter_64: Record<string, never>;
+        Filter_65: Record<string, never>;
+        Filter_66: Record<string, never>;
+        Filter_1: Record<string, never>;
+        SchoolsBatchSave: {
+            entities: components["schemas"]["School"][];
         };
         Filter_2: Record<string, never>;
         AcademicYearsBatchSave: {
@@ -27232,6 +27799,474 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Subject"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configureAcademicDiscipline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-academic-discipline payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigureAcademicDisciplineCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-academic-discipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicDiscipline"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.configurePlacementStatus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description configure-placement-status payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigurePlacementStatusCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed configure-placement-status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementStatus"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.upsertStudentAcademicYearProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description upsert-student-academic-year-profile payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpsertStudentAcademicYearProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed upsert-student-academic-year-profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.upsertTeacherAcademicYearProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description upsert-teacher-academic-year-profile payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpsertTeacherAcademicYearProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed upsert-teacher-academic-year-profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.removeStudentAcademicYearProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description remove-student-academic-year-profile payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RemoveStudentAcademicYearProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed remove-student-academic-year-profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoveStudentAcademicYearProfileResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.removeTeacherAcademicYearProfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description remove-teacher-academic-year-profile payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RemoveTeacherAcademicYearProfileCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed remove-teacher-academic-year-profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoveTeacherAcademicYearProfileResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -41532,6 +42567,1754 @@ export interface operations {
             };
             /** @description Access denied due to authorization policies */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description AcademicDiscipline query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_63"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicDiscipline"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description AcademicDiscipline query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_63"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicDiscipline"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description AcademicDiscipline not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description AcademicDiscipline query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_63"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcademicDiscipline"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description AcademicDiscipline not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description AcademicDiscipline delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityDelete"];
+            };
+        };
+        responses: {
+            /** @description Deleted AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.academicDisciplines.batchDelete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description AcademicDiscipline batch delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityBatchDelete"];
+            };
+        };
+        responses: {
+            /** @description Batch deleted AcademicDiscipline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PlacementStatus query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_64"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementStatus"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PlacementStatus query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_64"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementStatus"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description PlacementStatus not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PlacementStatus query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_64"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementStatus"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description PlacementStatus not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PlacementStatus delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityDelete"];
+            };
+        };
+        responses: {
+            /** @description Deleted PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.placementStatuses.batchDelete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PlacementStatus batch delete request */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CoreEntityBatchDelete"];
+            };
+        };
+        responses: {
+            /** @description Batch deleted PlacementStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentAcademicYearProfiles.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description StudentAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_65"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed StudentAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentAcademicYearProfile"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentAcademicYearProfiles.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description StudentAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_65"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found StudentAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description StudentAcademicYearProfile not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentAcademicYearProfiles.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description StudentAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_65"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted StudentAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.studentAcademicYearProfiles.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched StudentAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description StudentAcademicYearProfile not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.teacherAcademicYearProfiles.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description TeacherAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_66"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed TeacherAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAcademicYearProfile"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.teacherAcademicYearProfiles.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description TeacherAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_66"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found TeacherAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description TeacherAcademicYearProfile not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.teacherAcademicYearProfiles.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description TeacherAcademicYearProfile query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_66"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted TeacherAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.teacherAcademicYearProfiles.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched TeacherAcademicYearProfile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeacherAcademicYearProfile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description TeacherAcademicYearProfile not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

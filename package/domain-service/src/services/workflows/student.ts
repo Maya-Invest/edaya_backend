@@ -395,6 +395,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         notes,
       })
       const graduatedStudent = new Student({
+        ...student.data,
         id: student.id,
         schoolId: student.schoolId,
         firstName: student.firstName,
@@ -519,6 +520,9 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         ...existing.data,
         phone: undefined,
         email: undefined,
+        code: Object.hasOwn(changes, 'code') ? changes.code : existing.code,
+        occupation: Object.hasOwn(changes, 'occupation') ? changes.occupation : existing.occupation,
+        sourceFullName: Object.hasOwn(changes, 'sourceFullName') ? changes.sourceFullName : existing.sourceFullName,
         firstName: changes.firstName ?? existing.firstName,
         lastName: changes.lastName ?? existing.lastName,
         photoUrl: changes.photoUrl === undefined ? existing.photoUrl : (changes.photoUrl ?? undefined),
@@ -548,11 +552,11 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
         isBillingContact: changes.isBillingContact ?? existing.isBillingContact,
         legalGuardian: changes.legalGuardian ?? existing.legalGuardian,
         canPickup: changes.canPickup ?? existing.canPickup,
-        emergencyContactPriority: changes.emergencyContactPriority ?? existing.emergencyContactPriority,
+        emergencyContactPriority: Object.hasOwn(changes, 'emergencyContactPriority') ? changes.emergencyContactPriority : existing.emergencyContactPriority,
         receivesAcademicReports: changes.receivesAcademicReports ?? existing.receivesAcademicReports,
         receivesAttendanceAlerts: changes.receivesAttendanceAlerts ?? existing.receivesAttendanceAlerts,
-        contactRestrictions: changes.contactRestrictions ?? existing.contactRestrictions,
-        notes: changes.notes ?? existing.notes,
+        contactRestrictions: Object.hasOwn(changes, 'contactRestrictions') ? changes.contactRestrictions : existing.contactRestrictions,
+        notes: Object.hasOwn(changes, 'notes') ? changes.notes : existing.notes,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.guardianLinks.save(link)

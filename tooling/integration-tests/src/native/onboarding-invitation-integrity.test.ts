@@ -61,6 +61,7 @@ function typicalProvisionInput(schoolId: string, requestId: string) {
       periods: [{ label: 'Trimestre 1', start: '2026-09-01', end: '2026-12-19' }],
     },
     structure: {
+      disciplineMappings: templates.flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: 'TEST', disciplineName: 'Reviewed test discipline' })),
       templates: ['ci-college'],
       templateSnapshots: templates,
       levels: [{

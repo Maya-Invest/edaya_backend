@@ -81,7 +81,9 @@ describe('typed staff grants coordinated migration', () => {
       DELETE FROM class_subjects;
       DELETE FROM subjects;
     `)
-    await db.exec(readFileSync(resolve(migrationDirectory, '0044_grade_year_subjects.sql'), 'utf8'))
+    // Current repository policies require the complete current schema after the historical conversion.
+    for (const file of readdirSync(migrationDirectory).filter(name => /^\d{4}_.*\.sql$/.test(name) && name >= '0044').sort())
+      await db.exec(readFileSync(resolve(migrationDirectory, file), 'utf8'))
     await db.exec(`
       INSERT INTO subjects SELECT (jsonb_populate_record(NULL::subjects, data || jsonb_build_object(
         'grade_level_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'level-a' ELSE 'level-b' END,

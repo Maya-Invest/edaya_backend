@@ -9,6 +9,8 @@ import {
 export const guardianSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  occupation: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -74,6 +76,8 @@ export class Guardian {
 
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
+  get occupation() { return this.data.occupation }
+  get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
   get code() { return this.data.code }

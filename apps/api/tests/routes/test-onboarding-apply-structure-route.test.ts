@@ -1,3 +1,4 @@
+import { resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -111,6 +112,7 @@ describe("onboarding apply-structure-template route", () => {
       },
       body: JSON.stringify({
         templates: ["ci-college"],
+        disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
         levels: [
           { gradeLevelId: "ci-college:4EME", classCount: 2, capacity: 30 },
           { gradeLevelId: "ci-college:3EME", classCount: 1, capacity: 30, classNamingMode: "alphabetical" },
@@ -226,6 +228,7 @@ describe("onboarding apply-structure-template route", () => {
       },
       body: JSON.stringify({
         templates: ["ci-college"],
+        disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
         levels: [
           { gradeLevelId: "ci-college:6EME", classCount: 1, capacity: 30 },
         ],

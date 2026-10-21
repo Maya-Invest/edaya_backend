@@ -1,4 +1,4 @@
-import type { AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, CatalogEnrollmentMode, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
+import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, CatalogEnrollmentMode, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'demo-ci'
 
@@ -236,6 +236,7 @@ export interface FixtureDatasetEntities {
   students?: readonly StudentInput[]
   enrollments?: readonly StudentClassEnrollmentInput[]
   guardianLinks?: readonly GuardianStudentLinkInput[]
+  academicDisciplines?: readonly AcademicDisciplineInput[]
   subjects?: readonly SubjectInput[]
   subjectMatters?: readonly SubjectMatterInput[]
   classSubjects?: readonly ClassSubjectInput[]

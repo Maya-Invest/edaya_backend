@@ -117,6 +117,7 @@ export interface FinancePaymentRow {
   recordedById: string | null
   reversedAt: string | null
   reversedById: string | null
+  reversesPaymentId: string | null
   reversedByPaymentId: string | null
   createdAt: string
 }

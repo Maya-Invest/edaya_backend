@@ -1,3 +1,4 @@
+import { resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { describe, expect, it } from "bun:test";
 import {
   createAppRequest,
@@ -20,6 +21,7 @@ const typicalProvisionBody = {
   },
   structure: {
     templates: ["ci-college"],
+    disciplineMappings: resolveStructureTemplates(["ci-college"]).flatMap(template => template.subjects).map(subject => ({ subjectCode: subject.code, disciplineCode: "TEST", disciplineName: "Reviewed test discipline" })),
     levels: [
       { gradeLevelId: "ci-college:4EME", classCount: 1, capacity: 30, classNamingMode: "numerical" },
     ],

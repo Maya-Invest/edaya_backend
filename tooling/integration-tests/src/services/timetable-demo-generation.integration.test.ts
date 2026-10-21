@@ -1,5 +1,5 @@
 import { createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicYear, ActivitySession, CalendarEvent, CalendarEventScopeKind, ClassGroup, ClassSubject, GradeLevel, LessonSession, PeriodDefinition, School, Subject, Teacher, TeacherAssignment, TimetableGenerationMode } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, ActivitySession, CalendarEvent, CalendarEventScopeKind, ClassGroup, ClassSubject, GradeLevel, LessonSession, PeriodDefinition, School, Subject, Teacher, TeacherAssignment, TimetableGenerationMode } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
@@ -15,6 +15,7 @@ describeIntegration('demo school timetable generation', () => {
     await repos.academicYears.save(new AcademicYear(entities.academicYear))
     await repos.gradeLevels.batchSave(entities.gradeLevels.map(row => new GradeLevel(row)))
     await repos.classGroups.batchSave(entities.classGroups.map(row => new ClassGroup(row)))
+    await repos.academicDisciplines.batchSave((entities.academicDisciplines ?? []).map(row => new AcademicDiscipline(row)))
     await repos.subjects.batchSave(entities.subjects.map(row => new Subject(row)))
     await repos.classSubjects.batchSave(entities.classSubjects.map(row => new ClassSubject(row)))
     await repos.teachers.batchSave(entities.teachers.map(row => new Teacher(row)))

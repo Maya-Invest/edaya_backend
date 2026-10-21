@@ -20,7 +20,14 @@ export interface ApplyStructureLevelInput {
   classNamingMode?: ClassNamingMode
 }
 
+export interface ReviewedDisciplineMapping {
+  subjectCode: string
+  disciplineCode: string
+  disciplineName: string
+}
+
 export interface ApplyStructureTemplateInput {
+  disciplineMappings?: ReviewedDisciplineMapping[]
   templates: StructureTemplateId[]
   templateSnapshots?: StructureTemplateDefinition[]
   levels: ApplyStructureLevelInput[]
@@ -184,6 +191,7 @@ export async function buildStructureBootstrapGraph(
   schoolId: string,
   academicYearId: string,
   levels: NormalizedStructureLevel[],
+  disciplineIdsBySubjectCode: ReadonlyMap<string, string> = new Map(),
 ): Promise<StructureBootstrapGraph> {
   const gradeLevels: GradeLevel[] = []
   const subjects: Subject[] = []
@@ -209,11 +217,16 @@ export async function buildStructureBootstrapGraph(
         `Unknown subject code ${entry.subjectCode}`,
       )
     }
+    const disciplineId = disciplineIdsBySubjectCode.get(entry.subjectCode)
+    if (!disciplineId) {
+      throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_REQUIRED', `Review the academic discipline for subject ${entry.subjectCode}`)
+    }
     const subjectId = randomUUID()
     subjects.push(new Subject({
       id: subjectId,
       schoolId,
       name: catalogSubjectName(subject, entry),
+      disciplineId,
       shortName: subject.shortName,
       code: subject.code,
       gradeLevelId,
@@ -464,11 +477,29 @@ export async function applyStructureTemplate(
       templates: uniqueTemplates,
     })
 
+    await service.baseService.access.curriculum.assertConfigure()
+    const disciplineIdsBySubjectCode = new Map<string, string>()
+    const namesByCode = new Map<string, string>()
+    for (const mapping of input.disciplineMappings ?? []) {
+      const code = mapping.disciplineCode.trim().toUpperCase()
+      const name = mapping.disciplineName.trim()
+      if (!mapping.subjectCode.trim() || !code || !name || disciplineIdsBySubjectCode.has(mapping.subjectCode))
+        throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_INVALID', 'Each subject requires one reviewed discipline code and name')
+      if (namesByCode.has(code) && namesByCode.get(code) !== name)
+        throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_CONFLICT', 'A discipline code must use one consistent name')
+      namesByCode.set(code, name)
+      const existing = (await service.baseService.entities.academicDisciplines.list({ schoolId })).find(row => row.code.toUpperCase() === code)
+      if (existing && (!existing.isActive || existing.name !== name))
+        throw new BusinessRuleViolationError('STRUCTURE_DISCIPLINE_CONFLICT', 'Choose the active catalogue entry with its current name')
+      const discipline = existing ?? await service.academicsWorkflow.configureAcademicDiscipline({ id: randomUUID(), code, name, isActive: true })
+      disciplineIdsBySubjectCode.set(mapping.subjectCode, discipline.id)
+    }
     const graph = await buildStructureBootstrapGraph(
       application,
       schoolId,
       academicYear.id,
       levels,
+      disciplineIdsBySubjectCode,
     )
 
     await application.forActor(actor).baseService.access.curriculum.assertConfigure()

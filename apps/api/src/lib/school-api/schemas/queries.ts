@@ -726,6 +726,7 @@ const financePaymentRowSchema = z.object({
   recordedById: z.string().nullable(),
   reversedAt: z.string().nullable(),
   reversedById: z.string().nullable(),
+  reversesPaymentId: z.string().nullable(),
   reversedByPaymentId: z.string().nullable(),
   amount: z.number().int(),
 }).openapi("FinancePaymentRow");

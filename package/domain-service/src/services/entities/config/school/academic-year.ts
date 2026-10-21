@@ -16,6 +16,8 @@ export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ reposito
     gates: {
       preSave: validateAcademicYearSave,
       preDelete: async (year, repos) => {
+        if (await repos.studentAcademicYearProfiles.count({ academicYearId: year.id }) || await repos.teacherAcademicYearProfiles.count({ academicYearId: year.id }))
+          throw new BusinessRuleViolationError('ACADEMIC_YEAR_HAS_PROFILES', 'Remove annual profiles before deleting their year')
         if (await repos.subjects.count({ academicYearId: year.id }))
           throw new BusinessRuleViolationError('ACADEMIC_YEAR_HAS_SUBJECTS', 'Remove subjects before deleting their academic year')
         const classGroups = await repos.classGroups.list({ academicYearId: year.id })

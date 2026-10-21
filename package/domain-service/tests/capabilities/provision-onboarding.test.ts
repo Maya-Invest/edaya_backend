@@ -52,6 +52,7 @@ function typicalInput(schoolId: string, requestId: string) {
       periods: [{ label: 'Trimestre 1', start: '2026-09-01', end: '2026-12-19' }],
     },
     structure: {
+      disciplineMappings: [{ subjectCode: 'MATH', disciplineCode: 'TEST', disciplineName: 'Reviewed test discipline' }],
       templates: ['ci-college'],
       templateSnapshots: [templateSnapshot],
       levels: [{

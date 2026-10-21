@@ -1,4 +1,4 @@
-import { ActivitySession, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, CalendarEventKind, CalendarEventScopeKind, DayOfWeek, LessonSession, MessageDeliveryRecipientKind, OccurrenceStatus, RecordingNotificationGateway, ScheduleKind } from '@edaya/core'
+import { AcademicPeriod, ActivitySession, Assessment, AssessmentKind, AttendanceJustificationStatus, AttendanceMode, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, CalendarEventKind, CalendarEventScopeKind, DayOfWeek, LessonSession, MessageDeliveryRecipientKind, OccurrenceStatus, RecordingNotificationGateway, ScheduleKind } from '@edaya/core'
 import {
   describe,
   expect,
@@ -565,5 +565,20 @@ describe('SchoolService scheduling workflows', () => {
     const { repositories, service } = await createSchedulingContext()
     await expect(service.schedulingWorkflow.saveSchedule({ schedule: { id: 'invalid', schoolId: 'sch1', classGroupId: 'cg_daily', scheduleKind: 'unsupported', title: 'Invalid', isRecurring: true, dayOfWeek: DayOfWeek.Thursday, startTime: '08:00', endTime: '09:00' } as never })).rejects.toThrow()
     expect(await repositories.schedules.findById('invalid')).toBeUndefined()
+  })
+  test('reviews all occurrence anchors, retains notes on omission, clears null and uses server audit time', async () => {
+    const { service, repositories } = await createSchedulingContext({ existingDailyAttendance: true })
+    await repositories.activitySessions.save(new ActivitySession({ id: 'activity-review', scheduleId: 'sched-chess', schoolId: 'sch1', classGroupId: 'cg_daily', activityId: 'act1', displayLabel: 'Activity', startsAt: new Date('2026-05-28T15:00:00Z'), endsAt: new Date('2026-05-28T16:00:00Z') }))
+    await repositories.academicPeriods.save(new AcademicPeriod({ id: 'review-period', schoolId: 'sch1', academicYearId: 'ay1', name: 'Term', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }))
+    await repositories.assessments.save(new Assessment({ id: 'assessment-review', classGroupId: 'cg_daily', classSubjectId: 'cs1', periodId: 'review-period', title: 'Assessment', kind: AssessmentKind.Quiz, maxScore: 20, startsAt: new Date('2026-05-28T10:00:00Z'), endsAt: new Date('2026-05-28T11:00:00Z') }))
+    for (const [index, anchor] of [{ attendanceId: 'cg_daily:2026-05-28' }, { lessonSessionId: 'ses1' }, { activitySessionId: 'activity-review' }, { assessmentId: 'assessment-review' }].entries()) {
+      const id = Object.values(anchor)[0]!
+      await repositories.attendance.save(new AttendanceRecord({ id: `review-${id}`, studentId: 'stu1', ...anchor, date: new Date('2026-05-28'), status: AttendanceStatus.Absent, notes: 'Retained note' }))
+      const reviewed = await service.schedulingWorkflow.reviewAttendanceJustification({ studentId: 'stu1', ...anchor, decision: AttendanceJustificationStatus.Excused, reason: 'Reviewed reason', ...(index % 2 ? { notes: null } : {}), ...{ reviewedAt: new Date('1900-01-01') } })
+      expect(reviewed.notes).toBe(index % 2 ? undefined : 'Retained note')
+      expect(reviewed.justifiedByStaffId).toBe('user1')
+      expect(reviewed.justifiedAt!.getFullYear()).toBeGreaterThan(1900)
+    }
+    await expect(service.schedulingWorkflow.reviewAttendanceJustification({ studentId: 'stu1', lessonSessionId: 'ses1', activitySessionId: 'activity-review', reason: 'Ambiguous' })).rejects.toMatchObject({ code: 'ATTENDANCE_ANCHOR_REQUIRED' })
   })
 })

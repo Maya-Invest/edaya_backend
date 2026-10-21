@@ -30,6 +30,8 @@ export function createStudentsEntityStores(db: StoreDatabase): Pick<EntityStores
       (entity: Guardian) => ({
         id: entity.id,
         schoolId: entity.schoolId,
+        occupation: entity.occupation,
+        sourceFullName: entity.sourceFullName,
         firstName: entity.firstName,
         lastName: entity.lastName,
         code: entity.code ?? null,
@@ -52,6 +54,8 @@ export function createStudentsEntityStores(db: StoreDatabase): Pick<EntityStores
       row => new GuardianCtor({
         id: row.id,
         schoolId: row.schoolId,
+        occupation: row.occupation,
+        sourceFullName: row.sourceFullName,
         firstName: row.firstName,
         lastName: row.lastName,
         code: row.code,

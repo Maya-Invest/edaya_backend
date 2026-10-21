@@ -13,7 +13,7 @@ export interface AddStudentInvolvementInput {
   incidentId: string
   studentId: string
   role: IncidentInvolvementRole
-  notes?: string
+  notes?: string | null
   createdAt?: Date
 }
 
@@ -47,7 +47,7 @@ export interface ResolveIncidentInvolvementInput {
   id: string
   studentId: string
   role: IncidentInvolvementRole
-  notes?: string
+  notes?: string | null
   createdAt?: Date
 }
 
@@ -317,7 +317,7 @@ export class BehaviorServiceWorkflow extends BaseServiceWorkflow {
         incidentId: existing.incidentId,
         studentId: existing.studentId,
         role,
-        notes: notes ?? existing.notes,
+        notes: notes === undefined ? existing.notes : notes,
         createdAt: existing.createdAt,
       })
       await this.baseService.entities.studentIncidentInvolvements.save(updated)

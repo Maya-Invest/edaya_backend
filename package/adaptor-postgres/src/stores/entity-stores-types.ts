@@ -1,8 +1,13 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicDiscipline, AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlacementStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAcademicYearProfile, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { RepositoryStore as PostgresStore } from '../postgres-store'
 import type { ConsortiumRow } from './consortium-row'
 
 export interface EntityStores {
+  academicDisciplines: PostgresStore<AcademicDiscipline>
+  placementStatuses: PostgresStore<PlacementStatus>
+  studentAcademicYearProfiles: PostgresStore<StudentAcademicYearProfile>
+  teacherAcademicYearProfiles: PostgresStore<TeacherAcademicYearProfile>
+
   /** Kept for schema init / legacy row mapping; not exposed on SchoolRepositories. */
   consortiums: PostgresStore<ConsortiumRow>
   schoolsStore: PostgresStore<School>

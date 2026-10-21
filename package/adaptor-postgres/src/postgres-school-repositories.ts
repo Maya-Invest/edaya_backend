@@ -1,4 +1,4 @@
-import type { AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
+import type { AcademicDiscipline, AcademicPeriod, AcademicYear, Activity, ActivityEnrollment, ActivitySession, Allocation, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, DisciplinaryAction, DocumentIssuance, DocumentNumberSeries, FamilyFeedbackCampaign, FamilyFeedbackCommentReadAudit, FamilyFeedbackResponse, FamilyFeedbackSlot, FamilyFeedbackSnapshot, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlacementStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAcademicYearProfile, StudentAccountEntry, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment, TeacherUnavailability } from '@edaya/core'
 import type { SchoolRepositories } from '@edaya/service'
 import type { MigrationDriver } from './lib/migrate'
 import type { RepositoryStore as PostgresStore, StoreDatabase } from './postgres-store'
@@ -26,6 +26,11 @@ import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permissio
 import { PostgresTeacherCorrections } from './stores/teacher-corrections-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
+  public readonly academicDisciplines: PostgresStore<AcademicDiscipline>
+  public readonly placementStatuses: PostgresStore<PlacementStatus>
+  public readonly studentAcademicYearProfiles: PostgresStore<StudentAcademicYearProfile>
+  public readonly teacherAcademicYearProfiles: PostgresStore<TeacherAcademicYearProfile>
+
   public readonly financeProjections: PostgresFinanceProjections
   public readonly dashboardProjections: PostgresDashboardProjections
   public readonly conversations: PostgresConversations
@@ -123,6 +128,11 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
     this.privateFiles = new PostgresPrivateFileLifecycleStore(db)
     this.attachmentUploads = new PostgresAttachmentUploadStore(db)
     const stores = createEntityStores(db)
+    this.academicDisciplines = stores.academicDisciplines
+    this.placementStatuses = stores.placementStatuses
+    this.studentAcademicYearProfiles = stores.studentAcademicYearProfiles
+    this.teacherAcademicYearProfiles = stores.teacherAcademicYearProfiles
+
     // consortiums store remains registered in createEntityStores for schema init / legacy rows
     this.schoolsStore = stores.schoolsStore
     this.academicYears = stores.academicYears

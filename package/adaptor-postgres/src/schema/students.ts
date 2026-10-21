@@ -2,6 +2,9 @@ import { boolean, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/p
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const students = pgTable('students', {
+  nationalMatricule: text('national_matricule'),
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),
@@ -43,6 +46,9 @@ export const studentClassEnrollments = pgTable('student_class_enrollments', {
 // 35. Guardian Table
 
 export const guardians = pgTable('guardians', {
+  occupation: text('occupation'),
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),

@@ -12,6 +12,8 @@ export enum StudentStatus {
 export const studentSchema = z.object({
   id: z.string().trim().min(1, 'id must not be blank'),
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
+  nationalMatricule: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
+  sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
   firstName: z.string().trim().min(1, 'firstName must not be blank'),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   gender: z.string().trim().min(1, 'gender must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -47,6 +49,8 @@ export class Student {
 
   get id() { return this.data.id }
   get schoolId() { return this.data.schoolId }
+  get nationalMatricule() { return this.data.nationalMatricule }
+  get sourceFullName() { return this.data.sourceFullName }
   get firstName() { return this.data.firstName }
   get lastName() { return this.data.lastName }
   get gender() { return this.data.gender }
@@ -69,6 +73,8 @@ export class Student {
     return new Student({
       id: this.id,
       schoolId: this.schoolId,
+      nationalMatricule: this.nationalMatricule,
+      sourceFullName: this.sourceFullName,
       firstName: this.firstName,
       lastName: this.lastName,
       gender: this.gender,

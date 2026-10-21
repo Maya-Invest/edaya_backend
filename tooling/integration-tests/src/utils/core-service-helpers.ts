@@ -1,8 +1,8 @@
 import type { Permission } from '@edaya/authorization'
-import type { AttendanceJustificationStatus } from '@edaya/core'
+import type { AttendanceJustificationStatus, SubjectInput } from '@edaya/core'
 import type { SchoolRepositories, SchoolService } from '@edaya/service'
 import { AuthorizationError, AuthorizationErrorCode, resolveAuditActorId } from '@edaya/authorization'
-import { AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
+import { AcademicDiscipline, AcademicPeriod, Announcement, AnnouncementTarget, Assessment, Attachment, CalendarEvent, CatalogServiceStatus, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, Guardian, GuardianStudentLink, Incident, IncidentStatus, LessonSession, OccurrenceStatus, permissionScope, ReportCardDefinition, ResourceAssignment, Schedule, School, StaffAssignment, StaffMember, StaffPermissionAssignment, Student, StudentHealthProfile, StudentNote } from '@edaya/core'
 
 type ArgsOf<T extends abstract new (...args: any) => any> = ConstructorParameters<T>[0]
 
@@ -38,10 +38,16 @@ export async function seedStaffPermissionTemplate(
   }
 }
 
+/** Explicit synthetic catalogue fixture; production schools start empty. */
+export function withFixtureDiscipline(input: SubjectInput): SubjectInput {
+  return { ...input, disciplineId: input.disciplineId ?? `fixture-discipline-${input.schoolId}` }
+}
+
 export async function saveSchool(app: SchoolService, input: ArgsOf<typeof School>): Promise<School> {
   const existing = await app.baseService.repositories.schools.findById(input.id)
   const school = new School({ ...input, ownerSubjectId: input.ownerSubjectId ?? existing?.ownerSubjectId })
   await app.baseService.entities.schools.save(school)
+  await app.baseService.repositories.academicDisciplines.save(new AcademicDiscipline({ id: `fixture-discipline-${school.id}`, schoolId: school.id, code: 'FIXTURE', name: 'Synthetic test curriculum' }))
   return school
 }
 

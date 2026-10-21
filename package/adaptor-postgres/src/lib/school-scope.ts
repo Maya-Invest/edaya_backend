@@ -7,6 +7,8 @@ import * as schema from '../postgres-schema'
 // tenant, including secondary references on records with their own schoolId.
 const relatedFields: Record<string, PgTable> = {
   academicYearId: schema.academicYears,
+  disciplineId: schema.academicDisciplines,
+  placementStatusId: schema.placementStatuses,
   periodId: schema.academicPeriods,
   gradeLevelId: schema.gradeLevels,
   subjectMatterId: schema.subjectMatters,

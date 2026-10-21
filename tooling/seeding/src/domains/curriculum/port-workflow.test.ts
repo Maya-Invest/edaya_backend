@@ -13,6 +13,7 @@ describe('curriculum seed port workflow', () => {
     const seededSubjects: SubjectSeedRecord[] = []
     const seededMatters: SubjectMatterSeedRecord[] = []
     const port: CurriculumSeedPort = {
+      saveAcademicDiscipline: async () => {},
       saveSubject: async (record) => {
         seededSubjects.push(record)
       },

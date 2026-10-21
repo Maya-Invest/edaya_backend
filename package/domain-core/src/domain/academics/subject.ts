@@ -23,6 +23,7 @@ export const subjectSchema = z.object({
   minPeriodSpan: z.number().int().positive().nullable().optional().transform(v => v ?? undefined),
   maxPeriodSpan: z.number().int().positive().nullable().optional().transform(v => v ?? undefined),
   isOptional: z.boolean().default(false),
+  disciplineId: z.string().trim().min(1).nullable().optional().transform(v => v ?? undefined),
   categoryId: z.string().trim().min(1, 'categoryId must not be blank'),
   color: z.nativeEnum(SubjectColor).default(SubjectColor.Mint),
   createdAt: zodDate().default(() => new Date()),
@@ -75,6 +76,7 @@ export class Subject {
   get minPeriodSpan() { return this.data.minPeriodSpan }
   get maxPeriodSpan() { return this.data.maxPeriodSpan }
   get isOptional() { return this.data.isOptional }
+  get disciplineId() { return this.data.disciplineId }
   get categoryId() { return this.data.categoryId }
   get color() { return this.data.color }
   get createdAt() { return this.data.createdAt }
@@ -93,6 +95,7 @@ export class Subject {
       minPeriodSpan: overrides.minPeriodSpan !== undefined ? overrides.minPeriodSpan : this.minPeriodSpan,
       maxPeriodSpan: overrides.maxPeriodSpan !== undefined ? overrides.maxPeriodSpan : this.maxPeriodSpan,
       isOptional: overrides.isOptional ?? this.isOptional,
+      disciplineId: overrides.disciplineId !== undefined ? overrides.disciplineId : this.disciplineId,
       categoryId: overrides.categoryId
         ?? (overrides.category
           ? defaultSubjectCategoryId(this.schoolId, overrides.category)

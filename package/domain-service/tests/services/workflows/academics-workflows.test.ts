@@ -1,5 +1,5 @@
 import { AuthorizationError } from '@edaya/authorization'
-import { AcademicYear, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, StaffPermissionAssignment, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core'
+import { AcademicDiscipline, AcademicYear, BusinessRuleViolationError, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, GradeLevel, LessonSession, Permission, StaffPermissionAssignment, Subject, SubjectCategory, SubjectColor, SubjectMatter } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
@@ -7,6 +7,7 @@ import { createTestStaffActor } from '../../support/test-actor'
 async function createContext({ existingProgress = false, matterCompletedPercentage = 0, matterList, owner = true }: { existingProgress?: boolean, matterCompletedPercentage?: number, matterList?: Array<{ id: string, completedPercentage: number }>, owner?: boolean } = {}) {
   const fixture = await createTestApp(createTestStaffActor('sch1', 'user1'), { owner })
   const repositories = fixture.schoolRepositories
+  await repositories.academicDisciplines.save(new AcademicDiscipline({ id: 'test-discipline', schoolId: 'sch1', code: 'TEST', name: 'Test discipline' }))
   await repositories.academicYears.save(new AcademicYear({ id: 'ay1', schoolId: 'sch1', name: 'Year', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'published' }))
   await repositories.gradeLevels.save(new GradeLevel({ id: 'gl1', schoolId: 'sch1', name: 'Grade', label: 'G', order: 1 }))
   await repositories.classGroups.save(new ClassGroup({ id: 'cg1', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Class' }))
@@ -103,15 +104,7 @@ describe('SchoolService academics workflows', () => {
   test('configureSubject and configureSubjectMatter persist school curriculum entities', async () => {
     const { repositories, service } = await createContext()
 
-    const subject = await service.academicsWorkflow.configureSubject({
-      id: 'subj-math',
-      schoolId: 'sch1',
-      gradeLevelId: 'gl1',
-      academicYearId: 'ay1',
-      name: 'Mathematics',
-      category: SubjectCategory.Scientific,
-      color: SubjectColor.Sky,
-    })
+    const subject = await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'subj-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Mathematics', category: SubjectCategory.Scientific, color: SubjectColor.Sky })
     expect(subject.name).toBe('Mathematics')
     expect((await repositories.subjects.findById(subject.id))?.data).toEqual(subject.data)
 
@@ -128,7 +121,7 @@ describe('SchoolService academics workflows', () => {
   test('configureSubject and setClassSubjectOffered manage class offerings', async () => {
     const { repositories, service } = await createContext()
 
-    await service.academicsWorkflow.configureSubject({ id: 'new-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Math', coefficient: 2, classSubjectIdsByClassGroupId: { cg1: 'cs-custom' } })
+    await service.academicsWorkflow.configureSubject({ disciplineId: 'test-discipline', id: 'new-math', schoolId: 'sch1', gradeLevelId: 'gl1', academicYearId: 'ay1', name: 'Math', coefficient: 2, classSubjectIdsByClassGroupId: { cg1: 'cs-custom' } })
     expect((await repositories.classSubjects.findById('cs-custom'))?.isOffered).toBe(true)
 
     const updated = await service.academicsWorkflow.setClassSubjectOffered({

@@ -1,6 +1,6 @@
 import type { ActorMetadata } from '@edaya/authorization'
 import type { CommandJson } from '@edaya/core'
-import type { ApplyStructureTemplateResult } from './apply-structure-template'
+import type { ApplyStructureTemplateResult, ReviewedDisciplineMapping } from './apply-structure-template'
 import type { InviteStaffMembersResult } from './invite-staff-members'
 import type { OnboardingAccountStatus } from './onboarding-account-state'
 import type { OnboardingSchoolApplication } from './onboarding-application'
@@ -36,6 +36,7 @@ export interface ProvisionOnboardingSchoolInput {
 }
 
 export interface ProvisionOnboardingStructureInput {
+  disciplineMappings?: ReviewedDisciplineMapping[]
   templates: string[]
   templateSnapshots?: StructureTemplateDefinition[]
   levels: Array<{
@@ -333,6 +334,7 @@ async function executeProvision(
         ? { templateSnapshots: input.structure.templateSnapshots }
         : {}),
       levels: input.structure.levels,
+      disciplineMappings: input.structure.disciplineMappings,
     })
     for (const phase of structure.phases) {
       phases.push(phase)
@@ -416,6 +418,7 @@ export async function provisionOnboarding(
       structure: {
         templates: input.structure.templates,
         levels: input.structure.levels,
+        disciplineMappings: input.structure.disciplineMappings,
       },
       invites: parseInvites(input.invites),
     },

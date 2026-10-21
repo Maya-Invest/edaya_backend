@@ -3,6 +3,58 @@
 
 export const clientBindings = {
     "entities": {
+      "academicDisciplines": {
+        "publicName": "academic-disciplines",
+        "schemaName": "AcademicDiscipline",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": true,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": true
+        }
+      },
+      "placementStatuses": {
+        "publicName": "placement-statuses",
+        "schemaName": "PlacementStatus",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": true,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": true
+        }
+      },
+      "studentAcademicYearProfiles": {
+        "publicName": "student-academic-year-profiles",
+        "schemaName": "StudentAcademicYearProfile",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
+      "teacherAcademicYearProfiles": {
+        "publicName": "teacher-academic-year-profiles",
+        "schemaName": "TeacherAcademicYearProfile",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
       "schools": {
         "publicName": "schools",
         "schemaName": "School",
@@ -1100,6 +1152,36 @@ export const clientBindings = {
         "publicName": "configure-subject",
         "requestSchemaName": "SubjectConfigCommand",
         "responseSchemaName": "Subject"
+      },
+      "configureAcademicDiscipline": {
+        "publicName": "configure-academic-discipline",
+        "requestSchemaName": "ConfigureAcademicDisciplineCommand",
+        "responseSchemaName": "AcademicDiscipline"
+      },
+      "configurePlacementStatus": {
+        "publicName": "configure-placement-status",
+        "requestSchemaName": "ConfigurePlacementStatusCommand",
+        "responseSchemaName": "PlacementStatus"
+      },
+      "upsertStudentAcademicYearProfile": {
+        "publicName": "upsert-student-academic-year-profile",
+        "requestSchemaName": "UpsertStudentAcademicYearProfileCommand",
+        "responseSchemaName": "StudentAcademicYearProfile"
+      },
+      "upsertTeacherAcademicYearProfile": {
+        "publicName": "upsert-teacher-academic-year-profile",
+        "requestSchemaName": "UpsertTeacherAcademicYearProfileCommand",
+        "responseSchemaName": "TeacherAcademicYearProfile"
+      },
+      "removeStudentAcademicYearProfile": {
+        "publicName": "remove-student-academic-year-profile",
+        "requestSchemaName": "RemoveStudentAcademicYearProfileCommand",
+        "responseSchemaName": "RemoveStudentAcademicYearProfileResponse"
+      },
+      "removeTeacherAcademicYearProfile": {
+        "publicName": "remove-teacher-academic-year-profile",
+        "requestSchemaName": "RemoveTeacherAcademicYearProfileCommand",
+        "responseSchemaName": "RemoveTeacherAcademicYearProfileResponse"
       },
       "configureSubjectCategory": {
         "publicName": "configure-subject-category",

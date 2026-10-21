@@ -15,6 +15,10 @@ interface EntityRule<K extends CoreEntityKey> {
 
 /** Complete business actions for persisted entities. A module-entry permission never substitutes for these actions. */
 const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
+  academicDisciplines: { read: [Permission.ACADEMIC_CATALOG_READ, Permission.ACADEMIC_CATALOG_MANAGE, Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE, Permission.STAFF_READ, Permission.ACCESS_CONTROL_READ, Permission.ACCESS_CONTROL_MANAGE], write: Permission.ACADEMIC_CATALOG_MANAGE, delete: Permission.ACADEMIC_CATALOG_MANAGE },
+  placementStatuses: { read: [Permission.ACADEMIC_CATALOG_READ, Permission.ACADEMIC_CATALOG_MANAGE, Permission.STUDENT_READ, Permission.STUDENT_MANAGE], write: Permission.ACADEMIC_CATALOG_MANAGE, delete: Permission.ACADEMIC_CATALOG_MANAGE },
+  studentAcademicYearProfiles: { read: Permission.STUDENT_READ, write: Permission.STUDENT_MANAGE, delete: Permission.STUDENT_MANAGE },
+  teacherAcademicYearProfiles: { read: [Permission.STAFF_READ, Permission.ACCESS_CONTROL_READ], write: Permission.ACCESS_CONTROL_MANAGE, delete: Permission.ACCESS_CONTROL_MANAGE },
   classSubjectMatters: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
   classSubjectProgress: { read: [Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.GRADE_MANAGE], write: Permission.CLASS_LOGBOOK_MANAGE, delete: Permission.CLASS_LOGBOOK_MANAGE },
   classSubjects: { read: [Permission.ACADEMIC_PROGRAM_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_READ, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ACADEMIC_PROGRAM_MANAGE, delete: Permission.ACADEMIC_PROGRAM_MANAGE },
@@ -89,8 +93,12 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
     this.rule = entityRules[resource]
   }
 
-  readScope() {
-    return this.access.scope(this.rule.read, this.resource)
+  async readScope() {
+    const scope = await this.access.scope(this.rule.read, this.resource)
+    // Catalogue options are school-local reference data, also usable by scoped editors.
+    if (this.resource === 'academicDisciplines' || this.resource === 'placementStatuses')
+      return { ...scope, clauses: scope.clauses.map(() => ({ target: { kind: 'school' as const } })) }
+    return scope
   }
 
   async assertBatchSave(entities: CoreEntityMap[K][], existing: Map<string, CoreEntityMap[K]>) {

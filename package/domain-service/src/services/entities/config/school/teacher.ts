@@ -68,6 +68,8 @@ async function validateTeacherDelete(
   teacher: Teacher,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (await repositories.teacherAcademicYearProfiles.count({ teacherId: teacher.id }))
+    throw new BusinessRuleViolationError('TEACHER_HAS_ANNUAL_PROFILES', 'Remove annual information before deleting this teacher')
   const assignments = await repositories.teacherAssignments.list({ teacherId: teacher.id })
   const unavailabilities = await repositories.teacherUnavailabilities.list({ teacherId: teacher.id })
   if (assignments.length > 0 || unavailabilities.length > 0) {

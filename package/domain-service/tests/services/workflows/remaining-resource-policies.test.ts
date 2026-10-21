@@ -250,7 +250,8 @@ describe('remaining resource policies against native SQL and transactions', () =
 
   test('subject scopes work before classes and isolate subject, grade, year and school', async () => {
     await fixture.db.exec('INSERT INTO grade_levels (id, school_id, name, label, order_val, created_at) VALUES (\'empty-grade\', \'school-a\', \'Empty\', \'Empty\', 2, now())')
-    const input = { id: 'empty-math', schoolId: 'school-a', gradeLevelId: 'empty-grade', academicYearId: 'year-a', name: 'Math', categoryId: 'category-school-a-scientific' }
+    await fixture.db.exec('INSERT INTO academic_disciplines (id, school_id, code, name, created_at, updated_at) VALUES (\'test-discipline\', \'school-a\', \'TEST\', \'Test discipline\', now(), now())')
+    const input = { disciplineId: 'test-discipline', id: 'empty-math', schoolId: 'school-a', gradeLevelId: 'empty-grade', academicYearId: 'year-a', name: 'Math', categoryId: 'category-school-a-scientific' }
     const existing = (await fixture.repositories.subjects.findById('math'))!
     input.categoryId = existing.categoryId
     for (const permission of [Permission.ACADEMIC_PROGRAM_READ, Permission.ACADEMIC_PROGRAM_MANAGE])

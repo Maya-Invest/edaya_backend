@@ -20,6 +20,9 @@ export function createHttpCurriculumSeedPort(
   }
 
   return {
+    saveAcademicDiscipline: record => withSeedPortError('curriculum.saveAcademicDiscipline', async () => {
+      await postCoreCommand(requestOptions, 'configureAcademicDiscipline', record)
+    }),
     saveSubject: record => withSeedPortError('curriculum.saveSubject', async () => {
       await postCoreCommand(requestOptions, 'configureSubject', { ...new Subject(record).data, classSubjectIdsByClassGroupId: record.classSubjectIdsByClassGroupId })
     }),

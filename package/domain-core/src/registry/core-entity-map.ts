@@ -1,7 +1,9 @@
 import type {
+  AcademicDiscipline,
   AcademicPeriod,
   AcademicYear,
   AccountInvitation,
+
   Activity,
   ActivityEnrollment,
   ActivitySession,
@@ -30,6 +32,7 @@ import type {
   MessageDelivery,
   Payment,
   PeriodDefinition,
+  PlacementStatus,
   ReportCardDefinition,
   ReportCardDefinitionSection,
   ReportCardResult,
@@ -46,6 +49,7 @@ import type {
   StaffPermissionProfileBinding,
   StaffPermissionScopeDefaults,
   Student,
+  StudentAcademicYearProfile,
   StudentCharge,
   StudentClassEnrollment,
   StudentDisciplinaryAction,
@@ -59,11 +63,17 @@ import type {
   SubjectCategoryEntity,
   SubjectMatter,
   Teacher,
+  TeacherAcademicYearProfile,
   TeacherAssignment,
   TeacherUnavailability,
 } from '../domain'
 
 export interface CoreEntityMap {
+  academicDisciplines: AcademicDiscipline
+  placementStatuses: PlacementStatus
+  studentAcademicYearProfiles: StudentAcademicYearProfile
+  teacherAcademicYearProfiles: TeacherAcademicYearProfile
+
   schools: School
   academicYears: AcademicYear
   academicPeriods: AcademicPeriod
@@ -141,6 +151,11 @@ function defineCoreEntityKeys<const Keys extends readonly CoreEntityKey[]>(
 }
 
 export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
+  'academicDisciplines',
+  'placementStatuses',
+  'studentAcademicYearProfiles',
+  'teacherAcademicYearProfiles',
+
   'schools',
   'academicYears',
   'academicPeriods',

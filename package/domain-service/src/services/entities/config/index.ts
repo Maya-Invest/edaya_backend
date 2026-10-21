@@ -36,6 +36,7 @@ export { attachmentConfig, validateAttachmentSave } from './school/attachment'
 export { classGroupConfig, validateClassGroupDelete, validateClassGroupSave } from './school/class-group'
 export { gradeLevelConfig } from './school/grade-level'
 export { gradeScaleConfig } from './school/grade-scale'
+export * from './school/intake-profiles'
 export { resourceConfig } from './school/resource'
 export { resourceAssignmentConfig } from './school/resource-assignment'
 export { schoolConfig } from './school/school'
@@ -59,4 +60,5 @@ export { studentDisciplinaryActionConfig } from './students/student-disciplinary
 export { studentHealthProfileConfig } from './students/student-health-profile'
 export { studentIncidentInvolvementConfig } from './students/student-incident-involvement'
 export { studentNoteConfig, validateStudentNoteSave } from './students/student-note'
+
 export { studentPhotoSubmissionConfig, validateStudentPhotoSubmissionSave } from './students/student-photo-submission'

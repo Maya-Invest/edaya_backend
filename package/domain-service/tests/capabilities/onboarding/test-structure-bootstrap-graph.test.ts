@@ -51,12 +51,14 @@ describe('buildStructureBootstrapGraph', () => {
         template: college,
         levelCode: '4EME',
       }],
+      new Map([['MATH', 'discipline-math'], ['FR', 'discipline-fr']]),
     )
 
     const entries = curriculumEntriesForLevel(college, '4EME')
     expect(graph.gradeLevels).toHaveLength(1)
     expect(graph.classGroups).toHaveLength(2)
     expect(graph.subjects).toHaveLength(entries.length)
+    expect(graph.subjects.every(subject => subject.disciplineId)).toBe(true)
     expect(graph.classSubjects).toHaveLength(entries.length * 2)
     expect(graph.classSubjects.every(entry => entry.subjectId)).toBe(true)
     expect(graph.classSubjectMatters.length).toBeGreaterThan(0)

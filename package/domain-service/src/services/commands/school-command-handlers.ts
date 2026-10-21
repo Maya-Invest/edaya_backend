@@ -94,6 +94,7 @@ import type {
   UpdateCatalogServiceInput,
   WaiveStudentChargeInput,
 } from '../workflows/finance'
+import type * as intake from '../workflows/intake'
 import type { MarksReviewInput } from '../workflows/marks-review'
 import type {
   NotificationTemplatesServiceWorkflow,
@@ -262,6 +263,12 @@ export function createSchoolCommandHandlers(workflows: SchoolWorkflowHandlers): 
     acceptAccountInvitation: payload => workflows.accountInvitation.acceptAccountInvitation(payload as AcceptAccountInvitationInput),
     // academics
     configureSubject: payload => workflows.academics.configureSubject(payload as ConfigureSubjectInput),
+    configureAcademicDiscipline: payload => workflows.academics.configureAcademicDiscipline(payload as Parameters<typeof intake.configureAcademicDiscipline>[1]),
+    configurePlacementStatus: payload => workflows.academics.configurePlacementStatus(payload as Parameters<typeof intake.configurePlacementStatus>[1]),
+    upsertStudentAcademicYearProfile: payload => workflows.academics.upsertStudentAcademicYearProfile(payload as Parameters<typeof intake.upsertStudentAcademicYearProfile>[1]),
+    upsertTeacherAcademicYearProfile: payload => workflows.academics.upsertTeacherAcademicYearProfile(payload as Parameters<typeof intake.upsertTeacherAcademicYearProfile>[1]),
+    removeStudentAcademicYearProfile: payload => workflows.academics.removeStudentAcademicYearProfile(payload as Parameters<typeof intake.removeStudentAcademicYearProfile>[1]),
+    removeTeacherAcademicYearProfile: payload => workflows.academics.removeTeacherAcademicYearProfile(payload as Parameters<typeof intake.removeTeacherAcademicYearProfile>[1]),
     configureSubjectCategory: payload => workflows.academics.configureSubjectCategory(payload as ConfigureSubjectCategoryInput),
     configureSubjectMatter: payload => workflows.academics.configureSubjectMatter(payload as ConfigureSubjectMatterInput),
     removeSubjectMatter: payload => workflows.academics.removeSubjectMatter(payload as RemoveSubjectMatterInput),

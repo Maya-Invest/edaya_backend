@@ -239,6 +239,8 @@ export const resourceAssignments = pgTable('resource_assignments', {
 // 11. Fee Table
 
 export const teachers = pgTable('teachers', {
+  sourceFullName: text('source_full_name'),
+
   id: text('id').primaryKey(),
   schoolId: text('school_id').notNull(),
   firstName: text('first_name').notNull(),

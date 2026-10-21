@@ -61,6 +61,9 @@ export type CreateScheduleInput = ScheduleInput
 export type CreateCalendarEventInput = CalendarEventInput
 
 export interface ReviewAttendanceJustificationInput {
+  activitySessionId?: string
+  assessmentId?: string
+  notes?: string | null
   studentId: string
   attendanceId?: string
   lessonSessionId?: string
@@ -445,13 +448,17 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
     studentId,
     attendanceId,
     lessonSessionId,
+    activitySessionId,
+    assessmentId,
     decision,
     reason,
+    notes,
   }: ReviewAttendanceJustificationInput): Promise<AttendanceRecord> {
     return this.withAcademicState(async () => {
-      const anchor: AttendanceAnchor = attendanceId
-        ? { attendanceId }
-        : { lessonSessionId: lessonSessionId! }
+      const supplied = [attendanceId, lessonSessionId, activitySessionId, assessmentId].filter(Boolean)
+      if (supplied.length !== 1)
+        throw new BusinessRuleViolationError('ATTENDANCE_ANCHOR_REQUIRED', 'Select exactly one attendance occurrence')
+      const anchor: AttendanceAnchor = { attendanceId, lessonSessionId, activitySessionId, assessmentId }
       const existing = await findAttendanceRecordByAnchor(this.repositories, studentId, anchor)
       if (!existing) {
         denyResourceAccess()
@@ -459,6 +466,8 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
       const record = existing.copyWith({
         justificationStatus: decision ?? AttendanceJustificationStatus.Excused,
         reason,
+        notes: notes === undefined ? existing.notes : notes,
+        updatedAt: new Date(),
         justifiedAt: new Date(),
         justifiedByStaffId: resolveAuditActorId(this.baseService.actor),
       })

@@ -5,11 +5,12 @@ import type { SyncClassSubjectOptions } from './subject-sync'
 import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
 import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
-
 import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
+
 import { assertClassSubjectGradingMutable } from '../entities/config/academics/class-subject'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import * as intake from './intake'
 import { removeMirroredClassSubjects, syncSubjectMatterToClassSubject, syncSubjectsToClassGroup, syncSubjectToAllClassGroups } from './subject-sync'
 
 export interface RecordLessonSessionProgressInput {
@@ -50,6 +51,13 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     super(base)
     this.repositories = pickWorkflowRepositories('academics', base.repositories)
   }
+
+  configureAcademicDiscipline(input: Parameters<typeof intake.configureAcademicDiscipline>[1]) { return intake.configureAcademicDiscipline(this.baseService, input) }
+  configurePlacementStatus(input: Parameters<typeof intake.configurePlacementStatus>[1]) { return intake.configurePlacementStatus(this.baseService, input) }
+  upsertStudentAcademicYearProfile(input: Parameters<typeof intake.upsertStudentAcademicYearProfile>[1]) { return intake.upsertStudentAcademicYearProfile(this.baseService, input) }
+  upsertTeacherAcademicYearProfile(input: Parameters<typeof intake.upsertTeacherAcademicYearProfile>[1]) { return intake.upsertTeacherAcademicYearProfile(this.baseService, input) }
+  removeStudentAcademicYearProfile(input: Parameters<typeof intake.removeStudentAcademicYearProfile>[1]) { return intake.removeStudentAcademicYearProfile(this.baseService, input) }
+  removeTeacherAcademicYearProfile(input: Parameters<typeof intake.removeTeacherAcademicYearProfile>[1]) { return intake.removeTeacherAcademicYearProfile(this.baseService, input) }
 
   async configureSubject(input: ConfigureSubjectInput): Promise<Subject> {
     return this.baseService.atomicExecution.execute(async () => {

@@ -34,6 +34,8 @@ async function validateStudentDelete(
   student: Student,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  if (await repositories.studentAcademicYearProfiles.count({ studentId: student.id }))
+    throw new BusinessRuleViolationError('STUDENT_HAS_ANNUAL_PROFILES', 'Remove annual information before deleting this student')
   const [
     enrollments,
     guardianLinks,

@@ -3,9 +3,10 @@ import { Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { validateSubjectDelete, validateSubjectSave } from '../../../../src/services/entities/config/academics/subject'
 
-const subject = new Subject({ id: 'subject', schoolId: 'school', gradeLevelId: 'grade', academicYearId: 'year', name: 'Math', categoryId: 'category' })
+const subject = new Subject({ id: 'subject', disciplineId: 'discipline', schoolId: 'school', gradeLevelId: 'grade', academicYearId: 'year', name: 'Math', categoryId: 'category' })
 function repositories(overrides: Record<string, unknown> = {}) {
   return {
+    academicDisciplines: { findById: async () => ({ schoolId: 'school', isActive: true }) },
     gradeLevels: { findById: async () => ({ schoolId: 'school' }) },
     academicYears: { findById: async () => ({ schoolId: 'school' }) },
     subjectCategories: { findById: async () => ({ schoolId: 'school' }) },

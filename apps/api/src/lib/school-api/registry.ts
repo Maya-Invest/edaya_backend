@@ -1,7 +1,7 @@
 import type { CoreEntityKey, SchoolCommandKey } from "@edaya/service";
 import type { PublicEntityOperations } from "./public-operations";
 import type { AnySchema } from "@/lib/school-api/schemas/helpers";
-import { AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, attendanceCallSchema, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAssignment, teacherCorrectionsQuerySchema, TeacherUnavailability } from "@edaya/core";
+import { AcademicDiscipline, AcademicPeriod, AcademicYear, AccountInvitation, Activity, ActivityEnrollment, ActivitySession, Announcement, AnnouncementTarget, Assessment, AssessmentResult, Attachment, Attendance, attendanceCallSchema, AttendanceRecord, CalendarEvent, CatalogService, ClassActivityEnrollment, ClassGroup, ClassSubject, ClassSubjectMatter, ClassSubjectProgress, conversationDetailQuerySchema, conversationRecipientsQuerySchema, conversationsQuerySchema, DisciplinaryAction, DocumentIssuance, GradeLevel, GradeScale, Guardian, GuardianStudentLink, Incident, LessonSession, MessageDelivery, Payment, PeriodDefinition, PlacementStatus, ReportCardDefinition, ReportCardDefinitionSection, ReportCardResult, Resource, ResourceAssignment, Schedule, School, SchoolNotificationTemplates, StaffAssignment, StaffManualPermissionAssignment, StaffMember, StaffPermissionAssignment, StaffPermissionProfile, StaffPermissionProfileBinding, StaffPermissionScopeDefaults, Student, StudentAcademicYearProfile, StudentCharge, StudentClassEnrollment, StudentDisciplinaryAction, StudentHealthProfile, StudentIncidentInvolvement, StudentNote, StudentPhotoSubmission, StudentServiceEnrollment, StudentYearAccount, Subject, SubjectCategoryEntity, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment, teacherCorrectionsQuerySchema, TeacherUnavailability } from "@edaya/core";
 import { CORE_ENTITY_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import * as commandResponseSchemas from "@/lib/school-api/schemas/command-responses";
@@ -66,6 +66,11 @@ function decoration(
 }
 
 const apiEntityDecorations = {
+  academicDisciplines: decoration("academic-disciplines", "AcademicDiscipline", entitySchemas.academicDisciplineQuerySchema, entitySchemas.academicDisciplineResponseSchema, AcademicDiscipline, PUBLIC_DELETE),
+  placementStatuses: decoration("placement-statuses", "PlacementStatus", entitySchemas.placementStatusQuerySchema, entitySchemas.placementStatusResponseSchema, PlacementStatus, PUBLIC_DELETE),
+  studentAcademicYearProfiles: decoration("student-academic-year-profiles", "StudentAcademicYearProfile", entitySchemas.studentAcademicYearProfileQuerySchema, entitySchemas.studentAcademicYearProfileResponseSchema, StudentAcademicYearProfile, COMMAND_ONLY),
+  teacherAcademicYearProfiles: decoration("teacher-academic-year-profiles", "TeacherAcademicYearProfile", entitySchemas.teacherAcademicYearProfileQuerySchema, entitySchemas.teacherAcademicYearProfileResponseSchema, TeacherAcademicYearProfile, COMMAND_ONLY),
+
   schools: decoration("schools", "Schools", entitySchemas.schoolQuerySchema, entitySchemas.schoolResponseSchema, School, PUBLIC_CRUD),
   academicYears: decoration("academic-years", "Academic Years", entitySchemas.academicYearQuerySchema, entitySchemas.academicYearResponseSchema, AcademicYear, PUBLIC_CRUD),
   academicPeriods: decoration("academic-periods", "Academic Periods", entitySchemas.academicPeriodQuerySchema, entitySchemas.academicPeriodResponseSchema, AcademicPeriod, PUBLIC_CRUD),
@@ -209,6 +214,12 @@ export const coreCommands = [
   command("update-guardian-contact-methods", "updateGuardianContactMethods", commandSchemas.updateGuardianContactMethodsCommandSchema),
   command("update-guardian-student-link", "updateGuardianStudentLink", commandSchemas.updateGuardianStudentLinkCommandSchema),
   command("configure-subject", "configureSubject", commandSchemas.subjectConfigCommandSchema),
+  command("configure-academic-discipline", "configureAcademicDiscipline", commandSchemas.configureAcademicDisciplineCommandSchema),
+  command("configure-placement-status", "configurePlacementStatus", commandSchemas.configurePlacementStatusCommandSchema),
+  command("upsert-student-academic-year-profile", "upsertStudentAcademicYearProfile", commandSchemas.upsertStudentAcademicYearProfileCommandSchema),
+  command("upsert-teacher-academic-year-profile", "upsertTeacherAcademicYearProfile", commandSchemas.upsertTeacherAcademicYearProfileCommandSchema),
+  command("remove-student-academic-year-profile", "removeStudentAcademicYearProfile", commandSchemas.removeStudentAcademicYearProfileCommandSchema),
+  command("remove-teacher-academic-year-profile", "removeTeacherAcademicYearProfile", commandSchemas.removeTeacherAcademicYearProfileCommandSchema),
   command("configure-subject-category", "configureSubjectCategory", commandSchemas.subjectCategoryConfigCommandSchema),
   command("configure-subject-matter", "configureSubjectMatter", commandSchemas.subjectMatterConfigCommandSchema),
   command("remove-subject-matter", "removeSubjectMatter", commandSchemas.removeSubjectMatterCommandSchema),

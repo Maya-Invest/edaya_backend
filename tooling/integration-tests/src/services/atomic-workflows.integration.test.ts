@@ -2,25 +2,7 @@ import { AuthorizationErrorCode } from '@edaya/authorization'
 import { AcademicPeriodType, AnnouncementStatus, AnnouncementTargetKind, AttendanceStatus, ChargeStatus, DayOfWeek, GradeLevel, GradeScale, PaymentMethod, PaymentStatus, studentYearAccountId, Subject, SubjectMatter } from '@edaya/core'
 import { expect, it } from 'bun:test'
 import { describeIntegration } from '../support/suite-runner'
-import {
-  adjustStudentFee,
-  cancelStudentFee,
-  createAcademicPeriod,
-  createClassGroup,
-  listMatterProgress,
-  publishAcademicPeriod,
-  saveAnnouncement,
-  saveAnnouncementTarget,
-  saveClassSubject,
-  saveClassSubjectMatter,
-  saveFee,
-  saveGuardian,
-  saveLessonSession,
-  saveReportCardDefinition,
-  saveSchedule,
-  saveSchool,
-  saveStudent,
-} from '../utils/core-service-helpers'
+import { adjustStudentFee, cancelStudentFee, createAcademicPeriod, createClassGroup, listMatterProgress, publishAcademicPeriod, saveAnnouncement, saveAnnouncementTarget, saveClassSubject, saveClassSubjectMatter, saveFee, saveGuardian, saveLessonSession, saveReportCardDefinition, saveSchedule, saveSchool, saveStudent, withFixtureDiscipline } from '../utils/core-service-helpers'
 import { createTestApp } from '../utils/test-adapter'
 
 describeIntegration('atomic workflow safeguards', () => {
@@ -45,7 +27,7 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' }),
+      new Subject(withFixtureDiscipline({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' })),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-math',
@@ -238,7 +220,7 @@ describeIntegration('atomic workflow safeguards', () => {
     await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
     await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
     await app.baseService.entities.subjects.save(
-      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'general', schoolId: 'school', name: 'General' }),
+      new Subject(withFixtureDiscipline({ gradeLevelId: 'level', academicYearId: 'year', id: 'general', schoolId: 'school', name: 'General' })),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-general',
@@ -282,7 +264,7 @@ describeIntegration('atomic workflow safeguards', () => {
       name: 'Grade 6 A',
     })
     await app.baseService.entities.subjects.save(
-      new Subject({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' }),
+      new Subject(withFixtureDiscipline({ gradeLevelId: 'level', academicYearId: 'year', id: 'math', schoolId: 'school', name: 'Mathematics' })),
     )
     const classSubject = await saveClassSubject(app, {
       id: 'class-math',

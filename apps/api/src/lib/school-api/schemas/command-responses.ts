@@ -2,6 +2,7 @@ import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from 
 import { z } from "@hono/zod-openapi";
 import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import {
+  academicDisciplineResponseSchema,
   academicPeriodResponseSchema,
   academicYearResponseSchema,
   accountInvitationResponseSchema,
@@ -31,6 +32,7 @@ import {
   messageDeliveryResponseSchema,
   paymentResponseSchema,
   periodDefinitionResponseSchema,
+  placementStatusResponseSchema,
   resourceAssignmentResponseSchema,
   resourceResponseSchema,
   resultResponseSchema,
@@ -44,6 +46,7 @@ import {
   staffPermissionProfileBindingResponseSchema,
   staffPermissionProfileResponseSchema,
   staffPermissionScopeDefaultsResponseSchema,
+  studentAcademicYearProfileResponseSchema,
   studentChargeResponseSchema,
   studentDisciplinaryActionResponseSchema,
   studentHealthProfileResponseSchema,
@@ -55,6 +58,7 @@ import {
   subjectCategoryResponseSchema,
   subjectMatterResponseSchema,
   subjectResponseSchema,
+  teacherAcademicYearProfileResponseSchema,
   teacherResponseSchema,
 } from "./entities";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
@@ -289,6 +293,12 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
     profileId: z.string().min(1),
   }).openapi("RemoveStaffPermissionProfileResponse"),
   configureSubject: subjectResponseSchema,
+  configureAcademicDiscipline: academicDisciplineResponseSchema,
+  configurePlacementStatus: placementStatusResponseSchema,
+  upsertStudentAcademicYearProfile: studentAcademicYearProfileResponseSchema,
+  upsertTeacherAcademicYearProfile: teacherAcademicYearProfileResponseSchema,
+  removeStudentAcademicYearProfile: z.object({ id: z.string() }).openapi("RemoveStudentAcademicYearProfileResponse"),
+  removeTeacherAcademicYearProfile: z.object({ id: z.string() }).openapi("RemoveTeacherAcademicYearProfileResponse"),
   configureSubjectCategory: subjectCategoryResponseSchema,
   configureSubjectMatter: subjectMatterResponseSchema,
   configureDisciplinaryAction: disciplinaryActionResponseSchema,
