@@ -1,5 +1,6 @@
 import type { DocumentRendererPort, NotificationGatewayPort, ReportCardResultInput } from '@edaya/core'
 import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, ClassSubject, GradeScale, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultStatus, Student, Subject } from '@edaya/core'
+import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createStudentTransitionContext } from './student-workflow-context'
 
 export async function createReportCardContext({ existingReportCard, notificationGateway = noOpNotificationGateway, academicPeriodPublished = true, marksApproved = true, documentRenderer }: { documentRenderer?: DocumentRendererPort, existingReportCard?: Partial<ReportCardResultInput> & { id: string }, notificationGateway?: NotificationGatewayPort, academicPeriodPublished?: boolean, marksApproved?: boolean } = {}) {
@@ -25,5 +26,6 @@ export async function createReportCardContext({ existingReportCard, notification
   await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'sch1', studentId: 'stu1', guardianId: 'gua1', receivesAcademicReports: true }))
   if (existingReportCard)
     await repositories.results.save(new ReportCardResult({ reportCardDefinitionId: 'def1', studentId: 'stu1', classGroupId: 'cg1', periodId: 'per1', assessmentResultCount: 0, sectionResults: [], attendanceSummary: { presentCount: 0, absenceCount: 0, excusedAbsenceCount: 0, lateCount: 0 }, ...(existingReportCard.status === ReportCardResultStatus.Published ? { publishedAt: new Date('2026-04-01') } : {}), ...existingReportCard }))
+  await seedSubjectParticipation(repositories)
   return { ...fixture, results: repositories.results }
 }

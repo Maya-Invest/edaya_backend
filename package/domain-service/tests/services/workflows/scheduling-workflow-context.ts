@@ -1,6 +1,7 @@
 import type { ActivitySession, AttendanceRecord, CalendarEventInput, NotificationGatewayPort, ScheduleInput } from '@edaya/core'
 import { AcademicYear, Activity, ActivityCategory, Attendance, AttendanceMode, CalendarEvent, ClassGroup, ClassSubject, DayOfWeek, GradeLevel, Guardian, GuardianStudentLink, LessonSession, noOpNotificationGateway, Schedule, ScheduleKind, School, StaffMember, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { createTestApp } from '../../support/create-test-app'
+import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createTestStaffActor } from '../../support/test-actor'
 
 export async function createSchedulingContext({ classGroupAttendanceMode = AttendanceMode.Daily, existingAttendance, existingDailyAttendance = false, activeEnrollment = true, schedules = [], calendarEvents = [], academicYear = { startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31') }, enforceScheduleConflicts = false, extraLessonSessions = {}, extraActivitySessions = {}, notificationGateway = noOpNotificationGateway }: { classGroupAttendanceMode?: AttendanceMode, existingAttendance?: AttendanceRecord, existingDailyAttendance?: boolean, activeEnrollment?: boolean, schedules?: ScheduleInput[], calendarEvents?: CalendarEventInput[], academicYear?: { startDate: Date, endDate: Date }, enforceScheduleConflicts?: boolean, extraLessonSessions?: Record<string, LessonSession>, extraActivitySessions?: Record<string, ActivitySession>, notificationGateway?: NotificationGatewayPort } = {}) {
@@ -26,10 +27,11 @@ export async function createSchedulingContext({ classGroupAttendanceMode = Atten
   await repositories.guardianLinks.save(new GuardianStudentLink({ id: 'link', schoolId: 'sch1', guardianId: 'gua1', studentId: 'stu1', relationship: 'parent' }))
   await repositories.staffMembers.save(new StaffMember({ id: 'staff1', schoolId: 'sch1', firstName: 'Reviewer', lastName: 'One' }))
   if (activeEnrollment)
-    await repositories.enrollments.save(new StudentClassEnrollment({ id: 'enr1', studentId: 'stu1', classGroupId: 'cg_daily', academicYearId: 'ay1', enrollmentIndex: 1 }))
+    await repositories.enrollments.save(new StudentClassEnrollment({ id: 'enr1', studentId: 'stu1', classGroupId: 'cg_daily', academicYearId: 'ay1', enrollmentIndex: 1, enrolledAt: academicYear.startDate }))
   if (existingDailyAttendance)
     await repositories.attendances.save(new Attendance({ id: 'cg_daily:2026-05-28', schoolId: 'sch1', classGroupId: 'cg_daily', displayLabel: 'Daily attendance', startsAt: new Date('2026-05-28'), endsAt: new Date('2026-05-29') }))
   if (existingAttendance)
     await repositories.attendance.save(existingAttendance)
+  await seedSubjectParticipation(repositories)
   return { ...fixture, repositories, service: fixture.app, lessonSessions: repositories.lessonSessions, activitySessions: repositories.activitySessions, attendances: repositories.attendances }
 }

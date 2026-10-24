@@ -58,6 +58,7 @@ import type {
   StudentNote,
   StudentPhotoSubmission,
   StudentServiceEnrollment,
+  StudentSubjectEnrollment,
   StudentYearAccount,
   Subject,
   SubjectCategoryEntity,
@@ -125,6 +126,7 @@ export interface CoreEntityMap {
   sections: ReportCardDefinitionSection
   results: ReportCardResult
   students: Student
+  subjectEnrollments: StudentSubjectEnrollment
   enrollments: StudentClassEnrollment
   guardians: Guardian
   guardianLinks: GuardianStudentLink
@@ -207,6 +209,7 @@ export const CORE_ENTITY_KEYS = defineCoreEntityKeys([
   'sections',
   'results',
   'students',
+  'subjectEnrollments',
   'enrollments',
   'guardians',
   'guardianLinks',

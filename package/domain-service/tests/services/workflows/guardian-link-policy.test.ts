@@ -34,6 +34,8 @@ describe('guardian linking uses its own action and shared enrollment validation'
 
   test('direct saves and commands retain same-school enrollment and foreign-target invariants', async () => {
     await grant(Permission.PARENT_MANAGE)
+    for (const row of await fixture.repositories.subjectEnrollments.list({ studentClassEnrollmentId: 'enrollment-a' }))
+      await fixture.repositories.subjectEnrollments.delete(row.id)
     await fixture.repositories.enrollments.delete('enrollment-a')
     await expect(service.studentWorkflow.linkGuardianToStudent(input)).rejects.toBeInstanceOf(AuthorizationError)
     await expect(service.baseService.entities.guardianLinks.save(new GuardianStudentLink({ ...input, schoolId: 'school-a', relationship: 'parent' }))).rejects.toBeInstanceOf(AuthorizationError)

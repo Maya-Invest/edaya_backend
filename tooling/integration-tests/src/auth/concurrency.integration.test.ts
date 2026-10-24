@@ -55,9 +55,7 @@ async function createConcurrencyFixture() {
 
   // Register student and guardian
   await saveStudent(app, { id: 'student', schoolId: 'school', firstName: 'Amira', lastName: 'Diallo' })
-  await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class' })
   await saveGuardian(app, { id: 'guardian', schoolId: 'school', firstName: 'Nadia', lastName: 'Diallo' })
-  await app.studentWorkflow.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
 
   // Offer subject and class details
   await app.baseService.entities.subjects.save(
@@ -68,6 +66,10 @@ async function createConcurrencyFixture() {
     classGroupId: 'class',
     subjectId: 'math',
   })
+
+  await app.studentWorkflow.enrollStudent({ id: 'enrollment', studentId: 'student', classGroupId: 'class', enrolledAt: new Date('2026-09-01T00:00:00Z') })
+
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'guardian-link', guardianId: 'guardian', studentId: 'student' })
 
   const session = await saveLessonSession(app, {
     id: 'lesson',

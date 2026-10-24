@@ -718,6 +718,19 @@ export const clientBindings = {
           "batchDelete": false
         }
       },
+      "subjectEnrollments": {
+        "publicName": "subject-enrollments",
+        "schemaName": "StudentSubjectEnrollment",
+        "allowDirectSave": false,
+        "publicOperations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        }
+      },
       "enrollments": {
         "publicName": "enrollments",
         "schemaName": "StudentClassEnrollment",
@@ -1288,6 +1301,11 @@ export const clientBindings = {
         "requestSchemaName": "ReviseAssessmentMarksCorrectionCommand",
         "responseSchemaName": "AssessmentMarksCorrectionResponse"
       },
+      "manageStudentSubjectEnrollments": {
+        "publicName": "manage-student-subject-enrollments",
+        "requestSchemaName": "ManageStudentSubjectEnrollmentsCommand",
+        "responseSchemaName": "ManageStudentSubjectEnrollmentsResponse"
+      },
       "startConversation": {
         "publicName": "start-conversation",
         "requestSchemaName": "StartConversationCommand",
@@ -1855,6 +1873,21 @@ export const clientBindings = {
       }
     },
     "queries": {
+      "getStudentSubjectEnrollments": {
+        "publicName": "get-student-subject-enrollments",
+        "requestSchemaName": "GetStudentSubjectEnrollmentsQuery",
+        "responseSchemaName": "StudentSubjectEnrollmentsResponse"
+      },
+      "getClassSubjectRoster": {
+        "publicName": "get-class-subject-roster",
+        "requestSchemaName": "GetClassSubjectRosterQuery",
+        "responseSchemaName": "ClassSubjectRosterResponse"
+      },
+      "getStudentTimetable": {
+        "publicName": "get-student-timetable",
+        "requestSchemaName": "GetStudentTimetableQuery",
+        "responseSchemaName": "StudentTimetableResponse"
+      },
       "getTeacherAttendanceCall": {
         "publicName": "get-teacher-attendance-call",
         "requestSchemaName": "GetTeacherAttendanceCallQuery",

@@ -2,7 +2,7 @@ import type { PostgresTransactionalDb } from '@edaya/adaptor-postgres'
 import process from 'node:process'
 import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories } from '@edaya/adaptor-postgres'
 import { ActorAssuranceLevel, createStaffActorMetadata } from '@edaya/authorization'
-import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { AcademicPeriod, AcademicYear, Assessment, AssessmentKind, ClassGroup, ClassSubject, GradeLevel, GradeScale, noOpFileStorage, Permission, RecordingNotificationGateway, ReportCardDefinition, ReportCardDefinitionSection, ReportCardDefinitionSectionKind, School, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject } from '@edaya/core'
 import { SchoolApplication } from '@edaya/service'
 import { onTestFinished } from 'bun:test'
 import { createPostgresSchoolDatabase } from '@/runtime/shared/school-database'
@@ -29,6 +29,7 @@ export async function fixture(prefix: string) {
   await r.classSubjects.save(new ClassSubject({ id: id('subject'), classGroupId: id('class'), subjectId: id('math') }))
   await r.students.save(new Student({ id: id('student'), schoolId: id('school'), firstName: 'Native', lastName: 'Student' }))
   await r.enrollments.save(new StudentClassEnrollment({ id: id('enrollment'), studentId: id('student'), classGroupId: id('class'), academicYearId: id('year'), enrollmentIndex: 1, enrolledAt: dates.startDate }))
+  await r.subjectEnrollments.save(new StudentSubjectEnrollment({ id: id('participation'), studentClassEnrollmentId: id('enrollment'), classSubjectId: id('subject'), enrolledAt: dates.startDate, endedAt: new Date('2027-01-01'), source: 'automatic' }))
   await r.gradeScales.save(new GradeScale({ id: id('scale'), schoolId: id('school'), name: '20', minScore: 0, maxScore: 20, ranges: [{ letter: 'A', minScore: 10.5, maxScore: 20 }] }))
   await r.definitions.save(new ReportCardDefinition({ id: id('definition'), schoolId: id('school'), academicYearId: id('year'), gradeLevelId: id('grade'), gradeScaleId: id('scale'), name: 'Report' }))
   await r.sections.save(new ReportCardDefinitionSection({ id: id('root'), reportCardDefinitionId: id('definition'), kind: ReportCardDefinitionSectionKind.Group, name: 'Subjects', order: 1, weight: 1 }))

@@ -148,6 +148,9 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async materializeLessonSchedule(schedule: Schedule): Promise<LessonSession[]> {
+    const offering = schedule.classSubjectId ? await this.repositories.classSubjects.findById(schedule.classSubjectId) : undefined
+    if (!offering?.isOffered)
+      return []
     const classGroup = await this.requireClassGroup(schedule.classGroupId)
     await this.authorizeTimetableCreate(classGroup)
     const academicYear = await this.requireAcademicYear(classGroup.academicYearId, classGroup.schoolId)
@@ -514,7 +517,7 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   }): Promise<AttendanceRecord> {
     await this.requireStudent(studentId)
     const classGroupId = await this.resolveAttendanceAnchorClassGroupId(anchor)
-    await this.requireEnrollmentForClassGroup({ studentId, classGroupId })
+    await this.requireEnrollmentForClassGroup({ studentId, classGroupId, at: date })
     const existing = await findAttendanceRecordByAnchor(this.repositories, studentId, anchor)
     const isCorrection = existing !== undefined && existing.status !== status
     const updatedAt = isCorrection ? (createdAt ?? new Date()) : existing?.updatedAt ?? createdAt
@@ -728,16 +731,18 @@ export class SchedulingServiceWorkflow extends BaseServiceWorkflow {
   private async requireEnrollmentForClassGroup({
     studentId,
     classGroupId,
+    at,
   }: {
     studentId: string
     classGroupId: string
+    at?: Date
   }): Promise<void> {
     const enrollments = await this.repositories.enrollments.list({
       studentId,
       classGroupId,
-      status: StudentClassEnrollmentStatus.Active,
+      ...(at ? {} : { status: StudentClassEnrollmentStatus.Active }),
     })
-    if (enrollments.length === 0) {
+    if (!enrollments.some(row => !at || (row.enrolledAt <= at && (!row.endedAt || at < row.endedAt)))) {
       throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${studentId} does not have an active enrollment in classGroup ${classGroupId}`)
     }
   }

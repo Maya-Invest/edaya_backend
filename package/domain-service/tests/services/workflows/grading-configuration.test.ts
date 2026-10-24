@@ -3,6 +3,7 @@ import { AcademicYear, Assessment, GradeScale, Permission, ReportCardResultStatu
 import { describe, expect, test } from 'bun:test'
 import { dispatchGradingRecalculation } from '../../../src/capabilities/academics/durable-grading'
 import { applyReportCommentRevision } from '../../../src/capabilities/academics/report-comment-revisions'
+import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createReportCardContext } from './report-card-workflow-context'
 
 async function fixture(published = false) {
@@ -281,6 +282,7 @@ test('ranking a later draft never rewrites an already published ranking', async 
   const assessment = (await f.repositories.assessments.findById('ass1'))!
   await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
   await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+  await seedSubjectParticipation(f.repositories)
   await f.repositories.assessments.save(new Assessment({ ...assessment.data, marksReview: { ...assessment.marksReview, rosterStudentIds: ['stu1', 'stu2'] } }))
   await f.repositories.assessmentResults.save(new AssessmentResult({ id: 'ar2', studentId: 'stu2', assessmentId: 'ass1', score: 90 }))
   await f.service.assessmentsWorkflow.configureGrading(f.input)

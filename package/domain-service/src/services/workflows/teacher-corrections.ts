@@ -1,9 +1,9 @@
 import type { CommandJson, CommandOutboxFact, CorrectionProposal, CorrectionWorkflow, IncidentKind, MarksCorrection, TeacherCorrection, TeacherWorkflowState } from '@edaya/core'
-/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { z } from 'zod'
+/* eslint-disable dot-notation -- TypeScript requires bracket access for command-owned payload index signatures. */
 import type { BaseSchoolService } from '../base-school-service'
 import { AuthorizationError, denyResourceAccess } from '@edaya/authorization'
-import { appendIncidentFollowUpSchema, Attendance, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, decideTeacherCorrectionSchema, DocumentIssuanceStatus, editTeacherIncidentSchema, Incident, IncidentInvolvementRole, LessonSession, Permission, rejectTeacherCorrectionSchema, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, requestTeacherCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StudentClassEnrollmentStatus, StudentIncidentInvolvement, takeOverTeacherIncidentSchema, teacherCorrectionSchema, teacherCorrectionsQuerySchema, validateTeacherLogbookSchema } from '@edaya/core'
+import { appendIncidentFollowUpSchema, Attendance, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, AttendanceRecord, AttendanceStatus, BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, decideTeacherCorrectionSchema, DocumentIssuanceStatus, editTeacherIncidentSchema, Incident, IncidentInvolvementRole, LessonSession, Permission, rejectTeacherCorrectionSchema, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, requestTeacherCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, StudentIncidentInvolvement, takeOverTeacherIncidentSchema, teacherCorrectionSchema, teacherCorrectionsQuerySchema, validateTeacherLogbookSchema } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { visibleReportRevision } from '../../capabilities/academics/report-comment-revisions'
 import { assembleDocumentSource } from '../../capabilities/documents/assemble-document-source'
@@ -12,6 +12,7 @@ import { DOCUMENT_RENDER_KIND } from '../../capabilities/documents/durable-docum
 import { persistRequestedIssuance } from '../../capabilities/documents/persist-requested-issuance'
 import { ATTENDANCE_RECORDED_EVENT_KEY, runWorkflowNotifications } from '../../capabilities/notifications'
 import { notifyTeacherCorrection } from '../../capabilities/notifications/teacher-correction-notifications'
+import { loadParticipation, placementEffectiveAt, subjectRoster } from '../../capabilities/subject-enrollment/participation'
 import { normalizeCommandRequest } from '../commands/command-execution'
 import { schoolCommandScope } from '../commands/school-command-scope'
 import { getAssessmentMarksReview } from '../queries/marks-review'
@@ -416,7 +417,7 @@ export class TeacherCorrectionsWorkflow {
       const lesson = await this.repositories.lessonSessions.forSchool!(this.actor.schoolId).findById(anchor.lessonSessionId)
       if (!lesson)
         denyResourceAccess()
-      return { key: `lesson:${lesson.id}`, classGroupId: lesson.classGroupId, startsAt: lesson.startsAt, endsAt: lesson.endsAt, lessonSessionId: lesson.id }
+      return { key: `lesson:${lesson.id}`, classGroupId: lesson.classGroupId, startsAt: lesson.startsAt, endsAt: lesson.endsAt, lessonSessionId: lesson.id, classSubjectId: lesson.classSubjectId }
     }
     const date = new Date(anchor.date)
     date.setUTCHours(0, 0, 0, 0)
@@ -428,8 +429,10 @@ export class TeacherCorrectionsWorkflow {
     return { key, classGroupId: anchor.classGroupId, startsAt: date, endsAt, attendanceId: daily.id, daily }
   }
 
-  private async roster(classGroupId: string, at: Date) {
-    return (await this.repositories.enrollments.list({ classGroupId })).filter(e => e.status === StudentClassEnrollmentStatus.Active && e.enrolledAt <= at && (!e.endedAt || e.endedAt >= at)).map(e => e.studentId)
+  private async roster(classGroupId: string, at: Date, classSubjectId?: string) {
+    if (classSubjectId)
+      return subjectRoster(await loadParticipation(this.repositories, [classGroupId]), classSubjectId, at)
+    return (await this.repositories.enrollments.list({ classGroupId })).filter(e => placementEffectiveAt(e, at)).map(e => e.studentId)
   }
 
   async getAttendanceCall(input: { anchor: z.input<typeof attendanceCallSchema>['anchor'] }) {
@@ -438,7 +441,9 @@ export class TeacherCorrectionsWorkflow {
     const state = await this.state('attendance', context.key)
     const records = await this.repositories.attendance.list('lessonSessionId' in context ? { lessonSessionId: context.lessonSessionId } : { attendanceId: context.attendanceId })
     const submitted = state?.locked ?? records.length > 0
-    const roster = submitted ? [...new Set(records.map(r => r.studentId))] : await this.roster(context.classGroupId, context.startsAt)
+    const savedEntries = (state?.payload['entries'] ?? []) as Array<{ studentId: string }>
+    const frozenRoster = (state?.payload['rosterStudentIds'] ?? []) as string[]
+    const roster = submitted ? [...new Set([...frozenRoster, ...records.map(r => r.studentId)])] : [...new Set([...(await this.roster(context.classGroupId, context.startsAt, context.classSubjectId)), ...savedEntries.map(row => row.studentId)])]
     const students = await this.repositories.students.findByIds(roster)
     const official = await Promise.all(records.map(async (record) => {
       const recordState = await this.state('attendance', record.id)
@@ -458,12 +463,12 @@ export class TeacherCorrectionsWorkflow {
         fail('CORRECTION_REQUIRED', 'Attendance has been submitted; request a correction or record an arrival')
       if ((state?.version ?? 0) !== input.expectedVersion)
         fail('ATTENDANCE_VERSION_CONFLICT', 'The attendance call changed; synchronize before submitting')
-      const roster = await this.roster(context.classGroupId, context.startsAt)
+      const prior = (state?.payload['entries'] ?? []) as z.infer<typeof attendanceCallSchema>['entries']
+      const roster = [...new Set([...(await this.roster(context.classGroupId, context.startsAt, context.classSubjectId)), ...prior.map(entry => entry.studentId)])]
       if (new Set(input.entries.map(e => e.studentId)).size !== input.entries.length)
         fail('DUPLICATE_ATTENDANCE', 'Each student may appear only once')
       if (input.entries.some(e => !roster.includes(e.studentId)))
         denyResourceAccess()
-      const prior = (state?.payload['entries'] ?? []) as z.infer<typeof attendanceCallSchema>['entries']
       const entries = [...new Map([...prior, ...input.entries].map(e => [e.studentId, e])).values()].filter(e => roster.includes(e.studentId))
       if (action === 'submit') {
         if (!roster.length || roster.some(id => !entries.some(e => e.studentId === id)))

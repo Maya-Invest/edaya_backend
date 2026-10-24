@@ -1,5 +1,6 @@
 export type SchoolCommandKey
-  = | 'startConversation'
+  = | 'manageStudentSubjectEnrollments'
+    | 'startConversation'
     | 'configureAcademicDiscipline'
     | 'configurePlacementStatus'
     | 'upsertStudentAcademicYearProfile'
@@ -210,6 +211,7 @@ function defineSchoolCommandKeys<const Keys extends readonly SchoolCommandKey[]>
 }
 
 export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
+  'manageStudentSubjectEnrollments',
   'configureAcademicDiscipline',
   'configurePlacementStatus',
   'upsertStudentAcademicYearProfile',

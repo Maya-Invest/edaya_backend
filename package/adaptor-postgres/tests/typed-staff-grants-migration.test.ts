@@ -89,7 +89,7 @@ describe('typed staff grants coordinated migration', () => {
         'grade_level_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'level-a' ELSE 'level-b' END,
         'academic_year_id', CASE WHEN data->>'school_id' = 'school-a' THEN 'year-a' ELSE 'year-b' END,
         'is_optional', false))).* FROM fixture_subjects;
-      INSERT INTO class_subjects SELECT (jsonb_populate_record(NULL::class_subjects, data)).* FROM fixture_offerings;
+      INSERT INTO class_subjects SELECT (jsonb_populate_record(NULL::class_subjects, jsonb_build_object('participation_revision', 0) || data)).* FROM fixture_offerings;
     `)
     expect((await db.query('SELECT id, score FROM assessment_results ORDER BY id')).rows).toEqual(marksBefore.rows)
     const repositories = new PostgresSchoolRepositories(drizzle(db))

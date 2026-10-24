@@ -21,6 +21,7 @@ export class PostgresTeacherCorrections implements TeacherCorrectionsPort {
       select target_id from teacher_corrections where school_id=${schoolId} and workflow='logbook' and target_id in (${ids})
       union
       select substring(target_id from 8) as target_id from teacher_workflow_states where school_id=${schoolId} and workflow='attendance' and target_id in (${attendanceKeys})
+        and ((payload->>'locked')::boolean or payload->'payload' <> '{}'::jsonb or payload->'history' <> '[]'::jsonb)
     `)
     return rows.map(row => row.target_id!)
   }

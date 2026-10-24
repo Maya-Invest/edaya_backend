@@ -4,13 +4,16 @@ import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 import { requireSubjectCategory } from '../../../../capabilities/academics/ensure-default-subject-categories'
+import { subjectParticipationHooks } from '../../../../capabilities/subject-enrollment/mutation-hooks'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 export const subjectConfig: EntityConfigFactory<Subject> = ({ repositories, atomicExecution }) =>
-  config({ repository: repositories.subjects, tenant: directSchoolTenant(), resource: 'subjects', writeLockGroup: 'academic-state', gates: { preSave: validateSubjectSave, preDelete: validateSubjectDelete }, atomicExecution })
+  config({ repository: repositories.subjects, tenant: directSchoolTenant(), resource: 'subjects', writeLockGroup: 'academic-state', gates: { preSave: validateSubjectSave, preDelete: validateSubjectDelete }, hooks: subjectParticipationHooks, atomicExecution })
 
-export async function validateSubjectSave(subject: Subject, existing: Subject | undefined, repositories: SchoolRepositories): Promise<void> {
+export async function validateSubjectSave(subject: Subject, existing: Subject | undefined, repositories: SchoolRepositories, policyCommand = false): Promise<void> {
+  if (existing && subject.isOptional !== existing.isOptional && !policyCommand)
+    throw new BusinessRuleViolationError('SUBJECT_POLICY_COMMAND_REQUIRED', 'Change optional status through the curriculum command with expected participation revisions')
   const [grade, year] = await Promise.all([
     repositories.gradeLevels.findById(subject.gradeLevelId),
     repositories.academicYears.findById(subject.academicYearId),

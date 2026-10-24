@@ -11493,6 +11493,13 @@
       "TransferStudentCommand": {
         "type": "object",
         "properties": {
+          "acknowledgedDroppedSubjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "enrollmentId": {
             "type": "string",
             "minLength": 1
@@ -12261,6 +12268,13 @@
               "type": "string",
               "minLength": 1
             }
+          },
+          "expectedParticipationRevisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "required": [
@@ -12808,6 +12822,13 @@
           "subjectId": {
             "type": "string",
             "minLength": 1
+          },
+          "expectedParticipationRevisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "required": [
@@ -12860,6 +12881,11 @@
             "maximum": 100,
             "default": 0
           },
+          "participationRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
           "isOffered": {
             "type": "boolean",
             "default": true
@@ -12881,11 +12907,16 @@
           },
           "isOffered": {
             "type": "boolean"
+          },
+          "expectedParticipationRevision": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
           "classSubjectId",
-          "isOffered"
+          "isOffered",
+          "expectedParticipationRevision"
         ]
       },
       "ConfigureClassSubjectTimetableCommand": {
@@ -14831,6 +14862,133 @@
           "expectedVersion"
         ],
         "additionalProperties": false
+      },
+      "ManageStudentSubjectEnrollmentsResponse": {
+        "type": "object",
+        "properties": {
+          "enrollmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "revisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "enrollmentIds",
+          "revisions"
+        ]
+      },
+      "ManageStudentSubjectEnrollmentsCommand": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expectedRevisions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentClassEnrollmentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classSubjectId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "selection": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "annual"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "scope"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "periods"
+                          ]
+                        },
+                        "periodIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "minItems": 1,
+                          "maxItems": 100
+                        }
+                      },
+                      "required": [
+                        "scope",
+                        "periodIds"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "none"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "scope"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "studentClassEnrollmentId",
+                "classSubjectId",
+                "selection"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevisions",
+          "operations"
+        ]
       },
       "ConversationResponse": {
         "type": "object",
@@ -24542,6 +24700,549 @@
           "schoolId"
         ]
       },
+      "StudentSubjectEnrollment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentClassEnrollmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enrolledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "explicit"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "annual",
+              "periods"
+            ],
+            "default": "annual"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "activatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "periodId",
+                "activatedAt",
+                "startsAt",
+                "endsAt"
+              ]
+            }
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedBy": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "studentClassEnrollmentId",
+          "classSubjectId",
+          "enrolledAt",
+          "source",
+          "periods",
+          "createdAt"
+        ]
+      },
+      "StudentSubjectEnrollmentsResponse": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enrollments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSubjectEnrollment"
+            }
+          },
+          "placements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentClassEnrollment"
+            }
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "schoolId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "academicYearId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "trimester",
+                    "semester",
+                    "other"
+                  ]
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "isPublished": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "schoolId",
+                "academicYearId",
+                "name",
+                "startDate",
+                "endDate"
+              ]
+            }
+          },
+          "offerings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "classGroupId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "subjectId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "coefficient": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "periodsPerWeek": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "minPeriodSpan": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "maxPeriodSpan": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "exclusiveMinimum": true
+                },
+                "completedPercentage": {
+                  "type": "number",
+                  "nullable": true,
+                  "minimum": 0,
+                  "maximum": 100,
+                  "default": 0
+                },
+                "participationRevision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "isOffered": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "createdAt": {},
+                "name": {
+                  "type": "string"
+                },
+                "isOptional": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "classGroupId",
+                "subjectId",
+                "name",
+                "isOptional"
+              ]
+            }
+          }
+        },
+        "required": [
+          "studentId",
+          "enrollments",
+          "placements",
+          "periods",
+          "offerings"
+        ]
+      },
+      "GetStudentSubjectEnrollmentsQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "studentId"
+        ]
+      },
+      "ClassSubjectRosterResponse": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "current_selection",
+              "unavailable"
+            ]
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "schoolId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "academicYearId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "trimester",
+                    "semester",
+                    "other"
+                  ]
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "isPublished": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "schoolId",
+                "academicYearId",
+                "name",
+                "startDate",
+                "endDate"
+              ]
+            }
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "firstName",
+                "lastName"
+              ]
+            }
+          },
+          "enrollments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSubjectEnrollment"
+            }
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "at",
+          "revision",
+          "count",
+          "basis",
+          "periods",
+          "students",
+          "enrollments"
+        ]
+      },
+      "GetClassSubjectRosterQuery": {
+        "type": "object",
+        "properties": {
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "classSubjectId",
+          "at"
+        ]
+      },
+      "TimetableEvent": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "lesson",
+              "activity",
+              "assessment"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classGroupId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classSubjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectLabel": {
+            "type": "string",
+            "minLength": 1
+          },
+          "teacherName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timetableTeacherIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lessonSessionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "activitySessionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assessmentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "classGroupId",
+          "title",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "StudentTimetableResponse": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimetableEvent"
+            }
+          }
+        },
+        "required": [
+          "studentId",
+          "startDate",
+          "endDate",
+          "events"
+        ]
+      },
+      "GetStudentTimetableQuery": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "studentId",
+          "startDate",
+          "endDate"
+        ]
+      },
       "TeacherAttendanceCallResponse": {
         "type": "object",
         "properties": {
@@ -26206,6 +26907,10 @@
                 "assessmentId": {
                   "type": "string"
                 },
+                "rosterCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
                 "results": {
                   "type": "array",
                   "items": {
@@ -26215,6 +26920,7 @@
               },
               "required": [
                 "assessmentId",
+                "rosterCount",
                 "results"
               ]
             }
@@ -27138,90 +27844,6 @@
         },
         "required": [
           "schoolId"
-        ]
-      },
-      "TimetableEvent": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "lesson",
-              "activity",
-              "assessment"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "classGroupId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "classSubjectId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "activityId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1
-          },
-          "subjectLabel": {
-            "type": "string",
-            "minLength": 1
-          },
-          "teacherName": {
-            "type": "string",
-            "minLength": 1
-          },
-          "timetableTeacherIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lessonSessionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "activitySessionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "assessmentId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "completed",
-              "cancelled"
-            ]
-          }
-        },
-        "required": [
-          "kind",
-          "id",
-          "classGroupId",
-          "title",
-          "startsAt",
-          "endsAt"
         ]
       },
       "ClassGroupTimetableResponse": {
@@ -31521,6 +32143,9 @@
         "type": "object"
       },
       "Filter_49": {
+        "type": "object"
+      },
+      "Filter_67": {
         "type": "object"
       },
       "Filter_50": {
@@ -50124,6 +50749,136 @@
         }
       }
     },
+    "/core/commands/manage-student-subject-enrollments": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "manage-student-subject-enrollments",
+        "operationId": "commands.manageStudentSubjectEnrollments",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "manageStudentSubjectEnrollments",
+        "x-edaya-command-public-name": "manage-student-subject-enrollments",
+        "x-edaya-request-schema": "ManageStudentSubjectEnrollmentsCommand",
+        "x-edaya-response-schema": "ManageStudentSubjectEnrollmentsResponse",
+        "requestBody": {
+          "description": "manage-student-subject-enrollments payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManageStudentSubjectEnrollmentsCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed manage-student-subject-enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManageStudentSubjectEnrollmentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/core/commands/start-conversation": {
       "post": {
         "tags": [
@@ -64713,6 +65468,396 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SchoolNotificationTemplates"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-student-subject-enrollments": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-student-subject-enrollments",
+        "operationId": "queries.getStudentSubjectEnrollments",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getStudentSubjectEnrollments",
+        "x-edaya-query-public-name": "get-student-subject-enrollments",
+        "x-edaya-request-schema": "GetStudentSubjectEnrollmentsQuery",
+        "x-edaya-response-schema": "StudentSubjectEnrollmentsResponse",
+        "requestBody": {
+          "description": "get-student-subject-enrollments payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStudentSubjectEnrollmentsQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-student-subject-enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSubjectEnrollmentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-class-subject-roster": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-class-subject-roster",
+        "operationId": "queries.getClassSubjectRoster",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getClassSubjectRoster",
+        "x-edaya-query-public-name": "get-class-subject-roster",
+        "x-edaya-request-schema": "GetClassSubjectRosterQuery",
+        "x-edaya-response-schema": "ClassSubjectRosterResponse",
+        "requestBody": {
+          "description": "get-class-subject-roster payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetClassSubjectRosterQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-class-subject-roster",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSubjectRosterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/queries/get-student-timetable": {
+      "post": {
+        "tags": [
+          "Core Queries"
+        ],
+        "summary": "get-student-timetable",
+        "operationId": "queries.getStudentTimetable",
+        "x-edaya-kind": "query",
+        "x-edaya-query-key": "getStudentTimetable",
+        "x-edaya-query-public-name": "get-student-timetable",
+        "x-edaya-request-schema": "GetStudentTimetableQuery",
+        "x-edaya-response-schema": "StudentTimetableResponse",
+        "requestBody": {
+          "description": "get-student-timetable payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStudentTimetableQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved get-student-timetable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTimetableResponse"
                 }
               }
             }
@@ -128404,6 +129549,693 @@
           },
           "404": {
             "description": "Students not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/subject-enrollments/list": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "List Student Subject Enrollments",
+        "operationId": "entities.subjectEnrollments.list",
+        "x-edaya-kind": "entity",
+        "x-edaya-entity-key": "subjectEnrollments",
+        "x-edaya-entity-public-name": "subject-enrollments",
+        "x-edaya-response-schema": "StudentSubjectEnrollment",
+        "x-edaya-allow-direct-save": false,
+        "x-edaya-public-operations": {
+          "create": false,
+          "update": false,
+          "delete": false,
+          "batchCreate": false,
+          "batchUpdate": false,
+          "batchDelete": false
+        },
+        "requestBody": {
+          "description": "Student Subject Enrollments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_67"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listed Student Subject Enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentSubjectEnrollment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/subject-enrollments/one": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Find one Student Subject Enrollments",
+        "operationId": "entities.subjectEnrollments.one",
+        "requestBody": {
+          "description": "Student Subject Enrollments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_67"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Found Student Subject Enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSubjectEnrollment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student Subject Enrollments not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/subject-enrollments/count": {
+      "post": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Count Student Subject Enrollments",
+        "operationId": "entities.subjectEnrollments.count",
+        "requestBody": {
+          "description": "Student Subject Enrollments query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Filter_67"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$orderBy": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string"
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ]
+                        }
+                      },
+                      "$limit": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                      },
+                      "$offset": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counted Student Subject Enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/entities/subject-enrollments/{id}": {
+      "get": {
+        "tags": [
+          "Core Entities"
+        ],
+        "summary": "Get Student Subject Enrollments",
+        "operationId": "entities.subjectEnrollments.get",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched Student Subject Enrollments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSubjectEnrollment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student Subject Enrollments not found",
             "content": {
               "application/json": {
                 "schema": {

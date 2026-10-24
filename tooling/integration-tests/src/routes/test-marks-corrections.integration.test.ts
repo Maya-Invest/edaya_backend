@@ -1,5 +1,5 @@
 import type { components } from '@maya-invest/edaya-api-client/schema'
-import { Assessment, AssessmentKind, ClassGroup, ClassSubject, Permission, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
+import { Assessment, AssessmentKind, ClassGroup, ClassSubject, Permission, StaffPermissionAssignment, Student, StudentClassEnrollment, StudentSubjectEnrollment, Subject } from '@edaya/core'
 import { DEV_AUTH_STAFF_ACCOUNTS, MINIMAL_AUTH_FIXTURE_STAFF_EMAIL } from '@edaya/fixtures/meta/dev-auth-fixtures'
 import { createSchoolClient } from '@maya-invest/edaya-api-client'
 import { expect, it } from 'bun:test'
@@ -18,6 +18,7 @@ describeWithLightSchool('submitted marks correction HTTP contract', (getContext)
     await repositories.classSubjects.save(new ClassSubject({ id: 'correction-route-cs', classGroupId: 'correction-route-class', subjectId: 'correction-route-subject', coefficient: 1 }))
     await repositories.students.save(new Student({ id: 'correction-route-student', schoolId: group.schoolId, firstName: 'Contract', lastName: 'Student' }))
     await repositories.enrollments.save(new StudentClassEnrollment({ id: 'correction-route-enrollment', studentId: 'correction-route-student', classGroupId: 'correction-route-class', academicYearId: group.academicYearId, enrollmentIndex: 1, enrolledAt: period.startDate }))
+    await repositories.subjectEnrollments.save(new StudentSubjectEnrollment({ id: 'correction-route-participation', studentClassEnrollmentId: 'correction-route-enrollment', classSubjectId: 'correction-route-cs', enrolledAt: period.startDate, endedAt: period.endDate, source: 'automatic' }))
     await repositories.assessments.save(new Assessment({ id: 'correction-route-assessment', classGroupId: 'correction-route-class', classSubjectId: 'correction-route-cs', periodId: period.id, title: 'Contract evaluation', kind: AssessmentKind.Quiz, maxScore: 100, coefficient: 1, startsAt, endsAt: new Date(startsAt.getTime() + 3600000) }))
     const editor = createSchoolClient<components['schemas']>(createInProcessTransport(app, { headers: await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL) }))
     await editor.commands.recordAssessmentResult({ requestId: 'route-edit', expectedRevision: 0, id: 'correction-route-result', assessmentId: 'correction-route-assessment', studentId: 'correction-route-student', score: 75 })

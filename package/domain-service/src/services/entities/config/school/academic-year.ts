@@ -2,6 +2,7 @@ import type { AcademicYear } from '@edaya/core'
 import type { EntityConfigFactory } from '../../entity-config'
 
 import { BusinessRuleViolationError } from '@edaya/core'
+import { reconcileYearSelections } from '../../../../capabilities/subject-enrollment/calendar'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 import { validateAcademicYearSave } from './validate-academic-year-save'
@@ -12,6 +13,8 @@ export const academicYearConfig: EntityConfigFactory<AcademicYear> = ({ reposito
     repository: repositories.academicYears,
     tenant: directSchoolTenant(),
     resource: 'academicYears',
+    writeLockGroup: 'academic-state',
+    hooks: { postSave: (year, previous, repositories) => reconcileYearSelections(repositories, year, previous) },
 
     gates: {
       preSave: validateAcademicYearSave,

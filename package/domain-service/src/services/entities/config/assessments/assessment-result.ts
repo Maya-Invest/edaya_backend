@@ -81,8 +81,8 @@ export async function validateAssessmentResultSave(
   if (result.score !== undefined && result.score > assessment.maxScore) {
     throw new BusinessRuleViolationError('SCORE_EXCEEDS_MAX_SCORE', 'score must not exceed assessment maxScore')
   }
-  if (!(await assessmentRoster(assessment, repositories)).includes(result.studentId)) {
-    throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${result.studentId} does not have an active enrollment in classGroup ${classGroup.id}`)
+  if (!_existing && !(await assessmentRoster(assessment, repositories)).includes(result.studentId)) {
+    throw new BusinessRuleViolationError('ACTIVE_ENROLLMENT_REQUIRED', `Student ${result.studentId} does not participate in this subject at the assessment date in classGroup ${classGroup.id}`)
   }
   const reportCard = await repositories.results.findOne({
     studentId: result.studentId,

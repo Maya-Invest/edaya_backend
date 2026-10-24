@@ -5,6 +5,7 @@ import { withNotificationPostSaveHook } from '../../capabilities/notifications/n
 import { NotificationTemplateService } from '../../capabilities/notifications/templates/notification-template-service'
 import { academicPeriodConfig, academicYearConfig, accountInvitationConfig, activityConfig, activityEnrollmentConfig, activitySessionConfig, announcementConfig, announcementTargetConfig, assessmentConfig, assessmentResultConfig, attachmentConfig, attendanceConfig, attendanceRecordConfig, calendarEventConfig, catalogServiceConfig, classActivityEnrollmentConfig, classGroupConfig, classSubjectConfig, classSubjectMatterConfig, classSubjectProgressConfig, disciplinaryActionConfig, documentIssuanceConfig, gradeLevelConfig, gradeScaleConfig, guardianConfig, guardianStudentLinkConfig, incidentConfig, lessonSessionConfig, messageDeliveryConfig, paymentConfig, periodDefinitionConfig, reportCardDefinitionConfig, reportCardDefinitionSectionConfig, reportCardResultConfig, resourceAssignmentConfig, resourceConfig, scheduleConfig, schoolConfig, schoolNotificationTemplatesConfig, staffAssignmentConfig, staffManualPermissionAssignmentConfig, staffMemberConfig, staffPermissionAssignmentConfig, staffPermissionProfileBindingConfig, staffPermissionProfileConfig, staffPermissionScopeDefaultsConfig, studentChargeConfig, studentClassEnrollmentConfig, studentConfig, studentDisciplinaryActionConfig, studentHealthProfileConfig, studentIncidentInvolvementConfig, studentNoteConfig, studentPhotoSubmissionConfig, studentServiceEnrollmentConfig, studentYearAccountConfig, subjectCategoryConfig, subjectConfig, subjectMatterConfig, teacherAssignmentConfig, teacherConfig, teacherUnavailabilityConfig } from '../entities/config'
 import { academicDisciplineConfig, placementStatusConfig, studentAcademicYearProfileConfig, teacherAcademicYearProfileConfig } from '../entities/config/school/intake-profiles'
+import { studentSubjectEnrollmentConfig } from '../entities/config/students/student-subject-enrollment'
 import { ManagedEntityService } from '../entities/managed-entity-service'
 import { CORE_ENTITY_KEYS } from './core-entity-map'
 
@@ -74,6 +75,7 @@ export const CORE_ENTITY_CONFIG_FACTORIES: CoreEntityConfigFactoryMap = {
   results: reportCardResultConfig,
   students: studentConfig,
   enrollments: studentClassEnrollmentConfig,
+  subjectEnrollments: studentSubjectEnrollmentConfig,
   guardians: guardianConfig,
   guardianLinks: guardianStudentLinkConfig,
   studentNotes: studentNoteConfig,
@@ -110,7 +112,7 @@ function createManagedEntityService<Key extends CoreEntityKey>(
   const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
   if (['staffMembers', 'staffPermissionProfiles', 'staffPermissionAssignments', 'staffPermissionProfileBindings', 'staffManualPermissionAssignments', 'staffPermissionScopeDefaults'].includes(key))
     baseConfig.writeLockGroup = 'permission-state'
-  if (['students', 'teachers', 'guardians', 'guardianLinks', 'subjects', 'subjectMatters', 'academicDisciplines', 'placementStatuses', 'studentAcademicYearProfiles', 'teacherAcademicYearProfiles', 'gradeLevels', 'academicYears', 'assessments', 'assessmentResults', 'results', 'enrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))
+  if (['students', 'teachers', 'guardians', 'guardianLinks', 'subjects', 'subjectMatters', 'academicDisciplines', 'placementStatuses', 'studentAcademicYearProfiles', 'teacherAcademicYearProfiles', 'gradeLevels', 'academicYears', 'assessments', 'assessmentResults', 'results', 'enrollments', 'subjectEnrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))
     baseConfig.writeLockGroup = 'academic-state'
   if (['catalogServices', 'studentServiceEnrollments', 'studentCharges', 'studentYearAccounts', 'payments'].includes(key))
     baseConfig.writeLockGroup = '0-finance-state'

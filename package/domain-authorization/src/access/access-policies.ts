@@ -610,7 +610,34 @@ export class AccessPolicies {
     assertConfigure: () => this.assertSchool(P.ACCESS_CONTROL_MANAGE),
   }
 
+  readonly subjectParticipation = {
+    context: async () => {
+      const scope = await this.entity('subjectEnrollments').readScope()
+      return {
+        subjectEnrollments: this.repositories.subjectEnrollments.forAccess(scope),
+        placements: this.repositories.enrollments.forAccess({ ...scope, resource: 'enrollments' }),
+        students: this.repositories.students.forAccess({ ...scope, resource: 'students' }),
+        classSubjects: this.repositories.classSubjects.forAccess({ ...scope, resource: 'classSubjects' }),
+      }
+    },
+  }
+
   readonly timetable = {
+    studentEventRepositories: async (studentId: string) => {
+      const placements = await this.repositories.enrollments.forAccess(await this.scope(P.TIMETABLE_READ, 'enrollments')).list({ studentId })
+      if (!placements.length)
+        await this.assertResources(P.TIMETABLE_READ, 'students', [studentId], 'read')
+      return {
+        placements,
+        lessonSessions: this.repositories.lessonSessions.forAccess(await this.scope(P.TIMETABLE_READ, 'lessonSessions')),
+        activitySessions: this.repositories.activitySessions.forAccess(await this.scope(P.TIMETABLE_READ, 'activitySessions')),
+        assessments: this.repositories.assessments.forAccess(await this.scope(P.TIMETABLE_READ, 'assessments')),
+        classGroups: this.repositories.classGroups.forSchool!(this.actor.schoolId),
+        teacherAssignments: this.repositories.teacherAssignments.forSchool!(this.actor.schoolId),
+        teachers: this.repositories.teachers.forSchool!(this.actor.schoolId),
+        activities: this.repositories.activities.forSchool!(this.actor.schoolId),
+      }
+    },
     eventRepositories: async (classGroupId: string) => {
       await this.assertResources(P.TIMETABLE_READ, 'classGroups', [classGroupId], 'read')
       return {

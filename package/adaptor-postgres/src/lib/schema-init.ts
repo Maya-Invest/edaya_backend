@@ -41,6 +41,7 @@ export const CLEAR_TABLE_ORDER = [
   'student_photo_submissions',
   'student_health_profiles',
   'guardian_student_links',
+  'student_subject_enrollments',
   'student_class_enrollments',
   'report_card_results',
   'report_card_definition_sections',

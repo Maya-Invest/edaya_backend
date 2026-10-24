@@ -183,6 +183,7 @@ describeIntegration('tenant boundary safeguards', () => {
       id: 'enrollment-b',
       studentId: 'student-b',
       classGroupId: 'class-b',
+      enrolledAt: new Date('2026-09-01'),
     })
     await saveGuardian(schoolBApp, {
       id: 'guardian-b',

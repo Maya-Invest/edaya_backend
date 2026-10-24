@@ -4,7 +4,8 @@ import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { AssessmentKind, BusinessRuleViolationError, marksReviewSchema } from '@edaya/core'
 import { assessmentMutationHooks } from '../../../../capabilities/academics/marks-mutation-hooks'
-import { assertMarksDraft } from '../../../../capabilities/academics/marks-state'
+import { assertMarksDraft, assessmentDate } from '../../../../capabilities/academics/marks-state'
+import { assertAssessmentParticipationSafe } from '../../../../capabilities/subject-enrollment/occurrence'
 import { assertNoClassGroupScheduleConflict } from '../../../workflows/schedule-conflicts'
 
 import { config } from '../../entity-config'
@@ -67,7 +68,11 @@ async function validateAssessmentSave(
     denyResourceAccess()
   }
 
-  if (classSubject.isOffered === false) {
+  const participationChanged = existing && (existing.classSubjectId !== assessment.classSubjectId || existing.classGroupId !== assessment.classGroupId || existing.lessonSessionId !== assessment.lessonSessionId || existing.dueAt?.getTime() !== assessment.dueAt?.getTime() || existing.startsAt?.getTime() !== assessment.startsAt?.getTime())
+  if (participationChanged)
+    await assertAssessmentParticipationSafe(assessment, repositories)
+
+  if (classSubject.isOffered === false && (!existing || (participationChanged && await assessmentDate(assessment, repositories) >= new Date()))) {
     throw new BusinessRuleViolationError(
       'CLASS_SUBJECT_NOT_OFFERED',
       `Class subject ${classSubject.id} is not offered and cannot be assessed`,

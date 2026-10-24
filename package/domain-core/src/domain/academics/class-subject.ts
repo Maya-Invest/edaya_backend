@@ -14,6 +14,7 @@ export const classSubjectSchema = z.object({
     val => val === null ? undefined : val,
     z.number().min(0, 'completedPercentage must be a finite, non-negative number').max(100, 'completedPercentage must be between 0 and 100').default(0),
   ),
+  participationRevision: z.number().int().nonnegative().default(0),
   isOffered: z.boolean().default(true),
   createdAt: zodDate().default(() => new Date()),
 })
@@ -44,5 +45,6 @@ export class ClassSubject {
   get maxPeriodSpan() { return this.data.maxPeriodSpan ?? undefined }
   get createdAt() { return this.data.createdAt }
   get completedPercentage() { return this.data.completedPercentage }
+  get participationRevision() { return this.data.participationRevision }
   get isOffered() { return this.data.isOffered }
 }

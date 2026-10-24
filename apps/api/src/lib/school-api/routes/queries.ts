@@ -67,6 +67,12 @@ export function buildQueryRoutes(): SchoolApiRoutePair[] {
           return c.json(counts, HttpStatusCodes.OK);
         }
 
+        if (queryConfig.methodName === "getStudentSubjectEnrollments")
+          return c.json(await service.getStudentSubjectEnrollments(payload as Parameters<typeof service.getStudentSubjectEnrollments>[0]), 200);
+        if (queryConfig.methodName === "getClassSubjectRoster")
+          return c.json(await service.getClassSubjectRoster({ classSubjectId: payload.classSubjectId as string, at: new Date(payload.at as string) }), 200);
+        if (queryConfig.methodName === "getStudentTimetable")
+          return c.json(await service.getStudentTimetable({ studentId: payload.studentId as string, startDate: new Date(payload.startDate as string), endDate: new Date(payload.endDate as string) }), 200);
         if (queryConfig.methodName === "getClassGroupTimetable") {
           const input: GetClassGroupTimetableInput = {
             classGroupId: payload.classGroupId as string,

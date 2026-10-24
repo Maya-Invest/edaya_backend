@@ -6,6 +6,7 @@ import { denyResourceAccess, resolveAuditActorId } from '@edaya/authorization'
 import { BusinessRuleViolationError, ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus, ClassSubjectProgress, SubjectCategoryEntity as SubjectCategoryRecord, Subject as SubjectEntity, SubjectMatter as SubjectMatterEntity } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
 import { assertTeacherWorkflowWrite } from '../../capabilities/academics/teacher-workflow-boundaries'
+import { assertParticipationRevision, saveSubjectPolicy } from '../../capabilities/subject-enrollment/policy'
 
 import { assertClassSubjectGradingMutable } from '../entities/config/academics/class-subject'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
@@ -24,11 +25,12 @@ export interface RecordLessonSessionProgressInput {
 
 export interface RemoveSubjectMatterInput { subjectMatterId: string }
 export interface RemoveSubjectInput { subjectId: string }
-export type UpdateSubjectInput = Partial<Omit<SubjectInput, 'id' | 'schoolId' | 'gradeLevelId' | 'academicYearId' | 'createdAt'>> & { subjectId: string }
+export type UpdateSubjectInput = Partial<Omit<SubjectInput, 'id' | 'schoolId' | 'gradeLevelId' | 'academicYearId' | 'createdAt'>> & { subjectId: string, expectedParticipationRevisions?: Record<string, number> }
 
 export interface SetClassSubjectOfferedInput {
   classSubjectId: string
   isOffered: boolean
+  expectedParticipationRevision: number
 }
 
 export interface ConfigureClassSubjectTimetableInput {
@@ -40,6 +42,7 @@ export interface ConfigureClassSubjectTimetableInput {
 
 export type ConfigureSubjectInput = SubjectInput & {
   classSubjectIdsByClassGroupId?: Record<string, string>
+  expectedParticipationRevisions?: Record<string, number>
 }
 export type ConfigureSubjectCategoryInput = SubjectCategoryInput & { schoolId?: string }
 export type ConfigureSubjectMatterInput = SubjectMatterInput
@@ -118,15 +121,18 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async updateSubject({ subjectId, ...changes }: UpdateSubjectInput): Promise<Subject> {
+  async updateSubject({ subjectId, expectedParticipationRevisions, ...changes }: UpdateSubjectInput): Promise<Subject> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireSubject(subjectId)
       const updated = existing.copyWith(changes)
-      await this.baseService.entities.subjects.save(updated)
+      if (existing.isOptional !== updated.isOptional)
+        await saveSubjectPolicy(this.baseService, updated, existing, expectedParticipationRevisions)
+      else
+        await this.baseService.entities.subjects.save(updated)
       for (const offering of await this.repositories.classSubjects.list({ subjectId })) {
         const workload = Object.fromEntries(['coefficient', 'periodsPerWeek', 'minPeriodSpan', 'maxPeriodSpan']
           .filter(key => key in changes).map(key => [key, updated.data[key as keyof typeof updated.data]]))
-        const next = new ClassSubject({ ...offering.data, ...workload, isOffered: existing.isOptional !== updated.isOptional ? !updated.isOptional : offering.isOffered })
+        const next = new ClassSubject({ ...offering.data, ...workload, isOffered: offering.isOffered })
         if (next.minPeriodSpan !== undefined && next.maxPeriodSpan !== undefined && next.maxPeriodSpan < next.minPeriodSpan)
           throw new BusinessRuleViolationError('CLASS_SUBJECT_PERIOD_SPAN_INVALID', 'maxPeriodSpan must be greater than or equal to minPeriodSpan')
         const scope = await this.baseService.access.curriculum.assertUpdateSubject(next, offering)
@@ -138,10 +144,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
     }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
-  async setClassSubjectOffered({ classSubjectId, isOffered }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
+  async setClassSubjectOffered({ classSubjectId, isOffered, expectedParticipationRevision }: SetClassSubjectOfferedInput): Promise<ClassSubject> {
     return this.baseService.atomicExecution.execute(async () => {
       const existing = await this.requireClassSubject(classSubjectId)
       const updated = new ClassSubject({
+        ...existing.data,
         id: existing.id,
         classGroupId: existing.classGroupId,
         subjectId: existing.subjectId,
@@ -153,9 +160,11 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         isOffered,
         createdAt: existing.createdAt,
       })
+      await this.baseService.access.curriculum.assertUpdateSubject(updated, existing)
+      assertParticipationRevision(existing, expectedParticipationRevision)
       await this.baseService.entities.classSubjects.save(updated)
-      return updated
-    })
+      return (await this.repositories.classSubjects.findById(updated.id))!
+    }, { lockKeys: [academicStateLock(this.baseService.actor.schoolId)] })
   }
 
   async configureClassSubjectTimetable({
@@ -181,6 +190,7 @@ export class AcademicsServiceWorkflow extends BaseServiceWorkflow {
         )
       }
       const updated = new ClassSubject({
+        ...existing.data,
         id: existing.id,
         classGroupId: existing.classGroupId,
         subjectId: existing.subjectId,

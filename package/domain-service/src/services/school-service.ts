@@ -13,8 +13,9 @@ import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { getActivityRoster } from './queries/activity-roster'
 import { getAssessmentEditorContext } from './queries/assessment-editor-context'
 import { getAssessmentMarksReview, listAssessmentMarksReviews } from './queries/marks-review'
-
 import { buildSchoolOverview } from './queries/school-overview'
+
+import { getClassSubjectRoster, getStudentSubjectEnrollments, getStudentTimetable } from './queries/subject-enrollment'
 import { buildClassGroupTimetable, buildTeacherTimetable } from './queries/timetable'
 import { AcademicsServiceWorkflow } from './workflows/academics'
 import { AccessControlServiceWorkflow } from './workflows/access-control'
@@ -98,6 +99,10 @@ export class SchoolService {
       familyFeedback: this.familyFeedbackWorkflow,
     })
   }
+
+  getStudentSubjectEnrollments(input: Parameters<typeof getStudentSubjectEnrollments>[1]) { return getStudentSubjectEnrollments(this.baseService, input) }
+  getClassSubjectRoster(input: Parameters<typeof getClassSubjectRoster>[1]) { return getClassSubjectRoster(this.baseService, input) }
+  getStudentTimetable(input: Parameters<typeof getStudentTimetable>[1]) { return getStudentTimetable(this.baseService, input) }
 
   listConversationRecipients(input: Parameters<ConversationsWorkflow['recipients']>[0]) { return this.conversationsWorkflow.recipients(input) }
   listConversations(input: Parameters<ConversationsWorkflow['list']>[0]) { return this.conversationsWorkflow.list(input) }

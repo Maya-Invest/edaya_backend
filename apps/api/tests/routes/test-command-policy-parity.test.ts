@@ -67,7 +67,7 @@ test("scoped service imports retain action isolation, both placements, validity 
   await repositories.staffPermissionAssignments.save(update);
   await repositories.staffPermissionAssignments.save(new StaffPermissionAssignment({ ...update.data, id: "read", permission: Permission.ACADEMIC_PROGRAM_READ, scopes: [{ kind: "class_group", classGroupId: "class-other" }] }));
   const workflow = school.forActor(actor).academicsWorkflow;
-  const own = { classSubjectId: "math-a", isOffered: false };
+  const own = { classSubjectId: "math-a", isOffered: false, expectedParticipationRevision: 0 };
   await workflow.setClassSubjectOffered(own);
   for (const proposal of [
     { ...own, classSubjectId: "math-other" },

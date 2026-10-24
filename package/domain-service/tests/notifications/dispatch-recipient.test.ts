@@ -75,7 +75,7 @@ describe('delayed notification dispatch uses current business facts', () => {
 
   test.each([
     'DELETE FROM guardian_student_links WHERE id = \'guardian-link\'',
-    'DELETE FROM student_class_enrollments WHERE id = \'enrollment-a\'',
+    'UPDATE student_class_enrollments SET status = \'closed\', ended_at = now() WHERE id = \'enrollment-a\'',
     'UPDATE guardians SET has_access = false WHERE id = \'guardian-a\'',
     'UPDATE guardians SET subject_id = \'new-login\' WHERE id = \'guardian-a\'',
     'UPDATE students SET status = \'inactive\' WHERE id = \'student-a\'',

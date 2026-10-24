@@ -570,7 +570,7 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
       const offering = await ctx.unique('classSubjects', entity => entity.classGroupId === data['classGroupId'] && entity.subjectId === data['subjectId'])
       if (!offering)
         fail('IMPORT_OFFERING_NOT_FOUND')
-      await service.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, isOffered: data['isOffered'] as boolean })
+      await service.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, expectedParticipationRevision: offering.participationRevision, isOffered: data['isOffered'] as boolean })
       result['targetId'] = offering.id
       break
     }

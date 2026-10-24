@@ -1,5 +1,6 @@
 import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
+import { manageSubjectEnrollmentsResponseSchema } from "./subject-enrollment";
 import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import {
   academicDisciplineResponseSchema,
@@ -208,6 +209,7 @@ export const documentIssuanceBatchResponseSchema = z.object({
 
 /** Default OpenAPI response schema per SchoolService command method. */
 export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
+  manageStudentSubjectEnrollments: manageSubjectEnrollmentsResponseSchema,
   registerSchool: schoolResponseSchema,
   updateSchoolConfiguration: schoolResponseSchema,
   createAcademicYear: academicYearResponseSchema,

@@ -126,6 +126,7 @@ describe('SchoolService academics workflows', () => {
 
     const updated = await service.academicsWorkflow.setClassSubjectOffered({
       classSubjectId: 'cs1',
+      expectedParticipationRevision: (await repositories.classSubjects.findById('cs1'))!.participationRevision,
       isOffered: false,
     })
     expect(updated.isOffered).toBe(false)

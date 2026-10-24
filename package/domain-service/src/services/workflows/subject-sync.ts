@@ -3,6 +3,7 @@ import type { BaseSchoolService } from '../base-school-service'
 import { randomUUID } from 'node:crypto'
 import { ClassSubject, ClassSubjectMatter, ClassSubjectMatterStatus } from '@edaya/core'
 import { academicStateLock } from '../../capabilities/academics/marks-state'
+import { reconcileOffering } from '../../capabilities/subject-enrollment/reconcile'
 import { assertClassSubjectGradingMutable, assertClassSubjectUnused } from '../entities/config/academics/class-subject'
 
 export interface SyncClassSubjectOptions {
@@ -30,6 +31,7 @@ export async function syncSubjectToClassGroup(baseService: BaseSchoolService, su
     if (!existing) {
       await assertClassSubjectGradingMutable(offering, undefined, baseService.repositories)
       await baseService.repositories.classSubjects.forAccess(scope).save(offering)
+      await reconcileOffering(baseService.repositories, offering, undefined, baseService.actor)
     }
     for (const matter of await baseService.repositories.subjectMatters.list({ subjectId: subject.id }))
       await syncSubjectMatterToClassSubject(baseService, offering, matter, options)

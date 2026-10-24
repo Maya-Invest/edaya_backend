@@ -30,7 +30,7 @@ const subjectCommandFields = {
 
 export const subjectConfigCommandSchema = objectFromSchema(subjectSchema)
   .omit({ schoolId: true })
-  .extend({ ...subjectCommandFields, classSubjectIdsByClassGroupId: z.record(field.id(), field.id()).optional() })
+  .extend({ ...subjectCommandFields, classSubjectIdsByClassGroupId: z.record(field.id(), field.id()).optional(), expectedParticipationRevisions: z.record(z.string(), z.number().int().nonnegative()).optional() })
   .openapi("SubjectConfigCommand");
 
 export const subjectCategoryConfigCommandSchema = objectFromSchema(subjectCategorySchema)
@@ -364,6 +364,7 @@ export const promoteStudentCommandSchema = z.object({
 }).openapi("PromoteStudentCommand");
 
 export const transferStudentCommandSchema = z.object({
+  acknowledgedDroppedSubjectIds: z.array(field.id()).optional(),
   enrollmentId: field.id(),
   nextEnrollmentId: field.id(),
   nextClassGroupId: field.id(),
@@ -440,12 +441,13 @@ export const removeSubjectCommandSchema = z.object({
 export const updateSubjectCommandSchema = objectFromSchema(subjectSchema)
   .omit({ id: true, schoolId: true, gradeLevelId: true, academicYearId: true, createdAt: true })
   .partial()
-  .extend({ ...subjectCommandFields, subjectId: field.id() })
+  .extend({ ...subjectCommandFields, subjectId: field.id(), expectedParticipationRevisions: z.record(z.string(), z.number().int().nonnegative()).optional() })
   .openapi("UpdateSubjectCommand");
 
 export const setClassSubjectOfferedCommandSchema = z.object({
   classSubjectId: field.id(),
   isOffered: z.boolean(),
+  expectedParticipationRevision: z.number().int().nonnegative(),
 }).openapi("SetClassSubjectOfferedCommand");
 
 export const configureClassSubjectTimetableCommandSchema = z.object({

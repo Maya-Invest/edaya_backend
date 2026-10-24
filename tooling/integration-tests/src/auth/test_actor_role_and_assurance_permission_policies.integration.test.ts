@@ -79,9 +79,7 @@ async function setupBaselineFixture() {
 
   // Create students & guardians
   await saveStudent(app, { id: 'active-student', schoolId: 'school', firstName: 'Daniel', lastName: 'Craig' })
-  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a' })
   await saveGuardian(app, { id: 'active-guardian', schoolId: 'school', firstName: 'Eva', lastName: 'Craig' })
-  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
 
   // Academics setup
   await app.baseService.entities.subjects.save(
@@ -112,6 +110,10 @@ async function setupBaselineFixture() {
   })
 
   // Create session
+  await app.studentWorkflow.enrollStudent({ id: 'enroll-1', studentId: 'active-student', classGroupId: 'class-7a', enrolledAt: new Date('2026-09-01T00:00:00Z') })
+
+  await app.studentWorkflow.linkGuardianToStudent({ id: 'link-1', guardianId: 'active-guardian', studentId: 'active-student' })
+
   const session = await saveLessonSession(app, {
     id: 'active-session',
     schoolId: 'school',

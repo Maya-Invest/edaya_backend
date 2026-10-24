@@ -2,6 +2,7 @@ import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { Assessment, AssessmentResult, StudentClassEnrollment } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { Assessment as AssessmentEntity, BusinessRuleViolationError } from '@edaya/core'
+import { loadParticipation, subjectRoster } from '../subject-enrollment/participation'
 
 export function academicStateLock(schoolId: string): string {
   return `academic-state:${schoolId}`
@@ -30,8 +31,10 @@ export async function assessmentDate(assessment: Assessment, repositories: { les
   return at
 }
 
-export async function assessmentRoster(assessment: Assessment, repositories: Pick<SchoolRepositories, 'lessonSessions' | 'enrollments'>): Promise<string[]> {
+export async function assessmentRoster(assessment: Assessment, repositories: Pick<SchoolRepositories, 'lessonSessions' | 'enrollments' | 'subjectEnrollments'>): Promise<string[]> {
   const at = await assessmentDate(assessment, repositories)
+  if (assessment.classSubjectId)
+    return subjectRoster(await loadParticipation(repositories, [assessment.classGroupId]), assessment.classSubjectId, at)
   const enrollments = await repositories.enrollments.list({ classGroupId: assessment.classGroupId })
   return [...new Set(enrollments.filter(row => enrollmentEffectiveAt(row, at)).map(row => row.studentId))].sort()
 }

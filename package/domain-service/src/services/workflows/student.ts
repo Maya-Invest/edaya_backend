@@ -1,4 +1,4 @@
-import type { Attachment, AttachmentInput, ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput, StudentPhotoSubmission } from '@edaya/core'
+import type { Attachment, AttachmentInput, ClassGroup, GuardianInput, GuardianStudentLink as GuardianStudentLinkType, ManageStudentSubjectEnrollmentsInput, StudentHealthProfile, StudentHealthProfileInput, StudentInput, StudentNote, StudentNoteInput, StudentPhotoSubmission } from '@edaya/core'
 import type {
   CreateProfilePhotoUploadInput,
 } from '../../capabilities/files/profile-photo-uploads'
@@ -22,8 +22,10 @@ import {
 } from '../../capabilities/files'
 import { assertImmediatePortraitPhotoUrl } from '../../capabilities/files/profile-photo-access'
 import { resolveStudentInvitationEmail, scheduleAccountInvitationIfEligible } from '../../capabilities/invitations'
+import { carrySubjectChoices, subjectTransferImpact } from '../../capabilities/subject-enrollment/transfer'
 import { pickWorkflowRepositories } from '../runtime/workflow-repository-catalog'
 import { BaseServiceWorkflow } from './base-service-workflow'
+import { manageSubjectEnrollments } from './subject-enrollment'
 
 export interface EnrollStudentInput {
   enrolledAt?: Date
@@ -60,6 +62,7 @@ export interface PromoteStudentInput {
 }
 
 export interface TransferStudentInput {
+  acknowledgedDroppedSubjectIds?: string[]
   enrollmentId: string
   nextEnrollmentId: string
   nextClassGroupId: string
@@ -138,6 +141,7 @@ export type {
 } from '../../capabilities/files/student-photos'
 
 export class StudentServiceWorkflow extends BaseServiceWorkflow {
+  manageStudentSubjectEnrollments(input: ManageStudentSubjectEnrollmentsInput) { return manageSubjectEnrollments(this.baseService, input) }
   private readonly repositories: StudentWorkflowRepositories
 
   constructor(base: BaseSchoolService) {
@@ -352,11 +356,16 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
     nextEnrollmentId,
     nextClassGroupId,
     effectiveAt,
+    acknowledgedDroppedSubjectIds = [],
   }: TransferStudentInput): Promise<StudentClassEnrollment> {
     return this.baseService.atomicExecution.execute(async () => {
       const enrollment = await this.requireManagedEnrollment(enrollmentId)
       await this.requireCurrentActiveEnrollment(enrollment)
       const nextClassGroup = await this.requireTransitionTarget(enrollment, nextClassGroupId)
+      const impact = await subjectTransferImpact(this.baseService.repositories, enrollment, nextClassGroupId, effectiveAt)
+      const unsupported = impact.filter(choice => !choice.destinationClassSubjectId)
+      if (unsupported.some(choice => !acknowledgedDroppedSubjectIds.includes(choice.subjectId)))
+        throw new BusinessRuleViolationError('TRANSFER_OPTIONAL_CHOICES_ACKNOWLEDGMENT_REQUIRED', 'Confirm the optional subjects unavailable in the destination class', { unsupportedChoices: unsupported.map(choice => ({ subjectId: choice.subjectId, subjectName: choice.subjectName, enrollmentId: choice.enrollment.id })) })
       const transferred = enrollment.close({
         endedAt: effectiveAt,
         endReason: EnrollmentEndReason.Transferred,
@@ -370,6 +379,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       })
       await this.baseService.entities.enrollments.save(transferred)
       await this.baseService.entities.enrollments.save(successor)
+      await carrySubjectChoices(this.baseService.repositories, impact, successor, this.baseService.actor)
       return successor
     }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }

@@ -1,6 +1,8 @@
 import type { NotificationDispatchRequest, NotificationRecipientProfile } from '@edaya/core'
 import type { BaseSchoolService } from '../../../services/base-school-service'
 import { ActorAssuranceLevel, AuthorizationError, createAccessPolicies, createGuardianActorMetadata, createStaffActorMetadata, createTeacherActorMetadata, denyResourceAccess } from '@edaya/authorization'
+import { assessmentDate } from '../../academics/marks-state'
+import { loadParticipation, subjectRoster } from '../../subject-enrollment/participation'
 import { buildGuardianRecipientProfile, buildStaffRecipientProfile, buildStudentRecipientProfile, buildTeacherRecipientProfile } from './build-recipient-profile'
 import { enrichRecipientProfile } from './resolve-notification-contact'
 
@@ -10,6 +12,15 @@ export async function resolveNotificationDispatchRecipient(base: BaseSchoolServi
   try {
     profile = await base.atomicExecution.execute(async () => {
       const recipient = await base.access.notifications.recipient(request)
+      const { assessmentId } = request.metadata
+      if (assessmentId && request.eventKey === 'assessment.due_soon' && (recipient.kind === 'student' || recipient.kind === 'guardian')) {
+        const assessment = await base.repositories.assessments.findById(assessmentId)
+        if (!assessment)
+          denyResourceAccess()
+        const roster = subjectRoster(await loadParticipation(base.repositories, [assessment.classGroupId]), assessment.classSubjectId, await assessmentDate(assessment, base.repositories))
+        if (recipient.kind === 'student' ? !roster.includes(recipient.profile.id) : !recipient.links.some(link => roster.includes(link.studentId)))
+          denyResourceAccess()
+      }
       if (request.eventKey === 'conversation.message') {
         const { conversationId: id } = request.metadata
         const placement = id ? await base.repositories.conversations.placement(request.schoolId, id) : undefined

@@ -29,11 +29,22 @@ export async function prepareMarkBatchValidation(results: AssessmentResult[], re
     loadInBatches(assessments.map(row => row.id), ids => repositories.assessmentResults.list({ assessmentId: { $in: ids } })),
     loadInBatches(results.map(row => row.studentId), ids => repositories.results.list({ studentId: { $in: ids }, periodId: { $in: [...new Set(assessments.map(row => row.periodId))] } })),
   ])
+  const participation = await loadInBatches(enrollments.map(row => row.id), ids => repositories.subjectEnrollments.list({ studentClassEnrollmentId: { $in: ids } }))
+  const cachedParticipation = new Proxy(repositories.subjectEnrollments, { get(target, key) {
+    if (key === 'list')
+      return async (filter: { studentClassEnrollmentId?: { $in: string[] } }) => filter.studentClassEnrollmentId?.$in ? participation.filter(row => filter.studentClassEnrollmentId!.$in.includes(row.studentClassEnrollmentId)) : target.list(filter)
+    const value = Reflect.get(target, key)
+    return typeof value === 'function' ? value.bind(target) : value
+  } })
   const cachedEnrollments = new Proxy(repositories.enrollments, { get(target, key) {
     if (key === 'list') {
-      return async (filter: { classGroupId?: string }) => {
+      return async (filter: { classGroupId?: string | { $in: string[] } }) => {
         if (typeof filter?.classGroupId === 'string' && Object.keys(filter).length === 1)
           return enrollments.filter(row => row.classGroupId === filter.classGroupId)
+        if (filter.classGroupId && typeof filter.classGroupId !== 'string') {
+          const ids = filter.classGroupId.$in
+          return enrollments.filter(row => ids.includes(row.classGroupId))
+        }
         return target.list(filter)
       }
     }
@@ -64,5 +75,5 @@ export async function prepareMarkBatchValidation(results: AssessmentResult[], re
     const value = Reflect.get(target, key)
     return typeof value === 'function' ? value.bind(target) : value
   } })
-  return { ...repositories, assessmentResults: cachedMarks, results: cachedReports, assessments: cachedById(repositories.assessments, assessments), classGroups: cachedById(repositories.classGroups, groups), academicPeriods: cachedById(repositories.academicPeriods, periods), students: cachedById(repositories.students, students), lessonSessions: cachedById(repositories.lessonSessions, sessions), enrollments: cachedEnrollments }
+  return { ...repositories, subjectEnrollments: cachedParticipation, assessmentResults: cachedMarks, results: cachedReports, assessments: cachedById(repositories.assessments, assessments), classGroups: cachedById(repositories.classGroups, groups), academicPeriods: cachedById(repositories.academicPeriods, periods), students: cachedById(repositories.students, students), lessonSessions: cachedById(repositories.lessonSessions, sessions), enrollments: cachedEnrollments }
 }

@@ -626,7 +626,7 @@ export const assessmentMarksReviewsResponseSchema = z.object({
 }).openapi("AssessmentMarksReviewsResponse");
 
 export const getAssessmentEditorContextQuerySchema = z.object({ classGroupId: z.string().min(1), periodId: z.string().min(1) }).openapi("GetAssessmentEditorContextQuery");
-export const assessmentEditorContextResponseSchema = z.object({ assessmentsRaw: z.array(assessmentResponseSchema), classSubjectsRaw: z.array(classSubjectResponseSchema), subjectsRaw: z.array(subjectResponseSchema), classSize: z.number().int().nonnegative(), markResults: z.array(z.object({ assessmentId: z.string(), results: z.array(assessmentResultResponseSchema) })) }).openapi("AssessmentEditorContextResponse");
+export const assessmentEditorContextResponseSchema = z.object({ assessmentsRaw: z.array(assessmentResponseSchema), classSubjectsRaw: z.array(classSubjectResponseSchema), subjectsRaw: z.array(subjectResponseSchema), classSize: z.number().int().nonnegative(), markResults: z.array(z.object({ assessmentId: z.string(), rosterCount: z.number().int().nonnegative(), results: z.array(assessmentResultResponseSchema) })) }).openapi("AssessmentEditorContextResponse");
 
 export const getActivityRosterQuerySchema = z.object({ activityId: z.string().min(1) }).openapi("GetActivityRosterQuery");
 export const activityRosterResponseSchema = z.object({

@@ -244,10 +244,10 @@ export async function runDevSchoolSeed(
   })
 
   await runSchoolSeedStep(options?.progress, async () => {
-    await seedDevPopulation(populationPort, seedDataset)
+    await seedDevCurriculum(curriculumPort, seedDataset)
   })
   await runSchoolSeedStep(options?.progress, async () => {
-    await seedDevCurriculum(curriculumPort, seedDataset)
+    await seedDevPopulation(populationPort, seedDataset)
   })
   await runSchoolSeedStep(options?.progress, async () => {
     await seedDevTeachers(teachersPort, seedDataset)

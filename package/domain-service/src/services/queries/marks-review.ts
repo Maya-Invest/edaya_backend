@@ -52,8 +52,9 @@ export async function getAssessmentMarksReview(base: BaseSchoolService, input: {
   const assessment = await repositories.assessments.forAccess(scope).findById(input.assessmentId)
   if (!assessment)
     denyResourceAccess()
-  const roster = assessment.marksStatus === 'draft' ? await assessmentRoster(assessment, repositories) : assessment.marksReview.rosterStudentIds
   const results = await repositories.assessmentResults.list({ assessmentId: assessment.id })
+  const eligible = assessment.marksStatus === 'draft' ? await assessmentRoster(assessment, repositories) : assessment.marksReview.rosterStudentIds
+  const roster = [...new Set([...eligible, ...results.map(row => row.studentId)])]
   const students = await repositories.students.findByIds(roster)
   const byStudent = new Map(results.map(result => [result.studentId, result]))
   const missingStudentIds = roster.filter((id) => {

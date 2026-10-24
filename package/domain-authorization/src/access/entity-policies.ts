@@ -77,6 +77,7 @@ const entityRules: { [K in CoreEntityKey]: EntityRule<K> } = {
     read: [Permission.STUDENT_READ, Permission.CLASS_READ, Permission.PAYMENT_READ, Permission.REPORT_CARD_READ, Permission.REPORT_CARD_EXPORT, Permission.CLASS_LOGBOOK_READ, Permission.DISCIPLINE_READ, Permission.ATTENDANCE_READ, Permission.TIMETABLE_READ, Permission.ENROLLMENT_READ, Permission.DOCUMENT_VOID],
     write: [],
   },
+  subjectEnrollments: { read: [Permission.ENROLLMENT_READ, Permission.STUDENT_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD], write: [], delete: [] },
   enrollments: { read: [Permission.ENROLLMENT_READ, Permission.STUDENT_READ, Permission.GRADE_MANAGE, Permission.ATTENDANCE_RECORD, Permission.CLASS_LOGBOOK_MANAGE, Permission.DISCIPLINE_CREATE], write: Permission.ENROLLMENT_MANAGE, delete: Permission.ENROLLMENT_MANAGE },
   studentDisciplinaryActions: { read: [Permission.DISCIPLINE_READ], write: [Permission.DISCIPLINE_VALIDATE] },
   studentHealthProfiles: { read: [Permission.STUDENT_HEALTH_READ], write: [Permission.STUDENT_HEALTH_UPDATE] },

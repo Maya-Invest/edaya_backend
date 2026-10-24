@@ -526,8 +526,7 @@ export class AssessmentsServiceWorkflow extends BaseServiceWorkflow {
     const allSections = dedupeReportCardDefinitionSections(
       await this.repositories.sections.list({ reportCardDefinitionId }),
     ).sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
-    const classSubjects = (await this.repositories.classSubjects.list({ classGroupId }))
-      .filter(classSubject => classSubject.isOffered !== false)
+    const classSubjects = [...context.classSubjects].sort((a, b) => Number(a.classGroupId === classGroupId) - Number(b.classGroupId === classGroupId))
     const classSubjectBySubject = new Map(classSubjects.map(classSubject => [classSubject.subjectId, classSubject]))
 
     if (!aggregation) {

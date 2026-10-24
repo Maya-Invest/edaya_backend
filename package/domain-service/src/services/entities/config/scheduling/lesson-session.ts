@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, OccurrenceStatus, TeacherAssignmentKind, TeacherAssignmentStatus } from '@edaya/core'
+import { reconcileLessonParticipation } from '../../../../capabilities/subject-enrollment/occurrence'
 import { assertNoSessionConflict } from '../../../workflows/schedule-conflicts'
 import { config } from '../../entity-config'
 import { classGroupLinkedTenant } from '../../entity-config/tenant'
@@ -61,6 +62,13 @@ export async function validateLessonSessionSave(
     }
   }
   await requireValidClassSubject(lessonSession.classSubjectId, lessonSession.classGroupId, repositories)
+  if (existing)
+    await reconcileLessonParticipation(lessonSession, existing, repositories)
+  if ((!existing || existing.startsAt.getTime() !== lessonSession.startsAt.getTime() || existing.classSubjectId !== lessonSession.classSubjectId) && lessonSession.startsAt >= new Date()) {
+    const offering = await repositories.classSubjects.findById(lessonSession.classSubjectId)
+    if (!offering?.isOffered)
+      throw new BusinessRuleViolationError('CLASS_SUBJECT_NOT_OFFERED', 'Disabled subjects cannot receive future lessons')
+  }
 
   if ((!existing && lessonSession.timetableGenerated) || (existing && lessonSession.timetableGenerated !== existing.timetableGenerated)) {
     throw new BusinessRuleViolationError(

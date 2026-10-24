@@ -124,7 +124,7 @@ describe('subject inheritance through native policies', () => {
     await service.setupWorkflow.createClassGroup({ id: '6a', schoolId: 'sch1', academicYearId: 'ay1', gradeLevelId: 'gl-6', name: '6A' })
     const offering = (await repositories.classSubjects.findOne({ subjectId: 'optional' }))!
     expect(offering.isOffered).toBe(false)
-    await service.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, isOffered: true })
+    await service.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, expectedParticipationRevision: offering.participationRevision, isOffered: true })
     await service.academicsWorkflow.updateSubject({ subjectId: 'optional', coefficient: 2 })
     expect((await repositories.classSubjects.findById(offering.id))?.isOffered).toBe(true)
     await service.academicsWorkflow.configureClassSubjectTimetable({ classSubjectId: offering.id, periodsPerWeek: 4, minPeriodSpan: 1, maxPeriodSpan: 2 })

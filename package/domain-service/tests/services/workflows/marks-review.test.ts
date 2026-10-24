@@ -1,6 +1,7 @@
 import { ActorAssuranceLevel, createGuardianActorMetadata, createStaffActorMetadata } from '@edaya/authorization'
 import { AcademicPeriod, AcademicPeriodType, Assessment, AssessmentKind, AssessmentResult, ClassGroup, ClassSubject, DeadlineComplianceStatus, Permission, RecordingNotificationGateway, ReportCardAggregationSource, StaffMember, StaffPermissionAssignment, Student, StudentClassEnrollment, Subject } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
+import { seedSubjectParticipation } from '../../support/seed-subject-participation'
 import { createReportCardContext } from './report-card-workflow-context'
 
 const reportInput = { id: 'rc1', studentId: 'stu1', periodId: 'per1', reportCardDefinitionId: 'def1' }
@@ -78,6 +79,7 @@ describe('evaluation marks review', () => {
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
     await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+    await seedSubjectParticipation(f.repositories)
     const mark = (id: string, studentId: string, score: number) => new AssessmentResult({ id, studentId, assessmentId: 'ass1', score })
     await expect(f.service.baseService.entities.assessmentResults.batchSave([mark('ar1', 'stu1', 12), mark('duplicate', 'stu1', 13)])).rejects.toMatchObject({ code: 'DUPLICATE_ASSESSMENT_MARK' })
     expect((await f.repositories.assessments.findById('ass1'))!.marksRevision).toBe(0)
@@ -226,6 +228,7 @@ describe('evaluation marks review', () => {
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
     await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+    await seedSubjectParticipation(f.repositories)
     await f.edit()
     await f.service.assessmentsWorkflow.recordAssessmentResult({ requestId: 'second-mark', expectedRevision: 1, id: 'ar2', studentId: 'stu2', assessmentId: 'ass1', score: 65 })
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit-two', expectedRevision: 2 })
@@ -248,6 +251,7 @@ describe('evaluation marks review', () => {
     const enrollment = (await f.repositories.enrollments.findOne({ studentId: 'stu1', classGroupId: 'cg1' }))!
     await f.repositories.students.save(new Student({ ...student.data, id: 'stu2', subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...enrollment.data, id: 'enr2', studentId: 'stu2' }))
+    await seedSubjectParticipation(f.repositories)
     await f.edit()
     await f.service.assessmentsWorkflow.recordAssessmentResult({ ...correctionInput(), id: 'ar2', studentId: 'stu2', expectedRevision: 1, score: 65 })
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 2 })
@@ -264,6 +268,7 @@ describe('evaluation marks review', () => {
     const f = await fixture()
     await f.repositories.students.save(new Student({ ...(await f.repositories.students.findById('stu1'))!.data, id: 'stu2', subjectId: undefined }))
     await f.repositories.enrollments.save(new StudentClassEnrollment({ ...(await f.repositories.enrollments.findById('enr1'))!.data, id: 'enr2', studentId: 'stu2' }))
+    await seedSubjectParticipation(f.repositories)
     await f.edit()
     await f.service.assessmentsWorkflow.recordAssessmentResult({ requestId: 'edit-two', assessmentId: 'ass1', id: 'ar2', studentId: 'stu2', expectedRevision: 1, score: 65 })
     await f.service.assessmentsWorkflow.submitAssessmentMarks({ assessmentId: 'ass1', requestId: 'submit', expectedRevision: 2 })

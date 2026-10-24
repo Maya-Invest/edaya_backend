@@ -64,6 +64,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
   sections: s.reportCardDefinitionSections,
   results: s.reportCardResults,
   students: s.students,
+  subjectEnrollments: s.studentSubjectEnrollments,
   enrollments: s.studentClassEnrollments,
   guardians: s.guardians,
   guardianLinks: s.guardianStudentLinks,
@@ -78,6 +79,7 @@ const tables: Record<CoreEntityKey, PgTable> = {
 }
 
 const parents: Record<string, readonly [string, PgTable][]> = {
+  student_subject_enrollments: [['studentClassEnrollmentId', s.studentClassEnrollments], ['classSubjectId', s.classSubjects]],
   payments: [['accountId', s.studentYearAccounts]],
   assessment_results: [['assessmentId', s.assessments]],
   report_card_definition_sections: [['reportCardDefinitionId', s.reportCardDefinitions]],
@@ -146,7 +148,7 @@ export function compileResourceAccess(table: PgTable, scope: ResourceAccessScope
     const alternatives = sql.join([...ids].map(id => sql`(${id}::text)`), sql`, `)
     clauses.push(sql`exists (select 1 from (values ${alternatives}) as "grant_classes"("id") where ${compileClause(table, { ...clause, target }, scope.schoolId, proposed)})`)
   }
-  return and(schoolScope(table, scope.schoolId, proposed), clauses.length ? or(...clauses)! : sql`false`)!
+  return and(schoolScope(table, scope.schoolId, proposed), getTableName(table) === 'student_subject_enrollments' ? sql`${values(table, proposed)('deletedAt')} is null` : undefined, clauses.length ? or(...clauses)! : sql`false`)!
 }
 
 type CompiledClause = Omit<ResourceAccessClause, 'target'> & { target: AccessTarget | { kind: 'class_group', classGroupId: SQL } }
@@ -307,6 +309,12 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
     return sql`false`
   }
 
+  if (name === 'class_subject_progress' && target.kind === 'student')
+    return and(via('classSubjectMatterId', s.classSubjectMatters), via('lessonSessionId', s.lessonSessions))!
+
+  if (name === 'student_subject_enrollments')
+    return target.kind === 'student' ? via('studentClassEnrollmentId', s.studentClassEnrollments) : via('classSubjectId', s.classSubjects)
+
   if (target.kind === 'student') {
     if (name === 'students')
       return matches('id', target.studentId)
@@ -314,6 +322,27 @@ function targetPredicate(table: PgTable, target: TargetPattern, schoolId: string
       return matches('studentId', target.studentId)
     if (name === 'guardians')
       return exists(s.guardianStudentLinks, schoolId, and(sql`${s.guardianStudentLinks.guardianId} = ${value('id')}`, target.studentId ? eq(s.guardianStudentLinks.studentId, target.studentId) : sql`true`)!)
+    if (name === 'class_subjects' || name === 'lesson_sessions' || name === 'assessments' || name === 'schedules') {
+      const offeringId = name === 'class_subjects' ? value('id') : value('classSubjectId')
+      const at = name === 'lesson_sessions' ? value('startsAt') : name === 'assessments' ? sql`coalesce(${value('dueAt')}, ${value('startsAt')}, (select starts_at from lesson_sessions where id = ${value('lessonSessionId')}))` : undefined
+      const current = sql`exists (select 1 from ${s.studentSubjectEnrollments} inner join ${s.studentClassEnrollments} on ${s.studentClassEnrollments.id} = ${s.studentSubjectEnrollments.studentClassEnrollmentId} inner join ${s.classGroups} on ${s.classGroups.id} = ${s.studentClassEnrollments.classGroupId}
+        where ${s.classGroups.schoolId} = ${schoolId} and ${s.studentSubjectEnrollments.classSubjectId} = ${offeringId}
+        and ${target.studentId ? eq(s.studentClassEnrollments.studentId, target.studentId) : sql`true`}
+        and ${year ? eq(s.studentClassEnrollments.academicYearId, year) : sql`true`}
+        and ${s.studentSubjectEnrollments.deletedAt} is null
+        and ${at ? sql`(${s.studentSubjectEnrollments.scope} = 'annual' or exists (select 1 from jsonb_array_elements(${s.studentSubjectEnrollments.periods}) choice where (choice->>'activatedAt')::timestamptz <= ${at} and (choice->>'startsAt')::timestamptz <= ${at} and (choice->>'endsAt')::timestamptz > ${at})) and ${s.studentSubjectEnrollments.enrolledAt} <= ${at} and (${s.studentSubjectEnrollments.endedAt} is null or ${s.studentSubjectEnrollments.endedAt} > ${at}) and ${s.studentClassEnrollments.enrolledAt} <= ${at} and (${s.studentClassEnrollments.endedAt} is null or ${s.studentClassEnrollments.endedAt} > ${at})` : sql`true`})`
+      if (!target.studentId || name === 'schedules')
+        return current
+      const studentId = target.studentId
+      // Saved work grants access to its own details after withdrawal, never to unrelated teaching.
+      const assessmentProof = (assessmentId: SQLWrapper) => sql`exists (select 1 from assessment_results saved_mark where saved_mark.assessment_id = ${assessmentId} and saved_mark.student_id = ${studentId}) or exists (select 1 from assessments saved_sheet where saved_sheet.id = ${assessmentId} and saved_sheet.marks_status <> 'draft' and saved_sheet.marks_review->'rosterStudentIds' ? ${studentId}) or exists (select 1 from attendance_records saved_call where saved_call.assessment_id = ${assessmentId} and saved_call.student_id = ${studentId})`
+      const lessonProof = (lessonId: SQLWrapper) => sql`exists (select 1 from attendance_records saved_call where saved_call.lesson_session_id = ${lessonId} and saved_call.student_id = ${studentId}) or exists (select 1 from teacher_workflow_states saved_state where saved_state.school_id = ${schoolId} and saved_state.workflow = 'attendance' and saved_state.target_id = 'lesson:' || ${lessonId} and (saved_state.payload->'payload'->'entries' @> ${JSON.stringify([{ studentId }])}::jsonb or ((saved_state.payload->>'locked')::boolean and saved_state.payload->'payload'->'rosterStudentIds' ? ${studentId}))) or exists (select 1 from assessments lesson_assessment where lesson_assessment.lesson_session_id = ${lessonId} and (${assessmentProof(sql`lesson_assessment.id`)}))`
+      if (name === 'assessments')
+        return or(current, sql`(${assessmentProof(value('id'))})`)!
+      if (name === 'lesson_sessions')
+        return or(current, sql`(${lessonProof(value('id'))})`)!
+      return or(current, sql`exists (select 1 from assessments saved_assessment where saved_assessment.class_subject_id = ${offeringId} and (${assessmentProof(sql`saved_assessment.id`)}))`, sql`exists (select 1 from lesson_sessions saved_lesson where saved_lesson.class_subject_id = ${offeringId} and (${lessonProof(sql`saved_lesson.id`)}))`, sql`exists (select 1 from report_card_results saved_report where saved_report.student_id = ${studentId} and saved_report.status = 'published' and jsonb_path_exists(saved_report.section_results, '$.**.classSubjectId ? (@ == $offering)', jsonb_build_object('offering', ${offeringId})))`)!
+    }
     if (name === 'class_groups' || columns['classGroupId']) {
       const classId = name === 'class_groups' ? value('id') : value('classGroupId')
       return exists(s.studentClassEnrollments, schoolId, and(sql`${s.studentClassEnrollments.classGroupId} = ${classId}`, target.studentId ? eq(s.studentClassEnrollments.studentId, target.studentId) : sql`true`, activeEnrollment(year))!)
@@ -453,7 +482,7 @@ function occurrencePredicate(table: PgTable, target: OccurrenceTarget, schoolId:
     return or(...paths)!
   // Placement references may be read/checked as part of this occurrence's action.
   // Transactional records never inherit this wider reference scope.
-  if (['students', 'student_class_enrollments', 'class_groups', 'class_subjects', 'class_subject_matters', 'subjects', 'subject_matters', 'grade_levels'].includes(name)) {
+  if (['students', 'student_class_enrollments', 'student_subject_enrollments', 'class_groups', 'class_subjects', 'class_subject_matters', 'subjects', 'subject_matters', 'grade_levels'].includes(name)) {
     const placement: TargetPattern = 'classSubjectId' in target
       ? { kind: 'subject', classGroupId: target.classGroupId, gradeLevelId: sql`(select grade_level_id from class_groups where id = ${target.classGroupId} and school_id = ${schoolId})`, subjectId: sql`(select subject_id from class_subjects where id = ${target.classSubjectId} and class_group_id = ${target.classGroupId})` }
       : { kind: 'class_group', classGroupId: target.classGroupId }
@@ -471,6 +500,8 @@ function yearPredicate(table: PgTable, year: string, schoolId: string, visited: 
   const value = values(table, proposed)
   if (name === 'academic_years')
     return sql`${value('id')} = ${year}`
+  if (name === 'student_subject_enrollments')
+    return exists(s.studentClassEnrollments, schoolId, and(sql`${s.studentClassEnrollments.id} = ${value('studentClassEnrollmentId')}`, eq(s.studentClassEnrollments.academicYearId, year))!)
   if (columns['academicYearId'])
     return sql`${value('academicYearId')} = ${year}`
   const via = (field: string, parent: PgTable) => exists(parent, schoolId, and(sql`${getTableColumns(parent)['id']!} = ${value(field)}`, yearPredicate(parent, year, schoolId, seen))!)

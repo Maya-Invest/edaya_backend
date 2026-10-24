@@ -1,7 +1,7 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
 import type { Assessment } from '@edaya/core'
 import { createSystemActorMetadata } from '@edaya/authorization'
-import { AssessmentKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus } from '@edaya/core'
+import { AssessmentKind, MessageDelivery, MessageDeliveryRecipientKind, RecordingNotificationGateway, StudentClassEnrollmentStatus, StudentSubjectEnrollment } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 import { createAuthorizationDatabase, seedAuthorizationRelationships } from '../../../adaptor-postgres/tests/support/authorization-database'
 import {
@@ -93,10 +93,11 @@ describe('assessmentDueSoonTrigger resolver', () => {
         schools: {
           findById: async () => ({ id: 'school-1', name: 'Test School' }),
         },
+        subjectEnrollments: { list: async () => ['p1', 'p2'].map(id => new StudentSubjectEnrollment({ id, studentClassEnrollmentId: id, classSubjectId: entity.classSubjectId, enrolledAt: new Date('2026-01-01'), source: 'automatic' })) },
         enrollments: {
           list: async () => [
-            { studentId: 's1', status: StudentClassEnrollmentStatus.Active },
-            { studentId: 's2', status: StudentClassEnrollmentStatus.Active },
+            { id: 'p1', studentId: 's1', enrolledAt: new Date('2026-01-01'), status: StudentClassEnrollmentStatus.Active },
+            { id: 'p2', studentId: 's2', enrolledAt: new Date('2026-01-01'), status: StudentClassEnrollmentStatus.Active },
           ],
         },
       } as any,
@@ -155,6 +156,7 @@ describe('assessmentDueSoonTrigger resolver', () => {
         title: 'Reminder',
         body: 'Homework due',
       }))
+      await fixture.repositories.subjectEnrollments.batchDelete((await fixture.repositories.subjectEnrollments.list({ studentClassEnrollmentId: 'enrollment-a' })).map(row => row.id))
       await fixture.repositories.enrollments.delete('enrollment-a')
       const gateway = new RecordingNotificationGateway()
       const existing = assessment({ id: 'a1', classGroupId: 'class-a', dueAt, kind: AssessmentKind.Homework })

@@ -2708,6 +2708,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/manage-student-subject-enrollments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** manage-student-subject-enrollments */
+        post: operations["commands.manageStudentSubjectEnrollments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/start-conversation": {
         parameters: {
             query?: never;
@@ -4623,6 +4640,57 @@ export interface paths {
         put?: never;
         /** reset-school-notification-templates */
         post: operations["commands.resetSchoolNotificationTemplates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-student-subject-enrollments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-student-subject-enrollments */
+        post: operations["queries.getStudentSubjectEnrollments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-class-subject-roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-class-subject-roster */
+        post: operations["queries.getClassSubjectRoster"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/queries/get-student-timetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-student-timetable */
+        post: operations["queries.getStudentTimetable"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11514,6 +11582,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/entities/subject-enrollments/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** List Student Subject Enrollments */
+        post: operations["entities.subjectEnrollments.list"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-enrollments/one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find one Student Subject Enrollments */
+        post: operations["entities.subjectEnrollments.one"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-enrollments/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Count Student Subject Enrollments */
+        post: operations["entities.subjectEnrollments.count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/entities/subject-enrollments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student Subject Enrollments */
+        get: operations["entities.subjectEnrollments.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/entities/enrollments/list": {
         parameters: {
             query?: never;
@@ -15176,6 +15312,7 @@ export interface components {
             notes?: string;
         };
         TransferStudentCommand: {
+            acknowledgedDroppedSubjectIds?: string[];
             enrollmentId: string;
             nextEnrollmentId: string;
             nextClassGroupId: string;
@@ -15389,6 +15526,9 @@ export interface components {
             classSubjectIdsByClassGroupId?: {
                 [key: string]: string;
             };
+            expectedParticipationRevisions?: {
+                [key: string]: number;
+            };
         };
         AcademicDiscipline: {
             id: string;
@@ -15525,6 +15665,9 @@ export interface components {
             /** @enum {string} */
             color?: "mint" | "sky" | "warm";
             subjectId: string;
+            expectedParticipationRevisions?: {
+                [key: string]: number;
+            };
         };
         ClassSubject: {
             id: string;
@@ -15536,6 +15679,8 @@ export interface components {
             maxPeriodSpan?: number | null;
             /** @default 0 */
             completedPercentage: number | null;
+            /** @default 0 */
+            participationRevision: number;
             /** @default true */
             isOffered: boolean;
             createdAt?: unknown;
@@ -15543,6 +15688,7 @@ export interface components {
         SetClassSubjectOfferedCommand: {
             classSubjectId: string;
             isOffered: boolean;
+            expectedParticipationRevision: number;
         };
         ConfigureClassSubjectTimetableCommand: {
             classSubjectId: string;
@@ -16036,6 +16182,33 @@ export interface components {
             }[];
             correctionId: string;
             expectedVersion: number;
+        };
+        ManageStudentSubjectEnrollmentsResponse: {
+            enrollmentIds: string[];
+            revisions: {
+                [key: string]: number;
+            };
+        };
+        ManageStudentSubjectEnrollmentsCommand: {
+            requestId: string;
+            expectedRevisions: {
+                [key: string]: number;
+            };
+            operations: {
+                studentClassEnrollmentId: string;
+                classSubjectId: string;
+                selection: {
+                    /** @enum {string} */
+                    scope: "annual";
+                } | {
+                    /** @enum {string} */
+                    scope: "periods";
+                    periodIds: string[];
+                } | {
+                    /** @enum {string} */
+                    scope: "none";
+                };
+            }[];
         };
         ConversationResponse: {
             id: string;
@@ -18349,6 +18522,147 @@ export interface components {
             /** @enum {string} */
             templateKey?: "announcement.published" | "report_card.published" | "attendance.recorded" | "assessment.result_recorded" | "incident.recorded" | "assessment.due_soon" | "activity.reminder" | "calendar.event_reminder" | "student_photo.approved" | "student_photo.rejected" | "family_feedback.opened" | "family_feedback.reminder" | "family_feedback.published" | "family_feedback.purge_reminder" | "account_invitation";
         };
+        StudentSubjectEnrollment: {
+            id: string;
+            studentClassEnrollmentId: string;
+            classSubjectId: string;
+            /** Format: date-time */
+            enrolledAt: string;
+            /** Format: date-time */
+            endedAt?: string;
+            /** @enum {string} */
+            source: "automatic" | "explicit";
+            /**
+             * @default annual
+             * @enum {string}
+             */
+            scope: "annual" | "periods";
+            periods: {
+                periodId: string;
+                /** Format: date-time */
+                activatedAt: string;
+                /** Format: date-time */
+                startsAt: string;
+                /** Format: date-time */
+                endsAt: string;
+            }[];
+            /** Format: date-time */
+            deletedAt?: string;
+            deletedBy?: string | null;
+            /** @default 0 */
+            revision: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        StudentSubjectEnrollmentsResponse: {
+            studentId: string;
+            enrollments: components["schemas"]["StudentSubjectEnrollment"][];
+            placements: components["schemas"]["StudentClassEnrollment"][];
+            periods: {
+                id: string;
+                schoolId: string;
+                academicYearId: string;
+                name: string;
+                /** @enum {string} */
+                type?: "trimester" | "semester" | "other";
+                /** Format: date-time */
+                startDate: string;
+                /** Format: date-time */
+                endDate: string;
+                /** @default false */
+                isPublished: boolean;
+                /** Format: date-time */
+                createdAt?: string;
+            }[];
+            offerings: {
+                id: string;
+                classGroupId: string;
+                subjectId: string;
+                coefficient?: number | null;
+                periodsPerWeek?: number | null;
+                minPeriodSpan?: number | null;
+                maxPeriodSpan?: number | null;
+                /** @default 0 */
+                completedPercentage: number | null;
+                /** @default 0 */
+                participationRevision: number;
+                /** @default true */
+                isOffered: boolean;
+                createdAt?: unknown;
+                name: string;
+                isOptional: boolean;
+            }[];
+        };
+        GetStudentSubjectEnrollmentsQuery: {
+            studentId: string;
+            academicYearId?: string;
+        };
+        ClassSubjectRosterResponse: {
+            classSubjectId: string;
+            at: string | null;
+            revision: number;
+            count: number | null;
+            /** @enum {string} */
+            basis: "current_selection" | "unavailable";
+            periods: {
+                id: string;
+                schoolId: string;
+                academicYearId: string;
+                name: string;
+                /** @enum {string} */
+                type?: "trimester" | "semester" | "other";
+                /** Format: date-time */
+                startDate: string;
+                /** Format: date-time */
+                endDate: string;
+                /** @default false */
+                isPublished: boolean;
+                /** Format: date-time */
+                createdAt?: string;
+            }[];
+            students: {
+                id: string;
+                firstName: string;
+                lastName: string;
+            }[];
+            enrollments: components["schemas"]["StudentSubjectEnrollment"][];
+        };
+        GetClassSubjectRosterQuery: {
+            classSubjectId: string;
+            at: string | null;
+        };
+        TimetableEvent: {
+            /** @enum {string} */
+            kind: "lesson" | "activity" | "assessment";
+            id: string;
+            classGroupId: string;
+            classSubjectId?: string;
+            activityId?: string;
+            title: string;
+            subjectLabel?: string;
+            teacherName?: string;
+            timetableTeacherIds?: string[];
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            lessonSessionId?: string;
+            activitySessionId?: string;
+            assessmentId?: string;
+            /** @enum {string} */
+            status?: "pending" | "completed" | "cancelled";
+        };
+        StudentTimetableResponse: {
+            studentId: string;
+            startDate: string;
+            endDate: string;
+            events: components["schemas"]["TimetableEvent"][];
+        };
+        GetStudentTimetableQuery: {
+            studentId: string;
+            startDate: string | null;
+            endDate: string | null;
+        };
         TeacherAttendanceCallResponse: {
             key: string;
             version: number;
@@ -18721,6 +19035,7 @@ export interface components {
             classSize: number;
             markResults: {
                 assessmentId: string;
+                rosterCount: number;
                 results: components["schemas"]["AssessmentResult"][];
             }[];
         };
@@ -18948,27 +19263,6 @@ export interface components {
         GetAppShellCountsQuery: {
             schoolId: string;
             classGroupIds?: string[];
-        };
-        TimetableEvent: {
-            /** @enum {string} */
-            kind: "lesson" | "activity" | "assessment";
-            id: string;
-            classGroupId: string;
-            classSubjectId?: string;
-            activityId?: string;
-            title: string;
-            subjectLabel?: string;
-            teacherName?: string;
-            timetableTeacherIds?: string[];
-            /** Format: date-time */
-            startsAt: string;
-            /** Format: date-time */
-            endsAt: string;
-            lessonSessionId?: string;
-            activitySessionId?: string;
-            assessmentId?: string;
-            /** @enum {string} */
-            status?: "pending" | "completed" | "cancelled";
         };
         ClassGroupTimetableResponse: {
             classGroupId: string;
@@ -19962,6 +20256,7 @@ export interface components {
         };
         Filter_48: Record<string, never>;
         Filter_49: Record<string, never>;
+        Filter_67: Record<string, never>;
         Filter_50: Record<string, never>;
         Filter_51: Record<string, never>;
         GuardiansBatchSave: {
@@ -31172,6 +31467,84 @@ export interface operations {
             };
         };
     };
+    "commands.manageStudentSubjectEnrollments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description manage-student-subject-enrollments payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ManageStudentSubjectEnrollmentsCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed manage-student-subject-enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManageStudentSubjectEnrollmentsResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "commands.startConversation": {
         parameters: {
             query?: never;
@@ -39929,6 +40302,240 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchoolNotificationTemplates"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getStudentSubjectEnrollments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-student-subject-enrollments payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetStudentSubjectEnrollmentsQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-student-subject-enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSubjectEnrollmentsResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getClassSubjectRoster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-class-subject-roster payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetClassSubjectRosterQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-class-subject-roster */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassSubjectRosterResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "queries.getStudentTimetable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-student-timetable payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetStudentTimetableQuery"];
+            };
+        };
+        responses: {
+            /** @description Resolved get-student-timetable */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentTimetableResponse"];
                 };
             };
             /** @description Invalid request payload */
@@ -74931,6 +75538,363 @@ export interface operations {
                 };
             };
             /** @description Students not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectEnrollments.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Subject Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_67"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Listed Student Subject Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSubjectEnrollment"][];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectEnrollments.one": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Subject Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_67"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Found Student Subject Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSubjectEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Subject Enrollments not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectEnrollments.count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Student Subject Enrollments query */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Filter_67"] & {
+                    $orderBy?: {
+                        field: string;
+                        /** @enum {string} */
+                        direction: "asc" | "desc";
+                    }[];
+                    $limit?: number;
+                    $offset?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Counted Student Subject Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        count: number;
+                    };
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "entities.subjectEnrollments.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fetched Student Subject Enrollments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSubjectEnrollment"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Student Subject Enrollments not found */
             404: {
                 headers: {
                     [name: string]: unknown;

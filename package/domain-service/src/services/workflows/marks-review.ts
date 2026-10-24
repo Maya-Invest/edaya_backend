@@ -46,7 +46,7 @@ export class MarksReviewWorkflow {
         const results = await this.repositories.assessmentResults.list({ assessmentId: assessment.id })
         if (action === 'submit') {
           assertMarksDraft(assessment)
-          const rosterStudentIds = await assessmentRoster(assessment, this.repositories)
+          const rosterStudentIds = [...new Set([...(await assessmentRoster(assessment, this.repositories)), ...results.map(result => result.studentId)])].sort()
           if (!rosterStudentIds.length)
             throw new BusinessRuleViolationError('MARKS_ROSTER_EMPTY', 'An evaluation must have an eligible roster')
           const byStudent = new Map(results.map(result => [result.studentId, result]))

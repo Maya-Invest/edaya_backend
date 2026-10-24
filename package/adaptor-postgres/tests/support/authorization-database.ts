@@ -67,6 +67,9 @@ export async function seedAuthorizationRelationships(db: PGlite): Promise<void> 
         ('enrollment-a', 'student-a', 'class-a', 'year-a', 1, 'active', '2026-01-01', now()),
         ('enrollment-other', 'student-other', 'class-other', 'year-a', 1, 'active', '2026-01-01', now()),
         ('enrollment-b', 'student-b', 'class-b', 'year-b', 1, 'active', '2026-01-01', now());
+      INSERT INTO student_subject_enrollments (id, student_class_enrollment_id, class_subject_id, enrolled_at, ended_at, source, created_at)
+        SELECT 'participation:' || e.id || ':' || cs.id, e.id, cs.id, e.enrolled_at, y.end_date + interval '1 day', 'automatic', now()
+        FROM student_class_enrollments e JOIN class_subjects cs ON cs.class_group_id = e.class_group_id JOIN academic_years y ON y.id = e.academic_year_id;
       INSERT INTO assessments (id, class_group_id, class_subject_id, period_id, title, kind, max_score, coefficient, due_at, created_at) VALUES
         ('assessment-math', 'class-a', 'math-a', 'period-a', 'Math', 'homework', 20, 1, '2026-05-01', now()),
         ('assessment-french', 'class-a', 'french-a', 'period-a', 'French', 'homework', 20, 1, '2026-05-01', now()),

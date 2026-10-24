@@ -297,7 +297,7 @@ export async function saveClassSubject(
   if (input.coefficient !== undefined)
     await app.academicsWorkflow.updateSubject({ subjectId: input.subjectId, coefficient: input.coefficient })
   if (input.isOffered !== undefined)
-    await app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: classSubject.id, isOffered: input.isOffered })
+    await app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: classSubject.id, expectedParticipationRevision: classSubject.participationRevision, isOffered: input.isOffered })
   if (input.completedPercentage !== undefined)
     await app.baseService.entities.classSubjects.save(new ClassSubject({ ...classSubject.data, completedPercentage: input.completedPercentage }))
   return (await app.baseService.repositories.classSubjects.findById(classSubject.id))!

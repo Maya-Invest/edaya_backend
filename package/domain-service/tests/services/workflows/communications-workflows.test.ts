@@ -108,6 +108,8 @@ describe('communications workflows with production policies and transactions', (
     expect(gateway.enqueued.map(row => row.idempotencyKey)).toEqual([original.id])
     expect(await fixture.repositories.messageDeliveries.count()).toBe(1)
     await delivery(Recipient.Staff, { id: 'foreign-source', schoolId: 'school-b', recipientId: 'staff-b', subjectId: 'person-b', sourceKey: original.sourceKey, eventKey: original.eventKey })
+    for (const row of await fixture.repositories.subjectEnrollments.list({ studentClassEnrollmentId: 'enrollment-a' }))
+      await fixture.repositories.subjectEnrollments.delete(row.id)
     await fixture.db.exec('UPDATE guardians SET has_access = false, subject_id = NULL WHERE id = \'guardian-a\'; DELETE FROM student_class_enrollments WHERE id = \'enrollment-a\'')
     await cancelNotificationDeliveries(deps, 'school-a', original.sourceKey!)
     expect(gateway.cancelled).toEqual([original.id])

@@ -142,7 +142,7 @@ describe('authorization policies against native repository scopes', () => {
     expect(context.markResults[0]!.results.map(row => [row.id, row.score])).toEqual([['1-math', 10]])
     expect(context.classSize).toBe(1)
     await repositories.assessmentResults.delete('1-math')
-    expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([{ assessmentId: 'assessment-math', results: [] }])
+    expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([{ assessmentId: 'assessment-math', rosterCount: 1, results: [] }])
     await repositories.staffPermissionAssignments.delete(`${Permission.GRADE_READ}-math`)
     expect((await service.getAssessmentEditorContext({ classGroupId: 'class-a', periodId: 'period-a' })).markResults).toEqual([])
   })

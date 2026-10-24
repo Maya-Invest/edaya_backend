@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { boolean, doublePrecision, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
@@ -118,6 +119,7 @@ export const classSubjects = pgTable('class_subjects', {
   periodsPerWeek: integer('periods_per_week'),
   minPeriodSpan: integer('min_period_span'),
   maxPeriodSpan: integer('max_period_span'),
+  participationRevision: integer('participation_revision').notNull().default(0),
   isOffered: boolean('is_offered').notNull().default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
   completedPercentage: integer('completed_percentage').notNull(),
@@ -187,3 +189,18 @@ export const classActivityEnrollments = pgTable('class_activity_enrollments', {
 }, table => definePerformanceIndexes('class_activity_enrollments', table))
 
 // 30. Class Subject Matter Table
+
+export const studentSubjectEnrollments = pgTable('student_subject_enrollments', {
+  id: text('id').primaryKey(),
+  studentClassEnrollmentId: text('student_class_enrollment_id').notNull(),
+  classSubjectId: text('class_subject_id').notNull(),
+  enrolledAt: timestamp('enrolled_at', { mode: 'date' }).notNull(),
+  endedAt: timestamp('ended_at', { mode: 'date' }),
+  source: text('source').notNull(),
+  scope: text('scope').notNull().default('annual'),
+  periods: jsonb('periods').notNull().default([]),
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  deletedBy: text('deleted_by'),
+  revision: integer('revision').notNull().default(0),
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
+}, table => [...definePerformanceIndexes('student_subject_enrollments', table), uniqueIndex('student_subject_enrollments_current_idx').on(table.studentClassEnrollmentId, table.classSubjectId).where(sql`${table.deletedAt} IS NULL`)])
