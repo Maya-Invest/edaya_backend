@@ -1,3 +1,4 @@
+import importsRouter from "@/routes/imports.routes";
 import { createRouter } from "@/http/create-app";
 import { getAuthorizationProfilesHandler, getAuthorizationProfilesRoute } from "@/routes/authorization-profiles.route";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
@@ -87,6 +88,7 @@ import { buildCoreRoutes } from "@/lib/school-api/routes";
 
 // Index route
 const router = createRouter()
+  .route("/", importsRouter)
   .openapi(
     createRoute({
       tags: ["Index"],

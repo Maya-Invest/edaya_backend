@@ -68,6 +68,20 @@ type FilesClients<TSchemas extends Record<string, unknown>> = {
   getContent: (params: { attachmentId: string }) => Promise<unknown>
 }
 
+type ImportsClients<TSchemas extends Record<string, unknown>> = {
+  create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportFile'>>
+  validate: (payload: SchemaName<TSchemas, 'ValidateSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
+  history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportHistory'>>
+  report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDownload'>>
+  template: (payload: SchemaName<TSchemas, 'SchoolImportTemplateRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDownload'>>
+}
+
 type OnboardingClients<TSchemas extends Record<string, unknown>> = {
   registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => Promise<SchemaName<TSchemas, 'School'>>
   listStructureTemplates: () => Promise<SchemaName<TSchemas, 'OnboardingListStructureTemplatesResponse'>>
@@ -114,6 +128,7 @@ export interface SchoolClient<TSchemas extends Record<string, unknown>> {
   auth: AuthClients<TSchemas>
   authorization: AuthorizationClients<TSchemas>
   files: FilesClients<TSchemas>
+  imports: ImportsClients<TSchemas>
   onboarding: OnboardingClients<TSchemas>
   platformUsers: PlatformUsersClients<TSchemas>
   public: PublicClients<TSchemas>
@@ -190,6 +205,19 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     getDownloadUrl: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/download-url', params)),
     getContent: (params: { attachmentId: string }) => transport.request('GET', resolveClientRoutePath('files/{attachmentId}/content', params)),
   } as FilesClients<TSchemas>,
+    imports: {
+    create: (payload: SchemaName<TSchemas, 'CreateSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/create'), { body: payload }),
+    settings: (payload: SchemaName<TSchemas, 'UpdateSchoolImportSettingsRequest'>) => transport.request('POST', resolveClientRoutePath('imports/settings'), { body: payload }),
+    submit: (payload: SchemaName<TSchemas, 'SubmitSchoolImportFileRequest'>) => transport.request('POST', resolveClientRoutePath('imports/submit'), { body: payload }),
+    validate: (payload: SchemaName<TSchemas, 'ValidateSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/validate'), { body: payload }),
+    confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/confirm'), { body: payload }),
+    retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/retry'), { body: payload }),
+    cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/cancel'), { body: payload }),
+    detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/detail'), { body: payload }),
+    history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => transport.request('POST', resolveClientRoutePath('imports/history'), { body: payload }),
+    report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/report'), { body: payload }),
+    template: (payload: SchemaName<TSchemas, 'SchoolImportTemplateRequest'>) => transport.request('POST', resolveClientRoutePath('imports/template'), { body: payload }),
+  } as ImportsClients<TSchemas>,
     onboarding: {
     registerSchool: (payload: SchemaName<TSchemas, 'OnboardingRegisterSchoolRequest'>) => transport.request('POST', resolveClientRoutePath('onboarding/register-school'), { body: payload }),
     listStructureTemplates: () => transport.request('GET', resolveClientRoutePath('onboarding/structure-templates')),

@@ -250,7 +250,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       })
       await this.baseService.entities.enrollments.save(enrollment)
       return enrollment
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async linkGuardianToStudent({
@@ -344,7 +344,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.entities.enrollments.save(completed)
       await this.baseService.entities.enrollments.save(successor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async transferStudent({
@@ -371,7 +371,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.entities.enrollments.save(transferred)
       await this.baseService.entities.enrollments.save(successor)
       return successor
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async graduateStudent({
@@ -414,7 +414,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       await this.baseService.entities.enrollments.save(graduatedEnrollment)
       await this.baseService.entities.students.save(graduatedStudent)
       return graduatedEnrollment
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async closeEnrollment({ enrollmentId, endReason, endedAt }: CloseEnrollmentInput): Promise<StudentClassEnrollment> {
@@ -427,7 +427,7 @@ export class StudentServiceWorkflow extends BaseServiceWorkflow {
       })
       await this.baseService.entities.enrollments.save(closed)
       return closed
-    })
+    }, { lockKeys: [`academic-state:${this.baseService.actor.schoolId}`] })
   }
 
   async recordProgressionDecision({

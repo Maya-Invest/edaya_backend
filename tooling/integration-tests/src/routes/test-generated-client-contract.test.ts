@@ -32,6 +32,20 @@ describeWithLightSchool('generated school client contract', (getContext) => {
     expect(grants).toHaveProperty('grants', expect.any(Array))
   })
 
+  it('round-trips a single-token guardian through generated registration and update APIs', async () => {
+    const { app, application, authHeaders } = getContext()
+    const school = (await application.repositories.schools.list({ $limit: 1 }))[0]!
+    const client = createSchoolClient<components['schemas']>(createInProcessTransport(app, { headers: { ...await authHeaders(MINIMAL_AUTH_FIXTURE_STAFF_EMAIL), 'x-actor-kind': 'staff', 'x-school-id': school.id } }))
+    const guardian = await client.commands.registerGuardian({ id: 'single-token-api', schoolId: school.id, firstName: '', lastName: 'Koné', hasAccess: false, sendAccountInvitation: false })
+    expect(guardian.firstName).toBe('')
+    await client.commands.updateGuardianContactMethods({ guardianId: guardian.id, occupation: 'Teacher', hasAccess: false })
+    const saved = (await application.repositories.guardians.findById(guardian.id))!
+    expect(saved.firstName).toBe('')
+    expect(saved.fullName).toBe('Koné')
+    expect(saved.occupation).toBe('Teacher')
+    await expect(client.commands.updateGuardianContactMethods({ guardianId: guardian.id, lastName: '', hasAccess: false })).rejects.toMatchObject({ status: 422 })
+  })
+
   it('returns 401 from generated authorization routes without a session cookie', async () => {
     const { app } = getContext()
     const client = createInProcessSchoolClient(app)

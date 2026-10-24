@@ -2221,6 +2221,74 @@ export const clientBindings = {
         "basePath": "root"
       }
     },
+    "imports": {
+      "create": {
+        "method": "POST",
+        "path": "imports/create",
+        "requestSchemaName": "CreateSchoolImportRequest",
+        "responseSchemaName": "SchoolImportBatch"
+      },
+      "settings": {
+        "method": "POST",
+        "path": "imports/settings",
+        "requestSchemaName": "UpdateSchoolImportSettingsRequest",
+        "responseSchemaName": "SchoolImportBatch"
+      },
+      "submit": {
+        "method": "POST",
+        "path": "imports/submit",
+        "requestSchemaName": "SubmitSchoolImportFileRequest",
+        "responseSchemaName": "SchoolImportFile"
+      },
+      "validate": {
+        "method": "POST",
+        "path": "imports/validate",
+        "requestSchemaName": "ValidateSchoolImportRequest",
+        "responseSchemaName": "SchoolImportDetail"
+      },
+      "confirm": {
+        "method": "POST",
+        "path": "imports/confirm",
+        "requestSchemaName": "ConfirmSchoolImportRequest",
+        "responseSchemaName": "SchoolImportBatch"
+      },
+      "retry": {
+        "method": "POST",
+        "path": "imports/retry",
+        "requestSchemaName": "RetrySchoolImportRequest",
+        "responseSchemaName": "SchoolImportDetail"
+      },
+      "cancel": {
+        "method": "POST",
+        "path": "imports/cancel",
+        "requestSchemaName": "CancelSchoolImportRequest",
+        "responseSchemaName": "SchoolImportBatch"
+      },
+      "detail": {
+        "method": "POST",
+        "path": "imports/detail",
+        "requestSchemaName": "GetSchoolImportRequest",
+        "responseSchemaName": "SchoolImportDetail"
+      },
+      "history": {
+        "method": "POST",
+        "path": "imports/history",
+        "requestSchemaName": "SchoolImportHistoryRequest",
+        "responseSchemaName": "SchoolImportHistory"
+      },
+      "report": {
+        "method": "POST",
+        "path": "imports/report",
+        "requestSchemaName": "SchoolImportReportRequest",
+        "responseSchemaName": "SchoolImportDownload"
+      },
+      "template": {
+        "method": "POST",
+        "path": "imports/template",
+        "requestSchemaName": "SchoolImportTemplateRequest",
+        "responseSchemaName": "SchoolImportDownload"
+      }
+    },
     "authorization": {
       "effectiveGrants": {
         "method": "GET",

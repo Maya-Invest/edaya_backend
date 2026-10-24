@@ -38,6 +38,21 @@ describe('findBoundaryViolations', () => {
     expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
   })
 
+  test('imports keep parsing, persistence and runtime dependencies out of domain packages', () => {
+    const root = createRepoRoot()
+    for (const name of ['domain-core', 'domain-authorization', 'domain-service']) {
+      const path = `package/${name}/src/imports.ts`
+      for (const dependency of ['exceljs', 'xlsx', '@edaya/adaptor-postgres', '@hono/zod-openapi', 'drizzle-orm', 'cloudflare:workers', '../../../apps/api/runtime']) {
+        writeSource(root, path, `import { something } from '${dependency}'`)
+        expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
+      }
+      writeSource(root, path, 'import type { ImportFormatPort } from \'@edaya/core\'')
+    }
+    expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root)).toEqual([])
+    writeSource(root, 'package/adaptor-import-format/src/index.ts', 'import { SchoolService } from \'@edaya/service\'')
+    expect(findBoundaryViolations(IMPORT_BOUNDARY_CHECKS, root).length).toBeGreaterThan(0)
+  })
+
   test('reports no violations for clean imports', () => {
     const root = createRepoRoot()
     writeSource(root, 'apps/api/src/runtime/local/resolve-api-runtime.ts', `import type { AppBindings } from '@/http/bindings'\n`)

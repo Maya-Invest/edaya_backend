@@ -15,6 +15,12 @@ export class SchoolApplication {
     this.args = args
   }
 
+  get importPersistence(): import('@edaya/core').ImportPersistencePort {
+    if (!this.args.importPersistence)
+      throw new Error('Import persistence is not configured')
+    return this.args.importPersistence
+  }
+
   get repositories(): SchoolRepositories {
     return this.args.repositories
   }

@@ -35,6 +35,7 @@ import {
   studentYearAccountId,
   sumEntryBalance,
 } from '@edaya/core'
+import { acceptedCatalogTerms } from '../../capabilities/finance/accepted-catalog-terms'
 import { loadFinanceReconciliation } from '../../capabilities/finance/load-finance-reconciliation'
 import { assertCurrencyAgreement, assertSchoolCurrency, requireSchoolCurrency } from '../../capabilities/finance/school-currency'
 import { groupByKey } from '../../capabilities/shared/bounded-reads'
@@ -947,23 +948,13 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       return existing
     if (existingActive)
       fail('ENROLLMENT_ACTIVE_EXISTS', `Student ${student.id} is already enrolled in ${input.catalog.id}`)
-    const price = input.priceOverride ?? input.catalog.defaultPrice.amount
     const enrollment = new StudentServiceEnrollmentEntity({
       id: input.id,
       schoolId: student.schoolId,
       studentId: student.id,
       catalogServiceId: input.catalog.id,
       academicYearId: input.catalog.academicYearId,
-      acceptedTerms: {
-        catalogServiceId: input.catalog.id,
-        name: input.catalog.name,
-        category: input.catalog.category,
-        currency: input.catalog.defaultPrice.currency,
-        price,
-        billingKind: 'one_time',
-        billingTerms: input.catalog.billingTerms,
-        installmentTemplates: input.catalog.billingTerms.installments,
-      },
+      acceptedTerms: acceptedCatalogTerms(input.catalog, input.priceOverride),
       source: ServiceEnrollmentSource.Staff,
     })
     await this.baseService.entities.studentServiceEnrollments.save(enrollment)

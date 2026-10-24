@@ -166,7 +166,7 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     if (/0 2 \* \* \*/.test(wrangler) || /0 6 \* \* \*/.test(wrangler)) {
       violations.push({
         label: 'wrangler cron',
-        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (*/5 * * * *), not per-job triggers',
+        message: 'apps/api/wrangler.jsonc must use a single heartbeat cron (* * * * *), not per-job triggers',
       })
     }
 
@@ -180,10 +180,10 @@ export function findRuntimeBoundaryViolations(repoRoot: string): RuntimeBoundary
     else {
       for (const [, block] of cronBlocks) {
         const expressions = [...block.matchAll(/"([^"]+)"/g)].map(match => match[1])
-        if (expressions.length !== 1 || expressions[0] !== '0 * * * *') {
+        if (expressions.length !== 1 || expressions[0] !== '* * * * *') {
           violations.push({
             label: 'wrangler cron',
-            message: `each wrangler triggers.crons must contain only "0 * * * *" (found: ${expressions.join(', ') || 'none'})`,
+            message: `each wrangler triggers.crons must contain only "* * * * *" (found: ${expressions.join(', ') || 'none'})`,
           })
           break
         }

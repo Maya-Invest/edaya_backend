@@ -1,9 +1,10 @@
+import { ImportFormatAdapter } from "@edaya/adaptor-import-format";
 import type { NotifyRuntime } from "@edaya/adaptor-notify";
 import type { PostgresTransactionalDb } from "@edaya/adaptor-postgres";
 import type { FileStoragePort, InvitationDeliveryPort, NotificationGatewayPort } from "@edaya/core";
 import type { DirectoryClient } from "../../identity/server/index";
 import type { Environment } from "@/runtime/shared/env/schema";
-import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
+import { PostgresAtomicExecution, PostgresCommandJournal, PostgresDurableWork, PostgresImportStore, PostgresSchoolRepositories, resolveMigrationDriver } from "@edaya/adaptor-postgres";
 import type { SQL } from "drizzle-orm";
 import { ApiSchoolApplication } from "@/lib/school-api/application";
 import { createAuthContactResolver } from "@/runtime/shared/adapters/auth-contact-resolver";
@@ -53,6 +54,8 @@ export async function buildSchoolApplication(
 
   return new ApiSchoolApplication({
     atomicExecution,
+    importPersistence: new PostgresImportStore(),
+    importFormat: new ImportFormatAdapter(),
     commandJournal: new PostgresCommandJournal(),
     durableWork: new PostgresDurableWork(db as PostgresTransactionalDb & { execute: (query: SQL) => Promise<unknown> }),
     documentRenderer: resolveDocumentRenderer(options.env, logger),

@@ -1,4 +1,3 @@
-import { permitsPublicSave } from "../public-operations";
 import type { ActorMetadata } from "@edaya/authorization";
 import type { AccountInvitationData } from "@edaya/core";
 import type { CoreEntityKey } from "@edaya/service";
@@ -8,6 +7,8 @@ import { toPublicAccountInvitationData } from "@edaya/core";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
 import { normalizeListFilter } from "@/lib/school-api/pagination";
 import { coreEntities } from "@/lib/school-api/registry";
+import { permitsPublicSave } from "../public-operations";
+import { serializeNestedEntities, unwrapDomainEntity } from "../serialization";
 
 export class EntityOperationError extends Error {
   constructor(
@@ -62,20 +63,6 @@ function countFilter(filter: unknown): Record<string, unknown> {
   return next;
 }
 
-function unwrapDomainEntity(entity: unknown): unknown {
-  if (
-    entity
-    && typeof entity === "object"
-    && "data" in entity
-    && entity.data
-    && typeof entity.data === "object"
-  ) {
-    return entity.data;
-  }
-
-  return entity;
-}
-
 function serializeEntityResult(serviceName: CoreEntityKey, entity: unknown): unknown {
   const unwrapped = unwrapDomainEntity(entity);
   if (serviceName === "accountInvitations") {
@@ -84,7 +71,7 @@ function serializeEntityResult(serviceName: CoreEntityKey, entity: unknown): unk
     }
   }
 
-  return unwrapped;
+  return serializeNestedEntities(unwrapped);
 }
 
 function serializeEntityResults(serviceName: CoreEntityKey, entities: unknown[]): unknown[] {

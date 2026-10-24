@@ -21,7 +21,7 @@ Cooldown is 60 seconds after the first accepted request, 120 after the second an
 
 ## Deployment setup
 
-Apply `package/adaptor-account/drizzle/0001_phone_delivery.sql` through the existing Identity migration process before deploying. The new tables store cooldowns, idempotency requests and sanitized webhook receipts. The hourly cleanup removes expired metadata; challenge cleanup retains the additional hour. Keep existing Account encryption keys and provider generation stable.
+Apply `package/adaptor-account/drizzle/0001_phone_delivery.sql` through the existing Identity migration process before deploying. The new tables store cooldowns, idempotency requests and sanitized webhook receipts. The scheduled cleanup removes expired metadata; challenge cleanup retains the additional hour. Keep existing Account encryption keys and provider generation stable.
 
 Both Worker environments default to `PHONE_AUTH_MODE=disabled`. Configure `AFRICAS_TALKING_USERNAME` and the secret `AFRICAS_TALKING_API_KEY`. The legacy SMS API uses the provider default sender when `AFRICAS_TALKING_SENDER_ID` is absent or blank; set that optional field only to a registered sender ID. Set native `sms_routes` in the environment config to `[{"prefix":"+225","provider":"africas_talking"}]`. `AFRICAS_TALKING_SANDBOX` is for local testing only and is rejected in production. Enable `sms_only` while Meta approval is pending. An enabled mode rejects incomplete configuration at startup.
 

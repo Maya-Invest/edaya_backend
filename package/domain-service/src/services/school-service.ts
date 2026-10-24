@@ -7,6 +7,7 @@ import type { ServiceArgs } from './service-args'
 import type { ResolvedTimetableCell, ResolveTimetableSpaceInput } from './workflows/timetable-generation'
 import { AuthorizationError, AuthorizationErrorCode, requireActorSchoolId } from '@edaya/authorization'
 import { ReportCardResultStatus, StudentPhotoSubmissionStatus } from '@edaya/core'
+import { SchoolImportService } from '../capabilities/imports/import-service'
 import { BaseSchoolService } from './base-school-service'
 import { createSchoolCommandHandlers } from './commands/school-command-handlers'
 import { getActivityRoster } from './queries/activity-roster'
@@ -33,6 +34,13 @@ import { TeacherCorrectionsWorkflow } from './workflows/teacher-corrections'
 import { resolveTimetableSpace, TimetableGenerationServiceWorkflow } from './workflows/timetable-generation'
 
 export class SchoolService {
+  private readonly importArgs: Pick<ServiceArgs, 'importPersistence' | 'importFormat' | 'durableWork'>
+  get imports(): SchoolImportService {
+    if (!this.importArgs.importPersistence || !this.importArgs.importFormat)
+      throw new Error('Import adapters are not configured')
+    return new SchoolImportService(this, this.importArgs.importPersistence, this.importArgs.importFormat, this.importArgs.durableWork)
+  }
+
   readonly baseService: BaseSchoolService
   readonly academicsWorkflow: AcademicsServiceWorkflow
   readonly financeWorkflow: FinanceServiceWorkflow
@@ -53,6 +61,7 @@ export class SchoolService {
   readonly commands: SchoolCommandHandlerMap
 
   constructor(args: ServiceArgs) {
+    this.importArgs = args
     this.baseService = new BaseSchoolService(args)
     this.academicsWorkflow = new AcademicsServiceWorkflow(this.baseService)
     this.financeWorkflow = new FinanceServiceWorkflow(this.baseService)

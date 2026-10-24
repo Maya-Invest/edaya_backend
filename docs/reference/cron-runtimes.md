@@ -47,7 +47,7 @@ A single heartbeat trigger is declared per deploy profile in `apps/api/wrangler.
 
 | Cron expression | Role |
 |-----------------|------|
-| `*/5 * * * *` | Heartbeat — loads due schedules from Postgres and enqueues work |
+| `* * * * *` | Heartbeat — loads due schedules from Postgres and enqueues work |
 
 Job schedules live in the `cron_job_schedules` table (seeded after school migrations via `seedCronJobSchedules`):
 
@@ -103,7 +103,7 @@ Job catalog: `package/domain-service/src/capabilities/scheduling-jobs/cron-job-c
 After deploying the merged API worker with heartbeat + queue:
 
 1. In the Cloudflare dashboard, delete standalone Workers named `edaya-cron` / `edaya-cron-staging` if they still exist.
-2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `*/5 * * * *` cron trigger.
+2. Confirm only `edaya-api-staging` / `edaya-api-prod` have a `* * * * *` cron trigger.
 3. Verify queue consumers are attached to the API worker (Queues → `edaya-cron-jobs-*`).
 
 `bun repo check doctor` enforces a single heartbeat cron and `CRON_JOBS` queue binding in `wrangler.jsonc`.

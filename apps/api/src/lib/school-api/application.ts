@@ -12,6 +12,10 @@ export class ApiSchoolApplication {
     this.application = new CoreSchoolApplication(args);
   }
 
+  get importPersistence(): import("@edaya/core").ImportPersistencePort {
+    return this.application.importPersistence;
+  }
+
   get repositories(): SchoolRepositories {
     return this.application.repositories;
   }

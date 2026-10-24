@@ -1,6 +1,5 @@
 import { dispatchAuthentication } from "@/identity/http";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { defaultHook } from "stoker/openapi";
@@ -9,6 +8,7 @@ import type { AppBindings, AppOpenAPI } from "@/http/types";
 import { resolveCorsOrigin } from "@/http/cors";
 import { dependenciesInjection } from "@/http/dependencies";
 import { pinoLogger } from "@/http/middleware/logger";
+import { requestBodyLimit } from "@/http/middleware/request-body-limit";
 
 export function createRouter() {
   return new OpenAPIHono<AppBindings>({
@@ -37,12 +37,7 @@ export default function createApp() {
     ],
     credentials: true,
   }));
-  app.use(async (c, next) => {
-    if (c.req.path.startsWith("/core/files/memory/")) {
-      return next();
-    }
-    return bodyLimit({ maxSize: 1024 * 1024 })(c, next);
-  });
+  app.use(requestBodyLimit);
   app.use(dispatchAuthentication);
   app.use(dependenciesInjection);
 

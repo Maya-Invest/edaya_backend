@@ -16,6 +16,16 @@ export interface BoundaryViolation {
 }
 
 export const IMPORT_BOUNDARY_CHECKS: BoundaryCheck[] = [
+  ...['domain-core', 'domain-authorization', 'domain-service'].map(name => ({
+    label: 'domain imports infrastructure or transport',
+    pattern: /(?:from\s+|import\s*\()["'](?:@edaya\/adaptor-|hono|@hono\/|exceljs|xlsx|drizzle-orm|pg["'/]|cloudflare:|[^"']*(?:apps|tooling)\/)/,
+    searchPath: `package/${name}/src`,
+  })),
+  {
+    label: 'import format adapter calls application workflows',
+    pattern: /(?:from\s+|import\s*\()["'](?:@edaya\/(?:service|authorization)|[^"']*(?:apps|tooling|domain-service|domain-authorization)\/)/,
+    searchPath: 'package/adaptor-import-format/src',
+  },
   ...['documents/assembly', 'family-feedback/compute-campaign-aggregates.ts', 'finance/load-finance-reconciliation.ts', 'scheduling/materialize-occurrences.ts'].map(path => ({
     label: 'extracted business operation imports the broad service or escapes repository dependencies',
     pattern: /\bBaseSchoolService\b|repositories\s*:\s*SchoolRepositories\b|DocumentAssemblyContext<\s*keyof\s+SchoolRepositories/,

@@ -27,3 +27,4 @@ export { asStoreDatabase, PostgresStore, type StoreDatabase } from './postgres-s
 export { PostgresCommandJournal } from './stores/command-journal-store'
 export { PostgresDashboardProjections } from './stores/dashboard-projections-store'
 export { DURABLE_WORK_MAX_ATTEMPTS, PostgresDurableWork } from './stores/durable-work-store'
+export { PostgresImportStore } from './stores/import-store'

@@ -1,3 +1,4 @@
+import { importClientBindings } from "@/lib/school-api/import-client-bindings";
 import { permitsPublicSave } from "@/lib/school-api/public-operations";
 import { coreCommands, coreEntities, coreQueries } from "@/lib/school-api/registry";
 import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
@@ -8,8 +9,9 @@ export { CLIENT_BINDINGS_OPENAPI_EXTENSION };
 
 const manualClientRoutes: Pick<
   ClientBindingsDocument,
-  "authorization" | "onboarding" | "files" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public"
+  "authorization" | "onboarding" | "files" | "imports" | "serviceAccounts" | "platformUsers" | "s2sClients" | "public"
 > = {
+  imports: importClientBindings,
   authorization: {
     effectiveGrants: {
       method: "GET",

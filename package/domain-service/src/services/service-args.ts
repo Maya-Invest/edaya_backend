@@ -4,6 +4,8 @@ import type { NotificationTemplateService } from '../capabilities/notifications/
 import type { SchoolRepositories } from '../ports/school-repositories'
 
 export interface ServiceArgs {
+  importPersistence?: import('@edaya/core').ImportPersistencePort
+  importFormat?: import('@edaya/core').ImportFormatPort
   actor: SchoolScopedActorMetadata
   atomicExecution: AtomicExecutionPort
   commandJournal?: CommandJournalPort

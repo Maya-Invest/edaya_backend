@@ -59,6 +59,7 @@ export const staffMembers = pgTable('staff_members', {
   code: text('code'),
   photoUrl: text('photo_url'),
   email: text('email'),
+  phone: text('phone'),
   notificationEmail: text('notification_email'),
   notificationPhone: text('notification_phone'),
   subjectId: text('subject_id'),

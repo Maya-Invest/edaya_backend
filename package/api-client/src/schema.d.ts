@@ -368,6 +368,182 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/imports/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.settings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.validate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/detail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.detail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.history"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -12786,6 +12962,186 @@ export interface components {
         AuthUnlink: {
             identifierId: string;
         };
+        SchoolImportBatch: {
+            id: string;
+            schoolId: string;
+            academicYearId: string;
+            createdByStaffId: string;
+            createdBySubjectId: string;
+            /** @enum {string} */
+            defaultOnExisting: "S" | "M" | "O";
+            enrollmentEffectiveDate: string | null;
+            revision: number;
+            /** @enum {string} */
+            state: "draft" | "validated" | "running" | "completed" | "cancelled";
+            previewDigest: string | null;
+            workId: string | null;
+            approval: {
+                staffMemberId: string;
+                subjectId: string;
+                /** @enum {string} */
+                assuranceLevel: "standard" | "verified" | "strong";
+                authenticatedAt: string;
+                approvedAt: string;
+                revision: number;
+                previewDigest: string;
+            } | null;
+            createdAt: string;
+            updatedAt: string;
+        };
+        BusinessRuleViolationResponse: {
+            message: string;
+            code: string;
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        CreateSchoolImportRequest: {
+            academicYearId: string;
+            /**
+             * @default M
+             * @enum {string}
+             */
+            defaultOnExisting: "S" | "M" | "O";
+            enrollmentEffectiveDate?: string | null;
+        };
+        UpdateSchoolImportSettingsRequest: {
+            batchId: string;
+            /** @enum {string} */
+            defaultOnExisting: "S" | "M" | "O";
+            enrollmentEffectiveDate?: string | null;
+        };
+        SchoolImportFile: {
+            id: string;
+            fileId: string;
+            batchId: string;
+            schoolId: string;
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            templateVersion: number;
+            revision: number;
+            fileName: string;
+            storageKey: string;
+            sha256: string;
+            headers: string[];
+            createdAt: string;
+        };
+        SubmitSchoolImportFileRequest: {
+            batchId: string;
+            fileId?: string;
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            fileName: string;
+            base64: string;
+        };
+        SchoolImportRow: {
+            id: string;
+            batchId: string;
+            schoolId: string;
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            source: {
+                fileId: string;
+                revisionId: string;
+                row: number;
+                sheet?: string;
+            };
+            raw: {
+                [key: string]: string | number | boolean | unknown | unknown;
+            };
+            values: {
+                [key: string]: string | number | boolean | unknown | unknown;
+            };
+            generatedCode: string | null;
+            targetId: string;
+            sourceKey: string;
+            /** @enum {string} */
+            effectiveMode: "S" | "M" | "O";
+            inputDigest: string;
+            operationId: string;
+            collection?: {
+                ownerId: string;
+                memberIds: string[];
+                before: {
+                    [key: string]: unknown;
+                }[];
+            };
+            dependencies: string[];
+            current: {
+                [key: string]: unknown;
+            } | null;
+            proposed: {
+                [key: string]: unknown;
+            } | null;
+            expectedDigest: string | null;
+            issues: {
+                code: string;
+                column?: string;
+                candidates?: string[];
+                /** @enum {string} */
+                severity: "error" | "warning";
+            }[];
+            /** @enum {string} */
+            outcome: "pending" | "created" | "updated" | "unchanged" | "skipped" | "blocked" | "dependency_blocked" | "failed" | "cancelled";
+            result: {
+                [key: string]: unknown;
+            } | null;
+        };
+        SchoolImportDetail: {
+            batch: components["schemas"]["SchoolImportBatch"];
+            files: components["schemas"]["SchoolImportFile"][];
+            rows: components["schemas"]["SchoolImportRow"][];
+            counts: {
+                [key: string]: number;
+            };
+        };
+        ValidateSchoolImportRequest: {
+            batchId: string;
+        };
+        ConfirmSchoolImportRequest: {
+            batchId: string;
+            revision: number;
+            previewDigest: string;
+        };
+        RetrySchoolImportRequest: {
+            batchId: string;
+        };
+        CancelSchoolImportRequest: {
+            batchId: string;
+        };
+        GetSchoolImportRequest: {
+            batchId: string;
+        };
+        SchoolImportHistory: {
+            batches: components["schemas"]["SchoolImportBatch"][];
+        };
+        SchoolImportHistoryRequest: {
+            limit?: number;
+            before?: string;
+        };
+        SchoolImportDownload: {
+            fileName: string;
+            contentType: string;
+            base64: string;
+        };
+        SchoolImportReportRequest: {
+            batchId: string;
+            fileId: string;
+            /**
+             * @default xlsx
+             * @enum {string}
+             */
+            format: "csv" | "xlsx";
+        };
+        SchoolImportTemplateRequest: {
+            /** @enum {string} */
+            type: "academic_disciplines" | "placement_statuses" | "classes" | "subjects" | "students" | "guardians" | "teachers" | "staff" | "guardian_contacts" | "guardian_relationships" | "class_offerings" | "teacher_assignments" | "chapters" | "billing" | "payments";
+            /**
+             * @default xlsx
+             * @enum {string}
+             */
+            format: "csv" | "xlsx";
+        };
         EffectiveGrantsResponse: {
             /** @enum {string} */
             kind: "staff" | "guardian" | "student" | "teacher";
@@ -12898,13 +13254,6 @@ export interface components {
         };
         PermissionCatalogResponse: {
             items: components["schemas"]["PermissionCatalogEntry"][];
-        };
-        BusinessRuleViolationResponse: {
-            message: string;
-            code: string;
-            details?: {
-                [key: string]: unknown;
-            };
         };
         ScopeRenderResponse: {
             items: {
@@ -13871,6 +14220,7 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
+            phone?: string | null;
             notificationEmail?: string | null;
             notificationPhone?: string | null;
             subjectId?: string | null;
@@ -13899,6 +14249,7 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
+            phone?: string | null;
             notificationEmail?: string | null;
             notificationPhone?: string | null;
             subjectId?: string | null;
@@ -13966,6 +14317,7 @@ export interface components {
             code?: string | null;
             photoUrl?: string | null;
             email?: string | null;
+            phone?: string | null;
             onboardingWizardCompletedAt?: unknown;
             onboardingMaxReachedStep?: number | null;
             /** @enum {string|null} */
@@ -20873,6 +21225,864 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    "imports.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CreateSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportBatch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportBatch"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description UpdateSchoolImportSettingsRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateSchoolImportSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportBatch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportBatch"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description SubmitSchoolImportFileRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubmitSchoolImportFileRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportFile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportFile"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description ValidateSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ValidateSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDetail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDetail"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description ConfirmSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfirmSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportBatch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportBatch"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description RetrySchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RetrySchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDetail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDetail"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description CancelSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportBatch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportBatch"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.detail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GetSchoolImportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetSchoolImportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDetail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDetail"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description SchoolImportHistoryRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SchoolImportHistoryRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportHistory */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportHistory"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description SchoolImportReportRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SchoolImportReportRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDownload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDownload"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description SchoolImportTemplateRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SchoolImportTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportDownload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportDownload"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
             };
         };
     };

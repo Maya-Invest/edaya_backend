@@ -15,7 +15,7 @@ describe('Worker environment parity', () => {
     compatibility: (p: any) => { p.compatibility_date = '2026-01-01' },
     binding: (p: any) => { p.browser.binding = 'OTHER_BROWSER' },
     missingBinding: (p: any) => { delete p.send_email },
-    schedule: (p: any) => { p.triggers.crons = ['* * * * *'] },
+    schedule: (p: any) => { p.triggers.crons = ['*/2 * * * *'] },
     queue: (p: any) => { p.queues.consumers[0].max_retries = 1 },
     routeBehavior: (p: any) => { p.routes[0].custom_domain = false },
   })) {

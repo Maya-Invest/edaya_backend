@@ -11,7 +11,7 @@ export const guardianSchema = z.object({
   schoolId: z.string().trim().min(1, 'schoolId must not be blank'),
   occupation: z.string().trim().min(1).nullable().optional().transform(v => v === null ? undefined : v),
   sourceFullName: z.string().refine(v => v.trim().length > 0).nullable().optional().transform(v => v === null ? undefined : v),
-  firstName: z.string().trim().min(1, 'firstName must not be blank'),
+  firstName: z.string().trim(),
   lastName: z.string().trim().min(1, 'lastName must not be blank'),
   code: z.string().trim().min(1, 'code must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   photoUrl: z.string().trim().min(1, 'photoUrl must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
@@ -98,7 +98,7 @@ export class Guardian {
   }
 
   get fullName(): string {
-    return `${this.firstName} ${this.lastName}`
+    return `${this.firstName} ${this.lastName}`.trim()
   }
 
   private static normalizeContactMethods(

@@ -1,4 +1,4 @@
-import { Guardian, GuardianContactMethod, GuardianContactMethodType } from '@edaya/core'
+import { Guardian, GuardianContactMethod, GuardianContactMethodType, guardianUpdateSchema } from '@edaya/core'
 import { describe, expect, test } from 'bun:test'
 
 describe('Guardian entity', () => {
@@ -67,4 +67,14 @@ describe('Guardian entity', () => {
     expect(guardian.contactMethods[0]?.isPrimary).toBe(true)
     expect(guardian.contactMethods[1]?.isPrimary).toBe(false)
   })
+})
+
+test('single-token guardians retain an empty first name and require a last name', () => {
+  const guardian = new Guardian({ id: 'single', schoolId: 's1', firstName: '  ', lastName: ' Koné ', sourceFullName: ' Koné ' })
+  expect(guardian.firstName).toBe('')
+  expect(guardian.fullName).toBe('Koné')
+  expect(guardian.sourceFullName).toBe(' Koné ')
+  expect(guardianUpdateSchema.parse({ id: 'single', occupation: 'Teacher' })).not.toHaveProperty('firstName')
+  expect(guardianUpdateSchema.parse({ id: 'single', firstName: '' }).firstName).toBe('')
+  expect(() => new Guardian({ id: 'bad', schoolId: 's1', firstName: '', lastName: ' ' })).toThrow()
 })

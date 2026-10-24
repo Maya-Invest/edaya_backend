@@ -1,5 +1,8 @@
+import { Guardian } from "@edaya/core";
 import { describe, expect, test } from "bun:test";
+import { serializeCommandResult } from "@/lib/school-api/dispatch/commands";
 import { getEntityReadService, getEntityWriteService } from "@/lib/school-api/dispatch/entities";
+import { executeEntityGet, executeEntityList } from "@/lib/school-api/entities/operations";
 
 function readService() {
   return {
@@ -53,4 +56,19 @@ describe("entity dispatch services", () => {
     expect(getEntityWriteService(service, "students")).toBeNull();
     expect(getEntityReadService(service, "schools")).toBeNull();
   });
+});
+
+test("guardian reads and actor command results serialize contact value objects to the public fields", async () => {
+  const guardian = new Guardian({ id: "guardian-contacts", schoolId: "school-contacts", firstName: "Compound Given", lastName: "Compound Family", phone: "0012345", email: "fixture@example.invalid" });
+  const entities = { guardians: { ...readService(), list: async () => [guardian], findById: async () => guardian } };
+  const application = { forActor: () => ({ baseService: { entities } }) } as never;
+  const actor = { id: "staff-contacts" } as never;
+  const expected = guardian.contactMethods.map(method => method.data);
+  const one = await executeEntityGet(actor, application, "guardians", "Guardian", guardian.id);
+  const list = await executeEntityList(actor, application, "guardians", {});
+  const linked = serializeCommandResult({ kind: "guardian", entity: guardian });
+  for (const result of [one, list[0], (linked as { entity: unknown }).entity]) {
+    expect(JSON.parse(JSON.stringify(result)).contactMethods).toEqual(expected);
+    expect(JSON.parse(JSON.stringify(result)).firstName).toBe("Compound Given");
+  }
 });

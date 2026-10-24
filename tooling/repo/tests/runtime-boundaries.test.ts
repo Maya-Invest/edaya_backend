@@ -14,7 +14,7 @@ const VALID_WRANGLER = `{
   },
   "triggers": {
     "crons": [
-      "0 * * * *"
+      "* * * * *"
     ]
   },
   "queues": {

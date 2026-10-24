@@ -108,9 +108,9 @@ function createManagedEntityService<Key extends CoreEntityKey>(
 ): ManagedEntityService<CoreEntityMap[Key]> {
   const templateService = args.templateService ?? new NotificationTemplateService(args.repositories)
   const baseConfig = CORE_ENTITY_CONFIG_FACTORIES[key](input)
-  if (['staffPermissionProfiles', 'staffPermissionAssignments', 'staffPermissionProfileBindings', 'staffManualPermissionAssignments', 'staffPermissionScopeDefaults'].includes(key))
+  if (['staffMembers', 'staffPermissionProfiles', 'staffPermissionAssignments', 'staffPermissionProfileBindings', 'staffManualPermissionAssignments', 'staffPermissionScopeDefaults'].includes(key))
     baseConfig.writeLockGroup = 'permission-state'
-  if (['students', 'teachers', 'academicYears', 'assessments', 'assessmentResults', 'results', 'enrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))
+  if (['students', 'teachers', 'guardians', 'guardianLinks', 'subjects', 'subjectMatters', 'academicDisciplines', 'placementStatuses', 'studentAcademicYearProfiles', 'teacherAcademicYearProfiles', 'gradeLevels', 'academicYears', 'assessments', 'assessmentResults', 'results', 'enrollments', 'classSubjects', 'classGroups', 'academicPeriods', 'definitions', 'sections', 'lessonSessions', 'attendance', 'classSubjectProgress', 'incidents', 'resourceAssignments', 'staffAssignments', 'teacherAssignments', 'teacherUnavailabilities', 'activitySessions', 'calendarEvents', 'periodDefinitions'].includes(key))
     baseConfig.writeLockGroup = 'academic-state'
   if (['catalogServices', 'studentServiceEnrollments', 'studentCharges', 'studentYearAccounts', 'payments'].includes(key))
     baseConfig.writeLockGroup = '0-finance-state'

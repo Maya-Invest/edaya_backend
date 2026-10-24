@@ -632,6 +632,794 @@
         ],
         "additionalProperties": false
       },
+      "SchoolImportBatch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "academicYearId": {
+            "type": "string"
+          },
+          "createdByStaffId": {
+            "type": "string"
+          },
+          "createdBySubjectId": {
+            "type": "string"
+          },
+          "defaultOnExisting": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ]
+          },
+          "enrollmentEffectiveDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "number"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "validated",
+              "running",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "previewDigest": {
+            "type": "string",
+            "nullable": true
+          },
+          "workId": {
+            "type": "string",
+            "nullable": true
+          },
+          "approval": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "staffMemberId": {
+                "type": "string"
+              },
+              "subjectId": {
+                "type": "string"
+              },
+              "assuranceLevel": {
+                "type": "string",
+                "enum": [
+                  "standard",
+                  "verified",
+                  "strong"
+                ]
+              },
+              "authenticatedAt": {
+                "type": "string"
+              },
+              "approvedAt": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "number"
+              },
+              "previewDigest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "staffMemberId",
+              "subjectId",
+              "assuranceLevel",
+              "authenticatedAt",
+              "approvedAt",
+              "revision",
+              "previewDigest"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "schoolId",
+          "academicYearId",
+          "createdByStaffId",
+          "createdBySubjectId",
+          "defaultOnExisting",
+          "enrollmentEffectiveDate",
+          "revision",
+          "state",
+          "previewDigest",
+          "workId",
+          "approval",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "BusinessRuleViolationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            }
+          }
+        },
+        "required": [
+          "message",
+          "code"
+        ]
+      },
+      "CreateSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "academicYearId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defaultOnExisting": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ],
+            "default": "M"
+          },
+          "enrollmentEffectiveDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "academicYearId"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateSchoolImportSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "defaultOnExisting": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ]
+          },
+          "enrollmentEffectiveDate": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "batchId",
+          "defaultOnExisting"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_contacts",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "templateVersion": {
+            "type": "number"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "storageKey": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fileId",
+          "batchId",
+          "schoolId",
+          "type",
+          "templateVersion",
+          "revision",
+          "fileName",
+          "storageKey",
+          "sha256",
+          "headers",
+          "createdAt"
+        ]
+      },
+      "SubmitSchoolImportFileRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_contacts",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "base64": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6990508
+          }
+        },
+        "required": [
+          "batchId",
+          "type",
+          "fileName",
+          "base64"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportRow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_contacts",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "fileId": {
+                "type": "string"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "row": {
+                "type": "number"
+              },
+              "sheet": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fileId",
+              "revisionId",
+              "row"
+            ]
+          },
+          "raw": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "nullable": true
+                },
+                {
+                  "nullable": true
+                }
+              ]
+            }
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "nullable": true
+                },
+                {
+                  "nullable": true
+                }
+              ]
+            }
+          },
+          "generatedCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "sourceKey": {
+            "type": "string"
+          },
+          "effectiveMode": {
+            "type": "string",
+            "enum": [
+              "S",
+              "M",
+              "O"
+            ]
+          },
+          "inputDigest": {
+            "type": "string"
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "object",
+            "properties": {
+              "ownerId": {
+                "type": "string"
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "before": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                }
+              }
+            },
+            "required": [
+              "ownerId",
+              "memberIds",
+              "before"
+            ]
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "current": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "nullable": true
+            }
+          },
+          "proposed": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "nullable": true
+            }
+          },
+          "expectedDigest": {
+            "type": "string",
+            "nullable": true
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "column": {
+                  "type": "string"
+                },
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "error",
+                    "warning"
+                  ]
+                }
+              },
+              "required": [
+                "code",
+                "severity"
+              ]
+            }
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "created",
+              "updated",
+              "unchanged",
+              "skipped",
+              "blocked",
+              "dependency_blocked",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "result": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "nullable": true
+            }
+          }
+        },
+        "required": [
+          "id",
+          "batchId",
+          "schoolId",
+          "type",
+          "source",
+          "raw",
+          "values",
+          "generatedCode",
+          "targetId",
+          "sourceKey",
+          "effectiveMode",
+          "inputDigest",
+          "operationId",
+          "dependencies",
+          "current",
+          "proposed",
+          "expectedDigest",
+          "issues",
+          "outcome",
+          "result"
+        ]
+      },
+      "SchoolImportDetail": {
+        "type": "object",
+        "properties": {
+          "batch": {
+            "$ref": "#/components/schemas/SchoolImportBatch"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolImportFile"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolImportRow"
+            }
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "batch",
+          "files",
+          "rows",
+          "counts"
+        ]
+      },
+      "ValidateSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "batchId"
+        ],
+        "additionalProperties": false
+      },
+      "ConfirmSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "previewDigest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "batchId",
+          "revision",
+          "previewDigest"
+        ],
+        "additionalProperties": false
+      },
+      "RetrySchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "batchId"
+        ],
+        "additionalProperties": false
+      },
+      "CancelSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "batchId"
+        ],
+        "additionalProperties": false
+      },
+      "GetSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "batchId"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportHistory": {
+        "type": "object",
+        "properties": {
+          "batches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolImportBatch"
+            }
+          }
+        },
+        "required": [
+          "batches"
+        ]
+      },
+      "SchoolImportHistoryRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "before": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchoolImportDownload": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "base64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileName",
+          "contentType",
+          "base64"
+        ]
+      },
+      "SchoolImportReportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ],
+            "default": "xlsx"
+          }
+        },
+        "required": [
+          "batchId",
+          "fileId"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "academic_disciplines",
+              "placement_statuses",
+              "classes",
+              "subjects",
+              "students",
+              "guardians",
+              "teachers",
+              "staff",
+              "guardian_contacts",
+              "guardian_relationships",
+              "class_offerings",
+              "teacher_assignments",
+              "chapters",
+              "billing",
+              "payments"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ],
+            "default": "xlsx"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
       "EffectiveGrantsResponse": {
         "type": "object",
         "properties": {
@@ -1346,27 +2134,6 @@
         },
         "required": [
           "items"
-        ]
-      },
-      "BusinessRuleViolationResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "details": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          }
-        },
-        "required": [
-          "message",
-          "code"
         ]
       },
       "ScopeRenderResponse": {
@@ -5625,6 +6392,11 @@
             "nullable": true,
             "minLength": 1
           },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "notificationEmail": {
             "type": "string",
             "nullable": true,
@@ -5728,6 +6500,11 @@
             "minLength": 1
           },
           "email": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "phone": {
             "type": "string",
             "nullable": true,
             "minLength": 1
@@ -6002,6 +6779,11 @@
             "nullable": true,
             "minLength": 1
           },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
           "onboardingWizardCompletedAt": {
             "nullable": true
           },
@@ -6080,8 +6862,7 @@
             "nullable": true
           },
           "firstName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -10579,8 +11360,7 @@
             "nullable": true
           },
           "firstName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -11165,8 +11945,7 @@
             "nullable": true
           },
           "firstName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "lastName": {
             "type": "string",
@@ -32355,6 +33134,1425 @@
           },
           "403": {
             "description": "Provider verification failed or phone unavailable"
+          }
+        }
+      }
+    },
+    "/core/imports/create": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.create",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "create",
+        "x-edaya-client-path": "imports/create",
+        "x-edaya-request-schema": "CreateSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportBatch",
+        "requestBody": {
+          "description": "CreateSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportBatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/settings": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.settings",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "settings",
+        "x-edaya-client-path": "imports/settings",
+        "x-edaya-request-schema": "UpdateSchoolImportSettingsRequest",
+        "x-edaya-response-schema": "SchoolImportBatch",
+        "requestBody": {
+          "description": "UpdateSchoolImportSettingsRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolImportSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportBatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/submit": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.submit",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "submit",
+        "x-edaya-client-path": "imports/submit",
+        "x-edaya-request-schema": "SubmitSchoolImportFileRequest",
+        "x-edaya-response-schema": "SchoolImportFile",
+        "requestBody": {
+          "description": "SubmitSchoolImportFileRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitSchoolImportFileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportFile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/validate": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.validate",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "validate",
+        "x-edaya-client-path": "imports/validate",
+        "x-edaya-request-schema": "ValidateSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportDetail",
+        "requestBody": {
+          "description": "ValidateSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDetail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/confirm": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.confirm",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "confirm",
+        "x-edaya-client-path": "imports/confirm",
+        "x-edaya-request-schema": "ConfirmSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportBatch",
+        "requestBody": {
+          "description": "ConfirmSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportBatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/retry": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.retry",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "retry",
+        "x-edaya-client-path": "imports/retry",
+        "x-edaya-request-schema": "RetrySchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportDetail",
+        "requestBody": {
+          "description": "RetrySchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetrySchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDetail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/cancel": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.cancel",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "cancel",
+        "x-edaya-client-path": "imports/cancel",
+        "x-edaya-request-schema": "CancelSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportBatch",
+        "requestBody": {
+          "description": "CancelSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportBatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/detail": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.detail",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "detail",
+        "x-edaya-client-path": "imports/detail",
+        "x-edaya-request-schema": "GetSchoolImportRequest",
+        "x-edaya-response-schema": "SchoolImportDetail",
+        "requestBody": {
+          "description": "GetSchoolImportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSchoolImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDetail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/history": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.history",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "history",
+        "x-edaya-client-path": "imports/history",
+        "x-edaya-request-schema": "SchoolImportHistoryRequest",
+        "x-edaya-response-schema": "SchoolImportHistory",
+        "requestBody": {
+          "description": "SchoolImportHistoryRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolImportHistoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportHistory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/report": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.report",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "report",
+        "x-edaya-client-path": "imports/report",
+        "x-edaya-request-schema": "SchoolImportReportRequest",
+        "x-edaya-response-schema": "SchoolImportDownload",
+        "requestBody": {
+          "description": "SchoolImportReportRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolImportReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDownload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDownload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/template": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.template",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "template",
+        "x-edaya-client-path": "imports/template",
+        "x-edaya-request-schema": "SchoolImportTemplateRequest",
+        "x-edaya-response-schema": "SchoolImportDownload",
+        "requestBody": {
+          "description": "SchoolImportTemplateRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchoolImportTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportDownload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportDownload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
           }
         }
       }

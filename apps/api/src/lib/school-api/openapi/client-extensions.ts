@@ -23,6 +23,7 @@ export type ClientRouteNamespace
     | "authorization"
     | "onboarding"
     | "files"
+    | "imports"
     | "serviceAccounts"
     | "platformUsers"
     | "s2sClients"

@@ -3,6 +3,7 @@ export * from './access/action-grants'
 export * from './access/facts'
 export * from './access/grant-administration'
 export * from './access/identity'
+export { ImportAccessPolicy, importResources, resolveImportActor } from './access/import-policy'
 export * from './access/interactive-actor-kind'
 export * from './access/owner-authority'
 export * from './access/platform-policies'
@@ -12,8 +13,8 @@ export * from './bootstrap-actor'
 export * from './model'
 export * from './permissions'
 export * from './platform'
+
 export * from './ports'
 
 export * from './s2s'
-
 export * from './service-accounts'
