@@ -165,6 +165,9 @@ export type SchoolCommandKey
     | 'cancelPayment'
     | 'adjustStudentFee'
     | 'cancelStudentFee'
+    | 'getAutoBillingOptions'
+    | 'getFeeAutoBilling'
+    | 'retryAutoBilling'
     | 'createCatalogService'
     | 'updateCatalogService'
     | 'activateCatalogService'
@@ -377,6 +380,9 @@ export const SCHOOL_COMMAND_KEYS = defineSchoolCommandKeys([
   'cancelPayment',
   'adjustStudentFee',
   'cancelStudentFee',
+  'getAutoBillingOptions',
+  'getFeeAutoBilling',
+  'retryAutoBilling',
   'createCatalogService',
   'updateCatalogService',
   'activateCatalogService',

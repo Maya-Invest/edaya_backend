@@ -1,7 +1,7 @@
 import type { PublishAnnouncementInput, SchoolCommandKey, SchoolService } from "@edaya/service";
 import type { Context } from "hono";
 import type { AppBindings } from "@/http/bindings";
-import { dispatchConversationNotifications, dispatchDocumentRender, dispatchGradingRecalculation, dispatchSchoolCommand } from "@edaya/service";
+import { dispatchAutoBilling, dispatchConversationNotifications, dispatchDocumentRender, dispatchGradingRecalculation, dispatchSchoolCommand } from "@edaya/service";
 import { scheduleBackgroundApplicationTask, scheduleBackgroundTask } from "@/lib/school-api/schedule-background-task";
 
 const DOCUMENT_NUDGE_COMMANDS = new Set<SchoolCommandKey>([
@@ -41,6 +41,8 @@ export async function executeSchoolCommand(
   }
 
   const result = await dispatchSchoolCommand(service.commands, methodName, payload);
+  if (["createCatalogService", "updateCatalogService", "activateCatalogService", "retryAutoBilling", "enrollStudent", "transferStudent", "promoteStudent", "closeEnrollment", "upsertStudentAcademicYearProfile", "removeStudentAcademicYearProfile", "updateClassGroupConfiguration"].includes(methodName))
+    scheduleBackgroundApplicationTask(c, application => dispatchAutoBilling(application));
   if (methodName === "startConversation" || methodName === "replyConversation")
     scheduleBackgroundApplicationTask(c, application => dispatchConversationNotifications(application));
   if (methodName === "configureGrading" || methodName === "retryGrading")

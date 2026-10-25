@@ -3609,6 +3609,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/core/commands/get-auto-billing-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-auto-billing-options */
+        post: operations["commands.getAutoBillingOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/get-fee-auto-billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** get-fee-auto-billing */
+        post: operations["commands.getFeeAutoBilling"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/commands/retry-auto-billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** retry-auto-billing */
+        post: operations["commands.retryAutoBilling"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/commands/create-catalog-service": {
         parameters: {
             query?: never;
@@ -17357,6 +17408,41 @@ export interface components {
         CancelStudentFeeCommand: {
             id?: string;
         };
+        AutoBillingOptions: {
+            canConfigureAutomatic: boolean;
+            gradeLevels: {
+                id: string;
+                label: string;
+            }[];
+            placementStatuses: {
+                id: string;
+                label: string;
+                isActive: boolean;
+            }[];
+        };
+        GetAutoBillingOptionsCommand: Record<string, never>;
+        FeeAutoBilling: {
+            runs: {
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "running" | "completed" | "failed";
+                createdCount: number;
+                skippedCount: number;
+                failureCode?: string;
+                createdAt: string;
+                updatedAt: string;
+            }[];
+        };
+        GetFeeAutoBillingCommand: {
+            catalogServiceId: string;
+        };
+        RetryAutoBillingResult: {
+            id: string;
+        };
+        RetryAutoBillingCommand: {
+            runId: string;
+            requestId: string;
+        };
         CatalogService: {
             id: string;
             schoolId: string;
@@ -17369,10 +17455,22 @@ export interface components {
              */
             category: "tuition" | "transport" | "meals" | "activities" | "materials" | "other";
             /**
-             * @default mandatory
-             * @enum {string}
+             * @default {
+             *       "mode": "off"
+             *     }
              */
-            enrollmentMode: "mandatory" | "opt_in";
+            autoBilling: {
+                /** @enum {string} */
+                mode: "off";
+            } | {
+                /** @enum {string} */
+                mode: "all";
+            } | {
+                /** @enum {string} */
+                mode: "matching";
+                gradeLevelIds: string[] | null;
+                placementStatusIds: string[] | null;
+            };
             /**
              * @default one_time
              * @enum {string}
@@ -17416,7 +17514,18 @@ export interface components {
             name: string;
             description?: string;
             category?: string;
-            enrollmentMode?: string;
+            autoBilling?: {
+                /** @enum {string} */
+                mode: "off";
+            } | {
+                /** @enum {string} */
+                mode: "all";
+            } | {
+                /** @enum {string} */
+                mode: "matching";
+                gradeLevelIds: string[] | null;
+                placementStatusIds: string[] | null;
+            };
             defaultPrice: number;
             currency: string;
             billingTerms: components["schemas"]["OneTimeBillingTermsCommandValue"];
@@ -17428,7 +17537,18 @@ export interface components {
             name?: string;
             description?: string | null;
             category?: string;
-            enrollmentMode?: string;
+            autoBilling?: {
+                /** @enum {string} */
+                mode: "off";
+            } | {
+                /** @enum {string} */
+                mode: "all";
+            } | {
+                /** @enum {string} */
+                mode: "matching";
+                gradeLevelIds: string[] | null;
+                placementStatusIds: string[] | null;
+            };
             defaultPrice?: number;
             billingTerms?: components["schemas"]["OneTimeBillingTermsCommandValue"];
         };
@@ -17451,7 +17571,13 @@ export interface components {
              * @default staff
              * @enum {string}
              */
-            source: "staff";
+            source: "staff" | "automatic";
+            automation?: {
+                runId: string;
+                trigger: string;
+                triggeredById: string;
+                configurationRevision: string;
+            } | null;
             acceptedTerms: {
                 catalogServiceId: string;
                 name: string;
@@ -35544,6 +35670,240 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RetiredFinanceCommandResponse"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.getAutoBillingOptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-auto-billing-options payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetAutoBillingOptionsCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed get-auto-billing-options */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoBillingOptions"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.getFeeAutoBilling": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description get-fee-auto-billing payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetFeeAutoBillingCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed get-fee-auto-billing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeeAutoBilling"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "commands.retryAutoBilling": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description retry-auto-billing payload */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RetryAutoBillingCommand"];
+            };
+        };
+        responses: {
+            /** @description Executed retry-auto-billing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetryAutoBillingResult"];
                 };
             };
             /** @description Invalid request payload */

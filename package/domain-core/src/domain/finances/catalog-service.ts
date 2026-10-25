@@ -12,10 +12,15 @@ export enum CatalogServiceCategory {
   Other = 'other',
 }
 
-export enum CatalogEnrollmentMode {
-  Mandatory = 'mandatory',
-  OptIn = 'opt_in',
-}
+const autoBillingSelectionSchema = z.array(z.string().trim().min(1)).min(1).refine(ids => new Set(ids).size === ids.length, 'Selections must be unique').nullable()
+
+/** null explicitly means all; an empty selected list is invalid. */
+export const autoBillingSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('off') }).strict(),
+  z.object({ mode: z.literal('all') }).strict(),
+  z.object({ mode: z.literal('matching'), gradeLevelIds: autoBillingSelectionSchema, placementStatusIds: autoBillingSelectionSchema }).strict(),
+])
+export type AutoBillingConfiguration = z.infer<typeof autoBillingSchema>
 
 export enum CatalogServiceStatus {
   Draft = 'draft',
@@ -48,7 +53,7 @@ export const catalogServiceBaseSchema = z.object({
   name: z.string().trim().min(1, 'name must not be blank'),
   description: z.string().trim().min(1, 'description must not be blank').nullable().optional().transform(v => v === null ? undefined : v),
   category: z.nativeEnum(CatalogServiceCategory).default(CatalogServiceCategory.Tuition),
-  enrollmentMode: z.nativeEnum(CatalogEnrollmentMode).default(CatalogEnrollmentMode.Mandatory),
+  autoBilling: autoBillingSchema.default({ mode: 'off' }),
   billingKind: z.literal(CATALOG_BILLING_KIND_ONE_TIME).default(CATALOG_BILLING_KIND_ONE_TIME),
   defaultPrice: z.number().int().nonnegative('defaultPrice must be a non-negative integer'),
   currency: z.string().trim().min(1, 'currency must not be blank'),
@@ -118,7 +123,7 @@ export class CatalogService {
       name: validated.name,
       description: validated.description,
       category: validated.category,
-      enrollmentMode: validated.enrollmentMode,
+      autoBilling: validated.autoBilling,
       billingKind: validated.billingKind,
       billingTerms: validated.billingTerms,
       status: validated.status,
@@ -134,7 +139,7 @@ export class CatalogService {
   get name() { return this.data.name }
   get description() { return this.data.description }
   get category() { return this.data.category }
-  get enrollmentMode() { return this.data.enrollmentMode }
+  get autoBilling() { return this.data.autoBilling }
   get billingKind() { return this.data.billingKind }
   get defaultPrice() { return this.data.defaultPrice }
   get billingTerms() { return this.data.billingTerms }
@@ -154,7 +159,7 @@ export class CatalogService {
       name: this.name,
       description: this.description,
       category: this.category,
-      enrollmentMode: this.enrollmentMode,
+      autoBilling: this.autoBilling,
       billingKind: this.billingKind,
       defaultPrice: this.defaultPrice.amount,
       currency: this.defaultPrice.currency,

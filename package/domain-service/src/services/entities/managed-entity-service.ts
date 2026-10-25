@@ -32,6 +32,7 @@ export interface ManagedEntityServiceConfig<T> {
   atomicExecution?: AtomicExecutionPort
   projectRead?: (entity: T) => Promise<T>
   writeLockGroup?: string
+  additionalWriteLockGroups?: string[]
 }
 export interface ManagedEntityServiceArgs<T> {
   actor: SchoolScopedActorMetadata
@@ -202,7 +203,7 @@ export class ManagedEntityService<T> {
     if (!this.config.atomicExecution)
       throw new Error('Entity writes require atomic execution')
     return this.config.atomicExecution.execute(operation, {
-      lockKeys: this.config.writeLockGroup ? [`${this.config.writeLockGroup}:${this.actor.schoolId}`] : [],
+      lockKeys: [...(this.config.writeLockGroup ? [this.config.writeLockGroup] : []), ...this.config.additionalWriteLockGroups ?? []].map(group => `${group}:${this.actor.schoolId}`),
     })
   }
 

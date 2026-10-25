@@ -93,6 +93,8 @@ export class AccessPolicies {
   private async actionScope(facts: AccessFacts, action: Permission, resource: CoreEntityKey, intent: 'read' | 'write', operation?: MutationOperation): Promise<ResourceAccessClause[]> {
     const actor = this.actor
     if (actor.kind === 'system') {
+      if (actor.systemId === 'auto-billing')
+        return action === P.PAYMENT_RECORD && intent === 'write' && operation === 'create' && ['studentServiceEnrollments', 'studentCharges'].includes(resource) ? [{ target: { kind: 'school' } }] : []
       if (action === P.COMMUNICATION_DRAFT_MANAGE && ['notification-delivery-webhook', 'notify-adapter', 'reconcilePendingDeliveries'].includes(actor.systemId)
         && (resource !== 'messageDeliveries' || (intent === 'write' && (!operation || operation === 'delete')))) {
         return []

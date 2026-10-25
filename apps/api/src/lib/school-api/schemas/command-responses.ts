@@ -1,6 +1,5 @@
 import { grantScopeSchema, Permission, permissionResolutionWarningSchema } from "@edaya/core";
 import { z } from "@hono/zod-openapi";
-import { manageSubjectEnrollmentsResponseSchema } from "./subject-enrollment";
 import { conversationResponseSchema, markConversationReadResponseSchema } from "./conversations";
 import {
   academicDisciplineResponseSchema,
@@ -63,6 +62,7 @@ import {
   teacherResponseSchema,
 } from "./entities";
 import { marksCorrectionResponseSchema } from "./marks-corrections";
+import { manageSubjectEnrollmentsResponseSchema } from "./subject-enrollment";
 import { teacherCorrectionResponseSchema, teacherWorkflowStateListResponseSchema, teacherWorkflowStateResponseSchema } from "./teacher-corrections";
 
 const familyFeedbackCampaignCommandResponseSchema = z.object({
@@ -114,6 +114,22 @@ export const materializedOccurrenceCommandListResponseSchema = z.array(
 export const attendanceCommandListResponseSchema = z.array(attendanceResponseSchema).openapi("AttendanceCommandListResponse");
 export const assessmentResultCommandListResponseSchema = z.array(assessmentResultResponseSchema).openapi("AssessmentResultCommandListResponse");
 export const messageDeliveryCommandListResponseSchema = z.array(messageDeliveryResponseSchema).openapi("MessageDeliveryCommandListResponse");
+export const autoBillingOptionsResponseSchema = z.object({
+  canConfigureAutomatic: z.boolean(),
+  gradeLevels: z.array(z.object({ id: z.string(), label: z.string() })),
+  placementStatuses: z.array(z.object({ id: z.string(), label: z.string(), isActive: z.boolean() })),
+}).openapi("AutoBillingOptions");
+export const feeAutoBillingResponseSchema = z.object({ runs: z.array(z.object({
+  id: z.string(),
+  status: z.enum(["pending", "running", "completed", "failed"]),
+  createdCount: z.number().int(),
+  skippedCount: z.number().int(),
+  failureCode: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})) }).openapi("FeeAutoBilling");
+export const retryAutoBillingResponseSchema = z.object({ id: z.string() }).openapi("RetryAutoBillingResult");
+
 export const studentServiceEnrollmentCommandListResponseSchema = z.array(studentServiceEnrollmentResponseSchema).openapi("StudentServiceEnrollmentCommandListResponse");
 export const allocationPreviewResponseSchema = z.object({
   accountId: z.string().min(1),
@@ -431,6 +447,9 @@ export const commandResponseByMethod: Record<string, z.ZodTypeAny> = {
   cancelPayment: retiredFinanceCommandResponseSchema,
   adjustStudentFee: retiredFinanceCommandResponseSchema,
   cancelStudentFee: retiredFinanceCommandResponseSchema,
+  getAutoBillingOptions: autoBillingOptionsResponseSchema,
+  getFeeAutoBilling: feeAutoBillingResponseSchema,
+  retryAutoBilling: retryAutoBillingResponseSchema,
   createCatalogService: catalogServiceResponseSchema,
   updateCatalogService: catalogServiceResponseSchema,
   activateCatalogService: catalogServiceResponseSchema,

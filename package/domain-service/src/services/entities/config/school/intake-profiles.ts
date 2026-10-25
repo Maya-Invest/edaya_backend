@@ -3,6 +3,7 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
+import { placementProfileBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
@@ -36,7 +37,7 @@ export const placementStatusConfig: EntityConfigFactory<PlacementStatus> = ({ re
   gates: {
     preSave: async (record, existing, repos) => { await validateCode(record, existing, await repos.placementStatuses.list({ schoolId: record.schoolId })) },
     preDelete: async (record, repos) => {
-      if (await repos.studentAcademicYearProfiles.count({ placementStatusId: record.id }))
+      if (await repos.studentAcademicYearProfiles.count({ placementStatusId: record.id }) || (await repos.catalogServices.list({ schoolId: record.schoolId })).some(fee => fee.autoBilling.mode === 'matching' && fee.autoBilling.placementStatusIds?.includes(record.id)))
         throw new BusinessRuleViolationError('PLACEMENT_STATUS_IN_USE', 'Deactivate a placement status that is referenced by students')
     },
   },
@@ -49,12 +50,13 @@ async function validateYear(record: StudentAcademicYearProfile | TeacherAcademic
   if (existing && (record.schoolId !== existing.schoolId || record.academicYearId !== existing.academicYearId || ('studentId' in record && 'studentId' in existing ? record.studentId !== existing.studentId : 'teacherId' in record && 'teacherId' in existing && record.teacherId !== existing.teacherId)))
     throw new BusinessRuleViolationError('ANNUAL_PROFILE_IDENTITY_IMMUTABLE', 'An annual profile cannot move between people, schools or years')
 }
-export const studentAcademicYearProfileConfig: EntityConfigFactory<StudentAcademicYearProfile> = ({ repositories, atomicExecution }) => config({
-  repository: repositories.studentAcademicYearProfiles,
+export const studentAcademicYearProfileConfig: EntityConfigFactory<StudentAcademicYearProfile> = context => config({
+  repository: context.repositories.studentAcademicYearProfiles,
   tenant: directSchoolTenant(),
   resource: 'studentAcademicYearProfiles',
-  atomicExecution,
+  atomicExecution: context.atomicExecution,
   writeLockGroup: 'academic-state',
+  hooks: placementProfileBillingHooks(context),
   gates: { preSave: async (record, existing, repos) => {
     await validateYear(record, existing, repos)
     const student = await repos.students.findById(record.studentId)

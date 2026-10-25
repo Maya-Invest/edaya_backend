@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { definePerformanceIndexes } from '../postgres-indexes'
 
 export const catalogServices = pgTable('catalog_services', {
@@ -8,7 +8,7 @@ export const catalogServices = pgTable('catalog_services', {
   name: text('name').notNull(),
   description: text('description'),
   category: text('category').notNull(),
-  enrollmentMode: text('enrollment_mode').notNull(),
+  autoBilling: jsonb('auto_billing').notNull(),
   billingKind: text('billing_kind').notNull(),
   defaultPrice: integer('default_price').notNull(),
   currency: text('currency').notNull(),
@@ -26,6 +26,7 @@ export const studentServiceEnrollments = pgTable('student_service_enrollments', 
   academicYearId: text('academic_year_id').notNull(),
   status: text('status').notNull(),
   source: text('source').notNull(),
+  automation: jsonb('automation'),
   acceptedTerms: jsonb('accepted_terms').notNull(),
   enrolledAt: timestamp('enrolled_at', { mode: 'date' }).notNull(),
   cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
@@ -125,3 +126,12 @@ export const studentAccountEntries = pgTable('student_account_entries', {
   resultingAvailableBalance: integer('resulting_available_balance').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).notNull(),
 }, table => definePerformanceIndexes('student_account_entries', table))
+
+export const autoBillingRuns = pgTable('auto_billing_runs', {
+  id: text('id').primaryKey(),
+  schoolId: text('school_id').notNull(),
+  catalogServiceId: text('catalog_service_id').notNull(),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  payload: jsonb('payload').notNull(),
+}, table => [index('auto_billing_runs_fee_status_idx').on(table.schoolId, table.catalogServiceId, table.status, table.createdAt.desc())])

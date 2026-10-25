@@ -18,6 +18,19 @@ export class FinanceAccessPolicy {
     return this.access.scope(Permission.FINANCIAL_REPORT_READ, 'studentYearAccounts')
   }
 
+  assertReadAutoBilling() {
+    return this.access.assertSchool([Permission.FINANCIAL_CONFIG_READ, Permission.FINANCIAL_CATALOG_MANAGE, Permission.PAYMENT_READ])
+  }
+
+  async assertConfigureAutoBilling(academicYearId?: string) {
+    await this.access.assertSchool(Permission.FINANCIAL_CATALOG_MANAGE)
+    const scope = await this.access.scope(Permission.PAYMENT_RECORD, 'students', 'write', 'create')
+    if (!scope.clauses.some(clause => (!academicYearId || !clause.academicYearId || clause.academicYearId === academicYearId)
+      && (clause.target.kind === 'school' || (clause.target.kind === 'all' && ['student', 'class_group', 'grade_level'].includes(clause.target.grain))))) {
+      denied('Automatic billing requires school-wide assignment authority')
+    }
+  }
+
   assertEnrollStudent(studentId: string) {
     return this.access.assertResources(Permission.PAYMENT_RECORD, 'students', [studentId])
   }

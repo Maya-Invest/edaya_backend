@@ -1566,6 +1566,21 @@ export const clientBindings = {
         "requestSchemaName": "CancelStudentFeeCommand",
         "responseSchemaName": "RetiredFinanceCommandResponse"
       },
+      "getAutoBillingOptions": {
+        "publicName": "get-auto-billing-options",
+        "requestSchemaName": "GetAutoBillingOptionsCommand",
+        "responseSchemaName": "AutoBillingOptions"
+      },
+      "getFeeAutoBilling": {
+        "publicName": "get-fee-auto-billing",
+        "requestSchemaName": "GetFeeAutoBillingCommand",
+        "responseSchemaName": "FeeAutoBilling"
+      },
+      "retryAutoBilling": {
+        "publicName": "retry-auto-billing",
+        "requestSchemaName": "RetryAutoBillingCommand",
+        "responseSchemaName": "RetryAutoBillingResult"
+      },
       "createCatalogService": {
         "publicName": "create-catalog-service",
         "requestSchemaName": "CreateCatalogServiceCommand",

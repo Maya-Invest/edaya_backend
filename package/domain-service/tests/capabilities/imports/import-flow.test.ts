@@ -1,7 +1,7 @@
 /* eslint dot-notation: "off" -- Import snapshots are index-signature records. */
 import type { ImportFormatPort, ParsedImportTable } from '@edaya/core'
-import { BusinessRuleViolationError, ClassGroup, createInMemoryFileStorage, Guardian, GuardianContactMethodType, GuardianStudentLink, noOpNotificationGateway, StaffMember, Student, StudentClassEnrollmentStatus } from '@edaya/core'
-import { dispatchSchoolImports, SchoolApplication } from '@edaya/service'
+import { BusinessRuleViolationError, CatalogServiceStatus, ClassGroup, createInMemoryFileStorage, Guardian, GuardianContactMethodType, GuardianStudentLink, noOpNotificationGateway, StaffMember, Student, StudentClassEnrollmentStatus } from '@edaya/core'
+import { dispatchAutoBilling, dispatchSchoolImports, SchoolApplication } from '@edaya/service'
 import { expect, spyOn, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresImportStore } from '../../../../adaptor-postgres/src/stores/import-store'
@@ -338,4 +338,21 @@ test.each(['M', 'O', 'S'])('guardian %s handles blank first names without losing
   expect(saved.firstName).toBe(mode === 'O' ? '' : 'Original')
   expect(saved.lastName).toBe('Koné')
   expect(saved.occupation).toBe('Teacher')
+})
+
+test('imported placements and annual profiles schedule automatic fees transactionally', async () => {
+  const f = await fixture()
+  const status = await f.service.academicsWorkflow.configurePlacementStatus({ id: 'billing-status', code: 'BILL', label: 'Billable' })
+  await f.service.financeWorkflow.createCatalogService({ id: 'auto-fee', academicYearId: 'ay1', name: 'Automatic tuition', defaultPrice: 1000, currency: 'USD', billingTerms: { kind: 'one_time', installments: [] }, status: CatalogServiceStatus.Active, autoBilling: { mode: 'matching', gradeLevelIds: ['grade1'], placementStatusIds: [status.id] } })
+  await dispatchAutoBilling(f.application)
+  expect(await f.repositories.studentCharges.count()).toBe(0)
+  await f.submit('students', ['matricule', 'first_name', 'last_name', 'class', 'placement_status_code'], [['AUTO-001', 'Imported', 'Student', 'cg1', 'BILL']])
+  await f.run()
+  expect(await f.repositories.studentCharges.count()).toBe(0)
+  await dispatchAutoBilling(f.application)
+  expect(await f.repositories.studentCharges.count()).toBe(1)
+  const student = await f.repositories.students.findOne({ matricule: 'AUTO-001' })
+  expect((await f.repositories.studentCharges.list())[0]?.studentId).toBe(student?.id)
+  await dispatchAutoBilling(f.application)
+  expect(await f.repositories.studentCharges.count()).toBe(1)
 })

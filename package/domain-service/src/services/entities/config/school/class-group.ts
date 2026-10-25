@@ -3,16 +3,19 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, CalendarEventScopeKind, StudentClassEnrollmentStatus } from '@edaya/core'
+import { classGradeBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/school/class-group.ts (PR3)
-export const classGroupConfig: EntityConfigFactory<ClassGroup> = ({ repositories, atomicExecution }) => {
+export const classGroupConfig: EntityConfigFactory<ClassGroup> = (context) => {
+  const { repositories, atomicExecution } = context
   return config({
     repository: repositories.classGroups,
     tenant: directSchoolTenant(),
     resource: 'classGroups',
     writeLockGroup: 'academic-state',
+    hooks: classGradeBillingHooks(context),
 
     gates: {
       preSave: validateClassGroupSave,

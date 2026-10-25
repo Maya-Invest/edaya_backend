@@ -13,6 +13,7 @@ export class BaseSchoolService {
   readonly actor: SchoolScopedActorMetadata
   readonly repositories: SchoolRepositories
   readonly access: AccessPolicies
+  readonly durableWork?: ServiceArgs['durableWork']
   readonly atomicExecution: AtomicExecutionPort
   readonly notificationGateway: NotificationGatewayPort
   readonly fileStorage: FileStoragePort
@@ -37,6 +38,7 @@ export class BaseSchoolService {
     this.repositories = args.repositories
     this.access = createAccessPolicies({ actor: args.actor, repositories: args.repositories })
     this.atomicExecution = args.atomicExecution
+    this.durableWork = args.durableWork
     this.journal = args.commandJournal
     this.notificationGateway = args.notificationGateway
     this.fileStorage = args.fileStorage

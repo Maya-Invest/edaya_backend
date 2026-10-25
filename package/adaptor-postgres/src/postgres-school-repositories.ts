@@ -8,6 +8,7 @@ import { asStoreDatabase } from './postgres-store'
 import { PostgresAccountInvitationStore } from './stores/account-invitation-store'
 import { PostgresAssessmentDependencies } from './stores/assessment-dependencies-store'
 import { PostgresAttachmentUploadStore } from './stores/attachment-upload-store'
+import { PostgresAutoBilling } from './stores/auto-billing-store'
 import { PostgresConversations } from './stores/conversations-store'
 import { PostgresCronJobScheduleStore } from './stores/cron-job-schedule-store'
 import { PostgresDashboardProjections } from './stores/dashboard-projections-store'
@@ -26,6 +27,7 @@ import { PostgresStaffPermissionAssignmentStore } from './stores/staff-permissio
 import { PostgresTeacherCorrections } from './stores/teacher-corrections-store'
 
 export class PostgresSchoolRepositories implements SchoolRepositories {
+  public readonly autoBilling: PostgresAutoBilling
   public readonly academicDisciplines: PostgresStore<AcademicDiscipline>
   public readonly placementStatuses: PostgresStore<PlacementStatus>
   public readonly studentAcademicYearProfiles: PostgresStore<StudentAcademicYearProfile>
@@ -120,6 +122,7 @@ export class PostgresSchoolRepositories implements SchoolRepositories {
   constructor(database: unknown) {
     const db = asStoreDatabase(database)
     this.db = db
+    this.autoBilling = new PostgresAutoBilling(db)
     this.financeProjections = new PostgresFinanceProjections(db)
     this.dashboardProjections = new PostgresDashboardProjections(db)
     this.conversations = new PostgresConversations(db)

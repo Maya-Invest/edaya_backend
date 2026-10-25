@@ -1,9 +1,9 @@
+import type { AppRouteHandler } from "@/http/types";
 import { Buffer } from "node:buffer";
 import { BusinessRuleViolationError, IMPORT_MAX_FILE_BYTES, IMPORT_TYPES } from "@edaya/core";
-import { dispatchSchoolImports } from "@edaya/service";
+import { dispatchAutoBilling, dispatchSchoolImports } from "@edaya/service";
 import { createRoute, z } from "@hono/zod-openapi";
 import { jsonContent } from "stoker/openapi/helpers";
-import type { AppRouteHandler } from "@/http/types";
 import { createRouter } from "@/http/create-app";
 import { routeErrorResponse, unauthorizedResponse } from "@/http/responses";
 import { importClientBindings } from "@/lib/school-api/import-client-bindings";
@@ -69,7 +69,10 @@ for (const key of Object.keys(definitions) as (keyof typeof definitions)[]) {
           case "validate": return service.validate(definitions.validate.request.parse(input));
           case "confirm": {
             const result = await service.confirm(definitions.confirm.request.parse(input));
-            scheduleBackgroundApplicationTask(c, application => dispatchSchoolImports(application, { maxPages: 1000, maxDurationMs: c.env.RUNTIME === "worker" ? 20000 : 300000 }));
+            scheduleBackgroundApplicationTask(c, async (application) => {
+              await dispatchSchoolImports(application, { maxPages: 1000, maxDurationMs: c.env.RUNTIME === "worker" ? 20000 : 300000 });
+              await dispatchAutoBilling(application);
+            });
             return result;
           }
           case "retry": return service.retry(definitions.retry.request.parse(input));

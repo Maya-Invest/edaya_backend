@@ -20090,6 +20090,155 @@
           }
         }
       },
+      "AutoBillingOptions": {
+        "type": "object",
+        "properties": {
+          "canConfigureAutomatic": {
+            "type": "boolean"
+          },
+          "gradeLevels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "label"
+              ]
+            }
+          },
+          "placementStatuses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "isActive": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "isActive"
+              ]
+            }
+          }
+        },
+        "required": [
+          "canConfigureAutomatic",
+          "gradeLevels",
+          "placementStatuses"
+        ]
+      },
+      "GetAutoBillingOptionsCommand": {
+        "type": "object",
+        "properties": {}
+      },
+      "FeeAutoBilling": {
+        "type": "object",
+        "properties": {
+          "runs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "completed",
+                    "failed"
+                  ]
+                },
+                "createdCount": {
+                  "type": "integer"
+                },
+                "skippedCount": {
+                  "type": "integer"
+                },
+                "failureCode": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "status",
+                "createdCount",
+                "skippedCount",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "runs"
+        ]
+      },
+      "GetFeeAutoBillingCommand": {
+        "type": "object",
+        "properties": {
+          "catalogServiceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "catalogServiceId"
+        ]
+      },
+      "RetryAutoBillingResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "RetryAutoBillingCommand": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "runId",
+          "requestId"
+        ]
+      },
       "CatalogService": {
         "type": "object",
         "properties": {
@@ -20126,13 +20275,77 @@
             ],
             "default": "tuition"
           },
-          "enrollmentMode": {
-            "type": "string",
-            "enum": [
-              "mandatory",
-              "opt_in"
+          "autoBilling": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "off"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "matching"
+                    ]
+                  },
+                  "gradeLevelIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "placementStatusIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "mode",
+                  "gradeLevelIds",
+                  "placementStatusIds"
+                ],
+                "additionalProperties": false
+              }
             ],
-            "default": "mandatory"
+            "default": {
+              "mode": "off"
+            }
           },
           "billingKind": {
             "type": "string",
@@ -20282,8 +20495,74 @@
           "category": {
             "type": "string"
           },
-          "enrollmentMode": {
-            "type": "string"
+          "autoBilling": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "off"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "matching"
+                    ]
+                  },
+                  "gradeLevelIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "placementStatusIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "mode",
+                  "gradeLevelIds",
+                  "placementStatusIds"
+                ],
+                "additionalProperties": false
+              }
+            ]
           },
           "defaultPrice": {
             "type": "number",
@@ -20332,8 +20611,74 @@
           "category": {
             "type": "string"
           },
-          "enrollmentMode": {
-            "type": "string"
+          "autoBilling": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "off"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "matching"
+                    ]
+                  },
+                  "gradeLevelIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "placementStatusIds": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "mode",
+                  "gradeLevelIds",
+                  "placementStatusIds"
+                ],
+                "additionalProperties": false
+              }
+            ]
           },
           "defaultPrice": {
             "type": "number"
@@ -20399,9 +20744,38 @@
           "source": {
             "type": "string",
             "enum": [
-              "staff"
+              "staff",
+              "automatic"
             ],
             "default": "staff"
+          },
+          "automation": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "runId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "trigger": {
+                "type": "string",
+                "minLength": 1
+              },
+              "triggeredById": {
+                "type": "string",
+                "minLength": 1
+              },
+              "configurationRevision": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "runId",
+              "trigger",
+              "triggeredById",
+              "configurationRevision"
+            ]
           },
           "acceptedTerms": {
             "type": "object",
@@ -57538,6 +57912,396 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RetiredFinanceCommandResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/get-auto-billing-options": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "get-auto-billing-options",
+        "operationId": "commands.getAutoBillingOptions",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "getAutoBillingOptions",
+        "x-edaya-command-public-name": "get-auto-billing-options",
+        "x-edaya-request-schema": "GetAutoBillingOptionsCommand",
+        "x-edaya-response-schema": "AutoBillingOptions",
+        "requestBody": {
+          "description": "get-auto-billing-options payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetAutoBillingOptionsCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed get-auto-billing-options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoBillingOptions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/get-fee-auto-billing": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "get-fee-auto-billing",
+        "operationId": "commands.getFeeAutoBilling",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "getFeeAutoBilling",
+        "x-edaya-command-public-name": "get-fee-auto-billing",
+        "x-edaya-request-schema": "GetFeeAutoBillingCommand",
+        "x-edaya-response-schema": "FeeAutoBilling",
+        "requestBody": {
+          "description": "get-fee-auto-billing payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetFeeAutoBillingCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed get-fee-auto-billing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeAutoBilling"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/commands/retry-auto-billing": {
+      "post": {
+        "tags": [
+          "Core Commands"
+        ],
+        "summary": "retry-auto-billing",
+        "operationId": "commands.retryAutoBilling",
+        "x-edaya-kind": "command",
+        "x-edaya-command-key": "retryAutoBilling",
+        "x-edaya-command-public-name": "retry-auto-billing",
+        "x-edaya-request-schema": "RetryAutoBillingCommand",
+        "x-edaya-response-schema": "RetryAutoBillingResult",
+        "requestBody": {
+          "description": "retry-auto-billing payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryAutoBillingCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Executed retry-auto-billing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryAutoBillingResult"
                 }
               }
             }

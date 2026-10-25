@@ -116,6 +116,14 @@ export class EntityAccessPolicy<K extends CoreEntityKey> {
   }
 
   async assertSave(entity: CoreEntityMap[K], existing?: CoreEntityMap[K]) {
+    if (!existing && this.resource === 'studentServiceEnrollments' && (entity as StudentServiceEnrollment).source === 'automatic' && this.access.actor.kind !== 'system')
+      denied('Automatic assignments can only be created by the billing worker')
+    if (this.resource === 'catalogServices') {
+      const next = entity as CoreEntityMap['catalogServices']
+      const previous = existing as CoreEntityMap['catalogServices'] | undefined
+      if (next.autoBilling.mode !== 'off' || (previous && previous.autoBilling.mode !== 'off'))
+        await this.access.finance.assertConfigureAutoBilling(next.academicYearId)
+    }
     if (this.resource === 'teachers' && this.access.actor.kind === 'teacher') {
       return this.access.assertTeacherSelfProfile(
         entity as CoreEntityMap['teachers'],

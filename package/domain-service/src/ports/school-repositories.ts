@@ -2,6 +2,7 @@ import type { AccountInvitationRepository, Allocation, AssessmentDependenciesPor
 import type { CronJobSchedulePort } from './platform/cron-job-schedule'
 
 export interface SchoolRepositories extends CoreEntityRepositories {
+  readonly autoBilling: import('@edaya/core').AutoBillingPort
   readonly financeProjections: FinanceProjectionPort
   readonly dashboardProjections: DashboardProjectionPort
   readonly conversations: import('@edaya/core').ConversationsPort

@@ -17,3 +17,9 @@ The historical OpenAPI compatibility baseline intentionally remains unchanged. Q
 ## Durable school intake
 
 Apply additive school migration `0047_durable_school_imports.sql` after the academic-discipline/placement-profile model. Upgrade web and mobile clients from the same backend candidate. The staff import UI uses the new typed `imports` namespace; former browser execution loops are removed. The mode is session-wide `S | M | O`, defaults to `M`, and optional `on_existing` rows override it. File metadata has no conflict option. See [durable school imports](../architecture/school-imports.md) for transaction, recovery, correction and format contracts. Rollout requires preview-only validation of prepared files before a separately approved live import.
+
+## Automatic fee billing
+
+Apply school migration `0049_auto_billing.sql` with the matching backend and regenerated first-party clients. It replaces the fee enrollment mode with `autoBilling`; every existing fee starts Off and the migration creates neither charges nor background work. Enabling All students or Matching students explicitly schedules missing assignments for active class placements in that fee's academic year. Existing charge snapshots and cancellations are preserved.
+
+The transactional command outbox drives resumable automatic-billing runs. Request completion nudges the dispatcher, and the existing cron heartbeat recovers pending work. Fee details expose pending/running/completed/failed status and a retry command for unfinished work. Configuration and retry require catalog management plus assignment authority covering all students, classes, or grade levels in the fee's year; academic enrolment/profile writers need no added finance permission.

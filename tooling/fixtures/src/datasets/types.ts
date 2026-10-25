@@ -1,4 +1,4 @@
-import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, CalendarEventKind, CatalogEnrollmentMode, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
+import type { AcademicDisciplineInput, AcademicPeriodInput, AcademicYearInput, ActivityEnrollmentInput, ActivityInput, AnnouncementInput, AnnouncementTargetInput, AssessmentInput, AssessmentResultInput, AttachmentInput, AttendanceRecordInput, AutoBillingConfiguration, CalendarEventKind, CatalogServiceCategory, CatalogServiceStatus, ClassActivityEnrollmentInput, ClassGroupInput, ClassSubjectInput, DayOfWeek, DisciplinaryActionInput, GradeLevelInput, GradeScaleInput, GuardianInput, GuardianStudentLinkInput, IncidentInput, MessageDeliveryInput, PaymentMethod, PeriodDefinitionInput, ReportCardDefinitionInput, ReportCardDefinitionSectionRole, ResourceAssignmentInput, ResourceInput, ScheduleInput, SchoolInput, StaffAssignmentInput, StaffMemberInput, StudentClassEnrollmentInput, StudentDisciplinaryActionInput, StudentHealthProfileInput, StudentIncidentInvolvementInput, StudentInput, StudentNoteInput, SubjectInput, SubjectMatterInput, TeacherAssignmentInput, TeacherInput } from '@edaya/core'
 
 export type FixtureDatasetPurpose = 'demo-ci'
 
@@ -123,7 +123,7 @@ export interface FixtureCatalogService {
   name: string
   description?: string
   category?: CatalogServiceCategory
-  enrollmentMode?: CatalogEnrollmentMode
+  autoBilling?: AutoBillingConfiguration
   defaultPrice: number
   currency: string
   billingTerms: FixtureCatalogBillingTerms

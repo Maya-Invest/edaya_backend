@@ -16,6 +16,7 @@ export enum ServiceEnrollmentStatus {
 
 export enum ServiceEnrollmentSource {
   Staff = 'staff',
+  Automatic = 'automatic',
 }
 
 export const acceptedServiceTermsSchema = z.object({
@@ -38,6 +39,12 @@ export const studentServiceEnrollmentBaseSchema = z.object({
   academicYearId: z.string().trim().min(1, 'academicYearId must not be blank'),
   status: z.nativeEnum(ServiceEnrollmentStatus).default(ServiceEnrollmentStatus.Active),
   source: z.nativeEnum(ServiceEnrollmentSource).default(ServiceEnrollmentSource.Staff),
+  automation: z.object({
+    runId: z.string().min(1),
+    trigger: z.string().min(1),
+    triggeredById: z.string().min(1),
+    configurationRevision: z.string().min(1),
+  }).nullable().optional().transform(v => v ?? undefined),
   acceptedTerms: acceptedServiceTermsSchema,
   enrolledAt: zodDate().default(() => new Date()),
   cancelledAt: zodDate().nullable().optional().transform(v => v === null ? undefined : v),
@@ -48,6 +55,8 @@ export const studentServiceEnrollmentBaseSchema = z.object({
 })
 
 function refineEnrollment(data: any, ctx: z.RefinementCtx) {
+  if ((data.source === ServiceEnrollmentSource.Automatic) !== Boolean(data.automation))
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Automatic assignments require automation provenance' })
   if (data.acceptedTerms.catalogServiceId !== data.catalogServiceId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -100,6 +109,7 @@ export class StudentServiceEnrollment {
   get academicYearId() { return this.data.academicYearId }
   get status() { return this.data.status }
   get source() { return this.data.source }
+  get automation() { return this.data.automation }
   get acceptedTerms() { return this.data.acceptedTerms }
   get enrolledAt() { return this.data.enrolledAt }
   get cancelledAt() { return this.data.cancelledAt }
@@ -121,6 +131,7 @@ export class StudentServiceEnrollment {
       academicYearId: this.academicYearId,
       status: this.status,
       source: this.source,
+      automation: this.automation,
       acceptedTerms: {
         catalogServiceId: this.acceptedTerms.catalogServiceId,
         name: this.acceptedTerms.name,

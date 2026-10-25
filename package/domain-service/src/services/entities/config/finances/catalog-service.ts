@@ -3,15 +3,20 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, CatalogServiceStatus } from '@edaya/core'
+import { validateAutoBillingReferences } from '../../../../capabilities/finance/auto-billing'
+import { feeBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
 import { assertSchoolCurrency } from '../../../../capabilities/finance/school-currency'
 import { config } from '../../entity-config'
 import { directSchoolTenant } from '../../entity-config/tenant'
 
-export const catalogServiceConfig: EntityConfigFactory<CatalogService> = ({ repositories, atomicExecution }) => {
+export const catalogServiceConfig: EntityConfigFactory<CatalogService> = (context) => {
+  const { repositories, atomicExecution } = context
   return config({
     repository: repositories.catalogServices,
     tenant: directSchoolTenant(),
     resource: 'catalogServices',
+    additionalWriteLockGroups: ['academic-state'],
+    hooks: feeBillingHooks(context),
     gates: {
       preSave: validateCatalogServiceSave,
       preDelete: validateCatalogServiceDelete,
@@ -25,6 +30,7 @@ export async function validateCatalogServiceSave(
   existing: CatalogService | undefined,
   repositories: SchoolRepositories,
 ): Promise<void> {
+  await validateAutoBillingReferences(service, repositories)
   await assertSchoolCurrency(repositories, service.schoolId, service.defaultPrice.currency)
   const [school, academicYear] = await Promise.all([
     repositories.schools.findById(service.schoolId),

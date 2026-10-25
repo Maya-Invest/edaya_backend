@@ -31,6 +31,8 @@ export async function validateStudentServiceEnrollmentSave(
   await assertSchoolCurrency(repositories, entity.schoolId, entity.acceptedTerms.currency)
   if (!existing)
     return
+  if (existing.source !== entity.source || JSON.stringify(existing.automation) !== JSON.stringify(entity.automation))
+    throw new BusinessRuleViolationError('ENROLLMENT_SOURCE_IMMUTABLE', 'Assignment provenance cannot change')
   if (existing.schoolId !== entity.schoolId || existing.studentId !== entity.studentId || existing.catalogServiceId !== entity.catalogServiceId) {
     throw new BusinessRuleViolationError('ENROLLMENT_IDENTITY_LOCKED', `Enrollment ${existing.id} identity cannot change`)
   }

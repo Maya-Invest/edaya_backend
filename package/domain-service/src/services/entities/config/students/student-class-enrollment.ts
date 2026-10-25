@@ -3,15 +3,15 @@ import type { SchoolRepositories } from '../../../../ports/school-repositories'
 import type { EntityConfigFactory, EntityTenantResolver } from '../../entity-config'
 import { denyResourceAccess } from '@edaya/authorization'
 import { BusinessRuleViolationError, StudentClassEnrollmentStatus, StudentStatus } from '@edaya/core'
-import { placementParticipationHooks } from '../../../../capabilities/subject-enrollment/mutation-hooks'
+import { enrollmentBillingHooks } from '../../../../capabilities/finance/auto-billing-hooks'
 import { config } from '../../entity-config'
 import { dateTime } from '../../entity-config/helper-utils'
 import { indirectTenant } from '../../entity-config/tenant'
 
 // Extracted from domain/students/student-class-enrollment.ts (PR3)
-export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = ({ repositories, atomicExecution }) =>
+export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrollment> = context =>
   config({
-    repository: repositories.enrollments,
+    repository: context.repositories.enrollments,
     tenant: studentLinkedTenant(),
     resource: 'enrollments',
     writeLockGroup: 'academic-state',
@@ -20,8 +20,8 @@ export const studentClassEnrollmentConfig: EntityConfigFactory<StudentClassEnrol
       preSave: validateEnrollmentSave,
       preDelete: validateEnrollmentDelete,
     },
-    hooks: placementParticipationHooks,
-    atomicExecution,
+    hooks: enrollmentBillingHooks(context),
+    atomicExecution: context.atomicExecution,
   })
 
 function studentLinkedTenant(): EntityTenantResolver<StudentClassEnrollment> {

@@ -2,7 +2,6 @@ import type { CatalogService, Payment, StudentCharge, StudentServiceEnrollment, 
 import type { StoreDatabase } from '../postgres-store'
 import type { EntityStores } from './entity-stores-types'
 import {
-  CatalogEnrollmentMode,
   CatalogServiceCategory,
   CatalogService as CatalogServiceCtor,
   CatalogServiceStatus,
@@ -34,7 +33,7 @@ export function createFinancesEntityStores(db: StoreDatabase): Pick<EntityStores
         name: entity.name,
         description: entity.description ?? null,
         category: entity.category,
-        enrollmentMode: entity.enrollmentMode,
+        autoBilling: entity.autoBilling,
         billingKind: entity.billingKind,
         defaultPrice: entity.defaultPrice.amount,
         currency: entity.defaultPrice.currency,
@@ -50,7 +49,7 @@ export function createFinancesEntityStores(db: StoreDatabase): Pick<EntityStores
         name: row.name,
         description: row.description,
         category: enumValue(CatalogServiceCategory, row.category, 'catalogServices.category'),
-        enrollmentMode: enumValue(CatalogEnrollmentMode, row.enrollmentMode, 'catalogServices.enrollmentMode'),
+        autoBilling: deserializeJsonb(row.autoBilling),
         billingKind: 'one_time',
         defaultPrice: row.defaultPrice,
         currency: row.currency,
@@ -72,6 +71,7 @@ export function createFinancesEntityStores(db: StoreDatabase): Pick<EntityStores
         academicYearId: entity.academicYearId,
         status: entity.status,
         source: entity.source,
+        automation: entity.automation ?? null,
         acceptedTerms: {
           catalogServiceId: entity.acceptedTerms.catalogServiceId,
           name: entity.acceptedTerms.name,
@@ -97,6 +97,7 @@ export function createFinancesEntityStores(db: StoreDatabase): Pick<EntityStores
         academicYearId: row.academicYearId,
         status: enumValue(ServiceEnrollmentStatus, row.status, 'studentServiceEnrollments.status'),
         source: enumValue(ServiceEnrollmentSource, row.source, 'studentServiceEnrollments.source'),
+        automation: row.automation ? deserializeJsonb(row.automation) : undefined,
         acceptedTerms: deserializeJsonb(row.acceptedTerms),
         enrolledAt: row.enrolledAt,
         cancelledAt: row.cancelledAt,

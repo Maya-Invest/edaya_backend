@@ -27,7 +27,7 @@ export const gradeLevelConfig: EntityConfigFactory<GradeLevel> = ({ repositories
       if (normalizeCommandRequest(level.gradingPolicies) !== normalizeCommandRequest(existing?.gradingPolicies ?? []))
         throw new BusinessRuleViolationError('GRADING_COMMAND_REQUIRED', 'Use the grading configuration command')
     }, preDelete: async (level, repos) => {
-      if (await repos.subjects.count({ gradeLevelId: level.id }))
+      if (await repos.subjects.count({ gradeLevelId: level.id }) || (await repos.catalogServices.list({ schoolId: level.schoolId })).some(fee => fee.autoBilling.mode === 'matching' && fee.autoBilling.gradeLevelIds?.includes(level.id)))
         throw new BusinessRuleViolationError('GRADE_LEVEL_HAS_SUBJECTS', 'Remove subjects before deleting their grade level')
     } },
 

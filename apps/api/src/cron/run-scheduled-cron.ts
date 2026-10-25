@@ -2,7 +2,7 @@ import type { LoggerPort } from "@edaya/core";
 import type { CronHeartbeatSummary, CronJobDispatcherPort, CronJobKey } from "@edaya/service";
 import type { ApiSchoolApplication } from "@/lib/school-api/application";
 import type { ApiRuntime } from "@/runtime/types";
-import { computeNextRunAt, createInlineCronJobDispatcher, dispatchConversationNotifications, dispatchDocumentRender, dispatchGradingRecalculation, dispatchPrivateFileCleanup, dispatchSchoolImports, runCronJobs, tickCronSchedules } from "@edaya/service";
+import { computeNextRunAt, createInlineCronJobDispatcher, dispatchAutoBilling, dispatchConversationNotifications, dispatchDocumentRender, dispatchGradingRecalculation, dispatchPrivateFileCleanup, dispatchSchoolImports, runCronJobs, tickCronSchedules } from "@edaya/service";
 import { resolveCronJobDispatcher } from "@/runtime/worker/resolve-cron-job-dispatcher";
 
 export interface RunScheduledCronOptions {
@@ -41,6 +41,7 @@ export async function runCronHeartbeat(
 
   await dispatchGradingRecalculation(application);
   await dispatchSchoolImports(application, { maxPages: 1000, maxDurationMs: 20000 });
+  await dispatchAutoBilling(application);
   await dispatchPrivateFileCleanup(application);
   await dispatchDocumentRender(application);
   await dispatchConversationNotifications(application);
@@ -81,6 +82,7 @@ export async function runScheduledCronWithRuntime(
   });
   await dispatchGradingRecalculation(application);
   await dispatchSchoolImports(application, { maxPages: 1000, maxDurationMs: 20000 });
+  await dispatchAutoBilling(application);
   await dispatchPrivateFileCleanup(application);
   await dispatchDocumentRender(application);
   await dispatchConversationNotifications(application);

@@ -94,6 +94,7 @@ export function createCoreEntityServices(args: ServiceArgs): CoreEntityServices 
     repositories: args.repositories,
     notificationGateway: args.notificationGateway,
     durableWork: args.durableWork,
+    commandJournal: args.commandJournal,
   }
   const entries = CORE_ENTITY_KEYS.map(key => [
     key,

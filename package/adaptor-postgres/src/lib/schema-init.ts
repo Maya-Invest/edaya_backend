@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 
 /** Tables cleared in dependency-safe order (children before parents where practical). */
 export const CLEAR_TABLE_ORDER = [
+  'auto_billing_runs',
   'student_academic_year_profiles',
   'teacher_academic_year_profiles',
   'placement_statuses',

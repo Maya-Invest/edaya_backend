@@ -1,4 +1,4 @@
-import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, calendarEventSchema, classGroupSchema, classSubjectProgressSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
+import { academicPeriodSchema, academicYearSchema, AccountInvitationContactChannel, AccountInvitationKind, activityEnrollmentSchema, activitySchema, announcementSchema, announcementTargetSchema, appendIncidentFollowUpSchema, assessmentResultSchema, assessmentSchema, AttachmentOwnerKind, attachmentPurposeSchema, attachmentSchema, attendanceArrivalSchema, attendanceCallSchema, AttendanceJustificationStatus, attendanceRecordSchema, AttendanceStatus, autoBillingSchema, calendarEventSchema, classGroupSchema, classSubjectProgressSchema, gradeScaleRangeSchema as coreGradeScaleRangeSchema, DeadlineComplianceStatus, decideMarksCorrectionSchema, decideTeacherCorrectionSchema, disciplinaryActionSchema, DOCUMENT_TEMPLATE_KEYS, editTeacherIncidentSchema, EnrollmentEndReason, gradeLevelSchema, gradeScaleSchema, guardianContactMethodSchema, guardianSchema, guardianStudentLinkSchema, IncidentInvolvementRole, incidentSchema, messageDeliverySchema, PaymentMethod, periodDefinitionSchema, permissionScopeSelectionsSchema, ProgressionDecision, rejectMarksCorrectionSchema, rejectTeacherCorrectionSchema, reportCardDefinitionSchema, reportCardDefinitionSectionSchema, reportCardResultSchema, requestMarksCorrectionSchema, requestTeacherCorrectionSchema, resourceAssignmentSchema, resourceSchema, reviseMarksCorrectionSchema, reviseTeacherCorrectionSchema, saveTeacherLogbookSchema, scheduleSchema, SCHOOL_ISSUANCE_ASSET_PURPOSES, SCHOOL_PUBLIC_BRANDING_PURPOSES, schoolSchema, staffAssignmentSchema, staffManualPermissionAssignmentBaseSchema, staffMemberSchema, staffPermissionProfileSchema, studentClassEnrollmentSchema, studentDisciplinaryActionSchema, StudentDisciplinaryActionStatus, studentHealthProfileSchema, studentIncidentInvolvementSchema, studentNoteSchema, studentSchema, StudentStatus, subjectCategorySchema, subjectMatterSchema, subjectSchema, takeOverTeacherIncidentSchema, teacherSchema, validateTeacherLogbookSchema } from "@edaya/core";
 import { NOTIFICATION_TEMPLATE_KEYS } from "@edaya/service";
 import { z } from "@hono/zod-openapi";
 import { field, namedObjectSchema, objectFromSchema } from "./helpers";
@@ -869,7 +869,7 @@ export const createCatalogServiceCommandSchema = z.object({
   name: field.text(),
   description: optionalText(),
   category: optionalText(),
-  enrollmentMode: optionalText(),
+  autoBilling: autoBillingSchema.optional(),
   defaultPrice: field.positiveNumber(),
   currency: field.text(),
   billingTerms: oneTimeBillingTermsCommandSchema,
@@ -882,7 +882,7 @@ export const updateCatalogServiceCommandSchema = z.object({
   name: optionalText(),
   description: z.string().nullable().optional(),
   category: optionalText(),
-  enrollmentMode: optionalText(),
+  autoBilling: autoBillingSchema.optional(),
   defaultPrice: field.optionalNumber(),
   billingTerms: oneTimeBillingTermsCommandSchema.optional(),
 }).openapi("UpdateCatalogServiceCommand");
@@ -1220,3 +1220,7 @@ export const upsertStudentAcademicYearProfileCommandSchema = z.object({ studentI
 export const upsertTeacherAcademicYearProfileCommandSchema = z.object({ teacherId: field.id(), academicYearId: field.id(), disciplineIds: z.array(field.id()).optional(), declaredHours: z.number().finite().nonnegative().nullable().optional(), hoursPeriod: z.enum(["unspecified", "week", "month", "term", "academic_year", "other"]).optional(), hoursPeriodLabel: z.string().nullable().optional() }).openapi("UpsertTeacherAcademicYearProfileCommand");
 export const removeStudentAcademicYearProfileCommandSchema = z.object({ id: field.id() }).openapi("RemoveStudentAcademicYearProfileCommand");
 export const removeTeacherAcademicYearProfileCommandSchema = z.object({ id: field.id() }).openapi("RemoveTeacherAcademicYearProfileCommand");
+
+export const getAutoBillingOptionsCommandSchema = z.object({}).openapi("GetAutoBillingOptionsCommand");
+export const getFeeAutoBillingCommandSchema = z.object({ catalogServiceId: field.id() }).openapi("GetFeeAutoBillingCommand");
+export const retryAutoBillingCommandSchema = z.object({ runId: field.id(), requestId: z.string().trim().min(1).max(200) }).openapi("RetryAutoBillingCommand");

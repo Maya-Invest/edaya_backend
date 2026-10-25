@@ -16,7 +16,6 @@ import {
   deriveChargeStatus,
   FINANCE_BATCH_ENROLL_LIMIT,
   isAllocationActive,
-  materializeInstallments,
   netActiveSettlement,
   oneTimeChargeId,
   overdueInstallmentRemainder,
@@ -28,7 +27,6 @@ import {
   ServiceEnrollmentSource,
   ServiceEnrollmentStatus,
   StudentAccountEntry,
-  StudentCharge as StudentChargeEntity,
   StudentFinanceSummary,
   StudentServiceEnrollment as StudentServiceEnrollmentEntity,
   StudentYearAccount as StudentYearAccountEntity,
@@ -36,7 +34,9 @@ import {
   sumEntryBalance,
 } from '@edaya/core'
 import { acceptedCatalogTerms } from '../../capabilities/finance/accepted-catalog-terms'
+import { getAutoBillingOptions, getFeeAutoBilling, retryAutoBilling } from '../../capabilities/finance/auto-billing-management'
 import { loadFinanceReconciliation } from '../../capabilities/finance/load-finance-reconciliation'
+import { materializeServiceCharge } from '../../capabilities/finance/materialize-service-charge'
 import { assertCurrencyAgreement, assertSchoolCurrency, requireSchoolCurrency } from '../../capabilities/finance/school-currency'
 import { groupByKey } from '../../capabilities/shared/bounded-reads'
 import { schoolCommandScope } from '../commands/school-command-scope'
@@ -85,7 +85,7 @@ export interface CreateCatalogServiceInput {
   name: string
   description?: string
   category?: CatalogService['category']
-  enrollmentMode?: CatalogService['enrollmentMode']
+  autoBilling?: CatalogService['autoBilling']
   defaultPrice: number
   currency: string
   billingTerms: CatalogService['billingTerms']
@@ -98,7 +98,7 @@ export interface UpdateCatalogServiceInput {
   name?: string
   description?: string | null
   category?: CatalogService['category']
-  enrollmentMode?: CatalogService['enrollmentMode']
+  autoBilling?: CatalogService['autoBilling']
   defaultPrice?: number
   billingTerms?: CatalogService['billingTerms']
 }
@@ -202,6 +202,10 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
     this.repositories = pickWorkflowRepositories('finance', base.repositories)
   }
 
+  getAutoBillingOptions() { return getAutoBillingOptions(this.baseService) }
+  getFeeAutoBilling(input: { catalogServiceId: string }) { return getFeeAutoBilling(this.baseService, input) }
+  retryAutoBilling(input: { runId: string, requestId: string }) { return retryAutoBilling(this.baseService, input) }
+
   createFee(): never { return financeModelReplaced() }
   assignFeeToStudent(): never { return financeModelReplaced() }
   cancelPayment(): never { return financeModelReplaced() }
@@ -214,7 +218,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       command: 'createCatalogService',
       requestId: input.id,
       input,
-      lockKeys: [`catalog:${input.id}`],
+      lockKeys: [`academic-state:${this.schoolId()}`, `catalog:${input.id}`],
       authorize: async () => {
         await this.baseService.access.entity('catalogServices').assertSave(new CatalogServiceEntity({
           id: input.id,
@@ -223,7 +227,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
           name: input.name,
           description: input.description,
           category: input.category,
-          enrollmentMode: input.enrollmentMode,
+          autoBilling: input.autoBilling,
           defaultPrice: input.defaultPrice,
           currency: input.currency,
           billingTerms: input.billingTerms,
@@ -241,7 +245,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
           name: input.name,
           description: input.description,
           category: input.category,
-          enrollmentMode: input.enrollmentMode,
+          autoBilling: input.autoBilling,
           defaultPrice: input.defaultPrice,
           currency: input.currency,
           billingTerms: input.billingTerms,
@@ -260,14 +264,14 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       command: 'updateCatalogService',
       requestId: input.requestId,
       input,
-      lockKeys: [`catalog:${input.id}`],
+      lockKeys: [`academic-state:${this.schoolId()}`, `catalog:${input.id}`],
       authorize: async () => {
         const existing = await this.requireCatalog(input.id)
         await this.baseService.access.entity('catalogServices').assertSave(existing.copyWith({
           name: input.name ?? existing.name,
           description: input.description === undefined ? existing.description : input.description ?? undefined,
           category: input.category ?? existing.category,
-          enrollmentMode: input.enrollmentMode ?? existing.enrollmentMode,
+          autoBilling: input.autoBilling ?? existing.autoBilling,
           defaultPrice: input.defaultPrice ?? existing.defaultPrice.amount,
           billingTerms: input.billingTerms ?? existing.billingTerms,
         }), existing)
@@ -280,7 +284,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
           name: input.name ?? existing.name,
           description: input.description === undefined ? existing.description : input.description ?? undefined,
           category: input.category ?? existing.category,
-          enrollmentMode: input.enrollmentMode ?? existing.enrollmentMode,
+          autoBilling: input.autoBilling ?? existing.autoBilling,
           defaultPrice: input.defaultPrice ?? existing.defaultPrice.amount,
           billingTerms: input.billingTerms ?? existing.billingTerms,
           updatedAt: new Date(),
@@ -325,6 +329,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       input,
       lockKeys: [
         `catalog:${catalog.id}`,
+        ...unique.map(id => `service-assignment:${catalog.id}:${id}:${catalog.academicYearId}`),
         ...accountIds.map(id => `account:${id}`),
         ...chargeIds.map(id => `charge:${id}`),
         ...unique.map(id => `account-create:${this.schoolId()}:${id}:${catalog.academicYearId}:${catalog.defaultPrice.currency}`),
@@ -905,7 +910,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
       command,
       requestId: input.requestId,
       input,
-      lockKeys: [`catalog:${id}`],
+      lockKeys: [`academic-state:${this.schoolId()}`, `catalog:${id}`],
       authorize: async () => {
         await this.requireCatalog(id)
         await this.baseService.access.entity('catalogServices').assertSave(
@@ -963,31 +968,7 @@ export class FinanceServiceWorkflow extends BaseServiceWorkflow {
   }
 
   private async materializeCharge(enrollment: StudentServiceEnrollment, dueDate?: Date): Promise<StudentCharge> {
-    const chargeId = oneTimeChargeId(enrollment.id)
-    const existing = await this.repositories.studentCharges.findById(chargeId)
-    if (existing)
-      return existing
-    if (!enrollment.isActive)
-      fail('ENROLLMENT_INACTIVE', `Enrollment ${enrollment.id} is not active`)
-    const amount = enrollment.acceptedTerms.price
-    const fallbackDue = dueDate ?? enrollment.acceptedTerms.billingTerms.singleDueDate
-    const installments = materializeInstallments(chargeId, amount, enrollment.acceptedTerms.installmentTemplates, fallbackDue)
-    const effectiveDue = fallbackDue ?? installments.at(-1)?.dueDate
-    const charge = new StudentChargeEntity({
-      id: chargeId,
-      schoolId: enrollment.schoolId,
-      studentId: enrollment.studentId,
-      enrollmentId: enrollment.id,
-      academicYearId: enrollment.academicYearId,
-      label: enrollment.acceptedTerms.name,
-      expectedAmount: amount,
-      currency: enrollment.acceptedTerms.currency,
-      dueDate: effectiveDue,
-      installments,
-      status: ChargeStatus.Pending,
-    })
-    await this.baseService.entities.studentCharges.save(charge)
-    return charge
+    return materializeServiceCharge(this.baseService, enrollment, dueDate)
   }
 
   private async mutateCharge(
