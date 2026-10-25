@@ -1,7 +1,7 @@
 # Backend remediation and marks corrections
 
 Implementation baseline: `6cf9b7d65df440e351cf209d5717ae3895b6d1cc`.
-Source audit: `../../../audits/edaya-backend-2026-09-22/REPORT.md` in the parent workspace.
+Source audit: `../../../bin/audits/edaya-backend-2026-09-22/REPORT.md` in the parent workspace.
 
 ## Accepted decisions
 

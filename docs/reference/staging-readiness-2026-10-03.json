@@ -12,7 +12,7 @@
   "apkProvenanceSchemaVersion": 3,
   "clientPackage": "@maya-invest/edaya-api-client",
   "clientPublished": false,
-  "candidateManifest": "../../../release-validation/unified-api-2026-10-03/manifest.json",
+  "candidateManifest": "../../../bin/release-validation/unified-api-2026-10-03/manifest.json",
   "releaseContractId": "5608d72f47cb592cb8134ad60b755414fd72db8a2afbac6c0996dca238fe742b",
   "counts": {
     "backendPackageUnit": 2021,
@@ -80,10 +80,10 @@
     "Three optional native PostgreSQL benchmarks are skipped by the functional integration runner."
   ],
   "evidence": {
-    "browser": "/Users/atoumbre/SoftiLab/maya_invest/codebase/release-validation/unified-api-2026-10-03/browser-integration.json",
-    "mobile": "/Users/atoumbre/SoftiLab/maya_invest/codebase/release-validation/unified-api-2026-10-03/mobile-integration.json",
-    "preflight": "/Users/atoumbre/SoftiLab/maya_invest/codebase/release-validation/unified-api-2026-10-03/preflight.json",
-    "bootstrap": "/Users/atoumbre/SoftiLab/maya_invest/codebase/release-validation/unified-api-2026-10-03/bootstrap-rehearsal.json",
+    "browser": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/browser-integration.json",
+    "mobile": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/mobile-integration.json",
+    "preflight": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/preflight.json",
+    "bootstrap": "/Users/atoumbre/SoftiLab/maya_invest/codebase/bin/release-validation/unified-api-2026-10-03/bootstrap-rehearsal.json",
     "rawLocalLogs": "/private/tmp/edaya-unified-readiness-20261003"
   }
 }

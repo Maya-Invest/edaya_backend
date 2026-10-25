@@ -25,7 +25,7 @@ Release manifest schema 4 records three revisions, one matching API-client publi
 
 The browser marks-entry assertion now waits for one matching visible element; persisted marks were already present in its failure screenshot. Teacher synchronization/grading tests use bounded per-roster deadlines for sequential writes and retain full-roster and duplicate assertions. Runs invalidated by fixture edits were discarded; the final evidence passed freshness checks against unchanged sources.
 
-The exact committed backend/frontend/mobile revisions are recorded in the [schema-4 candidate manifest](../../../release-validation/unified-api-2026-10-03/manifest.json). APK checksums, certificates and the release-contract fingerprint appear in [the redacted validation record](staging-readiness-2026-10-03.json). APK schema-3 provenance is stored in `edaya_mobile/release-apks/apk-source.json`.
+The exact committed backend/frontend/mobile revisions are recorded in the [schema-4 candidate manifest](../../../bin/release-validation/unified-api-2026-10-03/manifest.json). APK checksums, certificates and the release-contract fingerprint appear in [the redacted validation record](staging-readiness-2026-10-03.json). APK schema-3 provenance is stored in `edaya_mobile/release-apks/apk-source.json`.
 
 ## Infrastructure blockers
 
