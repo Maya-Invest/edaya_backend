@@ -36,11 +36,11 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "4ba7953d5b8e4f398134b995d92d8596"
+          "id": "b910754e7de344448b7b8b19be5645f1"
         },
         {
           "binding": "HYPERDRIVE_AUTH",
-          "id": "6f965570779e4214b67484f1cd1dda68"
+          "id": "1f29cf5c2c8f4f0eb8019aa9d6cd74f5"
         }
       ],
       "send_email": [
