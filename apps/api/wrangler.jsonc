@@ -36,11 +36,11 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "ac4b84cb883843f5b04f9d1c30f363d5"
+          "id": "4ba7953d5b8e4f398134b995d92d8596"
         },
         {
           "binding": "HYPERDRIVE_AUTH",
-          "id": "278ed0bcd2fb4adca4cc6283a85eb33e"
+          "id": "6f965570779e4214b67484f1cd1dda68"
         }
       ],
       "send_email": [
@@ -81,7 +81,7 @@
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
-          "id": "5a94d81b83d54a3cb5210f8f4e027d02"
+          "id": "773f350615fc43919078baf225d7c1a9"
         }
       ]
     },
@@ -90,11 +90,11 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "c65edec7dba54f01a45d2d5c2f95e0a5"
+          "id": "4a24601d0a32497a82da4b00be086faa"
         },
         {
           "binding": "HYPERDRIVE_AUTH",
-          "id": "d355a17a3bcc4369b3394f9f86f2ee47"
+          "id": "4ba7953d5b8e4f398134b995d92d8596"
         }
       ],
       "send_email": [
@@ -135,7 +135,7 @@
       "kv_namespaces": [
         {
           "binding": "AUTH_KV",
-          "id": "5381bed94af74b478886d49ef52f1a52"
+          "id": "6b05cc9701e04c4993d5cf376fbae09e"
         }
       ]
     }
