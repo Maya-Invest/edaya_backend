@@ -3217,6 +3217,90 @@
           "academicYearId"
         ]
       },
+      "EdayaSparkResolveGuardianResponse": {
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string"
+                },
+                "schoolId": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "classLabel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "gradeLevel": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "order": {
+                      "type": "integer"
+                    },
+                    "cycle": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "label",
+                    "order"
+                  ]
+                }
+              },
+              "required": [
+                "studentId",
+                "schoolId",
+                "firstName",
+                "lastName"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schoolId",
+          "displayName",
+          "children"
+        ]
+      },
+      "EdayaSparkResolveGuardianRequest": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "subjectId"
+        ]
+      },
       "School": {
         "type": "object",
         "properties": {
@@ -36585,6 +36669,78 @@
           },
           "500": {
             "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/edaya-spark/resolve-guardian": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Resolve a guardian and linked students for Edaya Spark (sibling secret)",
+        "requestBody": {
+          "description": "Identity subject to resolve",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdayaSparkResolveGuardianRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guardian school and children",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EdayaSparkResolveGuardianResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid resolve secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {

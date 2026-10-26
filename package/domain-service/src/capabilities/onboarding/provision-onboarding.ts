@@ -1,4 +1,4 @@
-import type { ActorMetadata } from '@edaya/authorization'
+import type { ActorMetadata, EdayaSparkS2sKeyMode } from '@edaya/authorization'
 import type { CommandJson } from '@edaya/core'
 import type { ApplyStructureTemplateResult, ReviewedDisciplineMapping } from './apply-structure-template'
 import type { InviteStaffMembersResult } from './invite-staff-members'
@@ -276,6 +276,7 @@ async function executeProvision(
   options: {
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
   },
   schoolId: string,
   requestId: string,
@@ -308,6 +309,9 @@ async function executeProvision(
         city: input.school.city,
         country: input.school.country,
         requestId,
+        ...(options.edayaSparkS2sKeyMode
+          ? { edayaSparkS2sKeyMode: options.edayaSparkS2sKeyMode }
+          : {}),
       })
     })
     actor = await track('resolveOwnerActor', async () => {
@@ -385,6 +389,7 @@ export async function provisionOnboarding(
     existingActor?: ActorMetadata
     inviteBaseUrl?: string
     allowPublicSchoolRegistration: boolean
+    edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
   },
 ): Promise<ProvisionOnboardingResult> {
   if (!options.allowPublicSchoolRegistration && options.existingActor?.kind !== 'staff') {

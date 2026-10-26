@@ -21,6 +21,9 @@ describe("OpenAPI document", () => {
     expect(doc.components.schemas.ReportCardResultSection.type).toBe("object");
     expect(doc.paths["/auth/edaya/otp/start"].post?.security).toEqual([]);
     expect(doc.paths["/auth/edaya/access-token"].post).toBeDefined();
-    expect(Object.keys(doc.paths).some(path => path.startsWith("/internal/"))).toBe(false);
+    expect(Object.keys(doc.paths).filter(path => path.startsWith("/internal/"))).toEqual([
+      "/internal/edaya-spark/resolve-guardian",
+    ]);
+    expect(doc.paths["/internal/edaya-spark/resolve-guardian"].post).toBeDefined();
   });
 });

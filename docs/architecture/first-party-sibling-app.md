@@ -2,14 +2,14 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Implemented (Children AI bootstrap notes) |
+| Status | Implemented (Edaya Spark bootstrap notes) |
 | Date | 12 September 2026 |
 | Repo | `edaya_backend` |
 | Owner | Platform |
 
 ## Summary
 
-A first-party sibling API (Children AI today) is an audience on identity (`FIRST_PARTY_API_ORIGINS`) and a **machine caller** of the school API. It does not import school packages. School never treats a parent or staff JWT as a sibling-app credential.
+A first-party sibling API (Edaya Spark today) is an audience on identity (`FIRST_PARTY_API_ORIGINS`) and a **machine caller** of the school API. It does not import school packages. School never treats a parent or staff JWT as a sibling-app credential.
 
 ## School API access
 
@@ -21,7 +21,7 @@ Authorization: Bearer s2s_live_…
 
 Do **not** forward a parent, guardian, or staff identity JWT to school routes. Those JWTs are human sessions (`X-Actor-Kind` staff / guardian / student / teacher / platform). Sibling backends are `kind: s2s`.
 
-Mint keys with `POST /core/s2s-clients` (`schoolId`, `clientId` such as `children-ai`, `accessClass: read | write`). See [platform-actors-and-s2s-keys.md](./platform-actors-and-s2s-keys.md).
+Mint keys with `POST /core/s2s-clients` (`schoolId`, `clientId` such as `edaya-spark`, `accessClass: read | write`). See [platform-actors-and-s2s-keys.md](./platform-actors-and-s2s-keys.md).
 
 `sk_live_` remains the staff service-account family used by seeding and internal school automation. Do not reuse it for sibling products.
 

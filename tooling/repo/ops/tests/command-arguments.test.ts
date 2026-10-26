@@ -14,6 +14,8 @@ test('seed targets preserve implementation arguments and default to local', () =
     [[], []],
     [['local'], []],
     [['staging', '--scope', 'doctor'], ['--staging', '--scope', 'doctor']],
+    [['--scope', 's2s-clients'], ['--scope', 's2s-clients']],
+    [['staging', '--scope', 's2s-clients'], ['--staging', '--scope', 's2s-clients']],
     [['clean'], ['clean']],
     [['clean', 'staging', '-y'], ['clean', '--staging', '--yes']],
     [['--clean', '--yes'], ['--clean', '--yes']],

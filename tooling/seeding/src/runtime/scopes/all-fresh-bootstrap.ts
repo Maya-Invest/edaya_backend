@@ -1,6 +1,10 @@
 import type { HttpSeedRuntimeContext, RunHttpDevSeedsResults } from '../types'
 import { ownerSubjectIdFromAuthProvision } from '../../bootstrap/dev-staff-auth-seed'
 import {
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
+} from '../../bootstrap/s2s-client'
+import {
   logProvisionedServiceAccountKey,
   provisionSeedingServiceAccountHttp,
 } from '../../bootstrap/service-account'
@@ -108,6 +112,13 @@ export async function tryRunAllFreshBootstrap(
     results.profilePhotosSkipped = true
     results.profilePhotosSkipReason = options.profilePhotosSkipReason
   }
+
+  await runSeedProgressStep(progress, async () => {
+    const s2s = await provisionEdayaSparkS2sClientHttp(client, {
+      schoolId: seedContext.schoolId,
+    })
+    logProvisionedEdayaSparkS2sClient(s2s)
+  })
 
   if (options.log) {
     logDevSeedResults({

@@ -1,5 +1,6 @@
 import importsRouter from "@/routes/imports.routes";
 import { createRouter } from "@/http/create-app";
+import { edayaSparkResolveGuardianHandler, edayaSparkResolveGuardianRoute } from "@/routes/edaya-spark-internal.routes";
 import { getAuthorizationProfilesHandler, getAuthorizationProfilesRoute } from "@/routes/authorization-profiles.route";
 import { getEffectiveGrantsHandler, getEffectiveGrantsRoute } from "@/routes/effective-grants.route";
 import {
@@ -115,6 +116,7 @@ router
   .openapi(getPermissionCatalogRoute, getPermissionCatalogHandler)
   .openapi(postScopeRenderRoute, postScopeRenderHandler)
   .openapi(postScopeSelectionsRenderRoute, postScopeSelectionsRenderHandler)
+  .openapi(edayaSparkResolveGuardianRoute, edayaSparkResolveGuardianHandler)
   .openapi(onboardingRegisterSchoolRoute, onboardingRegisterSchoolHandler)
   .openapi(onboardingListStructureTemplatesRoute, onboardingListStructureTemplatesHandler)
   .openapi(onboardingAccountStatusRoute, onboardingAccountStatusHandler)

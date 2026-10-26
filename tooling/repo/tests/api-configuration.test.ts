@@ -10,6 +10,11 @@ afterEach(() => {
 })
 
 describe('API configuration ownership', () => {
+  test('accepts the Spark resolve secret only in secrets', () => {
+    const secret = { EDAYA_SPARK_RESOLVE_SECRET: 'test-resolve-secret' }
+    expect(validateSecrets(secret)).toEqual(secret)
+    expect(() => validateConfig(secret)).toThrow('secret key')
+  })
   test('accepts terms settings in configuration and rejects unsupported modes', () => {
     expect(validateConfig({ AUTH_TERMS_MODE: 'preview' }, 'config', 'local')).toEqual({ AUTH_TERMS_MODE: 'preview' })
     expect(validateConfig({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' }, 'config', 'production')).toEqual({ AUTH_TERMS_MODE: 'enforced', AUTH_TERMS_VERSION: 'approved-v1' })

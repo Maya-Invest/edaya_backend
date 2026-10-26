@@ -698,6 +698,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/edaya-spark/resolve-guardian": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a guardian and linked students for Edaya Spark (sibling secret) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            /** @description Identity subject to resolve */
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EdayaSparkResolveGuardianRequest"];
+                };
+            };
+            responses: {
+                /** @description Guardian school and children */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EdayaSparkResolveGuardianResponse"];
+                    };
+                };
+                /** @description Invalid resolve secret */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Invalid request */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/core/onboarding/register-school": {
         parameters: {
             query?: never;
@@ -13464,6 +13527,27 @@ export interface components {
                 kind: "student";
                 studentId: string;
             })[];
+        };
+        EdayaSparkResolveGuardianResponse: {
+            schoolId: string;
+            displayName: string;
+            children: {
+                studentId: string;
+                schoolId: string;
+                firstName: string;
+                lastName: string;
+                classLabel?: string;
+                gradeLevel?: {
+                    id: string;
+                    name: string;
+                    label: string;
+                    order: number;
+                    cycle?: string;
+                };
+            }[];
+        };
+        EdayaSparkResolveGuardianRequest: {
+            subjectId: string;
         };
         School: {
             id: string;

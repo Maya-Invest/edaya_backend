@@ -14,6 +14,6 @@ export function commandDocs(help: string, write = false, directory = root): void
   const expected = `${text.slice(0, from + start.length)}\n\n\`\`\`text\n${help.trimEnd()}\n\`\`\`\n\n${text.slice(to)}`
   if (write)
     writeFileSync(file, expected)
-  else if (expected !== text)
+  else if (expected.replaceAll('\r\n', '\n') !== text.replaceAll('\r\n', '\n'))
     throw new Error('Command documentation drift; run generate commands')
 }

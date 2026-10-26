@@ -1,4 +1,10 @@
 export { HttpAuthProvisioner, signInViaHttp } from './auth/http-provisioner'
+export {
+  EDAYA_SPARK_S2S_CLIENT_ID,
+  logProvisionedEdayaSparkS2sClient,
+  provisionEdayaSparkS2sClientHttp,
+  type ProvisionEdayaSparkS2sClientResult,
+} from './s2s-client'
 export { seedMinimalSchool } from './seed-minimal-school'
 export {
   logProvisionedServiceAccountKey,

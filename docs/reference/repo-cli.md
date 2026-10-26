@@ -418,7 +418,7 @@ Arguments:
 Options:
   -h, --help               Show help for this command.
   --scope <scope>
-      Seed scope. Default: all. Values: all, school, auth, auth:link, access, profile-pictures, service-account, validate, doctor.
+      Seed scope. Default: all. Values: all, school, auth, auth:link, access, profile-pictures, service-account, s2s-clients, validate, doctor.
   --clean
       Delete school data before seeding; prompts unless --yes.
   -y, --yes

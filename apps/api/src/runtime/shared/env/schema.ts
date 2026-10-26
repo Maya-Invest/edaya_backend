@@ -30,7 +30,9 @@ export const EnvSchema = z.object({
   AUTH_TERMS_MODE: z.enum(["off", "preview", "enforced"]).default("off"),
   AUTH_TERMS_VERSION: z.string().optional(),
   PHONE_AUTH_MODE: z.enum(["disabled", "sms_only", "whatsapp_first"]).default("disabled"),
-  TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173"),
+  TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175"),
+  /** Shared secret for Edaya Spark guardian resolution. Requests without it are rejected. */
+  EDAYA_SPARK_RESOLVE_SECRET: z.string().min(1).optional(),
   /** Email transport for in-process notify (`log` local default; `cloudflare` on the API Worker) */
   EMAIL_TRANSPORT: z.enum(["log", "cloudflare", "smtp"]).optional(),
   /** SMS transport (`log` locally; unimplemented on the API Worker until a provider is registered) */

@@ -2,7 +2,7 @@ import type { StructureTemplateDefinition } from "@edaya/service";
 import type { AuthenticatedSession } from "@/http/dependencies/session-actor";
 import type { AppRouteHandler } from "@/http/types";
 import { randomUUID } from "node:crypto";
-import { ActorAssuranceLevel } from "@edaya/authorization";
+import { ActorAssuranceLevel, resolveEdayaSparkS2sKeyMode } from "@edaya/authorization";
 import { BusinessRuleViolationError } from "@edaya/core";
 import { listStructureTemplatesForCountry, resolveStructureTemplates } from "@edaya/fixtures/onboarding";
 import { applyStructureTemplate, completeOnboardingWizard, inviteStaffMembers, isOnboardingStaffInviteRoleKey, isStructureTemplateId, provisionOnboarding, recordOnboardingAccountProgress, registerSchoolWithOwner, resolveOnboardingAccountStatus } from "@edaya/service";
@@ -238,7 +238,9 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
   }
 
   const body = c.req.valid("json");
-  if (c.get("actor")) {
+  const actor = c.get("actor");
+  // A platform operator has no school yet. Local seed signs in the demo owner, who is also PLATFORM_BOOTSTRAP_EMAILS, before register-school.
+  if (actor && actor.kind !== "platform") {
     return conflictResponse(c, new BusinessRuleViolationError(
       "SUBJECT_ALREADY_LINKED",
       "This account is already linked to a school actor",
@@ -265,6 +267,7 @@ export const onboardingRegisterSchoolHandler: AppRouteHandler<typeof onboardingR
       ...(body.ownerLastName ? { ownerLastName: body.ownerLastName } : {}),
       ...(body.ownerEmail ? { ownerEmail: body.ownerEmail } : {}),
       requestId,
+      edayaSparkS2sKeyMode: resolveEdayaSparkS2sKeyMode(c.env.NODE_ENV),
     });
 
     return c.json(
@@ -520,6 +523,7 @@ export const onboardingProvisionHandler: AppRouteHandler<typeof onboardingProvis
         existingActor: c.get("actor") ?? undefined,
         inviteBaseUrl: resolveInviteBaseUrl(c.env),
         allowPublicSchoolRegistration,
+        edayaSparkS2sKeyMode: resolveEdayaSparkS2sKeyMode(c.env.NODE_ENV),
       },
     );
     const { structure, ...rest } = result;

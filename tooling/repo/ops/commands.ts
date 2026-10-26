@@ -32,7 +32,7 @@ const seedTarget: Argument = { name: 'target', choices: ['local', 'staging'], op
 const seed = leaf('ops seed', 'Populate demo data while supervising background-work pauses.', {
   arguments: [seedTarget],
   options: {
-    '--scope': { value: 'scope', description: 'Seed scope. Default: all.', choices: ['all', 'school', 'auth', 'auth:link', 'access', 'profile-pictures', 'service-account', 'validate', 'doctor'] },
+    '--scope': { value: 'scope', description: 'Seed scope. Default: all.', choices: ['all', 'school', 'auth', 'auth:link', 'access', 'profile-pictures', 'service-account', 's2s-clients', 'validate', 'doctor'] },
     '--clean': { description: 'Delete school data before seeding; prompts unless --yes.' },
     '--yes': yes,
     '--repair': { description: 'Run the repair chain with --scope doctor.' },

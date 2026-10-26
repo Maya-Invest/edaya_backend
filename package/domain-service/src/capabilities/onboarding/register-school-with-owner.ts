@@ -1,8 +1,9 @@
+import type { EdayaSparkS2sKeyMode } from '@edaya/authorization'
 import type { School } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import type { OnboardingSchoolApplication } from './onboarding-application'
 import { randomUUID } from 'node:crypto'
-import { createSchoolBootstrapActor } from '@edaya/authorization'
+import { createSchoolBootstrapActor, provisionEdayaSparkReadS2sClient } from '@edaya/authorization'
 import { BusinessRuleViolationError } from '@edaya/core'
 
 export interface RegisterSchoolOwnerSession {
@@ -27,6 +28,7 @@ export interface RegisterSchoolWithOwnerInput {
   ownerFirstName?: string
   ownerLastName?: string
   ownerEmail?: string
+  edayaSparkS2sKeyMode?: EdayaSparkS2sKeyMode
 }
 
 export interface RegisterSchoolWithOwnerResult {
@@ -123,6 +125,12 @@ export async function registerSchoolWithOwner(
         'Failed to assign the caller as school owner',
       )
     }
+
+    await provisionEdayaSparkReadS2sClient(application.repositories.s2sClients, {
+      schoolId,
+      createdBySubjectId: subjectId,
+      keyMode: input.edayaSparkS2sKeyMode ?? 'deterministic',
+    })
 
     return { school: persistedSchool ?? school }
   }, { lockKeys: [`school-owner:${subjectId}`] })
