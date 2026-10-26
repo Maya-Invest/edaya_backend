@@ -1,7 +1,9 @@
 import type { SeedApplication } from '../../../support/types'
 import type { ReportCardsSeedPort } from '../port'
+import { dispatchGradingRecalculation } from '@edaya/service'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
+import { configureSeedGrading } from '../configure-grading'
 
 export function createInProcessReportCardsSeedPort(
   application: SeedApplication,
@@ -9,6 +11,13 @@ export function createInProcessReportCardsSeedPort(
   const service = createInProcessSeedService(application, 'dev-report-cards-seed')
 
   return {
+    configureGrading: record => withSeedPortError('reportCards.configureGrading', () => configureSeedGrading(record, {
+      read: async () => (await application.repositories.gradeLevels.findById(record.gradeLevelId))?.gradingPolicyFor(record.academicYearId),
+      configure: async () => {
+        await service.assessmentsWorkflow.configureGrading({ ...record, requestId: `seed-grading:${record.gradeLevelId}:${record.academicYearId}`, expectedRevision: 0, confirmed: true })
+      },
+      advance: () => dispatchGradingRecalculation(application),
+    })),
     createGradeScale: record => withSeedPortError('reportCards.createGradeScale', async () => {
       await service.assessmentsWorkflow.createGradeScale({
         ...record,

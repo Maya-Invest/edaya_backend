@@ -1,6 +1,7 @@
-import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import type { AppOpenAPI } from "@/http/types";
+import { z } from "@hono/zod-openapi";
 import { clientRouteOperation } from "@/lib/school-api/openapi/client-extensions";
+import { getOpenApiSchemaName } from "@/lib/school-api/schemas/schema-name";
 import * as schemas from "./contracts";
 
 /** Documents the existing handler using the shared namespace generator. */
@@ -12,6 +13,7 @@ export function registerAuthContract(app: AppOpenAPI) {
   app.openAPIRegistry.registerComponent("securitySchemes", "accountCookie", { type: "apiKey", in: "cookie", name: "__Host-edaya_session" });
   app.openAPIRegistry.registerComponent("securitySchemes", "nativeSession", { type: "http", scheme: "bearer", description: "Native opaque Account session credential; distinct from school access JWTs." });
   const operations = [
+    ["terms", "terms", undefined, schemas.AuthTerms, "GET"],
     ["methods", "methods", undefined, schemas.AuthMethods, "GET"],
     ["startOtp", "otp/start", schemas.AuthStart, schemas.PrimaryStatus],
     ["statusOtp", "otp/status", schemas.AuthChallengeInput, schemas.PrimaryStatus],
@@ -33,7 +35,7 @@ export function registerAuthContract(app: AppOpenAPI) {
   for (const [key, suffix, request, response, method] of operations) {
     const schemaName = (schema: typeof response | NonNullable<typeof request>) => getOpenApiSchemaName(schema);
     const path = `/auth/edaya/${suffix}`;
-    const publicOperation = ["methods", "startOtp", "statusOtp", "resendOtp", "verifyOtp", "verifyTotp", "recover"].includes(key);
+    const publicOperation = ["terms", "methods", "startOtp", "statusOtp", "resendOtp", "verifyOtp", "verifyTotp", "recover"].includes(key);
     app.openAPIRegistry.registerPath({
       method: method === "GET" ? "get" : "post",
       path,
@@ -41,7 +43,8 @@ export function registerAuthContract(app: AppOpenAPI) {
       ...clientRouteOperation({ namespace: "auth", clientKey: key, path, basePath: "root", responseSchemaName: schemaName(response), ...(request ? { requestSchemaName: schemaName(request) } : {}) }),
       security: publicOperation ? [] : [{ accountCookie: [] }, { nativeSession: [] }],
       ...(request ? { request: { body: { content: { "application/json": { schema: request } } } } } : {}),
-      responses: { 200: { description: "Account operation result", content: { "application/json": { schema: response } } }, 400: { description: "Invalid input or challenge", content: { "application/json": { schema: schemas.AuthFailure } } }, 401: { description: "Authentication required" }, 403: { description: "Origin or security policy rejected" }, 413: { description: "Body too large" }, 429: { description: "Rate limited" }, 503: { description: "Authentication unavailable" } },
+      ...(key === "terms" ? { request: { query: z.object({ locale: z.enum(["fr", "en"]).optional() }) } } : {}),
+      responses: { 200: { description: "Account operation result", content: { "application/json": { schema: response } } }, 400: { description: "Invalid input or challenge", content: { "application/json": { schema: schemas.AuthFailure } } }, 409: { description: "Terms version changed", content: { "application/json": { schema: schemas.AuthFailure } } }, 401: { description: "Authentication required" }, 403: { description: "Origin or security policy rejected" }, 413: { description: "Body too large" }, 429: { description: "Rate limited" }, 503: { description: "Authentication unavailable" } },
     });
   }
   app.openAPIRegistry.registerPath({ method: "get", path: "/.well-known/jwks.json", tags: ["Authentication"], security: [], responses: { 200: { description: "Public ES256 signing keys" } } });

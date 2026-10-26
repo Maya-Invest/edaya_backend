@@ -1,3 +1,5 @@
+import type { AcceptedTerms } from './terms'
+
 export type IdentifierKind = 'email' | 'phone'
 export type OtpChannel = 'email' | 'whatsapp' | 'sms'
 export type DeliveryStatus = 'pending' | 'accepted' | 'uncertain' | 'failed' | 'sent' | 'delivered' | 'read'
@@ -56,6 +58,7 @@ export interface AuthSession {
   method: IdentifierKind
 }
 export interface AuthChallenge {
+  terms?: AcceptedTerms
   id: string
   kind: IdentifierKind
   value: string
@@ -75,6 +78,7 @@ export interface AuthChallenge {
   messageId?: string
 }
 export interface PendingAuth {
+  terms?: AcceptedTerms
   digest: string
   accountId: string
   primaryAt: number

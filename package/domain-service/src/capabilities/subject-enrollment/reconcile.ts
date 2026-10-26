@@ -1,19 +1,24 @@
 import type { SchoolScopedActorMetadata } from '@edaya/authorization'
-import type { ClassSubject, StudentClassEnrollment, Subject } from '@edaya/core'
+import type { ClassSubject, StudentSubjectEnrollment as Enrollment, StudentClassEnrollment, Subject } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
+import type { ParticipationContext } from './persistence'
+import type { SubjectInvalidationWork } from './work'
 import { resolveAuditActorId } from '@edaya/authorization'
 import { BusinessRuleViolationError, OccurrenceStatus, StudentSubjectEnrollment } from '@edaya/core'
 import { assessmentDate } from '../academics/marks-state'
+import { loadInBatches } from '../shared/bounded-reads'
 import { regeneratableSessionIds } from '../timetable/regeneration-protection'
 import { bumpParticipation, enrollmentBounds, persistSubjectEnrollment, withdrawSubjectEnrollment } from './persistence'
+import { loadPlacementInvalidationWork } from './work'
 
-export async function ensureCompulsoryParticipation(repositories: SchoolRepositories, placement: StudentClassEnrollment, offering: ClassSubject, _actor: SchoolScopedActorMetadata, from: Date): Promise<void> {
-  const bounds = await enrollmentBounds(repositories, placement.id, offering.id)
+export async function ensureCompulsoryParticipation(repositories: SchoolRepositories, placement: StudentClassEnrollment, offering: ClassSubject, _actor: SchoolScopedActorMetadata, from: Date, context?: { bounds: ParticipationContext, existing: Enrollment[], work: SubjectInvalidationWork }): Promise<void> {
+  const bounds = await enrollmentBounds(repositories, placement.id, offering.id, context?.bounds)
   if (!offering.isOffered || bounds.subject.isOptional)
     return
   if (bounds.end <= from || bounds.end <= bounds.start || (placement.endedAt && placement.endedAt <= new Date()))
     return
-  const existing = (await repositories.subjectEnrollments.list({ studentClassEnrollmentId: placement.id, classSubjectId: offering.id })).find(row => !row.deletedAt)
+  const selections = context?.existing ?? await repositories.subjectEnrollments.list({ studentClassEnrollmentId: placement.id, classSubjectId: offering.id })
+  const existing = selections.find(row => !row.deletedAt)
   if (existing?.scope === 'annual' && existing.endedAt?.getTime() === bounds.end.getTime())
     return
   await persistSubjectEnrollment(repositories, new StudentSubjectEnrollment({
@@ -27,7 +32,7 @@ export async function ensureCompulsoryParticipation(repositories: SchoolReposito
     periods: [],
     source: 'automatic',
     revision: (existing?.revision ?? -1) + 1,
-  }), existing)
+  }), existing, context?.work, { bounds, existing: selections })
 }
 
 export async function closeSubjectParticipation(repositories: SchoolRepositories, row: StudentSubjectEnrollment, at: Date, actor: SchoolScopedActorMetadata): Promise<void> {
@@ -47,8 +52,31 @@ export async function reconcilePlacement(repositories: SchoolRepositories, place
     for (const row of rows) await closeSubjectParticipation(repositories, row, placement.endedAt, actor)
   }
   if (!previous) {
-    for (const offering of await repositories.classSubjects.list({ classGroupId: placement.classGroupId }))
-      await ensureCompulsoryParticipation(repositories, placement, offering, actor, placement.enrolledAt)
+    const [offerings, year, group, student] = await Promise.all([
+      repositories.classSubjects.list({ classGroupId: placement.classGroupId }),
+      repositories.academicYears.findById(placement.academicYearId),
+      repositories.classGroups.findById(placement.classGroupId),
+      repositories.students.findById(placement.studentId),
+    ])
+    if (!year || !group || !student)
+      throw new BusinessRuleViolationError('SUBJECT_ENROLLMENT_PLACEMENT_INVALID', 'Placement context is missing')
+    const [school, subjects] = await Promise.all([
+      repositories.schools.findById(group.schoolId),
+      loadInBatches(offerings.map(row => row.subjectId), ids => repositories.subjects.list({ id: { $in: ids } })),
+    ])
+    const byId = new Map(subjects.map(subject => [subject.id, subject]))
+    const compulsory = offerings.filter(offering => offering.isOffered && !byId.get(offering.subjectId)?.isOptional)
+    const work = await loadPlacementInvalidationWork(repositories, group, compulsory, placement.studentId)
+    for (const offering of offerings) {
+      const subject = byId.get(offering.subjectId)
+      if (!subject)
+        throw new BusinessRuleViolationError('SUBJECT_ENROLLMENT_PLACEMENT_INVALID', 'Subject is missing')
+      await ensureCompulsoryParticipation(repositories, placement, offering, actor, placement.enrolledAt, {
+        bounds: { placement, offering, year, group, subject, student, school },
+        existing: rows.filter(row => row.classSubjectId === offering.id),
+        work: work.get(offering.id)!,
+      })
+    }
   }
 }
 

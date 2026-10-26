@@ -1,4 +1,4 @@
-import type { ReportCardResultSection, StudentSubjectEnrollment } from '@edaya/core'
+import type { ClassGroup, ClassSubject, ReportCardResultSection, StudentSubjectEnrollment } from '@edaya/core'
 import type { SchoolRepositories } from '../../ports/school-repositories'
 import { Assessment, ReportCardResult, ReportCardResultStatus } from '@edaya/core'
 import { invalidateAssessmentDrafts } from '../academics/marks-state'
@@ -28,6 +28,24 @@ export async function loadSubjectWork(repositories: SchoolRepositories, classSub
 }
 export type SubjectWork = Awaited<ReturnType<typeof loadSubjectWork>>
 
+export type SubjectInvalidationWork = Pick<SubjectWork, 'offering' | 'group' | 'assessments' | 'lessons' | 'reports'>
+
+/** A placement transaction needs invalidation evidence, not withdrawal/deletion evidence. */
+export async function loadPlacementInvalidationWork(repositories: SchoolRepositories, group: ClassGroup, offerings: ClassSubject[], studentId: string): Promise<Map<string, SubjectInvalidationWork>> {
+  if (!offerings.length)
+    return new Map()
+  const ids = offerings.map(row => row.id)
+  const [assessments, lessons, periods, reports] = await Promise.all([
+    loadInBatches(ids, chunk => repositories.assessments.list({ classSubjectId: { $in: chunk } })),
+    loadInBatches(ids, chunk => repositories.lessonSessions.list({ classSubjectId: { $in: chunk } })),
+    repositories.academicPeriods.list({ academicYearId: group.academicYearId }),
+    repositories.results.list({ studentId }),
+  ])
+  const periodIds = new Set(periods.map(row => row.id))
+  const relevantReports = reports.filter(row => periodIds.has(row.periodId))
+  return new Map(offerings.map(offering => [offering.id, { offering, group, assessments: assessments.filter(row => row.classSubjectId === offering.id), lessons: lessons.filter(row => row.classSubjectId === offering.id), reports: relevantReports }]))
+}
+
 export function hasSubjectDependencies(work: SubjectWork, studentId: string): boolean {
   const contains = (sections: readonly ReportCardResultSection[]): boolean => sections.some(row => row.classSubjectId === work.offering.id || contains(row.subResults))
   return work.marks.some(row => row.studentId === studentId)
@@ -43,7 +61,7 @@ export function hasSubjectDependencies(work: SubjectWork, studentId: string): bo
 }
 
 /** Saved work survives selection changes; revision changes force stale editors to reload. */
-export async function invalidateSubjectWork(repositories: SchoolRepositories, work: SubjectWork, studentId: string, previous?: StudentSubjectEnrollment, next?: StudentSubjectEnrollment) {
+export async function invalidateSubjectWork(repositories: SchoolRepositories, work: SubjectInvalidationWork, studentId: string, previous?: StudentSubjectEnrollment, next?: StudentSubjectEnrollment) {
   const changed = (at: Date) => Boolean(previous?.effectiveAt(at)) !== Boolean(next?.effectiveAt(at))
   const lessons = new Map(work.lessons.map(row => [row.id, row]))
   for (const snapshot of work.assessments) {

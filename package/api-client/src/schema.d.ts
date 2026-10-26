@@ -1,4 +1,20 @@
 export interface paths {
+    "/auth/edaya/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["auth.terms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/edaya/methods": {
         parameters: {
             query?: never;
@@ -474,6 +490,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["imports.cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/core/imports/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["imports.status"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13130,7 +13162,15 @@ export interface components {
             totpEnabled: boolean;
             totpRequired: boolean;
         };
+        AuthTermsAcceptance: {
+            version: string;
+            /** @enum {string} */
+            locale: "fr" | "en";
+            /** @enum {boolean} */
+            accepted: true;
+        };
         AuthStart: {
+            termsAcceptance?: components["schemas"]["AuthTermsAcceptance"];
             /** @enum {string} */
             kind: "email" | "phone";
             value: string;
@@ -13145,6 +13185,33 @@ export interface components {
         AuthSuccess: {
             /** @enum {boolean} */
             success: true;
+        };
+        AuthTermsSection: {
+            heading: string;
+            paragraphs: string[];
+        };
+        AuthTerms: {
+            enforced: boolean;
+            document: {
+                version: string;
+                /** @enum {string} */
+                locale: "fr" | "en";
+                documentHash: string;
+                title: string;
+                /** @enum {string} */
+                status: "draft" | "published";
+                sections: components["schemas"]["AuthTermsSection"][];
+            } | null;
+        };
+        AuthTermsDocument: {
+            version: string;
+            /** @enum {string} */
+            locale: "fr" | "en";
+            documentHash: string;
+            title: string;
+            /** @enum {string} */
+            status: "draft" | "published";
+            sections: components["schemas"]["AuthTermsSection"][];
         };
         AuthUnlink: {
             identifierId: string;
@@ -13294,6 +13361,17 @@ export interface components {
             batchId: string;
         };
         CancelSchoolImportRequest: {
+            batchId: string;
+        };
+        SchoolImportStatus: {
+            batch: components["schemas"]["SchoolImportBatch"];
+            counts: {
+                [key: string]: number;
+            };
+            version: number;
+            updatedAt: string | null;
+        };
+        GetSchoolImportStatusRequest: {
             batchId: string;
         };
         GetSchoolImportRequest: {
@@ -20497,6 +20575,81 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "auth.terms": {
+        parameters: {
+            query?: {
+                locale?: "fr" | "en";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Account operation result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTerms"];
+                };
+            };
+            /** @description Invalid input or challenge */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Origin or security policy rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limited */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "auth.methods": {
         parameters: {
             query?: never;
@@ -20537,6 +20690,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -20606,6 +20768,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -20673,6 +20844,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -20742,6 +20922,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -20809,6 +20998,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -20878,6 +21076,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -20945,6 +21152,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -21014,6 +21230,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -21081,6 +21306,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -21150,6 +21384,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -21217,6 +21460,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -21286,6 +21538,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -21353,6 +21614,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -21422,6 +21692,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -21489,6 +21768,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -21558,6 +21846,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
+            };
             /** @description Body too large */
             413: {
                 headers: {
@@ -21625,6 +21922,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Terms version changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthFailure"];
+                };
             };
             /** @description Body too large */
             413: {
@@ -22138,6 +22444,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SchoolImportBatch"];
+                };
+            };
+            /** @description Invalid request payload */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid authorization session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Access denied due to authorization policies */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description Business rule violation */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessRuleViolationResponse"];
+                };
+            };
+            /** @description Internal server error occurred */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "imports.status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GetSchoolImportStatusRequest */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GetSchoolImportStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description SchoolImportStatus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolImportStatus"];
                 };
             };
             /** @description Invalid request payload */

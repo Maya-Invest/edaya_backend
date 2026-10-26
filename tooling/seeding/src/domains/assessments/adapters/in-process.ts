@@ -1,7 +1,7 @@
 import type { SeedApplication } from '../../../support/types'
 import type { AssessmentsSeedPort } from '../port'
 import { ActorAssuranceLevel, createStaffActorMetadata, createTeacherActorMetadata } from '@edaya/authorization'
-import { AssessmentResult, Permission } from '@edaya/core'
+import { Permission } from '@edaya/core'
 import { resolveDevSeedContext } from '@edaya/fixtures/meta/resolve-dev-seed-context'
 import { createInProcessSeedService } from '../../../support/in-process-seed-service'
 import { withSeedPortError } from '../../../support/seed-port-error'
@@ -57,21 +57,25 @@ export function createInProcessAssessmentsSeedPort(
       if (records.some(record => record.assessmentId !== records[0]!.assessmentId))
         throw new Error('Seed mark batch must share an evaluation')
       const teacher = await editor(records[0]!.assessmentId)
-      await teacher.baseService.entities.assessmentResults.batchSave(records.map(record => new AssessmentResult(record)))
+      const assessmentId = records[0]!.assessmentId
+      const assessment = await teacher.baseService.entities.assessments.findById(assessmentId)
+      if (!assessment)
+        throw new Error('Seed assessment missing')
+      await teacher.assessmentsWorkflow.recordAssessmentResults({ requestId: `seed-batch:${assessmentId}`, assessmentId, expectedRevision: assessment.marksRevision, results: records.map(({ assessmentId: _assessmentId, ...record }) => record) })
     }),
     finalizeMarks: (assessmentId, state) => withSeedPortError('assessments.finalizeMarks', async () => {
       if (state === 'draft')
         return
       const teacher = await editor(assessmentId)
       const detail = await teacher.getAssessmentMarksReview({ assessmentId })
-      const missing = detail.missingStudentIds.map(studentId => new AssessmentResult({
+      const missing = detail.missingStudentIds.map(studentId => ({
         id: detail.results.find(result => result.studentId === studentId)?.id ?? `ar-${assessmentId}-${studentId}`,
         assessmentId,
         studentId,
-        designation: 'absent',
+        designation: 'absent' as const,
       }))
       if (missing.length)
-        await teacher.baseService.entities.assessmentResults.batchSave(missing)
+        await teacher.assessmentsWorkflow.recordAssessmentResults({ requestId: `seed-absence-batch:${assessmentId}`, assessmentId, expectedRevision: detail.assessment.marksRevision, results: missing })
       const revision = detail.assessment.marksRevision + missing.length
       const submitted = await teacher.assessmentsWorkflow.submitAssessmentMarks({ requestId: `seed-submit:${assessmentId}`, assessmentId, expectedRevision: revision })
       if (state === 'submitted')

@@ -37,7 +37,7 @@ async function validateTeacherSave(
     entityId: teacher.id,
     errorCode: 'TEACHER_CODE_ALREADY_EXISTS',
     entityLabel: 'Teacher',
-    listBySchool: () => repositories.teachers.list({ schoolId: teacher.schoolId }),
+    findCandidates: code => repositories.teachers.list({ schoolId: teacher.schoolId, code: { $normalizedCandidate: code } }),
   })
   await validateTeacherPortrait(teacher, repositories)
 }

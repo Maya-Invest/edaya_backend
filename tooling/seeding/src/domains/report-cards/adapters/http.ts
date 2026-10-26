@@ -1,8 +1,10 @@
 import type { HttpSeedClient } from '../../../transport/http/client'
 import type { CoreHttpRequestOptions } from '../../../transport/http/core-entity'
 import type { ReportCardsSeedPort } from '../port'
+import { GradeLevel } from '@edaya/core'
 import { withSeedPortError } from '../../../support/seed-port-error'
 import { postCoreCommand, postEntityFindById } from '../../../transport/http/core-entity'
+import { configureSeedGrading } from '../configure-grading'
 
 export interface CreateHttpReportCardsSeedPortOptions {
   client: HttpSeedClient
@@ -19,6 +21,24 @@ export function createHttpReportCardsSeedPort(
   }
 
   return {
+    configureGrading: record => withSeedPortError('reportCards.configureGrading', async () => {
+      const configure = async () => {
+        await postCoreCommand(requestOptions, 'configureGrading', { ...record, requestId: `seed-grading:${record.gradeLevelId}:${record.academicYearId}`, expectedRevision: 0, confirmed: true })
+      }
+      await configureSeedGrading(record, {
+        read: async () => {
+          const level = await postEntityFindById(requestOptions, 'gradeLevels', record.gradeLevelId)
+          return level ? new GradeLevel(level as ConstructorParameters<typeof GradeLevel>[0]).gradingPolicyFor(record.academicYearId) : undefined
+        },
+        configure,
+        advance: async () => {
+          await Bun.sleep(250)
+          // Replaying the same command nudges the next durable page without a new
+          // policy revision, including local runtimes without a cron scheduler.
+          await configure()
+        },
+      })
+    }),
     createGradeScale: record => withSeedPortError('reportCards.createGradeScale', async () => {
       await postCoreCommand(requestOptions, 'createGradeScale', record)
     }),

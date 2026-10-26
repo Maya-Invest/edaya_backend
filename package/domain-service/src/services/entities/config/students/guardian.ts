@@ -35,7 +35,7 @@ async function validateGuardianSave(
     entityId: guardian.id,
     errorCode: 'GUARDIAN_CODE_ALREADY_EXISTS',
     entityLabel: 'Guardian',
-    listBySchool: () => repositories.guardians.list({ schoolId: guardian.schoolId }),
+    findCandidates: code => repositories.guardians.list({ schoolId: guardian.schoolId, code: { $normalizedCandidate: code } }),
   })
 }
 

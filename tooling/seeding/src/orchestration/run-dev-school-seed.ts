@@ -48,7 +48,7 @@ import { seedDevPopulation } from '../domains/population/workflow'
 import { createInProcessProfilePicturesSeedPort } from '../domains/profile-pictures/adapters/in-process'
 import { seedDevProfilePictures } from '../domains/profile-pictures/workflow'
 import { createInProcessReportCardsSeedPort } from '../domains/report-cards/adapters/in-process'
-import { seedDevReportCards } from '../domains/report-cards/workflow'
+import { seedDevReportCardConfiguration, seedDevReportCardResults } from '../domains/report-cards/workflow'
 import { createInProcessSchedulingSeedPort } from '../domains/scheduling/adapters/in-process'
 import { seedDevScheduling } from '../domains/scheduling/workflow'
 import { createInProcessSchoolBrandingSeedPort } from '../domains/school-branding/adapters/in-process'
@@ -243,8 +243,9 @@ export async function runDevSchoolSeed(
     }, seedDataset)
   })
 
-  await runSchoolSeedStep(options?.progress, async () => {
+  const reportCardConfiguration = await runSchoolSeedStep(options?.progress, async () => {
     await seedDevCurriculum(curriculumPort, seedDataset)
+    return seedDevReportCardConfiguration(reportCardsPort, seedDataset)
   })
   await runSchoolSeedStep(options?.progress, async () => {
     await seedDevPopulation(populationPort, seedDataset)
@@ -281,8 +282,8 @@ export async function runDevSchoolSeed(
   const studentSupportCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevStudentSupport(studentSupportPort, seedDataset))
 
-  const reportCardCounts = await runSchoolSeedStep(options?.progress, async () =>
-    seedDevReportCards(reportCardsPort, seedDataset))
+  const reportCardCounts = { ...reportCardConfiguration, ...await runSchoolSeedStep(options?.progress, async () =>
+    seedDevReportCardResults(reportCardsPort, seedDataset)) }
   const financeCounts = await runSchoolSeedStep(options?.progress, async () =>
     seedDevFinance(financePort, seedDataset))
   const documentCounts = await runSchoolSeedStep(options?.progress, async () =>

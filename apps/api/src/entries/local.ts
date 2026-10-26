@@ -1,3 +1,5 @@
+import { dispatchSchoolImports } from "@edaya/service";
+import { startImportRecovery } from "@/runtime/local/import-recovery";
 import { localOperations } from "../../configuration/local-operations.ts";
 import { maintenanceResponse } from "@/operational-controls";
 import { createCapturedIdentity } from "@/identity/local/capture";
@@ -54,9 +56,17 @@ async function main(): Promise<void> {
     port: env.PORT,
   });
 
+  const stopImportRecovery = startImportRecovery(
+    () => operations.background(["PAUSE_SCHEDULER", "PAUSE_JOBS"], async () => {
+      const runtime = await getApiRuntime(env);
+      await dispatchSchoolImports(await runtime.getSchoolApplication(), { maxPages: 1000, maxDurationMs: 20000 });
+    }),
+    () => console.error("Local import recovery failed; it will retry on the next heartbeat"),
+  );
+
   for (const signal of ["SIGTERM", "SIGINT"] as const) {
     process.once(signal, () => server.close(() => {
-      void resetApiRuntimesForTests().then(() => captured?.close()).then(() => process.exit(0));
+      void stopImportRecovery().then(() => resetApiRuntimesForTests()).then(() => captured?.close()).then(() => process.exit(0));
     }));
   }
   // eslint-disable-next-line no-console -- local dev startup banner

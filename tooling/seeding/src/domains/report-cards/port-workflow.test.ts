@@ -1,5 +1,6 @@
 import type {
   GradeScaleSeedRecord,
+  GradingPolicySeedRecord,
   ReportCardDefinitionSeedRecord,
   ReportCardResultSeedRecord,
   ReportCardSectionSeedRecord,
@@ -8,7 +9,7 @@ import type {
 import { GradeScale } from '@edaya/core'
 import { demoCiDataset } from '@edaya/fixtures'
 import { describe, expect, test } from 'bun:test'
-import { seedDevReportCards } from './workflow'
+import { seedDevReportCardConfiguration, seedDevReportCardResults } from './workflow'
 
 describe('report-cards seed port workflow', () => {
   test('seeds scales, definitions, sections, and generated or published results', async () => {
@@ -17,6 +18,7 @@ describe('report-cards seed port workflow', () => {
       result => result.narrativeStatus === 'published' && result.publishedAt,
     ).length
     const scales: GradeScaleSeedRecord[] = []
+    const policies: GradingPolicySeedRecord[] = []
     const definitions: ReportCardDefinitionSeedRecord[] = []
     const sections: ReportCardSectionSeedRecord[] = []
     const generated: ReportCardResultSeedRecord[] = []
@@ -25,7 +27,12 @@ describe('report-cards seed port workflow', () => {
       createGradeScale: async (record) => {
         scales.push(record)
       },
+      configureGrading: async (record) => {
+        expect(scales.some(scale => scale.id === record.scaleId)).toBe(true)
+        policies.push(record)
+      },
       createReportCardDefinition: async (record) => {
+        expect(policies.some(policy => policy.gradeLevelId === record.gradeLevelId && policy.academicYearId === record.academicYearId)).toBe(true)
         definitions.push(record)
       },
       createReportCardSection: async (record) => {
@@ -40,7 +47,11 @@ describe('report-cards seed port workflow', () => {
       },
     }
 
-    const counts = await seedDevReportCards(port, demoCiDataset)
+    const configuration = await seedDevReportCardConfiguration(port, demoCiDataset)
+    expect(generated).toHaveLength(0)
+    expect(policies).toHaveLength(4)
+    expect(policies.every(policy => policy.mode === 'numeric-first' && policy.scaleId === 'ci-gs-20')).toBe(true)
+    const counts = { ...configuration, ...await seedDevReportCardResults(port, demoCiDataset) }
 
     expect(counts).toEqual({
       gradeScales: scales.length,

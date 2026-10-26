@@ -10,13 +10,12 @@ export interface DevReportCardSeedCounts {
   results: number
 }
 
-export async function seedDevReportCards(
+export async function seedDevReportCardConfiguration(
   port: ReportCardsSeedPort,
   dataset: FixtureDataset,
-): Promise<DevReportCardSeedCounts> {
+): Promise<Omit<DevReportCardSeedCounts, 'results'>> {
   const gradeScaleFixtures = dataset.extensions?.reportCardGradeScaleFixtures ?? []
   const definitionFixtures = dataset.extensions?.reportCardDefinitionFixtures ?? []
-  const results = dataset.extensions?.reportCardResults ?? []
 
   for (const fixture of gradeScaleFixtures) {
     const scale = fixture.scale
@@ -43,9 +42,17 @@ export async function seedDevReportCards(
   }
 
   let sectionCount = 0
+  const configured = new Map<string, string>()
 
   for (const fixture of definitionFixtures) {
     const definition = fixture.definition
+    const scope = `${definition.gradeLevelId}/${definition.academicYearId}`
+    if (configured.has(scope) && configured.get(scope) !== definition.gradeScaleId)
+      throw new Error(`Conflicting seed grading scales for ${scope}`)
+    if (!configured.has(scope)) {
+      await port.configureGrading({ gradeLevelId: definition.gradeLevelId, academicYearId: definition.academicYearId, scaleId: definition.gradeScaleId, mode: 'numeric-first', aggregateLabel: 'Moyenne générale' })
+      configured.set(scope, definition.gradeScaleId)
+    }
     await port.createReportCardDefinition({
       id: definition.id,
       schoolId: definition.schoolId,
@@ -89,6 +96,11 @@ export async function seedDevReportCards(
     }
   }
 
+  return { gradeScales: gradeScaleFixtures.length, definitions: definitionFixtures.length, sections: sectionCount }
+}
+
+export async function seedDevReportCardResults(port: ReportCardsSeedPort, dataset: FixtureDataset): Promise<Pick<DevReportCardSeedCounts, 'results'>> {
+  const results = dataset.extensions?.reportCardResults ?? []
   for (const result of results) {
     const record = {
       id: result.id,
@@ -114,10 +126,5 @@ export async function seedDevReportCards(
     }
   }
 
-  return {
-    gradeScales: gradeScaleFixtures.length,
-    definitions: definitionFixtures.length,
-    sections: sectionCount,
-    results: results.length,
-  }
+  return { results: results.length }
 }

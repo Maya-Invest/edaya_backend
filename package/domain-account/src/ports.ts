@@ -1,4 +1,5 @@
 import type { Account, AccountSecurity, AuthChallenge, AuthSession, DeliveryReceipt, DeliveryResult, IdentifierKind, OtpChannel, PendingAuth, PrimaryEvidence, RecipientCooldown } from './model'
+import type { TermsAcceptance } from './terms'
 
 export interface AuthenticationProviderPort {
   readonly generation: string
@@ -31,6 +32,7 @@ export interface PhoneAuthPort {
   delivery: OtpDeliveryPort
 }
 export interface AccountRepositoryPort {
+  saveTermsAcceptance: (acceptance: TermsAcceptance) => Promise<void>
   transaction: <T>(work: () => Promise<T>) => Promise<T>
   find: (kind: IdentifierKind, value: string) => Promise<Account | null>
   get: (id: string) => Promise<Account | null>

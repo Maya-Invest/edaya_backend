@@ -1,6 +1,7 @@
+/* eslint dot-notation: "off" -- Import snapshots use index signatures. */
 import type { ImportBatch, ImportExecutionOutcome, ImportFileRevision, ImportIdentity, ImportPersistencePort, ImportRow } from '@edaya/core'
 import type { SchoolService } from '../../../src/services/school-service'
-import { createInMemoryFileStorage, StaffMember } from '@edaya/core'
+import { createInMemoryFileStorage, IMPORT_COMPLETED_OUTCOMES, IMPORT_TEMPLATES, StaffMember } from '@edaya/core'
 import { expect, test } from 'bun:test'
 import { SchoolImportService } from '../../../src/capabilities/imports/import-service'
 /** This application test has no SQL, HTTP, spreadsheet or runtime adapter imports. */
@@ -25,11 +26,39 @@ function memoryPersistence(): ImportPersistencePort {
     addFile: async (file) => { files.set(file.id, copy(file)) },
     listFiles: async (school, batch) => scoped(files, school, batch),
     listRows: async (school, batch) => scoped(rows, school, batch),
+    queryRows: async (school, batch, query) => {
+      const all = scoped(rows, school, batch)
+      return all.filter(row => (!query.ids || query.ids.includes(row.id)) && (!query.outcome || row.outcome === query.outcome) && (!query.after || row.id > query.after)
+        && (!query.ready || row.dependencies.every(id => all.some(parent => parent.id === id && IMPORT_COMPLETED_OUTCOMES.includes(parent.outcome))))
+        && (!query.dependencyBlocked || row.dependencies.some(id => !all.some(parent => parent.id === id && (parent.outcome === 'pending' || IMPORT_COMPLETED_OUTCOMES.includes(parent.outcome))))))
+        .sort((a, b) => (query.ready ? IMPORT_TEMPLATES[a.type].rank - IMPORT_TEMPLATES[b.type].rank : 0) || a.id.localeCompare(b.id))
+        .slice(0, query.limit)
+    },
+    pendingClassCohort: async (school, batch, id) => scoped(rows, school, batch).filter(row => row.type === 'students' && row.outcome === 'pending' && row.proposed?.['classGroupId'] === id && row.current?.['classGroupId'] !== id && !(row.current && row.effectiveMode === 'S')).map(row => ({ id: row.id, targetId: row.targetId })),
+    progress: async (school, batch) => {
+      const counts: Record<string, number> = {}
+      for (const row of scoped(rows, school, batch)) {
+        counts[row.outcome] = (counts[row.outcome] ?? 0) + 1
+        for (const [key, value] of Object.entries(row.result ?? {})) {
+          if (typeof value === 'number')
+            counts[key] = (counts[key] ?? 0) + value
+        }
+      }
+      return { counts, version: 0, updatedAt: null }
+    },
+    readTargets: async (school, batch) => scoped(rows, school, batch).map(row => ({ type: row.type, targetId: row.targetId, references: [], studentIds: [] })),
+    exhaustedBatches: async () => [],
     saveRows: async (entries) => {
       for (const row of entries)
         rows.set(row.id, copy(row))
     },
     getIdentity: async (school, type, key) => copy(identities.get(`${school}:${type}:${key}`)),
+    saveIdentities: async (entries) => {
+      for (const identity of entries) identities.set(`${identity.schoolId}:${identity.type}:${identity.sourceKey}`, copy(identity))
+    },
+    addOutcomes: async (entries) => {
+      for (const outcome of entries) outcomes.set(outcome.operationId, copy(outcome))
+    },
     saveIdentity: async (identity) => { identities.set(`${identity.schoolId}:${identity.type}:${identity.sourceKey}`, copy(identity)) },
     findOutcome: async (school, batch, row, digest) => copy([...outcomes.values()].find(outcome => outcome.schoolId === school && outcome.batchId === batch && outcome.rowId === row && outcome.inputDigest === digest)),
     addOutcome: async (outcome) => { outcomes.set(outcome.operationId, copy(outcome)) },
@@ -39,10 +68,10 @@ test('application staging and matching use only ports, inherit M, preserve false
   const staff = new StaffMember({ id: 'staff', schoolId: 'school', code: '001', firstName: 'Original', lastName: 'Name', phone: '0012', isActive: true })
   const repo = (entities: {
     id: string
-  }[]) => ({ forSchool: () => ({ list: async () => entities }), forAccess: () => ({ findById: async (id: string) => entities.find(entity => entity.id === id) }) })
+  }[]) => ({ forSchool: () => ({ list: async () => entities }), forAccess: () => ({ list: async () => entities, findById: async (id: string) => entities.find(entity => entity.id === id) }) })
   const actor = { kind: 'staff', accountKind: 'human', schoolId: 'school', staffMemberId: 'owner', subjectId: 'subject' }
   const repositories = new Proxy({ staffMembers: repo([staff]), privateFiles: { reserve: async () => { }, retain: async () => { } } }, { get: (target, property) => Reflect.get(target, property) ?? repo([]) })
-  const service = { baseService: { actor, access: { actor, assertSchool: async () => { }, scope: async () => ({}), entity: () => ({ readScope: async () => ({}), assertSave: async () => { } }) }, atomicExecution: { execute: async (run: () => Promise<unknown>) => run() }, entities: { academicYears: { findById: async () => ({ id: 'year', schoolId: 'school' }) } }, repositories, fileStorage: createInMemoryFileStorage() } } as unknown as SchoolService
+  const service = { baseService: { actor, access: { forOperation: () => service.baseService.access, actor, assertSchool: async () => { }, scope: async () => ({}), entity: () => ({ readScope: async () => ({}), assertSave: async () => { } }) }, atomicExecution: { execute: async (run: () => Promise<unknown>) => run() }, entities: { academicYears: { findById: async () => ({ id: 'year', schoolId: 'school' }) } }, repositories, fileStorage: createInMemoryFileStorage() } } as unknown as SchoolService
   const imports = new SchoolImportService(service, memoryPersistence(), { parse: async () => ({ headers: ['code', 'first_name', 'phone', 'is_active', 'on_existing'], rows: [{ row: 2, cells: ['001', 'Compound First Name', '', false, ' m '] }] }), serialize: async () => new Uint8Array() })
   const batch = await imports.create({ academicYearId: 'year' })
   expect(batch.defaultOnExisting).toBe('M')

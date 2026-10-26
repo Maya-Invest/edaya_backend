@@ -32,6 +32,7 @@ const definitions = {
   confirm: { request: identity.extend({ revision: z.number().int().positive(), previewDigest: z.string().regex(/^[a-f0-9]{64}$/) }).openapi("ConfirmSchoolImportRequest"), response: batch },
   retry: { request: identity.openapi("RetrySchoolImportRequest"), response: detail },
   cancel: { request: identity.openapi("CancelSchoolImportRequest"), response: batch },
+  status: { request: identity.openapi("GetSchoolImportStatusRequest"), response: z.object({ batch, counts: z.record(z.number()), version: z.number().int(), updatedAt: z.string().nullable() }).openapi("SchoolImportStatus") },
   detail: { request: identity.openapi("GetSchoolImportRequest"), response: detail },
   history: { request: z.object({ limit: z.number().int().min(1).max(100).optional(), before: z.string().optional() }).strict().openapi("SchoolImportHistoryRequest"), response: z.object({ batches: z.array(batch) }).openapi("SchoolImportHistory") },
   report: { request: identity.extend({ fileId: z.string(), format: z.enum(["csv", "xlsx"]).default("xlsx") }).openapi("SchoolImportReportRequest"), response: download },
@@ -77,6 +78,7 @@ for (const key of Object.keys(definitions) as (keyof typeof definitions)[]) {
           }
           case "retry": return service.retry(definitions.retry.request.parse(input));
           case "cancel": return service.cancel(definitions.cancel.request.parse(input));
+          case "status": return service.status(definitions.status.request.parse(input).batchId);
           case "detail": return service.detail(definitions.detail.request.parse(input).batchId);
           case "history": return { batches: await service.history(definitions.history.request.parse(input)) };
           case "report": {

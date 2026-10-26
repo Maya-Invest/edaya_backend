@@ -2150,6 +2150,12 @@ export const clientBindings = {
       }
     },
     "auth": {
+      "terms": {
+        "method": "GET",
+        "path": "/auth/edaya/terms",
+        "responseSchemaName": "AuthTerms",
+        "basePath": "root"
+      },
       "methods": {
         "method": "GET",
         "path": "/auth/edaya/methods",
@@ -2311,6 +2317,12 @@ export const clientBindings = {
         "path": "imports/cancel",
         "requestSchemaName": "CancelSchoolImportRequest",
         "responseSchemaName": "SchoolImportBatch"
+      },
+      "status": {
+        "method": "POST",
+        "path": "imports/status",
+        "requestSchemaName": "GetSchoolImportStatusRequest",
+        "responseSchemaName": "SchoolImportStatus"
       },
       "detail": {
         "method": "POST",

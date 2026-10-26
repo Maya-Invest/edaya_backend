@@ -351,6 +351,13 @@
       "when": 1792886400000,
       "tag": "0049_auto_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792972800000,
+      "tag": "0050_import_progress",
+      "breakpoints": true
     }
   ]
 }

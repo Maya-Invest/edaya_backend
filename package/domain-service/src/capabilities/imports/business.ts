@@ -1,8 +1,9 @@
 /* eslint dot-notation: "off" -- Import snapshots are index-signature records. */
-import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportJson, ImportRecord, ImportRow, ImportType } from '@edaya/core'
+import type { AccessPolicies } from '@edaya/authorization'
+import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportJson, ImportRecord, ImportRow, ImportType, QueryOptions } from '@edaya/core'
 import type { SchoolService } from '../../services/school-service'
 import { ImportAccessPolicy, importResources } from '@edaya/authorization'
-import { AcademicDiscipline, applyImportCollection, applyImportScalars, BusinessRuleViolationError, ClassGroup, Guardian, GuardianContactMethod, GuardianStudentLink, IMPORT_TEMPLATES, isBlankImportValue, normalizeImportKey, PaymentMethod, PlacementStatus, StaffMember, Student, StudentAcademicYearProfile, Subject, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment } from '@edaya/core'
+import { AcademicDiscipline, applyImportCollection, applyImportScalars, BusinessRuleViolationError, ClassGroup, Guardian, GuardianContactMethod, GuardianStudentLink, IMPORT_TEMPLATES, isBlankImportValue, normalizeImportKey, PaymentMethod, PlacementStatus, ServiceEnrollmentStatus, StaffMember, Student, StudentAcademicYearProfile, StudentClassEnrollmentStatus, Subject, SubjectMatter, Teacher, TeacherAcademicYearProfile, TeacherAssignment } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
 import { acceptedCatalogTerms } from '../finance/accepted-catalog-terms'
 import { importJson, normalizeImportValues } from './normalization'
@@ -23,27 +24,48 @@ const contactKey = (item: ImportRecord) => `${item['type']}:${normalizeImportKey
 const sourceResource: Partial<Record<CoreEntityKey, ImportType>> = { academicDisciplines: 'academic_disciplines', placementStatuses: 'placement_statuses', classGroups: 'classes', subjects: 'subjects', students: 'students', guardians: 'guardians', teachers: 'teachers', staffMembers: 'staff', studentServiceEnrollments: 'billing' }
 /** One bounded validation pass shares tenant indexes, never a global or cross-request cache. */
 export class ImportBusinessContext {
-  private readonly cached = new Map<CoreEntityKey, Promise<CoreEntityMap[CoreEntityKey][]>>()
-  constructor(readonly service: SchoolService, readonly batch: ImportBatch, readonly rows: ImportRow[] = []) { }
+  private readonly cached = new Map<string, Promise<CoreEntityMap[CoreEntityKey][]>>()
+  private readonly readableCache = new Map<string, Promise<CoreEntityMap[CoreEntityKey]>>()
+  private readonly validationAccess?: AccessPolicies
+  constructor(readonly service: SchoolService, readonly batch: ImportBatch, readonly rows: ImportRow[] = [], phase: 'validation' | 'execution' = 'execution') {
+    // Validation is read-only until its preview is persisted. Execution contexts
+    // must observe fresh permissions and entities, including between collection writes.
+    if (phase === 'validation')
+      this.validationAccess = service.baseService.access.forOperation()
+  }
+
   get base() { return this.service.baseService }
-  async list<K extends CoreEntityKey>(key: K): Promise<CoreEntityMap[K][]> {
-    let values = this.cached.get(key)
+  get access() { return this.validationAccess ?? this.base.access }
+  async list<K extends CoreEntityKey>(key: K, query?: QueryOptions<CoreEntityMap[K]>): Promise<CoreEntityMap[K][]> {
+    const cacheKey = `${key}:${JSON.stringify(query ?? {})}`
+    let values = this.cached.get(cacheKey)
     if (!values) {
       const repo = this.base.repositories[key]
       if (!repo.forSchool)
         throw new Error('Import matching requires a tenant-scoped repository')
-      values = repo.forSchool(this.batch.schoolId).list({}) as Promise<CoreEntityMap[CoreEntityKey][]>
-      this.cached.set(key, values)
+      values = repo.forSchool(this.batch.schoolId).list(query as never ?? {}) as Promise<CoreEntityMap[CoreEntityKey][]>
+      this.cached.set(cacheKey, values)
     }
     return values as Promise<CoreEntityMap[K][]>
   }
 
   async readable<K extends CoreEntityKey>(key: K, id: string): Promise<CoreEntityMap[K]> {
-    const scope = await this.base.access.entity(key).readScope()
-    const entity = await this.base.repositories[key].forAccess(scope).findById(id)
-    if (!entity)
-      fail('IMPORT_TARGET_RESTRICTED_OR_MISSING')
-    return entity as CoreEntityMap[K]
+    const read = async () => {
+      const scope = await this.access.entity(key).readScope()
+      const entity = await this.base.repositories[key].forAccess(scope).findById(id)
+      if (!entity)
+        fail('IMPORT_TARGET_RESTRICTED_OR_MISSING')
+      return entity as CoreEntityMap[K]
+    }
+    if (!this.validationAccess)
+      return read()
+    const cacheKey = JSON.stringify([key, id])
+    let entity = this.readableCache.get(cacheKey)
+    if (!entity) {
+      entity = read()
+      this.readableCache.set(cacheKey, entity)
+    }
+    return entity as Promise<CoreEntityMap[K]>
   }
 
   async reference(key: CoreEntityKey, value: ImportJson | undefined, owner: ImportRow, predicate: (data: ImportRecord) => boolean = () => true): Promise<ImportRecord> {
@@ -55,7 +77,8 @@ export class ImportBusinessContext {
       ? this.rows.filter(row => row.type === type && row.id !== owner.id && row.proposed && predicate(row.proposed)
         && [row.targetId, row.proposed['code'], key === 'students' ? row.proposed['matricule'] : ['guardians', 'teachers', 'staffMembers'].includes(key) ? undefined : row.proposed['name']].some(candidate => candidate !== undefined && normalizeImportKey(candidate) === lookup))
       : []
-    const existing = (await this.list(key)).filter((entity) => {
+    const fields = ['id', ...(['students', 'classGroups', 'gradeLevels', 'subjectCategories', 'catalogServices'].includes(key) ? [] : ['code']), ...(['students'].includes(key) ? ['matricule'] : ['guardians', 'teachers', 'staffMembers', 'placementStatuses'].includes(key) ? [] : ['name'])]
+    const existing = (await this.list(key, { $or: fields.map(field => ({ [field]: { $normalizedCandidate: String(value) } })) } as QueryOptions<CoreEntityMap[typeof key]>)).filter((entity) => {
       const data = importJson(entity)
       return predicate(data) && [entity.id, data['code'], key === 'students' ? data['matricule'] : ['guardians', 'teachers', 'staffMembers'].includes(key) ? undefined : data['name']].some(candidate => candidate !== undefined && normalizeImportKey(candidate) === lookup)
     })
@@ -83,8 +106,8 @@ export class ImportBusinessContext {
     return importJson(await this.readable(key, existing[0].id))
   }
 
-  async unique<K extends CoreEntityKey>(key: K, predicate: (entity: CoreEntityMap[K]) => boolean): Promise<CoreEntityMap[K] | undefined> {
-    const matches = (await this.list(key)).filter(predicate)
+  async unique<K extends CoreEntityKey>(key: K, predicate: (entity: CoreEntityMap[K]) => boolean, query?: QueryOptions<CoreEntityMap[K]>): Promise<CoreEntityMap[K] | undefined> {
+    const matches = (await this.list(key, query)).filter(predicate)
     if (matches.length > 1) {
       const candidates: string[] = []
       for (const entity of matches) {
@@ -161,11 +184,34 @@ async function matchTarget(ctx: ImportBusinessContext, row: ImportRow, data: Imp
   const explicit = text(row.values['target_id'])
   if (explicit)
     return ctx.readable(key, explicit)
-  const saved = (await ctx.list(key)).find(entity => entity.id === row.targetId)
+  const saved = (await ctx.list(key, { id: row.targetId } as QueryOptions<CoreEntityMap[typeof key]>))[0]
   if (saved)
     return ctx.readable(key, saved.id)
   const same = (a: unknown, b: unknown) => !isBlankImportValue(b) && normalizeImportKey(a) === normalizeImportKey(b)
   const sameYear = (record: ImportRecord) => record['academicYearId'] === ctx.batch.academicYearId
+  const matchFields: Record<ImportType, string[]> = {
+    academic_disciplines: ['code'],
+    placement_statuses: ['code'],
+    teachers: ['code'],
+    guardians: ['code'],
+    staff: ['code'],
+    students: ['matricule'],
+    classes: ['academicYearId', 'gradeLevelId', 'name'],
+    subjects: ['academicYearId', 'gradeLevelId', data['code'] ? 'code' : 'name'],
+    guardian_contacts: ['id'],
+    guardian_relationships: ['guardianId', 'studentId'],
+    class_offerings: ['classGroupId', 'subjectId'],
+    teacher_assignments: ['academicYearId', 'teacherId'],
+    chapters: ['subjectId'],
+    billing: ['academicYearId', 'studentId', 'catalogServiceId'],
+    payments: ['academicYearId', 'reference'],
+  }
+  const query = Object.fromEntries(matchFields[row.type].map((field) => {
+    const value = String(field === 'academicYearId' ? ctx.batch.academicYearId : row.type === 'guardian_contacts' ? data['guardianId'] ?? '' : data[field] ?? '')
+    // References have already been resolved (including ambiguity/access checks).
+    // Only external business keys need text normalization at this point.
+    return [field, field === 'id' || field.endsWith('Id') ? value : { $normalizedCandidate: value }]
+  })) as QueryOptions<CoreEntityMap[typeof key]>
   return ctx.unique(key, (entity) => {
     const record = importJson(entity)
     switch (row.type) {
@@ -185,7 +231,7 @@ async function matchTarget(ctx: ImportBusinessContext, row: ImportRow, data: Imp
       case 'billing': return sameYear(record) && same(record['studentId'], data['studentId']) && same(record['catalogServiceId'], data['catalogServiceId']) && record['status'] === 'active'
       case 'payments': return sameYear(record) && same(record['reference'], data['reference'])
     }
-  })
+  }, query)
 }
 function instantiate(type: ImportType, data: ImportRecord) {
   // Constructors remain the authoritative domain shape and value validation.
@@ -205,7 +251,7 @@ function instantiate(type: ImportType, data: ImportRecord) {
   }
 }
 export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRow): Promise<ImportRow> {
-  const policy = new ImportAccessPolicy(ctx.base.access)
+  const policy = new ImportAccessPolicy(ctx.access)
   await policy.assertType(row.type, true)
   row.dependencies = []
   const incoming = normalizeImportValues(row.type, row.values)
@@ -218,7 +264,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
     incoming['code'] = row.generatedCode
   await ctx.resolveReferences(row, incoming)
   if (row.type === 'teacher_assignments' && incoming['kind'] !== 'homeroom') {
-    const offering = await ctx.unique('classSubjects', entity => entity.classGroupId === incoming['classGroupId'] && entity.subjectId === incoming['subjectId'])
+    const offering = await ctx.unique('classSubjects', entity => entity.classGroupId === incoming['classGroupId'] && entity.subjectId === incoming['subjectId'], { classGroupId: text(incoming['classGroupId']), subjectId: text(incoming['subjectId']) })
     if (offering)
       incoming['classSubjectId'] = offering.id
     else if (!row.dependencies.length)
@@ -243,7 +289,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
     const annual = await ctx.unique(annualKey, (entity) => {
       const data = importJson(entity)
       return data[personKey] === row.targetId && entity.academicYearId === ctx.batch.academicYearId
-    })
+    }, { [personKey]: row.targetId, academicYearId: ctx.batch.academicYearId })
     if (current && annual) {
       const annualData = importJson(annual)
       // Persisted optional fields and proposed nullable fields describe the same unknown value.
@@ -251,7 +297,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
         current[field] = annualData[field] ?? null
     }
     if (row.type === 'students' && current) {
-      const active = await ctx.unique('enrollments', enrollment => enrollment.studentId === row.targetId && enrollment.academicYearId === ctx.batch.academicYearId && enrollment.status === 'active')
+      const active = await ctx.unique('enrollments', enrollment => enrollment.studentId === row.targetId && enrollment.academicYearId === ctx.batch.academicYearId && enrollment.status === 'active', { studentId: row.targetId, academicYearId: ctx.batch.academicYearId, status: StudentClassEnrollmentStatus.Active })
       if (active) {
         current['enrollmentId'] = active.id
         current['classGroupId'] = active.classGroupId
@@ -340,7 +386,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
       const previousLinks: ImportRecord[] = []
       const nextLinks: ImportRecord[] = []
       for (const studentId of listText(incoming['studentIds']).sort()) {
-        const previous = await ctx.unique('guardianLinks', link => link.guardianId === row.targetId && link.studentId === studentId)
+        const previous = await ctx.unique('guardianLinks', link => link.guardianId === row.targetId && link.studentId === studentId, { guardianId: row.targetId, studentId })
         const before = previous ? defined(importJson(previous), ['id', 'schoolId', 'guardianId', 'studentId', ...relationshipFields]) : null
         if (before)
           previousLinks.push(before)
@@ -352,7 +398,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
         const relation = applyImportScalars(before ?? { id: `${row.id}:${studentId}`, schoolId: ctx.batch.schoolId, guardianId: row.targetId, studentId }, defined(incoming, relationshipFields), previous ? row.effectiveMode : 'M', new Set(['emergencyContactPriority', 'contactRestrictions', 'notes']))
         const link = new GuardianStudentLink(relation as unknown as ConstructorParameters<typeof GuardianStudentLink>[0])
         if (!row.dependencies.length && existing)
-          await ctx.base.access.entity('guardianLinks').assertSave(link, previous)
+          await ctx.access.entity('guardianLinks').assertSave(link, previous)
         nextLinks.push(defined(importJson(link), ['id', 'schoolId', 'guardianId', 'studentId', ...relationshipFields]))
       }
       if (current)
@@ -388,7 +434,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
       proposed['acceptedTerms'] = existingData['acceptedTerms']!
       if (row.effectiveMode !== 'S' && supplied['priceOverride'] !== undefined && supplied['priceOverride'] !== null && supplied['priceOverride'] !== (existingData['acceptedTerms'] as ImportRecord)?.['price'])
         fail('IMPORT_FINANCIAL_ADJUSTMENT_REQUIRED')
-      const charges = (await ctx.list('studentCharges')).filter(charge => charge.enrollmentId === row.targetId)
+      const charges = (await ctx.list('studentCharges', { enrollmentId: row.targetId })).filter(charge => charge.enrollmentId === row.targetId)
       if (row.effectiveMode !== 'S' && 'dueDate' in supplied && (!isBlankImportValue(supplied['dueDate']) || row.effectiveMode === 'O') && charges.some(charge => (charge.dueDate?.toISOString().slice(0, 10) ?? null) !== supplied['dueDate']))
         fail('IMPORT_FINANCIAL_ADJUSTMENT_REQUIRED')
       proposed = { ...current }
@@ -430,7 +476,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
         if (parent.outcome === 'blocked' || parent.outcome === 'dependency_blocked')
           fail('IMPORT_DEPENDENCY_BLOCKED')
       }
-      if (!billing.length && !await ctx.unique('studentServiceEnrollments', enrollment => enrollment.studentId === proposed['studentId'] && enrollment.catalogServiceId === proposed['catalogServiceId'] && enrollment.academicYearId === ctx.batch.academicYearId && enrollment.status === 'active'))
+      if (!billing.length && !await ctx.unique('studentServiceEnrollments', enrollment => enrollment.studentId === proposed['studentId'] && enrollment.catalogServiceId === proposed['catalogServiceId'] && enrollment.academicYearId === ctx.batch.academicYearId && enrollment.status === 'active', { studentId: text(proposed['studentId']), catalogServiceId: text(proposed['catalogServiceId']), academicYearId: ctx.batch.academicYearId, status: ServiceEnrollmentStatus.Active }))
         fail('IMPORT_BILLING_REQUIRED')
     }
   }
@@ -440,7 +486,7 @@ export async function prepareImportRow(ctx: ImportBusinessContext, row: ImportRo
     proposed = { ...proposed, ...normalized }
     // New dependencies do not exist yet: their writes are authorized again after prerequisite commits.
     if (!row.dependencies.length)
-      await ctx.base.access.entity(importResources[row.type]).assertSave(entity as CoreEntityMap[CoreEntityKey], existing)
+      await ctx.access.entity(importResources[row.type]).assertSave(entity as CoreEntityMap[CoreEntityKey], existing)
   }
   row.dependencies = [...new Set(row.dependencies)]
   row.current = current
@@ -540,7 +586,7 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
         await service.studentWorkflow.registerGuardian({ ...data, id, schoolId, hasAccess: false, sendAccountInvitation: false } as Parameters<typeof service.studentWorkflow.registerGuardian>[0])
       for (const relation of (data['studentRelationships'] ?? []) as ImportRecord[]) {
         const studentId = text(relation['studentId'])
-        const previous = await ctx.unique('guardianLinks', link => link.guardianId === id && link.studentId === studentId)
+        const previous = await ctx.unique('guardianLinks', link => link.guardianId === id && link.studentId === studentId, { guardianId: id, studentId })
         if (previous) {
           await service.studentWorkflow.updateGuardianStudentLink({ ...relation, guardianId: id, studentId } as Parameters<typeof service.studentWorkflow.updateGuardianStudentLink>[0])
         }
@@ -567,7 +613,7 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
       }
       break
     case 'class_offerings': {
-      const offering = await ctx.unique('classSubjects', entity => entity.classGroupId === data['classGroupId'] && entity.subjectId === data['subjectId'])
+      const offering = await ctx.unique('classSubjects', entity => entity.classGroupId === data['classGroupId'] && entity.subjectId === data['subjectId'], { classGroupId: text(data['classGroupId']), subjectId: text(data['subjectId']) })
       if (!offering)
         fail('IMPORT_OFFERING_NOT_FOUND')
       await service.academicsWorkflow.setClassSubjectOffered({ classSubjectId: offering.id, expectedParticipationRevision: offering.participationRevision, isOffered: data['isOffered'] as boolean })
@@ -594,10 +640,10 @@ export async function executeImportRow(ctx: ImportBusinessContext, row: ImportRo
       if (!row.current) {
         let allocation: Parameters<typeof service.financeWorkflow.recordPayment>[0]['allocation'] = { mode: 'account_only' }
         if (data['catalogServiceId']) {
-          const enrollment = await ctx.unique('studentServiceEnrollments', entity => entity.studentId === data['studentId'] && entity.catalogServiceId === data['catalogServiceId'] && entity.academicYearId === academicYearId && entity.status === 'active')
+          const enrollment = await ctx.unique('studentServiceEnrollments', entity => entity.studentId === data['studentId'] && entity.catalogServiceId === data['catalogServiceId'] && entity.academicYearId === academicYearId && entity.status === 'active', { studentId: text(data['studentId']), catalogServiceId: text(data['catalogServiceId']), academicYearId, status: ServiceEnrollmentStatus.Active })
           if (!enrollment)
             fail('IMPORT_BILLING_REQUIRED')
-          const charge = await ctx.unique('studentCharges', entity => entity.enrollmentId === enrollment.id)
+          const charge = await ctx.unique('studentCharges', entity => entity.enrollmentId === enrollment.id, { enrollmentId: enrollment.id })
           if (!charge)
             fail('IMPORT_CHARGE_REQUIRED')
           allocation = { mode: 'targeted', targets: [{ chargeId: charge.id, amount: data['amount'] as number }] }
@@ -618,7 +664,7 @@ export async function validateImportCapacity(ctx: ImportBusinessContext, rows: I
     const id = text(row.proposed['classGroupId'])
     byClass.set(id, [...byClass.get(id) ?? [], row])
   }
-  const enrollments = byClass.size ? await ctx.list('enrollments') : []
+  const enrollments = byClass.size ? await ctx.list('enrollments', { classGroupId: { $in: [...byClass.keys()] }, status: StudentClassEnrollmentStatus.Active }) : []
   for (const [id, requested] of byClass) {
     let group: ImportRecord
     try {

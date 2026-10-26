@@ -1,10 +1,11 @@
 /* eslint dot-notation: "off" -- Import snapshots are index-signature records. */
-import type { ImportBatch, ImportExistingMode, ImportFileRevision, ImportFormatPort, ImportPersistencePort, ImportRow, ImportType } from '@edaya/core'
+import type { CoreEntityKey, CoreEntityMap, ImportBatch, ImportExistingMode, ImportFileRevision, ImportFormatPort, ImportPersistencePort, ImportProgress, ImportReadTarget, ImportRow, ImportType } from '@edaya/core'
 import type { SchoolService } from '../../services/school-service'
 import { ImportAccessPolicy, importResources } from '@edaya/authorization'
 import { BusinessRuleViolationError, IMPORT_COMPLETED_OUTCOMES, IMPORT_MAX_FILE_BYTES, IMPORT_MAX_ROWS, IMPORT_TEMPLATE_VERSION, IMPORT_TEMPLATES, parseImportDate, resolveImportExistingMode } from '@edaya/core'
 import { digestCommandRequest } from '../../services/commands/command-execution'
 import { schoolCommandScope } from '../../services/commands/school-command-scope'
+import { loadInBatches } from '../shared/bounded-reads'
 import { ImportBusinessContext, ImportBusinessIssue, prepareImportRow, validateImportCapacity } from './business'
 import { prepareCompleteCollections } from './collections'
 import { importErrorCode, normalizeImportTable, normalizeImportValues } from './normalization'
@@ -184,7 +185,7 @@ export class SchoolImportService {
       const latest = new Map(files.map(file => [file.fileId, file.id]))
       const allRows = await this.store.listRows(batch.schoolId, batch.id)
       const rows = allRows.filter(row => row.source.revisionId === latest.get(row.source.fileId)).sort((a, b) => IMPORT_TEMPLATES[a.type].rank - IMPORT_TEMPLATES[b.type].rank || a.id.localeCompare(b.id))
-      const ctx = new ImportBusinessContext(this.service, batch, rows)
+      const ctx = new ImportBusinessContext(this.service, batch, rows, 'validation')
       for (const row of rows) {
         row.issues = row.issues.filter(issue => issue.code === 'IMPORT_COLUMN_UNSUPPORTED')
         row.proposed = null
@@ -345,54 +346,91 @@ export class SchoolImportService {
       const batch = await this.requireBatch(id)
       const files = await this.store.listFiles(batch.schoolId, batch.id)
       const rows = await this.store.listRows(batch.schoolId, batch.id)
-      if (batch.state === 'running' && batch.workId && (await this.durableWork?.getState(batch.workId))?.status === 'dead') {
-        for (const row of rows.filter(row => row.outcome === 'pending')) {
-          row.outcome = 'failed'
-          row.issues = [{ code: 'IMPORT_RETRY_EXHAUSTED', severity: 'error' }]
-        }
-        batch.state = 'completed'
-        await this.store.saveRows(rows)
-        await this.store.saveBatch(batch)
-      }
-      const ctx = new ImportBusinessContext(this.service, batch)
-      for (const type of new Set(files.map(file => file.type)))
-        await this.policy.assertType(type)
-      for (const row of rows) {
-        const present = (await ctx.list(importResources[row.type])).some(entity => entity.id === row.targetId)
-        if (present) {
-          await ctx.readable(importResources[row.type], row.targetId)
-          for (const snapshot of [row.current, row.proposed]) {
-            if (!snapshot)
-              continue
-            for (const [field, key] of [['studentId', 'students'], ['guardianId', 'guardians'], ['teacherId', 'teachers'], ['classGroupId', 'classGroups']] as const) {
-              if (typeof snapshot[field] === 'string' && (await ctx.list(key)).some(entity => entity.id === snapshot[field]))
-                await ctx.readable(key, String(snapshot[field]))
-            }
-          }
-          if (row.type === 'students')
-            await ctx.unique('studentAcademicYearProfiles', profile => profile.studentId === row.targetId && profile.academicYearId === batch.academicYearId)
-          if (row.type === 'teachers')
-            await ctx.unique('teacherAcademicYearProfiles', profile => profile.teacherId === row.targetId && profile.academicYearId === batch.academicYearId)
-          if (row.type === 'guardians') {
-            for (const studentId of (row.proposed?.['studentIds'] as string[] | undefined) ?? []) {
-              await ctx.readable('students', studentId)
-              await ctx.unique('guardianLinks', link => link.guardianId === row.targetId && link.studentId === studentId)
-            }
-          }
-        }
-        else {
-          await this.policy.assertUnmatchedRead(batch, row.type)
-        }
-      }
-      const counts: Record<string, number> = {}
-      for (const row of rows) {
-        counts[row.outcome] = (counts[row.outcome] ?? 0) + 1
-        for (const [key, value] of Object.entries(row.result ?? {})) {
-          if (typeof value === 'number')
-            counts[key] = (counts[key] ?? 0) + value
-        }
-      }
+      await this.assertRead(batch, files.map(file => file.type), await this.store.readTargets(batch.schoolId, batch.id))
+      const { counts } = await this.store.progress(batch.schoolId, batch.id)
       return { batch, files, rows, counts }
+    })
+  }
+
+  /** The same current business scopes protect detail, progress and history. */
+  private async assertRead(batch: ImportBatch, types: ImportType[], targets: ImportReadTarget[]) {
+    for (const type of new Set(types)) await this.policy.assertType(type)
+    const requested = new Map<CoreEntityKey, Set<string>>()
+    const add = (key: CoreEntityKey, id: string) => {
+      const ids = requested.get(key) ?? new Set<string>()
+      ids.add(id)
+      requested.set(key, ids)
+    }
+    for (const target of targets) add(importResources[target.type], target.targetId)
+    const present = new Map<CoreEntityKey, Set<string>>()
+    const check = async (key: CoreEntityKey, ids: readonly string[]) => {
+      const repo = this.base.repositories[key]
+      if (!repo.forSchool)
+        throw new Error('Import reads require school scope')
+      const existing = await loadInBatches<CoreEntityMap[CoreEntityKey]>(ids, chunk => repo.forSchool!(batch.schoolId).list({ id: { $in: chunk } } as never))
+      const scope = await this.base.access.entity(key).readScope()
+      const readable = await loadInBatches<CoreEntityMap[CoreEntityKey]>(existing.map(row => row.id), chunk => repo.forAccess(scope).list({ id: { $in: chunk } } as never))
+      if (readable.length !== existing.length)
+        throw new ImportBusinessIssue('IMPORT_TARGET_RESTRICTED_OR_MISSING')
+      return new Set(existing.map(row => row.id))
+    }
+    for (const [key, ids] of requested) present.set(key, await check(key, [...ids]))
+    requested.clear()
+    const requiredStudents = new Set<string>()
+    const students = new Set<string>()
+    const teachers = new Set<string>()
+    const guardians: ImportReadTarget[] = []
+    const unmatched = new Set<ImportType>()
+    for (const target of targets) {
+      if (!present.get(importResources[target.type])?.has(target.targetId)) {
+        unmatched.add(target.type)
+        continue
+      }
+      for (const ref of target.references) add(ref.key, ref.id)
+      if (target.type === 'students')
+        students.add(target.targetId)
+      if (target.type === 'teachers')
+        teachers.add(target.targetId)
+      if (target.type === 'guardians') {
+        guardians.push(target)
+        for (const id of target.studentIds) {
+          add('students', id)
+          requiredStudents.add(id)
+        }
+      }
+    }
+    for (const type of unmatched) await this.policy.assertUnmatchedRead(batch, type)
+    for (const [key, ids] of requested) {
+      const existing = await check(key, [...ids])
+      if (key === 'students' && [...requiredStudents].some(id => !existing.has(id)))
+        throw new ImportBusinessIssue('IMPORT_TARGET_RESTRICTED_OR_MISSING')
+    }
+    for (const [key, personKey, ids] of [['studentAcademicYearProfiles', 'studentId', students], ['teacherAcademicYearProfiles', 'teacherId', teachers]] as const) {
+      if (!ids.size)
+        continue
+      const repo = this.base.repositories[key]
+      const profiles = await loadInBatches<CoreEntityMap['studentAcademicYearProfiles' | 'teacherAcademicYearProfiles']>([...ids], chunk => repo.forSchool!(batch.schoolId).list({ academicYearId: batch.academicYearId, [personKey]: { $in: chunk } }))
+      const owners = profiles.map(profile => 'studentId' in profile ? profile.studentId : profile.teacherId)
+      if (new Set(owners).size !== owners.length)
+        throw new ImportBusinessIssue('IMPORT_MATCH_AMBIGUOUS')
+      await check(key, profiles.map(profile => profile.id))
+    }
+    if (guardians.some(target => target.studentIds.length)) {
+      const links = await loadInBatches(guardians.map(target => target.targetId), ids => this.base.repositories.guardianLinks.forSchool!(batch.schoolId).list({ guardianId: { $in: ids } }))
+      const pairs = new Set(guardians.flatMap(target => target.studentIds.map(id => JSON.stringify([target.targetId, id]))))
+      const relevant = links.filter(link => pairs.has(JSON.stringify([link.guardianId, link.studentId])))
+      if (new Set(relevant.map(link => JSON.stringify([link.guardianId, link.studentId]))).size !== relevant.length)
+        throw new ImportBusinessIssue('IMPORT_MATCH_AMBIGUOUS')
+      await check('guardianLinks', relevant.map(link => link.id))
+    }
+  }
+
+  async status(id: string): Promise<{ batch: ImportBatch } & ImportProgress> {
+    return this.atomic(async () => {
+      const batch = await this.requireBatch(id)
+      const files = await this.store.listFiles(batch.schoolId, batch.id)
+      await this.assertRead(batch, files.map(file => file.type), await this.store.readTargets(batch.schoolId, batch.id))
+      return { batch, ...await this.store.progress(batch.schoolId, batch.id) }
     })
   }
 
@@ -407,8 +445,7 @@ export class SchoolImportService {
     const visible: ImportBatch[] = []
     for (const batch of batches) {
       try {
-        await this.detail(batch.id)
-        visible.push(batch)
+        visible.push((await this.status(batch.id)).batch)
       }
       catch (error) {
         if (importErrorCode(error) !== 'IMPORT_ACCESS_DENIED' && !(error instanceof ImportBusinessIssue))

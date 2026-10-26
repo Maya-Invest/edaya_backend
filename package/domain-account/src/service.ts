@@ -1,11 +1,12 @@
 import type { Account, AuthChallenge, AuthOutcome, AuthSession, DeliveryReceipt, IdentifierKind, OtpChannel, PendingAuth } from './model'
 import type { AccountRepositoryPort, AccountSecurityPort, AuthenticationProviderPort, PhoneAuthPort, PrivilegedAccountPolicyPort } from './ports'
+import type { AcceptedTerms, TermsAcceptanceInput, TermsLocale, TermsPolicyPort } from './terms'
 import { AuthError, normalizeIdentifier } from './model'
 
 const FIVE_MINUTES = 300000
 /** Owns Account policy. Provider sessions and identities never confer business access. */
 export class AccountService {
-  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort) { }
+  constructor(private readonly repository: AccountRepositoryPort, private readonly provider: AuthenticationProviderPort, private readonly crypto: AccountSecurityPort, private readonly policy: PrivilegedAccountPolicyPort, private readonly now: () => number = Date.now, private readonly localFixtures = false, private readonly phone?: PhoneAuthPort, private readonly terms?: TermsPolicyPort) { }
   // Expected failures commit attempt counters; infrastructure failures roll back.
   private async atomic<T>(work: () => Promise<T>): Promise<T> {
     const result = await this.repository.transaction(async () => {
@@ -23,7 +24,25 @@ export class AccountService {
     return result.value
   }
 
+  getTerms(locale: TermsLocale) {
+    return this.terms?.current(locale) ?? { enforced: false, document: null }
+  }
+
+  private acceptedTerms(input?: TermsAcceptanceInput): AcceptedTerms | undefined {
+    const policy = this.getTerms(input?.locale ?? 'fr')
+    if (!policy.enforced)
+      return undefined
+    if (!policy.document)
+      throw new AuthError('terms_unavailable', 503)
+    if (!input?.accepted)
+      throw new AuthError('terms_acceptance_required')
+    if (input.version !== policy.document.version)
+      throw new AuthError('terms_version_changed', 409)
+    return { version: input.version, locale: policy.document.locale, documentHash: policy.document.documentHash }
+  }
+
   async begin(input: {
+    termsAcceptance?: TermsAcceptanceInput
     kind: IdentifierKind
     value: string
     channel?: OtpChannel | 'telegram'
@@ -33,13 +52,18 @@ export class AccountService {
     credential?: string
     recoveryEligible?: boolean
   }) {
+    const terms = input.credential ? undefined : this.acceptedTerms(input.termsAcceptance)
+    return this.beginAccepted(input, terms)
+  }
+
+  private async beginAccepted(input: Parameters<AccountService['begin']>[0], terms?: AcceptedTerms) {
     const value = normalizeIdentifier(input.kind, input.value)
     if (input.channel === 'telegram')
       throw new AuthError('unsupported_channel')
     if (input.kind === 'phone') {
       if (input.channel && input.channel !== 'whatsapp')
         throw new AuthError('unsupported_channel')
-      return this.requestPhone({ ...input, value })
+      return this.requestPhone({ ...input, value, terms })
     }
     if (input.channel && input.channel !== 'email')
       throw new AuthError('invalid_channel')
@@ -55,7 +79,7 @@ export class AccountService {
       if (attempts >= 5)
         throw new AuthError('attempts_exhausted', 429)
       const id = this.crypto.token()
-      const challenge = { id, kind: input.kind, value, channel: 'email' as const, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
+      const challenge = { terms, id, kind: input.kind, value, channel: 'email' as const, purpose: session ? 'link' as const : 'login' as const, ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: input.recoveryEligible === true }
       await this.repository.saveChallenge(challenge)
       try {
         await this.provider.sendOtp({ kind: input.kind, value, channel: 'email', attemptId: id })
@@ -107,10 +131,10 @@ export class AccountService {
     await this.authorizeChallenge(previous, input.credential)
     if (input.action !== 'resend' || previous.consumed || previous.attempts >= 5 || this.now() >= previous.expiresAt + 3600000)
       throw new AuthError('challenge_expired')
-    return this.begin({ kind: 'email', value: previous.value, channel: 'email', ip: input.ip, credential: previous.purpose === 'link' ? input.credential : undefined, recoveryEligible: previous.recoveryEligible })
+    return this.beginAccepted({ kind: 'email', value: previous.value, channel: 'email', ip: input.ip, credential: previous.purpose === 'link' ? input.credential : undefined, recoveryEligible: previous.recoveryEligible }, previous.terms)
   }
 
-  private async requestPhone(input: { value?: string, challenge?: string, action?: 'resend' | 'sms', ip: string, requestId?: string, credential?: string, recoveryEligible?: boolean, locale?: 'fr' | 'en' }) {
+  private async requestPhone(input: { terms?: AcceptedTerms, value?: string, challenge?: string, action?: 'resend' | 'sms', ip: string, requestId?: string, credential?: string, recoveryEligible?: boolean, locale?: 'fr' | 'en' }) {
     const phone = this.phone
     if (!phone || phone.mode === 'disabled' || !this.provider.preparePhoneOtp)
       throw new AuthError('phone_auth_unavailable', 503)
@@ -130,7 +154,7 @@ export class AccountService {
       if (previous)
         await this.authorizeChallenge(previous, input.credential)
       const selected: OtpChannel = input.action === 'sms' ? 'sms' : previous?.channel ?? (phone.mode === 'sms_only' ? 'sms' : 'whatsapp')
-      const fingerprint = await this.crypto.digest(JSON.stringify([value, previous?.id ?? null, input.action ?? 'start', session?.digest ?? null, selected, previous?.recoveryEligible ?? input.recoveryEligible === true, previous?.locale ?? input.locale ?? 'fr']))
+      const fingerprint = await this.crypto.digest(JSON.stringify([value, previous?.id ?? null, input.action ?? 'start', session?.digest ?? null, selected, previous?.recoveryEligible ?? input.recoveryEligible === true, previous?.locale ?? input.locale ?? 'fr', previous?.terms ?? input.terms]))
       const replay = await this.repository.deliveryRequest(requestId)
       if (replay) {
         if (replay.fingerprint !== fingerprint)
@@ -154,7 +178,7 @@ export class AccountService {
       const attempts = await this.repository.supersede('phone', value, now)
       const count = cooldown && now - cooldown.lastSentAt < 3600000 ? cooldown.count + 1 : 1
       const nextResendAt = now + (count === 1 ? 60 : count === 2 ? 120 : 300) * 1000
-      const challenge: AuthChallenge = { id: this.crypto.token(), kind: 'phone', value, channel: selected, purpose: previous?.purpose ?? (session ? 'link' : 'login'), ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: previous?.recoveryEligible ?? input.recoveryEligible === true, locale: previous?.locale ?? input.locale ?? 'fr', nextResendAt, delivery: 'pending' }
+      const challenge: AuthChallenge = { terms: previous ? previous.terms : input.terms, id: this.crypto.token(), kind: 'phone', value, channel: selected, purpose: previous?.purpose ?? (session ? 'link' : 'login'), ...(session ? { accountId: session.accountId, sessionDigest: session.digest } : {}), createdAt: now, expiresAt: now + FIVE_MINUTES, attempts, consumed: false, recoveryEligible: previous?.recoveryEligible ?? input.recoveryEligible === true, locale: previous?.locale ?? input.locale ?? 'fr', nextResendAt, delivery: 'pending' }
       // The provider stores only the hash; the plaintext lives in this request.
       const code = await this.provider.preparePhoneOtp!(value)
       await this.repository.saveChallenge(challenge)
@@ -267,16 +291,18 @@ export class AccountService {
       const security = await this.repository.security(account.id)
       if (security.secret || await this.policy.requiresTotp(account.id)) {
         const token = this.crypto.token()
-        await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: challenge.kind, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: identifier.recoveryEligible })
+        await this.repository.savePending({ digest: await this.crypto.digest(token), accountId: account.id, primaryAt: this.now(), method: challenge.kind, expiresAt: this.now() + FIVE_MINUTES, attempts: 0, generation: this.provider.generation, securityVersion: account.securityVersion, recoveryEligible: identifier.recoveryEligible, terms: challenge.terms })
         return { state: security.secret ? 'totp_required' as const : 'enrollment_required' as const, challenge: token }
       }
-      return this.complete(account, this.now(), challenge.kind)
+      return this.complete(account, this.now(), challenge.kind, undefined, challenge.terms)
     })
   }
 
-  private async complete(account: Account, primaryAt: number, method: IdentifierKind, secondAt?: number): Promise<AuthOutcome> {
+  private async complete(account: Account, primaryAt: number, method: IdentifierKind, secondAt?: number, terms?: AcceptedTerms): Promise<AuthOutcome> {
     const credential = this.crypto.token()
     const session: AuthSession = { id: this.crypto.token(), accountId: account.id, digest: await this.crypto.digest(credential), primaryAt, ...(secondAt === undefined ? {} : { secondAt }), method, expiresAt: this.now() + 7 * 86400000, securityVersion: account.securityVersion, generation: this.provider.generation }
+    if (terms)
+      await this.repository.saveTermsAcceptance({ ...terms, accountId: account.id, acceptedAt: this.now() })
     await this.repository.saveSession(session)
     await this.repository.audit(account.id, 'authentication_completed', this.now())
     return { state: 'complete', credential, account, session }
@@ -311,7 +337,7 @@ export class AccountService {
       security.lastStep = step
       await this.repository.saveSecurity(account.id, security)
       await this.repository.deletePending(pending.digest)
-      return this.complete(account, pending.primaryAt, pending.method, this.now())
+      return this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms)
     })
   }
 
@@ -360,7 +386,7 @@ export class AccountService {
       await this.repository.revoke(account.id)
       await this.repository.deletePending(pending.digest)
       await this.repository.audit(account.id, 'totp_enrolled', this.now())
-      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now()), recoveryCodes }
+      return { ...await this.complete(account, pending.primaryAt, pending.method, this.now(), pending.terms), recoveryCodes }
     })
   }
 

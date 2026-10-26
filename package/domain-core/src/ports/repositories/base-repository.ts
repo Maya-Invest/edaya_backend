@@ -3,6 +3,8 @@ import type { ResourceAccessScope } from './resource-access-scope'
 export type FieldFilter<V>
   = | V
     | ({
+      /** Candidate prefilter for normalized text matching; callers must compare normalizeImportKey on returned values. */
+      $normalizedCandidate?: NonNullable<V> extends string ? string : never
       $eq?: V
       $ne?: V
       $in?: V[]

@@ -563,9 +563,41 @@
           "totpRequired"
         ]
       },
+      "AuthTermsAcceptance": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "accepted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "locale",
+          "accepted"
+        ],
+        "additionalProperties": false
+      },
       "AuthStart": {
         "type": "object",
         "properties": {
+          "termsAcceptance": {
+            "$ref": "#/components/schemas/AuthTermsAcceptance"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -618,6 +650,121 @@
         },
         "required": [
           "success"
+        ]
+      },
+      "AuthTermsSection": {
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": "string"
+          },
+          "paragraphs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "heading",
+          "paragraphs"
+        ]
+      },
+      "AuthTerms": {
+        "type": "object",
+        "properties": {
+          "enforced": {
+            "type": "boolean"
+          },
+          "document": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string",
+                "enum": [
+                  "fr",
+                  "en"
+                ]
+              },
+              "documentHash": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "published"
+                ]
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AuthTermsSection"
+                }
+              }
+            },
+            "required": [
+              "version",
+              "locale",
+              "documentHash",
+              "title",
+              "status",
+              "sections"
+            ]
+          }
+        },
+        "required": [
+          "enforced",
+          "document"
+        ]
+      },
+      "AuthTermsDocument": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "documentHash": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthTermsSection"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "locale",
+          "documentHash",
+          "title",
+          "status",
+          "sections"
         ]
       },
       "AuthUnlink": {
@@ -1283,6 +1430,47 @@
         "additionalProperties": false
       },
       "CancelSchoolImportRequest": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "batchId"
+        ],
+        "additionalProperties": false
+      },
+      "SchoolImportStatus": {
+        "type": "object",
+        "properties": {
+          "batch": {
+            "$ref": "#/components/schemas/SchoolImportBatch"
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "version": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "batch",
+          "counts",
+          "version",
+          "updatedAt"
+        ]
+      },
+      "GetSchoolImportStatusRequest": {
         "type": "object",
         "properties": {
           "batchId": {
@@ -32997,6 +33185,81 @@
     "parameters": {}
   },
   "paths": {
+    "/auth/edaya/terms": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "operationId": "auth.terms",
+        "x-edaya-kind": "auth",
+        "x-edaya-client-key": "terms",
+        "x-edaya-client-path": "/auth/edaya/terms",
+        "x-edaya-response-schema": "AuthTerms",
+        "x-edaya-base-path": "root",
+        "security": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fr",
+                "en"
+              ]
+            },
+            "required": false,
+            "name": "locale",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account operation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTerms"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or challenge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body too large"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Authentication unavailable"
+          }
+        }
+      }
+    },
     "/auth/edaya/methods": {
       "get": {
         "tags": [
@@ -33035,6 +33298,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33097,6 +33370,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33157,6 +33440,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33219,6 +33512,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33280,6 +33583,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33340,6 +33653,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33409,6 +33732,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33477,6 +33810,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33537,6 +33880,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33606,6 +33959,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33673,6 +34036,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33742,6 +34115,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33809,6 +34192,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -33878,6 +34271,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -33945,6 +34348,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -34014,6 +34427,16 @@
           "403": {
             "description": "Origin or security policy rejected"
           },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
+          },
           "413": {
             "description": "Body too large"
           },
@@ -34081,6 +34504,16 @@
           },
           "403": {
             "description": "Origin or security policy rejected"
+          },
+          "409": {
+            "description": "Terms version changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthFailure"
+                }
+              }
+            }
           },
           "413": {
             "description": "Body too large"
@@ -34939,6 +35372,135 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SchoolImportBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authorization session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied due to authorization policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessRuleViolationResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "example": {
+                    "message": "Hello World"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/core/imports/status": {
+      "post": {
+        "tags": [
+          "School Imports"
+        ],
+        "operationId": "imports.status",
+        "x-edaya-kind": "imports",
+        "x-edaya-client-key": "status",
+        "x-edaya-client-path": "imports/status",
+        "x-edaya-request-schema": "GetSchoolImportStatusRequest",
+        "x-edaya-response-schema": "SchoolImportStatus",
+        "requestBody": {
+          "description": "GetSchoolImportStatusRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSchoolImportStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SchoolImportStatus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolImportStatus"
                 }
               }
             }

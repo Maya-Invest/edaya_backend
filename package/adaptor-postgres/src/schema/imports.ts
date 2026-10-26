@@ -6,6 +6,9 @@ export const schoolImportBatches = pgTable('school_import_batches', {
   schoolId: text('school_id').notNull().references(() => schools.id),
   id: text('id').notNull(),
   data: jsonb('data').notNull(),
+  counts: jsonb('counts').notNull().default({}),
+  progressVersion: integer('progress_version').notNull().default(0),
+  progressAt: timestamp('progress_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
 }, table => [primaryKey({ columns: [table.schoolId, table.id] }), index('school_import_batches_history').on(table.schoolId, table.createdAt.desc(), table.id), check('school_import_batches_mode_check', sql`${table.data}->>'defaultOnExisting' IN ('S', 'M', 'O')`)])
 export const schoolImportFiles = pgTable('school_import_files', {
@@ -21,7 +24,10 @@ export const schoolImportRows = pgTable('school_import_rows', {
   batchId: text('batch_id').notNull(),
   id: text('id').notNull(),
   data: jsonb('data').notNull(),
-}, table => [primaryKey({ columns: [table.schoolId, table.batchId, table.id] }), foreignKey({ columns: [table.schoolId, table.batchId], foreignColumns: [schoolImportBatches.schoolId, schoolImportBatches.id] })])
+  outcome: text('outcome').generatedAlwaysAs(sql`data->>'outcome'`),
+  executionRank: integer('execution_rank').notNull().default(0),
+  classGroupId: text('class_group_id').generatedAlwaysAs(sql`data->'proposed'->>'classGroupId'`),
+}, table => [index('school_import_rows_ready').on(table.schoolId, table.batchId, table.outcome, table.executionRank, table.id), index('school_import_rows_cohort').on(table.schoolId, table.batchId, table.classGroupId).where(sql`${table.outcome} = 'pending'`), primaryKey({ columns: [table.schoolId, table.batchId, table.id] }), foreignKey({ columns: [table.schoolId, table.batchId], foreignColumns: [schoolImportBatches.schoolId, schoolImportBatches.id] })])
 export const schoolImportIdentities = pgTable('school_import_identities', {
   schoolId: text('school_id').notNull().references(() => schools.id),
   type: text('type').notNull(),

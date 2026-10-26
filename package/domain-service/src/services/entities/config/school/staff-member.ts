@@ -42,7 +42,7 @@ export async function validateStaffMemberSave(
     entityId: staffMember.id,
     errorCode: 'STAFF_MEMBER_CODE_ALREADY_EXISTS',
     entityLabel: 'Staff member',
-    listBySchool: () => repositories.staffMembers.list({ schoolId: staffMember.schoolId }),
+    findCandidates: code => repositories.staffMembers.list({ schoolId: staffMember.schoolId, code: { $normalizedCandidate: code } }),
   })
 }
 

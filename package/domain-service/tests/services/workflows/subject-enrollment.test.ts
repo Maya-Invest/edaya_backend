@@ -1,5 +1,6 @@
-import { AcademicDiscipline, AcademicPeriod, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceRecord, AttendanceStatus, ClassGroup, GradeLevel, LessonSession, OccurrenceStatus, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, Student, StudentSubjectEnrollment } from '@edaya/core'
-import { afterEach, beforeEach, describe, expect, it, setSystemTime } from 'bun:test'
+import { AcademicDiscipline, AcademicPeriod, AcademicYear, Assessment, AssessmentKind, AssessmentResult, AttendanceRecord, AttendanceStatus, ClassGroup, ClassSubject, GradeLevel, LessonSession, OccurrenceStatus, ReportCardDefinitionSectionKind, ReportCardResult, ReportCardResultSection, ReportCardResultStatus, Student, StudentSubjectEnrollment, Subject } from '@edaya/core'
+import { afterEach, beforeEach, describe, expect, it, setSystemTime, spyOn } from 'bun:test'
+import { reconcilePlacement } from '../../../src/capabilities/subject-enrollment/reconcile'
 import { createTestApp } from '../../support/create-test-app'
 import { createTestStaffActor } from '../../support/test-actor'
 
@@ -59,6 +60,36 @@ describe('current subject selections', () => {
     expect((await current(ctx)).source).toBe('automatic')
     expect((await current(ctx)).enrolledAt.toISOString()).toBe('2026-09-01T00:00:00.000Z')
     await expect(select(ctx, { scope: 'none' })).rejects.toMatchObject({ code: 'COMPULSORY_SUBJECT_MANAGED' })
+  })
+
+  it('loads shared compulsory context once for a placement transaction with many subjects', async () => {
+    const ctx = await context()
+    for (let index = 0; index < 10; index++) {
+      await ctx.repositories.subjects.save(new Subject({ id: `extra-${index}`, schoolId: 'sch1', academicYearId: 'year', gradeLevelId: 'grade', name: `Extra ${index}`, isOptional: false }))
+      await ctx.repositories.classSubjects.save(new ClassSubject({ id: `offering-${index}`, classGroupId: 'class', subjectId: `extra-${index}` }))
+    }
+    const placement = (await ctx.repositories.enrollments.findById('placement'))!
+    const reads = [
+      spyOn(ctx.repositories.academicYears, 'findById'),
+      spyOn(ctx.repositories.classGroups, 'findById'),
+      spyOn(ctx.repositories.students, 'findById'),
+      spyOn(ctx.repositories.schools, 'findById'),
+      spyOn(ctx.repositories.subjects, 'list'),
+      spyOn(ctx.repositories.classSubjects, 'list'),
+      spyOn(ctx.repositories.subjectEnrollments, 'list'),
+      spyOn(ctx.repositories.assessments, 'list'),
+      spyOn(ctx.repositories.academicPeriods, 'list'),
+    ]
+    try {
+      await ctx.atomicExecution.execute(() => reconcilePlacement(ctx.repositories, placement, undefined, createTestStaffActor('sch1', 'user1')))
+      for (const read of reads) expect(read).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      for (const read of reads) read.mockRestore()
+    }
+    expect(await ctx.repositories.subjectEnrollments.count({ studentClassEnrollmentId: 'placement' })).toBe(11)
+    for (let index = 0; index < 10; index++)
+      expect((await ctx.repositories.classSubjects.findById(`offering-${index}`))?.participationRevision).toBe(1)
   })
 
   it('hard deletes unused enrollment, replays deletion, and re-enrolls with a new identity', async () => {
@@ -331,6 +362,45 @@ describe('lifecycle and concurrency', () => {
     expect(carried.periods.map(row => row.periodId)).toEqual(['future'])
     expect(carried.effectiveAt(new Date('2027-02-01'))).toBe(true)
     expect(await current(ctx)).toBeUndefined()
+  })
+
+  it('saves multiple students and subjects in one command and replays the whole batch', async () => {
+    const ctx = await context(true)
+    await ctx.repositories.students.save(new Student({ id: 'second', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper' }))
+    await ctx.app.studentWorkflow.enrollStudent({ id: 'second-placement', studentId: 'second', classGroupId: 'class', enrolledAt: new Date('2026-09-01') })
+    await ctx.app.academicsWorkflow.configureSubject({ id: 'music', schoolId: 'sch1', disciplineId: 'discipline', gradeLevelId: 'grade', academicYearId: 'year', name: 'Music', isOptional: true })
+    const music = (await ctx.repositories.classSubjects.findOne({ subjectId: 'music' }))!
+    await ctx.app.academicsWorkflow.setClassSubjectOffered({ classSubjectId: music.id, expectedParticipationRevision: music.participationRevision, isOffered: true })
+    const input = {
+      requestId: crypto.randomUUID(),
+      expectedRevisions: { [ctx.offering.id]: await revision(ctx), [music.id]: (await ctx.repositories.classSubjects.findById(music.id))!.participationRevision },
+      operations: ['placement', 'second-placement'].flatMap(studentClassEnrollmentId => [ctx.offering.id, music.id].map(classSubjectId => ({ studentClassEnrollmentId, classSubjectId, selection: { scope: 'annual' as const } }))),
+    }
+    const first = await ctx.app.studentWorkflow.manageStudentSubjectEnrollments(input)
+    expect(first.enrollmentIds).toHaveLength(4)
+    expect(await ctx.app.studentWorkflow.manageStudentSubjectEnrollments(input)).toEqual(first)
+    expect(await ctx.repositories.subjectEnrollments.count()).toBe(4)
+    const withdrawal = { requestId: crypto.randomUUID(), expectedRevisions: first.revisions, operations: input.operations.filter(row => row.classSubjectId === ctx.offering.id).map(row => ({ ...row, selection: { scope: 'none' as const } })) }
+    await ctx.app.studentWorkflow.manageStudentSubjectEnrollments(withdrawal)
+    expect(await ctx.repositories.subjectEnrollments.count()).toBe(2)
+    expect((await ctx.repositories.subjectEnrollments.list()).every(row => row.classSubjectId === music.id)).toBe(true)
+  })
+
+  it('rolls back preceding batch changes when a later student operation fails', async () => {
+    const ctx = await context(true)
+    await ctx.repositories.students.save(new Student({ id: 'second', schoolId: 'sch1', firstName: 'Grace', lastName: 'Hopper' }))
+    await ctx.app.studentWorkflow.enrollStudent({ id: 'second-placement', studentId: 'second', classGroupId: 'class', enrolledAt: new Date('2026-09-01') })
+    const before = await revision(ctx)
+    const input = { requestId: crypto.randomUUID(), expectedRevisions: { [ctx.offering.id]: before }, operations: [
+      { studentClassEnrollmentId: 'placement', classSubjectId: ctx.offering.id, selection: { scope: 'annual' as const } },
+      { studentClassEnrollmentId: 'second-placement', classSubjectId: ctx.offering.id, selection: { scope: 'periods' as const, periodIds: ['missing-period'] } },
+    ] }
+    await expect(ctx.app.studentWorkflow.manageStudentSubjectEnrollments(input)).rejects.toMatchObject({ code: 'SUBJECT_ENROLLMENT_PERIOD_INVALID' })
+    expect(await ctx.repositories.subjectEnrollments.count()).toBe(0)
+    expect(await revision(ctx)).toBe(before)
+    const staff = ctx.forActor(createTestStaffActor('sch1', 'unprivileged'))
+    await expect(staff.studentWorkflow.manageStudentSubjectEnrollments({ ...input, requestId: crypto.randomUUID() })).rejects.toThrow()
+    expect(await ctx.repositories.subjectEnrollments.count()).toBe(0)
   })
 
   it('uses school midnights across daylight-saving transitions', async () => {

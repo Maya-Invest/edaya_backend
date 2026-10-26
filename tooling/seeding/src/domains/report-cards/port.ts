@@ -65,8 +65,18 @@ export interface ReportCardTeacherCommentSeedRecord {
   teacherComment: string
 }
 
+export interface GradingPolicySeedRecord {
+  gradeLevelId: string
+  academicYearId: string
+  scaleId: string
+  mode: 'numeric-first'
+  aggregateLabel: string
+}
+
 export interface ReportCardsSeedPort {
   createGradeScale: (record: GradeScaleSeedRecord) => Promise<void>
+  /** Returns only after the level/year policy has finished recalculating. */
+  configureGrading: (record: GradingPolicySeedRecord) => Promise<void>
   createReportCardDefinition: (record: ReportCardDefinitionSeedRecord) => Promise<void>
   createReportCardSection: (record: ReportCardSectionSeedRecord) => Promise<void>
   generateReportCardResult: (record: ReportCardResultSeedRecord) => Promise<void>

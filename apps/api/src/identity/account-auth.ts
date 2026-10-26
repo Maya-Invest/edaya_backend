@@ -1,13 +1,13 @@
-import { phoneSmsPrefixes } from "./phone-config";
-import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
 import type { Account, AccountService, AuthOutcome, AuthSession } from "@edaya/account";
 import type { Environment } from "./env";
 import type { IdentitySigningKeys } from "./jwt-keys";
 import { AuthError } from "@edaya/account";
 import { z } from "zod";
-import { assertAuthRequest, authCookieName, authCredential } from "./request-policy";
+import { AuthUnlink, AuthEnrollmentInput as enrollmentSchema, AuthResend as resendSchema, AuthStart as startSchema, AuthChallengeInput as statusSchema, AuthResource as tokenSchema, AuthProof as verifySchema } from "./contracts";
 import { resolveAllowlistedApiOrigin } from "./env";
 import { signIdentityAccessToken } from "./jwt-keys";
+import { phoneSmsPrefixes } from "./phone-config";
+import { assertAuthRequest, authCookieName, authCredential } from "./request-policy";
 import { createWhatsAppWebhook } from "./whatsapp-webhook";
 
 const authPostPaths = new Set([
@@ -33,7 +33,7 @@ const authPostPaths = new Set([
 export function isAccountAuthRoute(request: Request) {
   const path = new URL(request.url).pathname;
   return path === "/auth/edaya/whatsapp/webhook"
-    || (request.method === "GET" && path === "/auth/edaya/methods")
+    || (request.method === "GET" && ["/auth/edaya/methods", "/auth/edaya/terms"].includes(path))
     || (request.method === "POST" && authPostPaths.has(path));
 }
 
@@ -68,6 +68,10 @@ export function createAccountAuthHandler(service: AccountService, env: Environme
     try {
       if (path === "/auth/edaya/whatsapp/webhook")
         return webhook(request);
+      if (request.method === "GET" && path === "/auth/edaya/terms") {
+        const locale = z.enum(["fr", "en"]).parse(url.searchParams.get("locale") ?? "fr");
+        return json(service.getTerms(locale));
+      }
       if (request.method === "GET" && path === "/auth/edaya/methods") {
         return json({ methods: [
           { key: "email_otp", kind: "email", channels: ["email"] },

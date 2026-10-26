@@ -1,4 +1,5 @@
 import type { OtpDeliveryPort, PrivilegedAccountPolicyPort } from "@edaya/account";
+import type { SmsRouterPort } from "@edaya/core";
 import type { Environment } from "./env";
 import type { IdentitySigningKeys } from "./jwt-keys";
 import { createHash } from "node:crypto";
@@ -6,12 +7,12 @@ import { AccountService } from "@edaya/account";
 import { createAccountRepository, createAccountSecurity } from "@edaya/adaptor-account";
 import { createBetterAuthAdapter } from "@edaya/adaptor-auth-better-auth";
 import { sql } from "drizzle-orm";
+import { resolveSmsRouter } from "@/runtime/shared/adapters/sms-router";
 import { createAccountAuthHandler } from "./account-auth";
 import { createAuthDatabase } from "./database";
 import { ensureIdentitySigningKeys } from "./jwt-keys";
 import { createOtpDelivery } from "./otp-delivery";
-import type { SmsRouterPort } from "@edaya/core";
-import { resolveSmsRouter } from "@/runtime/shared/adapters/sms-router";
+import { createTermsPolicy } from "./terms-policy";
 
 export interface IdentityRuntime {
   env: Environment;
@@ -72,7 +73,7 @@ export async function createIdentityRuntime(env: Environment, options: CreateIde
       if (!env.REQUIRE_PRIVILEGED_TOTP)
         return false;
       throw new Error("Privileged Account policy must be composed in-process");
-    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || options.localFixtures === true), { mode: env.PHONE_AUTH_MODE, supports: phone => /^\+225(?:01|05|07)\d{8}$/.test(phone) && smsRouter.supports(phone), delivery });
+    } }, options.now ?? Date.now, env.RUNTIME !== "worker" && env.NODE_ENV !== "production" && (env.NODE_ENV === "test" || options.localFixtures === true), { mode: env.PHONE_AUTH_MODE, supports: phone => /^\+225(?:01|05|07)\d{8}$/.test(phone) && smsRouter.supports(phone), delivery }, createTermsPolicy(env));
     const auth = {
       handler: createAccountAuthHandler(accounts, env, keys),
       async purgeExpiredCredentials() {

@@ -5,6 +5,7 @@ import { dispatchAutoBilling, dispatchSchoolImports, SchoolApplication } from '@
 import { expect, spyOn, test } from 'bun:test'
 import { PostgresCommandJournal } from '../../../../adaptor-postgres/src/stores/command-journal-store'
 import { PostgresImportStore } from '../../../../adaptor-postgres/src/stores/import-store'
+import { ImportBusinessContext } from '../../../src/capabilities/imports/business'
 import { createStudentTransitionContext } from '../../services/workflows/student-workflow-context'
 // Application tests drive the parsing port, not a spreadsheet implementation.
 const format: ImportFormatPort = { parse: async ({ bytes }) => JSON.parse(new TextDecoder().decode(bytes)) as ParsedImportTable, serialize: async data => new TextEncoder().encode(JSON.stringify(data)) }
@@ -355,4 +356,235 @@ test('imported placements and annual profiles schedule automatic fees transactio
   expect((await f.repositories.studentCharges.list())[0]?.studentId).toBe(student?.id)
   await dispatchAutoBilling(f.application)
   expect(await f.repositories.studentCharges.count()).toBe(1)
+})
+
+test('execution uses bounded rows and status/history never load source snapshots', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name', 'class'], Array.from({ length: 24 }, (_, i) => [`bounded-${i}`, 'First', 'Last', 'cg1']))
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
+  let queries = 0
+  const originalTransaction = f.db.transaction.bind(f.db)
+  const transactions = spyOn(f.db, 'transaction').mockImplementation(run => originalTransaction(async (tx) => {
+    const query = tx.query.bind(tx)
+    tx.query = ((...args: Parameters<typeof query>) => {
+      queries++
+      return query(...args)
+    }) as typeof tx.query
+    return run(tx)
+  }))
+  const fullRead = spyOn(f.application.importPersistence, 'listRows').mockImplementation(async () => {
+    throw new Error('Full row snapshots must not be loaded')
+  })
+  try {
+    await dispatchSchoolImports(f.application, { maxPages: 100 })
+    expect(queries).toBeLessThan(24 * 120 + 100)
+    const status = await f.imports.status(f.batch.id)
+    expect(status.batch.state).toBe('completed')
+    expect(status.counts).toEqual({ created: 24, studentsRegistered: 24, studentsEnrolled: 24 })
+    expect(status.version).toBeGreaterThan(0)
+    expect(status.updatedAt).not.toBeNull()
+    expect(JSON.stringify(status)).not.toContain('bounded-')
+    expect((await f.imports.history()).map(batch => batch.id)).toContain(f.batch.id)
+    expect(fullRead).not.toHaveBeenCalled()
+  }
+  finally {
+    fullRead.mockRestore()
+    transactions.mockRestore()
+  }
+}, 30000)
+
+test('progress is transactional and unchanged row replays do not advance its version', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], [['metadata-1', 'First', 'Last']])
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  const before = await f.imports.status(f.batch.id)
+  await f.atomicExecution.execute(() => f.application.importPersistence.saveRows(preview.rows))
+  expect(await f.imports.status(f.batch.id)).toEqual(before)
+  await expect(f.atomicExecution.execute(async () => {
+    await f.application.importPersistence.saveRows(preview.rows.map(row => ({ ...row, outcome: 'created', result: { studentsRegistered: 1 } })))
+    throw new Error('abort transaction')
+  })).rejects.toThrow('abort transaction')
+  expect(await f.imports.status(f.batch.id)).toEqual(before)
+  const complete = await f.run()
+  const after = await f.imports.status(f.batch.id)
+  expect(after.counts).toEqual(complete.counts)
+  await dispatchSchoolImports(f.application, { maxPages: 100 })
+  expect(await f.imports.status(f.batch.id)).toEqual(after)
+})
+
+test('capacity changes after confirmation block every pending class member', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name', 'class'], [['capacity-a', 'A', 'Student', 'cg1'], ['capacity-b', 'B', 'Student', 'cg1']])
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
+  const group = (await f.repositories.classGroups.findById('cg1'))!
+  await f.repositories.classGroups.save(new ClassGroup({ ...group.data, capacity: 1 }))
+  await dispatchSchoolImports(f.application, { maxPages: 100 })
+  const status = await f.imports.status(f.batch.id)
+  expect(status.counts).toEqual({ blocked: 2 })
+  expect(await f.repositories.students.count({ matricule: { $in: ['capacity-a', 'capacity-b'] } })).toBe(0)
+})
+
+test('exhausted jobs reconcile without a detail request and failed reads never mutate job state', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], [['exhausted', 'First', 'Last']])
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  const confirmed = await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
+  await f.db.query('UPDATE command_outbox SET status = \'dead\' WHERE id = $1', [confirmed.workId])
+  expect((await f.imports.status(f.batch.id)).batch.state).toBe('running')
+  await dispatchSchoolImports(f.application)
+  const result = await f.imports.status(f.batch.id)
+  expect(result.batch.state).toBe('completed')
+  expect(result.counts).toEqual({ failed: 1 })
+  expect((await f.imports.detail(f.batch.id)).rows[0]!.issues[0]!.code).toBe('IMPORT_RETRY_EXHAUSTED')
+})
+
+test('normalized matching retains Unicode compatibility characters and whitespace', async () => {
+  const f = await fixture()
+  await f.repositories.students.save(new Student({ id: 'unicode-target', schoolId: 'sch1', matricule: '\u00A0ＭＡＴ-É\u00A0', firstName: 'Old', lastName: 'Name' }))
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], [['mat-é', 'Updated', 'Name']])
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  expect(preview.rows[0]!.targetId).toBe('unicode-target')
+  expect(preview.rows[0]!.outcome).toBe('pending')
+  expect((await f.run()).counts).toEqual({ updated: 1 })
+})
+
+test('numeric zero progress counters survive updates and legacy backfill preserves approval and receipts', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], [['backfill-1', 'First', 'Last']])
+  const complete = await f.run()
+  const row = { ...complete.rows[0]!, result: { zero: 0 } }
+  await f.atomicExecution.execute(() => f.application.importPersistence.saveRows([row]))
+  const expected = await f.imports.status(f.batch.id)
+  expect(expected.counts).toEqual({ created: 1, zero: 0 })
+  const receipt = await f.atomicExecution.execute(() => f.application.importPersistence.findOutcome(f.batch.schoolId, f.batch.id, row.id, row.inputDigest))
+  await f.db.query('UPDATE school_import_batches SET counts = \'{}\', progress_version = 0, progress_at = NULL WHERE id = $1', [f.batch.id])
+  const migration = await Bun.file(new URL('../../../../adaptor-postgres/drizzle/0050_import_progress.sql', import.meta.url)).text()
+  const backfill = migration.split('--> statement-breakpoint').at(-1)!
+  await f.db.exec(backfill)
+  const restored = await f.imports.status(f.batch.id)
+  expect(restored.counts).toEqual(expected.counts)
+  expect(restored.batch).toEqual(expected.batch)
+  expect(await f.atomicExecution.execute(() => f.application.importPersistence.findOutcome(f.batch.schoolId, f.batch.id, row.id, row.inputDigest))).toEqual(receipt)
+})
+
+test('status, history and detail re-evaluate a revoked reader instead of trusting persisted progress', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], [['read-access', 'First', 'Last']])
+  await f.run()
+  expect((await f.imports.status(f.batch.id)).counts['created']).toBe(1)
+  expect(await f.imports.history()).toHaveLength(1)
+  const actor = f.service.baseService.actor
+  if (actor.kind !== 'staff')
+    throw new Error('test actor')
+  const staff = (await f.repositories.staffMembers.findById(actor.staffMemberId))!
+  await f.repositories.staffMembers.save(new StaffMember({ ...staff.data, isActive: false }))
+  await expect(f.imports.status(f.batch.id)).rejects.toThrow()
+  await expect(f.imports.detail(f.batch.id)).rejects.toThrow()
+  await expect(f.imports.history()).rejects.toThrow()
+})
+
+test('complete collections larger than the candidate page commit all outcomes in one progress transition', async () => {
+  const f = await fixture()
+  await f.repositories.guardians.save(new Guardian({ id: 'large-guardian', schoolId: 'sch1', code: 'LARGE', firstName: 'First', lastName: 'Last' }))
+  await f.imports.settings({ batchId: f.batch.id, defaultOnExisting: 'O' })
+  await f.submit('guardian_contacts', ['guardian', 'type', 'value', 'complete_collection'], Array.from({ length: 21 }, (_, i) => ['LARGE', 'email', `contact-${i}@example.test`, true]))
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  expect(preview.counts['pending']).toBe(21)
+  await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
+  const before = await f.imports.status(f.batch.id)
+  await dispatchSchoolImports(f.application)
+  const after = await f.imports.status(f.batch.id)
+  expect(after.batch.state).toBe('completed')
+  expect(after.version).toBe(before.version + 1)
+  expect(after.counts['created']).toBe(21)
+  expect((await f.repositories.guardians.findById('large-guardian'))?.contactMethods).toHaveLength(21)
+  expect((await f.imports.detail(f.batch.id)).counts).toEqual(after.counts)
+}, 30000)
+
+test('a restarted dispatcher recovers an expired lease after a lost completion response without duplicate counters', async () => {
+  const f = await fixture()
+  await f.submit('students', ['matricule', 'first_name', 'last_name'], Array.from({ length: 23 }, (_, i) => [`restart-${i}`, 'First', 'Last']))
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  await f.imports.confirm({ batchId: f.batch.id, revision: preview.batch.revision, previewDigest: preview.batch.previewDigest! })
+  const completion = spyOn(f.durableWork, 'complete').mockResolvedValueOnce(false)
+  try {
+    expect((await dispatchSchoolImports(f.application)).lostLease).toBe(1)
+  }
+  finally { completion.mockRestore() }
+  expect((await f.imports.status(f.batch.id)).counts['created']).toBe(10)
+  await f.db.query('UPDATE command_outbox SET lease_expires_at = clock_timestamp() - INTERVAL \'1 second\' WHERE status = \'running\'')
+  const restarted = new SchoolApplication({ repositories: f.repositories, atomicExecution: f.atomicExecution, commandJournal: new PostgresCommandJournal(), durableWork: f.durableWork, importPersistence: new PostgresImportStore(), importFormat: format, fileStorage: createInMemoryFileStorage(), notificationGateway: noOpNotificationGateway })
+  await dispatchSchoolImports(restarted, { maxPages: 100 })
+  const final = await restarted.forActor(f.service.baseService.actor).imports.status(f.batch.id)
+  expect(final.batch.state).toBe('completed')
+  expect(final.counts).toEqual({ created: 23, studentsRegistered: 23 })
+  expect(await f.repositories.students.count({ matricule: { $in: Array.from({ length: 23 }, (_, i) => `restart-${i}`) } })).toBe(23)
+  await dispatchSchoolImports(restarted, { maxPages: 100 })
+  expect(await f.imports.status(f.batch.id)).toEqual(final)
+}, 30000)
+
+test('contact preview shares permission reads and uses exact resolved guardian IDs', async () => {
+  const f = await fixture()
+  await f.repositories.guardians.save(new Guardian({ id: 'Parent-ID', schoolId: 'sch1', code: 'G1', firstName: 'First', lastName: 'Parent' }))
+  await f.submit('guardian_contacts', ['guardian', 'type', 'value'], Array.from({ length: 24 }, (_, i) => [' ｇ１ ', 'email', `contact-${i}@example.test`]))
+  let permissionReads = 0
+  let normalizedOwnerReads = 0
+  const originalTransaction = f.db.transaction.bind(f.db)
+  const transactions = spyOn(f.db, 'transaction').mockImplementation(run => originalTransaction(async (tx) => {
+    const query = tx.query.bind(tx)
+    tx.query = ((...args: Parameters<typeof query>) => {
+      const sql = String(args[0])
+      if (/from "(?:schools|staff_members)"/.test(sql))
+        permissionReads++
+      if (sql.includes('translate(btrim("guardians"."id"') && !sql.includes('translate(btrim("guardians"."code"'))
+        normalizedOwnerReads++
+      return query(...args)
+    }) as typeof tx.query
+    return run(tx)
+  }))
+  try {
+    const preview = await f.imports.validate({ batchId: f.batch.id })
+    expect(preview.counts['pending']).toBe(24)
+    expect(preview.rows.every(row => row.targetId === 'Parent-ID')).toBe(true)
+    expect(permissionReads).toBeLessThan(40)
+    expect(normalizedOwnerReads).toBe(0)
+  }
+  finally { transactions.mockRestore() }
+  const staff = (await f.repositories.staffMembers.findById('user1'))!
+  await f.repositories.staffMembers.save(new StaffMember({ ...staff.data, isActive: false }))
+  await expect(f.imports.validate({ batchId: f.batch.id })).rejects.toThrow()
+  expect((await f.repositories.guardians.findById('Parent-ID'))!.contactMethods).toHaveLength(0)
+})
+
+test('resolved relationship IDs remain distinct while ambiguous external codes are rejected', async () => {
+  const f = await fixture()
+  for (const [id, code] of [['Parent-ID', 'G1'], ['parent-id', 'G2']] as const) {
+    await f.repositories.guardians.save(new Guardian({ id, code, schoolId: 'sch1', firstName: 'First', lastName: 'Parent' }))
+    await f.repositories.guardianLinks.save(new GuardianStudentLink({ id: `link-${id}`, schoolId: 'sch1', guardianId: id, studentId: 'stu1', relationship: 'parent' }))
+  }
+  await f.submit('guardian_relationships', ['guardian', 'student', 'legal_guardian'], [['G1', 'stu1', true]])
+  const result = await f.run()
+  expect(result.rows.map(row => [row.targetId, row.outcome])).toEqual([['link-Parent-ID', 'updated']])
+  expect((await f.repositories.guardianLinks.findById('link-Parent-ID'))!.legalGuardian).toBe(true)
+  expect((await f.repositories.guardianLinks.findById('link-parent-id'))!.legalGuardian).toBe(false)
+  const other = (await f.repositories.guardians.findById('parent-id'))!
+  await f.repositories.guardians.save(new Guardian({ ...other.data, contactMethods: [...other.contactMethods], code: 'g1' }))
+  const preview = await f.imports.validate({ batchId: f.batch.id })
+  expect(preview.rows[0]!.issues.map(issue => issue.code)).toContain('IMPORT_REFERENCE_AMBIGUOUS')
+})
+
+test('execution context sees entity changes and permission revocation between collection writes', async () => {
+  const f = await fixture()
+  await f.repositories.guardians.save(new Guardian({ id: 'parent', schoolId: 'sch1', firstName: 'Before', lastName: 'Parent' }))
+  await f.atomicExecution.execute(async () => {
+    const ctx = new ImportBusinessContext(f.service, f.batch)
+    const before = await ctx.readable('guardians', 'parent')
+    await f.repositories.guardians.save(new Guardian({ ...before.data, contactMethods: [...before.contactMethods], firstName: 'After' }))
+    expect((await ctx.readable('guardians', 'parent')).firstName).toBe('After')
+    const staff = (await f.repositories.staffMembers.findById('user1'))!
+    await f.repositories.staffMembers.save(new StaffMember({ ...staff.data, isActive: false }))
+    await expect(ctx.readable('guardians', 'parent')).rejects.toThrow()
+  })
 })

@@ -2,7 +2,7 @@
 import type { Filter } from '@edaya/core'
 import type { SQL } from 'drizzle-orm'
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core'
-import { DomainValidationError } from '@edaya/core'
+import { DomainValidationError, normalizeImportKey } from '@edaya/core'
 import { and, eq, getTableColumns, gt, gte, inArray, isNotNull, isNull, lt, lte, ne, not, notInArray, or, sql } from 'drizzle-orm'
 
 function buildFieldConditions(column: PgColumn, fieldFilter: unknown): SQL[] {
@@ -21,6 +21,14 @@ function buildFieldConditions(column: PgColumn, fieldFilter: unknown): SQL[] {
   for (const op of Object.keys(fieldFilter)) {
     const val = (fieldFilter as Record<string, unknown>)[op]
     switch (op) {
+      case '$normalizedCandidate':
+        if (typeof val !== 'string' || column.dataType !== 'string')
+          throw new DomainValidationError('$normalizedCandidate requires a text field and value')
+        // SQL locale-dependent case conversion cannot reproduce JavaScript Unicode folding.
+        // ASCII keys can be narrowed exactly. Keep non-ASCII candidates for the domain's
+        // NFKC/en-US comparison, including ambiguity checks, on every supported Postgres.
+        conditions.push(sql`(${column} ~ ${'[^\u0001-\u007F]'} OR translate(btrim(${column}, ${'\t\n\v\f\r '}), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = ${normalizeImportKey(val)})`)
+        break
       case '$eq':
         conditions.push(eq(column as never, val))
         break

@@ -52,6 +52,9 @@ export function createAccountRepository(database: unknown): {
     }
   }
   const repository: AccountRepositoryPort = {
+    async saveTermsAcceptance(acceptance) {
+      await db.execute(sql`INSERT INTO identity.terms_acceptance (account_id,version,locale,document_hash,accepted_at) VALUES (${acceptance.accountId},${acceptance.version},${acceptance.locale},${acceptance.documentHash},${acceptance.acceptedAt}) ON CONFLICT (account_id,version) DO NOTHING`)
+    },
     async transaction(work) {
       if (context.getStore())
         return work()

@@ -35,6 +35,7 @@ type QueryClients<TSchemas extends Record<string, unknown>> = {
 }
 
 type AuthClients<TSchemas extends Record<string, unknown>> = {
+  terms: () => Promise<SchemaName<TSchemas, 'AuthTerms'>>
   methods: () => Promise<SchemaName<TSchemas, 'AuthMethods'>>
   startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
   statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => Promise<SchemaName<TSchemas, 'AuthPrimaryStatus'>>
@@ -76,6 +77,7 @@ type ImportsClients<TSchemas extends Record<string, unknown>> = {
   confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
   retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
   cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportBatch'>>
+  status: (payload: SchemaName<TSchemas, 'GetSchoolImportStatusRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportStatus'>>
   detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDetail'>>
   history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportHistory'>>
   report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => Promise<SchemaName<TSchemas, 'SchoolImportDownload'>>
@@ -175,6 +177,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     commands,
     queries,
     auth: {
+    terms: () => transport.request('GET', resolveClientRoutePath('/auth/edaya/terms', {}, 'root')),
     methods: () => transport.request('GET', resolveClientRoutePath('/auth/edaya/methods', {}, 'root')),
     startOtp: (payload: SchemaName<TSchemas, 'AuthStart'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/start', {}, 'root'), { body: payload }),
     statusOtp: (payload: SchemaName<TSchemas, 'AuthChallengeInput'>) => transport.request('POST', resolveClientRoutePath('/auth/edaya/otp/status', {}, 'root'), { body: payload }),
@@ -213,6 +216,7 @@ export function createSchoolClient<TSchemas extends Record<string, unknown>>(
     confirm: (payload: SchemaName<TSchemas, 'ConfirmSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/confirm'), { body: payload }),
     retry: (payload: SchemaName<TSchemas, 'RetrySchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/retry'), { body: payload }),
     cancel: (payload: SchemaName<TSchemas, 'CancelSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/cancel'), { body: payload }),
+    status: (payload: SchemaName<TSchemas, 'GetSchoolImportStatusRequest'>) => transport.request('POST', resolveClientRoutePath('imports/status'), { body: payload }),
     detail: (payload: SchemaName<TSchemas, 'GetSchoolImportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/detail'), { body: payload }),
     history: (payload: SchemaName<TSchemas, 'SchoolImportHistoryRequest'>) => transport.request('POST', resolveClientRoutePath('imports/history'), { body: payload }),
     report: (payload: SchemaName<TSchemas, 'SchoolImportReportRequest'>) => transport.request('POST', resolveClientRoutePath('imports/report'), { body: payload }),

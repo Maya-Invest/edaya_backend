@@ -9,12 +9,12 @@ export function completeCollectionRows(row: ImportRow, rows: ImportRow[]): Impor
 }
 export async function collectionSnapshot(ctx: ImportBusinessContext, type: ImportRow['type'], ownerId: string): Promise<ImportRecord[]> {
   if (type === 'guardian_contacts') {
-    const existing = (await ctx.list('guardians')).find(guardian => guardian.id === ownerId)
+    const existing = (await ctx.list('guardians', { id: ownerId })).find(guardian => guardian.id === ownerId)
     if (existing)
       return importJson(await ctx.readable('guardians', ownerId))['contactMethods'] as ImportRecord[]
     return (ctx.rows.find(row => row.type === 'guardians' && row.targetId === ownerId)?.proposed?.['contactMethods'] ?? []) as ImportRecord[]
   }
-  const links = (await ctx.list('guardianLinks')).filter(link => link.guardianId === ownerId)
+  const links = (await ctx.list('guardianLinks', { guardianId: ownerId })).filter(link => link.guardianId === ownerId)
   const records: ImportRecord[] = []
   for (const link of links)
     records.push(importJson(await ctx.readable('guardianLinks', link.id)))
@@ -59,6 +59,6 @@ export async function replaceCompleteContacts(ctx: ImportBusinessContext, group:
 export async function removeUnmentionedLinks(ctx: ImportBusinessContext, group: ImportRow[]): Promise<void> {
   const ownerId = group[0]!.collection!.ownerId
   const students = new Set(group.map(row => row.proposed!['studentId']))
-  for (const link of (await ctx.list('guardianLinks')).filter(link => link.guardianId === ownerId && !students.has(link.studentId)))
+  for (const link of (await ctx.list('guardianLinks', { guardianId: ownerId })).filter(link => link.guardianId === ownerId && !students.has(link.studentId)))
     await ctx.base.entities.guardianLinks.delete(link.id)
 }

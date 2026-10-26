@@ -132,6 +132,26 @@ export interface ImportFormatPort {
     format: 'csv' | 'xlsx'
   }) => Promise<Uint8Array>
 }
+export interface ImportProgress {
+  counts: Record<string, number>
+  version: number
+  updatedAt: string | null
+}
+/** Minimal disclosure evidence; contains no source cells or business snapshots. */
+export interface ImportReadTarget {
+  type: ImportType
+  targetId: string
+  references: { key: 'students' | 'guardians' | 'teachers' | 'classGroups', id: string }[]
+  studentIds: string[]
+}
+export interface ImportRowQuery {
+  ids?: readonly string[]
+  outcome?: ImportOutcome
+  ready?: boolean
+  dependencyBlocked?: boolean
+  after?: string
+  limit: number
+}
 /** All mutations participate in the caller's AtomicExecutionPort transaction. */
 export interface ImportPersistencePort {
   getBatch: (schoolId: string, id: string) => Promise<ImportBatch | undefined>
@@ -140,9 +160,16 @@ export interface ImportPersistencePort {
   listFiles: (schoolId: string, batchId: string) => Promise<ImportFileRevision[]>
   addFile: (file: ImportFileRevision) => Promise<void>
   listRows: (schoolId: string, batchId: string) => Promise<ImportRow[]>
+  queryRows: (schoolId: string, batchId: string, query: ImportRowQuery) => Promise<ImportRow[]>
+  pendingClassCohort: (schoolId: string, batchId: string, classGroupId: string) => Promise<{ id: string, targetId: string }[]>
+  progress: (schoolId: string, batchId: string) => Promise<ImportProgress>
+  readTargets: (schoolId: string, batchId: string) => Promise<ImportReadTarget[]>
+  exhaustedBatches: (limit: number) => Promise<ImportBatch[]>
   saveRows: (rows: readonly ImportRow[]) => Promise<void>
   getIdentity: (schoolId: string, type: ImportType, sourceKey: string) => Promise<ImportIdentity | undefined>
+  saveIdentities: (identities: readonly ImportIdentity[]) => Promise<void>
   saveIdentity: (identity: ImportIdentity) => Promise<void>
   findOutcome: (schoolId: string, batchId: string, rowId: string, inputDigest: string) => Promise<ImportExecutionOutcome | undefined>
+  addOutcomes: (outcomes: readonly ImportExecutionOutcome[]) => Promise<void>
   addOutcome: (outcome: ImportExecutionOutcome) => Promise<void>
 }

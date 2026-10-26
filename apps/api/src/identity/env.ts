@@ -1,7 +1,7 @@
-import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
-/* eslint-disable node/no-process-env -- Local and fixture process configuration. */
 import process from "node:process";
+
 import { z } from "zod";
+import { smsEnvironmentFields, validateSmsEnvironment } from "@/lib/sms-config";
 import { templatesSchema } from "./phone-config";
 
 const envBoolean = z.preprocess((value) => {
@@ -121,6 +121,8 @@ const RawEnvSchema = z.object({
   TRUSTED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:4173,http://localhost:5174,http://localhost:5175,http://127.0.0.1:5175"),
   WEBAPP_ORIGIN: z.string().url().optional(),
   REQUIRE_PRIVILEGED_TOTP: envBoolean.optional(),
+  AUTH_TERMS_MODE: z.enum(["off", "preview", "enforced"]).default("off"),
+  AUTH_TERMS_VERSION: z.string().optional(),
   AUTH_PROVIDER_GENERATION: z.string().default("better-auth:v1"),
   ACCOUNT_SECURITY_KEYS: z.string().optional(),
   ACCOUNT_SECURITY_KEY_VERSION: z.string().regex(/^[\w-]+$/).default("v1"),
@@ -140,6 +142,8 @@ const RawEnvSchema = z.object({
   CLOUDFLARE_EMAIL_API_TOKEN: z.string().trim().optional(),
 }).superRefine((env, ctx) => {
   validateSmsEnvironment(env, ctx);
+  if (env.AUTH_TERMS_MODE === "preview" && env.NODE_ENV === "production")
+    ctx.addIssue({ code: "custom", path: ["AUTH_TERMS_MODE"], message: "Draft terms cannot be enabled in production" });
   const required = env.PHONE_AUTH_MODE === "whatsapp_first" ? ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "WHATSAPP_AUTH_TEMPLATES", "WHATSAPP_API_VERSION"] : [];
   for (const key of required) {
     if (!env[key as keyof typeof env])
@@ -208,6 +212,7 @@ export function parseEnv(source: Record<string, unknown>, runtime: Environment["
   return { ...parsed, EMAIL: source.EMAIL as Environment["EMAIL"], AUTH_KV: source.AUTH_KV, HYPERDRIVE_AUTH: source.HYPERDRIVE_AUTH as Environment["HYPERDRIVE_AUTH"] };
 }
 export function loadLocalProcessEnv(): Environment {
+  // eslint-disable-next-line node/no-process-env -- Local process configuration entrypoint.
   return parseEnv(process.env as Record<string, unknown>, "local");
 }
 export function trustedOrigins(env: Environment): string[] {

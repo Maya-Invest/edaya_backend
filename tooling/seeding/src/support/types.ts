@@ -1,7 +1,8 @@
 import type { ActorMetadata } from '@edaya/authorization'
-import type { SchoolRepositories, SchoolService } from '@edaya/service'
+import type { dispatchGradingRecalculation, SchoolRepositories, SchoolService } from '@edaya/service'
 
 export interface SeedApplication {
+  durableWork: Parameters<typeof dispatchGradingRecalculation>[0]['durableWork']
   repositories: SchoolRepositories
   forActor: (actor: ActorMetadata) => SchoolService
 }

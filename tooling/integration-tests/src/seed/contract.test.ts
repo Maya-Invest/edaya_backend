@@ -115,6 +115,22 @@ describeWithSeededSchool('dev seed contract', (getContext) => {
     expect(scale.findRange(20)?.letter).toBe('A')
   })
 
+  it('configures completed grading before seeding marks and generating report cards', async () => {
+    const { application } = getContext()
+    for (const fixture of demoCiDataset.extensions?.reportCardDefinitionFixtures ?? []) {
+      const definition = fixture.definition
+      const level = (await application.repositories.gradeLevels.findById(definition.gradeLevelId))!
+      expect(level.gradingPolicyFor(definition.academicYearId)).toMatchObject({ status: 'completed', mode: 'numeric-first', scale: { id: definition.gradeScaleId } })
+    }
+    for (const fixture of demoCiDataset.extensions?.reportCardResults ?? []) {
+      const report = (await application.repositories.results.findById(fixture.id))!
+      if (report.overallAverage !== undefined)
+        expect(report.grading).toMatchObject({ maximum: 20, policyRevision: 1, reportedValue: report.overallAverage })
+      expect(report.gradingPolicyRevision).toBe(1)
+      expect(report.revisedDraft).toBeUndefined()
+    }
+  })
+
   it('materializes only linked recipients and preserves explicit inbox history', async () => {
     const { application } = getContext()
     const guardian = await application.repositories.guardians.findById('ci-g1')

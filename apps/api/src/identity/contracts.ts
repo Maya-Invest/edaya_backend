@@ -1,6 +1,10 @@
 import { z } from "@hono/zod-openapi";
 
-export const AuthStart = z.object({ kind: z.enum(["email", "phone"]), value: z.string().max(254), channel: z.enum(["email", "telegram", "whatsapp"]).optional(), locale: z.enum(["fr", "en"]).optional(), requestId: z.string().uuid().optional(), recoveryEligible: z.boolean().optional() }).strict().openapi("AuthStart");
+export const AuthTermsAcceptance = z.object({ version: z.string().min(1).max(128), locale: z.enum(["fr", "en"]), accepted: z.literal(true) }).strict().openapi("AuthTermsAcceptance");
+export const AuthTermsSection = z.object({ heading: z.string(), paragraphs: z.array(z.string()) }).openapi("AuthTermsSection");
+export const AuthTermsDocument = z.object({ version: z.string(), locale: z.enum(["fr", "en"]), documentHash: z.string(), title: z.string(), status: z.enum(["draft", "published"]), sections: z.array(AuthTermsSection) }).openapi("AuthTermsDocument");
+export const AuthTerms = z.object({ enforced: z.boolean(), document: z.object(AuthTermsDocument.shape).nullable() }).openapi("AuthTerms");
+export const AuthStart = z.object({ termsAcceptance: AuthTermsAcceptance.optional(), kind: z.enum(["email", "phone"]), value: z.string().max(254), channel: z.enum(["email", "telegram", "whatsapp"]).optional(), locale: z.enum(["fr", "en"]).optional(), requestId: z.string().uuid().optional(), recoveryEligible: z.boolean().optional() }).strict().openapi("AuthStart");
 export const AuthChallengeInput = z.object({ challenge: z.string().min(1).max(128) }).strict().openapi("AuthChallengeInput");
 export const AuthResend = AuthChallengeInput.extend({ action: z.enum(["resend", "sms"]), requestId: z.string().uuid() }).strict().openapi("AuthResend");
 export const AuthProof = z.object({ challenge: z.string().min(1).max(128), code: z.string().max(128) }).strict().openapi("AuthProof");
